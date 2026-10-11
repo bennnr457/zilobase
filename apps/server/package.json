@@ -22,8 +22,8 @@
     }
   },
   "scripts": {
-    "dev": "AI_DEV_TOOLS_ENABLED=true AI_AGENT_DAILY_USAGE_LIMITS_ENABLED=false ZILOBASE_AUTO_MIGRATE=true ZILOBASE_ENV_FILE=../../.env.development dotenvx run --ignore=MISSING_ENV_FILE -f ../../.env.development --quiet -- tsx watch --include 'drizzle/**/*.sql' --include '../../packages/features/src/databases/**/*.ts' src/entrypoints/serverful.ts",
-    "dev:node": "AI_DEV_TOOLS_ENABLED=true AI_AGENT_DAILY_USAGE_LIMITS_ENABLED=false ZILOBASE_AUTO_MIGRATE=true ZILOBASE_ENV_FILE=../../.env.development dotenvx run --ignore=MISSING_ENV_FILE -f ../../.env.development --quiet -- tsx watch --include 'drizzle/**/*.sql' --include '../../packages/features/src/databases/**/*.ts' src/entrypoints/serverful.ts",
+    "dev": "ZILOBASE_AUTO_MIGRATE=true ZILOBASE_ENV_FILE=../../.env.development dotenvx run --ignore=MISSING_ENV_FILE -f ../../.env.development --quiet -- tsx watch --include 'drizzle/**/*.sql' --include '../../packages/features/src/databases/**/*.ts' src/entrypoints/serverful.ts",
+    "dev:node": "ZILOBASE_AUTO_MIGRATE=true ZILOBASE_ENV_FILE=../../.env.development dotenvx run --ignore=MISSING_ENV_FILE -f ../../.env.development --quiet -- tsx watch --include 'drizzle/**/*.sql' --include '../../packages/features/src/databases/**/*.ts' src/entrypoints/serverful.ts",
     "build": "npm run tokens:check --prefix ../.. && npm run typecheck",
     "build:node": "npm run tokens:check --prefix ../.. && npm run typecheck",
     "typecheck": "tsc --noEmit",
@@ -48,7 +48,6 @@
     "db:studio": "drizzle-kit studio --host 127.0.0.1 --port 4983"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.72",
     "@better-auth/api-key": "1.7.3",
     "@better-auth/expo": "1.7.3",
     "@better-auth/oauth-provider": "1.7.3",
@@ -58,7 +57,6 @@
     "@hocuspocus/server": "^4.3.0",
     "@hocuspocus/transformer": "^4.3.0",
     "@js-temporal/polyfill": "^0.5.1",
-    "@modelcontextprotocol/client": "^2.0.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/sdk-node": "^0.221.0",
     "@tiptap/pm": "^3.23.6",
@@ -67,7 +65,6 @@
     "@zilobase/page-context": "file:../../packages/page-context",
     "@zilobase/runtime-adapter": "file:../../packages/runtime-adapter",
     "@zilobase/runtime-ports": "file:../../packages/runtime-ports",
-    "ai": "^6.0.193",
     "better-auth": "1.7.3",
     "bullmq": "6.3.11",
     "crossws": "^0.4.9",

@@ -29,7 +29,6 @@ The stable [schema aggregate](../../apps/server/src/infrastructure/database/sche
 - Pages, page properties and placements are separate from database/data-source declarations. Placements refer to database rows without introducing a pages/databases initialization cycle.
 - Databases own a required fractional row-order key, a durable versioned mutation journal, and idempotent command receipts. The realtime outbox tracks delivery attempts by referencing committed journal events.
 - Calendar, meetings and notifications own their respective tables.
-- AI agents, MCP, conversations, execution, files and settings retain separate persistence responsibilities.
 - Navigation, images, search, background work, instance settings and user settings own their focused tables.
 - Column builders hold binary/search column types and timestamp defaults. Soft-delete columns depend on authentication's user declaration and reuse timestamp builders.
 

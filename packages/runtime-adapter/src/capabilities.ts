@@ -43,17 +43,6 @@ export async function fetchAutomationWebhook(input: {
   return requireRuntimePort("outbound").fetchWebhook({ ...input, method: "POST" });
 }
 
-export async function fetchMcpRequest(input: {
-  body: string | null;
-  headers: Record<string, string>;
-  method: string;
-  signal?: AbortSignal;
-  timeoutMs: number;
-  url: string;
-}) {
-  return requireRuntimePort("outbound").fetchMcp(input);
-}
-
 export function getCalendarRealtimeWebSocketUrl(request: Request) {
   return requireRuntimePort("urls").getCollabUrl("calendar", request);
 }

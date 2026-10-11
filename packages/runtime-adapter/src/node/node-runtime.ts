@@ -34,7 +34,6 @@ import { runMigrationSets, type MigrationSet } from "./migrations";
 import { createNodeRealtimeBus, type NodeRealtimeBus } from "./realtime-bus";
 import { createNodeCollaborationExtensions } from "./features/collaboration/collaboration-redis";
 import { fetchPinnedNodeWebhook } from "./pinned-webhook";
-import { fetchPinnedNodeMcp } from "./pinned-mcp";
 import { createNodeImageStorage } from "./image-storage";
 import { createNodeMailer } from "./mailer";
 import { getQueueRedisUrl, createNodeQueueRuntime, type NodeQueueRuntime } from "./queue-runtime";
@@ -58,7 +57,6 @@ export type NodeRuntimeOptions = {
     createCollaborationExtensions?: typeof createNodeCollaborationExtensions;
     setCollaborationExtensionsFactory?: typeof defaultSetCollaborationExtensionsFactory;
     fetchPinnedWebhook?: Ports["outbound"]["fetchWebhook"];
-    fetchPinnedMcp?: Ports["outbound"]["fetchMcp"];
     createBackgroundQueue?: (
       env: Record<string, unknown>,
       ports: Partial<Ports>,
@@ -78,7 +76,6 @@ export function createNodeRuntime(options: NodeRuntimeOptions) {
   const createCollaborationExtensions =
     hooks.createCollaborationExtensions ?? createNodeCollaborationExtensions;
   const fetchPinnedWebhook = hooks.fetchPinnedWebhook ?? fetchPinnedNodeWebhook;
-  const fetchPinnedMcp = hooks.fetchPinnedMcp ?? fetchPinnedNodeMcp;
   const maintenanceWorkerId = `node-maintenance:${crypto.randomUUID()}`;
   const createBackgroundQueue =
     hooks.createBackgroundQueue ??
@@ -123,7 +120,6 @@ export function createNodeRuntime(options: NodeRuntimeOptions) {
     limits,
     mailer: createNodeMailer(env),
     outbound: createNodeOutboundFetch({
-      fetchMcp: fetchPinnedMcp,
       fetchWebhook: fetchPinnedWebhook,
     }),
     readiness: {

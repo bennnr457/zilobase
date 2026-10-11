@@ -219,7 +219,6 @@ export function createFakePorts<Database = unknown>(
     meetings,
     outbound: {
       fetchWebhook: unavailable("outbound.fetchWebhook"),
-      fetchMcp: unavailable("outbound.fetchMcp"),
     },
     readiness: {
       background: () => ({ producerReady: null, consumerReady: null, maintenanceFresh: null }),

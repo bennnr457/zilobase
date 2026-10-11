@@ -12,12 +12,6 @@ export {
 } from "./realtime-bus";
 export { createNodeCollaborationExtensions } from "./features/collaboration/collaboration-redis";
 export { fetchPinnedNodeWebhook } from "./pinned-webhook";
-export {
-  fetchPinnedNodeMcp,
-  resolvePublicNodeMcpAddress,
-  buildPinnedMcpRequestOptions,
-  isPinnedMcpRemoteAddress,
-} from "./pinned-mcp";
 export { createNodeImageStorage } from "./image-storage";
 export { createNodeMailer } from "./mailer";
 export { createNodeOutboundFetch } from "./outbound-fetch";

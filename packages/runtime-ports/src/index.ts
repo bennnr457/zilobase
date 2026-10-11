@@ -148,7 +148,6 @@ export interface OutboundFetch {
   fetchWebhook(
     request: OutboundRequest & { body: string; pinnedAddress: string },
   ): Promise<Response>;
-  fetchMcp(request: OutboundRequest): Promise<Response>;
 }
 
 export type RealtimeEndpoint =

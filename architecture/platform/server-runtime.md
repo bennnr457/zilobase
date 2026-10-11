@@ -45,7 +45,7 @@ sides (`realtime-bus`, `room-host`, `room-state`, `notification-runtime`,
 
 `createNodeRuntime` takes `loadApp` plus hook overrides (edition extension,
 production-config assert, a non-nullable realtime bus, collaboration extensions,
-pinned webhook/MCP transports, queue lifecycle) with community defaults;
+pinned webhook transport, queue lifecycle) with community defaults;
 `apps/server` passes Zilobase wiring through hooks in
 [serverful.ts](../../apps/server/src/entrypoints/serverful.ts). The default bus
 factory validates `REALTIME_REDIS_URL` for every Node role before startup and
@@ -63,18 +63,18 @@ Community Cloudflare deployment uses the [worker templates](../../packages/runti
 
 Runtime ports are installed through `runWithRuntimePorts` around the complete
 Worker request dispatcher and every Node request or background invocation.
-That Worker scope includes ordinary Hono requests, agent dispatch, and all
-WebSocket upgrade authentication before routing to Durable Objects.
+That Worker scope includes ordinary Hono requests and all WebSocket upgrade
+authentication before routing to Durable Objects.
 Collaboration Durable Objects install the same Worker port set around each
 socket, alarm, and RPC event because those events execute as separate Worker
 invocations. Lookup outside an explicit async scope fails; there is no
 process-global port object. `ServerRuntimeAdapter`, its ambient context, and
 Worker adapter factories have been removed.
 
-Object storage, email delivery, webhook egress, and MCP egress require an
-explicit runtime provider. The Node side owns S3, SMTP/console email, and pinned
-network transports; the Worker side owns R2, Email bindings, and Worker fetch
-options. Server features no longer select S3 versus R2 or SMTP versus Email.
+Object storage, email delivery, and webhook egress require an explicit runtime
+provider. The Node side owns S3, SMTP/console email, and pinned webhook
+transport; the Worker side owns R2, Email bindings, and Worker fetch options.
+Server features no longer select S3 versus R2 or SMTP versus Email.
 
 Background dispatch is the first request-scoped port cutover. Feature services
 persist dispatch intent atomically with feature work; the publisher calls
@@ -134,7 +134,7 @@ the application.
 
 Composition now supplies `Env`, `UrlResolver`, `ImageStorage`, `Mailer`,
 `OutboundFetch`, and document RPC providers. Node maps `DATABASE_URL`, S3,
-SMTP, pinned network transports, and resident Hocuspocus; Workers map
+SMTP, pinned webhook transport, and resident Hocuspocus; Workers map
 Hyperdrive, R2, Email, Worker fetch options, and named Durable Objects. The
 hosted repository composes `createWorker` directly and no longer constructs a
 `createWorkerAdapter`. URL and storage helpers are thin port lookups, and
