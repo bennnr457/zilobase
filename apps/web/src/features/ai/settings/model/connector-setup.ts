@@ -61,15 +61,10 @@ function statusDescription(connected: boolean, unavailable: boolean, reason: str
 export function connectorActionState(
   setup: { connected: boolean; unavailable: boolean; label: string },
   scope: string,
-  role: string | undefined,
   connecting: boolean,
 ) {
   return {
-    disabled: setup.connected || connecting || setup.unavailable || !mayConnect(scope, role),
+    disabled: setup.connected || connecting || setup.unavailable || scope !== "personal",
     label: setup.connected ? "Connected" : connecting ? "Connecting…" : `Connect ${setup.label}`,
   };
-}
-
-function mayConnect(scope: string, role: string | undefined) {
-  return scope === "personal" || role === "owner" || role === "editor";
 }

@@ -6,19 +6,12 @@ import {
   deliverAfterCommit,
   type AfterCommit,
 } from "../../../infrastructure/database/after-commit";
-import {
-  aiAgentProfile,
-  databaseAccess,
-  member,
-  team,
-} from "../../../infrastructure/database/schema";
+import { databaseAccess, member, team } from "../../../infrastructure/database/schema";
 import { activeMembershipCondition } from "../../memberships";
 import { requireDatabaseAccess } from "../access/database-access";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import { getDatabaseTeamspaceSecurityPolicy } from "../../teamspaces";
 import type { RuntimeEnv } from "../../../shared/config/config";
-
-import { getAgentProfileRole } from "../../ai/agents/agent-profile-service";
 
 export async function listDatabaseAccessRulesService(input: {
   databaseId: string;
@@ -54,13 +47,8 @@ export async function upsertDatabaseAccessRuleService(input: {
   };
   const normalizedAccessLevel = normalizeAccessLevel(accessLevel);
 
-  if (
-    targetType !== "public" &&
-    targetType !== "user" &&
-    targetType !== "team" &&
-    targetType !== "agent"
-  ) {
-    throw new ServiceMutationError("targetType must be public, user, team, or agent", 400);
+  if (targetType !== "public" && targetType !== "user" && targetType !== "team") {
+    throw new ServiceMutationError("targetType must be public, user, or team", 400);
   }
 
   if (typeof targetId !== "string" || !targetId) {
@@ -69,10 +57,6 @@ export async function upsertDatabaseAccessRuleService(input: {
 
   if (!normalizedAccessLevel || normalizedAccessLevel === "comment") {
     throw new ServiceMutationError("accessLevel must be view, edit, or full", 400);
-  }
-
-  if (targetType === "agent" && normalizedAccessLevel === "full") {
-    throw new ServiceMutationError("agent access must be view or edit", 400);
   }
 
   if (targetType === "public" && (targetId !== "*" || normalizedAccessLevel !== "view")) {
@@ -86,14 +70,6 @@ export async function upsertDatabaseAccessRuleService(input: {
     }
   }
 
-  const agentRole =
-    targetType === "agent"
-      ? await getAgentProfileRole({
-          profileId: targetId,
-          userId: input.userId,
-          workspaceId: existing.workspaceId,
-        })
-      : null;
   const [target] =
     targetType === "public"
       ? [{ id: "*" }]
@@ -109,25 +85,11 @@ export async function upsertDatabaseAccessRuleService(input: {
               ),
             )
             .limit(1)
-        : targetType === "team"
-          ? await db
-              .select({ id: team.id })
-              .from(team)
-              .where(and(eq(team.organizationId, existing.workspaceId), eq(team.id, targetId)))
-              .limit(1)
-          : agentRole
-            ? await db
-                .select({ id: aiAgentProfile.id })
-                .from(aiAgentProfile)
-                .where(
-                  and(
-                    eq(aiAgentProfile.id, targetId),
-                    eq(aiAgentProfile.workspaceId, existing.workspaceId),
-                    eq(aiAgentProfile.status, "active"),
-                  ),
-                )
-                .limit(1)
-            : [];
+        : await db
+            .select({ id: team.id })
+            .from(team)
+            .where(and(eq(team.organizationId, existing.workspaceId), eq(team.id, targetId)))
+            .limit(1);
 
   if (!target) {
     throw new ServiceMutationError("Target not found", 404);

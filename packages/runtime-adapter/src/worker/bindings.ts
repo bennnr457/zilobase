@@ -15,7 +15,6 @@ export type BackgroundQueue = {
 export type WorkerEnvBindings = Record<string, unknown> & {
   COLLABORATION_RATE_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
   BACKGROUND_FAST?: BackgroundQueue;
-  AI_JOBS?: BackgroundQueue;
   AUTOMATION_RUNS?: BackgroundQueue;
   CALENDAR_JOBS?: BackgroundQueue;
   EMAIL?: CloudflareBindings["EMAIL"];

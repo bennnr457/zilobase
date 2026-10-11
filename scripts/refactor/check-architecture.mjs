@@ -15,12 +15,22 @@ const packages = [
   "packages/tiptap-comment-extension",
 ];
 const intentionalExportBreaks = new Set([
+  "AI_JOB_HANDLERS",
+  "AiJobHandler",
+  "aiJob",
+  "coerceAiChatRequestBody",
+  "getAiChatThreadForUser",
   "getConfiguredImageStorageMode",
   "getRuntimeAdapter",
   "isRequiredSidebarShortcut",
+  "loadAiChatThreadMessages",
+  "maybeAutoTitleAiChatThread",
+  "runAiChatTurn",
   "runWithRuntimeAdapter",
   "ServerRuntimeAdapter",
   "setRuntimeAdapter",
+  "syncAiChatThreadMessages",
+  "touchAiChatThreadActivity",
 ]);
 
 function markdownFiles(directory) {

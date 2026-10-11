@@ -1,14 +1,6 @@
 import { calendarRoutes, calendarProviderRoutes } from "../features/calendar/routes";
-import { aiSettingsRoutes } from "../features/ai/settings/routes";
 import type { Hono } from "hono";
 
-import {
-  aiAgentProfileRoutes,
-  aiAgentWebhookRoutes,
-  aiMcpRoutes,
-  aiRoutes,
-  aiThreadRoutes,
-} from "../features/ai/routes";
 import { apiKeyRoutes } from "../features/api-keys/routes";
 import { clipRoutes } from "../features/clips";
 import { authRoutes } from "../features/auth/routes";
@@ -28,7 +20,6 @@ import { profileImageRoutes } from "../features/user-settings/profile-image-rout
 import { searchRoutes } from "../features/search/routes";
 import { pageSettingsRoutes } from "../features/user-settings";
 import { workspaceRoutes } from "../features/workspaces/routes";
-import { workspaceSettingsRoutes } from "../features/workspaces/settings/routes";
 import type { AppBindings } from "../shared/types";
 import { demoRoutes } from "../features/demo/routes";
 import { notificationRoutes } from "../features/notifications/routes";
@@ -36,12 +27,6 @@ import { automationSlackProviderRoutes } from "../features/automations/http/slac
 
 export function registerRoutes(app: Hono<AppBindings>) {
   app.route("/", automationSlackProviderRoutes);
-  app.route("/api/ai", aiRoutes);
-  app.route("/api/ai", aiThreadRoutes);
-  app.route("/api/ai", aiSettingsRoutes);
-  app.route("/api/ai", aiAgentProfileRoutes);
-  app.route("/api/ai", aiAgentWebhookRoutes);
-  app.route("/api/ai", aiMcpRoutes);
   app.route("/api/keys", apiKeyRoutes);
   app.route("/clips", clipRoutes);
   app.route("/", desktopAuthRoutes);
@@ -58,7 +43,6 @@ export function registerRoutes(app: Hono<AppBindings>) {
   app.route("/workspaces", workspaceRoutes);
   app.route("/workspaces", notificationRoutes);
   app.route("/workspaces", teamspaceRoutes);
-  app.route("/api/workspace/settings", workspaceSettingsRoutes);
   app.route("/search", searchRoutes);
   app.route("/session", sessionRoutes);
   app.route("/user-settings", pageSettingsRoutes);

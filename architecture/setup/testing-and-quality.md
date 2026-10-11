@@ -67,6 +67,6 @@ installs both hooks through [hook installation](../../scripts/git/install-hooks.
 [hook tests](../../scripts/git/pre-push.test.mjs) cover path selection and skip
 behavior.
 
-[Background acceptance](../../scripts/background/test-isolated.mjs) owns disposable PostgreSQL and persistent queue Redis fixtures. It runs the production processor for all seven kinds, forced process termination, outage/republication, cell purge isolation and a deployment-bundled Miniflare consumer with real PostgreSQL. `--sql-only`, `--processor-only` and `--worker-sql-only` select focused gates; completion requires the combined run and mounted application acceptance. Only external provider HTTP is controlled.
+[Background acceptance](../../scripts/background/test-isolated.mjs) owns disposable PostgreSQL and persistent queue Redis fixtures. It runs the production processor for every background task kind, forced process termination, outage/republication, cell purge isolation and a deployment-bundled Miniflare consumer with real PostgreSQL. `--sql-only`, `--processor-only` and `--worker-sql-only` select focused gates; completion requires the combined run and mounted application acceptance. Only external provider HTTP is controlled.
 
 `test:editor:browser` runs the [editor acceptance fixture](../../scripts/editor/e2e/fixture.tsx) with real Tiptap/Yjs documents and replacement pane composition. Its local Vite server uses the application styles and configured Chrome channel. Results are generated under `.dev/editor-e2e-results/` and are ignored.

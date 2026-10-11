@@ -2,13 +2,7 @@ import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import { db } from "../infrastructure/database";
 import * as t from "../infrastructure/database/schema";
-import {
-  backgroundTransaction,
-  persistBackgroundTasks,
-} from "../infrastructure/background/publication";
-import { createBackgroundTask } from "../infrastructure/background/contracts";
-import { recordBackgroundExhaustion } from "../app/background/failures";
-import { replayBackgroundFailure } from "../app/background/operations/replay";
+import { backgroundTransaction } from "../infrastructure/background/publication";
 export async function seedCutoverAcceptance(env: Record<string, unknown>) {
   const old = new Date(0);
   await db.insert(t.member).values({
@@ -100,69 +94,6 @@ export async function seedCutoverAcceptance(env: Record<string, unknown>) {
     },
     { publishAfterCommit: false },
   );
-  await db.insert(t.aiAgentProfile).values({
-    id: "cutover-agent",
-    workspaceId: "workspace",
-    ownerUserId: "operator-owner",
-    name: "Retain agent",
-  });
-  await db.insert(t.aiAgentRevision).values({
-    id: "cutover-agent-revision",
-    profileId: "cutover-agent",
-    version: 1,
-    definition: {},
-    compiledDefinition: {},
-    definitionHash: "retained",
-  });
-  await db.insert(t.aiAgentRun).values(
-    ["cutover-agent-run", "uncertain-agent-run"].map((id) => ({
-      id,
-      workspaceId: "workspace",
-      profileId: "cutover-agent",
-      revisionId: "cutover-agent-revision",
-      triggerKind: "manual",
-      status: id === "cutover-agent-run" ? "waiting_approval" : "running",
-      leaseExpiresAt: old,
-    })),
-  );
-  await db.insert(t.aiAgentPendingAction).values({
-    id: "cutover-approval",
-    workspaceId: "workspace",
-    userId: "operator-owner",
-    agentRunId: "cutover-agent-run",
-    toolCallId: "call",
-    toolName: "write",
-    toolVersion: 1,
-    toolInput: {},
-    inputHash: "hash",
-    expiresAt: new Date(Date.now() + 60_000),
-  });
-  await db.insert(t.aiAgentTrigger).values({
-    id: "cutover-trigger",
-    revisionId: "cutover-agent-revision",
-    profileId: "cutover-agent",
-    kind: "schedule",
-    label: "Daily",
-    config: { cadence: "daily" },
-    nextRunAt: old,
-  });
-  await db.insert(t.aiAgentToolExecution).values({
-    id: "uncertain-write",
-    agentRunId: "uncertain-agent-run",
-    toolCallId: "write-call",
-    toolName: "write",
-    effect: "write",
-    status: "failed",
-    outcomeUnknown: true,
-  });
-  const uncertain = createBackgroundTask({
-    env,
-    kind: "agent.run",
-    resourceId: "uncertain-agent-run",
-  });
-  await persistBackgroundTasks(env, [uncertain]);
-  await recordBackgroundExhaustion(env, uncertain, "automation");
-  await assert.rejects(replayBackgroundFailure(env, uncertain.taskId), /INELIGIBLE|UNCERTAIN/);
   await db.insert(t.calendarAccount).values({
     id: "cutover-account",
     userId: "operator-owner",
@@ -212,20 +143,6 @@ export async function seedCutoverAcceptance(env: Record<string, unknown>) {
 }
 export async function assertCutoverAcceptance(cutoff: Date) {
   assert.equal(
-    (await db.select().from(t.aiAgentRun).where(eq(t.aiAgentRun.id, "cutover-agent-run")))[0]
-      .status,
-    "cancelled",
-  );
-  assert.equal(
-    (
-      await db
-        .select()
-        .from(t.aiAgentPendingAction)
-        .where(eq(t.aiAgentPendingAction.id, "cutover-approval"))
-    )[0].status,
-    "rejected",
-  );
-  assert.equal(
     (
       await db
         .select()
@@ -260,10 +177,6 @@ export async function assertCutoverAcceptance(cutoff: Date) {
         .where(eq(t.databaseAutomation.id, "cutover-automation"))
     )[0].nextRunAt! > cutoff,
   );
-  assert.ok(
-    (await db.select().from(t.aiAgentTrigger).where(eq(t.aiAgentTrigger.id, "cutover-trigger")))[0]
-      .nextRunAt! > cutoff,
-  );
   const [calendar] = await db
     .select()
     .from(t.calendarProviderCalendar)
@@ -295,14 +208,5 @@ export async function assertCutoverAcceptance(cutoff: Date) {
         .where(eq(t.databaseRealtimeOutbox.id, "cutover-outbox"))
     ).length,
     0,
-  );
-  assert.equal(
-    (
-      await db
-        .select()
-        .from(t.aiAgentRevision)
-        .where(eq(t.aiAgentRevision.id, "cutover-agent-revision"))
-    )[0].definitionHash,
-    "retained",
   );
 }

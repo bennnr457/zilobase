@@ -11,6 +11,7 @@ import { createDbClient, runWithDbEnv, db } from "../infrastructure/database";
 import * as tables from "../infrastructure/database/schema";
 import {
   BACKGROUND_LANE_POLICY,
+  BACKGROUND_TASK_KINDS,
   createBackgroundTaskV2,
   decodeBackgroundTaskV2,
 } from "../infrastructure/background/task-v2";
@@ -24,7 +25,6 @@ import {
   deliverBackgroundTask,
   recordBackgroundExhaustion,
 } from "../app/background/runtime-delivery";
-import { enqueueAiJob } from "../features/ai/jobs/ai-jobs";
 import { encryptCalendarSecret } from "../features/calendar/provider/credentials";
 
 const connection = process.env.ZILOBASE_BACKGROUND_VERIFY_URL!;
@@ -36,22 +36,15 @@ const env = {
   DATABASE_URL: connection,
   QUEUE_REDIS_URL: process.env.ZILOBASE_QUEUE_VERIFY_URL!,
   ZILOBASE_CELL_ID: cell,
-  AI_CUSTOM_AGENTS_ENABLED: "true",
   DATABASE_AUTOMATIONS_ENABLED: "true",
-  OPENAI_API_KEY: "fixture-no-external-calls",
-  MCP_CREDENTIAL_ENCRYPTION_KEYS: JSON.stringify({
-    activeVersion: "fixture",
-    keys: { fixture: key },
-  }),
   CALENDAR_TOKEN_ENCRYPTION_KEY: key,
   CALENDAR_GOOGLE_CLIENT_ID: "fixture",
   CALENDAR_GOOGLE_CLIENT_SECRET: "fixture",
 };
 const channels: string[] = [];
-let calendarCalls = 0,
-  modelCalls = 0;
+let calendarCalls = 0;
 const originalFetch = globalThis.fetch;
-globalThis.fetch = async (input, init) => {
+globalThis.fetch = async (input) => {
   const target = new URL(input instanceof Request ? input.url : String(input));
   if (target.hostname === "oauth2.googleapis.com")
     return Response.json({ access_token: "fixture" });
@@ -68,23 +61,6 @@ globalThis.fetch = async (input, init) => {
       ...(calendarCalls === 1
         ? { nextPageToken: "second" }
         : { nextSyncToken: "final-checkpoint" }),
-    });
-  }
-  if (target.hostname === "api.openai.com" && target.pathname.endsWith("/responses")) {
-    modelCalls++;
-    return Response.json({
-      id: `resp-${modelCalls}`,
-      model: JSON.parse(String(init?.body)).model,
-      created_at: Math.floor(Date.now() / 1000),
-      output: [
-        {
-          id: "message",
-          type: "message",
-          role: "assistant",
-          content: [{ type: "output_text", text: "Queue fixture result", annotations: [] }],
-        },
-      ],
-      usage: { input_tokens: 10, output_tokens: 5 },
     });
   }
   throw new Error(
@@ -226,60 +202,6 @@ try {
         }),
       ]);
     });
-    await db.insert(tables.aiAgentProfile).values({
-      id: "queue-agent",
-      workspaceId: "queue-workspace",
-      ownerUserId: "queue-actor",
-      name: "Queue Agent",
-    });
-    await db.insert(tables.aiAgentRevision).values({
-      id: "queue-agent-revision",
-      profileId: "queue-agent",
-      version: 1,
-      definition: {},
-      compiledDefinition: { name: "Queue Agent", instructions: "Return fixture text" },
-      definitionHash: "fixture",
-    });
-    await db
-      .update(tables.aiAgentProfile)
-      .set({ currentRevisionId: "queue-agent-revision" })
-      .where(eq(tables.aiAgentProfile.id, "queue-agent"));
-    await backgroundTransaction(env, async () => {
-      await db.insert(tables.aiAgentRun).values({
-        id: "queue-agent-run",
-        workspaceId: "queue-workspace",
-        profileId: "queue-agent",
-        revisionId: "queue-agent-revision",
-        initiatedByUserId: "queue-actor",
-        triggerKind: "manual",
-      });
-      await persistBackgroundTasks(env, [
-        createBackgroundTaskV2({ env, kind: "agent.run", resourceId: "queue-agent-run" }),
-      ]);
-    });
-    await db.insert(tables.aiChatThread).values({
-      id: "queue-thread",
-      workspaceId: "queue-workspace",
-      userId: "queue-actor",
-      nextMessageSequence: 14,
-    });
-    await db.insert(tables.aiChatMessage).values(
-      [0, 1].map((sequence) => ({
-        id: `queue-message-${sequence}`,
-        threadId: "queue-thread",
-        role: "user",
-        sequence,
-        parts: [{ type: "text", text: "Retain this conversation" }],
-      })),
-    );
-    await enqueueAiJob({
-      env,
-      workspaceId: "queue-workspace",
-      userId: "queue-actor",
-      type: "thread-compaction",
-      input: { threadId: "queue-thread" },
-      dedupeKey: "queue-compaction",
-    });
     const secret = await encryptCalendarSecret(env, "refresh", {
       connectionId: "queue-account",
       userId: "queue-actor",
@@ -345,23 +267,30 @@ try {
   });
   const broker = process.env.ZILOBASE_QUEUE_VERIFY_CONTAINER!;
   assert.ok(broker.startsWith("zilobase-background-test-") && broker.endsWith("-queue"));
-  await scoped(() =>
-    db
-      .insert(tables.aiChatThread)
-      .values({ id: "queue-outage-thread", workspaceId: "queue-workspace", userId: "queue-actor" }),
-  );
+  const outageTask = createBackgroundTaskV2({
+    env,
+    kind: "notification.publish",
+    resourceId: "queue-outage",
+  });
   await promisify(execFile)("docker", ["pause", broker]);
   const outageStarted = Date.now();
-  let outageJob: { id: string };
   try {
-    outageJob = await scoped(() =>
-      enqueueAiJob({
-        env,
-        workspaceId: "queue-workspace",
-        userId: "queue-actor",
-        type: "thread-compaction",
-        input: { threadId: "queue-outage-thread" },
-        dedupeKey: "queue-outage",
+    await scoped(() =>
+      backgroundTransaction(env, async () => {
+        await db.insert(tables.inProductNotification).values({
+          id: "queue-outage-notification",
+          workspaceId: "queue-workspace",
+          userId: "queue-actor",
+          message: "Outage notification",
+        });
+        await db.insert(tables.inProductNotificationOutbox).values({
+          id: "queue-outage",
+          notificationId: "queue-outage-notification",
+          workspaceId: "queue-workspace",
+          userId: "queue-actor",
+          nextAttemptAt: new Date(),
+        });
+        await persistBackgroundTasks(env, [outageTask]);
       }),
     );
     assert.ok(
@@ -372,7 +301,7 @@ try {
       const [ticket] = await db
         .select()
         .from(tables.backgroundDispatch)
-        .where(eq(tables.backgroundDispatch.resourceId, outageJob.id));
+        .where(eq(tables.backgroundDispatch.resourceId, "queue-outage"));
       assert.equal(ticket.status, "pending");
       await db
         .update(tables.backgroundDispatch)
@@ -386,22 +315,17 @@ try {
   await Promise.all(consumers.map((consumer) => consumer.start()));
   await until(() =>
     scoped(async () => {
-      const [agent] = await db
-        .select()
-        .from(tables.aiAgentRun)
-        .where(eq(tables.aiAgentRun.id, "queue-agent-run"));
       const [calendar] = await db
         .select()
         .from(tables.calendarProviderCalendar)
         .where(eq(tables.calendarProviderCalendar.accountId, "queue-account"));
-      const [summary] = await db
+      const [outage] = await db
         .select()
-        .from(tables.aiChatThreadSummary)
-        .where(eq(tables.aiChatThreadSummary.threadId, "queue-thread"));
+        .from(tables.inProductNotificationOutbox)
+        .where(eq(tables.inProductNotificationOutbox.id, "queue-outage"));
       return (
-        agent?.status === "succeeded" &&
         calendar?.syncToken === "final-checkpoint" &&
-        !!summary &&
+        outage?.status === "published" &&
         channels.includes("notification:queue-actor") &&
         channels.includes("db:queue-host")
       );
@@ -440,15 +364,12 @@ try {
       .select()
       .from(tables.backgroundDispatch)
       .where(eq(tables.backgroundDispatch.cellId, cell));
-    assert.equal(new Set(dispatches.map((row) => row.kind)).size, 7);
+    assert.equal(new Set(dispatches.map((row) => row.kind)).size, BACKGROUND_TASK_KINDS.length);
     assert.ok(dispatches.every((row) => row.status === "completed"));
-    assert.equal(channels.filter((channel) => channel === "notification:queue-actor").length, 1);
-    assert.equal(
-      (await db.select().from(tables.aiJob).where(eq(tables.aiJob.id, outageJob.id)))[0].attempt,
-      1,
-      "Partial enqueue after timeout cannot repeat business execution",
-    );
-    assert.equal(modelCalls, 2, "Both AI compaction and Custom Agent execute their provider calls");
+    assert.equal(channels.filter((channel) => channel === "notification:queue-actor").length, 2);
+    const outageDispatches = dispatches.filter((row) => row.resourceId === "queue-outage");
+    assert.equal(outageDispatches.length, 1);
+    assert.equal(outageDispatches[0].status, "completed");
     assert.equal(
       calendarCalls,
       2,
@@ -564,7 +485,7 @@ try {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
   }
   console.info(
-    "Production processor verification passed: all seven kinds, two competing workers, automation notifications, AI compaction, agent checkpoints, calendar continuation and journal fanout.",
+    "Production processor verification passed: every task kind, two competing workers, automation notifications, calendar continuation and journal fanout.",
   );
 } finally {
   await Promise.all(consumers.map((consumer) => consumer.stop()));

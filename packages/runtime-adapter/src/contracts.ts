@@ -14,8 +14,6 @@ export type MeetingLifecycleAction = "start" | "pause" | "resume" | "stop" | "co
 export type BackgroundTaskKind =
   | "automation.event_window"
   | "automation.run"
-  | "agent.run"
-  | "ai.job"
   | "calendar.sync"
   | "realtime.database"
   | "notification.publish";

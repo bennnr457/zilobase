@@ -9,17 +9,7 @@ export type {
   SecurityEvent,
   ZilobaseEditionExtension,
 } from "../shared/types";
-export { coerceAiChatRequestBody, runAiChatTurn } from "../features/ai/conversations/chat-service";
-export {
-  getAiChatThreadForUser,
-  loadAiChatThreadMessages,
-  maybeAutoTitleAiChatThread,
-  syncAiChatThreadMessages,
-  touchAiChatThreadActivity,
-} from "../features/ai/conversations/chat-persistence";
 export { createAuth } from "../features/auth";
-export { AI_JOB_HANDLERS } from "../features/ai/jobs/ai-job-handlers";
-export { type AiJobHandler } from "../features/ai/jobs/ai-jobs";
 export {
   appendMeetingTranscriptSegment,
   heartbeatMeetingRecorder,

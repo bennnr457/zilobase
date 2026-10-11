@@ -9,18 +9,13 @@ const coreRuntimeSecretNames = [
   "GOOGLE_CLIENT_SECRET",
   "COLLABORATION_SECRET",
   "ZILOBASE_OPERATIONS_TOKEN",
-  "AI_PROVIDER_CREDENTIAL_ENCRYPTION_KEY",
   "OPENAI_API_KEY",
   "AUTOMATION_SECRET_ENCRYPTION_KEY",
   "SLACK_CLIENT_ID",
   "SLACK_CLIENT_SECRET",
 ];
 
-const backgroundCoreRuntimeSecretNames = [
-  "AI_PROVIDER_CREDENTIAL_ENCRYPTION_KEY",
-  "OPENAI_API_KEY",
-  "AUTOMATION_SECRET_ENCRYPTION_KEY",
-];
+const backgroundCoreRuntimeSecretNames = ["AUTOMATION_SECRET_ENCRYPTION_KEY"];
 
 export const runtimeSecretNames = [...coreRuntimeSecretNames, ...calendarRuntimeSecretNames];
 

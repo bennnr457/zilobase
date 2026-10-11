@@ -7,8 +7,7 @@ import {
 } from "../../../infrastructure/background/publication";
 import { getBackgroundCellId } from "../../../infrastructure/background/contracts";
 import { decodeBackgroundTaskV2 } from "../../../infrastructure/background/task-v2";
-import { prepareAiJobReplay } from "../../../features/ai/jobs/delivery-failure";
-import { prepareAgentReplay } from "../../../features/ai/execution/delivery-failure";
+
 import { prepareAutomationReplay } from "../../../features/automations/execution/delivery-failure";
 import { prepareCalendarReplay } from "../../../features/calendar/delivery-failure";
 import { prepareDatabaseRealtimeReplay } from "../../../features/databases/realtime/background";
@@ -55,12 +54,6 @@ export async function replayBackgroundFailure(env: RuntimeEnv, taskId: string) {
         throw new Error("REPLAY_REQUIRES_FINALIZED_EXHAUSTION");
       const task = decodeBackgroundTaskV2(record.task, getBackgroundCellId(env));
       switch (task.kind) {
-        case "ai.job":
-          await prepareAiJobReplay(task.resourceId);
-          break;
-        case "agent.run":
-          await prepareAgentReplay(task.resourceId);
-          break;
         case "automation.run":
           await prepareAutomationReplay(task.resourceId, false);
           break;

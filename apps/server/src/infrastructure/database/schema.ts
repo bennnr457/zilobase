@@ -73,55 +73,8 @@ export { inProductNotification, inProductNotificationOutbox } from "./schema/not
 export { pageItemPlacement } from "./schema/placements";
 export { favorite, itemVisit, navigationRealtimeOutbox } from "./schema/navigation";
 export { imageAsset } from "./schema/images";
-export {
-  aiAgentProfile,
-  aiAgentRevision,
-  aiAgentConversation,
-  aiAgentConversationMessage,
-  aiAgentTrigger,
-  aiAgentRun,
-  aiAgentRunEvent,
-  aiAgentEventReceipt,
-  aiAgentProfileAccess,
-} from "./schema/ai-agents";
-export {
-  aiWorkspaceMcpPolicy,
-  aiMcpApprovedServer,
-  aiMcpConnection,
-  aiMcpCredential,
-  aiMcpOauthAttempt,
-  aiMcpClientRegistration,
-  aiMcpToolSnapshot,
-  aiMcpActivity,
-} from "./schema/ai-mcp";
-export {
-  aiChatThread,
-  aiChatMessage,
-  aiChatThreadSummary,
-  aiChatFeedback,
-} from "./schema/ai-conversations";
-export {
-  aiAgentTurn,
-  aiAgentToolExecution,
-  aiAgentActionReceipt,
-  aiAgentPendingAction,
-} from "./schema/ai-execution";
-export {
-  aiMcpDataset,
-  aiMcpDatasetChunk,
-  aiMcpMaterialization,
-  aiMcpMaterializationReservation,
-  aiChatUpload,
-  aiChatArtifact,
-} from "./schema/ai-files";
-export {
-  workspaceAiProviderConfig,
-  aiSettings,
-  aiSettingsDraft,
-  aiSettingsVersion,
-} from "./schema/ai-settings";
 export { searchDocument, searchChunk } from "./schema/search";
-export { aiJob, backgroundMaintenanceTask, backgroundDispatch } from "./schema/background";
+export { backgroundMaintenanceTask, backgroundDispatch } from "./schema/background";
 export {
   calendarAccount,
   calendarBinding,

@@ -1,5 +1,3 @@
-import { routeAgentRequest } from "agents";
-
 import type { WorkerEnvBindings } from "./bindings";
 
 type FetchableApp = {
@@ -9,46 +7,12 @@ type FetchableApp = {
 export function createWorkerHandler<
   Env extends WorkerEnvBindings,
   App extends FetchableApp,
->(options: {
-  authorizeAgentRequest?: (
-    request: Request,
-    lobby: unknown,
-    env: Env,
-  ) => Promise<Response | void> | Response | void;
-  authenticateAgentRequest?: (
-    request: Request,
-    lobby: unknown,
-    env: Env,
-  ) => Promise<Response | void> | Response | void;
-  getAgentCorsHeaders?: (env: Env, request: Request) => Record<string, string>;
-  loadApp: (env: Env) => Promise<App>;
-}) {
+>(options: { loadApp: (env: Env) => Promise<App> }) {
   let appPromise: Promise<App> | null = null;
 
   return {
     async fetch(request: Request, env: Env, ctx: unknown) {
       const timing = createRequestTiming(request);
-      const agentResponse = isAgentRequest(request)
-        ? await timed(() =>
-            routeAgentRequest(request, env, {
-              cors: options.getAgentCorsHeaders?.(env, request),
-              onBeforeConnect: options.authorizeAgentRequest
-                ? (req: Request, lobby: unknown) => options.authorizeAgentRequest?.(req, lobby, env)
-                : undefined,
-              onBeforeRequest: options.authenticateAgentRequest
-                ? (req: Request, lobby: unknown) =>
-                    options.authenticateAgentRequest?.(req, lobby, env)
-                : undefined,
-            }),
-          )
-        : null;
-
-      if (agentResponse?.value) {
-        return respondWithTiming(agentResponse.value, timing, {
-          routeAgentMs: agentResponse.durationMs,
-        });
-      }
-
       appPromise ??= options.loadApp(env);
       const appLoad = await timed(() => appPromise!);
       const appResponse = await timed(() =>
@@ -58,16 +22,9 @@ export function createWorkerHandler<
       return respondWithTiming(appResponse.value, timing, {
         appLoadMs: appLoad.durationMs,
         appFetchMs: appResponse.durationMs,
-        ...(agentResponse ? { routeAgentMs: agentResponse.durationMs } : {}),
       });
     },
   };
-}
-
-function isAgentRequest(request: Request) {
-  const pathname = new URL(request.url).pathname;
-
-  return pathname === "/agents" || pathname.startsWith("/agents/");
 }
 
 async function timed<T>(run: () => Promise<T>) {

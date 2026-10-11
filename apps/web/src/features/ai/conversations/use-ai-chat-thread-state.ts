@@ -105,7 +105,6 @@ function replaceAiThreadSearchParam(threadId: string | null) {
   } else {
     url.searchParams.delete("thread");
   }
-  url.searchParams.delete("agent");
 
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }

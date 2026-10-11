@@ -207,8 +207,6 @@ async function spawnNodeProfile(profile, environment, logDir, spawnWebFn, color)
           ...env,
           PORT: String(profile.apiPort),
           ZILOBASE_AUTO_MIGRATE: "true",
-          AI_DEV_TOOLS_ENABLED: "true",
-          AI_AGENT_DAILY_USAGE_LIMITS_ENABLED: "false",
         },
       },
       color++,

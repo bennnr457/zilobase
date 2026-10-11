@@ -16,7 +16,6 @@ assert.equal(new URL(url).hostname, "127.0.0.1");
 const env = {
   DATABASE_URL: url,
   ZILOBASE_CELL_ID: "worker-sql",
-  AI_CUSTOM_AGENTS_ENABLED: "false",
 };
 const require = createRequire(import.meta.url);
 const { Miniflare, convertV4MiniflareOptions } = require("miniflare");
@@ -24,7 +23,7 @@ const directory = await mkdtemp(`${tmpdir()}/zilobase-worker-queue-`);
 let worker: InstanceType<typeof Miniflare>;
 async function deliver(
   body: ReturnType<typeof createBackgroundTaskV2>,
-  queue = "zilobase-ai-jobs",
+  queue = "zilobase-background-fast",
 ) {
   const producer = await worker.getQueueProducer(queue);
   await producer.send(body);
@@ -59,12 +58,7 @@ try {
     ],
     { cwd: fileURLToPath(new URL("../../../../", import.meta.url)), maxBuffer: 1024 * 1024 },
   );
-  const names = [
-    "zilobase-background-fast",
-    "zilobase-automation-runs",
-    "zilobase-ai-jobs",
-    "zilobase-calendar-jobs",
-  ];
+  const names = ["zilobase-background-fast", "zilobase-automation-runs", "zilobase-calendar-jobs"];
   const all = [...names, ...names.map((name) => name + "-dlq")];
   worker = new Miniflare(
     convertV4MiniflareOptions({
@@ -80,8 +74,7 @@ try {
             ...Object.fromEntries(all.map((name) => [name, name])),
             BACKGROUND_FAST: names[0],
             AUTOMATION_RUNS: names[1],
-            AI_JOBS: names[2],
-            CALENDAR_JOBS: names[3],
+            CALENDAR_JOBS: names[2],
           },
           queueConsumers: Object.fromEntries(
             all.map((name) => [
@@ -105,27 +98,35 @@ try {
     await db
       .insert(tables.workspace)
       .values({ id: "worker-workspace", name: "Worker", slug: "worker-workspace" });
-    await db
-      .insert(tables.aiChatThread)
-      .values({ id: "worker-thread", userId: "worker-owner", workspaceId: "worker-workspace" });
-    await db.insert(tables.aiJob).values({
-      id: "worker-job",
+    await db.insert(tables.inProductNotification).values({
+      id: "worker-notification",
       workspaceId: "worker-workspace",
       userId: "worker-owner",
-      type: "thread-compaction",
-      input: { threadId: "worker-thread" },
-      dedupeKey: "worker-job",
-      availableAt: new Date(),
+      message: "Worker notification",
+    });
+    await db.insert(tables.inProductNotificationOutbox).values({
+      id: "worker-job",
+      notificationId: "worker-notification",
+      workspaceId: "worker-workspace",
+      userId: "worker-owner",
+      nextAttemptAt: new Date(),
     });
   });
-  const task = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "worker-job" });
+  const task = createBackgroundTaskV2({
+    env,
+    kind: "notification.publish",
+    resourceId: "worker-job",
+  });
   await runWithDbEnv(env, () => persistBackgroundTasks(env, [task]));
   await deliver(task);
   await deliver(task);
   await runWithDbEnv(env, async () => {
-    const [job] = await db.select().from(tables.aiJob).where(eq(tables.aiJob.id, "worker-job"));
-    assert.equal(job.status, "succeeded");
-    assert.equal(job.attempt, 1);
+    const [outbox] = await db
+      .select()
+      .from(tables.inProductNotificationOutbox)
+      .where(eq(tables.inProductNotificationOutbox.id, "worker-job"));
+    assert.equal(outbox.status, "published");
+    assert.equal(outbox.attempts, 0);
     assert.equal(
       (
         await db
@@ -136,30 +137,28 @@ try {
       "completed",
     );
   });
-  const retry = createBackgroundTaskV2({ env, kind: "agent.run", resourceId: "disabled-agent" });
-  await runWithDbEnv(env, () => persistBackgroundTasks(env, [retry]));
-  await deliver(retry, "zilobase-automation-runs");
-  await runWithDbEnv(env, async () => {
-    const rows = await db
-      .select()
-      .from(tables.backgroundDispatch)
-      .where(eq(tables.backgroundDispatch.resourceId, "disabled-agent"));
-    assert.equal(rows.length, 2);
-    assert.equal(rows.find((row) => row.id === retry.taskId)?.status, "completed");
+  const dlq = createBackgroundTaskV2({
+    env,
+    kind: "notification.publish",
+    resourceId: "worker-failed-job",
   });
-  const dlq = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "worker-failed-job" });
   await runWithDbEnv(env, async () => {
-    await db.insert(tables.aiJob).values({
-      id: "worker-failed-job",
+    await db.insert(tables.inProductNotification).values({
+      id: "worker-failed-notification",
       workspaceId: "worker-workspace",
-      type: "fixture",
-      input: {},
-      dedupeKey: "worker-failed-job",
-      availableAt: new Date(),
+      userId: "worker-owner",
+      message: "Failed worker notification",
+    });
+    await db.insert(tables.inProductNotificationOutbox).values({
+      id: "worker-failed-job",
+      notificationId: "worker-failed-notification",
+      workspaceId: "worker-workspace",
+      userId: "worker-owner",
+      nextAttemptAt: new Date(),
     });
     await persistBackgroundTasks(env, [dlq]);
   });
-  await deliver(dlq, "zilobase-ai-jobs-dlq");
+  await deliver(dlq, "zilobase-background-fast-dlq");
   await runWithDbEnv(env, async () => {
     assert.equal(
       (
@@ -171,13 +170,17 @@ try {
       "exhausted",
     );
     assert.equal(
-      (await db.select().from(tables.aiJob).where(eq(tables.aiJob.id, "worker-failed-job")))[0]
-        .status,
+      (
+        await db
+          .select()
+          .from(tables.inProductNotificationOutbox)
+          .where(eq(tables.inProductNotificationOutbox.id, "worker-failed-job"))
+      )[0].status,
       "failed",
     );
   });
   console.info(
-    "Miniflare real queue/SQL verification passed: production admission, duplicate AI delivery, business rescheduling and DLQ feature finalization.",
+    "Miniflare real queue/SQL verification passed: production admission, duplicate notification delivery, and DLQ feature finalization.",
   );
 } finally {
   await worker?.dispose();

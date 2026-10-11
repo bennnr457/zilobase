@@ -28,9 +28,8 @@ select/status property-value controls used by automations.
 | Database: timeline/Gantt            | Setup property selectors, timescale/toolbar options and Gantt interaction menus.                                                                                                                                    |
 | Database: forms                     | Field actions, move/reorder submenus, form options and share menu.                                                                                                                                                  |
 | Database: automations               | Automation actions, trigger/action option lists, property-value controls and Notion action configuration.                                                                                                           |
-| Library / Recents                   | Create-agent menu.                                                                                                                                                                                                  |
 | AI conversations                    | Chat history actions, prompt-input attachment/options menus, code-block selects.                                                                                                                                    |
-| AI agent settings                   | Agent options, sharing roles, saved instructions, MCP connections and workspace MCP policy selectors.                                                                                                               |
+| Ask AI settings                     | Saved instructions, MCP connections and workspace MCP policy selectors.                                                                                                                                             |
 | Notifications                       | Notification center options.                                                                                                                                                                                        |
 | Settings: Preferences               | Preference selectors.                                                                                                                                                                                               |
 | Settings: API keys                  | Key-related selectors.                                                                                                                                                                                              |
@@ -83,8 +82,6 @@ Every direct shared-menu consumer found in the web application is listed below.
 - [features/ai/conversations/components/elements/ai-chat-history-list.tsx](../../apps/web/src/features/ai/conversations/components/elements/ai-chat-history-list.tsx) — dropdrawer
 - [features/ai/conversations/components/elements/code-block.tsx](../../apps/web/src/features/ai/conversations/components/elements/code-block.tsx) — select
 - [features/ai/conversations/components/elements/prompt-input.tsx](../../apps/web/src/features/ai/conversations/components/elements/prompt-input.tsx) — dropdown-menu, select
-- [features/ai/settings/components/agent-settings-page.tsx](../../apps/web/src/features/ai/settings/components/agent-settings-page.tsx) — select
-- [features/ai/settings/components/agent-sharing.tsx](../../apps/web/src/features/ai/settings/components/agent-sharing.tsx) — select
 - [features/ai/settings/components/mcp-connections.tsx](../../apps/web/src/features/ai/settings/components/mcp-connections.tsx) — select
 - [features/ai/settings/components/saved-instruction-picker.tsx](../../apps/web/src/features/ai/settings/components/saved-instruction-picker.tsx) — dropdown-menu
 - [features/ai/settings/components/workspace-mcp-policy.tsx](../../apps/web/src/features/ai/settings/components/workspace-mcp-policy.tsx) — select

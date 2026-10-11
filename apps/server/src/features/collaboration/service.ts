@@ -617,12 +617,7 @@ async function storeDocument(
 
   const content = materializePageDocument(document);
 
-  const previousState = await withDatabase(env, async () => {
-    const [previous] = await db
-      .select({ state: pageCollaborationDocument.state })
-      .from(pageCollaborationDocument)
-      .where(eq(pageCollaborationDocument.pageId, pageId))
-      .limit(1);
+  await withDatabase(env, async () => {
     await db.transaction(async (tx) => {
       const [existing] = await tx
         .select({ content: page.content })
@@ -650,25 +645,7 @@ async function storeDocument(
         })
         .where(eq(page.id, pageId));
     });
-    return previous?.state ? new Uint8Array(previous.state) : null;
   });
-  try {
-    const { dispatchPageCommentAgentTriggers } = await import("../ai/agents/agent-trigger-service");
-    await withDatabase(env, () =>
-      dispatchPageCommentAgentTriggers(env, {
-        nextState: new Uint8Array(state),
-        pageId,
-        previousState,
-      }),
-    );
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        error: error instanceof Error ? error.name : "UnknownError",
-        event: "custom_agent_comment_trigger_dispatch_failed",
-      }),
-    );
-  }
 }
 
 async function getMeetingPageId(meetingId: string) {

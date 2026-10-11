@@ -8,7 +8,6 @@ import {
   type McpConnectionScopeRef,
 } from "@zilobase/features/ai-chat";
 import {
-  useAiAgentProfile,
   useMcpCatalog,
   useMcpConnections,
   useApprovedMcpServers,
@@ -29,9 +28,7 @@ export function ConnectorSetupCard({
   const workspaceId = useActiveWorkspaceId();
   const catalog = useMcpCatalog();
   const approved = useApprovedMcpServers();
-  const ref: McpConnectionScopeRef =
-    scope === "personal" ? { type: "personal" } : { type: "agent", agentProfileId: scope };
-  const agent = useAiAgentProfile(scope === "personal" ? null : scope);
+  const ref: McpConnectionScopeRef = { type: "personal" };
   const connections = useMcpConnections(ref);
   const [connecting, setConnecting] = React.useState(false);
   const setup = describeConnectorSetup({
@@ -42,7 +39,7 @@ export function ConnectorSetupCard({
     connections: connections.data,
   });
   const { approvedId, existing, label, description } = setup;
-  const action = connectorActionState(setup, scope, agent.data?.role, connecting);
+  const action = connectorActionState(setup, "personal", connecting);
   const connect = async () => {
     if (!workspaceId) return;
     setConnecting(true);
@@ -98,13 +95,11 @@ export function ConnectorSetupCard({
 }
 export function SettingsConnectors({
   review,
-  scope,
   definition,
   onChange,
   disabled,
 }: {
   review?: import("@zilobase/features/ai-chat").AgentSettingsReview | null;
-  scope: string;
   definition: AgentSettingsDefinition;
   onChange: (patch: Partial<AgentSettingsDefinition>) => void;
   disabled: boolean;
@@ -112,8 +107,7 @@ export function SettingsConnectors({
   return (
     <McpConnectionsPanel
       canEdit={!disabled}
-      delegated={scope !== "personal"}
-      scope={scope === "personal" ? { type: "personal" } : { type: "agent", agentProfileId: scope }}
+      scope={{ type: "personal" }}
       draft={{ definition, onChange, review }}
     />
   );

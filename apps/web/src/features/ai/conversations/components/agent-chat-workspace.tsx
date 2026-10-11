@@ -77,7 +77,6 @@ export function AgentChatWorkspace({
   useEffect(() => {
     const listener = (e: Event) => {
       const event = (e as CustomEvent<AgentSettingsEvent>).detail;
-      if (event.scope !== "personal") return;
       if (isSidebar) {
         setSidebarSettingsTab(event.tab);
         setSidebarSettingsOpen(true);

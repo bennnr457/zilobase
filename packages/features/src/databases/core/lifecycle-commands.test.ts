@@ -23,7 +23,7 @@ test("creation requires a workspace and either a standalone database or parent p
   );
 });
 
-test("access commands cannot grant public edit or full agent access", () => {
+test("access commands cannot grant public edit access", () => {
   const command = {
     type: "access.upsert",
     targetType: "public",
@@ -36,11 +36,7 @@ test("access commands cannot grant public edit or full agent access", () => {
     false,
   );
   assert.equal(
-    databaseLifecycleCommandSchema.safeParse({
-      ...command,
-      targetType: "agent",
-      accessLevel: "full",
-    }).success,
+    databaseLifecycleCommandSchema.safeParse({ ...command, targetType: "agent" }).success,
     false,
   );
 });

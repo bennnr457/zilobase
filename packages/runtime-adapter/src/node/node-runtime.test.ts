@@ -295,7 +295,7 @@ describe("Node runtime lifecycle", () => {
       {
         availableAt: new Date().toISOString(),
         cellId: "default",
-        kind: "ai.job",
+        kind: "notification.publish",
         resourceId: "job",
         version: 1,
       },

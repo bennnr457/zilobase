@@ -9,13 +9,12 @@ import {
 import { backgroundTaskLane } from "../../../../../apps/server/src/infrastructure/background/contracts";
 const queues = {
   fast: "zilobase-background-fast",
-  ai: "zilobase-ai-jobs",
   automation: "zilobase-automation-runs",
   calendar: "zilobase-calendar-jobs",
 };
 const worker = createBackgroundWorker();
 const env = { ZILOBASE_CELL_ID: "fixture" };
-async function deliver(body: unknown, queue = "zilobase-ai-jobs", attempts = 1) {
+async function deliver(body: unknown, queue = "zilobase-background-fast", attempts = 1) {
   const batch = createMessageBatch(queue, [
     { id: "message", timestamp: new Date(), attempts, body },
   ]);
@@ -37,33 +36,37 @@ describe("Miniflare shared queue consumption", () => {
   });
   it("acknowledges a persisted business retry", async () => {
     const result = await deliver(
-      createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "business-retry" }),
+      createBackgroundTaskV2({ env, kind: "notification.publish", resourceId: "business-retry" }),
     );
     expect(backgroundFixture.rescheduled).toHaveLength(1);
     expect(result.retryMessages).toHaveLength(0);
   });
   it("leaves unexpected failure to transport retry", async () => {
     const result = await deliver(
-      createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "throw" }),
+      createBackgroundTaskV2({ env, kind: "notification.publish", resourceId: "throw" }),
     );
     expect(result.retryMessages).toHaveLength(1);
     expect(backgroundFixture.completed.size).toBe(0);
   });
   it("records exhaustion on the final unexpected attempt", async () => {
-    const task = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "throw" });
-    await deliver(task, "zilobase-ai-jobs", 6);
+    const task = createBackgroundTaskV2({ env, kind: "notification.publish", resourceId: "throw" });
+    await deliver(task, "zilobase-background-fast", 6);
     expect(backgroundFixture.exhausted).toEqual([task.taskId]);
     expect(backgroundFixture.completed.size).toBe(0);
   });
   it("records DLQ exhaustion without invoking the feature", async () => {
-    const task = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "failed" });
-    const result = await deliver(task, "zilobase-ai-jobs-dlq");
+    const task = createBackgroundTaskV2({
+      env,
+      kind: "notification.publish",
+      resourceId: "failed",
+    });
+    const result = await deliver(task, "zilobase-background-fast-dlq");
     expect(backgroundFixture.exhausted).toEqual([task.taskId]);
     expect(backgroundFixture.executed).toEqual([]);
     expect(result.retryMessages).toHaveLength(0);
   });
   it("rejects foreign cells and wrong lanes before execution", async () => {
-    const task = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "foreign" });
+    const task = createBackgroundTaskV2({ env, kind: "calendar.sync", resourceId: "foreign" });
     await deliver({ ...task, cellId: "other" });
     await deliver(task, "zilobase-background-fast");
     expect(backgroundFixture.executed).toEqual([]);

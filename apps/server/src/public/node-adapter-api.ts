@@ -22,8 +22,6 @@ export { renderPrometheusDatabaseMetrics } from "../features/databases/observabi
 export { boundedErrorCode } from "../infrastructure/background/dispatch";
 export { db, createDbClientForUrl, runWithIndependentDbEnv } from "../infrastructure/database";
 export {
-  aiJob,
-  aiAgentRun,
   databaseAutomationEventWindow,
   databaseAutomationRun,
   databaseRealtimeOutbox,

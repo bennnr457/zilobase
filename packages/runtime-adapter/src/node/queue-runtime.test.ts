@@ -27,11 +27,10 @@ describe("dedicated Node queues", () => {
       }),
     ).toBe("redis://localhost:6380");
   });
-  it("defines four independent lane queues", () => {
+  it("defines three independent lane queues", () => {
     expect(NODE_BACKGROUND_QUEUE_NAMES).toEqual({
       fast: "background-fast",
       automation: "automation-runs",
-      ai: "ai-jobs",
       calendar: "calendar-jobs",
     });
   });

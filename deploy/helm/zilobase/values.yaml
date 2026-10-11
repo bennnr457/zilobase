@@ -19,13 +19,6 @@ queue:
   networkCIDR: 10.0.0.0/8
   port: 6379
 
-mcp:
-  enabled: false
-  customServersEnabled: false
-  externalWritesEnabled: false
-  executionDisabled: false
-  clientMetadataUrl: ""
-
 image:
   repository: ghcr.io/zilobase/zilobase
   digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
@@ -45,7 +38,6 @@ secretKeys:
   s3AccessKeyId: S3_ACCESS_KEY_ID
   s3SecretAccessKey: S3_SECRET_ACCESS_KEY
   smtpPassword: SMTP_PASSWORD
-  mcpCredentialEncryptionKeys: MCP_CREDENTIAL_ENCRYPTION_KEYS
 
 config:
   externalUrl: https://zilobase.example.invalid

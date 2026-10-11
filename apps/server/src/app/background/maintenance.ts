@@ -3,9 +3,6 @@ import { drainCalendarOutbox } from "../../features/calendar/realtime/outbox";
 import { recoverCalendarDispatches } from "../../features/calendar/sync/sync";
 import { and, asc, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
 
-import { cleanupExpiredAiAgentData } from "../../features/ai/actions/agent-operations";
-import { enqueueDueAgentSchedules } from "../../features/ai/agents/agent-trigger-service";
-import { expireAgentRunApprovals } from "../../features/ai/execution/agent-run-service";
 import { cleanupDatabaseAutomationHistory } from "../../features/automations/history/history-maintenance";
 import { scanDueDatabaseAutomationSchedules } from "../../features/automations/triggers/scheduler";
 import { expireTemporaryMemberships } from "../../features/memberships";
@@ -19,8 +16,6 @@ import { reconcileBackgroundFailures } from "./failures";
 import { backgroundMaintenanceTask } from "../../infrastructure/database/schema";
 
 export const BACKGROUND_MAINTENANCE_TASKS = {
-  "ai.cleanup": 5 * 60_000,
-  "agent.schedules": 60_000,
   "automation.retention": 60 * 60_000,
   "automation.schedules": 60_000,
   "background.reconcile": 60_000,
@@ -153,10 +148,6 @@ async function executeMaintenanceTask(env: RuntimeEnv, task: MaintenanceTaskKey,
 type MaintenanceTaskHandler = (env: RuntimeEnv, workerId: string) => Promise<number | void>;
 
 const MAINTENANCE_TASK_HANDLERS: Record<MaintenanceTaskKey, MaintenanceTaskHandler> = {
-  "agent.schedules": async (env) => {
-    await enqueueDueAgentSchedules(env);
-    await expireAgentRunApprovals();
-  },
   "background.reconcile": async (env) => {
     await reconcileBackgroundFailures(env);
     await publishBackgroundDispatches(env);
@@ -171,9 +162,6 @@ const MAINTENANCE_TASK_HANDLERS: Record<MaintenanceTaskKey, MaintenanceTaskHandl
     await recoverCalendarDispatches(env);
     await maintainCalendarWatches(env);
     await drainCalendarOutbox();
-  },
-  "ai.cleanup": async (env) => {
-    await cleanupExpiredAiAgentData(env);
   },
   "automation.retention": async (env) => {
     const result = await cleanupDatabaseAutomationHistory(env);

@@ -5,13 +5,11 @@
 | Lane       | Task kinds                                                       | Worker binding  | Cloudflare queue         |
 | ---------- | ---------------------------------------------------------------- | --------------- | ------------------------ |
 | fast       | automation.event_window, realtime.database, notification.publish | BACKGROUND_FAST | zilobase-background-fast |
-| automation | automation.run, agent.run                                        | AUTOMATION_RUNS | zilobase-automation-runs |
-| ai         | ai.job                                                           | AI_JOBS         | zilobase-ai-jobs         |
+| automation | automation.run                                                   | AUTOMATION_RUNS | zilobase-automation-runs |
 | calendar   | calendar.sync                                                    | CALENDAR_JOBS   | zilobase-calendar-jobs   |
 
-Each Cloudflare work queue has a corresponding `-dlq`. AI job handlers cover
-thread compaction, meeting summaries, upload extraction and MCP materialization.
-Personal chat, realtime sockets, Yjs rooms and meeting audio are not task queues.
+Each Cloudflare work queue has a corresponding `-dlq`. Realtime sockets, Yjs
+rooms and meeting audio are not task queues.
 
 ## Acceptance contract
 
@@ -30,18 +28,18 @@ Personal chat, realtime sockets, Yjs rooms and meeting audio are not task queues
 
 This change is a full cutover. Stop producers, consumers and maintenance before
 applying the cutover. Preview and scope the operation to a cell and fixed cutoff.
-Cancel unfinished runs/jobs and approvals, discard unfinished event windows and
-clear delivery backlogs. Advance schedules beyond the cutoff without backfill.
-Invalidate partial calendar cursors and perform fresh authorized synchronization.
-Preserve completed history, committed mutation journals, domain content, agent
-configuration and connection credentials. Do not flush unrelated Redis keys.
+Cancel unfinished runs, discard unfinished event windows and clear delivery
+backlogs. Advance schedules beyond the cutoff without backfill. Invalidate
+partial calendar cursors and perform fresh authorized synchronization. Preserve
+completed history, committed mutation journals and domain content. Do not flush
+unrelated Redis keys.
 
 Production deployment and cutover are separate operator actions, not test setup.
 Disposable integration fixtures must never discover production database URLs.
 
-Node requires `QUEUE_REDIS_URL` in every role, identifying a broker separate from `REALTIME_REDIS_URL`. Bundled Compose and source development use persistent `queue-valkey` with AOF and `noeviction`; queue data has its own volume. The API role produces only; worker/all roles consume four lanes and run maintenance. BullMQ is pinned to 6.3.11 and uses the public ioredis adapter.
+Node requires `QUEUE_REDIS_URL` in every role, identifying a broker separate from `REALTIME_REDIS_URL`. Bundled Compose and source development use persistent `queue-valkey` with AOF and `noeviction`; queue data has its own volume. The API role produces only; worker/all roles consume three lanes and run maintenance. BullMQ is pinned to 6.3.11 and uses the public ioredis adapter.
 
-Cloudflare retains the four work queues and four DLQs. DLQ consumers record exhaustion before acknowledging; database failures retain the message. Feature hooks update unfinished execution and presentation records after live owners expire. Existing Durable Object exports, bindings and migration history are retained.
+Cloudflare retains the three work queues and three DLQs. DLQ consumers record exhaustion before acknowledging; database failures retain the message. Feature hooks update unfinished execution records. Existing Durable Object exports, bindings and migration history are retained.
 
 Maintenance keeps schedule scanning, cleanup, retention, approval expiry, watch renewal and operational snapshots. `background.reconcile` publishes delivery records and finalizes failure hooks. Calendar recovery creates calendar queue references. No maintenance callback invokes an execution handler. Queue health exposes `producerReady`, `consumerReady` and `maintenanceFresh`; null means the check is not applicable to that role.
 
@@ -68,12 +66,12 @@ separate ownership migration before this reset can be used safely.
    It cancels unfinished work and approvals, updates dependent status records,
    preserves committed effects and history, clears legacy delivery state and
    releases maintenance ownership. No compensating domain writes run.
-4. Apply purges only the cell's four BullMQ queue prefixes, including retained
+4. Apply purges only the cell's three BullMQ queue prefixes, including retained
    failures. It never flushes Redis. For Workers add `--runtime worker`, with
    `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
    `CLOUDFLARE_BACKGROUND_QUEUE_CELL_ID` and `CLOUDFLARE_BACKGROUND_QUEUE_IDS`.
-   The latter is a JSON object mapping the four queue names and their four
-   `-dlq` names to queue IDs. All eight names are verified before purge, and the
+   The latter is a JSON object mapping the three queue names and their three
+   `-dlq` names to queue IDs. All six names are verified before purge, and the
    CLI waits for asynchronous purge completion. Tokens need Queues edit access.
 5. After purge, schedules advance beyond the fixed cutoff without backfill and
    abandoned partial calendar cursors are invalidated for a fresh authorized
@@ -100,14 +98,14 @@ PostgreSQL and persistent queue Redis containers. It tests real migrations,
 transaction rollback, failed/partial enqueue recovery, publication claims,
 future horizon, duplicate delivery, terminal outcomes, retry rescheduling,
 exhaustion/replay, full-cutover preservation and scope guards. BullMQ checks cover
-all seven envelopes, split roles, competing consumers, delayed work, business
+every task envelope, split roles, competing consumers, delayed work, business
 deferral beyond transport budgets, broker restart during active work, retained
 jobs, graceful shutdown, cell-only purge and bounded unavailable startup.
 
-The production processor fixture runs all seven kinds against real SQL/BullMQ.
-It asserts automation-generated notifications, AI compaction, encrypted agent
-checkpoints, paginated calendar continuation and committed journal fanout. Only
-provider HTTP is controlled: no paid model or Google account is contacted.
+The production processor fixture runs every background task kind against real SQL/BullMQ.
+It asserts automation-generated notifications, paginated calendar continuation
+and committed journal fanout. Only provider HTTP is controlled: no Google
+account is contacted.
 A child process is killed during notification fanout; expired SQL ownership and
 BullMQ stalled-job recovery finish publication while retaining one domain record.
 A paused real broker proves SQL commit survives enqueue timeout and stable IDs
@@ -115,8 +113,8 @@ prevent duplicate execution after republication.
 
 The Worker fixture bundles the production adapter with Wrangler's dry-run
 compiler and executes it through Miniflare queue producers/consumers against the
-same disposable PostgreSQL server. It asserts persisted admission, duplicate AI
-execution, business rescheduling and DLQ finalization. The bundle is supplied as
+same disposable PostgreSQL server. It asserts persisted admission, duplicate
+notification delivery and DLQ finalization. The bundle is supplied as
 source because this Miniflare prerelease's file-loading path fails at startup.
 The independent Miniflare conformance suite also covers every task kind and
 invalid envelopes/lanes/cells. Neither path uploads or deploys a Worker.

@@ -4,7 +4,7 @@
 
 [Chatbot](../../../apps/web/src/features/ai/conversations/components/elements/chatbot.tsx) loads personal-thread messages and seeds one initial snapshot per workspace/thread key. [Conversation presentation](../../../apps/web/src/features/ai/conversations/components/chatbot-conversation.tsx) renders the welcome state, scrolling history and composer. It receives message/composer props from [conversation orchestration](../../../apps/web/src/features/ai/conversations/use-chatbot-conversation.ts).
 
-The internal [conversation interface](../../../apps/web/src/features/ai/conversations/conversation-interface.ts) defines loading and controller inputs without importing their implementations. Personal threads have no Custom Agent identity or metadata; standalone agent conversations use the agent screens and agent conversation contracts.
+The internal [conversation interface](../../../apps/web/src/features/ai/conversations/conversation-interface.ts) defines loading and controller inputs without importing their implementations. Personal threads are the only Ask AI conversation.
 
 ## Local state owners
 
@@ -32,12 +32,10 @@ Existing feature tests protect source ownership, scroll/composer structure, cach
 
 [Thread selection](../../../apps/web/src/features/ai/conversations/model/thread-selection.ts) retains valid active IDs and chooses pinned/first fallback IDs only for hosted demos; initialization and URL updates remain in the thread-state hook. [Citation navigation](../../../apps/web/src/features/ai/conversations/components/elements/agent-citation-navigation.ts) recognizes local targets and unmodified primary clicks; badges retain pane/main-route dispatch. Behavioral tests preserve modifier-key browser behavior and demo selection order.
 
-Custom-agent streaming and persisted settings notifications pass through the [event adapter](../../../apps/web/src/features/ai/conversations/adapters/custom-agent-events.ts). It preserves complete LF-delimited events, UTF-8 chunk decoding, settings/error event order and mount-time/message-status deduplication. The conversation screen retains fetch abort ownership, draft restoration on failures and refetch ordering. [Controlled stream tests](../../../apps/web/test/features/ai/custom-agent-events.test.mjs) include incomplete final events and transport errors.
-
 Completed database tool results pass through [cache synchronization](../../../apps/web/src/features/ai/conversations/effects/database-tool-cache.ts), which owns tool filtering, target deduplication and query invalidation. The hook owns enablement and the handled-call lifetime. Calls are marked before notifying query observers; incomplete outputs remain eligible for later processing. [Behavioral coverage](../../../apps/web/test/features/ai/database-tool-cache-sync.test.mjs) uses a real QueryClient with explicitly invoked effects, including replay during invalidation.
 
 [Automatic page review preparation](../../../apps/web/src/features/ai/conversations/effects/use-page-edit-auto-apply.ts) separates completed-result validation from snapshot construction. It retains processed-call marking before output validation, preview snapshots for resolved edits, declined snapshots for stale patches and failed snapshots for other resolution errors. [Controlled-effect tests](../../../apps/web/test/features/ai/page-edit-auto-apply.test.mjs) exercise those outcomes and replay; they do not simulate mounted React scheduling.
 
 [Database embed preparation](../../../apps/web/src/features/ai/conversations/effects/use-database-embed-auto-apply.ts) distinguishes completed embed results from editor application. Missing/read-only editors and rejected writes remain retryable when the registry changes. Successful insertion or an already-matching embed marks the call handled. [Controlled editor tests](../../../apps/web/test/features/ai/database-embed-auto-apply.test.mjs) exercise those retries and output-over-input title visibility with the real structural-content converter.
 
-[Conversation route tests](../../../apps/server/src/features/ai/conversations/chat-routes.test.ts) cover canonical turn dispatch, approval replay/expiration/claim conflicts, connector outcomes and editor skill serialization. Provider and execution adapters are controlled; tests do not contact external services.
+The server no longer accepts conversation turns. Browser tests cover draft rules, review commands, thread selection, and local tool presentation.

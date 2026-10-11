@@ -10,7 +10,6 @@ import type {
 export const NODE_BACKGROUND_QUEUE_NAMES: Record<BackgroundLane, string> = {
   fast: "background-fast",
   automation: "automation-runs",
-  ai: "ai-jobs",
   calendar: "calendar-jobs",
 };
 const LANES = Object.keys(NODE_BACKGROUND_QUEUE_NAMES) as BackgroundLane[];

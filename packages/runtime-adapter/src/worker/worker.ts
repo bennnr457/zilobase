@@ -2,22 +2,15 @@ import {
   createDbClient,
   createAuth,
   getAuthHeaders as getServerAuthHeaders,
-  getAiChatThreadForUser,
-  getMembership,
-  isAllowedClientOrigin,
-  isLocalDevelopmentHost,
   meetingIdFromDocumentName,
   pageIdFromDocumentName,
   runWithDbClient,
-  runWithDbEnv,
   runWithRuntimePorts,
   type AppBindings,
   type AppErrorReport,
   type ZilobaseEditionExtension,
 } from "@zilobase/server/adapter-api";
 import type { AppPolicy, Ports } from "@zilobase/runtime-ports";
-import { parseChatAgentInstanceName } from "@zilobase/features/ai-chat/agent-room";
-
 import { CalendarNotificationRoom } from "./features/calendar-realtime/calendar-notification-room";
 import {
   routeCalendarRealtimeRequest,
@@ -56,7 +49,6 @@ export {
   NavigationNotificationRoom,
   PageCollaborationRoom,
 };
-export { ChatAgent } from "./features/chat/chat-agent";
 
 export type FetchableApp = {
   fetch(request: Request, env: Record<string, unknown>, ctx: unknown): Response | Promise<Response>;
@@ -152,10 +144,6 @@ export function createWorker<Env extends WorkerEnvBindings = WorkerEnvBindings>(
     return runtimePorts;
   };
   const appHandler = createWorkerHandler<Env, FetchableApp>({
-    authenticateAgentRequest: (request, lobby, env) =>
-      authenticateAgentRequest(request, lobby, env),
-    authorizeAgentRequest: (request, lobby, env) => authorizeAgentRequest(request, lobby, env),
-    getAgentCorsHeaders: (env, request) => getAgentCorsHeaders(env, request),
     loadApp: (env) => opts.loadApp(env, portsFor(env)),
   });
 
@@ -177,117 +165,6 @@ export function createWorker<Env extends WorkerEnvBindings = WorkerEnvBindings>(
         return null;
       return session?.user?.id ?? null;
     });
-  }
-
-  async function authenticateAgentRequest(request: Request, _lobby: unknown, env: Env) {
-    const authResult = await getAgentAuthContext(request, env);
-
-    if (authResult instanceof Response) {
-      return authResult;
-    }
-  }
-
-  async function authorizeAgentRequest(request: Request, _lobby: unknown, env: Env) {
-    const authResult = await getAgentAuthContext(request, env);
-
-    if (authResult instanceof Response) {
-      return authResult;
-    }
-
-    const { session, workspaceId } = authResult;
-    const instance = readAgentInstanceName(request);
-    if (!instance) {
-      return new Response("Invalid agent instance.", { status: 404 });
-    }
-
-    const userId = session?.user?.id;
-
-    if (!workspaceId || !userId) {
-      return;
-    }
-
-    const parsedInstance = parseChatAgentInstanceName(instance);
-
-    if (
-      !parsedInstance ||
-      parsedInstance.workspaceId !== workspaceId ||
-      parsedInstance.userId !== userId
-    ) {
-      return new Response("Forbidden", { status: 403 });
-    }
-
-    const thread = await runWithDbEnv(env, () =>
-      getAiChatThreadForUser({
-        workspaceId,
-        threadId: parsedInstance.threadId,
-        userId,
-      }),
-    );
-
-    if (!thread) {
-      return new Response("Forbidden", { status: 403 });
-    }
-  }
-
-  async function getAgentAuthContext(request: Request, env: Env) {
-    return runWithDbRequest(env, async (database) => {
-      const authHeaders = getAuthHeaders(request.headers);
-      const extension = resolveEditionExtension(env);
-      const auth = await createAuth(env, request, database, {
-        ...(extension ? { editionExtension: extension } : {}),
-        policy,
-      });
-      const session = await auth.api.getSession({ headers: authHeaders });
-      const workspaceId =
-        readAgentWorkspaceId(request) ??
-        request.headers.get("x-zilobase-workspace-id")?.trim() ??
-        null;
-
-      if (!session?.user) {
-        return new Response("Unauthorized", { status: 401 });
-      }
-
-      const denial = await sessionPolicyDenial(env, request, database, session);
-      if (denial) {
-        return Response.json(
-          { code: denial.code, message: denial.message },
-          { status: denial.status },
-        );
-      }
-
-      if (!workspaceId) {
-        return new Response("Missing workspace", { status: 409 });
-      }
-
-      if (!(await getMembership(workspaceId, session.user.id))) {
-        return new Response("Forbidden", { status: 403 });
-      }
-
-      return { session, workspaceId };
-    });
-  }
-
-  function getAgentCorsHeaders(env: Env, request: Request) {
-    const headers = new Headers();
-    const origin = request.headers.get("origin");
-
-    if (!origin || isAgentOriginAllowed(env, origin)) {
-      headers.set("Access-Control-Allow-Origin", origin ?? "*");
-      headers.set("Access-Control-Allow-Credentials", "true");
-      headers.set(
-        "Access-Control-Allow-Headers",
-        "authorization, content-type, x-mobile-auth-cookie, x-zilobase-workspace-id",
-      );
-      headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-      headers.set("Vary", "Origin");
-    }
-
-    return Object.fromEntries(headers.entries());
-  }
-
-  function isAgentOriginAllowed(env: Env, origin: string) {
-    if (opts.cors) return opts.cors.isAllowedOrigin(env, origin);
-    return isAllowedClientOrigin(env, origin) || isLocalDevelopmentHost(getOriginHost(origin));
   }
 
   async function sessionPolicyDenial(
@@ -454,24 +331,6 @@ function getAuthHeaders(headers: Headers) {
   }
 
   return nextHeaders;
-}
-
-function getOriginHost(origin: string) {
-  try {
-    return new URL(origin).hostname;
-  } catch {
-    return "";
-  }
-}
-
-function readAgentInstanceName(request: Request) {
-  const parts = new URL(request.url).pathname.replace(/^\/+|\/+$/g, "").split("/");
-
-  return parts.length >= 3 && parts[0] === "agents" ? parts[2] : null;
-}
-
-function readAgentWorkspaceId(request: Request) {
-  return new URL(request.url).searchParams.get("workspaceId")?.trim() ?? null;
 }
 
 export type { AppBindings };

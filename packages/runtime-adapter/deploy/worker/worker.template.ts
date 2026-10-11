@@ -5,7 +5,6 @@
 import { createApp } from "@zilobase/server/adapter-api";
 import {
   createWorker,
-  ChatAgent,
   PageCollaborationRoom,
   MeetingCollaborationRoom,
   DatabaseCollaborationRoom,
@@ -14,7 +13,6 @@ import {
 } from "@zilobase/runtime-adapter/worker";
 
 export {
-  ChatAgent,
   PageCollaborationRoom,
   MeetingCollaborationRoom,
   DatabaseCollaborationRoom,

@@ -2,13 +2,13 @@
 
 ## Interface and flow
 
-The processor maps task kinds to automation, agent, AI-job, Calendar, realtime and notification operations. The [Calendar handler](../../apps/server/src/features/calendar/background.ts) accepts event and calendar-list work through the existing `calendar.sync` task kind and drains completed revision notifications before returning. Durable dirty markers retain recovery when webhook dispatch fails. It records queue/execution telemetry and converts pending outbox state into completed or retry outcomes. Node BullMQ supplies transport and invokes shared maintenance.
+The processor maps task kinds to automation, Calendar, realtime and notification operations. The [Calendar handler](../../apps/server/src/features/calendar/background.ts) accepts event and calendar-list work through the existing `calendar.sync` task kind and drains completed revision notifications before returning. Durable dirty markers retain recovery when webhook dispatch fails. It records queue/execution telemetry and converts pending outbox state into completed or retry outcomes. Node BullMQ supplies transport and invokes shared maintenance.
 
 Start at the [entrypoint](../../apps/server/src/app/background/processor.ts); follow the [implementation](../../apps/server/src/infrastructure/background/contracts.ts) and the [Node queue runtime](../../packages/runtime-adapter/src/node/queue-runtime.ts).
 
 ## Invariants and failure handling
 
-The Node queue adapter owns BullMQ connections, four lane queues and role-specific consumption. Composition roots inject the shared delivery runner, failure recording and maintenance. Producers fail within two seconds when Redis is unavailable; persisted dispatch records retain recovery. Consumers reconnect automatically and delayed deliveries cannot invoke a feature before `availableAt`.
+The Node queue adapter owns BullMQ connections, three lane queues and role-specific consumption. Composition roots inject the shared delivery runner, failure recording and maintenance. Producers fail within two seconds when Redis is unavailable; persisted dispatch records retain recovery. Consumers reconnect automatically and delayed deliveries cannot invoke a feature before `availableAt`.
 
 Feature implementations own leases, receipts, authorization and durable status. Dispatch success is not equivalent to feature completion. Delivery handlers and maintenance use independent database scopes, and renew dispatch ownership while feature execution is active.
 
@@ -47,7 +47,7 @@ Worker alone publishes through the per-database Durable Object. See the
 
 [Isolated PostgreSQL verification](../../scripts/background/test-isolated.mjs) exercises migrations, rollback, failed enqueue recovery, competing publishers and duplicate delivery against a disposable database.
 
-Cloudflare queue and DLQ consumers share the [durable delivery entrypoint](../../apps/server/src/app/background/runtime-delivery.ts). Every batch message gets a separate database scope, so concurrent transactions cannot share one Worker PostgreSQL connection. Acknowledgement follows persisted completion or rescheduling. [Failure reconciliation](../../apps/server/src/app/background/failures.ts) invokes feature-owned failure hooks, preserving live leases, completed effects and uncertain agent writes. Exhaustion remains terminal while hooks wait for expired ownership.
+Cloudflare queue and DLQ consumers share the [durable delivery entrypoint](../../apps/server/src/app/background/runtime-delivery.ts). Every batch message gets a separate database scope, so concurrent transactions cannot share one Worker PostgreSQL connection. Acknowledgement follows persisted completion or rescheduling. [Failure reconciliation](../../apps/server/src/app/background/failures.ts) invokes feature-owned failure hooks and preserves completed effects. Exhaustion remains terminal.
 
 Shared maintenance publishes recoverable dispatches and finalizes exhausted failures. Calendar recovery enqueues dirty references; synchronization runs only in the calendar lane. Maintenance runs claimed callbacks sequentially so Worker transactions do not share a connection concurrently. Public feature-drain entrypoints are removed; runtime execution enters through the shared delivery runner. Queue readiness reports producer connectivity, role-specific consumer readiness and maintenance freshness through health and metrics.
 
@@ -67,16 +67,16 @@ explicit credentials, cell identity and apply flags. See the
 [release runbook](../../docs/background-queues.md#operator-commands-and-release-order).
 
 Node queue purge and Cloudflare purge are separate runtime operations. The
-Cloudflare operator verifies all eight queue IDs/names before issuing any purge
+Cloudflare operator verifies all six queue IDs/names before issuing any purge
 and waits for completion. Legacy feature tables have no cell discriminator;
 shared-database cells require an ownership migration before cutover is safe.
 
-The isolated fixture now executes all seven task kinds through the production
+The isolated fixture now executes every background task kind through the production
 processor with real PostgreSQL and BullMQ, including two competing consumers,
-provider-boundary HTTP fixtures, calendar pagination, agent checkpoints and
-notification fanout. A killed child process exercises durable ownership and
+provider-boundary HTTP fixtures, calendar pagination and notification fanout.
+A killed child process exercises durable ownership and
 stalled-job recovery. The real PostgreSQL Miniflare fixture uses production
-admission, delivery, AI processing, business rescheduling and DLQ finalization.
+admission, notification delivery and DLQ finalization.
 Mounted application acceptance uses distinct queue and realtime brokers and two
 independent browsers. External provider HTTP is controlled; broker and database
 operations are real.

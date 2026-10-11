@@ -5,8 +5,6 @@ import { databaseOrderKeyAtPosition } from "@zilobase/features/databases/order-k
 import type { Database } from "../../infrastructure/database";
 import {
   account,
-  aiChatMessage,
-  aiChatThread,
   apikey,
   database,
   databaseDataSource,
@@ -25,9 +23,8 @@ import {
   teamspacePrincipal,
   user,
   workspace,
-  workspaceAiProviderConfig,
 } from "../../infrastructure/database/schema";
-import { markdownToPageContent } from "../ai/conversion/markdown-to-page-content";
+import { markdownToPageContent } from "../pages/markdown-to-page-content";
 import { DEMO_IDS, DEMO_SEED_VERSION } from "./constants";
 
 const FIXED_DATE = new Date("2026-08-31T08:00:00.000Z");
@@ -657,160 +654,47 @@ export async function seedHostedDemo(databaseClient: Database) {
           });
       }
     }
-
-    await transaction
-      .insert(aiChatThread)
-      .values({
-        archivedAt: null,
-        createdAt: FIXED_DATE,
-        deletedAt: null,
-        id: DEMO_IDS.aiThread,
-        lastActivityAt: FIXED_DATE,
-        nextMessageSequence: 2,
-        pinnedAt: FIXED_DATE,
-        title: "Launch tracker review",
-        updatedAt: FIXED_DATE,
-        userId: DEMO_IDS.user,
-        workspaceId: DEMO_IDS.workspace,
-      })
-      .onConflictDoUpdate({
-        target: aiChatThread.id,
-        set: {
-          archivedAt: null,
-          deletedAt: null,
-          lastActivityAt: FIXED_DATE,
-          nextMessageSequence: 2,
-          pinnedAt: FIXED_DATE,
-          title: "Launch tracker review",
-          updatedAt: FIXED_DATE,
-        },
-      });
-    const aiMessages = [
-      {
-        id: DEMO_IDS.aiUserMessage,
-        parts: [
-          { text: "Summarize launch readiness and call out the next decision.", type: "text" },
-        ],
-        role: "user",
-        sequence: 0,
-      },
-      {
-        id: DEMO_IDS.aiAssistantMessage,
-        parts: [
-          {
-            input: {
-              databaseId: DEMO_IDS.database,
-              limit: 25,
-            },
-            output: {
-              citations: [
-                {
-                  id: DEMO_IDS.pageLaunchBrief,
-                  source: "page",
-                  title: "Launch brief",
-                  url: `/p/${DEMO_IDS.pageLaunchBrief}`,
-                },
-                {
-                  id: DEMO_IDS.database,
-                  source: "database",
-                  title: "Launch tracker",
-                  url: `/d/${DEMO_IDS.database}`,
-                },
-              ],
-              data: { rowCount: TASKS.length },
-              ok: true,
-              status: "succeeded",
-              summary: "Reviewed four launch tasks.",
-            },
-            state: "output-available",
-            toolCallId: "demo-tool-launch-tracker-review",
-            type: "tool-queryWorkspaceDatabase",
-          },
-          {
-            text: `The launch workspace is in good shape: the connected tracker has four tasks across product, mobile QA, documentation, and workspace setup. One item is complete, one is in progress, and two are queued.\n\nThe next decision is whether mobile QA can finish before the self-host guide review. See the [Launch brief](/p/${DEMO_IDS.pageLaunchBrief}) and [Launch tracker](/d/${DEMO_IDS.database}) for source context.`,
-            type: "text",
-          },
-        ],
-        role: "assistant",
-        sequence: 1,
-      },
-    ];
-    for (const message of aiMessages) {
-      await transaction
-        .insert(aiChatMessage)
-        .values({
-          ...message,
-          clientId: null,
-          createdAt: FIXED_DATE,
-          status: "completed",
-          threadId: DEMO_IDS.aiThread,
-          turnId: null,
-          updatedAt: FIXED_DATE,
-        })
-        .onConflictDoUpdate({
-          target: aiChatMessage.id,
-          set: {
-            parts: message.parts,
-            role: message.role,
-            sequence: message.sequence,
-            status: "completed",
-            updatedAt: FIXED_DATE,
-          },
-        });
-    }
   });
 
   await assertHostedDemoSeed(databaseClient);
 }
 
 export async function assertHostedDemoSeed(databaseClient: Database) {
-  const [
-    demoUser,
-    demoWorkspace,
-    seededPages,
-    seededViews,
-    seededDocuments,
-    credentials,
-    keys,
-    providers,
-  ] = await Promise.all([
-    databaseClient.select().from(user).where(eq(user.id, DEMO_IDS.user)).limit(1),
-    databaseClient.select().from(workspace).where(eq(workspace.id, DEMO_IDS.workspace)).limit(1),
-    databaseClient
-      .select({ content: page.content, id: page.id })
-      .from(page)
-      .where(
-        inArray(page.id, [
-          ...PAGE_DEFINITIONS.map((record) => record.id),
-          ...TASKS.map((record) => record.pageId),
-        ]),
-      ),
-    databaseClient
-      .select({ id: databaseView.id })
-      .from(databaseView)
-      .where(inArray(databaseView.id, Object.values(VIEW_IDS))),
-    databaseClient
-      .select({ pageId: pageCollaborationDocument.pageId })
-      .from(pageCollaborationDocument)
-      .where(
-        inArray(pageCollaborationDocument.pageId, [
-          ...PAGE_DEFINITIONS.map((record) => record.id),
-          ...TASKS.map((record) => record.pageId),
-        ]),
-      ),
-    databaseClient
-      .select({ id: account.id })
-      .from(account)
-      .where(eq(account.userId, DEMO_IDS.user)),
-    databaseClient
-      .select({ id: apikey.id })
-      .from(apikey)
-      .where(eq(apikey.referenceId, DEMO_IDS.user)),
-    databaseClient
-      .select({ id: workspaceAiProviderConfig.id })
-      .from(workspaceAiProviderConfig)
-      .where(eq(workspaceAiProviderConfig.workspaceId, DEMO_IDS.workspace)),
-  ]);
+  const [demoUser, demoWorkspace, seededPages, seededViews, seededDocuments, credentials, keys] =
+    await Promise.all([
+      databaseClient.select().from(user).where(eq(user.id, DEMO_IDS.user)).limit(1),
+      databaseClient.select().from(workspace).where(eq(workspace.id, DEMO_IDS.workspace)).limit(1),
+      databaseClient
+        .select({ content: page.content, id: page.id })
+        .from(page)
+        .where(
+          inArray(page.id, [
+            ...PAGE_DEFINITIONS.map((record) => record.id),
+            ...TASKS.map((record) => record.pageId),
+          ]),
+        ),
+      databaseClient
+        .select({ id: databaseView.id })
+        .from(databaseView)
+        .where(inArray(databaseView.id, Object.values(VIEW_IDS))),
+      databaseClient
+        .select({ pageId: pageCollaborationDocument.pageId })
+        .from(pageCollaborationDocument)
+        .where(
+          inArray(pageCollaborationDocument.pageId, [
+            ...PAGE_DEFINITIONS.map((record) => record.id),
+            ...TASKS.map((record) => record.pageId),
+          ]),
+        ),
+      databaseClient
+        .select({ id: account.id })
+        .from(account)
+        .where(eq(account.userId, DEMO_IDS.user)),
+      databaseClient
+        .select({ id: apikey.id })
+        .from(apikey)
+        .where(eq(apikey.referenceId, DEMO_IDS.user)),
+    ]);
 
   if (!demoUser[0] || !demoUser[0].email.endsWith(".invalid")) {
     throw new Error("Hosted demo seed must use a fictional .invalid identity.");
@@ -828,8 +712,8 @@ export async function assertHostedDemoSeed(databaseClient: Database) {
   if (seededViews.length !== Object.keys(VIEW_IDS).length) {
     throw new Error("Hosted demo database views are incomplete.");
   }
-  if (credentials.length || keys.length || providers.length) {
-    throw new Error("Hosted demo seed must not contain credentials or provider configuration.");
+  if (credentials.length || keys.length) {
+    throw new Error("Hosted demo seed must not contain credentials.");
   }
 
   const [membership] = await databaseClient
@@ -841,7 +725,7 @@ export async function assertHostedDemoSeed(databaseClient: Database) {
     throw new Error("Hosted demo membership is incomplete.");
   }
 
-  const [settings, taskProperties, assistantMessage] = await Promise.all([
+  const [settings, taskProperties] = await Promise.all([
     databaseClient
       .select({ sidebarConfig: pageSettings.sidebarConfig })
       .from(pageSettings)
@@ -851,11 +735,6 @@ export async function assertHostedDemoSeed(databaseClient: Database) {
       .select({ id: pageProperty.id, type: pageProperty.type })
       .from(pageProperty)
       .where(inArray(pageProperty.id, Object.values(PROPERTY_IDS))),
-    databaseClient
-      .select({ parts: aiChatMessage.parts })
-      .from(aiChatMessage)
-      .where(eq(aiChatMessage.id, DEMO_IDS.aiAssistantMessage))
-      .limit(1),
   ]);
   const sidebarJson = JSON.stringify(settings[0]?.sidebarConfig ?? null);
   if (!sidebarJson.includes(DEMO_IDS.database)) {
@@ -868,13 +747,6 @@ export async function assertHostedDemoSeed(databaseClient: Database) {
     )
   ) {
     throw new Error("Hosted demo task schema is incomplete.");
-  }
-  const assistantParts = JSON.stringify(assistantMessage[0]?.parts ?? null);
-  if (
-    !assistantParts.includes(`/p/${DEMO_IDS.pageLaunchBrief}`) ||
-    !assistantParts.includes(`/d/${DEMO_IDS.database}`)
-  ) {
-    throw new Error("Hosted demo AI citations are incomplete.");
   }
 }
 

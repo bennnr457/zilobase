@@ -7,7 +7,7 @@ import { createBackgroundTaskV2 } from "../../infrastructure/background/task-v2"
 import { runBackgroundDelivery } from "./delivery";
 
 describe.each(["node", "worker"])("%s shared delivery conformance", () => {
-  const fixture = (kind: (typeof BACKGROUND_TASK_KINDS)[number] = "ai.job") => {
+  const fixture = (kind: (typeof BACKGROUND_TASK_KINDS)[number] = "notification.publish") => {
     const task = createBackgroundTaskV2({
       env: { ZILOBASE_CELL_ID: "a" },
       kind,
@@ -45,7 +45,7 @@ describe.each(["node", "worker"])("%s shared delivery conformance", () => {
     const f = fixture();
     for (const input of [
       { ...f.input, cellId: "b" },
-      { ...f.input, lane: "fast" as const },
+      { ...f.input, lane: "calendar" as const },
       { ...f.input, body: { ...f.task, version: 1 } },
       { ...f.input, body: { ...f.task, resourceId: "x".repeat(20_000) } },
     ])

@@ -58,9 +58,6 @@ vi.mock("../teamspaces", () => ({
 }));
 
 import {
-  getEffectivePageAccessForAgent,
-  canAgentSnapshotAccessPage,
-  canAgentSnapshotAccessDatabase,
   isPagePublishedInWorkspace,
   getWorkspacePrincipalKind,
   canAccessDatabaseInWorkspace,
@@ -341,63 +338,6 @@ test("record-based database access preserves required-level checks", async () =>
     "none",
   );
   assert.equal(mocks.selectCalls, 1);
-});
-
-test("live agent access uses only its scoped grants even when a user owns the page", async () => {
-  mocks.hasOwnedRootAccess.mockReturnValue(true);
-  mocks.selectResults.push([{ id: "page-1" }], []);
-  assert.equal(await getEffectivePageAccessForAgent("page-1", "workspace-1", "agent-1"), "none");
-  assert.equal(mocks.selectCalls, 2);
-  assert.equal(mocks.hasOwnedRootAccess.mock.calls.length, 0);
-  assert.ok(mocks.predicates[0]?.params.includes("workspace-1"));
-  assert.ok(mocks.predicates[1]?.params.includes("agent"));
-  assert.ok(mocks.predicates[1]?.params.includes("agent-1"));
-});
-
-test("live agent grants normalize unknown levels and select the strongest valid level", async () => {
-  mocks.selectResults.push(
-    [{ id: "page-1" }],
-    [{ accessLevel: "view" }, { accessLevel: "owner" }, { accessLevel: "edit" }],
-  );
-  assert.equal(await getEffectivePageAccessForAgent("page-1", "workspace-1", "agent-1"), "edit");
-});
-
-test("page snapshots restrict immutable roots, resource kind and required privilege", async () => {
-  mocks.ancestorIds = ["page-1", "root-page"];
-  const grants = [
-    { resourceType: "database" as const, resourceId: "page-1", accessLevel: "full" as const },
-    { resourceType: "page" as const, resourceId: "unrelated", accessLevel: "full" as const },
-    { resourceType: "page" as const, resourceId: "root-page", accessLevel: "view" as const },
-  ];
-  mocks.selectResults.push([{ id: "page-1" }]);
-  assert.equal(await canAgentSnapshotAccessPage("page-1", "workspace-1", grants, "edit"), false);
-  mocks.selectResults.push([{ id: "page-1" }]);
-  assert.equal(await canAgentSnapshotAccessPage("page-1", "workspace-1", grants, "view"), true);
-  mocks.selectResults.push([]);
-  assert.equal(await canAgentSnapshotAccessPage("page-1", "workspace-1", grants, "view"), false);
-});
-
-test("inline database snapshots inherit the containing page grant, not standalone database grants", async () => {
-  mocks.selectResults.push([{ pageId: "page-1" }], [{ id: "page-1" }]);
-  assert.equal(
-    await canAgentSnapshotAccessDatabase(
-      "database-1",
-      "workspace-1",
-      [{ resourceType: "database", resourceId: "database-1", accessLevel: "full" }],
-      "view",
-    ),
-    false,
-  );
-  mocks.selectResults.push([{ pageId: "page-1" }], [{ id: "page-1" }]);
-  assert.equal(
-    await canAgentSnapshotAccessDatabase(
-      "database-1",
-      "workspace-1",
-      [{ resourceType: "page", resourceId: "page-1", accessLevel: "comment" }],
-      "comment",
-    ),
-    true,
-  );
 });
 
 test("teamspace publication policy prevents grant and standalone fallback lookups", async () => {

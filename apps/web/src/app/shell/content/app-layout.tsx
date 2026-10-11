@@ -226,9 +226,6 @@ function AppLayoutContent({
   const isFullPanePage = pathname === "/calendar";
   const pageId = useRoutePageId(pathname);
   const databaseId = getDatabaseId(pathname);
-  const agentId = pathname.match(/^\/agents\/([^/]+)$/)?.[1] ?? null;
-  const agentWorkspacePanel = agentId ? new URLSearchParams(searchStr).get("panel") : null;
-  const agentWorkspaceSidePaneOpen = agentWorkspacePanel === "settings";
   const activeWorkspaceId = useActiveWorkspaceId();
   const { data: databasePayload } = useDatabaseMetadata(databaseId, {
     includeDeleted: true,
@@ -392,8 +389,8 @@ function AppLayoutContent({
   }, [databaseId]);
 
   useEffect(() => {
-    const itemKind = databaseId ? "database" : pageId ? "page" : agentId ? "agent" : null;
-    const itemId = databaseId ?? pageId ?? agentId;
+    const itemKind = databaseId ? "database" : pageId ? "page" : null;
+    const itemId = databaseId ?? pageId;
     const workspaceId = databaseId
       ? databasePayload?.database.workspaceId
       : pageId
@@ -419,7 +416,6 @@ function AppLayoutContent({
   }, [
     databaseId,
     databasePayload?.database.workspaceId,
-    agentId,
     activeWorkspaceId,
     hostPage?.workspaceId,
     recordItemVisit.mutate,
@@ -453,12 +449,8 @@ function AppLayoutContent({
     !utilitySidebarOpen &&
     !pageLayoutSidebarOpen &&
     Boolean(renderedSidePanePageId || renderedSidePaneDatabaseId);
-  const showAiWorkspaceSidePaneLayout =
-    !utilitySidebarOpen && !pageLayoutSidebarOpen && aiWorkspaceSidePaneOpen;
-  const showAgentWorkspaceSidePaneLayout =
-    !utilitySidebarOpen && !pageLayoutSidebarOpen && agentWorkspaceSidePaneOpen;
   const showAuxiliaryWorkspaceSidePaneLayout =
-    showAiWorkspaceSidePaneLayout || showAgentWorkspaceSidePaneLayout;
+    !utilitySidebarOpen && !pageLayoutSidebarOpen && aiWorkspaceSidePaneOpen;
   const showSidePaneLayout = showAuxiliaryWorkspaceSidePaneLayout || showEmbeddedSidePaneLayout;
   const pageSidebarPanel = pageLayoutSidebar?.hasSidebar ? (
     <div className="flex h-full min-h-0 flex-col">
@@ -562,11 +554,8 @@ function AppLayoutContent({
               header={
                 embeddedMobileViewer || isFullPanePage ? undefined : (
                   <AppHeader
-                    agentId={agentId}
                     auxiliarySidePanePageId={aiSettingsPageId}
-                    auxiliarySidePaneCloseLabel={
-                      agentId ? "Close Custom Agent settings" : "Close AI settings"
-                    }
+                    auxiliarySidePaneCloseLabel="Close AI settings"
                     auxiliarySidePaneOpen={showAuxiliaryWorkspaceSidePaneLayout}
                     discussionsOpen={discussionsSidebarOpen}
                     isSettingsPage={isSettingsPage || isAiPage}
@@ -636,7 +625,7 @@ function AppLayoutContent({
       {chatSidebarOpen && !isMobile && chatPresentationMode === "floating" ? (
         <FloatingWidget aria-label="Floating Ask AI chat">{chatPanel}</FloatingWidget>
       ) : null}
-      {chatSidebarOpen || isAiPage || Boolean(agentId) || isFullPanePage ? null : (
+      {chatSidebarOpen || isAiPage || isFullPanePage ? null : (
         <ChatSidebarTrigger
           adjacentSidebarOpen={
             utilitySidebarOpen ||

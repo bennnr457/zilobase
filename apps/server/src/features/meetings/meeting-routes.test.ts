@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   claimRecorder: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
-  enqueueJob: vi.fn(),
   get: vi.fn(),
   list: vi.fn(),
   releaseRecorder: vi.fn(),
@@ -34,10 +33,6 @@ vi.mock("./lifecycle/meeting-service", () => ({
   transitionMeeting: mocks.transition,
   updateMeeting: mocks.update,
 }));
-vi.mock("../ai/jobs/ai-jobs", () => ({
-  enqueueAiJob: mocks.enqueueJob,
-}));
-
 import { meetingRoutes } from "./meeting-routes";
 
 const user = { id: "user-1" };
@@ -89,13 +84,6 @@ beforeEach(() => {
     workspaceId: "workspace-1",
   });
   mocks.recordConsent.mockResolvedValue({ id: "consent-1", mode: "confirmed" });
-  mocks.enqueueJob.mockResolvedValue({
-    error: null,
-    id: "job-1",
-    progress: 0,
-    status: "queued",
-    type: "meeting-summary",
-  });
   mocks.transition.mockResolvedValue({ id: "meeting-1", status: "recording" });
 });
 
@@ -194,19 +182,6 @@ test("recorder claim returns a scoped native audio ticket", async () => {
   assert.equal(payload.leaseId, "10000000-0000-4000-8000-000000000001");
   assert.equal(typeof payload.token, "string");
   assert.equal(payload.websocketUrl, "ws://localhost/meeting-audio?meeting=meeting-1");
-});
-
-test("summary generation is scoped to the authenticated editor", async () => {
-  const response = await appFor().request("/meetings/meeting-1/summary", { method: "POST" }, env);
-  assert.equal(response.status, 202);
-  assert.deepEqual(mocks.enqueueJob.mock.calls[0]?.[0], {
-    dedupeKey: "meeting-1:2:2026-08-18T00:00:00.000Z",
-    env,
-    input: { meetingId: "meeting-1" },
-    type: "meeting-summary",
-    userId: "user-1",
-    workspaceId: "workspace-1",
-  });
 });
 
 test("consent acknowledgement is audited before recorder claim", async () => {

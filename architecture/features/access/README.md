@@ -9,11 +9,11 @@ The [feature interface](../../../apps/server/src/features/access/index.ts) expli
 
 ## Main flow
 
-Access functions combine membership, page hierarchy, explicit grants and teamspace security to resolve effective page/database access. Agent access and pinned agent snapshots have their own entrypoints.
+Access functions combine membership, page hierarchy, explicit grants and teamspace security to resolve effective page and database access. Page and database grants use public, user, or team targets.
 
 ## Authorization and persistence
 
-The access module reads resource and principal records; access-level defines ranking and normalization. A page record, workspace membership, and permission to edit that page are different facts. Preserve guest/public/agent distinctions.
+The access module reads resource and principal records; access-level defines ranking and normalization. A page record, workspace membership, and permission to edit that page are different facts. Preserve guest and public distinctions.
 
 ## Side effects, failures and recovery
 
@@ -29,8 +29,8 @@ Update this guide when ownership, interfaces, authorization, persistence or cros
 
 [Resource loading](../../../apps/server/src/features/access/resource-access-records.ts) owns the repeated active page, active database-container and standalone-row association queries. Only identical query shapes share loaders. Publication retains its own queries and security policy checks; it is not treated as membership access.
 
-[Pure access decisions](../../../apps/server/src/features/access/access-decisions.ts) centralize strongest valid explicit grants, user/team grant targets, immutable snapshot-root matching, and teamspace principal overrides. This model and access-level rules are confined to each other; neither may import persistence, transport or feature operations. Effective access remains orchestration of loading and these decisions.
+[Pure access decisions](../../../apps/server/src/features/access/access-decisions.ts) centralize strongest valid explicit grants, user/team grant targets, and teamspace principal overrides. This model and access-level rules are confined to each other; neither may import persistence, transport or feature operations. Effective access remains orchestration of loading and these decisions.
 
-Member ownership shortcuts, guest ceilings, live agent grants and immutable snapshots remain distinct. Snapshot callers must still check live agent ACLs so revocations win. The multi-user batch function retains its existing caller preconditions and loading behavior; this refactor does not add membership queries to that fast path.
+Member ownership shortcuts and guest ceilings remain distinct. The multi-user batch function retains its existing caller preconditions and loading behavior; this refactor does not add membership queries to that fast path.
 
-Access tests exercise scoped agent predicates, exclusion of ownership shortcuts, invalid grant levels, snapshot resource-kind/root restrictions, publication policy denial and active-membership expiry predicates. They replace the previous agent-access source assertions; existing record-based access tests continue to protect query count and membership reuse.
+Access tests exercise access-level ranking, guest ceilings, ownership and shared rules, publication policy denial and active-membership expiry predicates. Existing record-based access tests continue to protect query count and membership reuse.

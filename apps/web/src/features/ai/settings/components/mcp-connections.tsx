@@ -10,7 +10,6 @@ import { ExternalLinkIcon, RefreshCw, Trash2Icon } from "@/shared/components/ico
 import { toast } from "sonner";
 
 import {
-  type AiAgentProfileDetail,
   type McpConnectionScopeRef,
   type McpConnectionSummary,
   type McpToolPolicy,
@@ -39,12 +38,10 @@ export type ConnectorDraft = {
 
 export function McpConnectionsPanel({
   canEdit,
-  delegated,
   scope,
   draft,
 }: {
   canEdit: boolean;
-  delegated: boolean;
   draft?: ConnectorDraft;
   scope: McpConnectionScopeRef;
 }) {
@@ -85,9 +82,7 @@ export function McpConnectionsPanel({
   return (
     <div className="grid gap-5">
       <div className="rounded-md border border-feedback-warning bg-feedback-warning-subtle p-3 text-sm text-feedback-warning-text">
-        {delegated
-          ? "Everyone with agent-use access invokes the external permissions of the member who authenticates this connection. Zilobase access checks still apply to native pages and databases."
-          : "These connections are private to your account in this workspace. Custom agents cannot use them."}
+        These connections are private to your account in this workspace.
       </div>
 
       {canEdit && (
@@ -417,11 +412,6 @@ type McpToolPolicyInput = Pick<McpToolPolicy, "classification" | "enabled" | "ex
 };
 
 type ServerSelection = { catalogId: string } | { approvedServerId: string };
-
-export function AgentMcpActivity({ agent }: { agent: AiAgentProfileDetail }) {
-  const activityQuery = useMcpActivity({ type: "agent", agentProfileId: agent.id }, true);
-  return <McpActivityList activity={activityQuery.data} />;
-}
 
 export function PersonalMcpActivity() {
   const activityQuery = useMcpActivity({ type: "personal" }, true);

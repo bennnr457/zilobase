@@ -20,7 +20,7 @@ Each guide follows a capability through its web, shared-package, server and nati
 - [Comments](features/comments/README.md)
 - [Databases](features/databases/README.md)
 - [Database automations](features/automations/README.md)
-- [AI conversations and agents](features/ai/README.md)
+- [AI conversations](features/ai/README.md)
 - [Calendar](features/calendar/README.md)
 - [Meetings](features/meetings/README.md)
 - [Notifications](features/notifications/README.md)

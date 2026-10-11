@@ -1,4 +1,3 @@
-export type AiAgentProfileRole = "owner" | "editor" | "user";
 export type McpExecutionMode = "automatic" | "always_ask";
 export type McpToolClassification = "read" | "write" | "unknown";
 export type McpConnectionState =
@@ -8,38 +7,7 @@ export type McpConnectionState =
   | "reconnect_required"
   | "disabled";
 
-export type McpConnectionScopeRef =
-  | { type: "personal" }
-  | { type: "agent"; agentProfileId: string };
-
-export type AiAgentProfileSummary = {
-  id: string;
-  name: string;
-  description: string;
-  icon: unknown | null;
-  cover?: string | null;
-  iconPosition?: "inline" | "top";
-  defaultModel: string;
-  role: AiAgentProfileRole;
-  status: "active" | "archived";
-  version: number;
-  ownerUserId: string;
-  currentRevisionId?: string | null;
-  executionDisabledReason?: string | null;
-  lastVisitedAt?: string | null;
-  updatedAt: string;
-};
-
-export type AiAgentProfileDetail = AiAgentProfileSummary & {
-  instructions: string;
-  access: Array<{
-    id: string;
-    principalType: "user" | "team";
-    principalId: string;
-    role: Exclude<AiAgentProfileRole, "owner">;
-  }>;
-  connections: McpConnectionSummary[];
-};
+export type McpConnectionScopeRef = { type: "personal" };
 
 export type McpServerCatalogEntry = {
   id: "github" | "linear" | "figma";
@@ -79,7 +47,6 @@ export type McpToolPolicy = {
 export type McpConnectionSummary = {
   id: string;
   scope: McpConnectionScopeRef;
-  agentProfileId: string | null;
   catalogId: string | null;
   serverLabel: string;
   endpointUrl: string;

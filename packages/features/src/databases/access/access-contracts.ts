@@ -4,7 +4,7 @@ export type DatabaseAccessRule = {
   id: string;
   workspaceId: string;
   databaseId: string;
-  targetType: "public" | "user" | "team" | "agent";
+  targetType: "public" | "user" | "team";
   targetId: string;
   accessLevel: "view" | "edit" | "full";
   createdAt: string;

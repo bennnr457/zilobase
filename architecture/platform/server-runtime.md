@@ -127,10 +127,10 @@ claim/transition/release/get/apply operations; serverful Node retains the
 database lease and resident Hocuspocus implementation. Meeting feature code no
 longer calls optional meeting methods on `ServerRuntimeAdapter`.
 
-The chat agent's room identity, request ownership, and canonical-message merge
-live in `@zilobase/features/ai-chat/agent-room`. The Cloudflare `AIChatAgent`
-class is only a host adapter around that shared behavior, so neither identity
-validation nor message reconciliation depends on Durable Object APIs.
+Ask AI room-name helpers remain in
+`@zilobase/features/ai-chat/agent-room` for the web client. The worker does not
+export a ChatAgent durable object and does not route `/agents` separately from
+the application.
 
 Composition now supplies `Env`, `UrlResolver`, `ImageStorage`, `Mailer`,
 `OutboundFetch`, and document RPC providers. Node maps `DATABASE_URL`, S3,

@@ -11,7 +11,7 @@ import {
 export { BACKGROUND_TASK_KINDS, getBackgroundCellId, type BackgroundTaskV2 } from "./task-v2";
 export type BackgroundTaskKind = BackgroundTaskV2["kind"];
 
-export type BackgroundLane = "fast" | "automation" | "ai" | "calendar";
+export type BackgroundLane = "fast" | "automation" | "calendar";
 
 export type BackgroundTaskResult =
   | { outcome: "completed" | "noop" | "terminal"; errorCode?: string }
@@ -24,8 +24,7 @@ const traceContextStore = new AsyncLocalStorage<{
 }>();
 
 export function backgroundTaskLane(kind: BackgroundTaskKind): BackgroundLane {
-  if (kind === "automation.run" || kind === "agent.run") return "automation";
-  if (kind === "ai.job") return "ai";
+  if (kind === "automation.run") return "automation";
   if (kind === "calendar.sync") return "calendar";
   return "fast";
 }

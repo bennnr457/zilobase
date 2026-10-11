@@ -4208,18 +4208,6 @@
       "value": false,
       "type": true
     },
-    "AiAgentProfileDetail": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileRole": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileSummary": {
-      "value": false,
-      "type": true
-    },
     "AiChatFeedback": {
       "value": false,
       "type": true
@@ -4285,66 +4273,6 @@
       "type": false
     },
     "ConnectorSetupRequest": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentChatIntent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentConversationMessage": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDetail": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentResourceAccess": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRevision": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRole": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRun": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunEvent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunStatus": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentSummary": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTrigger": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerKind": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentWorkspace": {
       "value": false,
       "type": true
     },
@@ -4714,18 +4642,6 @@
       "value": false,
       "type": true
     },
-    "AiAgentProfileDetail": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileRole": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileSummary": {
-      "value": false,
-      "type": true
-    },
     "AiChatFeedback": {
       "value": false,
       "type": true
@@ -4791,66 +4707,6 @@
       "type": false
     },
     "ConnectorSetupRequest": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentChatIntent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentConversationMessage": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDetail": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentResourceAccess": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRevision": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRole": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRun": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunEvent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunStatus": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentSummary": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTrigger": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerKind": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentWorkspace": {
       "value": false,
       "type": true
     },
@@ -5196,18 +5052,6 @@
     }
   },
   "@zilobase/features:./ai-chat/mcp-contract:types": {
-    "AiAgentProfileDetail": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileRole": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileSummary": {
-      "value": false,
-      "type": true
-    },
     "McpActivityEntry": {
       "value": false,
       "type": true
@@ -5258,18 +5102,6 @@
     }
   },
   "@zilobase/features:./ai-chat/mcp-contract:default": {
-    "AiAgentProfileDetail": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileRole": {
-      "value": false,
-      "type": true
-    },
-    "AiAgentProfileSummary": {
-      "value": false,
-      "type": true
-    },
     "McpActivityEntry": {
       "value": false,
       "type": true
@@ -5315,130 +5147,6 @@
       "type": true
     },
     "McpWorkspacePolicy": {
-      "value": false,
-      "type": true
-    }
-  },
-  "@zilobase/features:./ai-chat/custom-agent-contract:types": {
-    "CustomAgentChatIntent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentConversationMessage": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDetail": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentResourceAccess": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRevision": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRole": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRun": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunEvent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunStatus": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentSummary": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTrigger": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerKind": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentWorkspace": {
-      "value": false,
-      "type": true
-    }
-  },
-  "@zilobase/features:./ai-chat/custom-agent-contract:default": {
-    "CustomAgentChatIntent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentConversationMessage": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentDetail": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentResourceAccess": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRevision": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRole": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRun": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunEvent": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentRunStatus": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentSummary": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTrigger": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerDefinition": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentTriggerKind": {
-      "value": false,
-      "type": true
-    },
-    "CustomAgentWorkspace": {
       "value": false,
       "type": true
     }

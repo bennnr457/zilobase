@@ -21,7 +21,7 @@ export const databaseLifecycleCommandSchema = z.discriminatedUnion("type", [
     .object({
       type: z.literal("access.upsert"),
       targetId: id,
-      targetType: z.enum(["public", "user", "team", "agent"]),
+      targetType: z.enum(["public", "user", "team"]),
       accessLevel: z.enum(["view", "edit", "full"]),
     })
     .strict()
@@ -29,10 +29,6 @@ export const databaseLifecycleCommandSchema = z.discriminatedUnion("type", [
       (input) =>
         input.targetType !== "public" || (input.targetId === "*" && input.accessLevel === "view"),
       "Invalid public access",
-    )
-    .refine(
-      (input) => input.targetType !== "agent" || input.accessLevel !== "full",
-      "Invalid agent access",
     ),
   z.object({ type: z.literal("access.remove"), ruleId: id }).strict(),
   z.object({ type: z.literal("database.publish"), published: z.boolean() }).strict(),

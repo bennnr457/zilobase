@@ -34,7 +34,7 @@ the reset does not affect PostgreSQL or R2 data.
 
 ## 2. Provision resources
 
-Create the Hyperdrive config, R2 bucket (+ preview bucket), the four queues
+Create the Hyperdrive config, R2 bucket (+ preview bucket), the three queues
 with their dead-letter queues, and the two rate-limiter namespaces, then set
 `vars` origins to your domains and create every secret under
 `secrets.required` with `wrangler secret put <NAME>`.

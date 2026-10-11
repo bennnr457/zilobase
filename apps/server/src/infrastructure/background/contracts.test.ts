@@ -11,15 +11,13 @@ describe("background task v2", () => {
   it("routes every kind to an isolated lane", () => {
     expect(backgroundTaskLane("automation.event_window")).toBe("fast");
     expect(backgroundTaskLane("automation.run")).toBe("automation");
-    expect(backgroundTaskLane("agent.run")).toBe("automation");
-    expect(backgroundTaskLane("ai.job")).toBe("ai");
     expect(backgroundTaskLane("calendar.sync")).toBe("calendar");
   });
 
   it("rejects malformed, unknown, and cross-cell messages", () => {
     const task = createBackgroundTask({
       env: { ZILOBASE_CELL_ID: "cell-a" },
-      kind: "ai.job",
+      kind: "notification.publish",
       resourceId: "job-1",
     });
     expect(parseBackgroundTask(task, "cell-a")).toEqual({ ok: true, task });

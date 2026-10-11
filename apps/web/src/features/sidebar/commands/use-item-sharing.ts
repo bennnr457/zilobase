@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import { useSession } from "@zilobase/features/auth/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import { useAiAgentProfiles } from "@zilobase/features/ai-chat/react";
 import {
   useDeletePageAccess,
   useSetPagePublished,
@@ -52,7 +51,6 @@ export function useItemSharing({
   const { data: databasePayload } = useDatabaseMetadata(databaseId);
   const { data: databaseAccessPayload } = useDatabaseAccess(databaseId);
   const { data: targets } = usePageAccessTargets(workspaceId);
-  const { data: customAgents = [] } = useAiAgentProfiles();
   const guestPageId = getGuestPageId(databaseId, pageId);
   const isWorkspaceMember = isSharingWorkspaceMember(targets, session);
   const { data: personTargets } = usePagePersonAccessTargets(pageId, {
@@ -101,15 +99,8 @@ export function useItemSharing({
           label: guest.name || guest.email,
         },
       ]),
-      ...customAgents.map((agent): [string, { label: string; detail: string }] => [
-        `agent:${agent.id}`,
-        {
-          detail: "Custom Agent",
-          label: agent.name || "Untitled agent",
-        },
-      ]),
     ]);
-  }, [customAgents, personTargets?.guests, targets?.members]);
+  }, [personTargets?.guests, targets?.members]);
   const guestUserIds = React.useMemo(
     () => new Set((personTargets?.guests ?? []).map((guest) => guest.id)),
     [personTargets?.guests],
@@ -121,7 +112,7 @@ export function useItemSharing({
   const pendingGuestRequests = getPendingItems(guestRequests);
   const guestActionLabel = getGuestActionLabel(guestPolicy);
 
-  const { selectedTarget, selectedTargetIsAgent, shareDisabled } = getSharingSelection(
+  const { selectedTarget, shareDisabled } = getSharingSelection(
     targetValue,
     targetByKey,
     canManage,
@@ -271,7 +262,6 @@ export function useItemSharing({
     cancelGuestInvitation,
     cancelInvitation,
     copyLink,
-    customAgents,
     deleteRule,
     effectiveAccessLevel,
     guestAccessLevel,
@@ -287,7 +277,6 @@ export function useItemSharing({
     pendingGuestRequests,
     publicUrl,
     selectedTarget,
-    selectedTargetIsAgent,
     session,
     setDatabasePublished,
     setGuestAccessLevel,
@@ -345,7 +334,6 @@ function getSharingSelection(
 ) {
   return {
     selectedTarget: targetValue ? targets.get(targetValue) : null,
-    selectedTargetIsAgent: targetValue.startsWith("agent:"),
     shareDisabled: !canManage || !targetValue || pagePending || databasePending,
   };
 }

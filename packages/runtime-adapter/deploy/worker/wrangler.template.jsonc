@@ -28,7 +28,6 @@
       "CALENDAR_GOOGLE_CLIENT_ID",
       "CALENDAR_GOOGLE_CLIENT_SECRET",
       "CALENDAR_TOKEN_ENCRYPTION_KEY",
-      "AI_PROVIDER_CREDENTIAL_ENCRYPTION_KEY",
       "OPENAI_API_KEY",
       "AUTOMATION_SECRET_ENCRYPTION_KEY",
       "SLACK_CLIENT_ID",
@@ -37,8 +36,6 @@
   },
   "compatibility_flags": ["nodejs_compat"],
   "alias": {
-    "@cloudflare/ai-chat": "./node_modules/@cloudflare/ai-chat/dist/index.js",
-    "agents": "./node_modules/agents/dist/index.js",
     "better-auth/adapters/drizzle": "../zilobase/node_modules/better-auth/dist/adapters/drizzle-adapter/index.mjs",
     "better-auth/plugins": "../zilobase/node_modules/better-auth/dist/plugins/index.mjs",
     "better-auth": "../zilobase/node_modules/better-auth/dist/index.mjs",
@@ -51,10 +48,6 @@
   "durable_objects": {
     "bindings": [
       { "name": "CALENDAR_NOTIFICATION_ROOM", "class_name": "CalendarNotificationRoom" },
-      {
-        "name": "CHAT_AGENT",
-        "class_name": "ChatAgent",
-      },
       {
         "name": "PAGE_COLLABORATION",
         "class_name": "PageCollaborationRoom",
@@ -78,7 +71,6 @@
       "tag": "runtime-ports-v1",
       "new_sqlite_classes": [
         "CalendarNotificationRoom",
-        "ChatAgent",
         "DatabaseCollaborationRoom",
         "MeetingCollaborationRoom",
         "NavigationNotificationRoom",
@@ -91,10 +83,6 @@
       {
         "binding": "BACKGROUND_FAST",
         "queue": "zilobase-background-fast",
-      },
-      {
-        "binding": "AI_JOBS",
-        "queue": "zilobase-ai-jobs",
       },
       {
         "binding": "AUTOMATION_RUNS",

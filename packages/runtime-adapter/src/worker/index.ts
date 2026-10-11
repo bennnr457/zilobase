@@ -19,7 +19,6 @@ export {
 export { createWorkerMailer, type WorkerEmailBinding } from "./mailer";
 export { createWorkerOutboundFetch } from "./outbound-fetch";
 export { createWorkerDocuments } from "./documents";
-export { ChatAgent } from "./features/chat/chat-agent";
 export { PageCollaborationRoom } from "./features/collaboration/page-collaboration-room";
 export { MeetingCollaborationRoom } from "./features/collaboration/meeting-collaboration-room";
 export { DatabaseCollaborationRoom } from "./features/database-realtime/database-collaboration-room";

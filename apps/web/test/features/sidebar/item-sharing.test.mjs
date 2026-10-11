@@ -12,7 +12,6 @@ export function register({ assert, appPath, test }) {
       useDatabaseMetadata: "database",
       useDatabaseAccess: "databaseAccess",
       usePageAccessTargets: "targets",
-      useAiAgentProfiles: "agents",
       usePagePersonAccessTargets: "people",
       usePageGuestInvitations: "invitations",
       usePageGuestRequests: "requests",
@@ -128,7 +127,6 @@ export function register({ assert, appPath, test }) {
           { id: "member", name: "Member", email: "member@test" },
         ],
       },
-      agents: [{ id: "agent", name: "Agent" }],
       people: { guests: [{ id: "guest", name: "Guest", email: "guest@test" }] },
       invitations: [
         { id: "pending", status: "pending" },
@@ -180,15 +178,15 @@ export function register({ assert, appPath, test }) {
     const pageGrant = capture(
       undefined,
       {},
-      { target: "agent:agent", level: "edit", email: " Guest@Example.Test " },
+      { target: "user:member", level: "edit", email: " Guest@Example.Test " },
     );
     pageGrant.shareItem();
     assert.deepEqual(calls.at(-2), [
       "UpsertPageAccess",
       {
         accessLevel: "edit",
-        targetId: "agent",
-        targetType: "agent",
+        targetId: "member",
+        targetType: "user",
         pageId: "page",
       },
     ]);

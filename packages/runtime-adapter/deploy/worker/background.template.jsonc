@@ -21,14 +21,10 @@
       "CALENDAR_GOOGLE_CLIENT_ID",
       "CALENDAR_GOOGLE_CLIENT_SECRET",
       "CALENDAR_TOKEN_ENCRYPTION_KEY",
-      "AI_PROVIDER_CREDENTIAL_ENCRYPTION_KEY",
-      "OPENAI_API_KEY",
       "AUTOMATION_SECRET_ENCRYPTION_KEY",
     ],
   },
   "alias": {
-    "@cloudflare/ai-chat": "./node_modules/@cloudflare/ai-chat/dist/index.js",
-    "agents": "./node_modules/agents/dist/index.js",
     "better-auth/adapters/drizzle": "../zilobase/node_modules/better-auth/dist/adapters/drizzle-adapter/index.mjs",
     "better-auth/plugins": "../zilobase/node_modules/better-auth/dist/plugins/index.mjs",
     "better-auth": "../zilobase/node_modules/better-auth/dist/index.mjs",
@@ -43,7 +39,6 @@
     "producers": [
       { "binding": "BACKGROUND_FAST", "queue": "zilobase-background-fast" },
       { "binding": "AUTOMATION_RUNS", "queue": "zilobase-automation-runs" },
-      { "binding": "AI_JOBS", "queue": "zilobase-ai-jobs" },
       { "binding": "CALENDAR_JOBS", "queue": "zilobase-calendar-jobs" },
     ],
     "consumers": [
@@ -64,14 +59,6 @@
         "dead_letter_queue": "zilobase-automation-runs-dlq",
       },
       {
-        "queue": "zilobase-ai-jobs",
-        "max_batch_size": 1,
-        "max_batch_timeout": 1,
-        "max_concurrency": 10,
-        "max_retries": 5,
-        "dead_letter_queue": "zilobase-ai-jobs-dlq",
-      },
-      {
         "queue": "zilobase-calendar-jobs",
         "max_batch_size": 5,
         "max_batch_timeout": 1,
@@ -88,13 +75,6 @@
       },
       {
         "queue": "zilobase-automation-runs-dlq",
-        "max_batch_size": 10,
-        "max_batch_timeout": 5,
-        "max_concurrency": 5,
-        "max_retries": 100,
-      },
-      {
-        "queue": "zilobase-ai-jobs-dlq",
         "max_batch_size": 10,
         "max_batch_timeout": 5,
         "max_concurrency": 5,

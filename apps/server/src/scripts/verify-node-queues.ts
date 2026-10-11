@@ -65,12 +65,16 @@ try {
   assert.equal(producer.readiness().consumerReady, null);
   console.info("BullMQ fixture: consumption");
   await worker.start();
-  await until(() => effects.length === 7);
-  assert.equal(new Set(effects).size, 7, "Stable task IDs deduplicate enqueue");
+  await until(() => effects.length === BACKGROUND_TASK_KINDS.length);
+  assert.equal(
+    new Set(effects).size,
+    BACKGROUND_TASK_KINDS.length,
+    "Stable task IDs deduplicate enqueue",
+  );
   console.info("BullMQ fixture: delays");
   const future = createBackgroundTaskV2({
     env,
-    kind: "ai.job",
+    kind: "notification.publish",
     resourceId: "future",
     availableAt: new Date(Date.now() + 2000),
   });
@@ -78,24 +82,30 @@ try {
   await sleep(500);
   assert.ok(!effects.includes("future"), "Future work cannot execute early");
   await until(() => effects.includes("future"));
-  const job = await producer.queues.get("ai")!.getJob(future.taskId);
+  const job = await producer.queues.get("fast")!.getJob(future.taskId);
   assert.equal(job!.opts.attempts, 6);
   assert.equal(
     job!.opts.removeOnComplete && (job!.opts.removeOnComplete as { age: number }).age,
     86400,
   );
-  const business = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "business" });
+  const business = createBackgroundTaskV2({
+    env,
+    kind: "notification.publish",
+    resourceId: "business",
+  });
   await producer.dispatch([business]);
   await until(() => effects.includes("business"));
   assert.equal(attempts.get("business"), 8, "Business deferral exceeds the transport retry budget");
-  assert.equal((await producer.queues.get("ai")!.getJob(business.taskId))!.attemptsMade, 1);
+  assert.equal((await producer.queues.get("fast")!.getJob(business.taskId))!.attemptsMade, 1);
   console.info("BullMQ fixture: transport retries");
   await producer.dispatch([
     createBackgroundTaskV2({ env, kind: "realtime.database", resourceId: "unexpected" }),
   ]);
   await until(() => exhausted.includes("unexpected"));
   assert.equal(attempts.get("unexpected"), 6, "Initial attempt plus five transport redeliveries");
-  await producer.dispatch([createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "held" })]);
+  await producer.dispatch([
+    createBackgroundTaskV2({ env, kind: "notification.publish", resourceId: "held" }),
+  ]);
   await until(() => !!hold);
   const activeBroker = process.env.ZILOBASE_QUEUE_VERIFY_CONTAINER!;
   assert.ok(
@@ -115,7 +125,11 @@ try {
   hold!();
   await stop;
   console.info("BullMQ fixture: restart");
-  const retained = createBackgroundTaskV2({ env, kind: "ai.job", resourceId: "restart" });
+  const retained = createBackgroundTaskV2({
+    env,
+    kind: "notification.publish",
+    resourceId: "restart",
+  });
   await producer.dispatch([retained]);
   const container = process.env.ZILOBASE_QUEUE_VERIFY_CONTAINER;
   assert.ok(container);
@@ -123,7 +137,7 @@ try {
   await promisify(execFile)("docker", ["restart", "--time", "3", container]);
   await until(() => producer.readiness().producerReady === true);
   assert.ok(
-    await producer.queues.get("ai")!.getJob(retained.taskId),
+    await producer.queues.get("fast")!.getJob(retained.taskId),
     "Queue survives broker restart",
   );
   const restarted = createNodeQueueRuntime({ ...env, ZILOBASE_PROCESS_ROLE: "all" }, callbacks);
@@ -143,15 +157,15 @@ try {
     await other.start();
     const untouched = createBackgroundTaskV2({
       env: otherEnv,
-      kind: "ai.job",
+      kind: "notification.publish",
       resourceId: "isolated",
     });
     await other.dispatch([untouched]);
     await redis.set(`unrelated:${cell}`, "retained");
     await purgeNodeCellQueues(env, cell);
-    assert.ok(await other.queues.get("ai")!.getJob(untouched.taskId));
+    assert.ok(await other.queues.get("fast")!.getJob(untouched.taskId));
     assert.equal(await redis.get(`unrelated:${cell}`), "retained");
-    assert.equal(await producer.queues.get("ai")!.getJob(retained.taskId), undefined);
+    assert.equal(await producer.queues.get("fast")!.getJob(retained.taskId), undefined);
   } finally {
     await other.stop();
     redis.disconnect();
@@ -170,7 +184,7 @@ try {
   }
   assert.ok(Date.now() - start < 8000, "Startup and shutdown stay bounded during an outage");
   console.info(
-    "BullMQ verification passed: all seven envelopes, split roles, deduplication, delay, retry exhaustion, graceful shutdown and persistent broker restart.",
+    "BullMQ verification passed: every task envelope, split roles, deduplication, delay, retry exhaustion, graceful shutdown and persistent broker restart.",
   );
 } finally {
   await producer.stop();

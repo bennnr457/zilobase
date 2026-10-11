@@ -5,7 +5,7 @@ type DatabaseAccessInput = {
   accessLevel: "view" | "edit" | "full";
   databaseId: string;
   targetId: string;
-  targetType: "public" | "user" | "team" | "agent";
+  targetType: "public" | "user" | "team";
 };
 
 export function useUpsertDatabaseAccess() {

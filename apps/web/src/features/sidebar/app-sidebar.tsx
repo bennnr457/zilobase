@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import { useAppSearch } from "@/features/search";
 import { DatabaseViewIcon } from "@/features/databases";
 import { AiChatsSection } from "./components/ai-chats-section";
-import { AgentsSection } from "./components/agents-section";
 import { NavFavorites } from "./components/nav-favorites";
 import { NavMeetings } from "./components/nav-meetings";
 import { NavPageSection } from "./components/nav-pages";
@@ -173,9 +172,6 @@ export function AppSidebar({
     [integrations, storedLayout],
   );
   const { activeThreadId, setActiveThreadId } = useAiChatThreadState({ enabled: false });
-  const activeAgentId = pathname.startsWith("/agents/")
-    ? (pathname.slice("/agents/".length).split("/")[0] ?? null)
-    : null;
   const [activeTabId, setActiveTabId] = React.useState("home");
   React.useEffect(() => {
     const stored = readActiveSidebarTab(workspaceId);
@@ -570,7 +566,6 @@ export function AppSidebar({
               ) : null
             ) : (
               <>
-                <AgentsSection activeAgentId={activeAgentId} />
                 <DndContext
                   collisionDetection={closestCenter}
                   onDragEnd={handleRuntimeSectionDragEnd}

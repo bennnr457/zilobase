@@ -49,8 +49,6 @@ export function workerStackDevArgs(env = {}) {
         "NAVIGATION_REALTIME_WEBSOCKET_URL",
         `ws://localhost:${port}/navigation-realtime`,
       ),
-      AI_DEV_TOOLS_ENABLED: "true",
-      AI_AGENT_DAILY_USAGE_LIMITS_ENABLED: "false",
       MEETING_BLOCK_ENABLED: "true",
       CALENDAR_WEBHOOK_URL: value(env, "CALENDAR_WEBHOOK_URL", ""),
       ZILOBASE_DEV_EMAIL_SINK_URL: value(env, "ZILOBASE_DEV_EMAIL_SINK_URL", ""),

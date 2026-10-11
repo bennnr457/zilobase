@@ -1,13 +1,6 @@
 import * as z from "zod";
 
-export const settingsTabSchema = z.enum([
-  "instructions",
-  "connectors",
-  "activity",
-  "versions",
-  "triggers",
-  "access",
-]);
+export const settingsTabSchema = z.enum(["instructions", "connectors", "activity", "versions"]);
 export type AgentSettingsTab = z.infer<typeof settingsTabSchema>;
 export const settingsDefinitionSchema = z
   .object({
@@ -18,56 +11,8 @@ export const settingsDefinitionSchema = z
     iconPosition: z.enum(["inline", "top"]),
     instructions: z.string().max(200_000),
     instructionPageId: z.string().uuid().optional(),
-    instructionResources: z
-      .array(
-        z.object({
-          resourceType: z.enum(["page", "database"]),
-          resourceId: z.string(),
-          accessLevel: z.literal("view"),
-        }),
-      )
-      .optional(),
     instructionTitle: z.string().max(200).optional(),
     instructionDocument: z.record(z.string(), z.unknown()),
-    triggers: z
-      .array(
-        z.object({
-          id: z.string().min(1).max(160),
-          kind: z.enum([
-            "manual",
-            "schedule",
-            "database",
-            "comment",
-            "mention",
-            "meeting",
-            "webhook",
-            "slack",
-            "connector",
-          ]),
-          label: z.string().trim().min(1).max(120),
-          config: z.record(z.string(), z.unknown()),
-          status: z.enum(["active", "paused", "degraded", "disabled"]),
-        }),
-      )
-      .max(100),
-    resources: z
-      .array(
-        z.object({
-          resourceType: z.enum(["page", "database"]),
-          resourceId: z.string().min(1).max(160),
-          accessLevel: z.enum(["view", "comment", "edit"]),
-        }),
-      )
-      .max(200),
-    grants: z
-      .array(
-        z.object({
-          principalType: z.enum(["user", "team"]),
-          principalId: z.string().min(1).max(160),
-          role: z.enum(["editor", "user"]),
-        }),
-      )
-      .max(200),
     connectors: z
       .array(
         z.object({
@@ -98,13 +43,7 @@ export function hasAgentConfigurationChanges(
     !!definition.instructionPageId && definition.instructionPageId === saved.instructionPageId;
   const configuration = (value: AgentSettingsDefinition) => {
     if (!linkedPageUnchanged) return value;
-    const {
-      instructionDocument,
-      instructionTitle,
-      instructions,
-      instructionResources,
-      ...settings
-    } = value;
+    const { instructionDocument, instructionTitle, instructions, ...settings } = value;
     return settings;
   };
   const current = configuration(definition);
@@ -140,12 +79,7 @@ export function mergeSettingsReview(
 export function changedSettingsFields(
   state: AgentSettingsState,
 ): (keyof AgentSettingsDefinition)[] {
-  const pageFields = [
-    "instructions",
-    "instructionDocument",
-    "instructionTitle",
-    "instructionResources",
-  ];
+  const pageFields = ["instructions", "instructionDocument", "instructionTitle"];
   const samePage =
     !!state.definition.instructionPageId &&
     state.definition.instructionPageId === state.saved.instructionPageId;
@@ -162,7 +96,6 @@ export function changedSettingsFields(
 }
 export function settingsFieldTab(field: keyof AgentSettingsDefinition): AgentSettingsTab {
   if (field === "connectors") return "connectors";
-  if (["triggers", "resources", "grants", "instructionResources"].includes(field)) return "access";
   return "instructions";
 }
 export type AgentSettingsState = {
@@ -203,9 +136,6 @@ export function emptySettingsDefinition(): AgentSettingsDefinition {
     iconPosition: "inline",
     instructions: "",
     instructionDocument: { type: "doc", content: [] },
-    triggers: [],
-    resources: [],
-    grants: [],
     connectors: [],
   };
 }

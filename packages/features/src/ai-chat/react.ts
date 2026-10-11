@@ -9,26 +9,6 @@ export {
 } from "./hooks";
 export { useWorkspaceAiModels } from "./model-hooks";
 export {
-  useAiAgentProfiles,
-  useAiAgentProfile,
-  useCreateAiAgentProfile,
-  useTransferAiAgentProfile,
-  useArchiveAiAgentProfile,
-  useCustomAgentConversation,
-  useCustomAgentRevisions,
-  useCustomAgentResources,
-  useCustomAgentTriggers,
-  useCustomAgentRuns,
-  useStartCustomAgentRun,
-  useCustomAgentRun,
-  useSubmitCustomAgentMessage,
-  useGrantCustomAgentResource,
-  useRemoveCustomAgentResource,
-  useCreateCustomAgentTrigger,
-  useUpdateCustomAgentTrigger,
-  useRemoveCustomAgentTrigger,
-  useRotateCustomAgentWebhookSecret,
-  useRevertCustomAgentRevision,
   useMcpCatalog,
   useApprovedMcpServers,
   useMcpWorkspacePolicy,
@@ -37,5 +17,5 @@ export {
   useMcpActivity,
   useMcpConnectionMutation,
 } from "./mcp-hooks";
-export { aiAgentProfilesQueryKey, mcpScopeApiPath } from "./mcp-hooks";
+export { mcpScopeApiPath } from "./mcp-hooks";
 export { upsertAiChatThreadInCache } from "./hooks";

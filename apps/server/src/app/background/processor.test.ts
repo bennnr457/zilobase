@@ -19,9 +19,6 @@ vi.mock("../../infrastructure/background/telemetry", () => ({
   recordBackgroundHistogram: vi.fn(),
   runBackgroundTaskSpan: (_task: unknown, _attributes: unknown, run: () => unknown) => run(),
 }));
-vi.mock("../../features/ai/jobs/ai-job-handlers", () => ({ AI_JOB_HANDLERS: {} }));
-vi.mock("../../features/ai/jobs/ai-jobs", () => ({ runAiJobById: vi.fn() }));
-vi.mock("../../features/ai/execution/agent-run-service", () => ({ processAgentRun: vi.fn() }));
 vi.mock("../../features/automations/triggers/event-evaluator", () => ({
   processDatabaseAutomationEventWindow: vi.fn(),
 }));

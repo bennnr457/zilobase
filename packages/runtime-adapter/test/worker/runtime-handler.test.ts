@@ -1,18 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const { routeAgentRequest } = vi.hoisted(() => ({
-  routeAgentRequest: vi.fn(),
-}));
-
-vi.mock("agents", () => ({ routeAgentRequest }));
+import { describe, expect, it, vi } from "vitest";
 
 import { createWorkerHandler } from "../../src/worker/handler";
 
 describe("Cloudflare worker handler", () => {
-  beforeEach(() => {
-    routeAgentRequest.mockReset();
-  });
-
   it("loads the app once and adds request timing metadata", async () => {
     const fetch = vi.fn(async () => new Response("app", { status: 201 }));
     const loadApp = vi.fn(async () => ({ fetch }));
@@ -44,52 +34,10 @@ describe("Cloudflare worker handler", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it("routes agent requests with authorization, authentication, and CORS", async () => {
-    const authorizeAgentRequest = vi.fn();
-    const authenticateAgentRequest = vi.fn();
-    const getAgentCorsHeaders = vi.fn(() => ({
-      "Access-Control-Allow-Origin": "https://app.example.com",
-    }));
-    const loadApp = vi.fn(async () => ({
-      fetch: vi.fn(async () => new Response("app")),
-    }));
+  it("forwards /agents requests to the application", async () => {
+    const appFetch = vi.fn(async () => new Response("app"));
     const handler = createWorkerHandler({
-      authorizeAgentRequest,
-      authenticateAgentRequest,
-      getAgentCorsHeaders,
-      loadApp,
-    });
-    routeAgentRequest.mockImplementation(async (request, env, options) => {
-      expect(env).toEqual({ binding: true });
-      expect(options.cors).toEqual({
-        "Access-Control-Allow-Origin": "https://app.example.com",
-      });
-      await options.onBeforeConnect(request, "lobby");
-      await options.onBeforeRequest(request, "lobby");
-      return new Response("agent");
-    });
-
-    const request = new Request("https://api.example.com/agents/chat/thread-1");
-    const response = await handler.fetch(request, { binding: true }, {});
-
-    expect(await response.text()).toBe("agent");
-    expect(authorizeAgentRequest).toHaveBeenCalledWith(request, "lobby", { binding: true });
-    expect(authenticateAgentRequest).toHaveBeenCalledWith(request, "lobby", { binding: true });
-    expect(getAgentCorsHeaders).toHaveBeenCalledWith({ binding: true }, request);
-    expect(loadApp).not.toHaveBeenCalled();
-    expect(response.headers.get("server-timing")).toMatch(/zilobase_route_agent;dur=\d+/);
-  });
-
-  it("preserves Agent WebSocket upgrade responses", async () => {
-    const upgrade = new Response(null);
-    const webSocket = { id: "agent-websocket" };
-    Object.defineProperties(upgrade, {
-      status: { value: 101 },
-      webSocket: { value: webSocket },
-    });
-    routeAgentRequest.mockResolvedValue(upgrade);
-    const handler = createWorkerHandler({
-      loadApp: async () => ({ fetch: async () => new Response("fallback") }),
+      loadApp: async () => ({ fetch: appFetch }),
     });
 
     const response = await handler.fetch(
@@ -98,22 +46,11 @@ describe("Cloudflare worker handler", () => {
       {},
     );
 
-    expect(response).toBe(upgrade);
-    expect((response as Response & { webSocket: unknown }).webSocket).toBe(webSocket);
-  });
-
-  it("falls through when the agent router declines a matching request", async () => {
-    routeAgentRequest.mockResolvedValue(null);
-    const appFetch = vi.fn(async () => new Response("fallback"));
-    const handler = createWorkerHandler({
-      loadApp: async () => ({ fetch: appFetch }),
-    });
-
-    const response = await handler.fetch(new Request("https://api.example.com/agents"), {}, {});
-
-    expect(await response.text()).toBe("fallback");
+    expect(await response.text()).toBe("app");
     expect(appFetch).toHaveBeenCalledOnce();
-    expect(response.headers.get("server-timing")).toMatch(/zilobase_route_agent;dur=\d+/);
+    expect(response.headers.get("server-timing")).toMatch(
+      /zilobase_app_load;dur=\d+, zilobase_app_fetch;dur=\d+, zilobase_total;dur=\d+/,
+    );
   });
 
   it("rethrows request failures", async () => {

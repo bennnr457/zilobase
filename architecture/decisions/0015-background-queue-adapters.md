@@ -4,14 +4,15 @@ Status: accepted.
 
 ## Context
 
-Node background execution uses PostgreSQL notifications, lane timers and direct
-feature drains. Workers use four queues, but maintenance also directly drains
-feature work. These paths blur broker scheduling and feature execution ownership.
+Node background execution used PostgreSQL notifications, lane timers and direct
+feature drains. Workers used a separate queue per lane, and maintenance also
+directly drained feature work. These paths blur broker scheduling and feature
+execution ownership.
 
 ## Decision
 
-Use one versioned task contract and shared delivery runner for all seven task
-kinds. Dedicated Redis/BullMQ supplies Node transport; Cloudflare Queues supplies
+Use one versioned task contract and shared delivery runner for every background
+task kind. Dedicated Redis/BullMQ supplies Node transport; Cloudflare Queues supplies
 Worker transport. PostgreSQL owns feature state and transactional dispatch intent.
 The publisher repairs enqueue failures; it does not execute feature work.
 Feature services retain authorization, leases, checkpoints and operation receipts.

@@ -41,13 +41,12 @@ export type HomepageRow = {
   id: string;
   isFavorite: boolean;
   isShared: boolean;
-  itemKind: "agent" | "database" | "meeting" | "page" | "teamspace";
+  itemKind: "database" | "meeting" | "page" | "teamspace";
   teamspaceId: string | null;
   lastVisitedAt: string | null;
   metadata: Page["metadata"] | null;
   name: string;
   openDatabaseId: string | null;
-  openAgentId: string | null;
   openMeetingId: string | null;
   openPageId: string | null;
   parentRowId: string | null;
@@ -79,7 +78,6 @@ const trashPropertyDefinitions = [
 ] as const;
 
 export function getHomepageRowType(row: HomepageRow) {
-  if (row.itemKind === "agent") return "Agent";
   if (row.itemKind === "database") return "Database";
   if (row.itemKind === "meeting") return "Meeting";
   if (row.itemKind === "teamspace") return "Teamspace";
@@ -269,14 +267,6 @@ export function buildHomepageViewData({
 export function buildHomepageRows(
   navigation: PageNavigationPayload,
   meetings: MeetingListItem[],
-  agents: Array<{
-    id: string;
-    lastVisitedAt?: string | null;
-    name: string;
-    ownerUserId: string;
-    status: "active" | "archived";
-    updatedAt: string;
-  }>,
   mode: RecentsMode,
   teamspaces: Teamspace[] = [],
 ): HomepageRow[] {
@@ -316,7 +306,6 @@ export function buildHomepageRows(
           ...getPageRowAppearance(page),
           itemKind: "page" as const,
           openDatabaseId: null,
-          openAgentId: null,
           openMeetingId: null,
           openPageId: page.id,
           ...getLibraryRowPlacement(
@@ -344,7 +333,6 @@ export function buildHomepageRows(
           ...getDatabaseRowAppearance(database, page),
           itemKind: "database" as const,
           openDatabaseId: database.id,
-          openAgentId: null,
           openMeetingId: null,
           openPageId: database.pageId,
           ...getLibraryRowPlacement(hierarchy, `database:${database.id}`),
@@ -354,34 +342,6 @@ export function buildHomepageRows(
         };
       }),
     ...(mode === "home" ? buildMeetingRows(meetings, pagesById) : []),
-    ...(mode === "home"
-      ? agents
-          .filter((agent) => agent.status === "active")
-          .map((agent, index): HomepageRow => ({
-            createdAt: agent.updatedAt,
-            createdBy: "Workspace member",
-            deletedAt: "",
-            deletedBy: "",
-            iconKind: "page",
-            id: `agent:${agent.id}`,
-            isFavorite: false,
-            isShared: false,
-            itemKind: "agent",
-            lastVisitedAt: agent.lastVisitedAt ?? agent.updatedAt,
-            metadata: { emoji: "🤖" },
-            name: agent.name || "Untitled agent",
-            openAgentId: agent.id,
-            openDatabaseId: null,
-            openMeetingId: null,
-            openPageId: null,
-            parentRowId: null,
-            position: Number.MAX_SAFE_INTEGER - agents.length + index,
-            source: "",
-            sourcePage: null,
-            teamspaceId: null,
-            updatedAt: agent.updatedAt,
-          }))
-      : []),
   ];
 
   if (mode === "trash") return contentRows;
@@ -415,7 +375,6 @@ export function buildHomepageRows(
         typeof teamspace.icon === "string" && teamspace.icon ? { emoji: teamspace.icon } : null,
       name: teamspace.name,
       openDatabaseId: null,
-      openAgentId: null,
       openMeetingId: null,
       openPageId: null,
       parentRowId: null,
@@ -449,7 +408,6 @@ function buildMeetingRows(
       metadata: { emoji: meeting.emoji ?? DEFAULT_MEETING_ITEM_ICON },
       name: meeting.title?.trim() || "Untitled meeting",
       openDatabaseId: null,
-      openAgentId: null,
       openMeetingId: meeting.id,
       openPageId: null,
       parentRowId: null,

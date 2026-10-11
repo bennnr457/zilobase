@@ -153,10 +153,7 @@ export function profileEnvironment(profile, dependencies) {
     AUTOMATION_SLACK_ENABLED: "false",
     MEETING_BLOCK_ENABLED: "true",
     EMAIL_FROM: "Zilobase <no-reply@zilobase.com>",
-    AI_DEV_TOOLS_ENABLED: "true",
-    AI_AGENT_DAILY_USAGE_LIMITS_ENABLED: "false",
     ZILOBASE_OPERATIONS_TOKEN: secret(32),
-    AI_PROVIDER_CREDENTIAL_ENCRYPTION_KEY: encryptionKey(),
     AUTOMATION_SECRET_ENCRYPTION_KEY: encryptionKey(),
   };
 

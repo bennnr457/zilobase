@@ -1,11 +1,7 @@
-import {
-  combineSearchResults,
-  getSearchResultDestination,
-  type SearchResult,
-} from "./search-results";
+import { getSearchResultDestination, type SearchResult } from "./search-results";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { BotIcon, DatabaseIcon } from "@/shared/components/icons";
+import { DatabaseIcon } from "@/shared/components/icons";
 
 import {
   Command,
@@ -21,7 +17,6 @@ import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useAppSearchResults } from "@zilobase/features/search/react";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
 import { useAppShortcut } from "@/shared/shortcuts";
-import { useAiAgentProfiles } from "@zilobase/features/ai-chat/react";
 
 type AppSearchContextValue = {
   openSearch: () => void;
@@ -36,11 +31,6 @@ export function AppSearchProvider({ children }: { children: ReactNode }) {
   const debouncedQuery = useDebouncedValue(query, 250);
   const workspaceId = useActiveWorkspaceId();
   const { data: results = [], isFetching } = useAppSearchResults(workspaceId, debouncedQuery, open);
-  const agents = useAiAgentProfiles({ enabled: open });
-  const combinedResults = useMemo(
-    () => combineSearchResults(agents.data ?? [], results, debouncedQuery),
-    [agents.data, debouncedQuery, results],
-  );
   const contextValue = useMemo(() => ({ openSearch: () => setOpen(true) }), []);
 
   useAppShortcut(
@@ -76,13 +66,13 @@ export function AppSearchProvider({ children }: { children: ReactNode }) {
             value={query}
           />
           <CommandList className="max-h-[28rem]">
-            {isFetching && combinedResults.length === 0 ? (
+            {isFetching && results.length === 0 ? (
               <div className="py-6 text-center text-sm text-content-secondary">Searching...</div>
-            ) : combinedResults.length === 0 ? (
+            ) : results.length === 0 ? (
               <CommandEmpty>No results found.</CommandEmpty>
             ) : (
               <CommandGroup heading="Results">
-                {combinedResults.map((result) => (
+                {results.map((result) => (
                   <CommandItem
                     key={`${result.type}:${result.id}`}
                     onSelect={() => openResult(result)}
@@ -94,11 +84,7 @@ export function AppSearchProvider({ children }: { children: ReactNode }) {
                       <div className="truncate text-xs text-content-secondary">{result.path}</div>
                     </div>
                     <CommandShortcut className="ml-3 shrink-0 rounded-sm bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium uppercase leading-4 tracking-normal text-content-secondary">
-                      {result.type === "database"
-                        ? "Database"
-                        : result.type === "agent"
-                          ? "Agent"
-                          : "Page"}
+                      {result.type === "database" ? "Database" : "Page"}
                     </CommandShortcut>
                   </CommandItem>
                 ))}
@@ -140,9 +126,7 @@ function ResultIcon({ result }: { result: SearchResult }) {
     return <PageIconDisplay size="sm" value={result.emoji} />;
   }
 
-  return result.type === "agent" ? (
-    <BotIcon className="size-4 text-content-secondary" />
-  ) : result.type === "database" ? (
+  return result.type === "database" ? (
     <DatabaseIcon className="size-4 text-content-secondary" />
   ) : (
     <DefaultPageIcon className="text-content-secondary" />

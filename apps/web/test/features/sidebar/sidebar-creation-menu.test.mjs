@@ -165,8 +165,8 @@ export function register({ readSource, assert, test }) {
       /<SidebarContent\s+className="block overflow-x-hidden overflow-y-auto overscroll-y-contain"/,
     );
     assert.ok(
-      sidebarSource.indexOf("<AgentsSection", contentStart) < footerStart,
-      "Agents must scroll with the remaining sections",
+      sidebarSource.indexOf("<DndContext", contentStart) < footerStart,
+      "Sidebar sections scroll inside the content region",
     );
 
     const notificationPosition = sidebarSource.indexOf("<NotificationCenter", headerStart);

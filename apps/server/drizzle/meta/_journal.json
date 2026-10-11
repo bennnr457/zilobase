@@ -757,6 +757,20 @@
       "when": 1791244800002,
       "tag": "0110_background_dispatch_recovery_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1791244800003,
+      "tag": "0111_remove_custom_agents",
+      "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1791244800004,
+      "tag": "0112_remove_ai_backend",
+      "breakpoints": true
     }
   ]
 }

@@ -3,8 +3,6 @@ import type { BackgroundLane } from "./contracts";
 export const BACKGROUND_TASK_KINDS = [
   "automation.event_window",
   "automation.run",
-  "agent.run",
-  "ai.job",
   "calendar.sync",
   "realtime.database",
   "notification.publish",
@@ -34,7 +32,6 @@ export const BACKGROUND_LANE_POLICY: Record<
 > = {
   fast: { concurrency: 8, redeliveries: 5 },
   automation: { concurrency: 4, redeliveries: 8 },
-  ai: { concurrency: 2, redeliveries: 5 },
   calendar: { concurrency: 2, redeliveries: 8 },
 };
 

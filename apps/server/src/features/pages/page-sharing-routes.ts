@@ -14,7 +14,6 @@ import {
 import { rejectMismatchedPinnedWorkspace } from "../auth/oauth-access";
 import { db } from "../../infrastructure/database";
 import {
-  aiAgentProfile,
   favorite,
   itemVisit,
   member,
@@ -28,8 +27,6 @@ import type { AppBindings } from "../../shared/types";
 import { readJsonBody } from "../../shared/http/request";
 import { activeMembershipCondition } from "../memberships";
 import { getPageTeamspaceSecurityPolicy } from "../teamspaces";
-
-import { getAgentProfileRole } from "../ai/agents/agent-profile-service";
 
 export const pageSharingRoutes = new Hono<AppBindings>();
 export const pageVisitRoutes = new Hono<AppBindings>();
@@ -49,8 +46,8 @@ pageVisitRoutes.post("/item-visits", async (c) => {
     return c.json({ error: "workspaceId is required" }, 400);
   }
 
-  if (itemKind !== "page" && itemKind !== "database" && itemKind !== "agent") {
-    return c.json({ error: "itemKind must be page, database, or agent" }, 400);
+  if (itemKind !== "page" && itemKind !== "database") {
+    return c.json({ error: "itemKind must be page or database" }, 400);
   }
 
   if (typeof itemId !== "string" || itemId.length === 0) {
@@ -68,17 +65,9 @@ pageVisitRoutes.post("/item-visits", async (c) => {
   }
 
   const canView =
-    itemKind === "agent"
-      ? Boolean(
-          await getAgentProfileRole({
-            profileId: itemId,
-            userId: user.id,
-            workspaceId,
-          }),
-        )
-      : itemKind === "page"
-        ? await canAccessPageInWorkspace(itemId, workspaceId, user.id, "view")
-        : await canAccessDatabaseInWorkspace(itemId, workspaceId, user.id, "view");
+    itemKind === "page"
+      ? await canAccessPageInWorkspace(itemId, workspaceId, user.id, "view")
+      : await canAccessDatabaseInWorkspace(itemId, workspaceId, user.id, "view");
 
   if (!canView) {
     return c.json({ error: "Forbidden" }, 403);
@@ -209,7 +198,7 @@ pageSharingRoutes.get("/:id/access-targets", async (c) => {
 pageSharingRoutes.put("/:id/access", async (c) => {
   const authorization = await authorizePageRoute(c, "full");
   if (!authorization.ok) return authorization.response;
-  const { user: requestUser, record, accessLevel: currentAccess } = authorization;
+  const { record } = authorization;
 
   const body = await readJsonBody(c.req);
 
@@ -225,7 +214,7 @@ pageSharingRoutes.put("/:id/access", async (c) => {
   const normalizedAccessLevel = normalizeAccessLevel(accessLevel);
 
   if (!isPageAccessTarget(targetType)) {
-    return c.json({ error: "targetType must be public, user, team, or agent" }, 400);
+    return c.json({ error: "targetType must be public, user, or team" }, 400);
   }
 
   if (typeof targetId !== "string" || targetId.length === 0) {
@@ -234,10 +223,6 @@ pageSharingRoutes.put("/:id/access", async (c) => {
 
   if (!normalizedAccessLevel) {
     return c.json({ error: "accessLevel must be view, comment, edit, or full" }, 400);
-  }
-
-  if (targetType === "agent" && normalizedAccessLevel === "full") {
-    return c.json({ error: "agent access must be view, comment, or edit" }, 400);
   }
 
   if (targetType === "public") {
@@ -258,25 +243,6 @@ pageSharingRoutes.put("/:id/access", async (c) => {
 
   if (targetType === "public") {
     target = { id: "*" };
-  } else if (targetType === "agent") {
-    const role = await getAgentProfileRole({
-      profileId: targetId,
-      userId: requestUser.id,
-      workspaceId: record.workspaceId,
-    });
-    if (role) {
-      [target] = await db
-        .select({ id: aiAgentProfile.id })
-        .from(aiAgentProfile)
-        .where(
-          and(
-            eq(aiAgentProfile.id, targetId),
-            eq(aiAgentProfile.workspaceId, record.workspaceId),
-            eq(aiAgentProfile.status, "active"),
-          ),
-        )
-        .limit(1);
-    }
   } else if (targetType === "team") {
     [target] = await db
       .select({ id: team.id })
@@ -341,8 +307,8 @@ pageSharingRoutes.put("/:id/access", async (c) => {
   return c.json({ access: rule });
 });
 
-function isPageAccessTarget(value: unknown): value is "public" | "user" | "team" | "agent" {
-  return typeof value === "string" && ["public", "user", "team", "agent"].includes(value);
+function isPageAccessTarget(value: unknown): value is "public" | "user" | "team" {
+  return typeof value === "string" && ["public", "user", "team"].includes(value);
 }
 
 pageSharingRoutes.delete("/:id/access/public", async (c) => {

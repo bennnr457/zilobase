@@ -23,15 +23,6 @@ export function register({ assert, loadModule, test }) {
         placements: [],
       },
       [],
-      [
-        {
-          id: "agent",
-          name: "Agent",
-          ownerUserId: "owner",
-          status: "active",
-          updatedAt: "2026-09-08",
-        },
-      ],
       "home",
     );
     for (const [view, id] of [
@@ -60,7 +51,7 @@ export function register({ assert, loadModule, test }) {
     assert.deepEqual(applyHomepageView([], "skills"), []);
     assert.deepEqual(applyHomepageView([], "instructions"), []);
   });
-  test("library models keep meeting rows separate and exclude deleted pages and archived agents", async () => {
+  test("library models keep meeting rows separate and exclude deleted pages", async () => {
     const { buildHomepageRows, applyHomepageView } = await load();
     const page = {
       id: "page",
@@ -90,26 +81,10 @@ export function register({ assert, loadModule, test }) {
         updatedAt: "2025-01-02",
       },
     ];
-    const agents = [
-      {
-        id: "active",
-        name: "Agent",
-        ownerUserId: "owner",
-        status: "active",
-        updatedAt: "2025-01-01",
-      },
-      {
-        id: "archived",
-        name: "Archive",
-        ownerUserId: "owner",
-        status: "archived",
-        updatedAt: "2025-01-01",
-      },
-    ];
-    const rows = buildHomepageRows(navigation, meetings, agents, "home");
+    const rows = buildHomepageRows(navigation, meetings, "home");
     assert.deepEqual(
       rows.map((row) => row.id),
-      ["page:page", "meeting:meeting", "agent:active"],
+      ["page:page", "meeting:meeting"],
     );
     assert.deepEqual(
       applyHomepageView(rows, "meetings").map((row) => row.openMeetingId),
@@ -117,11 +92,11 @@ export function register({ assert, loadModule, test }) {
     );
     assert.deepEqual(
       applyHomepageView(rows, "recents").map((row) => row.id),
-      ["page:page", "agent:active"],
+      ["page:page"],
     );
     assert.equal(rows[0].createdBy, "Owner");
     assert.deepEqual(
-      buildHomepageRows(navigation, meetings, agents, "trash").map((row) => row.id),
+      buildHomepageRows(navigation, meetings, "trash").map((row) => row.id),
       ["page:deleted"],
     );
   });
@@ -247,7 +222,6 @@ export function register({ assert, loadModule, test }) {
         ],
       },
       [],
-      [],
       "home",
       [teamspace("team-a"), teamspace("empty")],
     );
@@ -307,7 +281,6 @@ export function register({ assert, loadModule, test }) {
         databases: [],
         placements: [],
       },
-      [],
       [],
       "home",
     );
@@ -378,8 +351,8 @@ export function register({ assert, loadModule, test }) {
       dataSourceConfig: { emoji: "database-icon" },
     };
     const navigation = { pages: [backing], databases: [database], placements: [] };
-    assert.deepEqual(buildHomepageRows(navigation, [], [], "home"), []);
-    const row = buildHomepageRows(navigation, [], [], "trash").find(
+    assert.deepEqual(buildHomepageRows(navigation, [], "home"), []);
+    const row = buildHomepageRows(navigation, [], "trash").find(
       (row) => row.itemKind === "database",
     );
     assert.equal(row.createdBy, "owner@test");

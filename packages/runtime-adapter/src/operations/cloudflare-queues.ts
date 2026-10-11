@@ -1,10 +1,5 @@
 import { setTimeout as sleep } from "node:timers/promises";
-const names = [
-  "zilobase-background-fast",
-  "zilobase-automation-runs",
-  "zilobase-ai-jobs",
-  "zilobase-calendar-jobs",
-];
+const names = ["zilobase-background-fast", "zilobase-automation-runs", "zilobase-calendar-jobs"];
 export const CLOUDFLARE_CELL_QUEUE_NAMES = [...names, ...names.map((name) => name + "-dlq")];
 
 /** Uses the operator-provided inventory; never discovers or purges unrelated queues. */
@@ -25,14 +20,14 @@ export async function purgeCloudflareCellQueues(
   )
     throw new Error("CLOUDFLARE_QUEUE_OPERATIONS_CREDENTIALS_REQUIRED");
   const inventory: unknown = JSON.parse(String(env.CLOUDFLARE_BACKGROUND_QUEUE_IDS ?? "{}"));
-  if (!inventory || typeof inventory !== "object" || Object.keys(inventory).length !== 8)
+  if (!inventory || typeof inventory !== "object" || Object.keys(inventory).length !== 6)
     throw new Error("CLOUDFLARE_QUEUE_INVENTORY_INVALID");
   const ids = inventory as Record<string, unknown>;
   if (
     !CLOUDFLARE_CELL_QUEUE_NAMES.every(
       (name) => typeof ids[name] === "string" && /^[a-f0-9]{32}$/i.test(String(ids[name])),
     ) ||
-    new Set(Object.values(ids)).size !== 8
+    new Set(Object.values(ids)).size !== 6
   )
     throw new Error("CLOUDFLARE_QUEUE_INVENTORY_INVALID");
   async function api(path: string, method = "GET", body?: string) {

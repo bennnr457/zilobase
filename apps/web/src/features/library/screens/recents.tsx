@@ -9,7 +9,7 @@ import {
 import { CreateTeamspaceDialog as CreateLibraryTeamspaceDialog } from "@/features/teamspaces/creation/index";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { BotIcon, ChevronDown, Database, FileText, Loader2, Plus } from "@/shared/components/icons";
+import { ChevronDown, Database, FileText, Loader2, Plus } from "@/shared/components/icons";
 import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
@@ -52,7 +52,6 @@ import { defaultUserSettings, normalizeSidebarConfig } from "@zilobase/features/
 import { useUpdateUserSettings, useUserSettings } from "@zilobase/features/user-settings/react";
 
 import { useTeamspaces } from "@zilobase/features/teamspaces/react";
-import { useAiAgentProfiles, useCreateAiAgentProfile } from "@zilobase/features/ai-chat/react";
 
 const homepageViews = libraryViews.map((view) => ({ ...view, icon: libraryViewIcons[view.id] }));
 
@@ -83,7 +82,6 @@ export default function RecentsPage() {
   const { data: teamspaces = [], isLoading: teamspacesLoading } = useTeamspaces(
     mode === "home" ? workspaceId : null,
   );
-  const { data: customAgents = [] } = useAiAgentProfiles({ enabled: mode === "home" });
   const {
     openDatabaseSidePane,
     renderedSidePaneDatabaseId,
@@ -132,11 +130,10 @@ export default function RecentsPage() {
     return buildHomepageRows(
       navigation ?? { databases: [], pages: [], placements: [] },
       meetingsPayload?.meetings ?? [],
-      customAgents,
       mode,
       teamspaces,
     );
-  }, [customAgents, meetingsPayload?.meetings, navigation, mode, teamspaces]);
+  }, [meetingsPayload?.meetings, navigation, mode, teamspaces]);
   const pageTitle = "Library";
 
   useEffect(() => {
@@ -230,9 +227,7 @@ export default function RecentsPage() {
       getMergedNameColumnConfig(current, config as DatabaseNameColumnConfig),
     );
   };
-  const createAgent = useCreateAiAgentProfile();
-  const isCreating =
-    createPageMutation.isPending || createDatabase.isPending || createAgent.isPending;
+  const isCreating = createPageMutation.isPending || createDatabase.isPending;
 
   const createPage = async () => {
     if (!workspaceId || createPageMutation.isPending) {
@@ -272,15 +267,6 @@ export default function RecentsPage() {
     }
   };
 
-  const createCustomAgent = async () => {
-    try {
-      const payload = await createAgent.mutateAsync({ name: "Untitled agent" });
-      await navigate({ params: { agentId: payload.agent.id }, to: "/agents/$agentId" });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not create agent.");
-    }
-  };
-
   const openHomepagePage = (pageId: string) => {
     const row = rows.find(
       (candidate) => candidate.id === pageId || candidate.openPageId === pageId,
@@ -292,10 +278,6 @@ export default function RecentsPage() {
           search: { teamspace: row.teamspaceId, tab: "general" },
           to: "/settings/teamspaces",
         });
-        return;
-      }
-      if (row.openAgentId) {
-        void navigate({ params: { agentId: row.openAgentId }, to: "/agents/$agentId" });
         return;
       }
       if (row.openDatabaseId) {
@@ -481,10 +463,6 @@ export default function RecentsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem onSelect={() => void createCustomAgent()}>
-                                <BotIcon />
-                                <span>Agent</span>
-                              </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => void createStandaloneDatabase()}>
                                 <Database />
                                 <span>Database</span>

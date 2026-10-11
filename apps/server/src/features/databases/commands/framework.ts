@@ -559,23 +559,6 @@ export async function executeDatabaseCommand<TResult = unknown>(
       // The durable outbox remains retryable; delivery cannot reject a committed receipt.
       console.error("Database command delivery deferred", error);
     });
-    if (agentTriggerFacts.length) {
-      try {
-        const { dispatchDatabaseAgentMutationFacts } =
-          await import("../../ai/agents/agent-trigger-service");
-        await dispatchDatabaseAgentMutationFacts(input.env, {
-          eventKeyPrefix: `database-command:${input.request.commandId}`,
-          facts: agentTriggerFacts,
-        });
-      } catch (error) {
-        console.error(
-          JSON.stringify({
-            error: error instanceof Error ? error.name : "UnknownError",
-            event: "custom_agent_database_trigger_dispatch_failed",
-          }),
-        );
-      }
-    }
   }
   for (const deliver of deliveries) {
     try {

@@ -92,14 +92,10 @@ Read the self-hosting guide:
 
 ## Ask AI
 
-Ask AI can search accessible Zilobase pages and databases, read page comments,
-complete supported page/database changes with durable receipts, analyze owned
-file uploads, and create expiring downloadable artifacts. The same conversation
-works in full-page chat and in a persisted docked or floating desktop panel.
-
-Permissions and tool availability are resolved on the server. See the
-[architecture map](./architecture/README.md) and
-[operations guide](./docs/ai/ask-ai-operations.md).
+The Ask AI screens remain in the web app: a full page, a docked sidebar, and a
+floating panel. The server chat, settings, connector, and job implementation is
+removed, so those screens have no backend. See the
+[architecture map](./architecture/README.md).
 
 ## Development
 

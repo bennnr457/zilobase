@@ -25,15 +25,9 @@ bootstrap an initialized database again.
 
 ## Ask AI
 
-Ask AI is enabled when `OPENAI_API_KEY` is configured and object storage is
-healthy. Its files and artifacts use the same S3-compatible store as the rest
-of the installation, with independent expiry metadata and scheduled cleanup.
-
-Apply migrations before rollout, review the effective quotas, verify member and
-admin authorization paths, and monitor only sanitized audit metadata. The full
-environment-variable table and rollout checks are in
-[Ask AI operations](../ai/ask-ai-operations.md). Follow the source links in the
-[architecture map](../../architecture/README.md) to inspect current capability enforcement.
+The web app still includes the Ask AI screens. The server does not serve chat,
+settings, connectors, or AI jobs. `OPENAI_API_KEY` is used by meeting
+transcription. See the [architecture map](../../architecture/README.md).
 
 For Helm, run `helm lint`, render the proposed values, and use
 `helm upgrade --install --wait`. The `realtime.existingSecret` must provide a

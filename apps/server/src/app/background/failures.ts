@@ -9,8 +9,6 @@ import {
   type BackgroundLane,
 } from "../../infrastructure/background/contracts";
 import type { RuntimeEnv } from "../../shared/config/config";
-import { failAiJobDelivery } from "../../features/ai/jobs/delivery-failure";
-import { failAgentDelivery } from "../../features/ai/execution/delivery-failure";
 import { failAutomationDelivery } from "../../features/automations/execution/delivery-failure";
 import { failCalendarDelivery } from "../../features/calendar/delivery-failure";
 import { failDatabaseRealtimeDelivery } from "../../features/databases/realtime/background";
@@ -82,12 +80,6 @@ export async function reconcileBackgroundFailures(env: RuntimeEnv) {
     for (const row of rows) {
       let handled: boolean;
       switch (row.task.kind) {
-        case "ai.job":
-          handled = await failAiJobDelivery(row.resourceId);
-          break;
-        case "agent.run":
-          handled = await failAgentDelivery(row.resourceId);
-          break;
         case "automation.run":
           handled = await failAutomationDelivery(row.resourceId, false);
           break;

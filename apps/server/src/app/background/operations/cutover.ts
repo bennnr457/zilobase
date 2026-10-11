@@ -5,13 +5,11 @@ import { getBackgroundCellId } from "../../../infrastructure/background/contract
 import {
   databaseAutomation,
   databaseAutomationRevision,
-  aiAgentTrigger,
 } from "../../../infrastructure/database/schema";
 import {
   databaseAutomationDefinitionSchema,
   getNextDatabaseAutomationOccurrence,
 } from "@zilobase/features/automations";
-import { computeNextAgentSchedule } from "../../../features/ai/agents/agent-definition";
 import type { RuntimeEnv } from "../../../shared/config/config";
 
 export type CutoverOptions = {
@@ -30,17 +28,12 @@ export async function previewBackgroundCutover(env: RuntimeEnv, options: Cutover
   assertCutoverScope(env, options);
   const cutoff = options.cutoff;
   const result = await db.execute<{ kind: string; count: number }>(sql`
-    select 'ai_jobs' as kind, count(*)::int as count from ai_job where created_at <= ${cutoff} and status in ('queued','running')
-    union all select 'agent_runs', count(*)::int from ai_agent_run where created_at <= ${cutoff} and status in ('queued','running','waiting_approval')
-    union all select 'automation_runs', count(*)::int from database_automation_run where created_at <= ${cutoff} and status in ('queued','running')
+    select 'automation_runs' as kind, count(*)::int as count from database_automation_run where created_at <= ${cutoff} and status in ('queued','running')
     union all select 'event_windows', count(*)::int from database_automation_event_window where created_at <= ${cutoff} and status in ('accumulating','ready','processing')
-    union all select 'pending_approvals', count(*)::int from ai_agent_pending_action where created_at <= ${cutoff} and status in ('pending','executing')
     union all select 'dispatches', count(*)::int from background_dispatch where cell_id = ${options.cellId} and created_at <= ${cutoff} and status in ('pending','published','running')
     union all select 'foreign_cell_dispatches', count(*)::int from background_dispatch where cell_id <> ${options.cellId}
     union all select 'calendar_cursors', count(*)::int from calendar_provider_calendar where (dirty_at is null or dirty_at <= ${cutoff}) and (page_token is not null or lease_id is not null or dirty_at <= ${cutoff})
     union all select 'newer_unfinished_work', (
-      (select count(*) from ai_job where created_at > ${cutoff} and status in ('queued','running')) +
-      (select count(*) from ai_agent_run where created_at > ${cutoff} and status in ('queued','running','waiting_approval')) +
       (select count(*) from database_automation_run where created_at > ${cutoff} and status in ('queued','running')) +
       (select count(*) from database_automation_event_window where created_at > ${cutoff} and status in ('accumulating','ready','processing')) +
       (select count(*) from background_dispatch where cell_id=${options.cellId} and created_at > ${cutoff} and status in ('pending','published','running'))
@@ -82,31 +75,6 @@ export async function applyBackgroundCutover(
     async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${"background-cutover:" + options.cellId}))`,
-      );
-      await tx.execute(sql`
-      update ai_chat_upload set status='rejected', updated_at=${cutoff}
-      where status in ('pending','processing') and id in (
-        select input->>'uploadId' from ai_job where type='upload-extraction' and created_at <= ${cutoff} and status in ('queued','running'))`);
-      await tx.execute(sql`
-      update ai_mcp_materialization set status='failed', error_code='QUEUE_CUTOVER_CANCELLED', completed_at=${cutoff}, updated_at=${cutoff}
-      where status in ('queued','running') and ai_job_id in (select id from ai_job where created_at <= ${cutoff} and status in ('queued','running'))`);
-      await tx.execute(sql`
-      update meeting set status='failed', updated_at=${cutoff}
-      where status='processing' and id in (select input->>'meetingId' from ai_job where type='meeting-summary' and created_at <= ${cutoff} and status in ('queued','running'))`);
-      await tx.execute(sql`
-      update ai_agent_conversation_message set status='cancelled', updated_at=${cutoff}
-      where kind in ('run','approval') and status='pending' and run_id in (select id from ai_agent_run where created_at <= ${cutoff} and status in ('queued','running','waiting_approval'))`);
-      await tx.execute(sql`
-      update ai_agent_tool_execution set outcome_unknown=(outcome_unknown or effect='write'), status='cancelled', error_code='QUEUE_CUTOVER_CANCELLED', completed_at=${cutoff}, updated_at=${cutoff}
-      where status='running' and agent_run_id in (select id from ai_agent_run where created_at <= ${cutoff} and status in ('queued','running','waiting_approval'))`);
-      await tx.execute(
-        sql`update ai_agent_pending_action set status='rejected', error='QUEUE_CUTOVER_CANCELLED', completed_at=${cutoff}, rejected_at=${cutoff}, updated_at=${cutoff} where created_at <= ${cutoff} and status in ('pending','executing')`,
-      );
-      await tx.execute(
-        sql`update ai_job set status='cancelled', dedupe_key=dedupe_key || ':cutover:' || id, error='QUEUE_CUTOVER_CANCELLED', completed_at=${cutoff}, worker_id=null, lease_expires_at=null, updated_at=${cutoff} where created_at <= ${cutoff} and status in ('queued','running')`,
-      );
-      await tx.execute(
-        sql`update ai_agent_run set status='cancelled', error_code='QUEUE_CUTOVER_CANCELLED', error_summary='Cancelled during queue cutover.', completed_at=${cutoff}, lease_owner=null, lease_expires_at=null, updated_at=${cutoff} where created_at <= ${cutoff} and status in ('queued','running','waiting_approval')`,
       );
       await tx.execute(
         sql`update database_automation_step_run set status='skipped', error_code='QUEUE_CUTOVER_CANCELLED', error_summary='Cancelled during queue cutover.', finished_at=${cutoff}, updated_at=${cutoff} where status in ('queued','running') and run_id in (select id from database_automation_run where created_at <= ${cutoff} and status in ('queued','running'))`,
@@ -161,25 +129,6 @@ export async function applyBackgroundCutover(
           .set({ nextRunAt, updatedAt: cutoff })
           .where(eq(databaseAutomation.id, record.id));
       }
-      const triggers = await tx
-        .select()
-        .from(aiAgentTrigger)
-        .where(
-          and(
-            eq(aiAgentTrigger.kind, "schedule"),
-            eq(aiAgentTrigger.status, "active"),
-            lte(aiAgentTrigger.nextRunAt, cutoff),
-          ),
-        )
-        .for("update");
-      for (const trigger of triggers)
-        await tx
-          .update(aiAgentTrigger)
-          .set({
-            nextRunAt: computeNextAgentSchedule(trigger.config as Record<string, unknown>, cutoff),
-            updatedAt: cutoff,
-          })
-          .where(eq(aiAgentTrigger.id, trigger.id));
       await tx.execute(
         sql`update calendar_provider_calendar set page_token=null, sync_token=null, lease_id=null, lease_expires_at=null, dirty_at=${fresh} where (dirty_at is null or dirty_at <= ${cutoff}) and (page_token is not null or lease_id is not null or dirty_at <= ${cutoff})`,
       );

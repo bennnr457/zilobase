@@ -664,9 +664,6 @@ function BasicAutofillDialog({ propertyName }: { propertyName: string }) {
                 <Sparkles />
                 Basic
               </TabsTrigger>
-              <TabsTrigger disabled value="agent">
-                Custom Agent
-              </TabsTrigger>
             </TabsList>
             <TabsContent className="grid gap-5" value="basic">
               <div className="grid gap-2">
@@ -715,7 +712,6 @@ function BasicAutofillDialog({ propertyName }: { propertyName: string }) {
                 </button>
               </div>
             </TabsContent>
-            <TabsContent value="agent" />
           </Tabs>
         </section>
 

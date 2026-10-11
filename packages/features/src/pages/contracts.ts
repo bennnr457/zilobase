@@ -142,7 +142,7 @@ export type PagePropertyPresenceTarget = {
 
 export type AccessLevel = "view" | "comment" | "edit" | "full";
 
-export type AccessTargetType = "public" | "user" | "team" | "agent";
+export type AccessTargetType = "public" | "user" | "team";
 
 export type PageAccessRule = {
   id: string;

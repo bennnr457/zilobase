@@ -13,7 +13,7 @@ const env = {
   CLOUDFLARE_API_TOKEN: "test-token",
   CLOUDFLARE_BACKGROUND_QUEUE_IDS: JSON.stringify(ids),
 };
-it("validates every queue before purging and confirms all eight purges", async () => {
+it("validates every queue before purging and confirms all six purges", async () => {
   const request = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     const path = String(url).split("/");
     const purge = path.at(-1) === "purge";
@@ -27,10 +27,10 @@ it("validates every queue before purging and confirms all eight purges", async (
     });
   });
   const result = await purgeCloudflareCellQueues(env, "cell", request);
-  expect(result.purged).toHaveLength(8);
+  expect(result.purged).toHaveLength(6);
   const calls = request.mock.calls;
-  expect(calls.slice(0, 8).every(([, init]) => init?.method === "GET")).toBe(true);
-  expect(calls.filter(([, init]) => init?.method === "POST")).toHaveLength(8);
+  expect(calls.slice(0, 6).every(([, init]) => init?.method === "GET")).toBe(true);
+  expect(calls.filter(([, init]) => init?.method === "POST")).toHaveLength(6);
 });
 it("refuses a mismatched cell or inventory before destructive requests", async () => {
   const request = vi.fn(async () =>

@@ -2,6 +2,10 @@
 
 ## Domain Terms
 
+### Ask AI
+
+The web chat screens, settings screens, and shared `ai-chat` client contracts. The server chat, settings, connector, job, and ChatAgent implementation is removed.
+
 ### Desktop bridge
 
 The versioned `window.zilobaseDesktop` API exposed by Electron preload to the

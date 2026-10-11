@@ -17,11 +17,10 @@ import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
 import {
   backgroundDispatch,
   workspace,
-  aiJob,
   backgroundMaintenanceTask,
   user,
-  aiChatThread,
-  aiChatMessage,
+  inProductNotification,
+  inProductNotificationOutbox,
 } from "../infrastructure/database/schema";
 import { createBackgroundTask } from "../infrastructure/background/contracts";
 import {
@@ -34,7 +33,6 @@ import {
   recordBackgroundExhaustion,
   reconcileBackgroundFailures,
 } from "../app/background/failures";
-import { enqueueAiJob } from "../features/ai/jobs/ai-jobs";
 import { runBackgroundDelivery } from "../app/background/delivery";
 
 const connection = process.env.ZILOBASE_BACKGROUND_VERIFY_URL;
@@ -69,7 +67,7 @@ try {
         backgroundTransaction(env, async (tx) => {
           await tx.insert(workspace).values({ id: "rollback", name: "Rollback", slug: "rollback" });
           await persistBackgroundTasks(env, [
-            createBackgroundTask({ env, kind: "ai.job", resourceId: "rollback" }),
+            createBackgroundTask({ env, kind: "notification.publish", resourceId: "rollback" }),
           ]);
           throw new Error("rollback fixture");
         }),
@@ -83,30 +81,24 @@ try {
     runWithDb(first.db, async () => {
       await assert.rejects(
         backgroundTransaction(env, async () => {
-          await enqueueAiJob({
-            env,
-            workspaceId: "workspace",
-            type: "fixture",
-            input: {},
-            dedupeKey: "nested-rollback",
-          });
+          await persistBackgroundTasks(env, [
+            createBackgroundTask({
+              env,
+              kind: "notification.publish",
+              resourceId: "nested-rollback",
+            }),
+          ]);
           assert.deepEqual(await publishBackgroundDispatches(env), { published: 0, claimed: 0 });
           assert.equal(sent.length, 0, "Nested source writes cannot publish before outer commit");
           throw new Error("nested rollback");
         }),
       );
-      assert.equal((await first.db.select().from(aiJob)).length, 0);
       assert.equal((await first.db.select().from(backgroundDispatch)).length, 0);
-      const job = await enqueueAiJob({
-        env,
-        workspaceId: "workspace",
-        type: "fixture",
-        input: {},
-        dedupeKey: "once",
-      });
-      assert.equal((await first.db.select().from(aiJob)).length, 1);
+      await persistBackgroundTasks(env, [
+        createBackgroundTask({ env, kind: "notification.publish", resourceId: "once" }),
+      ]);
       const [dispatch] = await first.db.select().from(backgroundDispatch);
-      assert.equal(dispatch.resourceId, job.id);
+      assert.equal(dispatch.resourceId, "once");
       assert.equal(dispatch.status, "pending");
       await first.db.update(backgroundDispatch).set({ nextPublicationAt: new Date(0) });
       brokerDown = false;
@@ -121,7 +113,7 @@ try {
         runBackgroundDelivery({
           body: dispatch.task,
           cellId: env.ZILOBASE_CELL_ID,
-          lane: "ai",
+          lane: "fast",
           store,
           execute: async () => {
             effects++;
@@ -136,7 +128,7 @@ try {
       assert.equal(sent.length, 1, "Completed work never republishes");
       const future = createBackgroundTask({
         env,
-        kind: "ai.job",
+        kind: "notification.publish",
         resourceId: "beyond-horizon",
         availableAt: new Date(Date.now() + 13 * 3600_000),
       });
@@ -163,31 +155,17 @@ try {
         "Business retry is a new occurrence",
       );
       assert.equal(rows.find((row) => row.id === task.taskId)?.status, "completed");
-      const failing = await enqueueAiJob({
+      const failing = createBackgroundTask({
         env,
-        workspaceId: "workspace",
-        type: "fixture",
-        input: {},
-        dedupeKey: "exhaustion",
+        kind: "notification.publish",
+        resourceId: "exhaustion",
       });
+      await persistBackgroundTasks(env, [failing]);
       const [ticket] = await first.db
         .select()
         .from(backgroundDispatch)
-        .where(eq(backgroundDispatch.resourceId, failing.id));
-      await first.db
-        .update(aiJob)
-        .set({
-          status: "running",
-          workerId: "live-owner",
-          leaseExpiresAt: new Date(Date.now() + 60_000),
-        })
-        .where(eq(aiJob.id, failing.id));
-      await recordBackgroundExhaustion(env, ticket.task, "ai");
-      assert.equal(
-        (await first.db.select().from(aiJob).where(eq(aiJob.id, failing.id)))[0].status,
-        "running",
-        "Exhaustion preserves live feature ownership",
-      );
+        .where(eq(backgroundDispatch.resourceId, failing.resourceId));
+      await recordBackgroundExhaustion(env, ticket.task, "fast");
       assert.equal(
         (
           await first.db
@@ -197,15 +175,7 @@ try {
         )[0].status,
         "exhausted",
       );
-      await first.db
-        .update(aiJob)
-        .set({ leaseExpiresAt: new Date(0) })
-        .where(eq(aiJob.id, failing.id));
       await reconcileBackgroundFailures(env);
-      assert.equal(
-        (await first.db.select().from(aiJob).where(eq(aiJob.id, failing.id)))[0].status,
-        "failed",
-      );
       const [failure] = await first.db
         .select()
         .from(backgroundDispatch)
@@ -221,13 +191,12 @@ try {
         1,
         "Exhaustion cannot be replayed by publication recovery",
       );
-      const queued = await enqueueAiJob({
+      const queued = createBackgroundTask({
         env,
-        workspaceId: "workspace",
-        type: "fixture",
-        input: {},
-        dedupeKey: "maintenance",
+        kind: "notification.publish",
+        resourceId: "maintenance",
       });
+      await persistBackgroundTasks(env, [queued]);
       await ensureBackgroundMaintenanceTasks();
       await first.db
         .update(backgroundMaintenanceTask)
@@ -238,9 +207,14 @@ try {
         .where(eq(backgroundMaintenanceTask.taskKey, "background.reconcile"));
       await runDueBackgroundMaintenance({ env, workerId: "fixture-maintenance" });
       assert.equal(
-        (await first.db.select().from(aiJob).where(eq(aiJob.id, queued.id)))[0].status,
-        "queued",
-        "Maintenance cannot invoke an AI handler",
+        (
+          await first.db
+            .select()
+            .from(backgroundDispatch)
+            .where(eq(backgroundDispatch.id, queued.taskId))
+        )[0].status,
+        "pending",
+        "Maintenance cannot invoke a feature handler",
       );
       assert.ok(
         (
@@ -253,41 +227,62 @@ try {
       await first.db
         .insert(user)
         .values({ id: "operator-owner", name: "Fixture", email: "owner@background.invalid" });
-      await first.db
-        .insert(aiChatThread)
-        .values({ id: "operator-thread", workspaceId: "workspace", userId: "operator-owner" });
-      await first.db.insert(aiChatMessage).values({
-        id: "history",
-        threadId: "operator-thread",
-        role: "user",
-        parts: [{ type: "text", text: "Retained conversation history" }],
-        sequence: 0,
-      });
-      const replayable = await enqueueAiJob({
-        env,
+      await first.db.insert(inProductNotification).values({
+        id: "replay-notification",
         workspaceId: "workspace",
         userId: "operator-owner",
-        type: "thread-compaction",
-        input: { threadId: "operator-thread" },
-        dedupeKey: "operator-replay",
+        message: "Replay notification",
       });
+      await first.db.insert(inProductNotificationOutbox).values({
+        id: "replay-outbox",
+        notificationId: "replay-notification",
+        workspaceId: "workspace",
+        userId: "operator-owner",
+        nextAttemptAt: new Date(),
+      });
+      const replayable = createBackgroundTask({
+        env,
+        kind: "notification.publish",
+        resourceId: "replay-outbox",
+      });
+      await persistBackgroundTasks(env, [replayable]);
       const [replayTicket] = await first.db
         .select()
         .from(backgroundDispatch)
-        .where(eq(backgroundDispatch.resourceId, replayable.id));
-      await recordBackgroundExhaustion(env, replayTicket.task, "ai");
+        .where(eq(backgroundDispatch.resourceId, replayable.resourceId));
+      await recordBackgroundExhaustion(env, replayTicket.task, "fast");
+      await reconcileBackgroundFailures(env);
+      assert.equal(
+        (
+          await first.db
+            .select()
+            .from(inProductNotificationOutbox)
+            .where(eq(inProductNotificationOutbox.id, "replay-outbox"))
+        )[0].status,
+        "failed",
+      );
       const replay = await replayBackgroundFailure(env, replayTicket.id);
       assert.notEqual(replay.taskId, replayTicket.id);
       assert.equal(
-        (await first.db.select().from(aiJob).where(eq(aiJob.id, replayable.id)))[0].status,
-        "queued",
+        (
+          await first.db
+            .select()
+            .from(inProductNotificationOutbox)
+            .where(eq(inProductNotificationOutbox.id, "replay-outbox"))
+        )[0].status,
+        "pending",
       );
       await assert.rejects(replayBackgroundFailure(env, replayTicket.id), /INELIGIBLE/);
       await first.db
-        .update(aiJob)
-        .set({ status: "succeeded", output: { retained: true }, completedAt: new Date() })
-        .where(eq(aiJob.id, replayable.id));
-      const completed = (await first.db.select().from(aiJob).where(eq(aiJob.id, replayable.id)))[0];
+        .update(inProductNotificationOutbox)
+        .set({ status: "published" })
+        .where(eq(inProductNotificationOutbox.id, "replay-outbox"));
+      const completed = (
+        await first.db
+          .select()
+          .from(backgroundDispatch)
+          .where(eq(backgroundDispatch.resourceId, "once"))
+      )[0];
       await assert.rejects(replayBackgroundFailure(env, replayTicket.id), /INELIGIBLE/);
       await seedCutoverAcceptance(env);
       const options = {
@@ -296,10 +291,14 @@ try {
         isolatedDatabase: true,
         runtimesStopped: true,
       };
-      const beforeCutover = await first.db.select().from(aiJob);
+      const beforeCutover = await first.db.select().from(backgroundDispatch);
       const preview = await previewBackgroundCutover(env, options);
-      assert.ok(preview.counts.ai_jobs > 0);
-      assert.deepEqual(await first.db.select().from(aiJob), beforeCutover, "Preview is read only");
+      assert.ok(preview.counts.dispatches > 0);
+      assert.deepEqual(
+        await first.db.select().from(backgroundDispatch),
+        beforeCutover,
+        "Preview is read only",
+      );
       let purges = 0;
       await assert.rejects(
         applyBackgroundCutover(env, { ...options, isolatedDatabase: false }, async () => {
@@ -317,7 +316,7 @@ try {
       const foreignEnv = { ...env, ZILOBASE_CELL_ID: "another-cell" };
       const foreign = createBackgroundTask({
         env: foreignEnv,
-        kind: "ai.job",
+        kind: "notification.publish",
         resourceId: "foreign",
       });
       await persistBackgroundTasks(foreignEnv, [foreign]);
@@ -328,7 +327,11 @@ try {
         /FOREIGN_CELL/,
       );
       await first.db.delete(backgroundDispatch).where(eq(backgroundDispatch.id, foreign.taskId));
-      const newer = createBackgroundTask({ env, kind: "ai.job", resourceId: "post-cutover" });
+      const newer = createBackgroundTask({
+        env,
+        kind: "notification.publish",
+        resourceId: "post-cutover",
+      });
       await persistBackgroundTasks(env, [newer]);
       await first.db
         .update(backgroundDispatch)
@@ -347,18 +350,23 @@ try {
 
       assert.equal(purges, 2, "Fixed-cutoff apply is safely repeatable");
       assert.equal(
-        (await first.db.select().from(aiJob).where(eq(aiJob.id, queued.id)))[0].status,
+        (
+          await first.db
+            .select()
+            .from(backgroundDispatch)
+            .where(eq(backgroundDispatch.id, queued.taskId))
+        )[0].status,
         "cancelled",
       );
       assert.deepEqual(
-        (await first.db.select().from(aiJob).where(eq(aiJob.id, completed.id)))[0],
+        (
+          await first.db
+            .select()
+            .from(backgroundDispatch)
+            .where(eq(backgroundDispatch.id, completed.id))
+        )[0],
         completed,
         "Completed execution is unchanged",
-      );
-      assert.equal(
-        (await first.db.select().from(aiChatMessage).where(eq(aiChatMessage.id, "history")))[0]
-          .status,
-        "completed",
       );
       assert.equal((await first.db.select().from(workspace)).length, 1);
     }),

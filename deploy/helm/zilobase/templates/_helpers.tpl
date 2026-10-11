@@ -49,10 +49,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
   valueFrom: { secretKeyRef: { name: {{ .Values.existingSecret | quote }}, key: {{ .Values.secretKeys.s3SecretAccessKey | quote }} } }
 - name: SMTP_PASSWORD
   valueFrom: { secretKeyRef: { name: {{ .Values.existingSecret | quote }}, key: {{ .Values.secretKeys.smtpPassword | quote }}, optional: true } }
-{{- if .Values.mcp.enabled }}
-- name: MCP_CREDENTIAL_ENCRYPTION_KEYS
-  valueFrom: { secretKeyRef: { name: {{ .Values.existingSecret | quote }}, key: {{ .Values.secretKeys.mcpCredentialEncryptionKeys | quote }} } }
-{{- end }}
 {{- if eq .Values.queue.existingSecret .Values.realtime.existingSecret }}
 {{- fail "queue.existingSecret must be separate from realtime.existingSecret" }}
 {{- end }}
@@ -71,11 +67,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ end }}
 - { name: DATABASE_AUTOMATIONS_ENABLED, value: "false" }
 - { name: DATABASE_AUTOMATIONS_EXECUTION_DISABLED, value: "true" }
-- { name: AI_MCP_ENABLED, value: {{ ternary "true" "false" .Values.mcp.enabled | quote }} }
-- { name: AI_MCP_CUSTOM_SERVERS_ENABLED, value: {{ ternary "true" "false" .Values.mcp.customServersEnabled | quote }} }
-- { name: AI_MCP_EXTERNAL_WRITES_ENABLED, value: {{ ternary "true" "false" .Values.mcp.externalWritesEnabled | quote }} }
-- { name: AI_MCP_EXECUTION_DISABLED, value: {{ ternary "true" "false" .Values.mcp.executionDisabled | quote }} }
-- { name: MCP_CLIENT_METADATA_URL, value: {{ .Values.mcp.clientMetadataUrl | quote }} }
 - { name: BETTER_AUTH_URL, value: {{ .Values.config.externalUrl | quote }} }
 - { name: CLIENT_URL, value: {{ .Values.config.externalUrl | quote }} }
 - { name: IMAGE_STORAGE_MODE, value: "s3" }

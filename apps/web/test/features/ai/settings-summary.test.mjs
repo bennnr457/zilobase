@@ -16,9 +16,6 @@ export function register({ assert, loadModule, test }) {
       iconPosition: "inline",
       instructions: "",
       instructionDocument: {},
-      triggers: [],
-      resources: [],
-      grants: [],
       connectors: [],
     };
     const state = { definition, saved: structuredClone(definition) };

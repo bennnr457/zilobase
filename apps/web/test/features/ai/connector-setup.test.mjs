@@ -23,7 +23,7 @@ export function register({ assert, loadModule, test }) {
     assert.equal(catalogState.connected, true);
     const approved = describeConnectorSetup({
       provider: "approved:server",
-      scope: "agent",
+      scope: "personal",
       approved: [{ id: "server", label: "Approved", endpointUrl: "https://tools.test" }],
       connections,
     });
@@ -49,29 +49,26 @@ export function register({ assert, loadModule, test }) {
     });
     assert.equal(unavailable.description, "Disabled here");
   });
-  test("connector actions enforce actor roles and prevent reconnecting while busy", async () => {
+  test("connector actions stay personal and prevent reconnecting while busy", async () => {
     const { connectorActionState } = await loadModule(
       "/src/features/ai/settings/model/connector-setup.ts",
     );
     const setup = { connected: false, unavailable: false, label: "Tools" };
-    assert.deepEqual(connectorActionState(setup, "personal", undefined, false), {
+    assert.deepEqual(connectorActionState(setup, "personal", false), {
       disabled: false,
       label: "Connect Tools",
     });
-    for (const role of ["owner", "editor"])
-      assert.equal(connectorActionState(setup, "agent", role, false).disabled, false);
-    for (const role of ["viewer", undefined])
-      assert.equal(connectorActionState(setup, "agent", role, false).disabled, true);
-    assert.deepEqual(connectorActionState(setup, "personal", undefined, true), {
+    assert.equal(connectorActionState(setup, "other", false).disabled, true);
+    assert.deepEqual(connectorActionState(setup, "personal", true), {
       disabled: true,
       label: "Connecting…",
     });
-    assert.deepEqual(
-      connectorActionState({ ...setup, connected: true }, "personal", undefined, true),
-      { disabled: true, label: "Connected" },
-    );
+    assert.deepEqual(connectorActionState({ ...setup, connected: true }, "personal", true), {
+      disabled: true,
+      label: "Connected",
+    });
     assert.equal(
-      connectorActionState({ ...setup, unavailable: true }, "personal", undefined, false).disabled,
+      connectorActionState({ ...setup, unavailable: true }, "personal", false).disabled,
       true,
     );
   });

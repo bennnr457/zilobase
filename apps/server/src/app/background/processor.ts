@@ -1,7 +1,4 @@
 import { processCalendarSyncTask } from "../../features/calendar/background";
-import { AI_JOB_HANDLERS } from "../../features/ai/jobs/ai-job-handlers";
-import { runAiJobById } from "../../features/ai/jobs/ai-jobs";
-import { processAgentRun } from "../../features/ai/execution/agent-run-service";
 import { processDatabaseAutomationEventWindow } from "../../features/automations/triggers/event-evaluator";
 import { processDatabaseAutomationRun } from "../../features/automations/execution/run-engine";
 import { processDatabaseRealtimeTask } from "../../features/databases/realtime/background";
@@ -81,14 +78,6 @@ async function processBackgroundTaskInner(input: {
         workerId,
       }),
     "automation.run": () => processDatabaseAutomationRun(env, { runId: task.resourceId, workerId }),
-    "agent.run": () => processAgentRun(env, { runId: task.resourceId, workerId }),
-    "ai.job": () =>
-      runAiJobById({
-        env,
-        handlers: AI_JOB_HANDLERS,
-        jobId: task.resourceId,
-        workerId,
-      }),
     "calendar.sync": () => processCalendarSyncTask(env, task.resourceId),
     "realtime.database": () => processDatabaseRealtimeTask(env, task.resourceId),
     "notification.publish": () => processNotificationTask(env, task.resourceId),

@@ -12,7 +12,7 @@ type SetPageFavoriteInput = {
 
 type RecordItemVisitInput = {
   itemId: string;
-  itemKind: "agent" | "database" | "page";
+  itemKind: "database" | "page";
   workspaceId: string;
 };
 
@@ -67,11 +67,6 @@ export function useRecordItemVisit() {
       }>("/pages/item-visits", { method: "POST", body: JSON.stringify(input) });
       if (!sharedClient(queryClient).isCurrent(read)) throw new Error("Expired visit confirmation");
       const variables = input;
-      if (result.itemKind === "agent") {
-        return queryClient.invalidateQueries({
-          queryKey: ["workspaces", variables.workspaceId, "ai-agent-profiles"],
-        });
-      }
       if (result.itemKind === "page")
         updatePageContexts(
           queryClient,

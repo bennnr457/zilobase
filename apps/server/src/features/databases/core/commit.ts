@@ -98,14 +98,12 @@ export async function commitDatabaseMutationBatch<T>(
 ): Promise<DatabaseMutationBatchResult<T>> {
   const committedAt = new Date().toISOString();
   const automationWindows: Array<{ availableAt: Date; id: string }> = [];
-  let agentTriggerFacts: DatabaseAutomationMutationFactCandidate[] = [];
   const { commits, result } = await measureDatabaseOperation(
     "commit_duration_ms",
     { operation: "internal", scope: "source" },
     () =>
       backgroundTransaction(options.env ?? {}, async (tx) => {
         const mutationResult = await mutate(tx);
-        agentTriggerFacts = mutationResult.automationFacts ?? [];
         if (mutationResult.automationFacts?.length) {
           if (options.env) {
             await captureDatabaseAutomationMutationFacts(tx, mutationResult.automationFacts, {
@@ -252,23 +250,6 @@ export async function commitDatabaseMutationBatch<T>(
       { operation: "internal", scope: "source" },
       () => publishBackgroundDispatches(options.env!),
     );
-    if (agentTriggerFacts.length > 0 && commits.length > 0) {
-      try {
-        const { dispatchDatabaseAgentMutationFacts } =
-          await import("../../ai/agents/agent-trigger-service");
-        await dispatchDatabaseAgentMutationFacts(options.env, {
-          eventKeyPrefix: `database-mutation:${commits.map((commit) => commit.eventId).join(":")}`,
-          facts: agentTriggerFacts,
-        });
-      } catch (error) {
-        console.error(
-          JSON.stringify({
-            error: error instanceof Error ? error.name : "UnknownError",
-            event: "custom_agent_database_trigger_dispatch_failed",
-          }),
-        );
-      }
-    }
   }
 
   return { commits, result };

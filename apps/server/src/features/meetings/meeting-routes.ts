@@ -2,8 +2,6 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { Schema } from "effect";
 import { getAuthenticatedUser as requireUser } from "../../shared/http/auth";
-import { AiProviderConfigError } from "../ai/providers/ai-provider";
-import { enqueueAiJob } from "../ai/jobs/ai-jobs";
 
 import {
   getEffectivePageAccessInWorkspace,
@@ -90,9 +88,6 @@ meetingRoutes.use("*", async (c, next) => {
 });
 
 function serviceError(c: Context<AppBindings>, error: unknown) {
-  if (error instanceof AiProviderConfigError) {
-    return c.json({ error: error.message }, error.status === 503 ? 503 : 400);
-  }
   if (!(error instanceof ServiceMutationError)) {
     throw error;
   }
@@ -269,37 +264,6 @@ meetingRoutes.post("/:id/recorder/release", async (c) => {
         userId: user.id,
       }),
     });
-  } catch (error) {
-    return serviceError(c, error);
-  }
-});
-
-meetingRoutes.post("/:id/summary", async (c) => {
-  const user = requireUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  try {
-    const record = await getMeetingForUser(c.req.param("id"), user.id, "edit");
-    const job = await enqueueAiJob({
-      dedupeKey: `${record.id}:${record.transcriptRevision}:${record.updatedAt.toISOString()}`,
-      env: c.env,
-      input: { meetingId: record.id },
-      type: "meeting-summary",
-      userId: user.id,
-      workspaceId: record.workspaceId,
-    });
-    return c.json(
-      {
-        job: {
-          error: job.status === "failed" ? job.error : null,
-          id: job.id,
-          progress: job.progress,
-          status: job.status,
-          type: job.type,
-        },
-        meeting: record,
-      },
-      202,
-    );
   } catch (error) {
     return serviceError(c, error);
   }

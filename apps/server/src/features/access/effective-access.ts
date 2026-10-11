@@ -1,15 +1,8 @@
-import {
-  getPageRecord,
-  loadStandaloneDatabaseForPage,
-  loadActivePageInWorkspace,
-  loadActiveDatabaseContainer,
-} from "./resource-access-records";
+import { getPageRecord, loadStandaloneDatabaseForPage } from "./resource-access-records";
 import {
   strongestExplicitAccess,
   principalGrantTargets,
-  snapshotRootAccess,
   teamspacePrincipalAccess,
-  type AgentPermissionSnapshotGrant,
 } from "./access-decisions";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
@@ -159,75 +152,6 @@ export async function getEffectivePageAccessInWorkspace(
     : "none";
 }
 
-/**
- * Resolves access for the agent principal only. This deliberately excludes
- * workspace membership, creator/owner shortcuts, teamspace defaults, public
- * grants, and the invoking user's permissions.
- */
-export async function getEffectivePageAccessForAgent(
-  pageId: string,
-  workspaceId: string,
-  agentId: string,
-): Promise<AccessLevel> {
-  const [record, graph] = await Promise.all([
-    loadActivePageInWorkspace(pageId, workspaceId),
-    loadWorkspacePageGraph(workspaceId),
-  ]);
-  if (!record) return "none";
-
-  const ancestorIds = graph.getAncestorIds(pageId);
-  if (ancestorIds.length === 0) return "none";
-  const rules = await db
-    .select({ accessLevel: pageAccess.accessLevel })
-    .from(pageAccess)
-    .where(
-      and(
-        eq(pageAccess.workspaceId, workspaceId),
-        inArray(pageAccess.pageId, ancestorIds),
-        eq(pageAccess.targetType, "agent"),
-        eq(pageAccess.targetId, agentId),
-      ),
-    );
-  return strongestExplicitAccess(rules);
-}
-
-export async function canAgentAccessPage(
-  pageId: string,
-  workspaceId: string,
-  agentId: string,
-  required: Exclude<AccessLevel, "none">,
-) {
-  return hasAccess(await getEffectivePageAccessForAgent(pageId, workspaceId, agentId), required);
-}
-
-/** Resolves only the immutable resource roots captured when an agent run was
- * queued. Callers must also check the live agent ACL so revocations win. */
-export async function getEffectivePageAccessForAgentSnapshot(
-  pageId: string,
-  workspaceId: string,
-  grants: AgentPermissionSnapshotGrant[],
-): Promise<AccessLevel> {
-  const [record, graph] = await Promise.all([
-    loadActivePageInWorkspace(pageId, workspaceId),
-    loadWorkspacePageGraph(workspaceId),
-  ]);
-  if (!record) return "none";
-  const ancestorIds = new Set(graph.getAncestorIds(pageId));
-  return snapshotRootAccess(grants, "page", ancestorIds);
-}
-
-export async function canAgentSnapshotAccessPage(
-  pageId: string,
-  workspaceId: string,
-  grants: AgentPermissionSnapshotGrant[],
-  required: Exclude<AccessLevel, "none">,
-) {
-  return hasAccess(
-    await getEffectivePageAccessForAgentSnapshot(pageId, workspaceId, grants),
-    required,
-  );
-}
-
 async function isPagePublished(pageId: string) {
   const record = await getPageRecord(pageId);
 
@@ -298,69 +222,6 @@ export async function getEffectiveDatabaseAccessInWorkspace(
   userId: string,
 ): Promise<AccessLevel> {
   return resolveEffectiveDatabaseAccessInWorkspace(databaseId, workspaceId, userId);
-}
-
-/** Standalone agents only receive explicit database grants. Inline databases
- * inherit the explicit grant on their containing page. */
-export async function getEffectiveDatabaseAccessForAgent(
-  databaseId: string,
-  workspaceId: string,
-  agentId: string,
-): Promise<AccessLevel> {
-  const record = await loadActiveDatabaseContainer(databaseId, workspaceId);
-  if (!record) return "none";
-  if (record.pageId) {
-    return getEffectivePageAccessForAgent(record.pageId, workspaceId, agentId);
-  }
-  const rules = await db
-    .select({ accessLevel: databaseAccess.accessLevel })
-    .from(databaseAccess)
-    .where(
-      and(
-        eq(databaseAccess.workspaceId, workspaceId),
-        eq(databaseAccess.databaseId, databaseId),
-        eq(databaseAccess.targetType, "agent"),
-        eq(databaseAccess.targetId, agentId),
-      ),
-    );
-  return strongestExplicitAccess(rules);
-}
-
-export async function canAgentAccessDatabase(
-  databaseId: string,
-  workspaceId: string,
-  agentId: string,
-  required: Exclude<AccessLevel, "none">,
-) {
-  return hasAccess(
-    await getEffectiveDatabaseAccessForAgent(databaseId, workspaceId, agentId),
-    required,
-  );
-}
-
-export async function getEffectiveDatabaseAccessForAgentSnapshot(
-  databaseId: string,
-  workspaceId: string,
-  grants: AgentPermissionSnapshotGrant[],
-): Promise<AccessLevel> {
-  const record = await loadActiveDatabaseContainer(databaseId, workspaceId);
-  if (!record) return "none";
-  if (record.pageId) {
-    return getEffectivePageAccessForAgentSnapshot(record.pageId, workspaceId, grants);
-  }
-  return snapshotRootAccess(grants, "database", new Set([databaseId]));
-}
-
-export async function canAgentSnapshotAccessDatabase(
-  databaseId: string,
-  workspaceId: string,
-  grants: AgentPermissionSnapshotGrant[],
-  required: Exclude<AccessLevel, "none">,
-) {
-  return hasAccess(
-    await getEffectiveDatabaseAccessForAgentSnapshot(databaseId, workspaceId, grants),
-    required,
-  );
 }
 
 async function resolveEffectiveDatabaseAccessInWorkspace(

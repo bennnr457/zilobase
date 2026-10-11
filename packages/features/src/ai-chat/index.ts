@@ -11,6 +11,5 @@ export * from "./live-agent";
 export * from "./agent-icons";
 export * from "./conversation-adapter";
 export * from "./mcp-contract";
-export * from "./custom-agent-contract";
 
 export * from "./settings-contract";

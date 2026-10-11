@@ -12,7 +12,7 @@ const ruleFields = {
   id: z.string().min(1),
   workspaceId: z.string().min(1),
   targetId: z.string(),
-  targetType: z.enum(["public", "user", "team", "agent"]),
+  targetType: z.enum(["public", "user", "team"]),
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
 };

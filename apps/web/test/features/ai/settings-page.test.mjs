@@ -2,7 +2,7 @@ import { build } from "esbuild";
 import { createRequire } from "node:module";
 
 export function register({ assert, appPath, test }) {
-  test("settings page keeps scope tabs, instruction permissions and version restore commands", async () => {
+  test("settings page keeps instruction permissions and version restore commands", async () => {
     const result = await build({
       stdin: {
         contents: `
@@ -67,9 +67,6 @@ export function register({ assert, appPath, test }) {
               else if (path.endsWith("/pages/react"))
                 code +=
                   "export const usePageNavigation=()=>({data:{pages:[],databases:[]}});export const usePageAccessTargets=()=>({data:{teams:[],members:[]}});";
-              else if (path.endsWith("/ai-chat/react"))
-                code +=
-                  "export const useCustomAgentRuns=()=>({data:{runs:[]}});export const useCustomAgentTriggers=()=>({data:{triggers:[]}});export const useRotateCustomAgentWebhookSecret=()=>({isPending:false,mutate(){}});";
               else if (path.endsWith("/ai-chat"))
                 code +=
                   'export const settingsDefinitionSchema={parse:value=>value};export const settingsFieldTab=()=>"instructions";';
@@ -88,7 +85,7 @@ export function register({ assert, appPath, test }) {
                 code += "export function SettingsReviewSummary(){return null;}";
               else if (path.endsWith("mcp-connections"))
                 code +=
-                  'export function PersonalMcpActivity(){return createElement("div",null,"Personal activity");}export function AgentMcpActivity(){return createElement("div",null,"Agent activity");}';
+                  'export function PersonalMcpActivity(){return createElement("div",null,"Personal activity");}';
               else if (path === "sonner")
                 code += "export const toast={error:value=>runtime.calls.push(value)};";
               else throw new Error(path);
@@ -118,9 +115,6 @@ export function register({ assert, appPath, test }) {
     const definition = {
       instructionPageId: "instruction",
       instructions: "Current",
-      triggers: [],
-      resources: [],
-      grants: [],
       connectors: [],
     };
     const draft = {
@@ -179,17 +173,8 @@ export function register({ assert, appPath, test }) {
     render({});
     assert.equal(editors[0].readOnly, false);
     assert.equal(editors[0].showCollaborationPresence, true);
-    assert.match(render({ scope: "agent" }), /Triggers &amp; Access/);
     assert.match(render({ initialTab: "tools" }), /Connector panel/);
     assert.match(render({ initialTab: "activity" }), /Personal activity/);
-    assert.match(
-      render({
-        scope: "agent",
-        agent: { id: "agent" },
-        initialTab: "activity",
-      }),
-      /Agent activity/,
-    );
     render({ draft: { ...draft, state: { ...draft.state, canEdit: false } } });
     assert.equal(editors[0].readOnly, true);
     render({ initialTab: "versions" });

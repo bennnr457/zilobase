@@ -1,5 +1,3 @@
-import { lazy, Suspense } from "react";
-
 import {
   getDatabaseId,
   MainPaneHeaderLeadingControl,
@@ -9,19 +7,7 @@ import {
 import { PageSidePaneHeaderCell } from "@/features/pages/pane/page-side-pane";
 import { useOptionalPageLayoutSidebar } from "@/features/pages/layout/page-layout-sidebar";
 
-const CustomAgentHeaderActions = lazy(() =>
-  import("@/features/ai/screens/custom-agent-header-actions").then((module) => ({
-    default: module.CustomAgentHeaderActions,
-  })),
-);
-const CustomAgentShareHeaderAction = lazy(() =>
-  import("@/features/ai/screens/custom-agent-header-actions").then((module) => ({
-    default: module.CustomAgentShareHeaderAction,
-  })),
-);
-
 type AppHeaderProps = {
-  agentId?: string | null;
   auxiliarySidePaneCloseLabel?: string;
   auxiliarySidePaneOpen?: boolean;
   auxiliarySidePanePageId?: string | null;
@@ -45,20 +31,10 @@ export function AppHeader(props: AppHeaderProps) {
   );
   const sideOpen = props.auxiliarySidePaneOpen || showItemSidePaneHeader;
   const splitActive = Boolean(sideOpen && props.sidePaneAnimatedOpen);
-  const showAgentActionsInSidePane = Boolean(
-    props.agentId && props.auxiliarySidePaneOpen && !props.auxiliarySidePanePageId,
-  );
   return (
     <>
       <PageSidePaneHeaderCell className="z-10" side="main" splitActive={splitActive}>
         <PagePaneHeader
-          actions={
-            props.agentId && !showAgentActionsInSidePane ? (
-              <Suspense fallback={null}>
-                <CustomAgentHeaderActions agentId={props.agentId} />
-              </Suspense>
-            ) : undefined
-          }
           className="min-w-0 flex-1"
           discussionsOpen={props.discussionsOpen}
           leadingControl={<MainPaneHeaderLeadingControl />}
@@ -66,18 +42,12 @@ export function AppHeader(props: AppHeaderProps) {
           onTogglePageSidebar={props.onTogglePageSidebar}
           pageSidebarOpen={props.pageSidebarOpen}
           pathname={props.pathname}
-          showActions={
-            (!props.isSettingsPage || Boolean(props.agentId)) && !showAgentActionsInSidePane
-          }
+          showActions={!props.isSettingsPage}
         />
       </PageSidePaneHeaderCell>
       {sideOpen ? (
         <PageSidePaneHeaderCell side="side" splitActive={splitActive}>
-          <SideHeader
-            props={props}
-            showItemSidePaneHeader={showItemSidePaneHeader}
-            showAgentActionsInSidePane={showAgentActionsInSidePane}
-          />
+          <SideHeader props={props} showItemSidePaneHeader={showItemSidePaneHeader} />
         </PageSidePaneHeaderCell>
       ) : null}
     </>
@@ -87,11 +57,9 @@ export function AppHeader(props: AppHeaderProps) {
 function SideHeader({
   props,
   showItemSidePaneHeader,
-  showAgentActionsInSidePane,
 }: {
   props: AppHeaderProps;
   showItemSidePaneHeader: boolean;
-  showAgentActionsInSidePane: boolean;
 }) {
   if (showItemSidePaneHeader || props.auxiliarySidePanePageId) return <ItemSideHeader {...props} />;
   if (!props.onCloseAuxiliarySidePane) return null;
@@ -101,17 +69,7 @@ function SideHeader({
         label={props.auxiliarySidePaneCloseLabel ?? "Close AI settings"}
         onClick={props.onCloseAuxiliarySidePane}
       />
-      {showAgentActionsInSidePane && props.agentId ? (
-        <div className="ml-auto flex items-center gap-2">
-          <Suspense fallback={null}>
-            <CustomAgentShareHeaderAction agentId={props.agentId} />
-          </Suspense>
-        </div>
-      ) : null}
-      <div
-        id="agent-settings-header-actions"
-        className={showAgentActionsInSidePane ? "ml-2" : "ml-auto"}
-      />
+      <div id="agent-settings-header-actions" className="ml-auto" />
     </div>
   );
 }

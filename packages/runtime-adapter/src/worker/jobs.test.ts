@@ -6,13 +6,13 @@ describe("worker Jobs port", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
     const send = vi.fn(async () => undefined);
-    const jobs = createWorkerJobs({ AI_JOBS: { send } });
+    const jobs = createWorkerJobs({ BACKGROUND_FAST: { send } });
 
     await jobs.dispatch([
       {
         availableAt: "2026-01-01T00:00:10.000Z",
         cellId: "default",
-        kind: "ai.job",
+        kind: "notification.publish",
         resourceId: "job-1",
         taskId: "00000000-0000-4000-8000-000000000001",
         version: 2,
