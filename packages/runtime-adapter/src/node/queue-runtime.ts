@@ -162,7 +162,7 @@ export function createNodeQueueRuntime(
           role === "api"
             ? null
             : running &&
-              consumers.length === 4 &&
+              consumers.length === LANES.length &&
               consumerClients.every((client) => client.status === "ready"),
         maintenanceFresh:
           role === "api"
