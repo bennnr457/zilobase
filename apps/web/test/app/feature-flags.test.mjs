@@ -1,7 +1,8 @@
 export function register({ assert, loadModule, test }) {
-  test("notion import and the web clipper stay disabled unless config enables them", async () => {
+  test("Ask AI, notion import, and the web clipper stay disabled unless config enables them", async () => {
     const { isFeatureEnabled } = await loadModule("/src/shared/config/feature-flags.ts");
 
+    assert.equal(isFeatureEnabled("askAi"), false);
     assert.equal(isFeatureEnabled("notionImport"), false);
     assert.equal(isFeatureEnabled("webClipper"), false);
   });

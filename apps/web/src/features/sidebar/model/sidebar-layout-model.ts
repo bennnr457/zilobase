@@ -98,12 +98,13 @@ export function updateSidebarTab(
 
 export function hideUnconfiguredIntegrationTabs(
   layout: SidebarWorkspaceLayout,
-  availability: { calendar: boolean },
+  availability: { askAi?: boolean; calendar: boolean },
 ): SidebarWorkspaceLayout {
   return {
     ...layout,
     tabs: layout.tabs.flatMap((tab) => {
       if (tab.id === "calendar" && !availability.calendar) return [];
+      if (tab.id === "ai" && availability.askAi === false) return [];
       return [tab];
     }),
   };
@@ -112,13 +113,27 @@ export function hideUnconfiguredIntegrationTabs(
 export function restoreUnconfiguredIntegrationTabs(
   stored: SidebarWorkspaceLayout,
   next: SidebarWorkspaceLayout,
-  availability: { calendar: boolean },
+  availability: { askAi?: boolean; calendar: boolean },
 ): SidebarWorkspaceLayout {
-  const hidden = stored.tabs.filter((tab) => tab.id === "calendar" && !availability.calendar);
-  if (hidden.length === 0) return next;
-  const tabs = next.tabs.filter((tab) => !hidden.some((item) => item.id === tab.id));
-  const anchor = tabs.findIndex((tab) => tab.id === "ai");
-  tabs.splice(anchor >= 0 ? anchor + 1 : tabs.length, 0, ...hidden);
+  const hiddenIds = new Set(
+    stored.tabs
+      .filter(
+        (tab) =>
+          (tab.id === "calendar" && !availability.calendar) ||
+          (tab.id === "ai" && availability.askAi === false),
+      )
+      .map((tab) => tab.id),
+  );
+  if (hiddenIds.size === 0) return next;
+  const visible = next.tabs.filter((tab) => !hiddenIds.has(tab.id));
+  const tabs = stored.tabs.flatMap((tab) => {
+    if (hiddenIds.has(tab.id)) return [tab];
+    const updated = visible.find((item) => item.id === tab.id);
+    return updated ? [updated] : [];
+  });
+  for (const tab of visible) {
+    if (!tabs.some((item) => item.id === tab.id)) tabs.push(tab);
+  }
   return { ...next, tabs };
 }
 

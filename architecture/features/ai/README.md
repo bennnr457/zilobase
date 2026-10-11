@@ -5,9 +5,9 @@
 - [apps/web/src/features/ai](../../../apps/web/src/features/ai)
 - [packages/features/src/ai-chat](../../../packages/features/src/ai-chat)
 
-The Ask AI web UI remains: the full page, docked sidebar, floating panel, editor entry, and personal settings screens. Shared `ai-chat` contracts and hooks stay with that UI.
+The Ask AI web UI remains behind `VITE_FEATURE_ASK_AI`, which is off unless that flag is true. While it is off, the sidebar AI tab, customizer chat actions, editor entry points, floating panel, and `/ai` screen stay hidden. Shared `ai-chat` contracts and hooks stay with that UI.
 
-The server implementation is removed. There are no `/api/ai` routes, chat or settings tables, AI jobs, MCP connector services, or a ChatAgent durable object. Requests the UI still sends to those endpoints have no server handler.
+The server implementation is removed. There are no `/api/ai` routes, chat or settings tables, AI jobs, MCP connector services, MCP egress, or a ChatAgent durable object. The server package does not depend on the AI SDK or the MCP client. Requests the UI still sends to those endpoints have no server handler. Meeting transcription remains the server model call.
 
 ## Main flow
 

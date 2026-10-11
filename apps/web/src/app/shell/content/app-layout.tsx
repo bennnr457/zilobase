@@ -8,6 +8,7 @@ import { AppSidebar } from "@/features/sidebar";
 import { AppSearchProvider } from "@/features/search";
 import { DesktopTabs, getDesktopTabTitle } from "@/features/desktop/components/index";
 import { ChatSidebarTrigger } from "@/features/ai/conversations/components/chat-sidebar-trigger";
+import { isFeatureEnabled } from "@/shared/config/feature-flags";
 import type { ChatPresentationMode } from "@/features/ai/conversations/components/chat-sidebar";
 import {
   usePageSidePaneState,
@@ -202,7 +203,8 @@ function AppLayoutContent({
   });
   const embeddedMobileViewer = isEmbeddedMobileViewer();
   const { isMobile, open: appSidebarOpen, setOpen: setAppSidebarOpen } = useSidebar();
-  const isAiPage = pathname === "/ai";
+  const askAiEnabled = isFeatureEnabled("askAi");
+  const isAiPage = askAiEnabled && pathname === "/ai";
   const aiWorkspacePanel = isAiPage ? new URLSearchParams(searchStr).get("panel") : null;
   const aiSettingsPageId =
     isAiPage && aiWorkspacePanel === "settings"
@@ -343,11 +345,12 @@ function AppLayoutContent({
     [appSidebarOpen, openDatabaseSidePaneBase, pageLayoutSidebar],
   );
   const openChatSidebar = useCallback(() => {
+    if (!askAiEnabled) return;
     if (appSidebarOpen) {
       closeSidePane();
     }
     setChatSidebarOpen(true);
-  }, [appSidebarOpen, closeSidePane]);
+  }, [appSidebarOpen, askAiEnabled, closeSidePane]);
 
   useEffect(() => {
     if (pathname === "/ai" && chatSidebarOpen) {
@@ -598,8 +601,8 @@ function AppLayoutContent({
           </SidebarInset>
         </ResizablePanel>
         <RightSidebars
-          chatOpen={dockedChatOpen}
-          chatPanel={dockedChatOpen ? chatPanel : null}
+          chatOpen={askAiEnabled && dockedChatOpen}
+          chatPanel={askAiEnabled && dockedChatOpen ? chatPanel : null}
           discussionsEnabled={discussionsEnabled}
           discussionsOpen={discussionsSidebarOpen}
           discussionsPanel={discussionsPanel}
@@ -613,8 +616,8 @@ function AppLayoutContent({
         />
       </ResizablePanelGroup>
       <RightSidebarMobilePanels
-        chatOpen={chatSidebarOpen}
-        chatPanel={chatPanel}
+        chatOpen={askAiEnabled && chatSidebarOpen}
+        chatPanel={askAiEnabled ? chatPanel : null}
         discussionsEnabled={discussionsEnabled}
         discussionsOpen={discussionsSidebarOpen}
         discussionsPanel={discussionsPanel}
@@ -622,10 +625,10 @@ function AppLayoutContent({
         pageSidebarOpen={pageLayoutSidebarOpen}
         pageSidebarPanel={pageSidebarPanel}
       />
-      {chatSidebarOpen && !isMobile && chatPresentationMode === "floating" ? (
+      {askAiEnabled && chatSidebarOpen && !isMobile && chatPresentationMode === "floating" ? (
         <FloatingWidget aria-label="Floating Ask AI chat">{chatPanel}</FloatingWidget>
       ) : null}
-      {chatSidebarOpen || isAiPage || isFullPanePage ? null : (
+      {!askAiEnabled || chatSidebarOpen || isAiPage || isFullPanePage ? null : (
         <ChatSidebarTrigger
           adjacentSidebarOpen={
             utilitySidebarOpen ||

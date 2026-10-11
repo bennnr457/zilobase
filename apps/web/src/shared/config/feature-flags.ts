@@ -21,6 +21,7 @@ export function readBooleanFeatureFlag(value: unknown, fallback = false) {
 
 export const appConfig = {
   featureFlags: {
+    askAi: readBooleanFeatureFlag(import.meta.env.VITE_FEATURE_ASK_AI, false),
     notionImport: readBooleanFeatureFlag(import.meta.env.VITE_FEATURE_NOTION_IMPORT, false),
     webClipper: readBooleanFeatureFlag(import.meta.env.VITE_FEATURE_WEB_CLIPPER, false),
   },

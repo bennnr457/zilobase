@@ -121,4 +121,38 @@ export function register({ assert, loadModule, test }) {
       ["home", "calendar"],
     );
   });
+
+  test("Ask AI tab stays hidden while the feature flag is off and returns on save", async () => {
+    const { hideUnconfiguredIntegrationTabs, restoreUnconfiguredIntegrationTabs } =
+      await loadModule("/src/features/sidebar/model/sidebar-layout-model.ts");
+    const layout = {
+      tabs: [
+        { icon: "home", id: "home", name: "Home", sections: [], shortcuts: [] },
+        {
+          icon: "sparkles",
+          id: "ai",
+          name: "AI",
+          sections: [{ id: "chats", kind: "aiChats", limit: 50, sort: "lastEdited" }],
+          shortcuts: [{ id: "new-chat", target: { action: "createChat", type: "action" } }],
+        },
+        { icon: "calendar", id: "calendar", name: "Calendar", sections: [], shortcuts: [] },
+      ],
+      taskDatabaseIds: [],
+    };
+
+    const hidden = hideUnconfiguredIntegrationTabs(layout, { askAi: false, calendar: true });
+    assert.deepEqual(
+      hidden.tabs.map((tab) => tab.id),
+      ["home", "calendar"],
+    );
+
+    const restored = restoreUnconfiguredIntegrationTabs(layout, hidden, {
+      askAi: false,
+      calendar: true,
+    });
+    assert.deepEqual(
+      restored.tabs.map((tab) => tab.id),
+      ["home", "ai", "calendar"],
+    );
+  });
 }

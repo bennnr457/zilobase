@@ -1,4 +1,5 @@
 import { createRoute, lazyRouteComponent, redirect } from "@tanstack/react-router";
+import { isFeatureEnabled } from "@/shared/config/feature-flags";
 import { appRoute } from "../route-roots";
 import {
   validateCalendarSearch,
@@ -17,6 +18,11 @@ export const appRoutes = [
     getParentRoute: () => appRoute,
     path: "/ai",
     validateSearch: validateAiSearch,
+    beforeLoad: () => {
+      if (!isFeatureEnabled("askAi")) {
+        throw redirect({ to: "/recents", search: { view: "recents" } });
+      }
+    },
     component: lazyRouteComponent(() => import("@/features/ai/screens/ai")),
   }),
   createRoute({

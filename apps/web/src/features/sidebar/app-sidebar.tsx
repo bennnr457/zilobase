@@ -89,6 +89,7 @@ import {
 } from "./model/sidebar-layout-model";
 import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/sidebar-persistence";
 import { useIntegrationAvailability } from "./model/use-integration-availability";
+import { isFeatureEnabled } from "@/shared/config/feature-flags";
 import { NotificationCenter } from "@/features/notifications";
 
 const sidebarNavigationIcons: SidebarNavigationIcons<React.ReactNode> = {
@@ -167,9 +168,13 @@ export function AppSidebar({
     [sidebarConfig, workspaceId],
   );
   const integrations = useIntegrationAvailability(workspaceId);
+  const sidebarAvailability = React.useMemo(
+    () => ({ askAi: isFeatureEnabled("askAi"), calendar: integrations.calendar }),
+    [integrations.calendar],
+  );
   const layout = React.useMemo(
-    () => hideUnconfiguredIntegrationTabs(storedLayout, integrations),
-    [integrations, storedLayout],
+    () => hideUnconfiguredIntegrationTabs(storedLayout, sidebarAvailability),
+    [sidebarAvailability, storedLayout],
   );
   const { activeThreadId, setActiveThreadId } = useAiChatThreadState({ enabled: false });
   const [activeTabId, setActiveTabId] = React.useState("home");
@@ -323,12 +328,12 @@ export function AppSidebar({
         sidebarConfig: withSidebarWorkspaceLayout(
           sidebarConfig,
           workspaceId,
-          restoreUnconfiguredIntegrationTabs(storedLayout, nextLayout, integrations),
+          restoreUnconfiguredIntegrationTabs(storedLayout, nextLayout, sidebarAvailability),
         ),
       });
       setCustomizing(false);
     },
-    [integrations, sidebarConfig, storedLayout, updateUserSettings, workspaceId],
+    [sidebarAvailability, sidebarConfig, storedLayout, updateUserSettings, workspaceId],
   );
   const handleRuntimeSectionDragEnd = React.useCallback(
     ({ active, over }: DragEndEvent) => {
@@ -349,7 +354,7 @@ export function AppSidebar({
           sidebarConfig: withSidebarWorkspaceLayout(
             sidebarConfig,
             workspaceId,
-            restoreUnconfiguredIntegrationTabs(storedLayout, nextLayout, integrations),
+            restoreUnconfiguredIntegrationTabs(storedLayout, nextLayout, sidebarAvailability),
           ),
         })
         .catch(showMutationError("Could not reorder sidebar sections."));
@@ -357,8 +362,8 @@ export function AppSidebar({
     [
       activeTab.id,
       activeTab.sections,
-      integrations,
       layout,
+      sidebarAvailability,
       sidebarConfig,
       storedLayout,
       updateUserSettings,

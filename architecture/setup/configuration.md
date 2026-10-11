@@ -25,4 +25,4 @@ Ask AI server configuration is removed. `OPENAI_API_KEY` remains the meeting tra
 
 Command definitions remain in [package scripts](../../package.json); consult them for the current invocation. [Architecture index](../README.md).
 
-Calendar is always available. Google sync still needs the provider credentials in the server environment. Notion import and the web clipper stay off unless `VITE_FEATURE_NOTION_IMPORT` or `VITE_FEATURE_WEB_CLIPPER` is true.
+Calendar is always available. Google sync still needs the provider credentials in the server environment. Ask AI, Notion import, and the web clipper stay off unless `VITE_FEATURE_ASK_AI`, `VITE_FEATURE_NOTION_IMPORT`, or `VITE_FEATURE_WEB_CLIPPER` is true. Ask AI covers the sidebar tab, customizer chat actions, editor entry points, and the `/ai` screen.

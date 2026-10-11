@@ -17,7 +17,7 @@ export function register({ readSource, assert, test }) {
     );
     assert.match(layoutSource, /aria-label="Floating Ask AI chat"/);
     assert.match(layoutSource, /<FloatingWidget aria-label="Floating Ask AI chat">/);
-    assert.match(layoutSource, /chatPanel=\{dockedChatOpen \? chatPanel : null\}/);
+    assert.match(layoutSource, /chatPanel=\{askAiEnabled && dockedChatOpen \? chatPanel : null\}/);
     assert.match(sidebarSource, /export type ChatPresentationMode = "floating" \| "sidebar"/);
     assert.match(sidebarSource, /onPresentationModeChange/);
   });
@@ -47,7 +47,10 @@ export function register({ readSource, assert, test }) {
     const headerSource = await readSource("/src/app/shell/content/app-header.tsx");
     const sidePaneSource = await readSource("/src/features/pages/pane/page-side-pane.tsx");
 
-    assert.match(layoutSource, /chatSidebarOpen \|\| isAiPage \|\| isFullPanePage \? null/);
+    assert.match(
+      layoutSource,
+      /!askAiEnabled \|\| chatSidebarOpen \|\| isAiPage \|\| isFullPanePage \? null/,
+    );
     assert.match(sidePaneSource, /data-page-scroll-viewport/);
     assert.match(chatbotSource, /\[data-ai-scroll-shell\], \[data-page-scroll-viewport\]/);
     assert.match(
@@ -168,15 +171,15 @@ export function register({ readSource, assert, test }) {
     assert.doesNotMatch(pane, /aria-label="Close settings"|<XIcon/);
   });
 
-  test("agent settings review opens the panel and uses editor diffs with the merged tab order", async () => {
+  test("agent settings review opens the instruction editor and uses editor diffs", async () => {
     const pane = await readSource("/src/features/ai/settings/components/agent-settings-page.tsx");
     const actions = await readSource(
       "/src/features/ai/settings/components/settings-draft-actions.tsx",
     );
     const editor = await readSource("/src/features/editor/composition/editor.tsx");
-    assert.match(pane, /"instructions", "connectors", "activity", "versions"/);
+    assert.match(pane, /tab="instructions"/);
+    assert.doesNotMatch(pane, /SettingsConnectors|PersonalMcpActivity|Version history/);
     assert.doesNotMatch(pane, /Triggers & Access/);
-    assert.match(pane, /aria-label="Unsaved changes"/);
     assert.match(actions, /onClick=\{draft.reviewChanges\}/);
     assert.match(editor, /baselineMarkdown: reviewDiff.beforeMarkdown/);
     assert.match(editor, /useBeforeBaseline: true/);

@@ -26,6 +26,7 @@ import {
 } from "../commands/editor-ai-utils";
 import { getApiRequestHeaders, toApiUrl } from "@/platform/network/api";
 import { desktopNetworkFetch } from "@/platform/network/index";
+import { isFeatureEnabled } from "@/shared/config/feature-flags";
 
 type AskAiBlockOptions = {
   workspaceId?: string | null;
@@ -276,6 +277,7 @@ export function openAskAiPopover({
   workspaceId?: string | null;
   range: Range;
 }) {
+  if (!isFeatureEnabled("askAi")) return;
   const coords = editor.view.coordsAtPos(range.from);
   const insertPos = range.from;
   const container = document.createElement("div");
@@ -498,6 +500,10 @@ function AskAiBlockView({
     abortControllerRef.current?.abort();
     setIsStreaming(false);
   };
+
+  if (!isFeatureEnabled("askAi")) {
+    return <NodeViewWrapper className="hidden" contentEditable={false} />;
+  }
 
   return (
     <NodeViewWrapper className="ask-ai-block w-full" contentEditable={false}>

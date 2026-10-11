@@ -2,7 +2,7 @@ import { build } from "esbuild";
 import { createRequire } from "node:module";
 
 export function register({ assert, appPath, test }) {
-  test("settings page keeps instruction permissions and version restore commands", async () => {
+  test("settings page keeps the instruction editor and its edit permissions", async () => {
     const result = await build({
       stdin: {
         contents: `
@@ -173,12 +173,10 @@ export function register({ assert, appPath, test }) {
     render({});
     assert.equal(editors[0].readOnly, false);
     assert.equal(editors[0].showCollaborationPresence, true);
-    assert.match(render({ initialTab: "tools" }), /Connector panel/);
-    assert.match(render({ initialTab: "activity" }), /Personal activity/);
+    assert.doesNotMatch(render({ initialTab: "tools" }), /Connector panel/);
+    assert.doesNotMatch(render({ initialTab: "activity" }), /Personal activity/);
+    assert.doesNotMatch(render({ initialTab: "versions" }), /Restore to draft/);
     render({ draft: { ...draft, state: { ...draft.state, canEdit: false } } });
     assert.equal(editors[0].readOnly, true);
-    render({ initialTab: "versions" });
-    buttons.find((button) => button.children === "Restore to draft").onClick();
-    assert.deepEqual(calls.at(-1), { instructionPageId: "old" });
   });
 }

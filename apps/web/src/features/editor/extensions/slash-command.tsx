@@ -39,6 +39,7 @@ import {
 import { createDatabaseSetupBlockContent } from "@/features/databases";
 import { ExcalidrawIcon, FigmaIcon, MiroIcon, YouTubeIcon } from "./embed-block";
 import { openAskAiPopover } from "./ask-ai-block";
+import { isFeatureEnabled } from "@/shared/config/feature-flags";
 import type { CreatedPage } from "./page-block";
 import {
   insertCreatedBlock,
@@ -124,18 +125,22 @@ function openSlashEmojiPicker({ editor, range }: { editor: Editor; range: Range 
 
 function createSlashCommandItems(options: SlashCommandOptions = {}): SlashCommandItem[] {
   return [
-    {
-      title: "Ask AI",
-      description: "Generate content with AI",
-      icon: Sparkles,
-      command: ({ editor, range }) => {
-        openAskAiPopover({
-          editor,
-          workspaceId: options.workspaceId,
-          range,
-        });
-      },
-    },
+    ...(isFeatureEnabled("askAi")
+      ? [
+          {
+            title: "Ask AI",
+            description: "Generate content with AI",
+            icon: Sparkles,
+            command: ({ editor, range }: { editor: Editor; range: Range }) => {
+              openAskAiPopover({
+                editor,
+                workspaceId: options.workspaceId,
+                range,
+              });
+            },
+          },
+        ]
+      : []),
     {
       title: "Text",
       description: "Plain paragraph",

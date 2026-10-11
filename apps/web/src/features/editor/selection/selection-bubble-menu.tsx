@@ -12,6 +12,7 @@ import { toolbarGroups } from "../toolbar/toolbar-data";
 import { ToolbarButton } from "../toolbar/toolbar-button";
 import type { SelectionAiDiffPreview } from "../core/types";
 import type { EditorControlProps, RunToolbarCommand } from "../toolbar/toolbar-contracts";
+import { isFeatureEnabled } from "@/shared/config/feature-flags";
 
 const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";
 
@@ -120,13 +121,19 @@ export function SelectionBubbleMenu({
             useMouseDown
           />
         ))}
-        <ButtonGroupSeparator />
-        <SelectionAiMenu
-          editor={editor}
-          onPreviewChange={onSelectionAiPreviewChange}
-          workspaceId={workspaceId}
-        />
-        <ButtonGroupSeparator />
+        {isFeatureEnabled("askAi") ? (
+          <>
+            <ButtonGroupSeparator />
+            <SelectionAiMenu
+              editor={editor}
+              onPreviewChange={onSelectionAiPreviewChange}
+              workspaceId={workspaceId}
+            />
+            <ButtonGroupSeparator />
+          </>
+        ) : (
+          <ButtonGroupSeparator />
+        )}
         <ColorMenu editor={editor} />
         <ButtonGroupSeparator />
         {toolbarGroups[2].map((item) => (
