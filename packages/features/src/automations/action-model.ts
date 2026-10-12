@@ -4,7 +4,7 @@ import type {
   AutomationRichTextExpression,
   DatabaseAutomationAction,
   DatabaseAutomationCatalog,
-} from "@zilobase/features/automations";
+} from "./index";
 
 export type ActionType = DatabaseAutomationAction["type"];
 type WebhookHeaderDraft = {

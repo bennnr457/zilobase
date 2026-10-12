@@ -1,8 +1,5 @@
-import type {
-  AutomationJsonValue,
-  DatabaseAutomationCatalog,
-} from "@zilobase/features/automations";
-import { notionActionLabel, type NotionActionDraft } from "./notion-action-model";
+import type { AutomationJsonValue, DatabaseAutomationCatalog } from "./index";
+import { notionActionLabel, type NotionActionDraft } from "./action-model";
 
 export function actionProperties(
   catalog?: DatabaseAutomationCatalog,

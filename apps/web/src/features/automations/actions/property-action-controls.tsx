@@ -4,7 +4,7 @@ import {
   propertyActionLabel,
   actionValuesFromLiteral,
   actionLiteralFromValues,
-} from "./property-action-model";
+} from "@zilobase/features/automations/models";
 import { AutomationPropertyIcon, TriggerOptionRow } from "../automation-picker-controls";
 import { useState } from "react";
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";

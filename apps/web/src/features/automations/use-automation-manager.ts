@@ -4,7 +4,7 @@ import {
   buildDefinition,
   generateName,
   draftFromDefinition,
-} from "./definition/automation-draft";
+} from "@zilobase/features/automations/models";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -21,7 +21,7 @@ import {
   useValidateDatabaseAutomation,
 } from "@zilobase/features/automations/react";
 
-import { materializeWebhookSecrets } from "./definition/materialize-webhook-secrets";
+import { materializeWebhookSecrets } from "@zilobase/features/automations/models";
 
 export type Screen = "builder" | "list" | "run" | "runs";
 

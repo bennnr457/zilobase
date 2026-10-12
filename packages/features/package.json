@@ -278,6 +278,10 @@
     "./calendar/react": {
       "types": "./src/calendar/react.ts",
       "default": "./src/calendar/react.ts"
+    },
+    "./automations/models": {
+      "types": "./src/automations/models.ts",
+      "default": "./src/automations/models.ts"
     }
   }
 }

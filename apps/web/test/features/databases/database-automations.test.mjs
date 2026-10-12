@@ -7,11 +7,11 @@ export function register({ assert, readSource, test }) {
         readSource("/src/features/automations/automation-picker-controls.tsx"),
         readSource("/src/features/automations/definition/automation-builder.tsx"),
         readSource("/src/features/automations/definition/automation-trigger-controls.tsx"),
-        readSource("/src/features/automations/definition/automation-draft.ts"),
-        readSource("/src/features/automations/definition/schedule-model.ts"),
-        readSource("/src/features/automations/definition/materialize-webhook-secrets.ts"),
+        readSource("/packages/features/src/automations/definition-model.ts"),
+        readSource("/packages/features/src/automations/schedule-model.ts"),
+        readSource("/packages/features/src/automations/materialize-webhook-secrets.ts"),
         readSource("/src/features/automations/actions/property-action-controls.tsx"),
-        readSource("/src/features/automations/actions/property-action-model.ts"),
+        readSource("/packages/features/src/automations/property-action-model.ts"),
         readSource("/src/features/automations/database-automation-screens.tsx"),
         readSource("/src/features/automations/definition/automation-schedule.tsx"),
       ])
@@ -20,7 +20,7 @@ export function register({ assert, readSource, test }) {
     (
       await Promise.all([
         readSource("/src/features/automations/actions/notion-action-builder.tsx"),
-        readSource("/src/features/automations/actions/notion-action-model.ts"),
+        readSource("/packages/features/src/automations/action-model.ts"),
       ])
     ).join("\n");
   test("database automation release is server-capability gated and source scoped", async () => {

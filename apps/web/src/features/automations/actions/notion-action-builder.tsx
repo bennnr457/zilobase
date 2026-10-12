@@ -28,7 +28,7 @@ export {
   createNotionActionDraft,
   NOTION_ACTION_OPTIONS,
   type NotionActionDraft,
-} from "./notion-action-model";
+} from "@zilobase/features/automations/models";
 import {
   createNotionActionDraft,
   defaultFilteredTarget,
@@ -36,7 +36,7 @@ import {
   NOTION_ACTION_OPTIONS,
   type ActionType,
   type NotionActionDraft,
-} from "./notion-action-model";
+} from "@zilobase/features/automations/models";
 
 export function NotionActionEditor({
   catalog,

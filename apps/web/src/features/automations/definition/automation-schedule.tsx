@@ -1,4 +1,4 @@
-import { type ScheduleDraft } from "./schedule-model";
+import { type ScheduleDraft } from "@zilobase/features/automations/models";
 
 import { Button } from "@/shared/ui/button";
 

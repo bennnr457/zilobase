@@ -1,5 +1,5 @@
-import type { BuilderDraft } from "./automation-draft";
-import { resolveWebhookHeader } from "../actions/notion-action-model";
+import type { BuilderDraft } from "./definition-model";
+import { resolveWebhookHeader } from "./action-model";
 
 export async function materializeWebhookSecrets(
   draft: BuilderDraft,

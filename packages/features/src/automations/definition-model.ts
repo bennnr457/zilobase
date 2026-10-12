@@ -4,13 +4,13 @@ import type {
   DatabaseAutomationDefinition,
   DatabaseAutomationEventTriggerClause,
   DatabaseAutomationTriggerOperator,
-} from "@zilobase/features/automations";
+} from "./index";
 import {
   actionForDefinition,
   notionActionDraftFromAction,
   notionActionLabel,
   type NotionActionDraft,
-} from "../actions/notion-action-model";
+} from "./action-model";
 import { scheduleDefinition, scheduleDraft, type ScheduleDraft } from "./schedule-model";
 
 export type TriggerDraft = {

@@ -1,4 +1,4 @@
-import type { DatabaseAutomationSchedule } from "@zilobase/features/automations";
+import type { DatabaseAutomationSchedule } from "./index";
 
 export type ScheduleDraft = {
   customPattern: "daily" | "monthly" | "weekly" | "yearly";

@@ -2,7 +2,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
   test("automation draft rules have no runtime React or presentation dependency", async () => {
     const { build } = await import("esbuild");
     const result = await build({
-      entryPoints: [sourcePath("/src/features/automations/definition/automation-draft.ts")],
+      entryPoints: [sourcePath("/packages/features/src/automations/definition-model.ts")],
       bundle: true,
       platform: "node",
       format: "esm",
@@ -16,8 +16,8 @@ export function register({ assert, loadModule, sourcePath, test }) {
       [],
     );
   });
-  const draftPath = "/src/features/automations/definition/automation-draft.ts";
-  const actionPath = "/src/features/automations/actions/notion-action-model.ts";
+  const draftPath = "/packages/features/src/automations/definition-model.ts";
+  const actionPath = "/packages/features/src/automations/action-model.ts";
   test("automation drafts keep incomplete triggers unsavable and round-trip typed operands", async () => {
     const model = await loadModule(draftPath);
     const { createNotionActionDraft } = await loadModule(actionPath);
@@ -100,7 +100,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
     const model = await loadModule(draftPath);
     const { createNotionActionDraft } = await loadModule(actionPath);
     const { actionLiteralFromValues, actionValuesFromLiteral } = await loadModule(
-      "/src/features/automations/actions/property-action-model.ts",
+      "/packages/features/src/automations/property-action-model.ts",
     );
     const draft = {
       ...model.emptyDraft(),
