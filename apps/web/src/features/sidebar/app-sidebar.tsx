@@ -27,10 +27,7 @@ import { SidebarDatabaseViewSection } from "./components/sidebar-database-view-s
 import { SidebarLayoutTabs } from "./components/sidebar-layout-tabs";
 import { SidebarShortcutList } from "./components/sidebar-shortcut-list";
 import { SidebarTasksSection } from "./components/sidebar-tasks-section";
-import {
-  buildSidebarNavigation,
-  type SidebarNavigationIcons,
-} from "./model/sidebar-navigation-model.ts";
+import { buildSidebarNavigation, type SidebarNavigationIcons } from "@zilobase/features/pages";
 import {
   getActiveDatabaseId,
   getActiveDatabaseViewId,

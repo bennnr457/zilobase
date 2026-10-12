@@ -1,3 +1,4 @@
+import { parseActiveWorkspaceMismatchError } from "../shared/api-errors";
 import { resolvePageAccessReferences } from "./access-references";
 import { resolveAiPageReferences } from "./summary-references";
 import { resolvePageProperties } from "./property-cache";
@@ -209,4 +210,28 @@ export function usePageProperties(
     status: query.status,
     refetch: query.refetch,
   };
+}
+
+export function usePageWorkspaceAccess(
+  pageId: string,
+  activeWorkspaceId: string | null | undefined,
+) {
+  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const query = useQuery({
+    ...pageQueryOptions(apiFetch, pageId),
+    retry: (failureCount, error) => {
+      if (parseActiveWorkspaceMismatchError(error)) {
+        return false;
+      }
+
+      return failureCount < 2;
+    },
+  });
+  const mismatch = parseActiveWorkspaceMismatchError(query.error);
+  const pageWorkspaceId = resolvePageDetailReference(queryClient, query.data)?.page.workspaceId;
+  const hasClientMismatch = Boolean(
+    pageWorkspaceId && activeWorkspaceId && pageWorkspaceId !== activeWorkspaceId,
+  );
+  const requiredWorkspaceId = mismatch?.workspaceId ?? (hasClientMismatch ? pageWorkspaceId : null);
+  return { query, requiredWorkspaceId };
 }

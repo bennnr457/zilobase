@@ -65,7 +65,7 @@ import {
   getMissingHostedMeetingIds,
   getPlacedDatabaseIds,
   insertMeetingBlockInContent,
-} from "../navigation/page-hierarchy-blocks";
+} from "@zilobase/features/pages";
 
 type PageEditorPaneProps = {
   afterMetadata?: ReactNode;

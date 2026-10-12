@@ -20,3 +20,12 @@ export {
 export * from "./duplication";
 export * from "./editability";
 export * from "./publication";
+export * from "./sidebar-nav-item";
+export * from "./sidebar-navigation-model";
+export * from "./sidebar-section-items";
+export * from "./page-path";
+export * from "./breadcrumb-navigation";
+export * from "./page-hierarchy-blocks";
+export * from "./navigation-item-state";
+export * from "./sharing-model";
+export { pageReadSnapshotOf } from "./read-snapshot";

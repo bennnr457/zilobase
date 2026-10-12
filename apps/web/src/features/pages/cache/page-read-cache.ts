@@ -1,3 +1,4 @@
+import { pageReadSnapshotOf } from "@zilobase/features/pages";
 import type { QueryClient } from "@tanstack/react-query";
 
 import {
@@ -5,53 +6,6 @@ import {
   readPageSnapshots,
   rememberPageSnapshot,
 } from "@/features/editor/collaboration/page-document-cache";
-
-type ReadSnapshot = {
-  scope: string;
-  queryKey: unknown[];
-  data: unknown;
-};
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function snapshotOf(
-  queryKey: readonly unknown[],
-  data: unknown,
-  _sessionId: string,
-): ReadSnapshot | null {
-  const key = [...queryKey];
-  if (key[0] === "meetings" && key[1] === "list" && typeof key[2] === "string") {
-    if (!isObject(data) || !Array.isArray(data.meetings)) return null;
-    return { scope: `workspace:${key[2]}`, queryKey: key, data };
-  }
-  if (key[0] === "user-settings" && key.length === 1) {
-    if (!isObject(data)) return null;
-    return { scope: "user", queryKey: key, data };
-  }
-  if (
-    key[0] === "page-layouts" &&
-    key[1] === "resolved" &&
-    typeof key[2] === "string" &&
-    key[2] !== "none"
-  ) {
-    if (!isObject(data) || !isObject(data.config) || data.pageId !== key[2]) return null;
-    return { scope: `page:${key[2]}`, queryKey: key, data };
-  }
-  if (key[0] === "page" && typeof key[1] === "string" && key[1] !== "none") {
-    if (
-      key[2] === "access-targets" &&
-      isObject(data) &&
-      Array.isArray(data.guests) &&
-      Array.isArray(data.members)
-    ) {
-      return { scope: `page:${key[1]}`, queryKey: key, data };
-    }
-  }
-  // Shared entity references belong to one active data session and cannot hydrate.
-  return null;
-}
 
 export async function hydratePageReadCache(input: {
   queryClient: QueryClient;
@@ -67,7 +21,7 @@ export async function hydratePageReadCache(input: {
   const snapshots = await readPageSnapshots(userId, scopes);
   for (const snapshot of snapshots) {
     const key = snapshot.queryKey;
-    if (!key || !snapshotOf(key, snapshot.data, sessionId)) continue;
+    if (!key || !pageReadSnapshotOf(key, snapshot.data, sessionId)) continue;
     const existing = queryClient.getQueryState(key);
     if (existing?.dataUpdatedAt && existing.dataUpdatedAt >= snapshot.updatedAt) continue;
     queryClient.setQueryData(key, snapshot.data, { updatedAt: snapshot.updatedAt });
@@ -84,7 +38,7 @@ export function subscribePageReadCache(
     if (event.type !== "updated") return;
     if (event.action.type === "error") {
       const error = event.action.error;
-      const status = isObject(error) ? error.status : null;
+      const status = error && typeof error === "object" && "status" in error ? error.status : null;
       if (status !== 401 && status !== 403 && status !== 404) return;
       const key = event.query.queryKey;
       const scope =
@@ -100,7 +54,7 @@ export function subscribePageReadCache(
     }
     if (event.action.type !== "success" || event.action.manual) return;
     const { queryKey, state } = event.query;
-    const snapshot = snapshotOf(queryKey, state.data, sessionId);
+    const snapshot = pageReadSnapshotOf(queryKey, state.data, sessionId);
     if (!snapshot) return;
     void rememberPageSnapshot(
       userId,

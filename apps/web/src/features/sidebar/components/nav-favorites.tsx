@@ -36,7 +36,7 @@ import {
 import { SidebarNavItemAction } from "@/shared/ui/sidebar-nav-item-action";
 import { useOpenInNewTab } from "@/features/desktop/components/index";
 import { getSidebarExpansionStorageKey } from "../model/sidebar-expansion-state";
-import { getConfiguredSidebarItems } from "../model/sidebar-section-items";
+import { getConfiguredSidebarItems } from "@zilobase/features/pages";
 import { SidebarLibraryLink } from "./sidebar-library-link";
 import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
 import type { SidebarSectionLimit, SidebarSectionSort } from "@zilobase/features/user-settings";

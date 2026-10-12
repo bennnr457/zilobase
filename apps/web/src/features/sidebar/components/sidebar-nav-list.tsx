@@ -1,4 +1,4 @@
-import type { SidebarNavItem as NavigationItem } from "../model/sidebar-nav-item";
+import type { SidebarNavItem as NavigationItem } from "@zilobase/features/pages";
 ("use client");
 
 import {

@@ -59,7 +59,7 @@ import {
   buildCanonicalBreadcrumbTrail,
   getBreadcrumbNavigationSection,
   type BreadcrumbNavigationItem,
-} from "@/features/pages/navigation/breadcrumb-navigation";
+} from "@zilobase/features/pages";
 import { useOptionalPageSidePane } from "./page-side-pane";
 import {
   isPublishedFallbackPage,

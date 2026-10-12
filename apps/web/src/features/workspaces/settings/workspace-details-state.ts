@@ -1,3 +1,4 @@
+import { isValidWorkspaceSlug, isValidWorkspaceLogoUrl } from "@zilobase/features/workspaces";
 import * as React from "react";
 
 import { toast } from "sonner";
@@ -52,12 +53,12 @@ export function useWorkspaceDetails({
       return;
     }
 
-    if (!isValidSlug(trimmedSlug)) {
+    if (!isValidWorkspaceSlug(trimmedSlug)) {
       setError("Use lowercase letters, numbers, and hyphens for the slug.");
       return;
     }
 
-    if (trimmedLogo && !isValidUrl(trimmedLogo)) {
+    if (trimmedLogo && !isValidWorkspaceLogoUrl(trimmedLogo)) {
       setError("Enter a valid logo URL.");
       return;
     }
@@ -97,19 +98,6 @@ export function useWorkspaceDetails({
     saveWorkspace,
     updateWorkspace,
   };
-}
-
-function isValidSlug(value: string) {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
-}
-
-function isValidUrl(value: string) {
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function workspaceDetailsChanged(

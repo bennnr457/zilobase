@@ -1,4 +1,4 @@
-import type { Page, PageDatabase, PageItemPlacement } from "@zilobase/features/pages";
+import type { Page, PageDatabase, PageItemPlacement } from "./contracts";
 
 export type BreadcrumbNavigationItem =
   | { id: string; kind: "page"; page: Page }

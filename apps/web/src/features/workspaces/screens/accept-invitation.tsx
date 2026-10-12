@@ -13,7 +13,7 @@ import { Spinner } from "@/shared/ui/spinner";
 import { useSession } from "@zilobase/features/auth/react";
 import { useAcceptWorkspaceInvitation } from "@zilobase/features/workspaces/react";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { readSingleInvitationId } from "../invitations/invitation-link";
+import { readSingleInvitationId } from "@zilobase/features/workspaces";
 
 export default function AcceptInvitationPage() {
   const navigate = useNavigate();

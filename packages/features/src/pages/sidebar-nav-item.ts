@@ -1,4 +1,4 @@
-import type { ZilobaseAiMode } from "@zilobase/features/pages";
+import type { ZilobaseAiMode } from "./contracts";
 
 export type SidebarNavItem<Icon = unknown> = {
   databaseId?: string | null;

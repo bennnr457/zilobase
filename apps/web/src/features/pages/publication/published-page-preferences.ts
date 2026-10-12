@@ -1,10 +1,8 @@
-import type { EmbeddedItemsOpenAs, Page } from "@zilobase/features/pages";
+import type { EmbeddedItemsOpenAs } from "@zilobase/features/pages";
 
 const PUBLISHED_EMBEDDED_ITEMS_OPEN_AS_KEY = "zilobase:published:embeddedItemsOpenAs";
 
-export function isPublishedFallbackPage(page: Page | null | undefined) {
-  return Boolean(page?.publishedOwnerPreferences);
-}
+export { isPublishedFallbackPage } from "@zilobase/features/pages";
 
 export function readPublishedEmbeddedItemsOpenAs(): EmbeddedItemsOpenAs {
   if (typeof window === "undefined") {

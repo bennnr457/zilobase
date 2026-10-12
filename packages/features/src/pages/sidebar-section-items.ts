@@ -1,5 +1,5 @@
 import type { SidebarNavItem } from "./sidebar-nav-item";
-import type { SidebarSectionId, SidebarSectionSort } from "@zilobase/features/user-settings";
+import type { SidebarSectionId, SidebarSectionSort } from "../user-settings/index";
 
 export function getConfiguredSidebarItems<Icon>(
   items: SidebarNavItem<Icon>[],

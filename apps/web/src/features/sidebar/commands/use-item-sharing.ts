@@ -1,5 +1,12 @@
+import {
+  getGuestPageId,
+  isSharingWorkspaceMember,
+  getSharingAccessLevel,
+  getSharingRules,
+  getPendingItems,
+  getGuestActionLabel,
+} from "@zilobase/features/pages";
 import { getNavigationItemPath } from "../model/database-view-navigation";
-import type { DatabaseAccessRule } from "@zilobase/features/databases";
 import * as React from "react";
 
 import { toast } from "sonner";
@@ -296,35 +303,6 @@ export function useItemSharing({
 }
 export type ItemSharingState = ReturnType<typeof useItemSharing>;
 
-function getGuestPageId(databaseId: string | null | undefined, pageId: string | null | undefined) {
-  return databaseId ? null : pageId;
-}
-function isSharingWorkspaceMember(
-  targets: { members: { id: string }[] } | undefined,
-  session: { user?: { id: string } | null } | null | undefined,
-) {
-  return Boolean(targets?.members.some((member) => member.id === session?.user?.id));
-}
-function getSharingAccessLevel(
-  isDatabase: boolean,
-  database: { database: { accessLevel?: AccessLevel | null } } | null | undefined,
-  pageLevel: AccessLevel | null | undefined,
-) {
-  return isDatabase ? database?.database.accessLevel : pageLevel;
-}
-function getSharingRules(
-  isDatabase: boolean,
-  database: { access: DatabaseAccessRule[] } | undefined,
-  page: { access: PageAccessRule[] } | undefined,
-) {
-  return isDatabase ? (database?.access ?? []) : (page?.access ?? []);
-}
-function getPendingItems<T extends { status: string }>(items: T[] | undefined) {
-  return (items ?? []).filter((item) => item.status === "pending");
-}
-function getGuestActionLabel(policy: { mode: string; canApprove: boolean } | null | undefined) {
-  return policy?.mode === "request" && !policy.canApprove ? "Request" : "Invite";
-}
 function getSharingSelection(
   targetValue: string,
   targets: Map<string, { label: string; detail?: string }>,

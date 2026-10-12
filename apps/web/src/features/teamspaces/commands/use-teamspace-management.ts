@@ -1,3 +1,4 @@
+import { getTeamspacePrincipalCandidates } from "@zilobase/features/teamspaces";
 import { useEffect, useMemo, useState } from "react";
 
 import { toast } from "sonner";
@@ -44,23 +45,7 @@ export function useTeamspaceManagement({
   }, [teamspace]);
 
   const candidates = useMemo(() => {
-    const memberIds = new Set(principals.map((principal) => principal.principalId));
-    return [
-      ...(targets?.members ?? [])
-        .filter((member) => !memberIds.has(member.id))
-        .map((member) => ({
-          id: member.id,
-          label: `${member.name} · ${member.email}`,
-          type: "user" as const,
-        })),
-      ...(targets?.teams ?? [])
-        .filter((team) => !memberIds.has(team.id))
-        .map((team) => ({
-          id: team.id,
-          label: `${team.name} · group`,
-          type: "team" as const,
-        })),
-    ];
+    return getTeamspacePrincipalCandidates(principals, targets);
   }, [principals, targets]);
 
   const save = (patch: Parameters<typeof update.mutate>[0]) =>

@@ -29,3 +29,4 @@ export {
   usePageProperties,
 } from "./query-hooks";
 export { useResolvedPageLayout, useSavePageLayout, useResetPageLayout } from "./page-layout-hooks";
+export { usePageWorkspaceAccess } from "./query-hooks";

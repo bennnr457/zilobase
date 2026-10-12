@@ -86,7 +86,7 @@ import { prefetchPageForNavigation } from "@/features/editor/collaboration/page-
 import { markPageNavigationStart } from "@/features/pages/navigation/page-navigation-timing";
 import { getTeamspaceSidebarPermissions } from "@zilobase/features/teamspaces";
 import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
-import { getConfiguredSidebarItems } from "../model/sidebar-section-items";
+import { getConfiguredSidebarItems } from "@zilobase/features/pages";
 import { SidebarLibraryLink } from "./sidebar-library-link";
 import type {
   SidebarSectionId,

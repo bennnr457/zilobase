@@ -1,8 +1,5 @@
-import {
-  getPrimaryPageParentId,
-  type Page,
-  type PageItemPlacement,
-} from "@zilobase/features/pages";
+import { getPrimaryPageParentId } from "./queries";
+import { type Page, type PageItemPlacement } from "./contracts";
 
 export function buildPagePath(
   pagesById: Map<string, Page>,

@@ -1,10 +1,5 @@
-import type {
-  Page,
-  PageDatabase,
-  PageDatabaseView,
-  PageItemPlacement,
-} from "@zilobase/features/pages";
-import type { MeetingListItem } from "@zilobase/features/meetings";
+import type { Page, PageDatabase, PageDatabaseView, PageItemPlacement } from "./contracts";
+import type { MeetingListItem } from "../meetings/contracts";
 
 import type { SidebarNavItem } from "./sidebar-nav-item";
 

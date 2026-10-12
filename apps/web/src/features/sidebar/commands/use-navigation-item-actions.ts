@@ -16,7 +16,8 @@ import {
   usePageNavigation,
 } from "@zilobase/features/pages/react";
 
-import { getNavigationItemState, getNavigationPendingState } from "../model/navigation-item-state";
+import { getNavigationItemState } from "@zilobase/features/pages";
+import { getNavigationPendingState } from "../model/navigation-item-state";
 import {
   useDeleteDatabase,
   useSetDatabaseFavorite,

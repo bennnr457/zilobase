@@ -1,3 +1,4 @@
+import type { Page } from "./contracts";
 import type { ApiFetcher } from "../shared/api-fetcher";
 import { ApiError } from "../shared/api-error";
 export type PublishedShareDecision =
@@ -58,4 +59,8 @@ export async function isPagePublished(apiFetch: ApiFetcher, pageId: string) {
     if (error instanceof ApiError && error.status === 404) return false;
     throw error;
   }
+}
+
+export function isPublishedFallbackPage(page: Page | null | undefined) {
+  return Boolean(page?.publishedOwnerPreferences);
 }

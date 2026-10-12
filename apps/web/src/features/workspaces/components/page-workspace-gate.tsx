@@ -1,5 +1,5 @@
+import { usePageWorkspaceAccess } from "@zilobase/features/pages/react";
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Building2Icon } from "@/shared/components/icons";
 
@@ -17,12 +17,7 @@ import { Button } from "@/shared/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import {
-  parseActiveWorkspaceMismatchError,
-  pageQueryKey,
-  pageQueryOptions,
-  resolvePageDetailReference,
-} from "@zilobase/features/pages";
+import { pageQueryKey } from "@zilobase/features/pages";
 import { useWorkspaces, useSetActiveWorkspace } from "@zilobase/features/workspaces/react";
 
 type PageWorkspaceGateProps = {
@@ -31,26 +26,11 @@ type PageWorkspaceGateProps = {
 };
 
 export function PageWorkspaceGate({ children, pageId }: PageWorkspaceGateProps) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const { queryClient } = useZilobaseFeatures();
   const activeWorkspaceId = useActiveWorkspaceId();
   const { data: workspaces = [] } = useWorkspaces();
   const setActiveWorkspace = useSetActiveWorkspace();
-  const query = useQuery({
-    ...pageQueryOptions(apiFetch, pageId),
-    retry: (failureCount, error) => {
-      if (parseActiveWorkspaceMismatchError(error)) {
-        return false;
-      }
-
-      return failureCount < 2;
-    },
-  });
-  const mismatch = parseActiveWorkspaceMismatchError(query.error);
-  const pageWorkspaceId = resolvePageDetailReference(queryClient, query.data)?.page.workspaceId;
-  const hasClientMismatch = Boolean(
-    pageWorkspaceId && activeWorkspaceId && pageWorkspaceId !== activeWorkspaceId,
-  );
-  const requiredWorkspaceId = mismatch?.workspaceId ?? (hasClientMismatch ? pageWorkspaceId : null);
+  const { query, requiredWorkspaceId } = usePageWorkspaceAccess(pageId, activeWorkspaceId);
   const workspace = workspaces.find((item) => item.id === requiredWorkspaceId);
   const workspaceLabel = workspace?.name?.trim() || "this workspace";
 

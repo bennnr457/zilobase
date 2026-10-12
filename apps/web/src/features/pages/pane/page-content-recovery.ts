@@ -2,10 +2,7 @@ import {
   insertDatabaseBlockInContent,
   isEffectivelyEmptyPageContent,
 } from "@zilobase/page-context";
-import {
-  getMissingPlacedDatabaseIds,
-  type DatabasePlacement,
-} from "../navigation/page-hierarchy-blocks";
+import { getMissingPlacedDatabaseIds, type DatabasePlacement } from "@zilobase/features/pages";
 
 export type PageContentHandle = {
   getContentJson: () => unknown;
