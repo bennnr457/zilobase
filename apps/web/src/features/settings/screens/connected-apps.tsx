@@ -10,19 +10,12 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@/shared/ui/item";
-import { authFetch, getApiErrorMessage } from "@/platform/network/api";
-import { labelForScope } from "@/features/oauth/lib/scope-labels";
-
-type OAuthConsent = {
-  clientId?: string;
-  client_id?: string;
-  createdAt?: string;
-  id: string;
-  name?: string;
-  scopes?: string[];
-};
+import { useZilobaseFeatures, getApiErrorMessage } from "@zilobase/features";
+import { listOAuthConsents, revokeOAuthConsent, type OAuthConsent } from "@zilobase/features/oauth";
+import { labelForScope } from "@zilobase/features/oauth";
 
 export default function ConnectedAppsSettingsPage() {
+  const { apiFetch } = useZilobaseFeatures();
   const [consents, setConsents] = useState<OAuthConsent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,12 +24,7 @@ export default function ConnectedAppsSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await authFetch<OAuthConsent[] | { consents?: OAuthConsent[] }>(
-        "/oauth2/get-consents",
-        undefined,
-        { method: "GET" },
-      );
-      setConsents(Array.isArray(result) ? result : (result.consents ?? []));
+      setConsents(await listOAuthConsents(apiFetch));
     } catch (cause) {
       setError(getApiErrorMessage(cause));
     } finally {
@@ -51,7 +39,7 @@ export default function ConnectedAppsSettingsPage() {
   async function revoke(id: string) {
     setError(null);
     try {
-      await authFetch("/oauth2/delete-consent", { id });
+      await revokeOAuthConsent(apiFetch, id);
       await load();
     } catch (cause) {
       setError(getApiErrorMessage(cause));

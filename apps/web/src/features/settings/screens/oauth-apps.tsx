@@ -12,17 +12,16 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@/shared/ui/item";
-import { authFetch, getApiErrorMessage } from "@/platform/network/api";
-
-type OAuthApp = {
-  client_id?: string;
-  client_name?: string;
-  client_secret?: string;
-  name?: string;
-  redirect_uris?: string[];
-};
+import { useZilobaseFeatures, getApiErrorMessage } from "@zilobase/features";
+import {
+  listOAuthApps,
+  createOAuthApp,
+  deleteOAuthApp,
+  type OAuthApp,
+} from "@zilobase/features/oauth";
 
 export default function OAuthAppsSettingsPage() {
+  const { apiFetch } = useZilobaseFeatures();
   const [apps, setApps] = useState<OAuthApp[]>([]);
   const [name, setName] = useState("");
   const [redirectUris, setRedirectUris] = useState("");
@@ -33,12 +32,7 @@ export default function OAuthAppsSettingsPage() {
   async function load() {
     setError(null);
     try {
-      const result = await authFetch<OAuthApp[] | { clients?: OAuthApp[] }>(
-        "/oauth2/get-clients",
-        undefined,
-        { method: "GET" },
-      );
-      setApps(Array.isArray(result) ? result : (result.clients ?? []));
+      setApps(await listOAuthApps(apiFetch));
     } catch (cause) {
       setError(getApiErrorMessage(cause));
     }
@@ -56,7 +50,7 @@ export default function OAuthAppsSettingsPage() {
       .map((uri) => uri.trim())
       .filter(Boolean);
     try {
-      const created = await authFetch<OAuthApp>("/oauth2/create-client", {
+      const created = await createOAuthApp(apiFetch, {
         application_type: publicClient ? "native" : "web",
         client_name: name.trim() || "OAuth app",
         redirect_uris: uris,
@@ -74,7 +68,7 @@ export default function OAuthAppsSettingsPage() {
   async function remove(clientId: string) {
     setError(null);
     try {
-      await authFetch("/oauth2/delete-client", { client_id: clientId });
+      await deleteOAuthApp(apiFetch, clientId);
       await load();
     } catch (cause) {
       setError(getApiErrorMessage(cause));

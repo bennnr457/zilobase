@@ -1,24 +1,17 @@
+import { bootstrapInstance as bootstrap } from "@zilobase/features/instance";
 import { apiFetch, authFetch } from "@/platform/network/api";
 
-export async function bootstrapInstance(form: FormData, onBootstrapped: () => void) {
-  const email = String(form.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  const password = String(form.get("password") ?? "");
-  await apiFetch("/api/instance/bootstrap", {
-    auth: false,
-    body: JSON.stringify({
-      email,
-      name: String(form.get("name") ?? "").trim(),
-      password,
-      workspaceName: String(form.get("workspaceName") ?? "").trim(),
-    }),
-    headers: {
-      "x-zilobase-bootstrap-token": String(form.get("bootstrapToken") ?? "").trim(),
+export function bootstrapInstance(form: FormData, onBootstrapped: () => void) {
+  return bootstrap(
+    apiFetch,
+    { signInWithPassword: (input) => authFetch("/sign-in/email", input) },
+    {
+      email: String(form.get("email") ?? ""),
+      password: String(form.get("password") ?? ""),
+      name: String(form.get("name") ?? ""),
+      workspaceName: String(form.get("workspaceName") ?? ""),
+      bootstrapToken: String(form.get("bootstrapToken") ?? ""),
     },
-    method: "POST",
-  });
-
-  onBootstrapped();
-  await authFetch("/sign-in/email", { email, password });
+    onBootstrapped,
+  );
 }

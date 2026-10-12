@@ -249,6 +249,26 @@
     "./runtime/notification-room": {
       "types": "./src/runtime/notification-room.ts",
       "default": "./src/runtime/notification-room.ts"
+    },
+    "./oauth": {
+      "types": "./src/oauth/index.ts",
+      "default": "./src/oauth/index.ts"
+    },
+    "./oauth/contracts": {
+      "types": "./src/oauth/contracts.ts",
+      "default": "./src/oauth/contracts.ts"
+    },
+    "./instance": {
+      "types": "./src/instance/index.ts",
+      "default": "./src/instance/index.ts"
+    },
+    "./instance/contracts": {
+      "types": "./src/instance/contracts.ts",
+      "default": "./src/instance/contracts.ts"
+    },
+    "./instance/react": {
+      "types": "./src/instance/react.ts",
+      "default": "./src/instance/react.ts"
     }
   }
 }

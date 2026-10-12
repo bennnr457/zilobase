@@ -1,10 +1,10 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("oauth consent helpers label scopes and preserve signed query", async () => {
     const { labelForScope, parseRequestedScopes } = await loadModule(
-      "/src/features/oauth/lib/scope-labels.ts",
+      "/packages/features/src/oauth/scopes.ts",
     );
     const { isOAuthLoginSearch, readOAuthQuery, pickOAuthSearch } = await loadModule(
-      "/src/features/oauth/lib/oauth-query.ts",
+      "/packages/features/src/oauth/search.ts",
     );
 
     assert.deepEqual(parseRequestedScopes("openid+clips.write"), ["openid", "clips.write"]);

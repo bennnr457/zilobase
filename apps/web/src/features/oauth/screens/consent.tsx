@@ -2,24 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useActiveWorkspaceId, useWorkspaces } from "@zilobase/features/workspaces/react";
 
-import { webAuthClient } from "@/app/providers/features-provider";
-import { authFetch, getApiErrorMessage } from "@/platform/network/api";
+import { useZilobaseFeatures, getApiErrorMessage } from "@zilobase/features";
+import { publicOAuthClient, submitOAuthConsent } from "@zilobase/features/oauth";
 import { Button } from "@/shared/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/shared/ui/item";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Spinner } from "@/shared/ui/spinner";
 import { ZilobaseLogo } from "@/shared/components/zilobase-logo";
-import { readOAuthQuery } from "../lib/oauth-query";
-import { labelForScope, parseRequestedScopes } from "../lib/scope-labels";
-
-type PublicOAuthClient = {
-  client_id?: string;
-  client_name?: string;
-  name?: string;
-};
+import { readOAuthQuery } from "@zilobase/features/oauth";
+import { labelForScope, parseRequestedScopes } from "@zilobase/features/oauth";
 
 export default function OAuthConsentPage() {
+  const { apiFetch, auth } = useZilobaseFeatures();
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const navigate = useNavigate();
   const workspacesQuery = useWorkspaces();
@@ -40,11 +35,7 @@ export default function OAuthConsentPage() {
       return;
     }
 
-    void authFetch<PublicOAuthClient>(
-      `/oauth2/public-client?client_id=${encodeURIComponent(clientId)}`,
-      undefined,
-      { method: "GET" },
-    )
+    void publicOAuthClient(apiFetch, clientId)
       .then((client) => {
         setClientName(client.client_name ?? client.name ?? "An application");
       })
@@ -58,17 +49,11 @@ export default function OAuthConsentPage() {
     setPending(accept ? "allow" : "deny");
 
     try {
-      if (accept) {
-        if (!selectedWorkspaceId) {
-          throw new Error("Choose a workspace to continue.");
-        }
-        await webAuthClient.setActiveWorkspace(selectedWorkspaceId);
-      }
-
-      const result = await authFetch<{ redirect?: boolean; url?: string }>("/oauth2/consent", {
+      const result = await submitOAuthConsent(apiFetch, auth, {
         accept,
-        oauth_query: readOAuthQuery(),
-        scope: typeof search.scope === "string" ? search.scope.replaceAll("+", " ") : undefined,
+        workspaceId: selectedWorkspaceId,
+        oauthQuery: readOAuthQuery(window.location.search),
+        scope: typeof search.scope === "string" ? search.scope : undefined,
       });
 
       if (result?.url) {

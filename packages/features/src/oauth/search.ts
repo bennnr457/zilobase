@@ -15,7 +15,7 @@ const oauthSearchKeys = [
   "exp",
 ] as const;
 
-export function readOAuthQuery(search = window.location.search) {
+export function readOAuthQuery(search: string) {
   const params = new URLSearchParams(search);
   const explicit = params.get("oauth_query");
   if (explicit) {

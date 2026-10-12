@@ -15,7 +15,7 @@ import {
 import { Input } from "@/shared/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { getAuthReturnPath, signInWithGoogle } from "../lib/google-auth";
-import { readOAuthQuery } from "@/features/oauth/lib/oauth-query";
+import { readOAuthQuery } from "@zilobase/features/oauth";
 import { cn } from "@/shared/lib/utils";
 import { useRequestSignInOtp, useSignInWithPassword } from "@zilobase/features/auth/react";
 import { useAuthFlowStore } from "../state/auth-flow-store";
@@ -63,7 +63,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"form">)
       const redirectUrl =
         result && typeof result === "object" && "url" in result && typeof result.url === "string"
           ? result.url
-          : readOAuthQuery()
+          : readOAuthQuery(window.location.search)
             ? `/oauth/consent${window.location.search}`
             : returnTo;
       window.location.assign(redirectUrl);

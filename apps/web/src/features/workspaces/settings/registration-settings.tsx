@@ -1,51 +1,22 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInstanceSettings, useUpdateInstanceSettings } from "@zilobase/features/instance/react";
+import type { RegistrationMode } from "@zilobase/features/instance";
 import { toast } from "sonner";
 
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/shared/ui/field";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
-import { apiFetch } from "@/platform/network/api";
-
-type RegistrationMode = "invite-only" | "open";
-
-type InstanceSettingsResponse = {
-  settings: {
-    bootstrapCompleted: boolean;
-    displayName: string;
-    instanceId: string;
-    pinnedWorkspaceId: string | null;
-    registrationMode: RegistrationMode;
-  };
-};
-
-const instanceSettingsQueryOptions = () =>
-  queryOptions({
-    queryFn: ({ signal }) =>
-      apiFetch<InstanceSettingsResponse>("/api/instance/settings", { signal }),
-    queryKey: ["instance", "settings"] as const,
-  });
-
 export function RegistrationSettingsSection() {
-  const queryClient = useQueryClient();
-  const settingsQuery = useQuery(instanceSettingsQueryOptions());
-  const updateSettings = useMutation({
-    mutationFn: (registrationMode: RegistrationMode) =>
-      apiFetch<InstanceSettingsResponse>("/api/instance/settings", {
-        body: JSON.stringify({ registrationMode }),
-        headers: { "content-type": "application/json" },
-        method: "PATCH",
-      }),
-    onSuccess: (response) => {
-      queryClient.setQueryData(instanceSettingsQueryOptions().queryKey, response);
-      toast.success("Registration settings updated.");
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Could not update registration settings.",
-      );
-    },
-  });
+  const settingsQuery = useInstanceSettings();
+  const updateSettings = useUpdateInstanceSettings();
+  const save = (value: RegistrationMode) =>
+    updateSettings.mutate(value, {
+      onSuccess: () => toast.success("Registration settings updated."),
+      onError: (error) =>
+        toast.error(
+          error instanceof Error ? error.message : "Could not update registration settings.",
+        ),
+    });
 
   return (
     <section className="grid gap-3">
@@ -59,7 +30,7 @@ export function RegistrationSettingsSection() {
         <FieldLabel>Registration mode</FieldLabel>
         <Select
           disabled={settingsQuery.isLoading || updateSettings.isPending}
-          onValueChange={(value) => updateSettings.mutate(value as RegistrationMode)}
+          onValueChange={(value) => save(value as RegistrationMode)}
           value={settingsQuery.data?.settings.registrationMode ?? ""}
         >
           <SelectTrigger className="w-full">

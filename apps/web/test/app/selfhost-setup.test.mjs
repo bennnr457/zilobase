@@ -1,9 +1,10 @@
-export function register({ loadModule, readSource, assert, test }) {
+export function register({ loadModule, readSource, readWorkspace, assert, test }) {
   test("self-host setup keeps its one-time token out of URLs and browser storage", async () => {
     const [page, router] = await Promise.all([
       Promise.all([
         readSource("/src/features/auth/screens/setup.tsx"),
         readSource("/src/features/auth/setup/bootstrap-instance.ts"),
+        readWorkspace("packages/features/src/instance/bootstrap.ts"),
       ]).then((parts) => parts.join("\n")),
       readSource("/src/app/routing/route-groups/public-routes.tsx"),
     ]);
@@ -22,7 +23,7 @@ export function register({ loadModule, readSource, assert, test }) {
 
   test("bootstrap-required login errors redirect to self-host setup", async () => {
     const [redirects, router, validators] = await Promise.all([
-      loadModule("/src/features/auth/lib/bootstrap-redirect.ts"),
+      loadModule("/packages/features/src/auth/bootstrap-redirect.ts"),
       readSource("/src/app/routing/route-groups/public-routes.tsx"),
       readSource("/src/app/routing/search-validators.ts"),
     ]);

@@ -2,10 +2,10 @@ import { createRoute, lazyRouteComponent, redirect } from "@tanstack/react-route
 import { isDesktopApp } from "@/features/desktop/index";
 
 import { getAuthReturnPath } from "@/features/auth/lib/google-auth";
-import { isBootstrapRequiredAuthError } from "@/features/auth/lib/bootstrap-redirect";
+import { isBootstrapRequiredAuthError } from "@zilobase/features/auth";
 import { getDefaultAppPath, getFreshSession, getWorkspaces } from "../guards";
 import { rootRoute } from "../route-roots";
-import { isOAuthLoginSearch, pickOAuthSearch } from "@/features/oauth/lib/oauth-query";
+import { isOAuthLoginSearch, pickOAuthSearch } from "@zilobase/features/oauth";
 import {
   validateLoginSearch,
   validateOAuthConsentSearch,

@@ -25,7 +25,7 @@ import { webClientLifecycle, databasePresenceColor } from "./client-lifecycle";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/features/demo";
 import posthog from "@/shared/lib/posthog";
-import { readOAuthQuery } from "@/features/oauth/lib/oauth-query";
+import { readOAuthQuery } from "@zilobase/features/oauth";
 import {
   clearCachedSession,
   clearPageCacheForUser,
@@ -55,7 +55,7 @@ function withOAuthQuery<T extends Record<string, unknown>>(input: T) {
     return input;
   }
 
-  const oauthQuery = readOAuthQuery();
+  const oauthQuery = readOAuthQuery(window.location.search);
   return oauthQuery ? { ...input, oauth_query: oauthQuery } : input;
 }
 
