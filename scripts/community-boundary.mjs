@@ -5,7 +5,6 @@ const importPattern = /(?:\bfrom|\bimport\s*\(|\brequire\s*\()\s*["']([^"']+)["'
 const privateFeatureTermPattern = /\b(?:SSO|Enterprise)\b/giu;
 
 const boundaryPolicyFiles = new Set([
-  "architecture/platform/edition-integration.md",
   "scripts/check-community-boundary.mjs",
   "scripts/community-boundary.mjs",
   "scripts/community-boundary.test.mjs",

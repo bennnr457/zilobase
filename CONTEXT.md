@@ -4,7 +4,7 @@
 
 ### Ask AI
 
-The web chat screens, settings screens, and shared `ai-chat` client contracts. The server chat, settings, connector, job, and ChatAgent implementation is removed.
+The web chat screens (full page, docked sidebar, and floating panel). There is no chat backend, MCP, agent tools, or client SDK.
 
 ### Desktop bridge
 

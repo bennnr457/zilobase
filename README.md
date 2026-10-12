@@ -83,19 +83,11 @@ docker compose --env-file .env.selfhost -f docker-compose.yml -f docker-compose.
 docker compose --env-file .env.selfhost -f docker-compose.yml -f docker-compose.prod.yml up -d --wait
 ```
 
-Read the self-hosting guide:
-
-- [Self-hosting overview](./docs/self-hosting/overview.md)
-- [Domains and TLS](./docs/self-hosting/domain.md)
-- [Operations guide](./docs/self-hosting/operations.md)
-- [Database operations and troubleshooting](./docs/databases/operations.md)
-
 ## Ask AI
 
 The Ask AI screens remain in the web app: a full page, a docked sidebar, and a
 floating panel. The server chat, settings, connector, and job implementation is
-removed, so those screens have no backend. See the
-[architecture map](./architecture/README.md).
+removed, so those screens have no backend.
 
 ## Development
 
@@ -140,10 +132,6 @@ Common commands:
 | `npm run test:selfhost`  | Run the isolated end-to-end Compose smoke test.                                                                  |
 | `npm run env:encrypt`    | Encrypt local runtime env files at rest.                                                                         |
 
-See the [unified local-development guide](./docs/development-workflows.md) for
-runtime URLs, debugger profiles, Kubernetes workflows, dotenvx precedence,
-failure recovery, and safe target-scoped resets.
-
 `npm run dev:desktop` opens Electron on the local Cloudflare web app at
 `http://localhost:1422`. Zilobase Cloud in that session is the local Cloudflare
 runtime at `http://localhost:3010`. **Choose custom server** lists self-hosted
@@ -186,8 +174,6 @@ zilobase/
 |-- docker/
 `-- docker-compose.yml
 ```
-
-For a deeper system walkthrough, read [architecture/README.md](./architecture/README.md).
 
 ## Deployment Model
 

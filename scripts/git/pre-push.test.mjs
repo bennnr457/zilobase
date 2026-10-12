@@ -33,7 +33,7 @@ test("GitHub glob prefixes match files the way workflow paths: lists do", () => 
 });
 
 test("docs-only changes still run always-on GitHub PR jobs", () => {
-  const selected = selectJobs(["docs/development-workflows.md", "CONTRIBUTING.md"]);
+  const selected = selectJobs(["README.md", "CONTRIBUTING.md"]);
   assert.deepEqual(
     selected.map((job) => job.id),
     ["community-boundary", "architecture"],

@@ -33,9 +33,7 @@ npm run db:studio
 
 The root supervisor runs the Node runtime and its local dependencies.
 `npm run db:studio` opens Drizzle Studio against the local development
-database. See
-[Unified local development](./docs/development-workflows.md) for the complete
-command, Kubernetes, editor, environment, and reset contract.
+database.
 
 For local self-hosting:
 
@@ -74,8 +72,6 @@ npm run test:selfhost
   domain contracts.
 - `packages/page-context`: canonical page/editor conversion and markdown helpers.
 - `packages/markdown-text-splitter`: standalone markdown splitting utilities.
-
-See `architecture/README.md` for a deeper walkthrough.
 
 ## Issues
 
@@ -153,7 +149,7 @@ Before adding or moving a file, use this checklist:
 Web features cannot import `app`, and web `shared` cannot import `features` or
 `app`. Server infrastructure cannot import feature implementations.
 
-Run the architecture gate before submitting structural changes:
+Run the published-export gate before submitting structural changes:
 
 ```sh
 npm run verify:architecture
@@ -167,7 +163,7 @@ npm run fmt:check           # Check formatting without writing files
 npm run lint                # Oxlint plus shared-UI and TanStack Query plugins
 npm run verify:core         # TypeScript packages, web, and server
 npm run verify:desktop      # Rust formatting, clippy, and tests
-npm run verify:architecture # Architecture links and published exports
+npm run verify:architecture # Published exports and remaining markdown links
 npm run verify              # All of the above
 npm run verify:commit       # Fast staged-file checks used by the commit hook
 npm run verify:push         # Path-filtered GitHub pull-request checks
@@ -183,10 +179,10 @@ class overrides, while query keys/functions stay paired in reusable option
 factories.
 
 `npm run setup` points Git at [`.githooks`](.githooks). `git commit` runs the
-cheap path-filtered jobs (community boundary, architecture links, and tooling
+cheap path-filtered jobs (community boundary, published exports, and tooling
 or token checks when those files are staged). `git push` runs a local subset of CI: those commit checks plus the web,
 package, or desktop suites when those paths changed. The [CI workflow](.github/workflows/ci.yml)
-runs the full core verification, lint, and architecture checks on PRs and main pushes.
+runs the full core verification, lint, and published-export checks on PRs and main pushes.
 [Electron CI](.github/workflows/electron-desktop.yml) keeps platform packaging checks
 for relevant changes; release publishing remains tag-triggered or manual.
 Run the [self-host](.github/workflows/selfhost.yml) and
@@ -196,10 +192,8 @@ run on PRs, main pushes, or a nightly schedule. Enable the hooks later with
 `npm run hooks:install`. Skip once with `git commit --no-verify`,
 `git push --no-verify`, or `ZILOBASE_SKIP_HOOKS=1`.
 
-Verification evidence and the scope of each gate are described in [testing and quality](architecture/setup/testing-and-quality.md). Use current command output for counts and coverage; source moves and new behavioral tests change those measurements.
-
-`verify:architecture` checks local links in architecture and contributor
-documents and verifies published package exports against the baseline in
+`verify:architecture` checks local links in contributor documents and published
+package exports against the baseline in
 `scripts/refactor/public-exports-baseline.json`.
 
 New and changed units must remain at or below 25 cyclomatic complexity, 40

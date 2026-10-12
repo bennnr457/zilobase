@@ -45,7 +45,7 @@ test("SSO and Enterprise names are reserved for public boundary policy", () => {
   );
   assert.deepEqual(
     findRestrictedRuntimeReferences(
-      "architecture/platform/edition-integration.md",
+      "scripts/community-boundary.mjs",
       "SSO and Enterprise implementations stay outside this repository.",
     ),
     [],

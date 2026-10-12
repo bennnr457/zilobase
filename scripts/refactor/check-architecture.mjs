@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
@@ -32,13 +32,6 @@ const intentionalExportBreaks = new Set([
   "syncAiChatThreadMessages",
   "touchAiChatThreadActivity",
 ]);
-
-function markdownFiles(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name);
-    return entry.isDirectory() ? markdownFiles(path) : path.endsWith(".md") ? [path] : [];
-  });
-}
 
 export function checkLinks(files) {
   return files.flatMap((file) =>
@@ -178,12 +171,9 @@ function main() {
     throw new Error("Expected all, links, exports or capture-exports");
   const errors = [];
   if (mode === "links" || mode === "all") {
-    const files = [
-      ...markdownFiles(join(root, "architecture")),
-      ...["AGENTS.md", "README.md", "CONTRIBUTING.md"].map((name) => join(root, name)),
-    ];
+    const files = ["README.md", "CONTRIBUTING.md"].map((name) => join(root, name));
     errors.push(...checkLinks(files));
-    console.log(`Checked local links in ${files.length} architecture/contributor documents`);
+    console.log(`Checked local links in ${files.length} contributor documents`);
   }
   if (mode !== "links") {
     const current = captureExports(root, packages);
