@@ -1,5 +1,4 @@
-import { useSharedDataRevision } from "@zilobase/features/data/react";
-import { useQueries } from "@tanstack/react-query";
+import { useTaskDatabases } from "@zilobase/features/tasks/react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRightIcon, ListChecksIcon } from "@/shared/components/icons";
 
@@ -13,13 +12,8 @@ import {
   SidebarMenuItem,
 } from "@/shared/ui/sidebar";
 import { buildTaskRows, filterMyTaskRows, getTaskDatabaseSchema } from "@zilobase/features/tasks";
-import { useZilobaseFeatures } from "@zilobase/features";
 import { useSession } from "@zilobase/features/auth/react";
-import {
-  databaseContextExportQueryOptions,
-  resolveDatabaseExportReference,
-  type DatabaseExportPayload,
-} from "@zilobase/features/databases";
+
 import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
 
 export function SidebarTasksSection({
@@ -32,18 +26,9 @@ export function SidebarTasksSection({
   storageKey: string;
 }) {
   const [open, setOpen] = useSidebarSectionOpen(storageKey);
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-  useSharedDataRevision(queryClient);
   const { data: session } = useSession();
-  const queries = useQueries({
-    queries: open
-      ? databaseIds.map((databaseId) => databaseContextExportQueryOptions(apiFetch, databaseId))
-      : [],
-  });
-  const payloads = queries
-    .map((query) => resolveDatabaseExportReference(queryClient, query.data))
-    .filter((payload): payload is DatabaseExportPayload => Boolean(payload))
-    .filter((payload) => getTaskDatabaseSchema(payload).missing.length === 0);
+  const { queries, payloads: sources } = useTaskDatabases(open ? databaseIds : []);
+  const payloads = sources.filter((payload) => getTaskDatabaseSchema(payload).missing.length === 0);
   const rows = filterMyTaskRows(buildTaskRows(payloads), session?.user?.id ?? null).slice(0, limit);
 
   return (

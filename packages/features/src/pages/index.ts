@@ -28,4 +28,5 @@ export * from "./breadcrumb-navigation";
 export * from "./page-hierarchy-blocks";
 export * from "./navigation-item-state";
 export * from "./sharing-model";
+export * from "./notion-import";
 export { pageReadSnapshotOf } from "./read-snapshot";

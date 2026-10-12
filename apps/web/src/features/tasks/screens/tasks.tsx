@@ -1,7 +1,21 @@
-import { useSharedDataRevision } from "@zilobase/features/data/react";
+import { useTaskDatabases } from "@zilobase/features/tasks/react";
+import { createTaskDatabase as createSharedTaskDatabase } from "@zilobase/features/tasks";
+import {
+  buildTasksViewData as deriveTasksViewData,
+  getSyntheticRowId,
+  TASKS_DATABASE_ID,
+  TASKS_DATA_SOURCE_ID,
+  TASKS_VIEW_ID,
+  STATUS_COLUMN_ID,
+  STATUS_PROPERTY_ID,
+  ASSIGNEE_COLUMN_ID,
+  ASSIGNEE_PROPERTY_ID,
+  DUE_DATE_COLUMN_ID,
+  DUE_DATE_PROPERTY_ID,
+  SOURCE_COLUMN_ID,
+} from "@zilobase/features/tasks";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQueries } from "@tanstack/react-query";
 import {
   CheckCircle2Icon,
   DatabaseIcon,
@@ -21,11 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import {
-  createSampleRowContent,
-  type DatabaseSetupSelection,
-} from "@/features/databases/setup/components/database-setup-card";
-import { getDatabaseSetupTemplate } from "@zilobase/features/databases/models";
+import { type DatabaseSetupSelection } from "@/features/databases/setup/components/database-setup-card";
 import { DatabaseViewSkeleton } from "@/features/databases/views/components/database-view-skeleton";
 import { getDatabaseViewModel } from "@/features/databases/views/components/database-view-model";
 import type { DatabaseViewData } from "@zilobase/features/databases/models";
@@ -43,31 +53,15 @@ import {
 } from "@zilobase/features/databases/models";
 import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases/models";
 import type { DatabaseSortUpdatePatch } from "@zilobase/features/databases/models";
-import {
-  serializePropertyValue,
-  type DatabasePropertyValue,
-} from "@zilobase/features/databases/models";
-import { defaultStatusOptions } from "@/features/databases/schema/property-catalog";
+import { type DatabasePropertyValue } from "@zilobase/features/databases/models";
 import { TaskDatabaseListAdapter } from "../components/task-database-list-adapter";
-import { getDatabaseEmoji } from "@zilobase/features/databases";
-import {
-  databaseContextExportQueryOptions,
-  resolveDatabaseExportReference,
-  type DatabaseExportPayload,
-  type DatabasePropertyEntity,
-  type DatabaseRecordEntity,
-  type DatabaseViewEntity,
-  type DataSourceEntity,
-  type PagePropertyValueEntity,
-} from "@zilobase/features/databases";
-import { databaseOrderKeyAtPosition } from "@zilobase/features/databases/order-key";
+import { type DatabaseExportPayload } from "@zilobase/features/databases";
 import {
   useAddDatabaseRow,
   useApplyDatabaseTemplate,
   useCreateDatabase,
   useUpdateDatabasePropertyValue,
 } from "@zilobase/features/databases/react";
-import { useZilobaseFeatures } from "@zilobase/features";
 import { useSession } from "@zilobase/features/auth/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { usePageNavigation } from "@zilobase/features/pages/react";
@@ -82,7 +76,6 @@ import { useWorkspaceAccessTargets } from "@zilobase/features/workspaces/react";
 import {
   buildTaskRows,
   filterMyTaskRows,
-  getSelectOptions,
   getTaskDatabaseSchema,
   getTaskStatusForCompletion,
   type TaskRow,
@@ -104,23 +97,10 @@ const DatabaseViewToolbar = lazy(() =>
   })),
 );
 
-const TASKS_DATABASE_ID = "my-tasks";
-const TASKS_DATA_SOURCE_ID = "my-tasks:source";
-const TASKS_VIEW_ID = "my-tasks-list";
-const STATUS_COLUMN_ID = "my-tasks-status-column";
-const STATUS_PROPERTY_ID = "my-tasks-status";
-const ASSIGNEE_COLUMN_ID = "my-tasks-assignee-column";
-const ASSIGNEE_PROPERTY_ID = "my-tasks-assignee";
-const DUE_DATE_COLUMN_ID = "my-tasks-due-date-column";
-const DUE_DATE_PROPERTY_ID = "my-tasks-due-date";
-const SOURCE_COLUMN_ID = "my-tasks-source-column";
-const SOURCE_PROPERTY_ID = "my-tasks-source";
 const emptyAsync = async () => undefined;
 
 export default function TasksPage() {
   const workspaceId = useActiveWorkspaceId();
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-  useSharedDataRevision(queryClient);
   const { data: session } = useSession();
   const { data: navigation, isLoading: navigationLoading } = usePageNavigation(workspaceId);
   const { data: userSettings = defaultUserSettings } = useUserSettings();
@@ -137,15 +117,8 @@ export default function TasksPage() {
     [sidebarConfig, workspaceId],
   );
   const selectedDatabaseIds = sidebarLayout.taskDatabaseIds;
-  const databaseQueries = useQueries({
-    queries: selectedDatabaseIds.map((databaseId) =>
-      databaseContextExportQueryOptions(apiFetch, databaseId),
-    ),
-  });
-  const payloads = databaseQueries
-    .map((query) => resolveDatabaseExportReference(queryClient, query.data))
-    .filter((payload): payload is DatabaseExportPayload => Boolean(payload));
-  const isLoading = navigationLoading || databaseQueries.some((query) => query.isLoading);
+  const { payloads, isLoading: databasesLoading } = useTaskDatabases(selectedDatabaseIds);
+  const isLoading = navigationLoading || databasesLoading;
   const eligiblePayloads = payloads.filter(
     (payload) => getTaskDatabaseSchema(payload).missing.length === 0,
   );
@@ -652,205 +625,24 @@ function TasksDatabaseView({
   );
 }
 
-function buildTasksViewData({
-  databaseConfig,
-  propertyConfigs,
-  rows,
-  sourcePayloads,
-  viewConfig,
-  workspaceId,
-}: {
-  databaseConfig: unknown;
-  propertyConfigs: Record<string, unknown>;
-  rows: TaskRow[];
-  sourcePayloads: DatabaseExportPayload[];
-  viewConfig: unknown;
-  workspaceId: string | null | undefined;
-}): DatabaseViewData {
-  const statusOptions = Array.from(
-    new Map(
-      sourcePayloads
-        .flatMap((source) => {
-          const status = getTaskDatabaseSchema(source).status;
-          return status ? getSelectOptions(status.property.config) : [];
-        })
-        .map((option) => [option.name, option]),
-    ).values(),
-  );
-  const sourceSummaries = Object.fromEntries(
-    sourcePayloads.map((source) => {
-      const emoji = getDatabaseEmoji({ config: source.database.dataSourceConfig });
-      return [
-        `task-source:${source.database.id}`,
-        {
-          iconKind: "database",
-          id: `task-source:${source.database.id}`,
-          metadata: emoji ? { emoji } : null,
-          name: source.database.name || "Untitled database",
-        },
-      ];
-    }),
-  );
-  const propertyDefinitions = [
-    {
-      config: { options: statusOptions },
-      databasePropertyId: STATUS_COLUMN_ID,
-      id: STATUS_PROPERTY_ID,
-      name: "Status",
-      type: "status",
-      width: 170,
-    },
-    {
-      config: undefined,
-      databasePropertyId: ASSIGNEE_COLUMN_ID,
-      id: ASSIGNEE_PROPERTY_ID,
-      name: "Assignee",
-      type: "person",
-      width: 190,
-    },
-    {
-      config: undefined,
-      databasePropertyId: DUE_DATE_COLUMN_ID,
-      id: DUE_DATE_PROPERTY_ID,
-      name: "Due date",
-      type: "date",
-      width: 160,
-    },
-    {
-      config: {
-        pageSummaries: sourceSummaries,
-        relation: { limit: "one_page" },
-      },
-      databasePropertyId: SOURCE_COLUMN_ID,
-      id: SOURCE_PROPERTY_ID,
-      name: "Source",
-      type: "relation",
-      width: 210,
-    },
-  ] as const;
-  const properties: DatabasePropertyEntity[] = propertyDefinitions.map((definition, position) => ({
-    createdAt: "",
-    dataSourceId: TASKS_DATA_SOURCE_ID,
-    id: definition.databasePropertyId,
-    position,
-    property: {
-      config: getMergedPropertyConfig(
-        definition.config,
-        propertyConfigs[definition.databasePropertyId] as DatabasePropertyConfig,
-      ),
-      createdAt: "",
-      id: definition.id,
-      name: definition.name,
-      type: definition.type,
-      updatedAt: "",
-      workspaceId: workspaceId ?? TASKS_DATABASE_ID,
-    },
-    propertyId: definition.id,
-    updatedAt: "",
-    visible: true,
-    width: definition.width,
-  }));
-  const values: PagePropertyValueEntity[] = rows.flatMap((row) => [
-    makeValue(row, STATUS_PROPERTY_ID, row.status),
-    makeValue(row, ASSIGNEE_PROPERTY_ID, row.assigneeIds),
-    makeValue(row, DUE_DATE_PROPERTY_ID, row.dueDate),
-    makeValue(row, SOURCE_PROPERTY_ID, [`task-source:${row.databaseId}`]),
-  ]);
-  const views: DatabaseViewEntity[] = [
-    {
-      config: viewConfig,
-      createdAt: "",
-      databaseId: TASKS_DATABASE_ID,
-      dataSourceId: TASKS_DATA_SOURCE_ID,
-      id: TASKS_VIEW_ID,
-      name: "My Tasks",
-      position: 0,
-      type: "list",
-      updatedAt: "",
-    },
-  ];
-
-  const valuesByPageId = new Map<string, PagePropertyValueEntity[]>();
-  for (const value of values) {
-    const group = valuesByPageId.get(value.pageId) ?? [];
-    group.push(value);
-    valuesByPageId.set(value.pageId, group);
-  }
-  const records: DatabaseRecordEntity[] = rows.map((row, position) => ({
-    createdAt: row.createdAt,
-    dataSourceId: TASKS_DATA_SOURCE_ID,
-    id: getSyntheticRowId(row),
-    orderKey: databaseOrderKeyAtPosition(position),
-    page: {
-      createdAt: row.createdAt,
-      deletedAt: null,
-      hasContent: false,
-      id: row.pageId,
-      metadata: row.pageMetadata,
-      name: row.title,
-      updatedAt: row.updatedAt,
-    },
-    pageId: row.pageId,
-    parentRowId: null,
-    updatedAt: row.updatedAt,
-    valuesByPropertyId: Object.fromEntries(
-      (valuesByPageId.get(row.pageId) ?? []).map((value) => [value.propertyId, value]),
-    ),
-  }));
-
-  const activeDataSource: DataSourceEntity = {
-    config: databaseConfig,
-    configVersion: 1,
-    createdAt: "",
-    id: TASKS_DATA_SOURCE_ID,
-    linkedAt: null,
-    name: "My Tasks",
-    parentDatabaseId: TASKS_DATABASE_ID,
-    position: 0,
-    updatedAt: "",
-    version: 0,
-    workspaceId: workspaceId ?? TASKS_DATABASE_ID,
+function buildTasksViewData(input: Parameters<typeof deriveTasksViewData>[0]): DatabaseViewData {
+  const data = deriveTasksViewData(input);
+  const widths: Record<string, number> = {
+    [STATUS_COLUMN_ID]: 170,
+    [ASSIGNEE_COLUMN_ID]: 190,
+    [DUE_DATE_COLUMN_ID]: 160,
+    [SOURCE_COLUMN_ID]: 210,
   };
-
   return {
-    activeDataSource,
+    ...data,
     bootstrap: {
-      database: {
-        accessLevel: "full",
-        config: databaseConfig,
-        createdAt: "",
-        deletedAt: null,
-        id: TASKS_DATABASE_ID,
-        name: "My Tasks",
-        pageId: null,
-        updatedAt: "",
-        version: 0,
-        workspaceId: workspaceId ?? TASKS_DATABASE_ID,
-      },
-      dataSources: [activeDataSource],
-      properties,
-      views,
+      ...data.bootstrap,
+      properties: data.bootstrap.properties.map((property) => ({
+        ...property,
+        width: widths[property.id],
+      })),
     },
-    dataSourceId: TASKS_DATA_SOURCE_ID,
-    hasMore: false,
-    records,
-    totalCount: records.length,
   };
-}
-
-function makeValue(row: TaskRow, propertyId: string, value: unknown): PagePropertyValueEntity {
-  return {
-    createdAt: row.createdAt,
-    id: `${getSyntheticRowId(row)}:${propertyId}`,
-    pageId: row.pageId,
-    propertyId,
-    updatedAt: row.updatedAt,
-    value,
-  };
-}
-
-function getSyntheticRowId(row: TaskRow) {
-  return `${row.databaseId}:${row.rowId}`;
 }
 
 function TasksEmptyState({
@@ -1010,99 +802,13 @@ function ConfigureTaskDatabasesDialog({
   );
 }
 
-async function createTaskDatabase({
-  applyTemplate,
-  createDatabase,
-  saveTaskDatabaseIds,
-  selection,
-  selectedDatabaseIds,
-  workspaceId,
-}: {
-  applyTemplate: ReturnType<typeof useApplyDatabaseTemplate>;
-  createDatabase: ReturnType<typeof useCreateDatabase>;
-  saveTaskDatabaseIds: (databaseIds: string[]) => Promise<void>;
-  selection: DatabaseSetupSelection;
-  selectedDatabaseIds: string[];
-  workspaceId: string | null | undefined;
-}) {
-  if (!workspaceId) throw new Error("Choose a workspace first.");
-
-  if (selection.sourceView) {
-    if (selectedDatabaseIds.includes(selection.sourceView.parentDatabaseId)) {
-      toast.message("That data source is already connected.");
-      return;
-    }
-
-    await saveTaskDatabaseIds(
-      [...selectedDatabaseIds, selection.sourceView.parentDatabaseId].slice(0, 10),
+async function createTaskDatabase(input: Parameters<typeof createSharedTaskDatabase>[0]) {
+  const result = await createSharedTaskDatabase(input);
+  if (result === "already-connected") toast.message("That data source is already connected.");
+  else
+    toast.success(
+      result === "linked" ? "Data source linked." : "Data source created and connected.",
     );
-    toast.success("Data source linked.");
-    return;
-  }
-
-  const template = selection.templateId ? getDatabaseSetupTemplate(selection.templateId) : null;
-  const name = selection.databaseName || template?.name || "New data source";
-  const payload = await createDatabase.mutateAsync({
-    name,
-    standalone: true,
-    workspaceId,
-  });
-  const requiredProperties = [
-    {
-      config: {
-        defaultOptionId: defaultStatusOptions[0]?.id,
-        options: defaultStatusOptions,
-      },
-      name: "Status",
-      type: "status",
-    },
-    {
-      config: { personLimit: "one_person" },
-      name: "Assignee",
-      type: "person",
-    },
-    { name: "Due date", type: "date" },
-  ];
-  const templateProperties = template?.properties ?? [];
-  const templatePropertyTypes = new Set(templateProperties.map((property) => property.type));
-  const properties = [
-    ...templateProperties,
-    ...requiredProperties.filter((property) => !templatePropertyTypes.has(property.type)),
-  ];
-  const propertyTypesByName = new Map(
-    properties.map((property) => [property.name.toLowerCase(), property.type]),
-  );
-
-  if (!payload.activeDataSource) throw new Error("Created task database has no active source");
-  await applyTemplate.mutateAsync({
-    config: getMergedDatabaseConfig(payload.database.config, {
-      emoji: template?.emoji ?? "✅",
-      setupDismissed: true,
-    }),
-    databaseId: payload.activeDataSource.id,
-    hostDatabaseId: payload.database.id,
-    name,
-    properties,
-    rows: (template?.sampleRows ?? []).map((sampleRow) => ({
-      content: createSampleRowContent(sampleRow.content),
-      metadata: { emoji: sampleRow.emoji },
-      title: sampleRow.title,
-      values: Object.entries(sampleRow.values ?? {}).flatMap(([propertyName, value]) => {
-        const propertyType = propertyTypesByName.get(propertyName.toLowerCase());
-
-        return propertyType
-          ? [
-              {
-                propertyName,
-                value: serializePropertyValue(propertyType, value),
-              },
-            ]
-          : [];
-      }),
-    })),
-  });
-  await saveTaskDatabaseIds([...selectedDatabaseIds, payload.database.id].slice(0, 10));
-  toast.success("Data source created and connected.");
 }
 
 function createFilterId() {

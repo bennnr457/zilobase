@@ -295,6 +295,10 @@
     "./library": {
       "types": "./src/library/index.ts",
       "default": "./src/library/index.ts"
+    },
+    "./tasks/react": {
+      "types": "./src/tasks/react.ts",
+      "default": "./src/tasks/react.ts"
     }
   }
 }
