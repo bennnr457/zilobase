@@ -13,7 +13,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   filterPageDatabasePickerOptions,
   type PageDatabasePickerSearchOption,
-} from "./page-database-picker-model";
+} from "@zilobase/features/databases/models";
 
 export type PageDatabasePickerOption = PageDatabasePickerSearchOption & {
   description?: string;

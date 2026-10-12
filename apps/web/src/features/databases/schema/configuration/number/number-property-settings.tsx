@@ -1,3 +1,4 @@
+import { NumberPropertyConfig } from "@zilobase/features/databases/models";
 import { Check, Hash } from "@/shared/components/icons";
 import { useState, type ReactNode } from "react";
 
@@ -14,26 +15,11 @@ import { Switch } from "@/shared/ui/switch";
 import { colorTokens, getColorTokenValue } from "@/shared/lib/color-tokens";
 
 import {
-  getNumberDecimalPlaces,
-  getNumberDisplayColor,
-  getNumberDisplayDivideBy,
-  getNumberDisplayShowNumber,
-  getNumberDisplayStyle,
-  getNumberFormat,
   type DatabaseNumberDisplayStyle,
   type DatabasePropertyConfig,
   type NumberDecimalPlacesValue,
 } from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
-
-type NumberPropertyConfig = {
-  numberDecimalPlaces: NumberDecimalPlacesValue;
-  numberDisplayColor: string;
-  numberDisplayDivideBy: number;
-  numberDisplayShowNumber: boolean;
-  numberDisplayStyle: DatabaseNumberDisplayStyle;
-  numberFormat: string;
-};
 
 export function NumberPropertySettings({
   config,
@@ -138,17 +124,6 @@ export function NumberPropertySettings({
       ) : null}
     </div>
   );
-}
-
-export function getNumberPropertyConfig(config: unknown): NumberPropertyConfig {
-  return {
-    numberDecimalPlaces: getNumberDecimalPlaces(config),
-    numberDisplayColor: getNumberDisplayColor(config),
-    numberDisplayDivideBy: getNumberDisplayDivideBy(config),
-    numberDisplayShowNumber: getNumberDisplayShowNumber(config),
-    numberDisplayStyle: getNumberDisplayStyle(config),
-    numberFormat: getNumberFormat(config),
-  };
 }
 
 function NumberFormatSettingSubmenu({
@@ -317,3 +292,5 @@ function getColorSwatchClassName(color?: string | null) {
     "bg-surface-canvas"
   );
 }
+
+export { getNumberPropertyConfig } from "@zilobase/features/databases/models";

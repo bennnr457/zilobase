@@ -1,9 +1,8 @@
+import { FilesLimitValue } from "@zilobase/features/databases/models";
 import { Hash } from "@/shared/components/icons";
 
 import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
-
-type FilesLimitValue = "one_file" | "no_limit";
 
 const filesLimitOptions = [
   { label: "1 file", value: "one_file" },
@@ -28,15 +27,4 @@ export function FilesPropertySettings({
   );
 }
 
-export function getFilesPropertyConfig(config: unknown) {
-  const parsedConfig =
-    config && typeof config === "object" ? (config as DatabasePropertyConfig) : {};
-
-  return {
-    filesLimit: isFilesLimitValue(parsedConfig.filesLimit) ? parsedConfig.filesLimit : "no_limit",
-  };
-}
-
-function isFilesLimitValue(value: unknown): value is FilesLimitValue {
-  return value === "one_file" || value === "no_limit";
-}
+export { getFilesPropertyConfig } from "@zilobase/features/databases/models";

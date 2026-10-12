@@ -5,7 +5,7 @@ export function register({ assert, loadModule, test }) {
       getToolbarSourceIdentity,
       getToolbarSourceTitle,
       getToolbarFallbackSources,
-    } = await loadModule("/src/features/databases/views/model/toolbar-source.ts");
+    } = await loadModule("/packages/features/src/databases/views/toolbar-source.ts");
     const host = {
       databaseId: "source",
       hostDatabaseId: "host",

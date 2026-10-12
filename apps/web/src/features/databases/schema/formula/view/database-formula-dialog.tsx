@@ -46,7 +46,7 @@ import {
   getPropertyReferenceDescription,
   getPropertyReferenceSnippets,
   type FormulaReferenceItem,
-} from "../model/formula-reference-catalog";
+} from "@zilobase/features/databases/formula";
 
 type HighlightedFormulaCode = {
   bg: string;

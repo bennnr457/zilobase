@@ -3,7 +3,7 @@ import {
   getToolbarSourceIdentity,
   getToolbarSourceTitle,
   getToolbarFallbackSources,
-} from "../model/toolbar-source";
+} from "@zilobase/features/databases/models";
 
 import {
   useDatabaseActionsContext,

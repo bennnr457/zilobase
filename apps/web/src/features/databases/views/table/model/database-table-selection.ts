@@ -1,5 +1,3 @@
-import type { DatabasePropertyValue } from "@zilobase/features/databases/models";
-
 export const DATABASE_SELECTION_PRIMARY_PROPERTY_LIMIT = 5;
 
 export function splitDatabaseSelectionProperties<T>(
@@ -14,15 +12,4 @@ export function splitDatabaseSelectionProperties<T>(
   };
 }
 
-export function getSharedDatabaseSelectionValue(
-  values: DatabasePropertyValue[],
-  areEqual: (left: DatabasePropertyValue, right: DatabasePropertyValue) => boolean,
-) {
-  const firstValue = values[0] ?? "";
-  const mixed = values.some((value) => !areEqual(firstValue, value));
-
-  return {
-    mixed,
-    value: mixed ? "" : firstValue,
-  };
-}
+export { getSharedDatabaseSelectionValue } from "@zilobase/features/databases/models";

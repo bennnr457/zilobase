@@ -1,3 +1,5 @@
+import type { SelectOptionSortValue } from "@zilobase/features/databases/models";
+import { getSortedSelectOptions } from "@zilobase/features/databases/models";
 import { ArrowDownUp, Plus } from "@/shared/components/icons";
 import { Reorder } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -17,8 +19,6 @@ import {
   reorderOptionsByIds,
 } from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
-
-export type SelectOptionSortValue = "manual" | "alphabetical" | "reverse_alphabetical";
 
 const selectOptionSortOptions = [
   { label: "Manual", value: "manual" },
@@ -190,49 +190,6 @@ export function SelectPropertySettings({
   );
 }
 
-export function getSelectOptions(config: unknown) {
-  const options =
-    config && typeof config === "object" && "options" in config
-      ? (config as DatabasePropertyConfig).options
-      : null;
+export { getSelectOptionSort, getSelectOptions } from "@zilobase/features/databases/models";
 
-  if (!Array.isArray(options)) {
-    return [];
-  }
-
-  return options.filter(
-    (option): option is DatabaseSelectOption =>
-      Boolean(option) &&
-      typeof option === "object" &&
-      typeof option.id === "string" &&
-      typeof option.name === "string",
-  );
-}
-
-export function getSelectOptionSort(config: unknown): SelectOptionSortValue {
-  if (!config || typeof config !== "object" || !("selectOptionSort" in config)) {
-    return "manual";
-  }
-
-  const selectOptionSort = (config as DatabasePropertyConfig).selectOptionSort;
-
-  return isSelectOptionSortValue(selectOptionSort) ? selectOptionSort : "manual";
-}
-
-function isSelectOptionSortValue(value: unknown): value is SelectOptionSortValue {
-  return value === "manual" || value === "alphabetical" || value === "reverse_alphabetical";
-}
-
-function getSortedSelectOptions(options: DatabaseSelectOption[], sort: SelectOptionSortValue) {
-  if (sort === "manual") {
-    return options;
-  }
-
-  const sortedOptions = [...options].sort((firstOption, secondOption) =>
-    firstOption.name.localeCompare(secondOption.name, undefined, {
-      sensitivity: "base",
-    }),
-  );
-
-  return sort === "reverse_alphabetical" ? sortedOptions.reverse() : sortedOptions;
-}
+export type { SelectOptionSortValue } from "@zilobase/features/databases/models";

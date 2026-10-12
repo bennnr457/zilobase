@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("page and database picker search is normalized and relevance ranked", async () => {
     const { filterPageDatabasePickerOptions } = await loadModule(
-      "/src/features/databases/components/page-database-picker-model.ts",
+      "/packages/features/src/databases/views/picker-search.ts",
     );
     const options = [
       { label: "Project Decaféteria", value: "contains" },

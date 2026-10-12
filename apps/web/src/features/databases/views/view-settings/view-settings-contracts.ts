@@ -19,25 +19,14 @@ import type {
 import type { DatabaseChartSettings } from "@zilobase/features/databases/models";
 import type { DatabaseViewType } from "./model/view-type-options";
 
-export type DatabaseViewProperty = {
-  id: string;
-  property: {
-    config?: unknown;
-    id: string;
-    name: string;
-    type: string;
-  };
-};
-
-export type DatabaseSourceMenuItem = {
-  config?: unknown;
-  hiddenViewCount?: number;
-  id: string;
-  name: string;
-  parentDatabaseId: string;
-  position?: number;
-  viewCount: number;
-};
+import type {
+  DatabaseViewProperty,
+  DatabaseSourceMenuItem,
+} from "@zilobase/features/databases/models";
+export type {
+  DatabaseViewProperty,
+  DatabaseSourceMenuItem,
+} from "@zilobase/features/databases/models";
 
 export type DatabaseViewSettingsMenuProps = {
   activeConditionalColors: DatabaseActiveConditionalColor[];

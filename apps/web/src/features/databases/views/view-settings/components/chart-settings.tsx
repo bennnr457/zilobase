@@ -52,7 +52,7 @@ import {
   getChartSortOptions,
   isChartDateProperty,
   parseOptionalChartNumber,
-} from "../model/chart-settings-model";
+} from "@zilobase/features/databases/models";
 import { ViewSettingsRow } from "./view-settings-row";
 
 const chartTypeOptions: Array<{

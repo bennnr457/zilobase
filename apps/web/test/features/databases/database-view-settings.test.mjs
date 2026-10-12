@@ -8,7 +8,7 @@ export function register({ readSource, assert, loadModule, test }) {
         readSource("/src/features/databases/views/components/database-view-toolbar-dialogs.tsx"),
         readSource("/src/features/databases/views/components/database-toolbar-actions.tsx"),
         readSource("/src/features/databases/views/components/database-settings-control.tsx"),
-        readSource("/src/features/databases/views/model/toolbar-source.ts"),
+        readSource("/packages/features/src/databases/views/toolbar-source.ts"),
       ])
     ).join("\n");
   test("link existing data source owns its nested picker state", async () => {
@@ -264,9 +264,7 @@ export function register({ readSource, assert, loadModule, test }) {
       getChartRangeLabel,
       getChartSortOptions,
       parseOptionalChartNumber,
-    } = await loadModule(
-      "/src/features/databases/views/view-settings/model/chart-settings-model.ts",
-    );
+    } = await loadModule("/packages/features/src/databases/views/chart-settings-model.ts");
 
     assert.equal(getChartRangeLabel({}), "Auto");
     assert.equal(getChartRangeLabel({ rangeMax: 20 }), "Auto – 20");
