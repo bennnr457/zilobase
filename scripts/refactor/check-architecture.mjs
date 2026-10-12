@@ -12,7 +12,6 @@ const packages = [
   "packages/page-context",
   "packages/markdown-text-splitter",
   "packages/runtime-ports",
-  "packages/tiptap-comment-extension",
 ];
 const intentionalExportBreaks = new Set([
   "AI_JOB_HANDLERS",

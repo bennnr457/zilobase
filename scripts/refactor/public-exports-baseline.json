@@ -8554,57 +8554,5 @@
       "value": false,
       "type": true
     }
-  },
-  "@zilobase/tiptap-comment-extension:.:types": {
-    "CommentExtension": {
-      "value": true,
-      "type": false
-    },
-    "CommentOptions": {
-      "value": false,
-      "type": true
-    },
-    "CommentStorage": {
-      "value": false,
-      "type": true
-    },
-    "default": {
-      "value": true,
-      "type": false
-    },
-    "getCommentIdsAtSelection": {
-      "value": true,
-      "type": false
-    },
-    "getCommentIdsInRange": {
-      "value": true,
-      "type": false
-    }
-  },
-  "@zilobase/tiptap-comment-extension:.:default": {
-    "CommentExtension": {
-      "value": true,
-      "type": false
-    },
-    "CommentOptions": {
-      "value": false,
-      "type": true
-    },
-    "CommentStorage": {
-      "value": false,
-      "type": true
-    },
-    "default": {
-      "value": true,
-      "type": false
-    },
-    "getCommentIdsAtSelection": {
-      "value": true,
-      "type": false
-    },
-    "getCommentIdsInRange": {
-      "value": true,
-      "type": false
-    }
   }
 }

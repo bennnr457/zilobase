@@ -1,8 +1,9 @@
 export function register({ assert, loadModule, test }) {
+  const extensionPath = "/src/features/editor/extensions/comment-selection.ts";
+
   test("comment selection lookup returns existing thread ids", async () => {
     const { Schema } = await import("@tiptap/pm/model");
     const { EditorState, TextSelection } = await import("@tiptap/pm/state");
-    const extensionPath = "/packages/tiptap-comment-extension/src/index.ts";
     const { getCommentIdsAtSelection, getCommentIdsInRange } = await loadModule(extensionPath);
     const schema = new Schema({
       nodes: {
@@ -34,7 +35,6 @@ export function register({ assert, loadModule, test }) {
   test("comment selection lookup ignores unmarked text", async () => {
     const { Schema } = await import("@tiptap/pm/model");
     const { EditorState, TextSelection } = await import("@tiptap/pm/state");
-    const extensionPath = "/packages/tiptap-comment-extension/src/index.ts";
     const { getCommentIdsAtSelection } = await loadModule(extensionPath);
     const schema = new Schema({
       nodes: {

@@ -15,8 +15,7 @@
     "packages/markdown-text-splitter",
     "packages/page-context",
     "packages/runtime-ports",
-    "packages/runtime-adapter",
-    "packages/tiptap-comment-extension"
+    "packages/runtime-adapter"
   ],
   "scripts": {
     "dev": "node scripts/dev/workspace.mjs",

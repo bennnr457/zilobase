@@ -115,5 +115,3 @@ export const CommentExtension = Mark.create<CommentOptions, CommentStorage>({
     };
   },
 });
-
-export default CommentExtension;

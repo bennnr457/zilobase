@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/shared/ui/popover";
 import { usePageCommentsSnapshot } from "@/features/comments/index";
-import { getCommentIdsInRange } from "@zilobase/tiptap-comment-extension";
+import { getCommentIdsInRange } from "../extensions/comment-selection";
 
 import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
 
