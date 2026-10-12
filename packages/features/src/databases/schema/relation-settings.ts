@@ -63,3 +63,33 @@ export function getRelationConfig(config: unknown): {
         : undefined,
   };
 }
+
+export type RelationPageSummary = {
+  iconKind?: "database" | "page";
+  id?: string;
+  metadata?: unknown;
+  name?: string;
+};
+
+export function getRelationPageSummary(
+  propertyConfig: unknown,
+  pageId: string,
+): RelationPageSummary | null {
+  if (!propertyConfig || typeof propertyConfig !== "object" || Array.isArray(propertyConfig)) {
+    return null;
+  }
+
+  const pageSummaries = (propertyConfig as { pageSummaries?: unknown }).pageSummaries;
+
+  if (!pageSummaries || typeof pageSummaries !== "object" || Array.isArray(pageSummaries)) {
+    return null;
+  }
+
+  const pageSummary = (pageSummaries as Record<string, unknown>)[pageId];
+
+  if (!pageSummary || typeof pageSummary !== "object" || Array.isArray(pageSummary)) {
+    return null;
+  }
+
+  return pageSummary as RelationPageSummary;
+}

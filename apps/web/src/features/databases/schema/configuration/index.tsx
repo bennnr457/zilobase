@@ -27,7 +27,8 @@ import {
   getSelectOptionSort,
   SelectPropertySettings,
 } from "./select/select-property-settings";
-import { getStatusOptions, StatusPropertySettings } from "./status/status-property-settings";
+import { getStatusOptions } from "@zilobase/features/databases/models";
+import { StatusPropertySettings } from "./status/status-property-settings";
 import { UrlPropertySettings } from "./url/url-property-settings";
 
 type PropertySettingsProps = {

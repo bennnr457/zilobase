@@ -1,11 +1,10 @@
-import { getGroupedRecordMove, type RecordDrop } from "@zilobase/features/databases/models";
-import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
-import {
-  getFilteredReorderedRowIds,
-  getReorderedRowIds,
-} from "../../../interactions/database-row-drag";
-import { type DatabasePropertyListItem } from "@zilobase/features/databases/models";
-import type { TimelineGroupSection } from "./database-timeline-rows";
+import { getGroupedRecordMove, type RecordDrop } from "./record-drop";
+import type { SortableDatabaseItem } from "../interactions/item-utils";
+import { getFilteredReorderedRowIds, getReorderedRowIds } from "./row-reorder";
+import type { DatabasePropertyListItem } from "../views/grouping";
+import type { DatabaseTableGroupSection } from "../views/group-sections";
+
+type TimelineGroupSection = DatabaseTableGroupSection<SortableDatabaseItem>;
 
 export type TimelineRowMoveInput = {
   draggedRowId: string | null;

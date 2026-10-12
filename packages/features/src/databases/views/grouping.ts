@@ -123,3 +123,10 @@ export function getGroupOptions(property: DatabasePropertyListItem | null) {
 
   return property.property.type === "status" ? defaultStatusOptions : [];
 }
+
+export function getSelectConfigWithOptions(config: unknown, options: DatabaseSelectOption[]) {
+  return {
+    ...(config && typeof config === "object" ? config : {}),
+    options,
+  };
+}

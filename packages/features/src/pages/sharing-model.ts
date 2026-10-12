@@ -34,3 +34,14 @@ export function getGuestActionLabel(
 ) {
   return policy?.mode === "request" && !policy.canApprove ? "Request" : "Invite";
 }
+
+export function getSharingRuleState(rules: (PageAccessRule | DatabaseAccessRule)[]) {
+  return {
+    isPublished: rules.some((rule) => rule.targetType === "public" && rule.targetId === "*"),
+    sharingRules: rules.filter((rule) => rule.targetType !== "public"),
+  };
+}
+
+export function getDatabaseSharingAccessLevel(accessLevel: AccessLevel) {
+  return accessLevel === "comment" ? "view" : accessLevel;
+}

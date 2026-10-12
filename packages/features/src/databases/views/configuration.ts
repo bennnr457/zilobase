@@ -634,3 +634,20 @@ function getNameColumnConfig(config: unknown) {
     ? nameColumn
     : {};
 }
+
+export function getPlainConditionalColorSettings(
+  settings: DatabaseConditionalColorConfig[],
+): DatabaseConditionalColorConfig[] {
+  return settings.map(({ applyTo, color, filter, id, style }) => ({
+    applyTo,
+    color,
+    filter: {
+      id: filter.id,
+      operator: filter.operator,
+      propertyId: filter.propertyId,
+      values: filter.values,
+    },
+    id,
+    style,
+  }));
+}

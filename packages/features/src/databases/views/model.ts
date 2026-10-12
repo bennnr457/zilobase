@@ -420,9 +420,9 @@ function getActiveDatabaseConditionalColors(
   });
 }
 
-function getFilterPropertyType(
+export function getFilterPropertyType(
   propertyId: DatabasePropertyFilterConfig["propertyId"],
-  properties: DatabasePropertyEntity[],
+  properties: { id: string; property: { type: string } }[],
 ) {
   if (propertyId === "name") {
     return "text";

@@ -1,20 +1,17 @@
+import { reorderOptionsByIds } from "@zilobase/features/databases/models";
 import { Plus } from "@/shared/components/icons";
 import { Reorder } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import { DropDrawerLabel, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
 
-import { defaultStatusOptions } from "@zilobase/features/databases/models";
+import { reorderStatusGroupOptions } from "@zilobase/features/databases/models";
 import { getNextDatabaseOptionColor } from "../../property-catalog";
 import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
 import { OptionCreateInput } from "../shared/option-create-input";
 import { OptionEditorSubmenu } from "../shared/option-editor-submenu";
-import {
-  areSameOrderedIds,
-  haveSameIds,
-  reorderOptionsByIds,
-} from "@zilobase/features/databases/models";
-import { getStatusOptionGroup, getStatusOptionGroups } from "@zilobase/features/databases/models";
+import { areSameOrderedIds, haveSameIds } from "@zilobase/features/databases/models";
+import { getStatusOptionGroups } from "@zilobase/features/databases/models";
 import type { StatusOption } from "@zilobase/features/databases/models";
 
 export type { StatusOption } from "@zilobase/features/databases/models";
@@ -209,48 +206,4 @@ export function StatusPropertySettings({
       })}
     </>
   );
-}
-
-export function getStatusOptions(config: unknown) {
-  const options =
-    config && typeof config === "object" && "options" in config
-      ? (config as DatabasePropertyConfig).options
-      : null;
-
-  if (!Array.isArray(options) || options.length === 0) {
-    return defaultStatusOptions;
-  }
-
-  const validOptions = options.filter(
-    (option): option is StatusOption =>
-      Boolean(option) &&
-      typeof option === "object" &&
-      typeof option.id === "string" &&
-      typeof option.name === "string",
-  );
-
-  return validOptions.length > 0 ? validOptions : defaultStatusOptions;
-}
-
-function reorderStatusGroupOptions(
-  options: StatusOption[],
-  groupName: string,
-  optionIds: string[],
-) {
-  const reorderedGroupOptions = reorderOptionsByIds(
-    options.filter((option) => getStatusOptionGroup(option) === groupName),
-    optionIds,
-  );
-  let nextGroupIndex = 0;
-
-  return options.map((option) => {
-    if (getStatusOptionGroup(option) !== groupName) {
-      return option;
-    }
-
-    const nextOption = reorderedGroupOptions[nextGroupIndex];
-    nextGroupIndex += 1;
-
-    return nextOption ?? option;
-  });
 }

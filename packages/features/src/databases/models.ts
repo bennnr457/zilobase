@@ -59,3 +59,5 @@ export * from "./schema/file-values";
 export * from "./views/condition-values";
 export * from "./schema/relation-delete-config";
 export * from "./templates/sample-content";
+
+export * from "./records/timeline-row-move";

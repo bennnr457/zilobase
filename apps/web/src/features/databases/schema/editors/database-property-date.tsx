@@ -15,7 +15,7 @@ import {
   getTimeFormatConfig,
   getTimeFormatLabel,
   timeFormatOptions,
-  type DatabaseDatePropertyConfig,
+  getDateConfigWithFormat,
   type DateFormatValue,
   type TimeFormatValue,
 } from "@zilobase/features/databases/models";
@@ -350,13 +350,6 @@ export function DatabasePropertyDate({
       </PopoverContent>
     </Popover>
   );
-}
-
-function getDateConfigWithFormat(config: unknown, nextConfig: DatabaseDatePropertyConfig) {
-  return {
-    ...(config && typeof config === "object" ? config : {}),
-    ...nextConfig,
-  };
 }
 
 function DateInput({

@@ -241,3 +241,10 @@ function formatRelativeDate(date: Date) {
     numeric: "auto",
   }).format(dayDiff, "day");
 }
+
+export function getDateConfigWithFormat(config: unknown, nextConfig: DatabaseDatePropertyConfig) {
+  return {
+    ...(config && typeof config === "object" ? config : {}),
+    ...nextConfig,
+  };
+}

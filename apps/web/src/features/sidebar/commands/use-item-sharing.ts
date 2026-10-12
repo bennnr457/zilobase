@@ -3,6 +3,8 @@ import {
   isSharingWorkspaceMember,
   getSharingAccessLevel,
   getSharingRules,
+  getSharingRuleState,
+  getDatabaseSharingAccessLevel,
   getPendingItems,
   getGuestActionLabel,
 } from "@zilobase/features/pages";
@@ -113,8 +115,7 @@ export function useItemSharing({
     [personTargets?.guests],
   );
   const rules = getSharingRules(isDatabase, databaseAccessPayload, accessPayload);
-  const isPublished = rules.some((rule) => rule.targetType === "public" && rule.targetId === "*");
-  const sharingRules = rules.filter((rule) => rule.targetType !== "public");
+  const { isPublished, sharingRules } = getSharingRuleState(rules);
   const pendingGuestInvitations = getPendingItems(guestInvitations);
   const pendingGuestRequests = getPendingItems(guestRequests);
   const guestActionLabel = getGuestActionLabel(guestPolicy);
@@ -148,7 +149,7 @@ export function useItemSharing({
     if (isDatabase) {
       upsertDatabaseAccess.mutate(
         {
-          accessLevel: nextAccessLevel === "comment" ? "view" : nextAccessLevel,
+          accessLevel: getDatabaseSharingAccessLevel(nextAccessLevel),
           targetId,
           targetType,
           databaseId: databaseId as string,

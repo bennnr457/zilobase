@@ -1,3 +1,4 @@
+import { getSelectOptions, getSelectConfigWithOptions } from "@zilobase/features/databases/models";
 import { cn } from "@/shared/lib/utils";
 import { menuItemVariants } from "@/shared/ui/menu-styles";
 import { Check, GripVertical } from "@/shared/components/icons";
@@ -11,10 +12,6 @@ import { toStringArray } from "@zilobase/features/databases/models";
 
 type DatabasePropertySelectOption = DatabaseSelectOption & {
   suffix?: string;
-};
-
-type DatabasePropertyConfig = {
-  options?: DatabasePropertySelectOption[];
 };
 
 function DatabaseSelectBadge({
@@ -35,33 +32,6 @@ function DatabaseSelectBadge({
       {suffix ? <span className="ml-1 opacity-70">{suffix}</span> : null}
     </span>
   );
-}
-
-function getSelectOptions(config: unknown) {
-  if (!config || typeof config !== "object" || !("options" in config)) {
-    return [];
-  }
-
-  const options = (config as DatabasePropertyConfig).options;
-
-  if (!Array.isArray(options)) {
-    return [];
-  }
-
-  return options.filter(
-    (option): option is DatabasePropertySelectOption =>
-      Boolean(option) &&
-      typeof option === "object" &&
-      typeof option.id === "string" &&
-      typeof option.name === "string",
-  );
-}
-
-function getSelectConfigWithOptions(config: unknown, options: DatabasePropertySelectOption[]) {
-  return {
-    ...(config && typeof config === "object" ? config : {}),
-    options,
-  };
 }
 
 export function DatabasePropertySelect({
@@ -103,7 +73,7 @@ export function DatabasePropertySelect({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [query, setQuery] = useState("");
-  const configuredOptions = getSelectOptions(propertyConfig);
+  const configuredOptions = getSelectOptions(propertyConfig) as DatabasePropertySelectOption[];
   const selectOptions = configuredOptions.length > 0 ? configuredOptions : defaultOptions;
   const selectedValues = toStringArray(value);
   const getOptionValue = (option: DatabasePropertySelectOption) => option[valueKey];

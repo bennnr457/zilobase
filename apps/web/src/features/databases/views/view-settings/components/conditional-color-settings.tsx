@@ -14,6 +14,10 @@ import {
   type DatabaseConditionalColorConfig,
 } from "@zilobase/features/databases/models";
 import type { DatabaseActiveConditionalColor } from "../../state/database-view-context";
+import {
+  getPlainConditionalColorSettings,
+  getFilterPropertyType,
+} from "@zilobase/features/databases/models";
 import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases/models";
 import type { DatabaseSearchableMenuOption } from "../../menu-option-contracts";
 import type { DatabaseViewProperty } from "../view-settings-contracts";
@@ -34,31 +38,6 @@ function createConditionalColorId(prefix: string) {
   }
 
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
-function getPlainConditionalColorSettings(
-  settings: DatabaseActiveConditionalColor[],
-): DatabaseConditionalColorConfig[] {
-  return settings.map(({ applyTo, color, filter, id, style }) => ({
-    applyTo,
-    color,
-    filter: {
-      id: filter.id,
-      operator: filter.operator,
-      propertyId: filter.propertyId,
-      values: filter.values,
-    },
-    id,
-    style,
-  }));
-}
-
-function getFilterPropertyType(propertyId: string, properties: DatabaseViewProperty[]) {
-  if (propertyId === "name") {
-    return "text";
-  }
-
-  return properties.find((property) => property.id === propertyId)?.property.type ?? "text";
 }
 
 function getConditionalColorLabel(value: string) {

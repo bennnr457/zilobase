@@ -29,7 +29,7 @@ import type { TimelineRowLayout } from "../layout/database-timeline-layout";
 import {
   getTimelineRowMove,
   indexTimelineGroupSections,
-} from "../model/database-timeline-row-move";
+} from "@zilobase/features/databases/models";
 
 type TimelineRowDragInput = {
   addDraggedPageRow: (
