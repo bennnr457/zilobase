@@ -1,3 +1,4 @@
+import { visibleSourceEvent } from "@zilobase/features/calendar";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -146,12 +147,6 @@ function sourcePanelEvents(
         Date.parse(eventInstant(a.start, preferences.timeZone)) -
         Date.parse(eventInstant(b.start, preferences.timeZone)),
     );
-}
-function visibleSourceEvent(event: CalendarEvent, preferences: CalendarPreferences) {
-  return (
-    preferences.showDeclined ||
-    !event.attendees.some((attendee) => attendee.self && attendee.responseStatus === "declined")
-  );
 }
 function SourceEventList({
   events,

@@ -57,3 +57,4 @@ export * from "./mutations";
 export * from "./search";
 export * from "./range-queue";
 export * from "./search-model";
+export * from "./event-visibility";

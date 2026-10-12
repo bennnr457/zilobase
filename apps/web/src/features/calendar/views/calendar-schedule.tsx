@@ -1,3 +1,4 @@
+import { visibleScheduleEvent } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import { useCalendarBuffers } from "../preferences/calendar-buffer-preferences";
 import { calendarRangeReady, calendarSnapshotMatches } from "@zilobase/features/calendar";
@@ -44,11 +45,7 @@ import {
   type CalendarView,
 } from "@zilobase/features/calendar";
 import { useCalendarCache } from "../sync/use-calendar-cache";
-import {
-  calendarSelectionKey,
-  calendarIsVisible,
-  resolveDefaultCalendar,
-} from "@zilobase/features/calendar";
+import { calendarSelectionKey, resolveDefaultCalendar } from "@zilobase/features/calendar";
 import { Button } from "@/shared/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 import type { CalendarDatabase } from "../storage/calendar-database";
@@ -691,11 +688,6 @@ function scheduleBuffers(
   if (view === "month")
     return { bufferBefore: buffers.monthBefore, bufferAfter: buffers.monthAfter };
   return { bufferBefore: buffers.before, bufferAfter: buffers.after };
-}
-function visibleScheduleEvent(event: CalendarEvent, preferences: CalendarPreferences) {
-  if (!calendarIsVisible(preferences, event.bindingId, event.calendarId)) return false;
-  if (preferences.showDeclined) return true;
-  return !event.attendees.some((a) => a.self && a.responseStatus === "declined");
 }
 function requestScheduleRange(
   passiveDate: { current: string | null },

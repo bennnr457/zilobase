@@ -1,3 +1,4 @@
+import { calendarRowSiblings, toggleHiddenCalendar } from "@zilobase/features/calendar";
 import { useCalendarWorkspace } from "../workspace/calendar-workspace";
 import { useRef, useState } from "react";
 import {
@@ -297,24 +298,6 @@ async function removeCalendarFromList(input: {
   } finally {
     input.setPending(false);
   }
-}
-function calendarRowSiblings(calendars: CalendarRecord[], preferences: CalendarPreferences) {
-  return orderCalendarSources(calendars, preferences.calendarOrder ?? [], (item) =>
-    calendarSelectionKey(item.bindingId, item.id),
-  )
-    .filter(
-      (item) =>
-        !preferences.removedCalendarKeys?.includes(calendarSelectionKey(item.bindingId, item.id)),
-    )
-    .map((item) => calendarSelectionKey(item.bindingId, item.id));
-}
-function toggleHiddenCalendar(preferences: CalendarPreferences, key: string, hidden: boolean) {
-  return {
-    ...preferences,
-    hiddenCalendarKeys: hidden
-      ? preferences.hiddenCalendarKeys.filter((id) => id !== key)
-      : [...preferences.hiddenCalendarKeys, key],
-  };
 }
 function CalendarRowMenu({
   calendar,
