@@ -1,3 +1,5 @@
+import { dayInstant, wallTime } from "../calendar-layout/time";
+import type { CalendarEvent } from "./contracts";
 import type { CalendarIdentity, CalendarPreferences, CalendarScope } from "./contracts";
 export function calendarApiBasePath(workspaceId: string) {
   if (!workspaceId.trim()) throw new Error("A workspace is required");
@@ -43,5 +45,46 @@ export function defaultCalendarPreferences(timeZone = "UTC"): CalendarPreference
     timeFormat: "24",
     timeZone,
     remindersEnabled: false,
+  };
+}
+
+export function newCalendarEvent(input: {
+  workspaceId: string;
+  bindingId: string;
+  calendarId: string;
+  date: string;
+  timeZone: string;
+  hour?: number;
+}): CalendarEvent {
+  const start =
+    input.hour === undefined
+      ? dayInstant(input.date, input.timeZone)
+      : wallTime(
+          input.date,
+          `${String(Math.floor(input.hour)).padStart(2, "0")}:${String(Math.round((input.hour % 1) * 60)).padStart(2, "0")}`,
+          input.timeZone,
+        );
+  return {
+    workspaceId: input.workspaceId,
+    bindingId: input.bindingId,
+    calendarId: input.calendarId,
+    eventId: `local-${crypto.randomUUID()}`,
+    etag: "",
+    title: "New event",
+    description: "",
+    location: "",
+    start: { dateTime: start, timeZone: input.timeZone },
+    end: {
+      dateTime: new Date(Date.parse(start) + 1800_000).toISOString(),
+      timeZone: input.timeZone,
+    },
+    status: "confirmed",
+    eventType: "default",
+    attendees: [],
+    reminders: { useDefault: true },
+    transparency: "opaque",
+    visibility: "default",
+    colorId: null,
+    htmlLink: "",
   };
 }

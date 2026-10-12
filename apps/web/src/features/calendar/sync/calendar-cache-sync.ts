@@ -1,4 +1,5 @@
 import {
+  calendarRequestRanges,
   synchronizeCalendar,
   calendarCatalog,
   readCalendarRange,
@@ -243,16 +244,4 @@ function freshCalendarRange(
     Date.now() - prior.fetchedAt < 2000 &&
     (!state || (state.revision <= prior.revision && state.generation <= prior.generation)),
   );
-}
-// Keep moving month windows within the server's 62-day per-request limit.
-function calendarRequestRanges(start: string, end: string, chunkDays = 28) {
-  const ranges: { start: string; end: string }[] = [];
-  let cursor = Date.parse(start);
-  const until = Date.parse(end);
-  while (cursor < until) {
-    const next = Math.min(until, cursor + Math.min(60, Math.max(1, chunkDays)) * 86400_000);
-    ranges.push({ start: new Date(cursor).toISOString(), end: new Date(next).toISOString() });
-    cursor = next;
-  }
-  return ranges;
 }

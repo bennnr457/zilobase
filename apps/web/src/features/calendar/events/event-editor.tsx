@@ -4,8 +4,7 @@ import { eventEditorDefaults, type EventEditorDraft } from "./event-editor-model
 import { useState } from "react";
 import {
   calendarCapability,
-  dayInstant,
-  wallTime,
+  eventEditorCapability,
   type CalendarEvent,
   type CalendarRecord,
 } from "@zilobase/features/calendar";
@@ -286,20 +285,7 @@ function EventEditorAlerts({
     </>
   );
 }
-function eventEditorCapability(
-  isNew: boolean,
-  scope: "occurrence" | "following" | "series",
-  calendars: CalendarRecord[],
-  event: CalendarEvent,
-  calendarId: string,
-) {
-  const operation = isNew ? "create" : scope === "following" ? "following" : "update";
-  return calendarCapability(
-    operation,
-    calendars.find((c) => c.id === calendarId && c.bindingId === event.bindingId)?.permissions,
-    event,
-  );
-}
+
 async function saveEventEditor(input: {
   online: boolean;
   capability: ReturnType<typeof calendarCapability>;
@@ -337,44 +323,4 @@ async function saveEventEditor(input: {
   } finally {
     input.setPending(false);
   }
-}
-export function newCalendarEvent(input: {
-  workspaceId: string;
-  bindingId: string;
-  calendarId: string;
-  date: string;
-  timeZone: string;
-  hour?: number;
-}): CalendarEvent {
-  const start =
-    input.hour === undefined
-      ? dayInstant(input.date, input.timeZone)
-      : wallTime(
-          input.date,
-          `${String(Math.floor(input.hour)).padStart(2, "0")}:${String(Math.round((input.hour % 1) * 60)).padStart(2, "0")}`,
-          input.timeZone,
-        );
-  return {
-    workspaceId: input.workspaceId,
-    bindingId: input.bindingId,
-    calendarId: input.calendarId,
-    eventId: `local-${crypto.randomUUID()}`,
-    etag: "",
-    title: "New event",
-    description: "",
-    location: "",
-    start: { dateTime: start, timeZone: input.timeZone },
-    end: {
-      dateTime: new Date(Date.parse(start) + 1800_000).toISOString(),
-      timeZone: input.timeZone,
-    },
-    status: "confirmed",
-    eventType: "default",
-    attendees: [],
-    reminders: { useDefault: true },
-    transparency: "opaque",
-    visibility: "default",
-    colorId: null,
-    htmlLink: "",
-  };
 }

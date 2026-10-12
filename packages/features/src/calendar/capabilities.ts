@@ -1,4 +1,4 @@
-import type { CalendarPermissions } from "./contracts";
+import type { CalendarPermissions, CalendarEvent, CalendarRecord } from "./contracts";
 
 export type CalendarOperation =
   | "create"
@@ -93,4 +93,19 @@ function calendarFollowingCapability(event: CapabilityEvent): CalendarCapability
 
 function denied(code: string, reason: string): CalendarCapability {
   return { allowed: false, code, reason };
+}
+
+export function eventEditorCapability(
+  isNew: boolean,
+  scope: "occurrence" | "following" | "series",
+  calendars: CalendarRecord[],
+  event: CalendarEvent,
+  calendarId: string,
+) {
+  const operation = isNew ? "create" : scope === "following" ? "following" : "update";
+  return calendarCapability(
+    operation,
+    calendars.find((c) => c.id === calendarId && c.bindingId === event.bindingId)?.permissions,
+    event,
+  );
 }

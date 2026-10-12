@@ -25,7 +25,7 @@ import {
 } from "@/shared/components/calendar";
 import { runCalendarMutation } from "../events/calendar-mutations";
 import { toast } from "sonner";
-import { newCalendarEvent } from "../events/event-editor";
+import { newCalendarEvent } from "@zilobase/features/calendar";
 import { PALETTE, type ColorTokenId } from "@/shared/lib/color-tokens";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";

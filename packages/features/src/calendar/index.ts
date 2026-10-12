@@ -6,10 +6,12 @@ export { orderCalendarSources, moveCalendarSource } from "./source-order";
 export { calendarConnectionReturnPath } from "./onboarding";
 export {
   calendarCapability,
+  eventEditorCapability,
   type CalendarCapability,
   type CalendarOperation,
 } from "./capabilities";
 export {
+  newCalendarEvent,
   calendarApiBasePath,
   calendarKeys,
   calendarEventKey,
