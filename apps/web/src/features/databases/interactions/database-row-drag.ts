@@ -19,4 +19,4 @@ export {
   getFilteredReorderedRowIds,
   getGroupedReorderedRowIds,
   getReorderedRowIds,
-} from "./database-row-reorder";
+} from "@zilobase/features/databases/models";

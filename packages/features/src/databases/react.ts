@@ -60,3 +60,6 @@ export {
   useProjectedDatabaseRecords,
   useDatabaseInteractionRecovery,
 } from "./interactions/react";
+
+export { useDatabaseMetadata } from "./queries/metadata";
+export { useDatabaseSecondaryPayload } from "./queries/secondary-records";

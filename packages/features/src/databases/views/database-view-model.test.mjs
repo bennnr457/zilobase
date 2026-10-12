@@ -1,0 +1,714 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+test("database view model derives kanban visibility, sorts, and rows", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const statusProperty = createProperty(
+    "database-property-status",
+    "property-status",
+    "Status",
+    "status",
+  );
+  const priorityProperty = createProperty(
+    "database-property-priority",
+    "property-priority",
+    "Priority",
+    "number",
+  );
+  const viewData = createViewData({
+    database: {
+      config: {
+        nameColumn: {
+          label: "Task",
+          showPageIcon: false,
+        },
+      },
+      id: "database-1",
+      name: "Roadmap",
+    },
+    properties: [statusProperty, priorityProperty],
+    rows: [createRow("row-1", "page-1", "Second", 0), createRow("row-2", "page-2", "First", 1)],
+    values: [
+      {
+        propertyId: "property-priority",
+        value: 2,
+        pageId: "page-1",
+      },
+      {
+        propertyId: "property-priority",
+        value: 1,
+        pageId: "page-2",
+      },
+    ],
+    views: [
+      {
+        config: {
+          groupPropertyId: "property-status",
+          sorts: [
+            { column: "database-property-priority", direction: "ascending" },
+            { column: "missing-property", direction: "descending" },
+          ],
+        },
+        id: "view-kanban",
+        name: "Board",
+        type: "kanban",
+      },
+    ],
+  });
+
+  const model = getDatabaseViewModel({
+    accessTargets: {
+      members: [
+        { email: "one@example.com", id: "user-1", name: "One" },
+        { email: "two@example.com", id: "user-2", name: "" },
+      ],
+    },
+    activeViewId: "view-kanban",
+    currentUserId: "user-1",
+    viewData,
+  });
+
+  assert.equal(model.activeView?.id, "view-kanban");
+  assert.equal(model.isKanbanView, true);
+  assert.equal(model.titlePropertyLabel, "Task");
+  assert.equal(model.showPageIconInTitle, false);
+  assert.deepEqual(
+    model.activeDatabaseSorts.map(({ column, direction, label }) => ({
+      column,
+      direction,
+      label,
+    })),
+    [
+      {
+        column: "database-property-priority",
+        direction: "ascending",
+        label: "Priority",
+      },
+    ],
+  );
+  assert.deepEqual(
+    model.addableSortFieldOptions.map((option) => option.value),
+    ["name", "database-property-status"],
+  );
+  assert.deepEqual(model.activeVisibilityConfig.hiddenPropertyIds, ["database-property-status"]);
+  assert.deepEqual(
+    model.visibleProperties.map((property) => property.id),
+    ["database-property-priority"],
+  );
+  assert.equal(model.visiblePropertyCount, 2);
+  assert.equal(model.showPropertyTitles, false);
+  assert.equal(
+    getDatabaseViewModel({
+      activeViewId: "view-kanban",
+      viewData: {
+        ...viewData,
+        bootstrap: {
+          ...viewData.bootstrap,
+          views: [
+            {
+              ...viewData.bootstrap.views[0],
+              config: {
+                ...viewData.bootstrap.views[0].config,
+                hiddenPropertyIds: [
+                  "database-property-status",
+                  "database-property-priority",
+                  "name",
+                ],
+                showPropertyTitles: true,
+              },
+            },
+          ],
+        },
+      },
+    }).visiblePropertyCount,
+    1,
+  );
+  assert.equal(
+    getDatabaseViewModel({
+      activeViewId: "view-kanban",
+      viewData: {
+        ...viewData,
+        bootstrap: {
+          ...viewData.bootstrap,
+          views: [
+            {
+              ...viewData.bootstrap.views[0],
+              config: {
+                ...viewData.bootstrap.views[0].config,
+                showPropertyTitles: true,
+              },
+            },
+          ],
+        },
+      },
+    }).showPropertyTitles,
+    true,
+  );
+  assert.deepEqual(
+    model.kanbanOptions.map((option) => option.name),
+    ["Not started", "In progress", "Done"],
+  );
+  assert.deepEqual(
+    model.personOptions.map(({ id, name, suffix }) => ({ id, name, suffix })),
+    [
+      { id: "user-1", name: "One", suffix: "(you)" },
+      { id: "user-2", name: "two@example.com", suffix: undefined },
+    ],
+  );
+  assert.deepEqual(
+    model.sortedItems.map((item) => item.id),
+    ["row-2", "row-1"],
+  );
+  assert.deepEqual(model.propertyValuesByKey, {
+    "page-1:property-priority": "2",
+    "page-1:property-status": "",
+    "page-2:property-priority": "1",
+    "page-2:property-status": "",
+  });
+});
+
+test("database view model shows the first three non-grouped board properties by default", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const properties = [
+    createProperty("database-property-status", "property-status", "Status", "status"),
+    createProperty("database-property-owner", "property-owner", "Owner", "person"),
+    createProperty("database-property-priority", "property-priority", "Priority", "number"),
+    createProperty("database-property-date", "property-date", "Date", "date"),
+    createProperty("database-property-notes", "property-notes", "Notes", "text"),
+  ];
+  const viewData = createViewData({
+    database: { config: {}, id: "database-1", name: "Roadmap" },
+    properties,
+    rows: [],
+    values: [],
+    views: [
+      {
+        config: { groupPropertyId: "property-status" },
+        id: "view-kanban",
+        name: "Board",
+        type: "kanban",
+      },
+    ],
+  });
+
+  const model = getDatabaseViewModel({
+    activeViewId: "view-kanban",
+    viewData,
+  });
+
+  assert.deepEqual(
+    model.visibleProperties.map((property) => property.id),
+    ["database-property-owner", "database-property-priority", "database-property-date"],
+  );
+  assert.deepEqual(model.activeVisibilityConfig.hiddenPropertyIds, [
+    "database-property-status",
+    "database-property-notes",
+  ]);
+});
+
+test("database view model filters rows before sorting", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const statusProperty = createProperty(
+    "database-property-status",
+    "property-status",
+    "Status",
+    "status",
+    {
+      options: [
+        { id: "todo", name: "Not started" },
+        { id: "done", name: "Done" },
+      ],
+    },
+  );
+  const priorityProperty = createProperty(
+    "database-property-priority",
+    "property-priority",
+    "Priority",
+    "number",
+  );
+  const viewData = createViewData({
+    database: {
+      config: {
+        nameColumn: { label: "Task" },
+      },
+      id: "database-1",
+      name: "Roadmap",
+    },
+    properties: [statusProperty, priorityProperty],
+    rows: [
+      createRow("row-1", "page-1", "Alpha", 0),
+      createRow("row-2", "page-2", "Beta", 1),
+      createRow("row-3", "page-3", "Gamma", 2),
+    ],
+    values: [
+      {
+        propertyId: "property-status",
+        value: "Done",
+        pageId: "page-1",
+      },
+      {
+        propertyId: "property-priority",
+        value: 3,
+        pageId: "page-1",
+      },
+      {
+        propertyId: "property-status",
+        value: "Not started",
+        pageId: "page-2",
+      },
+      {
+        propertyId: "property-priority",
+        value: 1,
+        pageId: "page-2",
+      },
+      {
+        propertyId: "property-status",
+        value: "Done",
+        pageId: "page-3",
+      },
+      {
+        propertyId: "property-priority",
+        value: 2,
+        pageId: "page-3",
+      },
+    ],
+    views: [
+      {
+        config: {
+          filters: [
+            {
+              id: "filter-status",
+              operator: "is",
+              propertyId: "database-property-status",
+              values: ["Done"],
+            },
+          ],
+          sorts: [
+            {
+              column: "database-property-priority",
+              direction: "descending",
+            },
+          ],
+        },
+        id: "view-table",
+        name: "Table",
+        type: "table",
+      },
+    ],
+  });
+
+  const model = getDatabaseViewModel({
+    activeViewId: "view-table",
+    viewData,
+  });
+
+  assert.deepEqual(
+    model.activeDatabaseFilters.map(({ label, operator, operatorLabel, propertyId, values }) => ({
+      label,
+      operator,
+      operatorLabel,
+      propertyId,
+      values,
+    })),
+    [
+      {
+        label: "Status",
+        operator: "is",
+        operatorLabel: "Is",
+        propertyId: "database-property-status",
+        values: ["Done"],
+      },
+    ],
+  );
+  assert.deepEqual(
+    model.addableFilterFieldOptions.map((option) => option.value),
+    ["name", "database-property-priority"],
+  );
+  assert.deepEqual(
+    model.filterValueOptionsByField["database-property-status"].map((option) => option.value),
+    ["Done", "Not started"],
+  );
+  assert.deepEqual(
+    model.filteredItems.map((item) => item.id),
+    ["row-1", "row-3"],
+  );
+  assert.deepEqual(
+    model.sortedItems.map((item) => item.id),
+    ["row-1", "row-3"],
+  );
+});
+
+test("database view model applies table property order", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const statusProperty = createProperty(
+    "database-property-status",
+    "property-status",
+    "Status",
+    "status",
+  );
+  const priorityProperty = createProperty(
+    "database-property-priority",
+    "property-priority",
+    "Priority",
+    "number",
+  );
+  const ownerProperty = createProperty(
+    "database-property-owner",
+    "property-owner",
+    "Owner",
+    "person",
+  );
+  const viewData = createViewData({
+    database: {
+      config: {},
+      id: "database-1",
+      name: "Roadmap",
+    },
+    properties: [statusProperty, priorityProperty, ownerProperty],
+    rows: [],
+    values: [],
+    views: [
+      {
+        config: {
+          propertyOrder: ["database-property-priority", "name", "database-property-status"],
+        },
+        id: "view-table",
+        name: "Table",
+        type: "table",
+      },
+    ],
+  });
+
+  const model = getDatabaseViewModel({
+    activeViewId: "view-table",
+    viewData,
+  });
+
+  assert.deepEqual(
+    model.visibleProperties.map((property) => property.id),
+    ["database-property-priority", "database-property-status", "database-property-owner"],
+  );
+});
+
+test("database view model uses the latest duplicated cell value", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const statusProperty = createProperty(
+    "database-property-status",
+    "property-status",
+    "Status",
+    "status",
+  );
+  const viewData = createViewData({
+    database: {
+      config: {},
+      id: "database-1",
+      name: "Roadmap",
+    },
+    properties: [statusProperty],
+    rows: [createRow("row-1", "page-1", "Alpha", 0)],
+    values: [
+      {
+        propertyId: "property-status",
+        value: "Not started",
+        pageId: "page-1",
+      },
+      {
+        propertyId: "property-status",
+        value: "In progress",
+        pageId: "page-1",
+      },
+    ],
+    views: [
+      {
+        config: {},
+        id: "view-table",
+        name: "Table",
+        type: "table",
+      },
+    ],
+  });
+
+  const model = getDatabaseViewModel({
+    activeViewId: "view-table",
+    viewData,
+  });
+
+  assert.equal(model.propertyValuesByKey["page-1:property-status"], "In progress");
+});
+
+test("database view model keeps name and date kanban group properties", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const dueProperty = createProperty("database-property-due", "property-due", "Due", "date");
+  const createdProperty = createProperty(
+    "database-property-created",
+    "property-created",
+    "Created",
+    "created_time",
+  );
+  const viewData = createViewData({
+    database: {
+      config: {
+        nameColumn: { label: "Task" },
+      },
+      id: "database-1",
+      name: "Roadmap",
+    },
+    properties: [dueProperty, createdProperty],
+    rows: [createRow("row-1", "page-1", "Alpha", 0)],
+    values: [
+      {
+        propertyId: "property-due",
+        value: "2026-01-01",
+        pageId: "page-1",
+      },
+    ],
+    views: [
+      {
+        config: { groupPropertyId: "name" },
+        id: "view-name-kanban",
+        name: "By name",
+        type: "kanban",
+      },
+      {
+        config: { groupPropertyId: "property-due" },
+        id: "view-date-kanban",
+        name: "By due date",
+        type: "kanban",
+      },
+      {
+        config: { groupPropertyId: "property-created" },
+        id: "view-created-kanban",
+        name: "By created time",
+        type: "kanban",
+      },
+    ],
+  });
+
+  const nameModel = getDatabaseViewModel({
+    activeViewId: "view-name-kanban",
+    viewData,
+  });
+  const dateModel = getDatabaseViewModel({
+    activeViewId: "view-date-kanban",
+    viewData,
+  });
+  const createdModel = getDatabaseViewModel({
+    activeViewId: "view-created-kanban",
+    viewData,
+  });
+
+  assert.equal(nameModel.groupProperty?.id, "name");
+  assert.equal(nameModel.kanbanGroupProperty?.id, "name");
+  assert.deepEqual(nameModel.kanbanOptions, []);
+  assert.equal(dateModel.groupProperty?.property.type, "date");
+  assert.equal(dateModel.kanbanGroupProperty?.property.type, "date");
+  assert.deepEqual(dateModel.kanbanOptions, []);
+  assert.equal(createdModel.groupProperty?.property.type, "created_time");
+  assert.equal(createdModel.kanbanGroupProperty?.property.type, "created_time");
+  assert.deepEqual(
+    createdModel.groupableProperties.map((property) => property.property.id),
+    ["name", "property-due", "property-created"],
+  );
+});
+
+test("database view model derives conditional color settings", async () => {
+  const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
+  const statusProperty = createProperty(
+    "database-property-status",
+    "property-status",
+    "Status",
+    "status",
+  );
+  const viewData = createViewData({
+    database: {
+      config: {},
+      id: "database-1",
+      name: "Roadmap",
+    },
+    properties: [statusProperty],
+    rows: [createRow("row-1", "page-1", "Alpha", 0)],
+    values: [],
+    views: [
+      {
+        config: {
+          conditionalColors: [
+            {
+              applyTo: "this-property",
+              color: "green",
+              filter: {
+                id: "conditional-filter-status",
+                operator: "is",
+                propertyId: "database-property-status",
+                values: ["Done"],
+              },
+              id: "conditional-color-status",
+              style: "page-background",
+            },
+            {
+              color: "red",
+              filter: {
+                id: "conditional-filter-missing",
+                operator: "is",
+                propertyId: "missing-property",
+                values: ["Blocked"],
+              },
+              id: "conditional-color-missing",
+            },
+          ],
+        },
+        id: "view-table",
+        name: "Table",
+        type: "table",
+      },
+    ],
+  });
+
+  const model = getDatabaseViewModel({
+    activeViewId: "view-table",
+    viewData,
+  });
+
+  assert.deepEqual(
+    model.activeConditionalColors.map(({ applyTo, color, filter, id }) => ({
+      applyTo,
+      color,
+      filter: {
+        label: filter.label,
+        operator: filter.operator,
+        propertyId: filter.propertyId,
+        propertyType: filter.propertyType,
+        values: filter.values,
+      },
+      id,
+    })),
+    [
+      {
+        applyTo: "this-property",
+        color: "green",
+        filter: {
+          label: "Status",
+          operator: "is",
+          propertyId: "database-property-status",
+          propertyType: "status",
+          values: ["Done"],
+        },
+        id: "conditional-color-status",
+      },
+    ],
+  );
+});
+
+const TIMESTAMP = "2026-01-01T00:00:00.000Z";
+
+function createProperty(id, propertyId, name, type, config = {}) {
+  return {
+    createdAt: TIMESTAMP,
+    dataSourceId: "source-1",
+    id,
+    position: 0,
+    property: {
+      config,
+      createdAt: TIMESTAMP,
+      id: propertyId,
+      name,
+      type,
+      updatedAt: TIMESTAMP,
+      workspaceId: "workspace-1",
+    },
+    propertyId,
+    updatedAt: TIMESTAMP,
+    visible: true,
+    width: null,
+  };
+}
+
+function createRow(id, pageId, name) {
+  return { id, pageId, name };
+}
+
+function createValue(pageId, propertyId, value) {
+  return {
+    createdAt: TIMESTAMP,
+    id: `${pageId}:${propertyId}`,
+    pageId,
+    propertyId,
+    updatedAt: TIMESTAMP,
+    value,
+  };
+}
+
+function createViewData({ database, properties = [], rows = [], values = [], views = [] }) {
+  const source = {
+    config: {},
+    configVersion: 1,
+    createdAt: TIMESTAMP,
+    id: "source-1",
+    linkedAt: null,
+    name: "Source",
+    parentDatabaseId: "database-1",
+    position: 0,
+    updatedAt: TIMESTAMP,
+    version: 0,
+    workspaceId: "workspace-1",
+  };
+  const valuesByRow = new Map();
+  for (const value of values) {
+    const group = valuesByRow.get(value.pageId) ?? [];
+    group.push(createValue(value.pageId, value.propertyId, value.value));
+    valuesByRow.set(value.pageId, group);
+  }
+  const records = rows.map((row, index) => ({
+    createdAt: TIMESTAMP,
+    dataSourceId: "source-1",
+    id: row.id,
+    orderKey: `${(index + 1) * 1024}.0000000000`,
+    page: {
+      createdAt: TIMESTAMP,
+      deletedAt: null,
+      hasContent: false,
+      id: row.pageId,
+      metadata: {},
+      name: row.name,
+      updatedAt: TIMESTAMP,
+    },
+    pageId: row.pageId,
+    parentRowId: null,
+    updatedAt: TIMESTAMP,
+    valuesByPropertyId: Object.fromEntries(
+      (valuesByRow.get(row.pageId) ?? []).map((value) => [value.propertyId, value]),
+    ),
+  }));
+  return {
+    activeDataSource: source,
+    bootstrap: {
+      database: {
+        accessLevel: "edit",
+        config: database.config ?? {},
+        createdAt: TIMESTAMP,
+        id: database.id,
+        name: database.name,
+        pageId: null,
+        updatedAt: TIMESTAMP,
+        version: 0,
+        workspaceId: "workspace-1",
+      },
+      dataSources: [source],
+      properties,
+      views: views.map((view, index) => ({
+        createdAt: TIMESTAMP,
+        databaseId: "database-1",
+        dataSourceId: "source-1",
+        id: view.id,
+        name: view.name,
+        position: index,
+        type: view.type,
+        updatedAt: TIMESTAMP,
+        config: view.config ?? {},
+      })),
+    },
+    dataSourceId: "source-1",
+    hasMore: false,
+    records,
+    totalCount: records.length,
+  };
+}

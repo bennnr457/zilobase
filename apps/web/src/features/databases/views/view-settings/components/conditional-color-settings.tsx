@@ -12,9 +12,9 @@ import { DatabaseConditionEditor } from "../../components/database-condition-edi
 import {
   getDatabaseFilterOperatorsForType,
   type DatabaseConditionalColorConfig,
-} from "../../model/database-view-config";
+} from "@zilobase/features/databases/models";
 import type { DatabaseActiveConditionalColor } from "../../state/database-view-context";
-import type { DatabaseFilterUpdatePatch } from "../../model/filter-sort-contracts";
+import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases/models";
 import type { DatabaseSearchableMenuOption } from "../../menu-option-contracts";
 import type { DatabaseViewProperty } from "../view-settings-contracts";
 

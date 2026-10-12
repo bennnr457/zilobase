@@ -38,9 +38,9 @@ import {
   escapeFormulaString,
   getFormulaExpression,
   getMergedFormulaConfig,
-} from "../model/formula-config";
-import { evaluateDatabaseFormula } from "../runtime/formula-evaluator";
-import { formatFormulaValue } from "../formatting/formula-formatters";
+} from "@zilobase/features/databases/formula";
+import { evaluateDatabaseFormula } from "@zilobase/features/databases/formula";
+import { formatFormulaValue } from "@zilobase/features/databases/formula";
 import {
   builtInReferences,
   getPropertyReferenceDescription,

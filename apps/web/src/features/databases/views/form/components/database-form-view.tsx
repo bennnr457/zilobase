@@ -42,33 +42,33 @@ import {
   getNextDatabaseOptionColor,
 } from "../../../schema/property-catalog";
 import { DatabasePropertyDate } from "../../../schema/editors/database-property-date";
-import { formatDatabaseDateValue } from "../../../schema/model/database-date-config";
+import { formatDatabaseDateValue } from "@zilobase/features/databases/models";
 import { getColorTokenDotClassName } from "@/shared/lib/color-tokens";
 import { cn } from "@/shared/lib/utils";
 import {
   getDatabasePropertyOrder,
   getPersonLimit,
   getViewHiddenPropertyIds,
-} from "../../model/database-view-config";
+} from "@zilobase/features/databases/models";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/database-view-context";
-import { getDatabaseFormHeaderSettings } from "../model/database-form-header-config";
+import { getDatabaseFormHeaderSettings } from "@zilobase/features/databases/models";
 import {
   getDatabaseFormQuestionSettings,
   moveDatabaseFormQuestion,
   type DatabaseFormQuestionMove,
   type DatabaseFormQuestionSettings,
   type DatabaseFormQuestionSettingsPatch,
-} from "../model/database-form-question-config";
+} from "@zilobase/features/databases/models";
 import {
   getFormOptions,
   getFormQuestionDescription,
   isOptionProperty,
   type FormOption,
-} from "../model/database-form-options";
+} from "@zilobase/features/databases/models";
 
 type FormQuestionEntry = {
   id: string;

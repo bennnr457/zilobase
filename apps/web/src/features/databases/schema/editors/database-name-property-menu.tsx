@@ -43,7 +43,7 @@ import {
   upsertDatabaseSort,
   type DatabaseNameColumnConfig,
   type DatabaseSortDirection,
-} from "../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 import { NameColumnGlyph } from "../../interactions/name-column-glyph";
 
 export function DatabaseNamePropertyMenu({

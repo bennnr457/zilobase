@@ -6,14 +6,17 @@ import type {
   DatabaseConditionalColorConfig,
   DatabaseLayoutSettings,
   DatabaseSubItemsSettings,
-} from "../model/database-view-config";
+} from "@zilobase/features/databases/models";
 import type {
   DatabaseActiveFilter,
   DatabaseFilterUpdatePatch,
-} from "../model/filter-sort-contracts";
+} from "@zilobase/features/databases/models";
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
-import type { DatabaseActiveSort, DatabaseSortUpdatePatch } from "../model/filter-sort-contracts";
-import type { DatabaseChartSettings } from "../chart/model/database-chart-config";
+import type {
+  DatabaseActiveSort,
+  DatabaseSortUpdatePatch,
+} from "@zilobase/features/databases/models";
+import type { DatabaseChartSettings } from "@zilobase/features/databases/models";
 import type { DatabaseViewType } from "./model/view-type-options";
 
 export type DatabaseViewProperty = {

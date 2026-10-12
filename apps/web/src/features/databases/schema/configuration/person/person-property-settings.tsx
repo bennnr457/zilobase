@@ -1,7 +1,7 @@
 import { Bell, CircleUserRound, Hash, UserRound } from "@/shared/components/icons";
 import type { ReactNode } from "react";
 
-import type { DatabasePropertyConfig } from "../../../views/model/database-view-config";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 type PersonDefaultValue = "no_default" | "created_by";

@@ -5,8 +5,8 @@ import {
   timeFormatOptions,
   type DateFormatValue,
   type TimeFormatValue,
-} from "../../model/database-date-config";
-import type { DatabasePropertyConfig } from "../../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 export function DatePropertySettings({

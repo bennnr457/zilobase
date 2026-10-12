@@ -5,7 +5,7 @@ export function register({ assert, loadModule, readSource, test }) {
       databaseSetupSuggestedTemplates,
       getDatabaseSetupTemplate,
       inferDatabaseSetupTemplateId,
-    } = await loadModule("/src/features/databases/setup/model/database-setup-templates.ts");
+    } = await loadModule("/packages/features/src/databases/templates/definitions.ts");
 
     const templates = [...databaseSetupSuggestedTemplates, ...databaseSetupMoreTemplates];
 

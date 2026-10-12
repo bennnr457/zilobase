@@ -3,7 +3,10 @@ export function register({ assert, readSource, readWorkspace, test }) {
     const [block, controller, screen, view, toolbarActions, restoreButton, styles, cache] =
       await Promise.all([
         readSource("/src/features/databases/core/database-block.tsx"),
-        readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+        Promise.all([
+          readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+          readSource("/packages/features/src/databases/records/source-commands.ts"),
+        ]).then((parts) => parts.join("\n")),
         readSource("/src/features/databases/core/database-screen.tsx"),
         readSource("/src/features/databases/views/components/database-view.tsx"),
         readSource("/src/features/databases/views/components/database-toolbar-actions.tsx"),

@@ -3,7 +3,7 @@ import type {
   DatabaseChartReferenceLine,
   DatabaseChartSettings,
   DatabaseChartSort,
-} from "../../chart/model/database-chart-config";
+} from "@zilobase/features/databases/models";
 import type { DatabaseViewProperty } from "../view-settings-contracts";
 
 export const chartDateIntervalOptions: Array<{

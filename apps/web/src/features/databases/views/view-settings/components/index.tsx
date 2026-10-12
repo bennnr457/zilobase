@@ -29,7 +29,7 @@ import { PageIconDisplay } from "@/features/pages/index";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 
 import { getDatabasePropertyType } from "../../../schema/property-catalog";
-import { getDatabaseViewIcon, getPropertyHiddenForView } from "../../model/database-view-config";
+import { getDatabaseViewIcon, getPropertyHiddenForView } from "@zilobase/features/databases/models";
 import { DatabaseViewToolbarButton } from "../../components/database-view-toolbar-button";
 import { DatabaseFilterSubmenu } from "../../components/database-filter-menu";
 import { DatabaseSortSubmenu } from "../../components/database-sort-menu";

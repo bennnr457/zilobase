@@ -15,12 +15,9 @@ import {
 import { DbProvider } from "../../../../../packages/features/src/databases/queries/session";
 import { useRecordDrops } from "../../../src/features/databases/views/controller/use-record-drop";
 import { useDatabaseKanbanCardDrag } from "../../../src/features/databases/views/kanban/controller/use-database-kanban-card-drag";
-import { buildKanbanBoard } from "../../../src/features/databases/views/kanban/model/database-kanban-board";
-import type {
-  DatabaseRow,
-  KanbanGroupOption,
-} from "../../../src/features/databases/views/kanban/model/database-kanban-group-model";
-import type { DatabasePropertyListItem } from "../../../src/features/databases/views/model/database-group-config";
+import { buildKanbanBoard } from "@zilobase/features/databases/models";
+import type { DatabaseRow, KanbanGroupOption } from "@zilobase/features/databases/models";
+import type { DatabasePropertyListItem } from "@zilobase/features/databases/models";
 
 export function mountRecordDrops(container: HTMLElement) {
   const queryClient = new QueryClient({

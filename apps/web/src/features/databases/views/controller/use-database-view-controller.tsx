@@ -1,4 +1,5 @@
-import { diffConfiguration } from "@zilobase/features/databases/record-interactions";
+import { createDatabaseSourceCommands } from "@zilobase/features/databases/models";
+import { shouldUseDatabaseSetupMode } from "@/features/databases/setup/model/setup-mode";
 import { useCallback, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
 
 import { useSession } from "@zilobase/features/auth/react";
@@ -30,22 +31,14 @@ import {
   useUpdateDatabasePropertyValue,
 } from "@zilobase/features/databases/react";
 import { toast } from "sonner";
-import {
-  createSampleRowContent,
-  type DatabaseSetupSelection,
-} from "../../setup/components/database-setup-card";
-import { getDatabaseSetupTemplate } from "../../setup/model/database-setup-templates";
-import { serializePropertyValue } from "../../schema/property-values";
+import { createSampleRowContent } from "../../setup/components/database-setup-card";
 import { usePage, usePagePersonAccessTargets } from "@zilobase/features/pages/react";
 import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,
   type DatabasePageDragPayload,
 } from "../../interactions/database-page-drop";
-import type {
-  DatabaseSourceViewSelection,
-  DatabaseViewProviderValue,
-} from "../state/database-view-context";
+import type { DatabaseViewProviderValue } from "../state/database-view-context";
 import { getDatabaseViewCommands } from "../../records/view-commands";
 import { getDatabaseViewModel } from "../components/database-view-model";
 import { useDatabaseController } from "@zilobase/features/databases/react";
@@ -54,9 +47,8 @@ import {
   getDatabaseDataSourceSummaries,
   getDatabaseViewTabs,
   resolveRequestedDatabaseViewId,
-  shouldUseDatabaseSetupMode,
-} from "../model/database-controller-state";
-import { getDatabaseSetupDismissed, getMergedDatabaseConfig } from "../model/database-view-config";
+} from "@zilobase/features/databases/models";
+import { getDatabaseSetupDismissed } from "@zilobase/features/databases/models";
 import {
   databaseViewTypeOptions,
   type DatabaseViewType,
@@ -444,280 +436,46 @@ export function useDatabaseViewController({
     return "match" as const;
   }, []);
 
-  const linkDataSourceView = (selection: DatabaseSourceViewSelection) => {
-    if (!databaseId || linkDatabaseDataSource.isPending) return;
-    linkDatabaseDataSource.mutate(
-      {
-        databaseId,
-        config: selection.viewConfig,
-        dataSourceId: selection.dataSourceId,
-        name: selection.viewName,
-        type: selection.viewType,
-      },
-      {
-        onSuccess: ({ view }) => {
-          setSelectedActiveViewId(view.id);
-          toast.success("Data source linked.");
-        },
-      },
-    );
-  };
-
-  const unlinkDataSource = async (dataSourceId: string) => {
-    if (
-      !databaseId ||
-      !editable ||
-      unlinkDatabaseDataSource.isPending ||
-      deleteDatabaseView.isPending
-    ) {
-      return;
-    }
-
-    const source = bootstrap?.dataSources.find((candidate) => candidate.id === dataSourceId);
-    if (!source || source.parentDatabaseId === databaseId) return;
-
-    const sourceViewIds =
-      bootstrap?.views
-        .filter((view) => view.dataSourceId === dataSourceId)
-        .map((view) => view.id) ?? [];
-    const fallbackViewId =
-      bootstrap?.views.find((view) => view.dataSourceId !== dataSourceId)?.id ?? null;
-
-    try {
-      for (const databaseViewId of sourceViewIds) {
-        await deleteDatabaseView.mutateAsync({ databaseId, databaseViewId });
-      }
-      await unlinkDatabaseDataSource.mutateAsync({ databaseId, dataSourceId });
-      setSelectedActiveViewId(fallbackViewId);
-      toast.success("Linked data source removed.");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not remove the linked data source.",
-      );
-    }
-  };
-
-  const replaceActiveViewSource = async (selection: DatabaseSourceViewSelection) => {
-    if (
-      !databaseId ||
-      !resolvedActiveViewId ||
-      !editable ||
-      replaceDatabaseViewDataSource.isPending
-    )
-      return;
-
-    await replaceDatabaseViewDataSource.mutateAsync({
-      databaseId,
-      databaseViewId: resolvedActiveViewId,
-      dataSourceId: selection.dataSourceId,
-    });
-    setSelectedActiveViewId(resolvedActiveViewId);
-    toast.success("View source replaced.");
-  };
-
-  const addDataSourceView = async (
+  const sourceCommands = createDatabaseSourceCommands({
+    databaseId,
+    editable,
+    bootstrap,
+    resolvedActiveViewId,
+    activeViewTabId,
+    viewTabs,
+    updateDatabase,
+    applyDataSourceTemplate,
+    createDataSource,
+    updateDatabaseView,
+    addDatabaseView,
+    linkDatabaseDataSource,
+    replaceDatabaseViewDataSource,
+    unlinkDatabaseDataSource,
+    deleteDatabaseView,
+    onViewSelected: setSelectedActiveViewId,
+    notify: toast,
+    createSampleRowContent,
+  });
+  const {
+    linkDataSourceView,
+    unlinkDataSource,
+    replaceActiveViewSource,
+    handleDataSourceSetupSelection,
+    saveDatabaseViewIcon,
+    duplicateDatabaseView,
+    deleteDatabaseViewByTab,
+  } = sourceCommands;
+  const addDataSourceView = (
     dataSourceId: string,
     type: DatabaseViewType,
     mode: "add" | "replace" = "add",
-  ) => {
-    if (
-      !databaseId ||
-      !editable ||
-      linkDatabaseDataSource.isPending ||
-      replaceDatabaseViewDataSource.isPending
-    ) {
-      return;
-    }
-
-    const option = databaseViewTypeOptions.find((candidate) => candidate.type === type);
-    const viewName = option?.label ?? "Table";
-
-    try {
-      if (mode === "replace") {
-        if (!resolvedActiveViewId) return;
-        await replaceDatabaseViewDataSource.mutateAsync({
-          databaseId,
-          databaseViewId: resolvedActiveViewId,
-          dataSourceId,
-        });
-        toast.success("View source replaced.");
-        return;
-      }
-      const { view } = await linkDatabaseDataSource.mutateAsync({
-        databaseId,
-        dataSourceId,
-        name: viewName,
-        type,
-      });
-      setSelectedActiveViewId(view.id);
-      toast.success(`${viewName} view added.`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not add the view.");
-    }
-  };
-
-  const handleDataSourceSetupSelection = async (selection: DatabaseSetupSelection) => {
-    if (!editable || !databaseId || createDataSource.isPending || updateDatabase.isPending) {
-      return;
-    }
-
-    try {
-      if (selection.sourceView) {
-        const { view } = await linkDatabaseDataSource.mutateAsync({
-          databaseId,
-          config: selection.sourceView.viewConfig,
-          dataSourceId: selection.sourceView.dataSourceId,
-          name: selection.sourceView.viewName,
-          type: selection.sourceView.viewType,
-        });
-        setSelectedActiveViewId(view.id);
-        toast.success("Data source linked.");
-        return;
-      }
-
-      const template = selection.templateId ? getDatabaseSetupTemplate(selection.templateId) : null;
-      const databaseName =
-        selection.databaseName || selection.csvImport?.name || template?.name || "New data source";
-      const created = await createDataSource.mutateAsync({
-        databaseId,
-        name: databaseName,
-      });
-      const createdSource = created.dataSource;
-      if (selection.csvImport) {
-        await applyDataSourceTemplate.mutateAsync({
-          config: getMergedDatabaseConfig(createdSource.config, {
-            setupDismissed: true,
-          }),
-          databaseId: createdSource.id,
-          name: databaseName,
-          properties: selection.csvImport.headers.slice(1).map((name) => ({
-            name,
-            type: "text",
-          })),
-          rows: selection.csvImport.rows.map((row, rowIndex) => ({
-            title: row[0]?.trim() || `Row ${rowIndex + 1}`,
-            values: selection.csvImport!.headers.slice(1).map((propertyName, index) => ({
-              propertyName,
-              value: serializePropertyValue("text", row[index + 1] ?? ""),
-            })),
-          })),
-        });
-      } else if (template) {
-        const propertyTypesByName = new Map(
-          template.properties.map((property) => [property.name.toLowerCase(), property.type]),
-        );
-
-        await applyDataSourceTemplate.mutateAsync({
-          config: getMergedDatabaseConfig(createdSource.config, {
-            emoji: template.emoji,
-            setupDismissed: true,
-          }),
-          databaseId: createdSource.id,
-          name: databaseName,
-          properties: template.properties,
-          rows: template.sampleRows.map((sampleRow) => ({
-            content: createSampleRowContent(sampleRow.content),
-            metadata: { emoji: sampleRow.emoji },
-            title: sampleRow.title,
-            values: Object.entries(sampleRow.values ?? {}).flatMap(([propertyName, value]) => {
-              const propertyType = propertyTypesByName.get(propertyName.toLowerCase());
-
-              return propertyType
-                ? [
-                    {
-                      propertyName,
-                      value: serializePropertyValue(propertyType, value),
-                    },
-                  ]
-                : [];
-            }),
-          })),
-        });
-      }
-
-      setSelectedActiveViewId(created.view.id);
-      toast.success("Data source added.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not add the data source.");
-    }
-  };
-
-  const saveDatabaseViewIcon: DatabaseViewProviderValue["saveDatabaseViewIcon"] = (
-    view,
-    nextIcon,
-  ) => {
-    if (!editable || !databaseId) {
-      return;
-    }
-
-    const sourceView = bootstrap?.views.find((candidate) => candidate.id === view.id);
-
-    if (!sourceView) {
-      return;
-    }
-
-    updateDatabaseView.mutate({
-      configuration: diffConfiguration(
-        sourceView.config,
-        getMergedDatabaseConfig(sourceView.config, { icon: nextIcon }),
-      ),
-      databaseId,
-      databaseViewId: sourceView.id,
-    });
-  };
-
-  const duplicateDatabaseView = (view: DatabaseViewProviderValue["viewTabs"][number]) => {
-    if (!databaseId || addDatabaseView.isPending || updateDatabase.isPending) {
-      return;
-    }
-
-    const sourceView = (bootstrap?.views ?? []).find((databaseView) => databaseView.id === view.id);
-
-    if (!sourceView) {
-      return;
-    }
-
-    addDatabaseView.mutate(
-      {
-        config: sourceView.config,
-        databaseId,
-        dataSourceId: sourceView.dataSourceId,
-        name: `${sourceView.name} copy`,
-        type: sourceView.type,
-      },
-      {
-        onSuccess: (view) => {
-          setSelectedActiveViewId(view.id);
-        },
-      },
+  ) =>
+    sourceCommands.addDataSourceView(
+      dataSourceId,
+      type,
+      databaseViewTypeOptions.find((option) => option.type === type)?.label ?? "Table",
+      mode,
     );
-  };
-
-  const deleteDatabaseViewByTab = (view: DatabaseViewProviderValue["viewTabs"][number]) => {
-    if (!databaseId || deleteDatabaseView.isPending) {
-      return;
-    }
-
-    if (viewTabs.length <= 1) {
-      toast.error("A database must always have at least one view.");
-      return;
-    }
-
-    const nextActiveViewId =
-      activeViewTabId === view.id
-        ? (viewTabs.find((viewTab) => viewTab.id !== view.id)?.id ?? null)
-        : activeViewTabId;
-
-    deleteDatabaseView.mutate(
-      {
-        databaseId,
-        databaseViewId: view.id,
-      },
-      {
-        onSuccess: () => setSelectedActiveViewId(nextActiveViewId),
-      },
-    );
-  };
 
   const commands = getDatabaseViewCommands({
     notify: toast,

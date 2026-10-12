@@ -25,7 +25,7 @@ import {
 import { useUpdateUserSettings, useUserSettings } from "@zilobase/features/user-settings/react";
 
 import { useLayoutEditor } from "@/features/pages/layout";
-import { useDatabaseMetadata } from "@/features/databases/access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 
 import { getPrimaryPageParentId, resolvePageFullWidth } from "@zilobase/features/pages/queries";
 import type { ZilobaseAiMode } from "@zilobase/features/pages";

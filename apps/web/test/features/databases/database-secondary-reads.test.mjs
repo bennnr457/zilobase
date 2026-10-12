@@ -1,8 +1,6 @@
 export function register({ assert, readSource, readWorkspace, test }) {
   test("secondary database reads separate metadata from bounded record windows", async () => {
-    const hook = await readSource(
-      "/src/features/databases/records/use-database-secondary-payload.ts",
-    );
+    const hook = await readSource("/packages/features/src/databases/queries/secondary-records.ts");
 
     assert.match(hook, /useDatabaseMetadata\(databaseId/);
     assert.match(hook, /useDatabaseRecords\(/);

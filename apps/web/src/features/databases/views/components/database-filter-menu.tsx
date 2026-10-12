@@ -1,7 +1,7 @@
 import type {
   DatabaseActiveFilter,
   DatabaseFilterUpdatePatch,
-} from "../model/filter-sort-contracts";
+} from "@zilobase/features/databases/models";
 import { Filter, Plus, X } from "@/shared/components/icons";
 import { Reorder } from "framer-motion";
 import { useState, type ReactNode } from "react";

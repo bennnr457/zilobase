@@ -20,8 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/shared/ui/textarea";
 import { useSlackAutomationChannels } from "@zilobase/features/automations/react";
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
-import { type DatabaseCondition } from "../../databases/views/model/filter-sort-contracts";
-import type { DatabasePropertyFilterOperator } from "../../databases/views/model/database-view-config";
+import { type DatabaseCondition } from "@zilobase/features/databases/models";
+import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases/models";
 
 type CatalogProperty = DatabaseAutomationCatalog["properties"][number];
 export {

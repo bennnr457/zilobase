@@ -25,10 +25,10 @@ import {
   createSampleRowContent,
   type DatabaseSetupSelection,
 } from "@/features/databases/setup/components/database-setup-card";
-import { getDatabaseSetupTemplate } from "@/features/databases/setup/model/database-setup-templates";
+import { getDatabaseSetupTemplate } from "@zilobase/features/databases/models";
 import { DatabaseViewSkeleton } from "@/features/databases/views/components/database-view-skeleton";
 import { getDatabaseViewModel } from "@/features/databases/views/components/database-view-model";
-import type { DatabaseViewData } from "@/features/databases/views/model/database-controller-state";
+import type { DatabaseViewData } from "@zilobase/features/databases/models";
 import {
   getDatabaseFilterOperatorsForType,
   getMergedDatabaseConfig,
@@ -40,13 +40,13 @@ import {
   type DatabasePropertyConfig,
   type DatabaseSortConfig,
   type DatabaseSubItemsSettings,
-} from "@/features/databases/views/model/database-view-config";
-import type { DatabaseFilterUpdatePatch } from "../../databases/views/model/filter-sort-contracts";
-import type { DatabaseSortUpdatePatch } from "../../databases/views/model/filter-sort-contracts";
+} from "@zilobase/features/databases/models";
+import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases/models";
+import type { DatabaseSortUpdatePatch } from "@zilobase/features/databases/models";
 import {
   serializePropertyValue,
   type DatabasePropertyValue,
-} from "@/features/databases/schema/property-values";
+} from "@zilobase/features/databases/models";
 import { defaultStatusOptions } from "@/features/databases/schema/property-catalog";
 import { TaskDatabaseListAdapter } from "../components/task-database-list-adapter";
 import { getDatabaseEmoji } from "@zilobase/features/databases";

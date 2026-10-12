@@ -23,7 +23,7 @@ import {
   type DatabaseNumberDisplayStyle,
   type DatabasePropertyConfig,
   type NumberDecimalPlacesValue,
-} from "../../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 type NumberPropertyConfig = {

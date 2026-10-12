@@ -22,7 +22,7 @@ import {
   useRevokePageGuest,
 } from "@zilobase/features/pages/react";
 import { useWorkspaceGuestPolicy } from "@zilobase/features/workspaces/react";
-import { useDatabaseMetadata } from "@/features/databases/access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import {
   useDatabaseAccess,
   useDeleteDatabaseAccess,

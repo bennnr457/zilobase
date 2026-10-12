@@ -4,8 +4,8 @@ import { getPageCover, getPageEmoji, type PageMetadata } from "@zilobase/feature
 
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
-import { getDatabaseTableGroupSections } from "../../../interactions/database-table-group-sections";
-import { canCreateRowInGroup } from "../../model/database-group-config";
+import { getDatabaseTableGroupSections } from "@zilobase/features/databases/models";
+import { canCreateRowInGroup } from "@zilobase/features/databases/models";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,

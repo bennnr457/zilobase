@@ -17,7 +17,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database chart config normalizes persisted settings", async () => {
     const { getDatabaseChartSettings } = await loadModule(
-      "/src/features/databases/views/chart/model/database-chart-config.ts",
+      "/packages/features/src/databases/views/chart-config.ts",
     );
 
     assert.deepEqual(
@@ -49,7 +49,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database chart config preserves radial charts", async () => {
     const { getDatabaseChartSettings } = await loadModule(
-      "/src/features/databases/views/chart/model/database-chart-config.ts",
+      "/packages/features/src/databases/views/chart-config.ts",
     );
 
     assert.equal(getDatabaseChartSettings({ chart: { type: "radial" } }).type, "radial");
@@ -57,7 +57,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database chart config preserves radar charts", async () => {
     const { getDatabaseChartSettings } = await loadModule(
-      "/src/features/databases/views/chart/model/database-chart-config.ts",
+      "/packages/features/src/databases/views/chart-config.ts",
     );
 
     assert.equal(getDatabaseChartSettings({ chart: { type: "radar" } }).type, "radar");
@@ -65,7 +65,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database charts do not split a series by its own axis", async () => {
     const { shouldSplitDatabaseChartSeries } = await loadModule(
-      "/src/features/databases/views/chart/model/database-chart-config.ts",
+      "/packages/features/src/databases/views/chart-config.ts",
     );
 
     assert.equal(
@@ -88,7 +88,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database chart config normalizes advanced chart controls", async () => {
     const { getDatabaseChartSettings } = await loadModule(
-      "/src/features/databases/views/chart/model/database-chart-config.ts",
+      "/packages/features/src/databases/views/chart-config.ts",
     );
     const settings = getDatabaseChartSettings({
       chart: {

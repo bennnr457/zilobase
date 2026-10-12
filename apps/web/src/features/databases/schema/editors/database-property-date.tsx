@@ -18,9 +18,9 @@ import {
   type DatabaseDatePropertyConfig,
   type DateFormatValue,
   type TimeFormatValue,
-} from "../model/database-date-config";
-import { parseDatabaseDateValue } from "../model/database-date-value";
-import { firstScalarValue } from "../property-values";
+} from "@zilobase/features/databases/models";
+import { parseDatabaseDateValue } from "@zilobase/features/databases/models";
+import { firstScalarValue } from "@zilobase/features/databases/models";
 
 type DatabasePropertyDateProps = {
   editable?: boolean;

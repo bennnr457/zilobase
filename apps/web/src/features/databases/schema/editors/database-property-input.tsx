@@ -10,7 +10,7 @@ import {
   getNumberDisplayShowNumber,
   getNumberDisplayStyle,
   getNumberFormat,
-} from "../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 
 function DatabaseInputCell({
   editable = true,

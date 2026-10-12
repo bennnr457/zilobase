@@ -11,7 +11,10 @@ import {
   useDatabaseUiContext,
 } from "../state/database-view-context";
 import { DatabaseViewSettingsMenu } from "../view-settings/components";
-import { getNameColumnWrapContent, getPropertyWrapContent } from "../model/database-view-config";
+import {
+  getNameColumnWrapContent,
+  getPropertyWrapContent,
+} from "@zilobase/features/databases/models";
 
 export function DatabaseSettingsControl({
   open,

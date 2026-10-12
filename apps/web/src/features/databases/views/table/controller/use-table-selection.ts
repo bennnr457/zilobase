@@ -1,17 +1,17 @@
-import { createCellEditHistoryAction } from "../../../interactions/cell-edit-history";
+import { createCellEditHistoryAction } from "@zilobase/features/databases/models";
 import { useCallback, useMemo, useState } from "react";
 
 import { toast } from "sonner";
 
 import type { useUndoHistory } from "@/shared/shortcuts";
 
-import { type DatabasePropertyValue as DatabasePropertyValueType } from "../../../schema/property-values";
+import { type DatabasePropertyValue as DatabasePropertyValueType } from "@zilobase/features/databases/models";
 
-import { areSerializedPropertyValuesEqual } from "../../../interactions/database-item-utils";
+import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases/models";
 
-import { type DatabaseCellFillHistoryChange } from "../../../interactions/database-cell-fill";
+import { type DatabaseCellFillHistoryChange } from "@zilobase/features/databases/models";
 
-import { type DatabasePropertyListItem } from "../../model/database-group-config";
+import { type DatabasePropertyListItem } from "@zilobase/features/databases/models";
 import { getSharedDatabaseSelectionValue } from "../model/database-table-selection";
 import { type TableRow } from "../model/database-table-model";
 

@@ -10,12 +10,12 @@ import { DatabasePropertyFiles } from "../schema/editors/database-property-files
 import { DatabasePropertyInput } from "../schema/editors/database-property-input";
 import { DatabasePropertySelect } from "../schema/editors/database-property-select";
 import { DatabaseRelationPropertyValue } from "../schema/editors/database-property-value";
-import { formatDatabaseDateValue } from "../schema/model/database-date-config";
-import { defaultStatusOptions } from "../schema/model/property-defaults";
+import { formatDatabaseDateValue } from "@zilobase/features/databases/models";
+import { defaultStatusOptions } from "@zilobase/features/databases/models";
 import { getDatabasePropertyType } from "../schema/property-catalog";
-import { getPersonLimit } from "../views/model/database-view-config";
+import { getPersonLimit } from "@zilobase/features/databases/models";
 import type { DatabasePresenceCollaborator } from "@zilobase/features/databases";
-import type { DatabasePropertyValue } from "../schema/property-values";
+import type { DatabasePropertyValue } from "@zilobase/features/databases/models";
 
 type PagePropertyPayload = ReturnType<typeof usePageProperties>["data"];
 type PageProperty = NonNullable<PagePropertyPayload>["properties"][number];

@@ -29,3 +29,4 @@ export type {
 } from "./realtime/realtime";
 
 export { resolveDatabaseExportReference, type DatabaseExportReference } from "./export-references";
+export { isDatabasePublished } from "./access/publication";

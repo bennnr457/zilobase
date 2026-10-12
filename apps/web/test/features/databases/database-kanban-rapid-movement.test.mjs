@@ -26,7 +26,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("kanban group moves and auto-scroll remain independent", async () => {
     const { getDatabaseGroupMoveValue } = await loadModule(
-      "/src/features/databases/interactions/database-group-values.ts",
+      "/packages/features/src/databases/interactions/group-values.ts",
     );
     const { getKanbanEdgeScrollSpeed } = await loadModule(
       "/src/features/databases/views/kanban/model/database-kanban-card-drag.ts",

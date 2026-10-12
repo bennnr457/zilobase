@@ -1,0 +1,1232 @@
+import { diffConfiguration } from "../interactions/configuration";
+import { getConvertedViewConfig, removeDatabaseGroupProperty } from "../models";
+
+import type { DatabasePropertyEntity, DatabaseRow, DatabaseViewEntity } from "../index";
+import type { DatabaseViewData } from "../models";
+
+import { defaultStatusOption } from "../models";
+import { getGroupPropertyId, type DatabasePropertyListItem } from "../models";
+import { getDefaultKanbanHiddenPropertyIds } from "../models";
+import { ganttMoveToDateValue, getTimelineDateProperty } from "../models";
+import { getDefaultDatabasePropertyConfig, isSelectLikePropertyType } from "../models";
+import { serializePropertyValue, type DatabasePropertyValue } from "../models";
+import { areSerializedPropertyValuesEqual, hasViewHiddenPropertyIds } from "../models";
+import type { DatabasePageDragPayload } from "../models";
+import {
+  getDatabaseFilterOperatorsForType,
+  getDatabaseFilters,
+  getDatabaseSorts,
+  isDatabaseFilterGroup,
+  getDatabaseLayoutSettings,
+  getDatabaseSubItemsSettings,
+  getMergedDatabaseConfig,
+  getMergedNameColumnConfig,
+  getMergedPropertyConfig,
+  getPropertyHidden,
+  getShowPropertyTitles,
+  getViewHiddenPropertyIds,
+  getValidDatabaseFilterOperator,
+  type DatabaseConditionalColorConfig,
+  type DatabasePropertyFilterConfig,
+  type DatabasePropertyConfig,
+  type DatabaseLayoutSettings,
+  type DatabaseNameColumnConfig,
+  type DatabaseSortConfig,
+  type DatabaseSubItemsSettings,
+} from "../models";
+import type { DatabaseFilterUpdatePatch } from "../models";
+import { getRelationLimitTrimUpdates, relationPayloadFromViewData } from "../models";
+import {
+  defaultDatabaseChartSettings,
+  getDatabaseChartSettings,
+  type DatabaseChartSettings,
+} from "../models";
+import { getDatabaseFormHeaderSettings, type DatabaseFormHeaderSettings } from "../models";
+import {
+  getDatabaseFormQuestionSettingsById,
+  type DatabaseFormQuestionSettingsPatch,
+} from "../models";
+import { getDatabaseFormShareSettings, type DatabaseFormShareSettings } from "../models";
+
+import {
+  getDraggedRowGroupSetup,
+  getNewRowGroupSetup,
+  getTimelineGroupPropertyId,
+} from "../models";
+import type { DatabaseMutations } from "../models";
+import { createAddDatabaseRowMutation } from "../models";
+
+export type DatabaseViewCommands = ReturnType<typeof createDatabaseViewCommands>;
+
+export function createDatabaseViewCommands({
+  activeDatabaseFilters,
+  activeDatabaseSorts,
+  activeView,
+  databaseId,
+  viewDatabaseId,
+  editable,
+  isKanbanView,
+  items,
+  kanbanGroupProperty,
+  timelineDateProperty = null,
+  mutations,
+  notify,
+  viewData,
+  properties,
+  onViewCreated,
+  onSortsChanged,
+  getLatestViewConfig,
+  getSourcePropertyMode,
+}: {
+  activeDatabaseFilters: DatabasePropertyFilterConfig[];
+  activeDatabaseSorts: DatabaseSortConfig[];
+  activeView: DatabaseViewEntity | null;
+  databaseId: string | null | undefined;
+  viewDatabaseId?: string | null;
+  editable: boolean;
+  isKanbanView: boolean;
+  items: DatabaseRow[];
+  kanbanGroupProperty: DatabasePropertyListItem | null;
+  timelineDateProperty: DatabasePropertyListItem | null;
+  mutations: DatabaseMutations;
+  notify: { error: (message: string) => void; success: (message: string) => void };
+  viewData: DatabaseViewData | null | undefined;
+  properties: DatabasePropertyEntity[];
+  onViewCreated: (viewId: string) => void;
+  onSortsChanged: (hasSorts: boolean) => void;
+  getLatestViewConfig?: (
+    databaseId: string,
+    databaseViewId: string,
+    fallbackConfig: unknown,
+  ) => unknown;
+  getSourcePropertyMode?: (
+    dragPayload: DatabasePageDragPayload,
+  ) => Promise<"duplicate" | "match" | null>;
+}) {
+  const {
+    addDatabaseView,
+    addProperty,
+    addRow,
+    changeRow,
+    updateDatabase,
+    updateDatabaseView,
+    updateProperty,
+    updateValue,
+  } = mutations;
+  const databaseConfig = viewData?.bootstrap.database.config;
+  const databasePageId = viewData?.bootstrap.database.pageId;
+  const databaseName = viewData?.bootstrap.database.name;
+  const viewProperties = viewData
+    ? viewData.bootstrap.properties.filter(
+        (property) => property.dataSourceId === viewData.dataSourceId,
+      )
+    : null;
+  const ensureTimelineDatePropertyId = createTimelineDateResolver({
+    addProperty,
+    databaseId,
+    editable,
+    viewData,
+    properties,
+    timelineDateProperty,
+    notify,
+  });
+
+  const addRowWithValues = createAddDatabaseRowMutation({
+    addRow,
+    databaseId,
+    editable,
+    hostDatabaseId: viewDatabaseId,
+  });
+
+  const saveDatabaseSorts = (nextSorts: DatabaseSortConfig[]) => {
+    if (!databaseId || !activeView?.id) {
+      return Promise.resolve();
+    }
+
+    onSortsChanged(nextSorts.length > 0);
+    const currentConfig = latestConfig();
+
+    return updateDatabaseView.mutateAsync({
+      configuration: diffConfiguration(
+        currentConfig,
+        getMergedDatabaseConfig(currentConfig, {
+          sorts: nextSorts.length > 0 ? nextSorts : undefined,
+        }),
+      ),
+      databaseId: viewDatabaseId ?? databaseId,
+      databaseViewId: activeView.id,
+    });
+  };
+
+  const saveDatabaseFilters = (nextFilters: DatabasePropertyFilterConfig[]) => {
+    if (!databaseId || !activeView?.id) {
+      return;
+    }
+
+    const currentConfig = latestConfig();
+    updateDatabaseView.mutate({
+      configuration: diffConfiguration(
+        currentConfig,
+        getMergedDatabaseConfig(currentConfig, {
+          filters: nextFilters.length > 0 ? nextFilters : undefined,
+        }),
+      ),
+      databaseId: viewDatabaseId ?? databaseId,
+      databaseViewId: activeView.id,
+    });
+  };
+
+  const saveDatabaseConditionalColors = (
+    nextConditionalColors: DatabaseConditionalColorConfig[],
+  ) => {
+    if (!databaseId || !activeView?.id) {
+      return;
+    }
+
+    updateDatabaseView.mutate({
+      configuration: diffConfiguration(
+        activeView.config,
+        getMergedDatabaseConfig(activeView.config, {
+          conditionalColors: nextConditionalColors.length > 0 ? nextConditionalColors : undefined,
+        }),
+      ),
+      databaseId: viewDatabaseId ?? databaseId,
+      databaseViewId: activeView.id,
+    });
+  };
+
+  const getFilterPropertyType = (propertyId: DatabasePropertyFilterConfig["propertyId"]) => {
+    if (propertyId === "name") {
+      return "text";
+    }
+
+    return properties.find((property) => property.id === propertyId)?.property.type ?? "text";
+  };
+
+  const createDatabaseFilter = (
+    propertyId: DatabasePropertyFilterConfig["propertyId"],
+  ): DatabasePropertyFilterConfig => {
+    const propertyType = getFilterPropertyType(propertyId);
+
+    return {
+      id: createDatabaseFilterId(),
+      operator: getDatabaseFilterOperatorsForType(propertyType)[0]?.value ?? "is",
+      propertyId,
+      values: [],
+    };
+  };
+
+  const latestConfig = () =>
+    activeView && databaseId && getLatestViewConfig
+      ? getLatestViewConfig(viewDatabaseId ?? databaseId, activeView.id, activeView.config)
+      : activeView?.config;
+  const latestSorts = () =>
+    getLatestViewConfig ? getDatabaseSorts(latestConfig()) : activeDatabaseSorts;
+  const getPlainDatabaseFilters = () =>
+    (getLatestViewConfig
+      ? getDatabaseFilters(latestConfig()).filter(
+          (filter): filter is DatabasePropertyFilterConfig => !isDatabaseFilterGroup(filter),
+        )
+      : activeDatabaseFilters
+    ).map(({ id, operator, propertyId, values }) => ({
+      id,
+      operator: getValidDatabaseFilterOperator(operator, getFilterPropertyType(propertyId)),
+      propertyId,
+      values,
+    }));
+
+  const updateTimelineDateProperty = (datePropertyId: string | null) => {
+    if (!databaseId || !activeView?.id) {
+      return;
+    }
+
+    updateDatabaseView.mutate({
+      configuration: diffConfiguration(
+        activeView.config,
+        getMergedDatabaseConfig(activeView.config, {
+          datePropertyId: datePropertyId ?? undefined,
+        }),
+      ),
+      databaseId: viewDatabaseId ?? databaseId,
+      databaseViewId: activeView.id,
+    });
+  };
+
+  const updateDatabaseChartSettings = (settings: Partial<DatabaseChartSettings>) => {
+    if (!databaseId || !activeView?.id) {
+      return;
+    }
+
+    const currentConfig =
+      getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+    const nextConfig = getMergedDatabaseConfig(currentConfig, {
+      chart: {
+        ...getDatabaseChartSettings(currentConfig),
+        ...settings,
+      },
+    });
+
+    updateDatabaseView.mutate({
+      configuration: diffConfiguration(currentConfig, nextConfig),
+      databaseId: viewDatabaseId ?? databaseId,
+      databaseViewId: activeView.id,
+    });
+  };
+
+  const updateDatabaseLayoutSettings = (settings: Partial<DatabaseLayoutSettings>) => {
+    if (!databaseId || !activeView?.id) {
+      return;
+    }
+
+    const currentConfig =
+      getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+    const nextConfig = getMergedDatabaseConfig(currentConfig, {
+      layout: {
+        ...getDatabaseLayoutSettings(currentConfig),
+        ...settings,
+      },
+    });
+
+    updateDatabaseView.mutate({
+      configuration: diffConfiguration(currentConfig, nextConfig),
+      databaseId: viewDatabaseId ?? databaseId,
+      databaseViewId: activeView.id,
+    });
+  };
+
+  return {
+    addDatabaseProperty: (type = "text", label = "Property", position?: number) => {
+      if (!editable || !databaseId) {
+        return;
+      }
+
+      addProperty.mutate({
+        config: getDefaultDatabasePropertyConfig(type),
+        databaseId,
+        name: label,
+        position,
+        type,
+      });
+    },
+    addDatabaseRow: (
+      groupValue?: string,
+      groupPropertyOverride?: DatabasePropertyListItem | null,
+      parentRowId?: string | null,
+    ) => {
+      const defaultStatusValue = defaultStatusOption.name;
+      const nextGroupProperty =
+        groupPropertyOverride ?? (isKanbanView ? kanbanGroupProperty : null);
+      const nextGroupValue =
+        groupValue ??
+        (isKanbanView && kanbanGroupProperty?.property.type === "status"
+          ? defaultStatusValue
+          : null);
+      const groupSetup = getNewRowGroupSetup(nextGroupValue, nextGroupProperty);
+      const subItemsSettings = getDatabaseSubItemsSettings(activeView?.config ?? databaseConfig);
+      if (
+        parentRowId &&
+        (!subItemsSettings.parentPropertyId || !subItemsSettings.subItemPropertyId)
+      ) {
+        notify.error("Sub-items are still being set up. Try again shortly.");
+        return;
+      }
+      const parentRow = parentRowId ? items.find((row) => row.id === parentRowId) : undefined;
+      if (parentRowId && !parentRow) {
+        notify.error("Parent item is no longer available.");
+        return;
+      }
+      const parentRelation =
+        parentRow && subItemsSettings.parentPropertyId && subItemsSettings.subItemPropertyId
+          ? {
+              parentPropertyId: subItemsSettings.parentPropertyId,
+              parentRow,
+              subItemPropertyId: subItemsSettings.subItemPropertyId,
+            }
+          : undefined;
+      addRowWithValues({
+        ...(parentRelation ? { parentRelation } : {}),
+        ...groupSetup,
+        ...(parentRelation
+          ? {
+              propertyValues: [
+                ...groupSetup.propertyValues,
+                {
+                  propertyId: parentRelation.parentPropertyId,
+                  value: parentRelation.parentRow.pageId,
+                },
+              ],
+            }
+          : {}),
+      });
+    },
+    addDraggedPageRow: async (
+      dragPayload: DatabasePageDragPayload,
+      position: number,
+      groupValue?: string,
+      groupPropertyOverride?: DatabasePropertyListItem | null,
+      clearSortViewId?: string,
+    ) => {
+      if (!editable || !databaseId) {
+        return;
+      }
+
+      if (dragPayload.pageId === databasePageId) {
+        notify.error("You can't nest a page inside itself.");
+        return;
+      }
+
+      const groupSetup = getDraggedRowGroupSetup(groupValue, groupPropertyOverride);
+      if (dragPayload.databaseId === databaseId && dragPayload.rowId && viewDatabaseId) {
+        const previousIndex = items.findIndex(({ id }) => id === dragPayload.rowId);
+        const remaining = items.filter(({ id }) => id !== dragPayload.rowId);
+        const index = Math.max(
+          0,
+          Math.min(
+            position - (previousIndex >= 0 && previousIndex < position ? 1 : 0),
+            remaining.length,
+          ),
+        );
+        changeRow.mutate(
+          {
+            databaseId: viewDatabaseId,
+            dataSourceId: databaseId,
+            rowId: dragPayload.rowId,
+            ...(clearSortViewId ? { clearSortViewId } : {}),
+            placement: {
+              afterRowId: remaining[index - 1]?.id ?? null,
+              beforeRowId: remaining[index]?.id ?? null,
+            },
+            title: groupSetup.pageTitle,
+            valuesByPropertyId: Object.fromEntries(
+              groupSetup.propertyValues.map(({ propertyId, value }) => [propertyId, value]),
+            ),
+          },
+          { onError: () => notify.error("Couldn't move this row.") },
+        );
+        return;
+      }
+      if (items.some((row) => row.pageId === dragPayload.pageId)) {
+        notify.error("This page is already in this database.");
+        return;
+      }
+
+      const isCrossDatabaseMove = Boolean(
+        dragPayload.databaseId && dragPayload.databaseId !== databaseId,
+      );
+
+      if (isCrossDatabaseMove && !dragPayload.rowId) {
+        notify.error("Couldn't identify the source row to move.");
+        return;
+      }
+
+      const sourcePropertyMode = isCrossDatabaseMove
+        ? await getSourcePropertyMode?.(dragPayload)
+        : undefined;
+
+      if (sourcePropertyMode === null) {
+        return;
+      }
+
+      const groupValues = new Map(
+        groupSetup.propertyValues.map((propertyValue) => [propertyValue.propertyId, propertyValue]),
+      );
+      addRow.mutate(
+        {
+          databaseId,
+          ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
+          ...(groupValues.size > 0 ? { initialValues: [...groupValues.values()] } : {}),
+          pageId: dragPayload.pageId,
+          ...(clearSortViewId ? { clearSortViewId } : {}),
+          afterRowId: items[position - 1]?.id ?? null,
+          beforeRowId: items[position]?.id ?? null,
+          sourceHostDatabaseId: dragPayload.hostDatabaseId,
+          sourceDataSourceId: isCrossDatabaseMove ? dragPayload.databaseId : undefined,
+          sourceRowId: isCrossDatabaseMove ? dragPayload.rowId : undefined,
+          sourcePropertyMode: sourcePropertyMode ?? undefined,
+          previewTitle: dragPayload.title,
+          title: groupSetup.pageTitle,
+        },
+        {
+          onError: () => {
+            notify.error("Couldn't move this row to the database.");
+          },
+        },
+      );
+    },
+    addChartView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending) {
+        return;
+      }
+
+      addDatabaseView.mutate(
+        {
+          config: {
+            chart: {
+              ...defaultDatabaseChartSettings,
+              valueColors: {},
+            },
+          },
+          databaseId: viewDatabaseId ?? databaseId,
+          dataSourceId: databaseId ?? undefined,
+          name: "Chart",
+          type: "chart",
+        },
+        {
+          onSuccess: (view) => {
+            onViewCreated(view.id);
+          },
+          onError: () => {
+            notify.error("Couldn't add chart view");
+          },
+        },
+      );
+    },
+    addGalleryView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending) {
+        return;
+      }
+
+      addDatabaseView.mutate(
+        {
+          databaseId: viewDatabaseId ?? databaseId,
+          dataSourceId: databaseId ?? undefined,
+          name: "Gallery",
+          type: "gallery",
+        },
+        {
+          onSuccess: (view) => {
+            onViewCreated(view.id);
+          },
+          onError: () => {
+            notify.error("Couldn't add gallery view");
+          },
+        },
+      );
+    },
+    addFormView: (hiddenPropertyIds: string[]) => {
+      if (!editable || !databaseId || addDatabaseView.isPending) {
+        return;
+      }
+
+      addDatabaseView.mutate(
+        {
+          config: { hiddenPropertyIds },
+          databaseId: viewDatabaseId ?? databaseId,
+          dataSourceId: databaseId ?? undefined,
+          name: "Form",
+          type: "form",
+        },
+        {
+          onSuccess: (view) => {
+            onViewCreated(view.id);
+          },
+          onError: () => {
+            notify.error("Couldn't add form view");
+          },
+        },
+      );
+    },
+    addKanbanView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending) {
+        return;
+      }
+
+      const currentProperties = viewProperties ?? [];
+      const groupProperty =
+        currentProperties.find((property) => property.property.type === "status") ??
+        currentProperties.find(
+          (property) =>
+            property.property.type !== "status" && isSelectLikePropertyType(property.property.type),
+        ) ??
+        currentProperties[0] ??
+        null;
+      const addView = (
+        groupPropertyId: string,
+        hiddenPropertyIds: string[],
+        onViewAdded?: () => void,
+      ) => {
+        addDatabaseView.mutate(
+          {
+            config: { groupPropertyId, hiddenPropertyIds },
+            databaseId: viewDatabaseId ?? databaseId,
+            dataSourceId: databaseId ?? undefined,
+            name: "Kanban",
+            type: "kanban",
+          },
+          {
+            onSuccess: (view) => {
+              onViewCreated(view.id);
+              onViewAdded?.();
+            },
+            onError: () => {
+              notify.error("Couldn't add kanban view");
+            },
+          },
+        );
+      };
+
+      if (groupProperty) {
+        addView(
+          groupProperty.property.id,
+          getDefaultKanbanHiddenPropertyIds(currentProperties, groupProperty.property.id),
+        );
+        return;
+      }
+
+      addView("name", []);
+    },
+    addListView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending) {
+        return;
+      }
+
+      addDatabaseView.mutate(
+        {
+          databaseId: viewDatabaseId ?? databaseId,
+          dataSourceId: databaseId ?? undefined,
+          name: "List",
+          type: "list",
+        },
+        {
+          onSuccess: (view) => {
+            onViewCreated(view.id);
+          },
+          onError: () => {
+            notify.error("Couldn't add list view");
+          },
+        },
+      );
+    },
+    addTimelineRow: (
+      startAt: Date,
+      endAt: Date,
+      groupValue?: string,
+      groupProperty?: DatabasePropertyListItem | null,
+    ) => {
+      if (!timelineDateProperty) {
+        return;
+      }
+
+      const groupSetup = getNewRowGroupSetup(groupValue, groupProperty);
+      addRowWithValues({
+        propertyValues: [
+          {
+            propertyId: timelineDateProperty.property.id,
+            value: ganttMoveToDateValue(startAt, endAt),
+          },
+          ...groupSetup.propertyValues,
+        ],
+        title: groupSetup.title,
+      });
+    },
+    addTimelineView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending || addProperty.isPending) {
+        return;
+      }
+
+      ensureTimelineDatePropertyId((datePropertyId) => {
+        const currentProperties = viewProperties ?? properties;
+        const groupPropertyId = getTimelineGroupPropertyId(currentProperties);
+
+        addDatabaseView.mutate(
+          {
+            config: {
+              datePropertyId,
+              ...(groupPropertyId ? { groupPropertyId } : {}),
+            },
+            databaseId: viewDatabaseId ?? databaseId,
+            dataSourceId: databaseId ?? undefined,
+            name: "Timeline",
+            type: "timeline",
+          },
+          {
+            onSuccess: (view) => {
+              onViewCreated(view.id);
+            },
+            onError: () => {
+              notify.error("Couldn't add timeline view");
+            },
+          },
+        );
+      });
+    },
+    addTableView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending) {
+        return;
+      }
+
+      addDatabaseView.mutate(
+        {
+          databaseId: viewDatabaseId ?? databaseId,
+          dataSourceId: databaseId ?? undefined,
+          name: "Table",
+          type: "table",
+        },
+        {
+          onSuccess: (view) => {
+            onViewCreated(view.id);
+          },
+          onError: () => {
+            notify.error("Couldn't add table view");
+          },
+        },
+      );
+    },
+    clearDatabaseSort: () => {
+      saveDatabaseSorts([]);
+    },
+    clearDatabaseFilter: () => {
+      saveDatabaseFilters([]);
+    },
+    setViewGroupProperty: (groupPropertyId: string | null) => {
+      if (!databaseId || !activeView?.id) {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      let nextConfig = getMergedDatabaseConfig(currentConfig, {
+        groupPropertyId: groupPropertyId ?? undefined,
+      });
+
+      if (groupPropertyId === null) {
+        nextConfig = removeDatabaseGroupProperty(nextConfig);
+      }
+
+      if (isKanbanView) {
+        const currentGroupPropertyId =
+          getGroupPropertyId(currentConfig) ?? kanbanGroupProperty?.property.id ?? null;
+        const hiddenPropertyIds = new Set(
+          hasViewHiddenPropertyIds(currentConfig)
+            ? getViewHiddenPropertyIds(currentConfig)
+            : getDefaultKanbanHiddenPropertyIds(properties, currentGroupPropertyId),
+        );
+        const previousGroupProperty = properties.find(
+          (property) => property.property.id === currentGroupPropertyId,
+        );
+        const nextGroupProperty = properties.find(
+          (property) => property.property.id === groupPropertyId,
+        );
+
+        if (previousGroupProperty) {
+          hiddenPropertyIds.delete(previousGroupProperty.id);
+        }
+        if (nextGroupProperty) {
+          hiddenPropertyIds.add(nextGroupProperty.id);
+        }
+
+        nextConfig = getMergedDatabaseConfig(nextConfig, {
+          hiddenPropertyIds: [...hiddenPropertyIds],
+        });
+      }
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    setViewDateProperty: (datePropertyId: string | null) => {
+      updateTimelineDateProperty(datePropertyId);
+    },
+    setupTimelineDateProperty: () => {
+      if (!databaseId || !activeView?.id) {
+        return;
+      }
+
+      ensureTimelineDatePropertyId((datePropertyId) => {
+        updateTimelineDateProperty(datePropertyId);
+      });
+    },
+    createDatabaseSort: (field: string) => {
+      saveDatabaseSorts([
+        ...latestSorts().map(({ column, direction }) => ({
+          column,
+          direction,
+        })),
+        {
+          column: field,
+          direction: "ascending",
+        },
+      ]);
+    },
+    createDatabaseFilter: (field: string) => {
+      if (getPlainDatabaseFilters().some((filter) => filter.propertyId === field)) {
+        return;
+      }
+
+      saveDatabaseFilters([...getPlainDatabaseFilters(), createDatabaseFilter(field)]);
+    },
+    removeDatabaseFilter: (index: number) => {
+      saveDatabaseFilters(
+        getPlainDatabaseFilters().filter(
+          (filter) => filter.id !== activeDatabaseFilters[index]?.id,
+        ),
+      );
+    },
+    reorderDatabaseFilters: (filterIds: string[]) => {
+      const filters = getPlainDatabaseFilters();
+      const filtersById = new Map(filters.map((filter) => [filter.id, filter]));
+      const reorderedFilters = filterIds.flatMap((filterId) => {
+        const filter = filtersById.get(filterId);
+
+        return filter ? [filter] : [];
+      });
+      const remainingFilters = filters.filter((filter) => !filterIds.includes(filter.id));
+
+      saveDatabaseFilters([...reorderedFilters, ...remainingFilters]);
+    },
+    removeDatabaseSort: (index: number) => {
+      saveDatabaseSorts(
+        latestSorts().flatMap(({ column, direction }) =>
+          column === activeDatabaseSorts[index]?.column ? [] : [{ column, direction }],
+        ),
+      );
+    },
+    renameDatabaseProperty: (databasePropertyId: string, name: string) => {
+      if (!databaseId) {
+        return;
+      }
+
+      updateProperty.mutate({
+        databaseId,
+        databasePropertyId,
+        name,
+      });
+    },
+    saveDatabaseFilters,
+    saveDatabaseConditionalColors,
+    saveDatabasePropertyOrder: (propertyIds: string[]) => {
+      if (!editable || !databaseId || !activeView?.id) {
+        return;
+      }
+
+      const validPropertyIds = new Set(["name", ...properties.map((property) => property.id)]);
+      const seenPropertyIds = new Set<string>();
+      const orderedPropertyIds = propertyIds.filter((propertyId) => {
+        if (!validPropertyIds.has(propertyId) || seenPropertyIds.has(propertyId)) {
+          return false;
+        }
+
+        seenPropertyIds.add(propertyId);
+        return true;
+      });
+      const propertyOrder = [
+        ...orderedPropertyIds,
+        ...properties
+          .map((property) => property.id)
+          .filter((propertyId) => !seenPropertyIds.has(propertyId)),
+      ];
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        propertyOrder,
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    saveDatabaseSorts,
+    saveDatabaseEmoji: (nextEmoji: string) => {
+      if (!editable || !databaseId) {
+        return;
+      }
+
+      updateDatabase.mutate({
+        configuration: diffConfiguration(
+          databaseConfig,
+          getMergedDatabaseConfig(databaseConfig, {
+            emoji: nextEmoji,
+          }),
+        ),
+        databaseId,
+      });
+    },
+    saveDatabaseTitle: (nextTitle: string) => {
+      if (!databaseId || nextTitle === databaseName) {
+        return;
+      }
+
+      updateDatabase.mutate({
+        databaseId,
+        name: nextTitle,
+      });
+    },
+    saveDatabaseViewTitle: (nextTitle: string) => {
+      if (!databaseId || !activeView?.id || nextTitle === activeView.name) {
+        return;
+      }
+
+      updateDatabaseView.mutate({
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+        name: nextTitle,
+      });
+    },
+    setViewType: (
+      type: "table" | "kanban" | "timeline" | "chart" | "gallery" | "list" | "form",
+    ) => {
+      if (!databaseId || !activeView?.id || type === activeView.type) {
+        return;
+      }
+
+      if (type === "timeline") {
+        ensureTimelineDatePropertyId((datePropertyId) => {
+          const groupPropertyId =
+            getGroupPropertyId(activeView.config) ??
+            getTimelineGroupPropertyId(properties) ??
+            undefined;
+
+          updateDatabaseView.mutate({
+            configuration: diffConfiguration(
+              activeView.config,
+              getMergedDatabaseConfig(activeView.config, {
+                datePropertyId,
+                ...(groupPropertyId ? { groupPropertyId } : {}),
+              }),
+            ),
+            databaseId: viewDatabaseId ?? databaseId,
+            databaseViewId: activeView.id,
+            type,
+          });
+        });
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const nextConfig = getConvertedViewConfig({
+        currentConfig,
+        type,
+        previousType: activeView.type,
+        kanbanGroupProperty,
+        properties,
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+        type,
+      });
+    },
+    updateDatabaseChartSettings,
+    updateDatabaseLayoutSettings,
+    updateDatabaseFormHeaderSettings: (settings: Partial<DatabaseFormHeaderSettings>) => {
+      if (!editable || !databaseId || !activeView?.id || activeView.type !== "form") {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        formHeader: {
+          ...getDatabaseFormHeaderSettings(currentConfig),
+          ...settings,
+        },
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    updateDatabaseFormQuestionSettings: (
+      propertyId: string,
+      settings: DatabaseFormQuestionSettingsPatch,
+    ) => {
+      if (!editable || !databaseId || !activeView?.id || activeView.type !== "form") {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const currentQuestions = getDatabaseFormQuestionSettingsById(currentConfig);
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        formQuestions: {
+          ...currentQuestions,
+          [propertyId]: {
+            ...currentQuestions[propertyId],
+            ...settings,
+          },
+        },
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    updateDatabaseFormShareSettings: (settings: Partial<DatabaseFormShareSettings>) => {
+      if (!databaseId || !activeView?.id || activeView.type !== "form") {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        formShare: {
+          ...getDatabaseFormShareSettings(currentConfig),
+          ...settings,
+        },
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    updateDatabaseSubItemsSettings: (settings: Partial<DatabaseSubItemsSettings>) => {
+      if (!databaseId || !activeView?.id) {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        subItems: {
+          ...getDatabaseSubItemsSettings(currentConfig),
+          ...settings,
+        },
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    updateNameColumnConfig: (config: DatabaseNameColumnConfig) => {
+      if (!editable || !databaseId) {
+        return;
+      }
+
+      updateDatabase.mutate({
+        configuration: diffConfiguration(
+          databaseConfig,
+          getMergedNameColumnConfig(databaseConfig, config),
+        ),
+        databaseId,
+      });
+    },
+    savePropertyValue: (
+      rowId: string,
+      propertyId: string,
+      propertyType: string,
+      currentValue: DatabasePropertyValue,
+      nextValue: DatabasePropertyValue,
+    ) => {
+      if (!editable || !databaseId) {
+        return;
+      }
+
+      if (areSerializedPropertyValuesEqual(propertyType, currentValue, nextValue)) {
+        return;
+      }
+
+      updateValue.mutate({
+        databaseId,
+        ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
+        propertyId,
+        rowId,
+        value: serializePropertyValue(propertyType, nextValue),
+      });
+    },
+    togglePropertyVisibility: (propertyId: string) => {
+      if (!databaseId || !activeView?.id) {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const hiddenPropertyIds = new Set(
+        hasViewHiddenPropertyIds(currentConfig)
+          ? getViewHiddenPropertyIds(currentConfig)
+          : isKanbanView
+            ? getDefaultKanbanHiddenPropertyIds(
+                properties,
+                getGroupPropertyId(currentConfig) ?? kanbanGroupProperty?.property.id ?? null,
+              )
+            : properties
+                .filter((property) => getPropertyHidden(property.property.config))
+                .map((property) => property.id),
+      );
+
+      if (hiddenPropertyIds.has(propertyId)) {
+        hiddenPropertyIds.delete(propertyId);
+      } else {
+        hiddenPropertyIds.add(propertyId);
+      }
+
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        hiddenPropertyIds: [...hiddenPropertyIds],
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    togglePropertyTitles: () => {
+      if (!databaseId || !activeView?.id) {
+        return;
+      }
+
+      const currentConfig =
+        getLatestViewConfig?.(databaseId, activeView.id, activeView.config) ?? activeView.config;
+      const nextConfig = getMergedDatabaseConfig(currentConfig, {
+        showPropertyTitles: !getShowPropertyTitles(currentConfig),
+      });
+
+      updateDatabaseView.mutate({
+        configuration: diffConfiguration(currentConfig, nextConfig),
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+      });
+    },
+    updateDatabasePropertyConfig: (databasePropertyId: string, config: unknown) => {
+      if (!databaseId) {
+        return Promise.resolve();
+      }
+      const currentPropertyConfig = viewProperties?.find(
+        (property) => property.id === databasePropertyId,
+      )?.property.config;
+      const nextConfig = getMergedPropertyConfig(
+        currentPropertyConfig,
+        config as DatabasePropertyConfig,
+      );
+
+      const trimUpdates = getRelationLimitTrimUpdates({
+        databasePropertyId,
+        payload: relationPayloadFromViewData(viewData),
+        propertyConfig: nextConfig,
+      });
+
+      for (const update of trimUpdates) {
+        updateValue.mutate({
+          databaseId,
+          ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
+          propertyId: update.propertyId,
+          rowId: update.rowId,
+          value: update.value,
+        });
+      }
+
+      return updateProperty.mutateAsync({
+        configuration: diffConfiguration(currentPropertyConfig, nextConfig),
+        databaseId,
+        databasePropertyId,
+      });
+    },
+    updateDatabaseSort: (index: number, patch: Partial<DatabaseSortConfig>) => {
+      saveDatabaseSorts(
+        latestSorts().map(({ column, direction }) =>
+          column === activeDatabaseSorts[index]?.column
+            ? { column, direction, ...patch }
+            : { column, direction },
+        ),
+      );
+    },
+    updateDatabaseFilter: (index: number, patch: DatabaseFilterUpdatePatch) => {
+      saveDatabaseFilters(
+        getPlainDatabaseFilters().map((filter) => {
+          if (filter.id !== activeDatabaseFilters[index]?.id) {
+            return filter;
+          }
+
+          if (patch.propertyId && patch.propertyId !== filter.propertyId) {
+            const propertyType = getFilterPropertyType(patch.propertyId);
+            const operator = getDatabaseFilterOperatorsForType(propertyType)[0]?.value ?? "is";
+
+            return {
+              ...filter,
+              operator,
+              propertyId: patch.propertyId,
+              values: patch.values ?? [],
+            };
+          }
+
+          const propertyType = getFilterPropertyType(filter.propertyId);
+          const operator = patch.operator
+            ? getValidDatabaseFilterOperator(patch.operator, propertyType)
+            : filter.operator;
+
+          return {
+            ...filter,
+            operator,
+            values: patch.values ?? filter.values,
+          };
+        }),
+      );
+    },
+  };
+}
+
+function createTimelineDateResolver({
+  addProperty,
+  databaseId,
+  editable,
+  viewData,
+  properties,
+  timelineDateProperty,
+  notify,
+}: {
+  addProperty: DatabaseMutations["addProperty"];
+  databaseId: string | null | undefined;
+  editable: boolean;
+  viewData: DatabaseViewData | null | undefined;
+  properties: DatabasePropertyEntity[];
+  timelineDateProperty: DatabasePropertyListItem | null;
+  notify: { error: (message: string) => void };
+}) {
+  return (onResolved: (datePropertyId: string) => void) => {
+    const viewProperties = viewData
+      ? viewData.bootstrap.properties.filter(
+          (property) => property.dataSourceId === viewData.dataSourceId,
+        )
+      : null;
+    const currentProperties = viewProperties ?? properties;
+    const existingDateProperty =
+      timelineDateProperty ?? getTimelineDateProperty(currentProperties, null);
+
+    if (existingDateProperty) {
+      onResolved(existingDateProperty.property.id);
+      return;
+    }
+
+    if (!editable || !databaseId || addProperty.isPending) {
+      return;
+    }
+
+    addProperty.mutate(
+      {
+        databaseId,
+        name: "Date",
+        type: "date",
+      },
+      {
+        onSuccess: (createdDateProperty) => {
+          onResolved(createdDateProperty.property.id);
+        },
+        onError: () => {
+          notify.error("Couldn't add date property");
+        },
+      },
+    );
+  };
+}
+
+function createDatabaseFilterId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `filter-${crypto.randomUUID()}`;
+  }
+
+  return `filter-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}

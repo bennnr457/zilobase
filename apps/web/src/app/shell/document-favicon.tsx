@@ -15,7 +15,7 @@ import {
   DEFAULT_MEETING_ITEM_ICON,
   DEFAULT_PAGE_ITEM_ICON,
 } from "@/features/pages/icons/item-icons";
-import { useDatabaseMetadata } from "@/features/databases/access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 import { useMeeting } from "@zilobase/features/meetings/react";
 import { getPageEmoji } from "@zilobase/features/pages";

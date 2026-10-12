@@ -41,13 +41,13 @@ import {
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/database-view-context";
-import { getKanbanGroupValues, type KanbanGroupOption } from "../model/database-kanban-group-model";
+import { getKanbanGroupValues, type KanbanGroupOption } from "@zilobase/features/databases/models";
 import {
   getKanbanGroupSettings,
   updateKanbanGroupSettings,
   getKanbanGroupPageIds,
   type KanbanGroupSettings,
-} from "../model/database-kanban-group-settings";
+} from "@zilobase/features/databases/models";
 
 export function useKanbanGroupActions(options: KanbanGroupOption[]) {
   const { activeView } = useDatabaseUiContext();

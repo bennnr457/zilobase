@@ -6,8 +6,8 @@ import { useState, type ReactNode } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
 import { getNextDatabaseOptionColor } from "../property-catalog";
-import type { DatabaseSelectOption } from "../../views/model/database-view-config";
-import { toStringArray } from "../property-values";
+import type { DatabaseSelectOption } from "@zilobase/features/databases/models";
+import { toStringArray } from "@zilobase/features/databases/models";
 
 type DatabasePropertySelectOption = DatabaseSelectOption & {
   suffix?: string;

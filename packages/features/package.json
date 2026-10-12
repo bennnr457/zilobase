@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "test": "tsx --test \"src/**/*.test.ts\"",
-    "test:databases": "tsx --test src/databases/**/*.test.ts \"src/automations/**/*.test.ts\" src/databases/*.test.ts",
+    "test": "tsx --test \"src/**/*.test.ts\" \"src/**/*.test.mjs\"",
+    "test:databases": "tsx --test src/databases/**/*.test.ts \"src/automations/**/*.test.ts\" src/databases/*.test.ts \"src/databases/**/*.test.mjs\" \"src/automations/**/*.test.mjs\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -13,7 +13,8 @@
     "@tanstack/db": "0.11.3",
     "@tanstack/react-db": "0.5.3",
     "@zilobase/runtime-ports": "file:../runtime-ports",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "date-fns": "^4.3.0"
   },
   "devDependencies": {
     "@tanstack/react-query": "5.101.4",
@@ -269,6 +270,10 @@
     "./instance/react": {
       "types": "./src/instance/react.ts",
       "default": "./src/instance/react.ts"
+    },
+    "./databases/models": {
+      "types": "./src/databases/models.ts",
+      "default": "./src/databases/models.ts"
     }
   }
 }

@@ -27,7 +27,7 @@ import { Popover, PopoverContent } from "@/shared/ui/popover";
 import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
 
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
-import { type DatabaseCondition } from "../../databases/views/model/filter-sort-contracts";
+import { type DatabaseCondition } from "@zilobase/features/databases/models";
 
 import {
   createNotionActionDraft,

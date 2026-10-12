@@ -33,8 +33,8 @@ import { cn } from "@/shared/lib/utils";
 import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
 
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
-import { type DatabaseCondition } from "../../databases/views/model/filter-sort-contracts";
-import type { DatabasePropertyFilterOperator } from "../../databases/views/model/database-view-config";
+import { type DatabaseCondition } from "@zilobase/features/databases/models";
+import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases/models";
 
 import { ScheduleEditor } from "./automation-schedule";
 import { scheduleTriggerLabel, type ScheduleDraft } from "./schedule-model";

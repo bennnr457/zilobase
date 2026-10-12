@@ -9,8 +9,8 @@ import { DatabasePageLink } from "../../../interactions/database-page-link";
 import {
   canCreateRowInGroup,
   type DatabasePropertyListItem,
-} from "../../model/database-group-config";
-import type { DatabaseRow, KanbanGroupOption } from "../model/database-kanban-group-model";
+} from "@zilobase/features/databases/models";
+import type { DatabaseRow, KanbanGroupOption } from "@zilobase/features/databases/models";
 import type { useDatabaseKanbanCardDrag } from "../controller/use-database-kanban-card-drag";
 import {
   DatabaseKanbanGroupActions,

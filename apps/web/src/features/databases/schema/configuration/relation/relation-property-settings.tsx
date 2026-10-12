@@ -36,15 +36,15 @@ import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
 } from "../../../components/page-database-picker";
-import type { DatabasePropertyConfig } from "../../../views/model/database-view-config";
-import { useDatabaseMetadata } from "../../../access/use-database-metadata";
-import { useDatabaseSecondaryPayload } from "../../../records/use-database-secondary-payload";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
+import { useDatabaseSecondaryPayload } from "@zilobase/features/databases/react";
 import {
   getRelationNeedsRepair,
   getRelationRepairMutationPlan,
   getRelationTwoWayConfigUpdate,
   relationPayloadFromViewData,
-} from "../../relations/model/database-relation-sync";
+} from "@zilobase/features/databases/models";
 
 type RelationDatabaseOption = PageDatabasePickerOption & {
   pageName: string;

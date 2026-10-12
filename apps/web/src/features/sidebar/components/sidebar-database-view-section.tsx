@@ -14,8 +14,8 @@ import {
   SidebarMenuItem,
 } from "@/shared/ui/sidebar";
 import { getDatabaseViewModel } from "@/features/databases";
-import { useDatabaseMetadata } from "@/features/databases/access/use-database-metadata";
-import { composeDatabaseViewData } from "@/features/databases/views/model/database-controller-state";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
+import { composeDatabaseViewData } from "@zilobase/features/databases/models";
 import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
 import type { SidebarSection } from "@zilobase/features/user-settings";
 import { isDatabaseLocked } from "@zilobase/features/databases";

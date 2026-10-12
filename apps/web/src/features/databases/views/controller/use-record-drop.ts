@@ -1,6 +1,6 @@
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { toast } from "sonner";
-import type { RecordDrop } from "../model/database-record-drop";
+import type { RecordDrop } from "@zilobase/features/databases/models";
 
 /** A renderer describes a drop; the session controller owns state and persistence. */
 export function useRecordDrops(input: {

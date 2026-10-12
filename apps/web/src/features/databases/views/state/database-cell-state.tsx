@@ -2,7 +2,7 @@ import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-import type { DatabasePropertyValue } from "../../schema/property-values";
+import type { DatabasePropertyValue } from "@zilobase/features/databases/models";
 
 type DatabaseCellState = {
   activeKey: string | null;

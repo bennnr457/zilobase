@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useRecordDrops } from "../../controller/use-record-drop";
 
-import type { SortableDatabaseItem } from "../../../interactions/database-item-utils";
+import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
 import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,
@@ -23,7 +23,7 @@ import {
   startDatabaseRowDrag,
   type DatabaseRowDragOverlay,
 } from "../../../interactions/database-row-drag";
-import type { DatabasePropertyListItem } from "../../model/database-group-config";
+import type { DatabasePropertyListItem } from "@zilobase/features/databases/models";
 import type { TimelineGroupSection } from "../model/database-timeline-rows";
 import type { TimelineRowLayout } from "../layout/database-timeline-layout";
 import {

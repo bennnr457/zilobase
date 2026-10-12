@@ -1,7 +1,7 @@
 import type {
   DatabaseCondition,
   DatabaseConditionUpdatePatch,
-} from "../model/filter-sort-contracts";
+} from "@zilobase/features/databases/models";
 import { CalendarIcon, ChevronDownIcon, GripVertical, X } from "@/shared/components/icons";
 import { Reorder, useDragControls } from "framer-motion";
 import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
@@ -19,7 +19,7 @@ import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
 import {
   getDatabaseFilterOperatorsForType,
   type DatabasePropertyFilterOperator,
-} from "../model/database-view-config";
+} from "@zilobase/features/databases/models";
 import { isDateLikePropertyType } from "../../schema/property-catalog";
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
 

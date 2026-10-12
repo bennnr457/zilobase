@@ -1,9 +1,9 @@
-import type { DatabaseTableGroupSection } from "../../../interactions/database-table-group-sections";
-import type { SortableDatabaseItem } from "../../../interactions/database-item-utils";
+import type { DatabaseTableGroupSection } from "@zilobase/features/databases/models";
+import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
 import {
   canCreateRowInGroup,
   type DatabasePropertyListItem,
-} from "../../model/database-group-config";
+} from "@zilobase/features/databases/models";
 
 export const TIMELINE_ROW_HEIGHT = 32;
 export const TIMELINE_GROUP_HEADER_HEIGHT = 40;

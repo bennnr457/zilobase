@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, test }) {
-  const model = () => loadModule("/src/features/databases/views/model/database-record-drop.ts");
+  const model = () => loadModule("/packages/features/src/databases/records/record-drop.ts");
   const projection = () => loadModule("/packages/features/src/databases/interactions/model.ts");
   const rows = ["a", "b", "c"].map((id) => ({
     id,

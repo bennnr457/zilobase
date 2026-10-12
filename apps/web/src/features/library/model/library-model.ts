@@ -8,7 +8,7 @@ import {
   type PagePropertyValueEntity,
 } from "@zilobase/features/databases";
 import { databaseOrderKeyAtPosition } from "@zilobase/features/databases/order-key";
-import type { DatabaseViewData } from "@/features/databases/views/model/database-controller-state";
+import type { DatabaseViewData } from "@zilobase/features/databases/models";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 import type { Teamspace } from "@zilobase/features/teamspaces";
 import type {

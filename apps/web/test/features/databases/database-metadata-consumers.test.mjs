@@ -1,6 +1,6 @@
 export function register({ assert, readSource, readWorkspace, test }) {
   test("database metadata facade uses bootstrap for authenticated and public reads", async () => {
-    const hook = await readSource("/src/features/databases/access/use-database-metadata.ts");
+    const hook = await readSource("/packages/features/src/databases/queries/metadata.ts");
     const bootstrapHook = await readWorkspace(
       "/packages/features/src/databases/queries/bootstrap.ts",
     );

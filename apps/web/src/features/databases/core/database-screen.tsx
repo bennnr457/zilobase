@@ -25,7 +25,7 @@ import {
 } from "@/features/pages/publication/shared-page-header";
 import { PageEditorPane } from "@/features/pages/pane/page-editor-pane";
 import { useDatabaseViewNavigation } from "../views/use-database-view-navigation";
-import { useDatabaseMetadata } from "../access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import type { OpenPageOptions } from "@/features/pages";
 import { useTitleDraft } from "@/features/pages/hooks/index";
 

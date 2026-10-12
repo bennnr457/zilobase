@@ -3,10 +3,10 @@ import {
   databaseColumnDefaultWidth,
   databaseNameColumnDefaultWidth,
 } from "../../model/column-dimensions";
-import type { SortableDatabaseItem } from "../../../interactions/database-item-utils";
+import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
 import type { DatabaseRowDropTarget } from "../../../interactions/database-table-layout";
-import type { DatabaseTableGroupSection } from "../../../interactions/database-table-group-sections";
-import type { RecordDrop } from "../../model/database-record-drop";
+import type { DatabaseTableGroupSection } from "@zilobase/features/databases/models";
+import type { RecordDrop } from "@zilobase/features/databases/models";
 
 export type InsertPropertySide = "left" | "right";
 

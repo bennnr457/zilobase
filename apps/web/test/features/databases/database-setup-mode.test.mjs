@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("setup mode waits for settled data before judging emptiness", async () => {
     const { shouldUseDatabaseSetupMode } = await loadModule(
-      "/src/features/databases/views/model/database-controller-state.ts",
+      "/src/features/databases/setup/model/setup-mode.ts",
     );
     const emptyEditable = {
       dataSettled: true,
@@ -19,7 +19,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("setup mode still respects editability, dismissal, and content", async () => {
     const { shouldUseDatabaseSetupMode } = await loadModule(
-      "/src/features/databases/views/model/database-controller-state.ts",
+      "/src/features/databases/setup/model/setup-mode.ts",
     );
     const base = {
       dataSettled: true,

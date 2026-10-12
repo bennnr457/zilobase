@@ -17,9 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/select";
-import { useDatabaseMetadata } from "../../../access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 
-import type { DatabasePropertyConfig } from "../../../views/model/database-view-config";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
 import {
   getRollupCalculationsForType,
   getRollupConfig,
@@ -31,8 +31,8 @@ import {
   rollupPercentCalculations,
   rollupShowCalculations,
   type DatabaseRollupConfig,
-} from "../../rollup/model/rollup-config";
-import { getRollupRelationProperty } from "../../rollup/model/rollup-engine";
+} from "@zilobase/features/databases/models";
+import { getRollupRelationProperty } from "@zilobase/features/databases/models";
 import { NumberPropertySettings } from "../number/number-property-settings";
 import { getRelationConfig } from "../relation/relation-property-settings";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";

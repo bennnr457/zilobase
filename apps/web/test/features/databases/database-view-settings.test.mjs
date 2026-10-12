@@ -24,7 +24,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("manage data sources uses explicit ownership and hides stale links", async () => {
     const { partitionManagedDataSources } = await loadModule(
-      "/src/features/databases/views/view-settings/model/data-source-model.ts",
+      "/packages/features/src/databases/views/source-state.ts",
     );
     const { linked, owned } = partitionManagedDataSources(
       [
@@ -72,8 +72,11 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("adding a data source opens the shared database setup chooser", async () => {
     const [controller, controllerModel, databaseView, setupCard] = await Promise.all([
-      readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
-      readSource("/src/features/databases/views/model/database-controller-state.ts"),
+      Promise.all([
+        readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+        readSource("/packages/features/src/databases/records/source-commands.ts"),
+      ]).then((parts) => parts.join("\n")),
+      readSource("/packages/features/src/databases/views/source-state.ts"),
       readSource("/src/features/databases/views/components/database-view.tsx"),
       readSource("/src/features/databases/setup/components/database-setup-card.tsx"),
     ]);
@@ -92,7 +95,11 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(setupCard, /if \(onSelectDataSource\)/);
     assert.match(setupCard, /New empty data source/);
     assert.match(setupCard, /accept="\.csv,text\/csv"/);
-    assert.match(setupCard, /function parseCsv/);
+    assert.match(setupCard, /import \{ parseCsv \} from "@zilobase\/features\/databases\/models"/);
+    assert.match(
+      await readSource("/packages/features/src/databases/templates/csv.ts"),
+      /export function parseCsv/,
+    );
     assert.match(setupCard, /csvImport:/);
     assert.doesNotMatch(setupCard, /CSV import is coming soon/);
     assert.match(setupCard, /Link to existing data source/);
@@ -108,7 +115,10 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("deleting a final source view keeps it recoverable", async () => {
     const [controller, sourceItems] = await Promise.all([
-      readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+      Promise.all([
+        readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+        readSource("/packages/features/src/databases/records/source-commands.ts"),
+      ]).then((parts) => parts.join("\n")),
       readSource("/src/features/databases/views/view-settings/components/data-source-items.tsx"),
     ]);
 
@@ -134,7 +144,10 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("deleting a view never deletes its linked data source", async () => {
     const [controller, toolbar] = await Promise.all([
-      readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+      Promise.all([
+        readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+        readSource("/packages/features/src/databases/records/source-commands.ts"),
+      ]).then((parts) => parts.join("\n")),
       readToolbarSource(),
     ]);
 
@@ -206,7 +219,7 @@ export function register({ readSource, assert, loadModule, test }) {
       getMergedPropertyConfig,
       getNameColumnIcon,
       getDatabaseViewIcon,
-    } = await loadModule("/src/features/databases/views/model/database-view-config.ts");
+    } = await loadModule("/packages/features/src/databases/views/configuration.ts");
 
     assert.equal(getDatabasePropertyIcon({ icon: "🌐" }), "🌐");
     assert.equal(getDatabasePropertyIcon({ icon: 42 }), "");
@@ -282,7 +295,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database form headers normalize editable page metadata", async () => {
     const { getDatabaseFormHeaderSettings } = await loadModule(
-      "/src/features/databases/views/form/model/database-form-header-config.ts",
+      "/packages/features/src/databases/views/form-header-config.ts",
     );
 
     assert.deepEqual(getDatabaseFormHeaderSettings(undefined), {
@@ -314,7 +327,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database form questions normalize options and move in view order", async () => {
     const { getDatabaseFormQuestionSettings, moveDatabaseFormQuestion } = await loadModule(
-      "/src/features/databases/views/form/model/database-form-question-config.ts",
+      "/packages/features/src/databases/views/form-question-config.ts",
     );
 
     assert.deepEqual(getDatabaseFormQuestionSettings(undefined, "name", "Task name"), {
@@ -364,10 +377,10 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database sub-item settings normalize and build nested rows", async () => {
     const { getDatabaseSubItemsSettings } = await loadModule(
-      "/src/features/databases/views/model/database-view-config.ts",
+      "/packages/features/src/databases/views/configuration.ts",
     );
     const { getDatabaseSubItemsView } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const rows = [
       createSubItemRow("parent", null, 0),
@@ -415,7 +428,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database parent-only filters keep matching parents with descendants", async () => {
     const { getDatabaseSubItemsView } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const parent = createSubItemRow("parent", null, 0);
     const child = createSubItemRow("child", "parent", 1);
@@ -449,10 +462,10 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database sub-items use only the first parent relation value", async () => {
     const { getDatabaseSubItemsSettings } = await loadModule(
-      "/src/features/databases/views/model/database-view-config.ts",
+      "/packages/features/src/databases/views/configuration.ts",
     );
     const { getDatabaseSubItemsView } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const rows = [
       { id: "parent-a", pageId: "page-a", position: 0 },
@@ -496,7 +509,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("new sub-items nest from their parent relation before the inverse relation updates", async () => {
     const { getDatabaseSubItemsView } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const rows = [
       createSubItemRow("parent", null, 0),
@@ -531,7 +544,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database sub-item create rows follow the existing child rows", async () => {
     const { getSubItemCreateRowsAfterRow } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const rows = [
       createSubItemRow("parent", null, 0),
@@ -555,7 +568,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database nested create rows close from the deepest branch outward", async () => {
     const { getSubItemCreateRowsAfterRow } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const rows = [
       createSubItemRow("parent", null, 0),
@@ -578,7 +591,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database sub-item drop lines resolve their hierarchy level", async () => {
     const { getDatabaseSubItemLineParentRowId } = await loadModule(
-      "/src/features/databases/views/model/database-sub-items.ts",
+      "/packages/features/src/databases/views/sub-items.ts",
     );
     const rows = [{ id: "parent-a" }, { id: "child-a" }, { id: "parent-b" }, { id: "parent-c" }];
     const input = {

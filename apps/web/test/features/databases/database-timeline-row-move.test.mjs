@@ -4,7 +4,7 @@ export function register({ assert, loadModule, test }) {
       "/src/features/databases/views/timeline/model/database-timeline-row-move.ts",
     );
     const { getGroupedRecordMove } = await loadModule(
-      "/src/features/databases/views/model/database-record-drop.ts",
+      "/packages/features/src/databases/records/record-drop.ts",
     );
     const items = ["a", "b", "c"].map((id, position) => ({
       id,

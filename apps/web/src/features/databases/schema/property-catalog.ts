@@ -4,7 +4,7 @@ export {
   getDefaultDatabasePropertyConfig,
   isReadOnlyPropertyType,
   isSelectLikePropertyType,
-} from "./model/property-defaults";
+} from "@zilobase/features/databases/models";
 import {
   ArrowUpRight,
   AtSign,
@@ -31,27 +31,17 @@ import {
 import { type DatabasePropertyType as DatabasePropertyTypeId } from "@zilobase/features/databases/property-types";
 import { cyclingColorTokens } from "@/shared/lib/color-tokens";
 
-export type DatabasePropertyFilterKind =
-  | "checkbox"
-  | "date"
-  | "files"
-  | "number"
-  | "person"
-  | "text";
-
-export type DatabasePropertyCellKind =
-  | "button"
-  | "checkbox"
-  | "date"
-  | "files"
-  | "formula"
-  | "input"
-  | "person"
-  | "read_only_time"
-  | "relation"
-  | "rollup"
-  | "select";
-
+import type {
+  DatabasePropertyFilterKind,
+  DatabasePropertyCellKind,
+} from "@zilobase/features/databases/models";
+import { getDatabasePropertyCapability } from "@zilobase/features/databases/models";
+export {
+  getDatabasePropertyFilterKind,
+  getDatabasePropertyCellKind,
+  hasDatabasePropertyTypeEditSettings,
+  isDateLikePropertyType,
+} from "@zilobase/features/databases/models";
 export type DatabasePropertyType = {
   cellKind?: DatabasePropertyCellKind;
   editable?: boolean;
@@ -62,116 +52,83 @@ export type DatabasePropertyType = {
   type: DatabasePropertyTypeId;
 };
 
-export const databasePropertyTypes: DatabasePropertyType[][] = [
+const databasePropertyPresentation: Array<
+  Array<Pick<DatabasePropertyType, "icon" | "label" | "type">>
+> = [
   [
-    { filterKind: "text", icon: Type, label: "Text", type: "text" },
+    { icon: Type, label: "Text", type: "text" },
     {
-      filterKind: "number",
-      hasEditSettings: true,
       icon: Hash,
       label: "Number",
       type: "number",
     },
     {
-      cellKind: "select",
-      filterKind: "text",
-      hasEditSettings: true,
       icon: CircleChevronDown,
       label: "Select",
       type: "select",
     },
     {
-      cellKind: "select",
-      filterKind: "text",
-      hasEditSettings: true,
       icon: List,
       label: "Multi-select",
       type: "multi_select",
     },
     {
-      cellKind: "select",
-      filterKind: "text",
-      hasEditSettings: true,
       icon: CircleDashed,
       label: "Status",
       type: "status",
     },
     {
-      cellKind: "date",
-      filterKind: "date",
-      hasEditSettings: true,
       icon: Calendar,
       label: "Date",
       type: "date",
     },
     {
-      cellKind: "person",
-      filterKind: "person",
-      hasEditSettings: true,
       icon: Users,
       label: "Person",
       type: "person",
     },
     {
-      cellKind: "files",
-      filterKind: "files",
-      hasEditSettings: true,
       icon: Paperclip,
       label: "Files & media",
       type: "files",
     },
     {
-      cellKind: "checkbox",
-      filterKind: "checkbox",
       icon: CheckSquare,
       label: "Checkbox",
       type: "checkbox",
     },
     {
-      filterKind: "text",
-      hasEditSettings: true,
       icon: Link,
       label: "URL",
       type: "url",
     },
-    { filterKind: "text", icon: Phone, label: "Phone", type: "phone" },
-    { filterKind: "text", icon: AtSign, label: "Email", type: "email" },
+    { icon: Phone, label: "Phone", type: "phone" },
+    { icon: AtSign, label: "Email", type: "email" },
   ],
   [
     {
-      cellKind: "relation",
-      filterKind: "text",
-      hasEditSettings: true,
       icon: ArrowUpRight,
       label: "Relation",
       type: "relation",
     },
     {
-      cellKind: "rollup",
-      filterKind: "text",
-      hasEditSettings: true,
       icon: Search,
       label: "Rollup",
       type: "rollup",
     },
     {
-      cellKind: "formula",
-      filterKind: "text",
       icon: Sigma,
       label: "Formula",
       type: "formula",
     },
     {
-      cellKind: "button",
-      filterKind: "text",
       icon: MousePointerClick,
       label: "Button",
       type: "button",
     },
-    { filterKind: "text", icon: BadgeHelp, label: "ID", type: "id" },
-    { filterKind: "text", icon: MapPin, label: "Place", type: "place" },
+    { icon: BadgeHelp, label: "ID", type: "id" },
+    { icon: MapPin, label: "Place", type: "place" },
     {
-      filterKind: "text",
       icon: BadgeCheck,
       label: "Verification",
       type: "verification",
@@ -179,25 +136,21 @@ export const databasePropertyTypes: DatabasePropertyType[][] = [
   ],
   [
     {
-      cellKind: "read_only_time",
-      editable: false,
-      filterKind: "date",
-      hasEditSettings: true,
       icon: Clock,
       label: "Created time",
       type: "created_time",
     },
     {
-      cellKind: "read_only_time",
-      editable: false,
-      filterKind: "date",
-      hasEditSettings: true,
       icon: Clock,
       label: "Edited time",
       type: "edited_time",
     },
   ],
 ];
+
+export const databasePropertyTypes: DatabasePropertyType[][] = databasePropertyPresentation.map(
+  (group) => group.map((item) => ({ ...getDatabasePropertyCapability(item.type), ...item })),
+);
 
 export const databasePropertyTypeItems = databasePropertyTypes.flat();
 
@@ -210,20 +163,4 @@ export const textDatabasePropertyType =
 
 export function getDatabasePropertyType(type: string) {
   return databasePropertyTypeItems.find((item) => item.type === type) ?? textDatabasePropertyType;
-}
-
-export function getDatabasePropertyFilterKind(type: string): DatabasePropertyFilterKind {
-  return getDatabasePropertyType(type).filterKind;
-}
-
-export function getDatabasePropertyCellKind(type: string): DatabasePropertyCellKind {
-  return getDatabasePropertyType(type).cellKind ?? "input";
-}
-
-export function hasDatabasePropertyTypeEditSettings(type: string) {
-  return getDatabasePropertyType(type).hasEditSettings === true;
-}
-
-export function isDateLikePropertyType(type: string) {
-  return getDatabasePropertyFilterKind(type) === "date";
 }

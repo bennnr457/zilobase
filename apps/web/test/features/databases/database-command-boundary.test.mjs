@@ -2,7 +2,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
   test("database derivation has no runtime React, editor or UI dependencies", async () => {
     const { build } = await import("esbuild");
     const result = await build({
-      entryPoints: [sourcePath("/src/features/databases/views/model/database-view-model.ts")],
+      entryPoints: [sourcePath("/packages/features/src/databases/views/model.ts")],
       bundle: true,
       platform: "node",
       format: "esm",
@@ -19,7 +19,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
 
   test("view presentation supplies icons while derivation exposes only field descriptors", async () => {
     const { deriveDatabaseViewModel } = await loadModule(
-      "/src/features/databases/views/model/database-view-model.ts",
+      "/packages/features/src/databases/views/model.ts",
     );
     const { getDatabaseViewModel } = await loadModule(
       "/src/features/databases/views/components/database-view-model.tsx",

@@ -21,7 +21,7 @@ import { cn } from "@/shared/lib/utils";
 
 import { getDatabasePropertyType } from "../../../schema/property-catalog";
 import { NameColumnGlyph } from "../../../interactions/name-column-glyph";
-import { getPropertyHiddenForView } from "../../model/database-view-config";
+import { getPropertyHiddenForView } from "@zilobase/features/databases/models";
 import { DatabaseChartSettingsSection } from "./chart-settings";
 import type { DatabaseViewSettingsMenuProps } from "../view-settings-contracts";
 import { ViewTypeOptionGrid } from "./view-type-option-grid";

@@ -17,14 +17,14 @@ import {
 } from "@/shared/ui/dropdrawer";
 import { DatabasePropertyDate } from "../../../schema/editors/database-property-date";
 import { DatabasePropertySelect } from "../../../schema/editors/database-property-select";
-import { defaultStatusOption, defaultStatusOptions } from "../../../schema/model/property-defaults";
+import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases/models";
 import {
   getDatabasePropertyCellKind,
   getDatabasePropertyType,
 } from "../../../schema/property-catalog";
-import type { DatabasePropertyValue as DatabasePropertyValueType } from "../../../schema/property-values";
-import { getPersonLimit } from "../../model/database-view-config";
-import type { DatabasePropertyListItem } from "../../model/database-group-config";
+import type { DatabasePropertyValue as DatabasePropertyValueType } from "@zilobase/features/databases/models";
+import { getPersonLimit } from "@zilobase/features/databases/models";
+import type { DatabasePropertyListItem } from "@zilobase/features/databases/models";
 import { splitDatabaseSelectionProperties } from "../model/database-table-selection";
 
 function DatabaseSelectionPropertyTrigger({

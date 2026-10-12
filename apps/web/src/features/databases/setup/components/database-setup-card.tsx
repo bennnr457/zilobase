@@ -1,3 +1,4 @@
+import { parseCsv } from "@zilobase/features/databases/models";
 import { diffConfiguration } from "@zilobase/features/databases/record-interactions";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -36,7 +37,7 @@ import {
   useLinkDatabaseDataSource,
   useUpdateDataSource,
 } from "@zilobase/features/databases/react";
-import { useDatabaseMetadata } from "../../access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { usePageNavigation } from "@zilobase/features/pages/react";
 
 import {
@@ -45,20 +46,19 @@ import {
   databaseSetupMoreTemplates,
   databaseSetupSuggestedTemplates,
   type DatabaseSetupTemplate,
-  type DatabaseSetupTemplateId,
-} from "../model/database-setup-templates";
+} from "@zilobase/features/databases/models";
 import {
   getDatabaseSetupDismissed,
   getDatabaseViewIcon,
   getMergedDatabaseConfig,
-} from "../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 import type { DatabaseSourceViewSelection } from "../../views/state/database-view-context";
 import { ViewTypeOptionGrid } from "../../views/view-settings/components/view-type-option-grid";
 import {
   getDatabaseViewTypePresentation,
   type DatabaseViewType,
 } from "../../views/view-settings/model/view-type-options";
-import { serializePropertyValue } from "../../schema/property-values";
+import { databaseCsvPayload, databaseTemplateRows } from "@zilobase/features/databases/models";
 import { PageDatabasePicker } from "../../components/page-database-picker";
 
 type SetupView = "main" | "link";
@@ -85,63 +85,8 @@ type DatabaseSetupCardProps = {
   pageId?: string | null;
 };
 
-export type DatabaseSetupSelection = {
-  csvImport?: {
-    headers: string[];
-    name: string;
-    rows: string[][];
-  };
-  databaseName?: string;
-  sourceView?: DatabaseSourceViewSelection;
-  templateId?: DatabaseSetupTemplateId | null;
-};
-
-function parseCsv(text: string) {
-  const records: string[][] = [];
-  let field = "";
-  let quoted = false;
-  let record: string[] = [];
-
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-
-    if (quoted) {
-      if (character === '"' && text[index + 1] === '"') {
-        field += '"';
-        index += 1;
-      } else if (character === '"') {
-        quoted = false;
-      } else {
-        field += character;
-      }
-      continue;
-    }
-
-    if (character === '"') {
-      quoted = true;
-    } else if (character === ",") {
-      record.push(field);
-      field = "";
-    } else if (character === "\n") {
-      record.push(field.replace(/\r$/, ""));
-      if (record.some((value) => value.length > 0)) records.push(record);
-      record = [];
-      field = "";
-    } else {
-      field += character;
-    }
-  }
-
-  record.push(field.replace(/\r$/, ""));
-  if (record.some((value) => value.length > 0)) records.push(record);
-
-  return {
-    headers: (records[0] ?? []).map(
-      (value, index) => value.trim() || (index === 0 ? "Name" : `Column ${index + 1}`),
-    ),
-    rows: records.slice(1),
-  };
-}
+import type { DatabaseSetupSelection } from "@zilobase/features/databases/models";
+export type { DatabaseSetupSelection } from "@zilobase/features/databases/models";
 
 type TextNode = {
   type: "text";
@@ -528,17 +473,7 @@ export function DatabaseSetupCard({
             }),
             databaseId: activeDataSource.id,
             name: csvImport.name,
-            properties: csvImport.headers.slice(1).map((name) => ({
-              name,
-              type: "text",
-            })),
-            rows: csvImport.rows.map((row, rowIndex) => ({
-              title: row[0]?.trim() || `Row ${rowIndex + 1}`,
-              values: csvImport.headers.slice(1).map((propertyName, index) => ({
-                propertyName,
-                value: serializePropertyValue("text", row[index + 1] ?? ""),
-              })),
-            })),
+            ...databaseCsvPayload(csvImport),
           });
           setupDismissedPersisted = true;
         } else if (templateId) {
@@ -580,23 +515,12 @@ export function DatabaseSetupCard({
               databaseId: activeDataSource.id,
               name: nextDatabasePatch.name ?? template.name,
               properties: template.properties,
-              rows: template.sampleRows.map((sampleRow) => ({
-                content: createSampleRowContent(sampleRow.content),
-                metadata: getPageMetadataWithEmoji(null, sampleRow.emoji),
-                title: sampleRow.title,
-                values: Object.entries(sampleRow.values ?? {}).flatMap(([propertyName, value]) => {
-                  const propertyType = propertyTypesByName.get(propertyName.toLowerCase());
-
-                  return propertyType
-                    ? [
-                        {
-                          propertyName,
-                          value: serializePropertyValue(propertyType, value),
-                        },
-                      ]
-                    : [];
-                }),
-              })),
+              rows: databaseTemplateRows(
+                template,
+                propertyTypesByName,
+                createSampleRowContent,
+                (emoji) => getPageMetadataWithEmoji(null, emoji),
+              ),
             });
             setupDismissedPersisted = true;
           }

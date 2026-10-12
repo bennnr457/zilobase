@@ -34,7 +34,7 @@ import {
   getDatabaseFormShareSettings,
   type DatabaseFormFillAccess,
   type DatabaseFormSubmissionAccess,
-} from "../model/database-form-share-config";
+} from "@zilobase/features/databases/models";
 
 const fillAccessLabels: Record<DatabaseFormFillAccess, string> = {
   workspace: "Anyone in this workspace with link",

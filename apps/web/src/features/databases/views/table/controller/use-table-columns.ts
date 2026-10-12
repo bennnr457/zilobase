@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { databaseColumnMinWidth } from "../../model/column-dimensions";
 import { useResizableTableColumns } from "@/shared/hooks/use-resizable-table-columns";
 
-import { getDatabasePropertyOrder } from "../../model/database-view-config";
+import { getDatabasePropertyOrder } from "@zilobase/features/databases/models";
 
 import {
   DATABASE_NAME_COLUMN_ID,

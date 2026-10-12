@@ -63,7 +63,7 @@ import {
   useUpdateDatabase,
   useUpdateDatabaseProperty,
 } from "@zilobase/features/databases/react";
-import { useDatabaseMetadata } from "../../access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { Separator } from "@/shared/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
 import { Textarea } from "@/shared/ui/textarea";
@@ -78,7 +78,7 @@ import {
   upsertDatabaseSort,
   type DatabasePropertyConfig,
   type DatabaseSortDirection,
-} from "../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 import { DatabasePropertyEditSubmenu } from "../configuration";
 import { useClearDatabasePropertyDrafts } from "../../views/state/database-cell-state";
 

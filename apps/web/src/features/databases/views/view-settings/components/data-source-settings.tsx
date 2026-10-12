@@ -20,7 +20,7 @@ import {
   DropDrawerSubTrigger,
 } from "@/shared/ui/dropdrawer";
 import { Input } from "@/shared/ui/input";
-import { useDatabaseMetadata } from "../../../access/use-database-metadata";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { type PageDatabase } from "@zilobase/features/pages";
 import { usePageNavigation } from "@zilobase/features/pages/react";
 import { DEFAULT_DATABASE_ITEM_ICON } from "@/features/pages/index";
@@ -34,14 +34,14 @@ import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
 } from "../../../components/page-database-picker";
-import { getDatabaseViewIcon } from "../../model/database-view-config";
+import { getDatabaseViewIcon } from "@zilobase/features/databases/models";
 import {
   DataSourceAddGlyph,
   DataSourceMenuItem,
   DataSourceSectionLabel,
   LinkedDataSourceMenuItem,
 } from "./data-source-items";
-import { partitionManagedDataSources } from "../model/data-source-model";
+import { partitionManagedDataSources } from "@zilobase/features/databases/models";
 import type { DatabaseViewSettingsMenuProps } from "../view-settings-contracts";
 import { ViewTypeOptionGrid } from "./view-type-option-grid";
 import { getDatabaseViewTypePresentation, type DatabaseViewType } from "../model/view-type-options";

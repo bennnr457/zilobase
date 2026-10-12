@@ -1,5 +1,5 @@
 import { useManualRecordPlacement } from "../../state/manual-record-placement";
-import { getGroupedRecordMove } from "../../model/database-record-drop";
+import { getGroupedRecordMove } from "@zilobase/features/databases/models";
 import { useCallback, useRef, useState, type DragEvent, type PointerEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -7,7 +7,7 @@ import {
   useChangeDatabaseRow,
 } from "@zilobase/features/databases/react";
 
-import type { SortableDatabaseItem } from "../../../interactions/database-item-utils";
+import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
 import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,
@@ -21,8 +21,8 @@ import {
   startDatabaseRowDrag,
 } from "../../../interactions/database-row-drag";
 import { isInteractiveDatabaseCardTarget } from "../../../interactions/database-card-drag-target";
-import type { DatabaseTableGroupSection } from "../../../interactions/database-table-group-sections";
-import type { DatabasePropertyListItem } from "../../model/database-group-config";
+import type { DatabaseTableGroupSection } from "@zilobase/features/databases/models";
+import type { DatabasePropertyListItem } from "@zilobase/features/databases/models";
 
 type GallerySection = DatabaseTableGroupSection<SortableDatabaseItem>;
 

@@ -23,9 +23,9 @@ export {
   getMergedDatabaseConfig,
   getMergedNameColumnConfig,
   getMergedPropertyConfig,
-} from "./views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 export type {
   DatabasePropertyConfig,
   DatabaseSortConfig,
   DatabaseNameColumnConfig,
-} from "./views/model/database-view-config";
+} from "@zilobase/features/databases/models";

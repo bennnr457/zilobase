@@ -8,10 +8,14 @@ import { getNextDatabaseOptionColor } from "../../property-catalog";
 import type {
   DatabasePropertyConfig,
   DatabaseSelectOption,
-} from "../../../views/model/database-view-config";
+} from "@zilobase/features/databases/models";
 import { OptionCreateInput } from "../shared/option-create-input";
 import { OptionEditorSubmenu } from "../shared/option-editor-submenu";
-import { areSameOrderedIds, haveSameIds, reorderOptionsByIds } from "../shared/option-order";
+import {
+  areSameOrderedIds,
+  haveSameIds,
+  reorderOptionsByIds,
+} from "@zilobase/features/databases/models";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 export type SelectOptionSortValue = "manual" | "alphabetical" | "reverse_alphabetical";

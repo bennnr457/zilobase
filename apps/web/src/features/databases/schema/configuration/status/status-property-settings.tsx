@@ -4,16 +4,20 @@ import { useEffect, useRef, useState } from "react";
 
 import { DropDrawerLabel, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
 
-import { defaultStatusOptions } from "../../model/property-defaults";
+import { defaultStatusOptions } from "@zilobase/features/databases/models";
 import { getNextDatabaseOptionColor } from "../../property-catalog";
-import type { DatabasePropertyConfig } from "../../../views/model/database-view-config";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
 import { OptionCreateInput } from "../shared/option-create-input";
 import { OptionEditorSubmenu } from "../shared/option-editor-submenu";
-import { areSameOrderedIds, haveSameIds, reorderOptionsByIds } from "../shared/option-order";
-import { getStatusOptionGroup, getStatusOptionGroups } from "./status-property-settings-model";
-import type { StatusOption } from "./status-property-settings-model";
+import {
+  areSameOrderedIds,
+  haveSameIds,
+  reorderOptionsByIds,
+} from "@zilobase/features/databases/models";
+import { getStatusOptionGroup, getStatusOptionGroups } from "@zilobase/features/databases/models";
+import type { StatusOption } from "@zilobase/features/databases/models";
 
-export type { StatusOption } from "./status-property-settings-model";
+export type { StatusOption } from "@zilobase/features/databases/models";
 
 export function StatusPropertySettings({
   defaultOptionId,

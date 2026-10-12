@@ -50,7 +50,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database filter operators are selected from property metadata", async () => {
     const { getDatabaseFilterOperatorsForType } = await loadModule(
-      "/src/features/databases/views/model/database-view-config.ts",
+      "/packages/features/src/databases/views/configuration.ts",
     );
 
     assert.deepEqual(

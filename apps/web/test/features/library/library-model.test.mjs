@@ -169,7 +169,7 @@ export function register({ assert, loadModule, test }) {
   test("Library tabs nest descendants and Teamspaces uses teamspace parent rows", async () => {
     const { buildHomepageRows, buildHomepageViewData, libraryParentPropertyId } = await load();
     const { deriveDatabaseViewModel } = await loadModule(
-      "/src/features/databases/views/model/database-view-model.ts",
+      "/packages/features/src/databases/views/model.ts",
     );
     const page = (id, parentPageId, isFavorite) => ({
       id,

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("database kanban config allows new groups only for creatable group types", async () => {
     const { canCreateKanbanGroup, canMoveRowsAcrossGroups, canUpdateGroupProperty } =
-      await loadModule("/src/features/databases/views/model/database-group-config.ts");
+      await loadModule("/packages/features/src/databases/views/grouping.ts");
 
     assert.equal(canCreateKanbanGroup(createProperty("name", "text")), true);
     assert.equal(canCreateKanbanGroup(createProperty("property-select", "select")), true);

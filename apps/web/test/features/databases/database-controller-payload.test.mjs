@@ -11,7 +11,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("controller view data keeps record identity and source scoping", async () => {
     const { composeDatabaseViewData } = await loadModule(
-      "/src/features/databases/views/model/database-controller-state.ts",
+      "/packages/features/src/databases/views/source-state.ts",
     );
     const timestamp = "2026-09-14T00:00:00.000Z";
     const viewData = composeDatabaseViewData({
