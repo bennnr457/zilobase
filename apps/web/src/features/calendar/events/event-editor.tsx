@@ -1,10 +1,6 @@
 import { EventTimingFields, EventRecurrenceFields } from "./event-timing-fields";
-import {
-  eventEditorDefaults,
-  eventEditorZone,
-  editorWrite,
-  type EventEditorDraft,
-} from "./event-editor-model";
+import { eventEditorZone, editorWrite } from "@zilobase/features/calendar";
+import { eventEditorDefaults, type EventEditorDraft } from "./event-editor-model";
 import { useState } from "react";
 import {
   calendarCapability,

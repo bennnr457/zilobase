@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
-import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
 import {
-  addCalendarDays,
-  calendarApiBasePath,
   calendarEventKey,
-  dayInstant,
   eventClock,
   eventInstant,
   type CalendarConnection,
@@ -12,57 +8,18 @@ import {
   type CalendarPreferences,
   type CalendarRecord,
 } from "@zilobase/features/calendar";
+import { createCalendarSelectionMatcher, calendarSelectionKey } from "@zilobase/features/calendar";
+import { getApiErrorMessage } from "@zilobase/features";
 import {
-  createCalendarSelectionMatcher,
-  calendarSelectionKey,
-} from "../connections/calendar-selection";
-import { apiFetch, getApiErrorMessage } from "@/platform/network/api";
+  searchSources,
+  searchLoadedEvents,
+  matchesSearchEvent,
+  uniqueSearchEvents,
+} from "@zilobase/features/calendar";
+import { useCalendarSearch } from "@zilobase/features/calendar/react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-type Cursor = { source: number; token?: string };
-
-function calendarSearchQueryOptions(input: {
-  debounced: string;
-  enabled: boolean;
-  from: string;
-  sources: { calendar: CalendarRecord; connection: CalendarConnection }[];
-  timeZone: string;
-  until: string;
-  userId: string;
-}) {
-  return infiniteQueryOptions({
-    enabled: input.enabled,
-    initialPageParam: { source: 0 } as Cursor,
-    queryFn: ({ pageParam, signal }) =>
-      fetchSearchPage(
-        input.sources,
-        pageParam,
-        signal,
-        input.debounced,
-        input.from,
-        input.until,
-        input.timeZone,
-      ),
-    getNextPageParam: (page) => nextSearchPage(page, input.sources.length),
-    queryKey: [
-      "calendar",
-      "search",
-      input.userId,
-      input.sources.map(({ connection, calendar }) => [
-        connection.workspaceId,
-        connection.bindingId,
-        calendar.id,
-      ]),
-      input.debounced,
-      input.from,
-      input.until,
-      input.timeZone,
-    ] as const,
-    staleTime: 30_000,
-  });
-}
-
 export function CalendarSearchResults({
   query,
   connections,
@@ -96,17 +53,15 @@ export function CalendarSearchResults({
   const matcher = createCalendarSelectionMatcher(preferences);
   const sources = searchSources(readable, connections, source, matcher);
   const invalidRange = Boolean(from && until && until < from);
-  const results = useInfiniteQuery(
-    calendarSearchQueryOptions({
-      debounced,
-      enabled: searchQueryEnabled(online, debounced, query, sources.length, invalidRange),
-      from,
-      sources,
-      timeZone: preferences.timeZone,
-      until,
-      userId,
-    }),
-  );
+  const results = useCalendarSearch({
+    debounced,
+    enabled: searchQueryEnabled(online, debounced, query, sources.length, invalidRange),
+    from,
+    sources,
+    timeZone: preferences.timeZone,
+    until,
+    userId,
+  });
   const loaded = searchLoadedEvents(
     online,
     query,
@@ -286,116 +241,5 @@ function searchQueryEnabled(
 ) {
   return (
     online && Boolean(debounced) && query.trim() === debounced && sourceCount > 0 && !invalidRange
-  );
-}
-async function fetchSearchPage(
-  sources: { calendar: CalendarRecord; connection: CalendarConnection }[],
-  pageParam: Cursor,
-  signal: AbortSignal,
-  debounced: string,
-  from: string,
-  until: string,
-  zone: string,
-) {
-  const selected = sources[pageParam.source]!;
-  const params = new URLSearchParams({
-    q: debounced,
-    calendarId: selected.calendar.id,
-    ...(from ? { start: dayInstant(from, zone) } : {}),
-    ...(until ? { end: dayInstant(addCalendarDays(until, 1), zone) } : {}),
-    ...(pageParam.token ? { pageToken: pageParam.token } : {}),
-  });
-  const page = await apiFetch<{ events: CalendarEvent[]; nextPageToken: string | null }>(
-    `${calendarApiBasePath(selected.connection.workspaceId)}/connections/${encodeURIComponent(selected.connection.bindingId)}/search?${params}`,
-    { signal },
-  );
-  return { ...page, source: pageParam.source };
-}
-function nextSearchPage(
-  page: { nextPageToken: string | null; source: number },
-  sourceCount: number,
-): Cursor | undefined {
-  if (page.nextPageToken) return { source: page.source, token: page.nextPageToken };
-  if (page.source + 1 < sourceCount) return { source: page.source + 1 };
-}
-function searchSources(
-  readable: CalendarRecord[],
-  connections: CalendarConnection[],
-  source: string,
-  matcher: ReturnType<typeof createCalendarSelectionMatcher>,
-) {
-  return readable
-    .flatMap((calendar) => {
-      const connection = connections.find(
-        (connection) => connection.bindingId === calendar.bindingId,
-      );
-      if (!connection || !sourceIncludesCalendar(source, matcher, calendar)) return [];
-      return [{ calendar, connection }];
-    })
-    .sort((a, b) =>
-      calendarSelectionKey(a.calendar.bindingId, a.calendar.id).localeCompare(
-        calendarSelectionKey(b.calendar.bindingId, b.calendar.id),
-      ),
-    );
-}
-function sourceIncludesCalendar(
-  source: string,
-  matcher: ReturnType<typeof createCalendarSelectionMatcher>,
-  calendar: CalendarRecord,
-) {
-  if (source === "all") return matcher.isVisible(calendar.bindingId, calendar.id);
-  return source === calendarSelectionKey(calendar.bindingId, calendar.id);
-}
-function searchLoadedEvents(
-  online: boolean,
-  query: string,
-  debounced: string,
-  pages: CalendarEvent[],
-  cached: CalendarEvent[],
-) {
-  if (!online)
-    return cached.filter((event) =>
-      `${event.title} ${event.description} ${event.location}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-    );
-  if (query.trim() !== debounced) return [];
-  return pages;
-}
-function matchesSearchEvent(
-  event: CalendarEvent,
-  sources: { calendar: CalendarRecord }[],
-  preferences: CalendarPreferences,
-  from: string,
-  until: string,
-) {
-  if (event.status === "cancelled") return false;
-  if (
-    !sources.some(
-      ({ calendar }) => calendar.id === event.calendarId && calendar.bindingId === event.bindingId,
-    )
-  )
-    return false;
-  if (
-    !preferences.showDeclined &&
-    event.attendees.some((attendee) => attendee.self && attendee.responseStatus === "declined")
-  )
-    return false;
-  return matchesSearchRange(event, preferences.timeZone, from, until);
-}
-function matchesSearchRange(event: CalendarEvent, zone: string, from: string, until: string) {
-  if (from && Date.parse(eventInstant(event.end, zone)) <= Date.parse(dayInstant(from, zone)))
-    return false;
-  if (
-    until &&
-    Date.parse(eventInstant(event.start, zone)) >=
-      Date.parse(dayInstant(addCalendarDays(until, 1), zone))
-  )
-    return false;
-  return true;
-}
-function uniqueSearchEvents(events: CalendarEvent[], zone: string) {
-  return [...new Map(events.map((event) => [calendarEventKey(event), event])).values()].sort(
-    (a, b) => Date.parse(eventInstant(a.start, zone)) - Date.parse(eventInstant(b.start, zone)),
   );
 }

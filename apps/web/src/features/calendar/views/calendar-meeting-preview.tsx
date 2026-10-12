@@ -1,4 +1,4 @@
-import { createCalendarSelectionMatcher } from "../connections/calendar-selection";
+import { createCalendarSelectionMatcher } from "@zilobase/features/calendar";
 import { useEffect, useMemo, useState } from "react";
 import {
   addCalendarDays,

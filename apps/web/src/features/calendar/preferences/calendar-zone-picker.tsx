@@ -9,7 +9,7 @@ import {
   CommandItem,
   CommandGroup,
 } from "@/shared/ui/command";
-import { canonicalZone, zoneDescription } from "./time-zone-model";
+import { canonicalZone, zoneDescription } from "@zilobase/features/calendar";
 export function CalendarZonePicker({
   onSelect,
   date = new Date(),

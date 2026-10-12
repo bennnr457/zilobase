@@ -18,7 +18,7 @@ import {
   withZoneColumns,
   zoneCity,
   saveTravelZone,
-} from "./time-zone-model";
+} from "@zilobase/features/calendar";
 import { getApiErrorMessage } from "@/platform/network/api";
 export function CalendarTimeZones({
   value,

@@ -44,7 +44,7 @@ import {
   AlertDialogAction,
 } from "@/shared/ui/alert-dialog";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { calendarSelectionKey } from "./calendar-selection";
+import { calendarSelectionKey } from "@zilobase/features/calendar";
 const colors: CalendarColor[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray"];
 const colorName = (color: CalendarColor) => (color === "gray" ? "Grey" : PALETTE[color].name);
 type Props = {

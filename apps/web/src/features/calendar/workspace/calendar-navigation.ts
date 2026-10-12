@@ -7,7 +7,7 @@ import {
   type CalendarPreferences,
   type CalendarView,
 } from "@zilobase/features/calendar";
-import { type CalendarWindow } from "../sync/range-coverage";
+import { type CalendarWindow } from "@zilobase/features/calendar";
 export type CalendarDestination = {
   date: string;
   view: CalendarView;

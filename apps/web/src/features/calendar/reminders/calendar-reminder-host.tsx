@@ -1,3 +1,4 @@
+import { dueCalendarReminders } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@zilobase/features/auth/react";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 import { useCalendarAccounts } from "../connections/use-calendar-accounts";
 import { useCalendarPreferences } from "../preferences/use-calendar-preferences";
 import { useCalendarCache } from "../sync/use-calendar-cache";
-import { dueCalendarReminders, claimCalendarReminder } from "./scheduler";
+import { claimCalendarReminder } from "./scheduler";
 import { deliverCalendarSystemNotification } from "./notification-delivery";
 export default function CalendarReminderHost() {
   const workspaceId = useActiveWorkspaceId(),

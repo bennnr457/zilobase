@@ -274,6 +274,10 @@
     "./databases/models": {
       "types": "./src/databases/models.ts",
       "default": "./src/databases/models.ts"
+    },
+    "./calendar/react": {
+      "types": "./src/calendar/react.ts",
+      "default": "./src/calendar/react.ts"
     }
   }
 }

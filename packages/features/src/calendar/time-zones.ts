@@ -1,4 +1,4 @@
-import type { CalendarPreferences, CalendarTimeZoneColumn } from "@zilobase/features/calendar";
+import type { CalendarPreferences, CalendarTimeZoneColumn } from "./index";
 export const canonicalZone = (zone: string) =>
   new Intl.DateTimeFormat("en", { timeZone: zone }).resolvedOptions().timeZone;
 const cityAliases: Record<string, string> = { "Asia/Calcutta": "Kolkata", "Europe/Kiev": "Kyiv" };

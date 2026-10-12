@@ -1,12 +1,13 @@
+import {
+  synchronizeCalendar,
+  calendarCatalog,
+  readCalendarRange,
+} from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import { requestCalendarIntervals } from "./calendar-range-queue";
-import { missingCalendarRanges } from "./range-coverage";
+import { missingCalendarRanges } from "@zilobase/features/calendar";
 import { runCalendarSyncOnce } from "./calendar-sync-queue";
-import {
-  calendarApiBasePath,
-  type CalendarRangeResponse,
-  type CalendarSyncResponse,
-} from "@zilobase/features/calendar";
+import { type CalendarRangeResponse, type CalendarSyncResponse } from "@zilobase/features/calendar";
 import {
   applyCalendarRange,
   calendarBufferBudgetAvailable,
@@ -34,7 +35,6 @@ export async function synchronizeCalendarCache(
 ) {
   return (async () => {
     if (options.isCurrent && !options.isCurrent()) return;
-    const base = `${calendarApiBasePath(database.identity.workspaceId)}/connections/${encodeURIComponent(database.identity.bindingId)}`;
     let sync: Pick<CalendarSyncResponse, "calendars"> = {
       calendars: await database.calendars.toArray(),
     };
@@ -64,7 +64,7 @@ export async function synchronizeCalendarCache(
         sync = { calendars: await database.calendars.toArray() };
         return;
       }
-      sync = await fetcher<CalendarSyncResponse>(`${base}/sync`, { method: "POST", body: "{}" });
+      sync = await synchronizeCalendar(fetcher, database.identity);
       if (!database.isOpen()) return;
       await storeMetadata();
       await database.state.put({ key: "last_recovery", revision: Date.now(), generation: 1 });
@@ -78,7 +78,7 @@ export async function synchronizeCalendarCache(
             await navigator.locks.request(`${database.name}:provider-recovery`, recoverMetadata);
           else await recoverMetadata();
         } else if (!options.metadataLoaded) {
-          sync = await fetcher<Pick<CalendarSyncResponse, "calendars">>(`${base}/catalog`);
+          sync = await calendarCatalog(fetcher, database.identity);
           if (!database.isOpen()) return;
           await storeMetadata();
         }
@@ -92,7 +92,7 @@ export async function synchronizeCalendarCache(
       sync.calendars
         .filter((c) => readableCalendar(c, options.hiddenKeys, database.identity.bindingId))
         .map((calendar) =>
-          syncCalendarRanges(database, calendar, start, end, base, fetcher, options, pinned),
+          syncCalendarRanges(database, calendar, start, end, fetcher, options, pinned),
         ),
     );
     await evictCalendarRanges(database, pinned);
@@ -115,7 +115,6 @@ async function syncCalendarRanges(
   calendar: { id: string },
   start: string,
   end: string,
-  base: string,
   fetcher: Transport,
   options: {
     missingOnly?: boolean;
@@ -138,14 +137,13 @@ async function syncCalendarRanges(
       .map((r) => r.key),
   );
   for (const request of requested)
-    await requestCalendarChunks(database, calendar, request, dense, base, fetcher, options, pinned);
+    await requestCalendarChunks(database, calendar, request, dense, fetcher, options, pinned);
 }
 async function requestCalendarChunks(
   database: CalendarDatabase,
   calendar: { id: string },
   request: { start: string; end: string },
   dense: { revision?: number } | undefined,
-  base: string,
   fetcher: Transport,
   options: {
     priority?: number;
@@ -167,7 +165,7 @@ async function requestCalendarChunks(
       ]),
       range,
       (span, signal) =>
-        loadLockedCalendarRange(database, calendar.id, base, fetcher, options, span, signal),
+        loadLockedCalendarRange(database, calendar.id, fetcher, options, span, signal),
       options.priority,
       options.signal,
     );
@@ -184,14 +182,12 @@ function shouldStopCalendarChunks(
 async function loadLockedCalendarRange(
   database: CalendarDatabase,
   calendarId: string,
-  base: string,
   fetcher: Transport,
   options: { missingOnly?: boolean },
   span: { start: string; end: string },
   signal: AbortSignal,
 ) {
-  const load = () =>
-    loadCalendarRangePages(database, calendarId, base, fetcher, options, span, signal);
+  const load = () => loadCalendarRangePages(database, calendarId, fetcher, options, span, signal);
   if (typeof navigator !== "undefined" && navigator.locks)
     await navigator.locks.request(
       `${database.name}:range:${calendarId}:${span.start}:${span.end}`,
@@ -203,7 +199,6 @@ async function loadLockedCalendarRange(
 async function loadCalendarRangePages(
   database: CalendarDatabase,
   calendarId: string,
-  base: string,
   fetcher: Transport,
   options: { missingOnly?: boolean },
   span: { start: string; end: string },
@@ -218,15 +213,16 @@ async function loadCalendarRangePages(
   let pageToken: string | null = null,
     pages = 0;
   do {
-    const params: URLSearchParams = new URLSearchParams({
-      calendarId,
-      start: span.start,
-      end: span.end,
-      ...(pageToken ? { pageToken } : {}),
-    });
-    const response: CalendarRangeResponse = await fetcher<CalendarRangeResponse>(
-      `${base}/ranges?${params}`,
-      { signal },
+    const response: CalendarRangeResponse = await readCalendarRange(
+      fetcher,
+      database.identity,
+      {
+        calendarId,
+        start: span.start,
+        end: span.end,
+        ...(pageToken ? { pageToken } : {}),
+      },
+      signal,
     );
     if (!database.isOpen()) return;
     pages++;

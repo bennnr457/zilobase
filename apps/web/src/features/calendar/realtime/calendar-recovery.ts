@@ -1,10 +1,10 @@
+import { calendarRecoveryTicket } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import {
   calendarRecoveryDelay,
   calendarPushHealthy,
   validCalendarInvalidation,
-} from "./recovery-model";
-import { calendarApiBasePath } from "@zilobase/features/calendar";
+} from "@zilobase/features/calendar";
 import { apiFetch } from "@/platform/network/api";
 import type { CalendarDatabase } from "../storage/calendar-database";
 type Refresh = (recover: boolean) => Promise<unknown>;
@@ -104,15 +104,7 @@ function createCalendarRecovery(
   const connect = async () => {
     if (stopped || !leader || !isOnline()) return;
     try {
-      const ticket = await apiFetch<{
-        websocketUrl: string;
-        websocketProtocols: string[];
-        expiresAt: string;
-        providerWatchExpiresAt: string | null;
-      }>(
-        `${calendarApiBasePath(scope.workspaceId)}/connections/${encodeURIComponent(scope.bindingId)}/realtime-ticket`,
-        { method: "POST" },
-      );
+      const ticket = await calendarRecoveryTicket(apiFetch, scope);
       if (stopped || !leader) return;
       watchExpiresAt = Date.parse(ticket.providerWatchExpiresAt ?? "") || 0;
       attachCalendarSocket(

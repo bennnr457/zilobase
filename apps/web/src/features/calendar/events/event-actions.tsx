@@ -1,3 +1,4 @@
+import type { EventAction } from "@zilobase/features/calendar";
 import { RecurrenceScope } from "./recurrence-controls";
 import { useState } from "react";
 import {
@@ -18,7 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/shared/ui/alert-dialog";
-import { runCalendarMutation, type EventAction } from "./calendar-mutations";
+import { runCalendarMutation } from "./calendar-mutations";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/platform/network/api";
 export function EventActions({

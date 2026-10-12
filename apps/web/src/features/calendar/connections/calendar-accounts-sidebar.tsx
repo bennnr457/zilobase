@@ -10,8 +10,8 @@ import {
   SidebarNavItemAction,
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
 } from "@/shared/ui/sidebar-nav-item-action";
-import { useCalendarCatalog } from "./use-calendar-catalog";
-import { calendarSelectionKey, resolveDefaultCalendar } from "./calendar-selection";
+import { useCalendarCatalog } from "@zilobase/features/calendar/react";
+import { calendarSelectionKey, resolveDefaultCalendar } from "@zilobase/features/calendar";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { PlusIcon } from "@/shared/components/icons";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/shared/ui/sidebar";

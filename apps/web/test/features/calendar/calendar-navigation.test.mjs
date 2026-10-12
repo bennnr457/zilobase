@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("coverage composes snapshots, detects holes and treats empty intervals as loaded", async () => {
     const { missingCalendarRanges, coversCalendarRange } = await loadModule(
-      "/src/features/calendar/sync/range-coverage.ts",
+      "/packages/features/src/calendar/coverage.ts",
     );
     const at = (day) => `2026-09-${String(day).padStart(2, "0")}T00:00:00.000Z`;
     const windows = [
@@ -131,9 +131,7 @@ export function register({ assert, loadModule, test }) {
     assert.equal(chromeCalendarDate(null, "2026-09-09", "UTC"), "2026-09-09");
   });
   test("readiness requires each visible account and rejects another user's snapshot", async () => {
-    const { calendarRangeReady } = await loadModule(
-      "/src/features/calendar/sync/range-coverage.ts",
-    );
+    const { calendarRangeReady } = await loadModule("/packages/features/src/calendar/coverage.ts");
     const range = { start: "2026-09-01T00:00:00Z", end: "2026-10-01T00:00:00Z" };
     const connections = [
       { workspaceId: "w", bindingId: "a" },

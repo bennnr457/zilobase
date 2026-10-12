@@ -1,5 +1,4 @@
 import {
-  calendarApiBasePath,
   calendarEventKey,
   eventOverlaps,
   type CalendarEvent,
@@ -7,8 +6,13 @@ import {
   type CalendarMutationResponse,
 } from "@zilobase/features/calendar";
 import type { CalendarDatabase, PendingCalendarMutation } from "../storage/calendar-database";
-import { apiFetch, ApiError } from "@/platform/network/api";
-export type EventAction = "create" | "update" | "delete" | "duplicate" | "move" | "rsvp";
+import { apiFetch } from "@/platform/network/api";
+import {
+  postCalendarMutation,
+  readCalendarMutation,
+  definiteCalendarRejection,
+  type EventAction,
+} from "@zilobase/features/calendar";
 async function presentEvent(
   database: CalendarDatabase,
   event: CalendarEvent | undefined,
@@ -70,19 +74,11 @@ export async function runCalendarMutation(
     await presentEvent(database, action === "delete" ? undefined : pending.optimistic, key);
   });
   try {
-    const path = `${calendarApiBasePath(database.identity.workspaceId)}/connections/${encodeURIComponent(database.identity.bindingId)}/calendars/${encodeURIComponent(event.calendarId)}/events${action === "create" ? "" : `/${encodeURIComponent(event.eventId)}/${action}`}`;
-    const result = await transport<CalendarMutationResponse>(path, {
-      method: "POST",
-      body: JSON.stringify({
-        ...write,
-        destination: input.destination,
-        responseStatus: input.responseStatus,
-      }),
-    });
+    const result = await postCalendarMutation(transport, database.identity, input);
     await settle(database, pending, result);
     return result;
   } catch (error) {
-    const definite = definiteRejection(error);
+    const definite = definiteCalendarRejection(error);
     await settle(database, pending, {
       operationId: write.operationId,
       status: definite ? "failed" : "ambiguous",
@@ -96,8 +92,10 @@ export async function reconcileCalendarMutations(
 ) {
   for (const pending of await database.pending.toArray()) {
     try {
-      const result = await transport<CalendarMutationResponse>(
-        `${calendarApiBasePath(database.identity.workspaceId)}/operations/${encodeURIComponent(pending.id)}`,
+      const result = await readCalendarMutation(
+        transport,
+        database.identity.workspaceId,
+        pending.id,
       );
       if (database.isOpen()) await settle(database, pending, result);
     } catch {
@@ -106,14 +104,6 @@ export async function reconcileCalendarMutations(
   }
 }
 
-function definiteRejection(error: unknown) {
-  return (
-    error instanceof ApiError &&
-    error.status >= 400 &&
-    error.status < 500 &&
-    ![408, 429].includes(error.status)
-  );
-}
 function belongsToRange(
   event: CalendarEvent,
   range: { calendarId: string; start: string; end: string },

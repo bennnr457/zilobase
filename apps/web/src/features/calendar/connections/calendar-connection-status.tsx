@@ -14,9 +14,9 @@ import {
 import { Label } from "@/shared/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
-import { calendarSelectionKey } from "./calendar-selection";
+import { calendarSelectionKey } from "@zilobase/features/calendar";
 import { calendarSourcesQueryKey, useCalendarAccounts } from "./use-calendar-accounts";
-import { useCalendarCatalog } from "./use-calendar-catalog";
+import { useCalendarCatalog } from "@zilobase/features/calendar/react";
 import { useCalendarPreferences } from "../preferences/use-calendar-preferences";
 import { requestCalendarNotificationPermission } from "../reminders/notification-delivery";
 

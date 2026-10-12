@@ -13,7 +13,7 @@ import {
 import { useEffect, type ComponentType } from "react";
 import { useSession } from "@zilobase/features/auth/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import { useIntegrationAvailability } from "@/features/sidebar/model/use-integration-availability";
+import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
 import { isSettingsSectionAvailable } from "../model/settings-section-availability";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";

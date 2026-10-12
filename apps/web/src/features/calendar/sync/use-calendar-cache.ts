@@ -1,5 +1,5 @@
 import { emitCalendarMetric } from "../metrics";
-import { coversCalendarRange, type CalendarWindow } from "./range-coverage";
+import { coversCalendarRange, type CalendarWindow } from "@zilobase/features/calendar";
 import { useQueryClient } from "@tanstack/react-query";
 import { calendarEventKey, calendarKeys } from "@zilobase/features/calendar";
 import { startCalendarRecovery } from "../realtime/calendar-recovery";

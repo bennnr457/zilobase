@@ -1,4 +1,4 @@
-import type { CalendarInvalidation } from "@zilobase/features/calendar";
+import type { CalendarInvalidation } from "./index";
 export function calendarRecoveryDelay(healthy: boolean, failures = 0, random = Math.random()) {
   return (
     Math.min(300_000, (healthy ? 300_000 : 60_000) * 2 ** Math.min(failures, 3)) *

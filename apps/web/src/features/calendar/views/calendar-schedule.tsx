@@ -1,6 +1,6 @@
 import { emitCalendarMetric } from "../metrics";
 import { useCalendarBuffers } from "../preferences/calendar-buffer-preferences";
-import { calendarRangeReady, calendarSnapshotMatches } from "../sync/range-coverage";
+import { calendarRangeReady, calendarSnapshotMatches } from "@zilobase/features/calendar";
 import {
   calendarDestinationRange,
   useCalendarNavigation,
@@ -48,7 +48,7 @@ import {
   calendarSelectionKey,
   calendarIsVisible,
   resolveDefaultCalendar,
-} from "../connections/calendar-selection";
+} from "@zilobase/features/calendar";
 import { Button } from "@/shared/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 import type { CalendarDatabase } from "../storage/calendar-database";

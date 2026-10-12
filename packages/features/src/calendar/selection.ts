@@ -1,4 +1,4 @@
-import type { CalendarPreferences, CalendarRecord } from "@zilobase/features/calendar";
+import type { CalendarPreferences, CalendarRecord } from "./index";
 export const calendarSelectionKey = (bindingId: string, calendarId: string) =>
   JSON.stringify([bindingId, calendarId]);
 

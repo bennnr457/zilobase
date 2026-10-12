@@ -1,9 +1,5 @@
-import type {
-  CalendarConnection,
-  CalendarRecord,
-  CalendarPreferences,
-} from "@zilobase/features/calendar";
-import { createCalendarSelectionMatcher } from "../connections/calendar-selection";
+import type { CalendarConnection, CalendarRecord, CalendarPreferences } from "./index";
+import { createCalendarSelectionMatcher } from "./selection";
 export type CalendarWindow = { start: string; end: string };
 /** Return only holes, composing adjacent and overlapping complete snapshots. */
 export function missingCalendarRanges(start: string, end: string, ranges: CalendarWindow[]) {

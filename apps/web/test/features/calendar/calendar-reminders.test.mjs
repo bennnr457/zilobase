@@ -6,7 +6,10 @@ export function register({ assert, loadModule, test }) {
     const { openCalendarDatabase, applyCalendarRange, destroyCalendarDatabase } = await loadModule(
       "/src/features/calendar/storage/calendar-database.ts",
     );
-    const { dueCalendarReminders, claimCalendarReminder } = await loadModule(
+    const { dueCalendarReminders } = await loadModule(
+      "/packages/features/src/calendar/reminders.ts",
+    );
+    const { claimCalendarReminder } = await loadModule(
       "/src/features/calendar/reminders/scheduler.ts",
     );
     const event = {

@@ -1,6 +1,6 @@
 import { useCalendarAccounts } from "../connections/use-calendar-accounts";
-import { useCalendarCatalog } from "../connections/use-calendar-catalog";
-import { calendarSelectionKey } from "../connections/calendar-selection";
+import { useCalendarCatalog } from "@zilobase/features/calendar/react";
+import { calendarSelectionKey } from "@zilobase/features/calendar";
 import { useCalendarPreferences } from "./use-calendar-preferences";
 import { Button } from "@/shared/ui/button";
 import { SettingsRow, SettingsSectionLayout } from "@/features/settings";
