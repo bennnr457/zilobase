@@ -24,9 +24,9 @@ export function useDatabaseEntityCommandState(target: DatabaseCommandTarget) {
 }
 
 export function useDatabaseController() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const { apiFetch, queryClient, lifecycle } = useZilobaseFeatures();
   const sessionId = useDatabaseSessionId();
-  return databaseController(queryClient, sessionId, apiFetch);
+  return databaseController(queryClient, sessionId, apiFetch, lifecycle);
 }
 
 export function useProjectedDatabaseBootstrap(snapshot: DatabaseBootstrapResponse | undefined) {

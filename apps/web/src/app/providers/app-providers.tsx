@@ -18,6 +18,8 @@ import { DemoExperience, installDemoCache } from "@/features/demo";
 import { resolvePageDetailReference, type PageDetailReference } from "@zilobase/features/pages";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useSession } from "@zilobase/features/auth/react";
+import { useDatabaseController } from "@zilobase/features/databases/react";
+import { guardPendingDatabaseWrites } from "@/features/databases/lifecycle/beforeunload";
 import { DbProvider } from "@zilobase/features/databases/react";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { subscribePageReadCache } from "@/features/pages/cache/page-read-cache";
@@ -76,7 +78,7 @@ export function AppProviders({ children }: React.PropsWithChildren) {
 
 function SessionDatabaseProvider({ children }: React.PropsWithChildren) {
   const { data: session } = useSession();
-  const { apiFetch } = useZilobaseFeatures();
+  const { apiFetch, lifecycle } = useZilobaseFeatures();
   const userId = session?.user?.id;
   const sessionId = session?.session?.id;
 
@@ -86,10 +88,22 @@ function SessionDatabaseProvider({ children }: React.PropsWithChildren) {
   }, [userId, sessionId]);
 
   return (
-    <DbProvider apiFetch={apiFetch} queryClient={queryClient} sessionId={sessionId ?? null}>
+    <DbProvider
+      apiFetch={apiFetch}
+      queryClient={queryClient}
+      sessionId={sessionId ?? null}
+      lifecycle={lifecycle}
+    >
+      <DatabaseUnloadGuard />
       {children}
     </DbProvider>
   );
+}
+
+function DatabaseUnloadGuard() {
+  const controller = useDatabaseController();
+  React.useEffect(() => guardPendingDatabaseWrites(window, controller.commandState), [controller]);
+  return null;
 }
 
 function PostHogIdentitySync() {

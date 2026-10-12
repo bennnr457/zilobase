@@ -21,6 +21,7 @@ import {
   recordDesktopDiagnostic,
 } from "@/features/desktop/diagnostics/index";
 import { queryClient } from "@/app/query-client";
+import { webClientLifecycle, databasePresenceColor } from "./client-lifecycle";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/features/demo";
 import posthog from "@/shared/lib/posthog";
@@ -202,6 +203,8 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
     <ZilobaseFeaturesProvider
       value={{
         apiFetch,
+        lifecycle: webClientLifecycle,
+        databasePresenceColor,
         auth: webAuthClient,
         databaseRealtimeEnabled: !isHostedDemoRuntime(),
         preferredActiveWorkspaceId,

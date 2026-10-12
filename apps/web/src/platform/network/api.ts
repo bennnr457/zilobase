@@ -1,3 +1,5 @@
+import { ApiError } from "@zilobase/features";
+export { ApiError, getApiErrorMessage } from "@zilobase/features";
 import {
   clearDesktopAuthToken,
   getDesktopAuthToken,
@@ -29,31 +31,11 @@ type ApiErrorBody = {
   message?: string;
 };
 
-export class ApiError extends Error {
-  status: number;
-  body: unknown;
-
-  constructor(message: string, status: number, body: unknown) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.body = body;
-  }
-}
-
 export class NetworkUnavailableError extends Error {
   constructor(message = "Zilobase is offline. This action requires a connection.") {
     super(message);
     this.name = "NetworkUnavailableError";
   }
-}
-
-export function getApiErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Something went wrong. Please try again.";
 }
 
 export async function apiFetch<T>(

@@ -1,3 +1,4 @@
+import { defaultClientLifecycle, type ClientLifecycle } from "../../shared/lifecycle";
 import { type PageNavigationReference } from "../../pages/cache";
 import { refreshRecordResults } from "../queries/result-refresh";
 import { publishDatabaseEvent } from "../cache-publication";
@@ -85,6 +86,7 @@ export class DatabaseController {
     private queryClient: QueryClient,
     readonly sessionId: string,
     private apiFetch: ApiFetcher,
+    public lifecycle: ClientLifecycle = defaultClientLifecycle,
   ) {
     this.unsubscribe = queryClient.getQueryCache().subscribe(() => this.collect());
   }
@@ -201,8 +203,7 @@ export class DatabaseController {
     const policy = databaseCommandPolicies[input.command.type];
     if ((policy.scope === "source") !== !!input.dataSourceId)
       return Promise.reject(new Error("Database command scope does not match its policy"));
-    if (typeof navigator !== "undefined" && navigator.onLine === false)
-      return Promise.reject(new OfflineError());
+    if (!this.lifecycle.isOnline()) return Promise.reject(new OfflineError());
     const queued = [...this.jobs.values()].at(-1);
     if (
       queued?.interaction.status === "queued" &&
@@ -368,6 +369,7 @@ export class DatabaseController {
       const authorization = owner.capture();
       const send = async () => {
         const ack = await executeDatabaseCommand(this.apiFetch, job.input, {
+          isOnline: this.lifecycle.isOnline,
           commandId: job.interaction.id,
         });
         job.scopeExpired = !owner.isCurrent(authorization);
@@ -784,8 +786,9 @@ export function retainDatabaseController(
   queryClient: QueryClient,
   sessionId: string,
   apiFetch: ApiFetcher,
+  lifecycle?: ClientLifecycle,
 ) {
-  const controller = databaseController(queryClient, sessionId, apiFetch);
+  const controller = databaseController(queryClient, sessionId, apiFetch, lifecycle);
   const owner = owners.get(controller) ?? { count: 0 };
   owners.set(controller, owner);
   owner.count++;
@@ -805,6 +808,7 @@ export function databaseController(
   queryClient: QueryClient,
   sessionId: string,
   apiFetch: ApiFetcher,
+  lifecycle?: ClientLifecycle,
 ) {
   let stores = sessions.get(queryClient);
   if (!stores) {
@@ -813,9 +817,10 @@ export function databaseController(
   }
   let store = stores.get(sessionId);
   if (!store) {
-    store = new DatabaseController(queryClient, sessionId, apiFetch);
+    store = new DatabaseController(queryClient, sessionId, apiFetch, lifecycle);
     stores.set(sessionId, store);
   }
+  if (lifecycle) store.lifecycle = lifecycle;
   return store;
 }
 export function disposeDatabaseController(queryClient: QueryClient, sessionId: string) {

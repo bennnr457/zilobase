@@ -30,16 +30,11 @@ export {
 export type { CalendarSpan } from "../calendar-layout/types";
 export { createEventIndex } from "../calendar-layout/event-index";
 export {
-  timelineGeometry,
   civilDayOrdinal,
   dateFromOrdinal,
   dateFromRank,
   visibleDateRank,
   contiguousTimeline,
-  timeToPosition,
-  positionToTime,
-  timelineRetargets,
-  snapTimelineOffset,
 } from "../calendar-layout/timeline";
 export { timedLayoutByKey } from "../calendar-layout/time";
 

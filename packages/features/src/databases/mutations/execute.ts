@@ -37,6 +37,7 @@ export type DatabaseCommandInput = {
 
 export type ExecuteDatabaseCommandOptions = {
   commandId?: string;
+  isOnline?: () => boolean;
 };
 
 export async function executeDatabaseCommand(
@@ -44,7 +45,7 @@ export async function executeDatabaseCommand(
   input: DatabaseCommandInput,
   opts?: ExecuteDatabaseCommandOptions,
 ): Promise<DatabaseCommandAck> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+  if (opts?.isOnline?.() === false) {
     throw new OfflineError();
   }
 
@@ -71,7 +72,7 @@ export async function executeDatabaseCommand(
       if (!isRetryable(error)) {
         throw error;
       }
-      if (attempt === 0 && (typeof navigator === "undefined" || navigator.onLine !== false)) {
+      if (attempt === 0 && opts?.isOnline?.() !== false) {
         continue; // retry once with same body
       }
       const unconfirmed = new DatabaseCommandUnconfirmedError(error);

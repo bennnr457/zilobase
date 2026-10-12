@@ -1,6 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
 import type { ApiFetcher } from "./api-fetcher";
+import type { ClientLifecycle } from "./lifecycle";
+export type { ClientLifecycle } from "./lifecycle";
 
 export type { ApiFetcher } from "./api-fetcher";
 
@@ -13,6 +15,8 @@ export type ZilobaseFeaturesConfig = {
   preferredActiveWorkspaceId?: string | null;
   queryClient: QueryClient;
   databaseRealtimeEnabled?: boolean;
+  lifecycle?: ClientLifecycle;
+  databasePresenceColor?: (userId: string) => string;
   setPreferredActiveWorkspaceId?: (workspaceId: string | null) => void;
 };
 

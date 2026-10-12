@@ -1,3 +1,4 @@
+import { defaultClientLifecycle, type ClientLifecycle } from "../../shared/lifecycle";
 import { refreshRecordResults } from "../queries/result-refresh";
 import { publishDatabaseEvent } from "../cache-publication";
 import { sharedClient } from "../../data/client";
@@ -59,13 +60,22 @@ export function useDatabaseRealtime(
     publishPresence?: boolean;
   } = {},
 ) {
-  const { apiFetch, databaseRealtimeEnabled = false, queryClient } = useZilobaseFeatures();
+  const {
+    apiFetch,
+    databaseRealtimeEnabled = false,
+    queryClient,
+    lifecycle = defaultClientLifecycle,
+    databasePresenceColor,
+  } = useZilobaseFeatures();
   const sessionId = useDatabaseSessionId();
   const ownerIdRef = useRef<string>(crypto.randomUUID());
   const enabled = Boolean(databaseRealtimeEnabled && options.enabled !== false && databaseId);
   const manager = useMemo(
-    () => (enabled && databaseId ? getManager(queryClient, apiFetch, databaseId, sessionId) : null),
-    [apiFetch, databaseId, enabled, queryClient, sessionId],
+    () =>
+      enabled && databaseId
+        ? getManager(queryClient, apiFetch, databaseId, sessionId, lifecycle, databasePresenceColor)
+        : null,
+    [apiFetch, databaseId, enabled, queryClient, sessionId, lifecycle, databasePresenceColor],
   );
   const state = useSyncExternalStore(
     manager ? manager.subscribe : emptySubscribe,
@@ -135,7 +145,7 @@ export class DatabaseRealtimeManager {
   private connectionGeneration = 0;
   private connecting = false;
   private terminal = false;
-  private lifecycleListening = false;
+  private unsubscribeLifecycle: (() => void) | null = null;
   private paused = false;
   private reconnectAttempt = 0;
   private stopped = true;
@@ -148,6 +158,8 @@ export class DatabaseRealtimeManager {
     private readonly databaseId: string,
     private readonly sessionId: string,
     private readonly onIdle: () => void,
+    private readonly lifecycle: ClientLifecycle = defaultClientLifecycle,
+    private readonly presenceColor: (userId: string) => string = stableColor,
   ) {}
 
   subscribe = (listener: Listener) => {
@@ -192,7 +204,7 @@ export class DatabaseRealtimeManager {
     if (
       this.stopped ||
       this.paused ||
-      !isBrowserOnline() ||
+      !this.lifecycle.isOnline() ||
       this.connecting ||
       typeof WebSocket === "undefined" ||
       this.socket?.readyState === WebSocket.CONNECTING ||
@@ -356,7 +368,7 @@ export class DatabaseRealtimeManager {
     }
 
     if (message.type === "presence.update") {
-      const collaborator = withColor(message.collaborator);
+      const collaborator = withColor(message.collaborator, this.presenceColor);
       this.setCollaborators([
         ...this.state.collaborators.filter((item) => item.sessionId !== collaborator.sessionId),
         collaborator,
@@ -414,7 +426,7 @@ export class DatabaseRealtimeManager {
   private scheduleReconnect() {
     if (this.stopped || this.paused || this.reconnectTimer) return;
 
-    if (!isBrowserOnline()) {
+    if (!this.lifecycle.isOnline()) {
       this.pause();
       return;
     }
@@ -464,7 +476,7 @@ export class DatabaseRealtimeManager {
   ) {
     const colored = collaborators
       .filter((item) => item.sessionId !== this.realtimeSessionId)
-      .map(withColor);
+      .map((collaborator) => withColor(collaborator, this.presenceColor));
     this.setState({
       ...this.state,
       cellPresenceByKey: createCellPresenceByKey(colored),
@@ -529,37 +541,27 @@ export class DatabaseRealtimeManager {
     this.setState(getUnavailableSnapshot());
   }
 
-  private readonly handleOnline = () => this.handleLifecycleChange();
-  private readonly handleOffline = () => this.pause();
-  private readonly handleVisibility = () => this.handleLifecycleChange();
-
   private startLifecycleListeners() {
-    if (this.lifecycleListening || typeof window === "undefined") return;
-    window.addEventListener("online", this.handleOnline);
-    window.addEventListener("offline", this.handleOffline);
-    document.addEventListener("visibilitychange", this.handleVisibility);
-    this.lifecycleListening = true;
+    if (this.unsubscribeLifecycle) return;
+    this.unsubscribeLifecycle = this.lifecycle.subscribe(() => this.handleLifecycleChange());
   }
 
   private stopLifecycleListeners() {
-    if (!this.lifecycleListening || typeof window === "undefined") return;
-    window.removeEventListener("online", this.handleOnline);
-    window.removeEventListener("offline", this.handleOffline);
-    document.removeEventListener("visibilitychange", this.handleVisibility);
-    this.lifecycleListening = false;
+    this.unsubscribeLifecycle?.();
+    this.unsubscribeLifecycle = null;
   }
 
   private handleLifecycleChange() {
-    if (!isBrowserOnline()) {
+    if (!this.lifecycle.isOnline()) {
       this.pause();
       return;
     }
 
-    if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+    if (!this.lifecycle.isVisible()) {
       if (!this.visibilityTimer) {
         this.visibilityTimer = setTimeout(() => {
           this.visibilityTimer = null;
-          if (document.visibilityState === "hidden") this.pause();
+          if (!this.lifecycle.isVisible()) this.pause();
         }, 60_000);
       }
       if (!this.paused) void this.connect();
@@ -588,7 +590,7 @@ export class DatabaseRealtimeManager {
   }
 
   private resume() {
-    if (this.stopped || this.listeners.size === 0 || !isBrowserOnline()) return;
+    if (this.stopped || this.listeners.size === 0 || !this.lifecycle.isOnline()) return;
     if (this.visibilityTimer) clearTimeout(this.visibilityTimer);
     this.visibilityTimer = null;
     this.paused = false;
@@ -643,10 +645,6 @@ export function ticketFailureAction(error: unknown): "retry" | "stop" {
   return status === 401 || status === 403 || status === 404 ? "stop" : "retry";
 }
 
-function isBrowserOnline() {
-  return typeof navigator === "undefined" || navigator.onLine !== false;
-}
-
 export function samePresence(left: DatabasePresence | null, right: DatabasePresence | null) {
   return (
     left === right ||
@@ -665,6 +663,8 @@ function getManager(
   apiFetch: ApiFetcher,
   databaseId: string,
   sessionId: string,
+  lifecycle: ClientLifecycle,
+  presenceColor?: (userId: string) => string,
 ) {
   let byDatabase = managers.get(queryClient);
 
@@ -687,6 +687,8 @@ function getManager(
           byDatabase.delete(managerKey);
         }
       },
+      lifecycle,
+      presenceColor,
     );
     manager = created;
     byDatabase.set(managerKey, manager);
@@ -788,21 +790,13 @@ export type RealtimeServerMessage =
 
 function withColor<T extends Omit<DatabasePresenceCollaborator, "color">>(
   collaborator: T,
+  color: (userId: string) => string,
 ): DatabasePresenceCollaborator {
-  return { ...collaborator, color: stableColor(collaborator.user.id) };
+  return { ...collaborator, color: color(collaborator.user.id) };
 }
 
 function stableColor(value: string) {
-  const colors = [
-    "var(--editor-blue)",
-    "var(--editor-purple)",
-    "var(--editor-pink)",
-    "var(--editor-orange)",
-    "var(--editor-green)",
-    "var(--editor-yellow)",
-    "var(--editor-red)",
-    "var(--editor-brown)",
-  ];
+  const colors = ["blue", "purple", "pink", "orange", "green", "yellow", "red", "brown"];
   let hash = 0;
   for (let index = 0; index < value.length; index += 1) {
     hash = (hash * 31 + value.charCodeAt(index)) >>> 0;

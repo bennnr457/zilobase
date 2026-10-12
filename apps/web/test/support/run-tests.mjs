@@ -76,15 +76,7 @@ async function loadModule(path) {
       }),
     },
     entryPoints: [sourcePath],
-    external:
-      sourcePath.includes("/features/calendar/") ||
-      sourcePath.includes("/features/pages/cache/") ||
-      sourcePath.includes("/shared/components/calendar/") ||
-      sourcePath.endsWith("/fixtures/database-kanban-moves.tsx") ||
-      sourcePath.endsWith("/support/demo-transport.ts") ||
-      sourcePath.includes("/features/src/calendar-layout/")
-        ? []
-        : ["@zilobase/features"],
+    external: [],
     format: "esm",
     jsx: "automatic",
     logLevel: "silent",
@@ -100,6 +92,7 @@ async function loadModule(path) {
 }
 
 function sourcePath(path) {
+  if (path.startsWith("/packages/")) return join(workspaceDir, path.slice(1));
   const relativePath = path.startsWith("/src/") ? path.slice(1) : path.replace(/^src\//, "src/");
   return join(appDir, relativePath);
 }

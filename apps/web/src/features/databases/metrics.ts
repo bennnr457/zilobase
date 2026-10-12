@@ -1,4 +1,4 @@
-import { emitDatabaseMetric } from "@zilobase/features/databases";
+import { emitDatabaseMetric } from "./lifecycle/metrics";
 
 export function markDatabaseInteractionPaint(startedAt: number) {
   requestAnimationFrame(() => {

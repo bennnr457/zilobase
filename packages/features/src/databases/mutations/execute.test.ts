@@ -27,33 +27,25 @@ function ackFor(commandId: string, overrides: Record<string, unknown> = {}) {
 }
 
 test("offline throws OfflineError without POST", async () => {
-  const original = globalThis.navigator;
-  Object.defineProperty(globalThis, "navigator", {
-    configurable: true,
-    value: { onLine: false },
-  });
-  try {
-    let posted = false;
-    const apiFetch = (async () => {
-      posted = true;
-      return {};
-    }) as ApiFetcher;
-    await assert.rejects(
-      () =>
-        executeDatabaseCommand(apiFetch, {
+  let posted = false;
+  const apiFetch = (async () => {
+    posted = true;
+    return {};
+  }) as ApiFetcher;
+  await assert.rejects(
+    () =>
+      executeDatabaseCommand(
+        apiFetch,
+        {
           command: { rowId: "r", type: "row.change", valuesByPropertyId: { p: 1 } },
           databaseId: "database-1",
           dataSourceId: "data-source-1",
-        }),
-      OfflineError,
-    );
-    assert.equal(posted, false);
-  } finally {
-    Object.defineProperty(globalThis, "navigator", {
-      configurable: true,
-      value: original,
-    });
-  }
+        },
+        { isOnline: () => false },
+      ),
+    OfflineError,
+  );
+  assert.equal(posted, false);
 });
 
 test("retry-once uses SAME commandId and SAME body on network failure", async () => {
