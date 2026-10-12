@@ -23,7 +23,6 @@
   },
   "peerDependencies": {
     "@tanstack/react-query": "5.101.4",
-    "ai": "^6.0.193",
     "react": "^19.1.0"
   },
   "exports": {
@@ -54,42 +53,6 @@
     "./auth": {
       "types": "./src/auth/index.ts",
       "default": "./src/auth/index.ts"
-    },
-    "./ai-chat": {
-      "types": "./src/ai-chat/index.ts",
-      "default": "./src/ai-chat/index.ts"
-    },
-    "./ai-chat/agent-contract": {
-      "types": "./src/ai-chat/agent-contract.ts",
-      "default": "./src/ai-chat/agent-contract.ts"
-    },
-    "./ai-chat/agent-room": {
-      "types": "./src/ai-chat/agent-room.ts",
-      "default": "./src/ai-chat/agent-room.ts"
-    },
-    "./ai-chat/mcp-contract": {
-      "types": "./src/ai-chat/mcp-contract.ts",
-      "default": "./src/ai-chat/mcp-contract.ts"
-    },
-    "./ai-chat/conversation-adapter": {
-      "types": "./src/ai-chat/conversation-adapter.ts",
-      "default": "./src/ai-chat/conversation-adapter.ts"
-    },
-    "./ai-chat/live-agent": {
-      "types": "./src/ai-chat/live-agent.ts",
-      "default": "./src/ai-chat/live-agent.ts"
-    },
-    "./ai-chat/agent-icons": {
-      "types": "./src/ai-chat/agent-icons.ts",
-      "default": "./src/ai-chat/agent-icons.ts"
-    },
-    "./ai-chat/apply-page-content-patch": {
-      "types": "./src/ai-chat/apply-page-content-patch.ts",
-      "default": "./src/ai-chat/apply-page-content-patch.ts"
-    },
-    "./ai-chat/tool-registry": {
-      "types": "./src/ai-chat/tool-registry.ts",
-      "default": "./src/ai-chat/tool-registry.ts"
     },
     "./databases": {
       "types": "./src/databases/index.ts",
@@ -187,11 +150,6 @@
       "types": "./src/pages/queries.ts",
       "default": "./src/pages/queries.ts"
     },
-    "./ai-chat/settings-contract": "./src/ai-chat/settings-contract.ts",
-    "./ai-chat/contracts": {
-      "types": "./src/ai-chat/contracts.ts",
-      "default": "./src/ai-chat/contracts.ts"
-    },
     "./api-keys/contracts": {
       "types": "./src/api-keys/contracts.ts",
       "default": "./src/api-keys/contracts.ts"
@@ -231,10 +189,6 @@
     "./workspaces/contracts": {
       "types": "./src/workspaces/contracts.ts",
       "default": "./src/workspaces/contracts.ts"
-    },
-    "./ai-chat/react": {
-      "types": "./src/ai-chat/react.ts",
-      "default": "./src/ai-chat/react.ts"
     },
     "./api-keys/react": {
       "types": "./src/api-keys/react.ts",

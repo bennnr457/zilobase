@@ -52,12 +52,11 @@ export function register({ readSource, assert, test }) {
   });
 
   test("rectangular badges and pills share the control radius", async () => {
-    const [badge, editorStyles, discussions, contextChips, toolbar] = await Promise.all(
+    const [badge, editorStyles, discussions, toolbar] = await Promise.all(
       [
         "shared/ui/badge.tsx",
         "features/databases/styles/database-table.css",
         "features/comments/components/discussions-sidebar.tsx",
-        "features/ai/conversations/components/elements/context-attach-chips.tsx",
         "features/databases/views/components/database-view-toolbar.tsx",
       ].map((path) => readSource(`/src/${path}`)),
     );
@@ -66,7 +65,6 @@ export function register({ readSource, assert, test }) {
     assert.match(editorStyles, /\.database-select-badge \{\s*@apply[^;]*rounded-md/);
     assert.match(editorStyles, /\.database-page-open \{\s*@apply[^;]*rounded-md/);
     assert.doesNotMatch(discussions, /rounded-full[^"\n]*px-/);
-    assert.match(contextChips, /h-7[^"\n]*rounded-md/);
     assert.doesNotMatch(toolbar, /h-8 shrink-0 rounded-full px-3/);
   });
 }

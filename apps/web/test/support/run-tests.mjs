@@ -137,9 +137,6 @@ function aliasPlugin() {
   return {
     name: "zilobase-test-alias",
     setup(build) {
-      build.onResolve({ filter: /^@zilobase\/ai-conversation-adapter$/ }, () => ({
-        path: join(srcDir, "features/ai/conversations/use-agent-conversation.ts"),
-      }));
       build.onResolve({ filter: /^@zilobase\/edition-web$/ }, () => ({
         path: editionWebModule,
       }));
@@ -177,7 +174,7 @@ function aliasPlugin() {
       build.onResolve(
         {
           filter:
-            /^@zilobase\/features\/(databases\/views\/appearance|user-settings\/sidebar-config|ai-chat\/settings-contract)$/,
+            /^@zilobase\/features\/(databases\/views\/appearance|user-settings\/sidebar-config)$/,
         },
         (args) => ({
           path: join(

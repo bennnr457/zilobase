@@ -1,10 +1,9 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import type { Editor, Range } from "@tiptap/core";
-import { Loader2, Send, Sparkles, X } from "@/shared/components/icons";
-import { useEffect, useRef, useState } from "react";
+import { Send, Sparkles, X } from "@/shared/components/icons";
+import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { toast } from "sonner";
 
 import { AppIconProvider } from "@/shared/components/app-icon-provider";
 import {
@@ -12,20 +11,10 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputTools,
-  type PromptInputMessage,
 } from "@/features/ai/conversations/components/elements/index";
 import { Button } from "@/shared/ui/button";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import { Textarea } from "@/shared/ui/textarea";
-import {
-  nextPaint,
-  parseMarkdownContent,
-  readStreamError,
-  type GeneratedRange,
-} from "../commands/editor-ai-utils";
-import { getApiRequestHeaders, toApiUrl } from "@/platform/network/api";
-import { desktopNetworkFetch } from "@/platform/network/index";
 import { isFeatureEnabled } from "@/shared/config/feature-flags";
 
 type AskAiBlockOptions = {
@@ -44,223 +33,44 @@ type AskAiPopoverProps = {
   editor: Editor;
   insertPos: number;
   onDone: () => void;
-  workspaceId?: string | null;
 };
 
-function AskAiPopover({ anchorRect, editor, insertPos, onDone, workspaceId }: AskAiPopoverProps) {
-  const [error, setError] = useState<string | null>(null);
+function AskAiPopover({ anchorRect, onDone }: AskAiPopoverProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const generatedRangeRef = useRef<GeneratedRange | null>(null);
-  const isStreamingRef = useRef(false);
-  const latestMarkdownRef = useRef("");
-
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, []);
-
-  const cleanupIfIdle = () => {
-    if (!isStreamingRef.current) {
-      onDone();
-    }
-  };
-
-  const replaceGeneratedContent = (markdown: string) => {
-    const parsed = parseMarkdownContent(editor, markdown);
-
-    if (!parsed) {
-      return;
-    }
-
-    const currentRange = generatedRangeRef.current;
-
-    if (currentRange) {
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(currentRange, parsed.content, {
-          updateSelection: false,
-        })
-        .run();
-
-      generatedRangeRef.current = {
-        from: currentRange.from,
-        to: currentRange.from + parsed.size,
-      };
-      return;
-    }
-
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(insertPos, parsed.content, {
-        updateSelection: false,
-      })
-      .run();
-
-    generatedRangeRef.current = {
-      from: insertPos,
-      to: insertPos + parsed.size,
-    };
-  };
-
-  const finishStreaming = () => {
-    const range = generatedRangeRef.current;
-
-    if (!range) {
-      editor.chain().focus().setTextSelection(insertPos).run();
-      return;
-    }
-
-    editor.chain().focus().setTextSelection(range.to).run();
-  };
-
-  const submitPrompt = async (message: PromptInputMessage) => {
-    const trimmedPrompt = message.text.trim();
-
-    if (!trimmedPrompt || isStreamingRef.current) {
-      return;
-    }
-
-    setError(null);
-    setIsOpen(false);
-    setIsStreaming(true);
-    isStreamingRef.current = true;
-    latestMarkdownRef.current = "";
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const headers = getApiRequestHeaders({
-        "content-type": "application/json",
-      });
-
-      if (workspaceId) {
-        headers.set("x-zilobase-workspace-id", workspaceId);
-      }
-
-      const response = await desktopNetworkFetch(toApiUrl("/api/ai/editor"), {
-        body: JSON.stringify({ prompt: trimmedPrompt }),
-        credentials: "include",
-        headers,
-        method: "POST",
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(await readStreamError(response));
-      }
-
-      if (!response.body) {
-        throw new Error("The AI response did not include a stream.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        latestMarkdownRef.current += decoder.decode(value, { stream: true });
-        replaceGeneratedContent(latestMarkdownRef.current);
-        await nextPaint();
-      }
-
-      const flushed = decoder.decode();
-
-      if (flushed) {
-        latestMarkdownRef.current += flushed;
-        replaceGeneratedContent(latestMarkdownRef.current);
-        await nextPaint();
-      }
-
-      finishStreaming();
-    } catch (streamError) {
-      if (streamError instanceof DOMException && streamError.name === "AbortError") {
-        return;
-      }
-
-      const message =
-        streamError instanceof Error ? streamError.message : "AI generation failed. Try again.";
-
-      setError(message);
-      toast.error("Ask AI failed", { description: message });
-    } finally {
-      setIsStreaming(false);
-      isStreamingRef.current = false;
-      abortControllerRef.current = null;
-      onDone();
-    }
-  };
-
-  const stopStreaming = () => {
-    abortControllerRef.current?.abort();
-    setIsStreaming(false);
-    isStreamingRef.current = false;
-  };
 
   return (
     <Popover
-      open={isOpen}
-      onOpenChange={(nextOpen) => {
-        setIsOpen(nextOpen);
-
-        if (!nextOpen) {
-          cleanupIfIdle();
-        }
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) onDone();
       }}
+      open={isOpen}
     >
-      <PopoverAnchor
-        style={{
-          height: Math.max(anchorRect.bottom - anchorRect.top, 1),
-          left: anchorRect.left,
-          position: "fixed",
-          top: anchorRect.top,
-          width: Math.max(anchorRect.right - anchorRect.left, 1),
-        }}
-      />
-      <PopoverContent
-        align="start"
-        className="w-[min(42rem,calc(100vw-2rem))] gap-0 p-0"
-        onOpenAutoFocus={(event) => event.preventDefault()}
-        side="bottom"
-        sideOffset={8}
-      >
+      <PopoverAnchor asChild>
+        <span
+          className="pointer-events-none absolute"
+          style={{
+            left: anchorRect.left,
+            top: anchorRect.top,
+            width: Math.max(1, anchorRect.right - anchorRect.left),
+            height: Math.max(1, anchorRect.bottom - anchorRect.top),
+          }}
+        />
+      </PopoverAnchor>
+      <PopoverContent align="start" className="w-80 p-3" side="bottom">
         <PromptInput
-          className="w-full"
-          inputGroupClassName="h-auto items-stretch overflow-visible border-0 focus-within:border-control-border focus-within:ring-0 has-[[data-slot=input-group-control]:focus-visible]:border-control-border has-[[data-slot=input-group-control]:focus-visible]:ring-0"
-          onSubmit={submitPrompt}
+          onSubmit={({ text }) => {
+            setPrompt(text);
+          }}
         >
-          <div className="relative w-full min-w-0 flex-1 self-stretch">
-            <PromptInputTextarea
-              autoFocus
-              className="w-full px-2 focus-visible:border-transparent focus-visible:ring-0"
-              disabled={isStreaming}
-              onChange={(event) => setPrompt(event.currentTarget.value)}
-              placeholder="Ask AI to write in this page..."
-              value={prompt}
-            />
-          </div>
+          <PromptInputTextarea
+            onChange={(event) => setPrompt(event.target.value)}
+            placeholder="Ask AI to write in this page..."
+            value={prompt}
+          />
           <PromptInputFooter>
-            <PromptInputTools>
-              {isStreaming ? (
-                <span className="px-1 text-xs text-content-secondary">Writing...</span>
-              ) : error ? (
-                <span className="px-1 text-xs text-action-danger-text">{error}</span>
-              ) : null}
-            </PromptInputTools>
-            <PromptInputSubmit
-              disabled={!prompt.trim() && !isStreaming}
-              onStop={stopStreaming}
-              status={isStreaming ? "streaming" : undefined}
-            />
+            <PromptInputSubmit disabled={!prompt.trim()} />
           </PromptInputFooter>
         </PromptInput>
       </PopoverContent>
@@ -270,235 +80,46 @@ function AskAiPopover({ anchorRect, editor, insertPos, onDone, workspaceId }: As
 
 export function openAskAiPopover({
   editor,
-  workspaceId,
   range,
+  workspaceId: _workspaceId,
 }: {
   editor: Editor;
-  workspaceId?: string | null;
   range: Range;
+  workspaceId?: string | null;
 }) {
   if (!isFeatureEnabled("askAi")) return;
+
   const coords = editor.view.coordsAtPos(range.from);
   const insertPos = range.from;
-  const container = document.createElement("div");
-  let root: Root | null = createRoot(container);
-  let didCleanup = false;
-
+  const host = document.createElement("div");
+  document.body.appendChild(host);
+  const root: Root = createRoot(host);
   const cleanup = () => {
-    if (didCleanup) {
-      return;
-    }
-
-    didCleanup = true;
-    root?.unmount();
-    root = null;
-    container.remove();
-    editor.chain().focus().run();
+    root.unmount();
+    host.remove();
   };
 
-  document.body.appendChild(container);
   editor.chain().focus().deleteRange(range).setTextSelection(insertPos).run();
 
   root.render(
     <AppIconProvider>
-      <AskAiPopover
-        anchorRect={coords}
-        editor={editor}
-        insertPos={insertPos}
-        onDone={cleanup}
-        workspaceId={workspaceId}
-      />
+      <AskAiPopover anchorRect={coords} editor={editor} insertPos={insertPos} onDone={cleanup} />
     </AppIconProvider>,
   );
 }
 
-function AskAiBlockView({
-  editor,
-  getPos,
-  node,
-  workspaceId,
-}: ReactNodeViewProps & { workspaceId?: string | null }) {
-  const [error, setError] = useState<string | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+function AskAiBlockView({ editor, getPos, node }: ReactNodeViewProps) {
   const [prompt, setPrompt] = useState("");
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const generatedRangeRef = useRef<GeneratedRange | null>(null);
-  const latestMarkdownRef = useRef("");
-
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, []);
-
-  const readNodePos = () => {
-    if (typeof getPos !== "function") {
-      return null;
-    }
-
-    const pos = getPos();
-
-    return typeof pos === "number" ? pos : null;
-  };
 
   const removeBlock = () => {
-    const pos = readNodePos();
-
-    if (pos === null) {
-      return;
-    }
-
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (typeof pos !== "number") return;
     editor
       .chain()
       .focus()
       .deleteRange({ from: pos, to: pos + node.nodeSize })
       .run();
-  };
-
-  const replaceGeneratedContent = (markdown: string) => {
-    const parsed = parseMarkdownContent(editor, markdown);
-
-    if (!parsed) {
-      return;
-    }
-
-    const currentRange = generatedRangeRef.current;
-
-    if (currentRange) {
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(currentRange, parsed.content, {
-          updateSelection: false,
-        })
-        .run();
-
-      generatedRangeRef.current = {
-        from: currentRange.from,
-        to: currentRange.from + parsed.size,
-      };
-      return;
-    }
-
-    const pos = readNodePos();
-
-    if (pos === null) {
-      return;
-    }
-
-    const insertPos = pos;
-
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(insertPos, parsed.content, {
-        updateSelection: false,
-      })
-      .run();
-
-    generatedRangeRef.current = {
-      from: insertPos,
-      to: insertPos + parsed.size,
-    };
-  };
-
-  const finishStreaming = () => {
-    const pos = readNodePos();
-    const range = generatedRangeRef.current;
-
-    if (pos === null || !range) {
-      removeBlock();
-      return;
-    }
-
-    editor
-      .chain()
-      .focus()
-      .deleteRange({ from: pos, to: pos + node.nodeSize })
-      .setTextSelection(Math.max(pos, range.to - node.nodeSize))
-      .run();
-  };
-
-  const submitPrompt = async () => {
-    const trimmedPrompt = prompt.trim();
-
-    if (!trimmedPrompt || isStreaming) {
-      return;
-    }
-
-    setError(null);
-    setIsStreaming(true);
-    latestMarkdownRef.current = "";
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const headers = getApiRequestHeaders({
-        "content-type": "application/json",
-      });
-
-      if (workspaceId) {
-        headers.set("x-zilobase-workspace-id", workspaceId);
-      }
-
-      const response = await desktopNetworkFetch(toApiUrl("/api/ai/editor"), {
-        body: JSON.stringify({ prompt: trimmedPrompt }),
-        credentials: "include",
-        headers,
-        method: "POST",
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(await readStreamError(response));
-      }
-
-      if (!response.body) {
-        throw new Error("The AI response did not include a stream.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        latestMarkdownRef.current += decoder.decode(value, { stream: true });
-        replaceGeneratedContent(latestMarkdownRef.current);
-        await nextPaint();
-      }
-
-      const flushed = decoder.decode();
-
-      if (flushed) {
-        latestMarkdownRef.current += flushed;
-        replaceGeneratedContent(latestMarkdownRef.current);
-        await nextPaint();
-      }
-
-      finishStreaming();
-    } catch (streamError) {
-      if (streamError instanceof DOMException && streamError.name === "AbortError") {
-        return;
-      }
-
-      const message =
-        streamError instanceof Error ? streamError.message : "AI generation failed. Try again.";
-
-      setError(message);
-      toast.error("Ask AI failed", { description: message });
-    } finally {
-      setIsStreaming(false);
-      abortControllerRef.current = null;
-    }
-  };
-
-  const stopStreaming = () => {
-    abortControllerRef.current?.abort();
-    setIsStreaming(false);
   };
 
   if (!isFeatureEnabled("askAi")) {
@@ -512,15 +133,9 @@ function AskAiBlockView({
         <Textarea
           autoFocus
           className="max-h-48 min-h-8 flex-1 resize-none border-0 bg-transparent px-0 py-1 text-base leading-6 shadow-none focus-visible:ring-0"
-          disabled={isStreaming}
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              void submitPrompt();
-            }
-
-            if (event.key === "Escape" && !isStreaming) {
+            if (event.key === "Escape") {
               event.preventDefault();
               removeBlock();
             }
@@ -529,41 +144,27 @@ function AskAiBlockView({
           rows={1}
           value={prompt}
         />
-        {isStreaming ? (
-          <Button
-            aria-label="Stop generation"
-            className="size-8 shrink-0 rounded-sm [&_svg]:size-4"
-            onClick={stopStreaming}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <X />
-          </Button>
-        ) : (
-          <Button
-            aria-label="Send prompt"
-            className="size-8 shrink-0 rounded-sm [&_svg]:size-4"
-            disabled={!prompt.trim()}
-            onClick={() => void submitPrompt()}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <Send />
-          </Button>
-        )}
+        <Button
+          aria-label="Remove Ask AI"
+          className="size-8 shrink-0 rounded-sm [&_svg]:size-4"
+          onClick={removeBlock}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <X />
+        </Button>
+        <Button
+          aria-label="Send prompt"
+          className="size-8 shrink-0 rounded-sm [&_svg]:size-4"
+          disabled={!prompt.trim()}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <Send />
+        </Button>
       </div>
-      {isStreaming ? (
-        <div className="mt-2 flex items-center gap-2 px-1 text-xs text-content-secondary [&_svg]:size-3.5">
-          <Loader2 className="animate-spin" />
-          <span>Writing...</span>
-        </div>
-      ) : error ? (
-        <div className="mt-2 flex items-center gap-2 px-1 text-xs text-action-danger-text">
-          {error}
-        </div>
-      ) : null}
     </NodeViewWrapper>
   );
 }
@@ -592,9 +193,6 @@ export const AskAiBlock = Node.create<AskAiBlockOptions>({
   },
 
   addNodeView() {
-    const workspaceId = this.options.workspaceId;
-    return ReactNodeViewRenderer((props) => (
-      <AskAiBlockView {...props} workspaceId={workspaceId} />
-    ));
+    return ReactNodeViewRenderer((props) => <AskAiBlockView {...props} />);
   },
 });

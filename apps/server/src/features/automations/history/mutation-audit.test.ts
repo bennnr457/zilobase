@@ -6,13 +6,12 @@ const read = (path: string) => readFile(new URL(path, featuresRoot), "utf8");
 
 describe("database automation mutation-path audit", () => {
   it("captures every current eligible row/title/property mutation boundary", async () => {
-    const [cell, rows, commands, template, pages, ai] = await Promise.all([
+    const [cell, rows, commands, template, pages] = await Promise.all([
       read("databases/schema/cells.ts"),
       read("databases/records/service.ts"),
       read("databases/commands/records.ts"),
       read("databases/commands/template-apply-handler.ts"),
       read("pages/page-content-routes.ts"),
-      read("ai/tools/ask-ai-database-tools.ts"),
     ]);
 
     expect(cell).toMatch(/automationFacts:[\s\S]*before: previous\?\.value/);
@@ -23,7 +22,6 @@ describe("database automation mutation-path audit", () => {
     expect(template).toMatch(/origin: "import" as const/);
     expect(pages).toMatch(/propertyId: "name"/);
     expect(pages).toMatch(/c\.get\("authMethod"\) === "apiKey"/);
-    expect(ai).toMatch(/origin: "ai"/);
   });
 
   it("keeps every remaining direct write under an explicit system suppression", async () => {

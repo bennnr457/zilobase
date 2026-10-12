@@ -107,10 +107,6 @@
     "./worker/web/gateway": {
       "default": "./src/worker/web/gateway.js"
     },
-    "./worker/web/use-agent-conversation": {
-      "types": "./src/worker/web/use-agent-conversation.ts",
-      "default": "./src/worker/web/use-agent-conversation.ts"
-    },
     "./operations/cloudflare-queues": {
       "types": "./src/operations/cloudflare-queues.ts",
       "default": "./src/operations/cloudflare-queues.ts"
@@ -138,9 +134,6 @@
       "optional": true
     },
     "@aws-sdk/s3-request-presigner": {
-      "optional": true
-    },
-    "@cloudflare/ai-chat": {
       "optional": true
     },
     "@hocuspocus/extension-redis": {
@@ -177,7 +170,6 @@
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1070.0",
     "@aws-sdk/s3-request-presigner": "^3.1070.0",
-    "@cloudflare/ai-chat": "^0.11.0",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^4.20250929.0",
     "@hocuspocus/extension-redis": "^4.6.0",

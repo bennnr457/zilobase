@@ -1,9 +1,12 @@
 export function register({ readSource, assert, test }) {
-  test("Ask AI ships only its native workspace feature boundary", async () => {
+  test("Ask AI UI does not import the removed chat client", async () => {
     const chatbotSource = await readSource(
       "/src/features/ai/conversations/components/elements/chatbot.tsx",
     );
-    assert.match(chatbotSource, /@zilobase\/features\/ai-chat/);
-    assert.match(chatbotSource, /@zilobase\/features\/workspaces/);
+    const conversationSource = await readSource(
+      "/src/features/ai/conversations/use-chatbot-conversation.ts",
+    );
+    assert.doesNotMatch(chatbotSource, /@zilobase\/features\/ai-chat/);
+    assert.doesNotMatch(conversationSource, /@zilobase\/features\/ai-chat/);
   });
 }

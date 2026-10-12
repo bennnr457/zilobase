@@ -1,27 +1,14 @@
 import { AgentChatLayout } from "./agent-chat-layout";
-
-import { AgentLiveDebugger } from "./elements/agent-live-debugger";
-
 import { Button } from "@/shared/ui/button";
-
 import { ChatbotComposer } from "./elements/chatbot-composer";
 import { ChatbotMessages } from "./elements/chatbot-messages";
-
 import { useChatbotConversation } from "../use-chatbot-conversation";
 import type { ChatbotConversationInput } from "../conversation-interface";
 
 export function ChatbotConversationController(props: ChatbotConversationInput) {
   const { isSidebar = false, beforeComposer } = props;
-  const {
-    rootRef,
-    hasMessages,
-    session,
-    setText,
-    liveDebugger,
-    status,
-    messagesProps,
-    composerProps,
-  } = useChatbotConversation(props);
+  const { rootRef, hasMessages, session, setText, messagesProps, composerProps } =
+    useChatbotConversation(props);
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <div ref={rootRef} data-ai-scroll-shell className="min-h-0 flex-1 overflow-y-auto">
@@ -54,18 +41,7 @@ export function ChatbotConversationController(props: ChatbotConversationInput) {
               </div>
             </div>
           )}
-          <ChatbotMessages
-            {...messagesProps}
-            debuggerContent={
-              import.meta.env.DEV ? (
-                <AgentLiveDebugger
-                  events={liveDebugger.events}
-                  status={status}
-                  turnStartedAt={liveDebugger.turnStartedAt}
-                />
-              ) : null
-            }
-          />
+          <ChatbotMessages {...messagesProps} />
         </AgentChatLayout>
       </div>
       <AgentChatLayout sidebar={isSidebar}>

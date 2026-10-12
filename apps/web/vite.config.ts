@@ -3,7 +3,6 @@ import { fileURLToPath, URL } from "node:url";
 import { defineConfig, searchForWorkspaceRoot, type ProxyOptions } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { aiDevTracePlugin } from "./vite/ai-dev-trace-plugin";
 
 const host = process.env.VITE_DEV_HOST;
 const devPort = readPort(process.env.VITE_DEV_PORT, 1420);
@@ -11,17 +10,11 @@ const hmrPort = readPort(process.env.VITE_HMR_PORT, devPort + 1);
 const viteCacheDir = process.env.ZILOBASE_VITE_CACHE_DIR?.trim();
 const srcDir = fileURLToPath(new URL("./src", import.meta.url));
 const pageContextDir = fileURLToPath(new URL("../../packages/page-context/src", import.meta.url));
-const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
-const externalAiConversationModule = process.env.ZILOBASE_WEB_AI_CONVERSATION_MODULE?.trim();
 const externalEditionWebModule = process.env.ZILOBASE_WEB_EDITION_MODULE?.trim();
-const aiConversationModule = externalAiConversationModule
-  ? resolve(externalAiConversationModule)
-  : `${srcDir}/features/ai/conversations/use-agent-conversation.ts`;
 const editionWebModule = externalEditionWebModule
   ? resolve(externalEditionWebModule)
   : `${srcDir}/edition/community-module.ts`;
 const externalModuleDirectories = [
-  externalAiConversationModule ? dirname(aiConversationModule) : null,
   externalEditionWebModule ? dirname(editionWebModule) : null,
 ].filter((directory): directory is string => directory !== null);
 const adapterWebSocketPaths = readAdapterWebSocketPaths(
@@ -107,14 +100,10 @@ function readAdapterWebSocketPaths(value: string | undefined) {
 export default defineConfig(async () => ({
   ...(viteCacheDir ? { cacheDir: resolve(viteCacheDir) } : {}),
   envDir: fileURLToPath(new URL("../..", import.meta.url)),
-  plugins: [aiDevTracePlugin(repoRoot), react(), tailwindcss()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     dedupe: ["react", "react-dom"],
     alias: [
-      {
-        find: "@zilobase/ai-conversation-adapter",
-        replacement: aiConversationModule,
-      },
       {
         find: "@zilobase/edition-web",
         replacement: editionWebModule,
