@@ -8,12 +8,9 @@ import { Input } from "@/shared/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { apiFetch } from "@/platform/network/api";
 
-export type BookmarkMetadata = {
-  description: string | null;
-  favicon: string | null;
-  image: string | null;
-  title: string;
-};
+import type { BookmarkMetadata } from "@zilobase/features/pages";
+import { bookmarkMetadata } from "@zilobase/features/pages";
+export type { BookmarkMetadata } from "@zilobase/features/pages";
 
 function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
   const [faviconFailed, setFaviconFailed] = useState(false);
@@ -219,7 +216,7 @@ export function getFallbackBookmarkMetadata(value: string): BookmarkMetadata {
 }
 
 export async function fetchBookmarkMetadata(value: string) {
-  return apiFetch<BookmarkMetadata>(`/metadata/bookmark?url=${encodeURIComponent(value)}`);
+  return bookmarkMetadata(apiFetch, value);
 }
 
 function getFallbackFavicon(value: string) {

@@ -1,3 +1,4 @@
+import { meetingCollaborationTicket } from "@zilobase/features/meetings";
 import { useEffect, useMemo, useState } from "react";
 import type { HocuspocusProvider } from "@hocuspocus/provider";
 import type { SessionUser } from "@zilobase/features/auth";
@@ -8,14 +9,10 @@ import { apiFetch } from "@/platform/network/api";
 import {
   applyTicketState,
   connectCollaborationDocument,
-  type CollaborationTicket,
 } from "../../collaboration/collaboration-connection";
 
 function getMeetingTicket(meetingId: string, signal?: AbortSignal) {
-  return apiFetch<CollaborationTicket>(`/meetings/${meetingId}/collaboration-ticket`, {
-    method: "POST",
-    signal,
-  });
+  return meetingCollaborationTicket(apiFetch, meetingId, signal);
 }
 
 export function useMeetingCollaboration(

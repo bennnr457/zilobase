@@ -233,3 +233,18 @@ export type PageDetail = {
   page: Page;
   viewerType?: "member" | "guest" | "public" | null;
 };
+
+export type BookmarkMetadata = {
+  description: string | null;
+  favicon: string | null;
+  image: string | null;
+  title: string;
+};
+
+export type CollaborationTicket = {
+  documentName: string;
+  expiresAt: string;
+  initialState?: string;
+  token: string;
+  websocketUrl: string;
+};

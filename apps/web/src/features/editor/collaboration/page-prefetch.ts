@@ -1,10 +1,10 @@
-import { pageQueryOptions } from "@zilobase/features/pages";
+import { pageCollaborationTicket, pageQueryOptions } from "@zilobase/features/pages";
 import { sessionQueryKey, type SessionResponse } from "@zilobase/features/auth";
 
 import { queryClient } from "@/app/query-client";
 import { getConnectivityState } from "@/platform/network/connectivity";
 import { apiFetch } from "@/platform/network/api";
-import { applyTicketState, type CollaborationTicket } from "./collaboration-connection";
+import { applyTicketState } from "./collaboration-connection";
 import {
   acquirePageDocument,
   markPageDocumentInitialized,
@@ -30,10 +30,7 @@ async function prefetchDocument(userId: string, pageId: string) {
   const entry = await acquirePageDocument(userId, pageId);
   try {
     if (entry.hasPersistedState) return;
-    const ticket = await apiFetch<CollaborationTicket>(
-      `/pages/${encodeURIComponent(pageId)}/collaboration-bootstrap`,
-      { method: "POST", body: JSON.stringify({ includeState: true }) },
-    );
+    const ticket = await pageCollaborationTicket(apiFetch, pageId, undefined, true);
     applyTicketState(entry.document, ticket);
     await entry.flush();
     if (entry.persistenceError) return;

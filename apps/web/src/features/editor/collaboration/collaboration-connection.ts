@@ -8,13 +8,8 @@ const COLLABORATION_TICKET_REFRESH_BUFFER_MS = 75_000;
 const COLLABORATION_WEBSOCKET_PROTOCOL = "zilobase.collaboration.v1";
 const SESSION_AUTH_WEBSOCKET_PROTOCOL_PREFIX = "zilobase.session.v1.";
 
-export type CollaborationTicket = {
-  documentName: string;
-  expiresAt: string;
-  initialState?: string;
-  token: string;
-  websocketUrl: string;
-};
+import type { CollaborationTicket } from "@zilobase/features/pages";
+export type { CollaborationTicket } from "@zilobase/features/pages";
 
 export function applyTicketState(document: Y.Doc, ticket: CollaborationTicket) {
   if (ticket.initialState) {

@@ -490,3 +490,24 @@ export function getPageCover(page: Pick<Page, "metadata">) {
 export function getPageIconPosition(page: Pick<Page, "metadata">) {
   return page.metadata?.iconPosition === "inline" ? "inline" : "top";
 }
+
+export function bookmarkMetadata(apiFetch: ApiFetcher, value: string) {
+  return apiFetch<import("./contracts").BookmarkMetadata>(
+    `/metadata/bookmark?url=${encodeURIComponent(value)}`,
+  );
+}
+export function pageCollaborationTicket(
+  apiFetch: ApiFetcher,
+  pageId: string,
+  signal?: AbortSignal,
+  includeState = false,
+) {
+  return apiFetch<import("./contracts").CollaborationTicket>(
+    `/pages/${encodeURIComponent(pageId)}/collaboration-bootstrap`,
+    {
+      method: "POST",
+      body: JSON.stringify({ includeState }),
+      signal,
+    },
+  );
+}

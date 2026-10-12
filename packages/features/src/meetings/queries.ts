@@ -43,3 +43,14 @@ export function meetingQueryOptions(apiFetch: ApiFetcher, meetingId: string | nu
     refetchInterval: false,
   });
 }
+
+export function meetingCollaborationTicket(
+  apiFetch: ApiFetcher,
+  meetingId: string,
+  signal?: AbortSignal,
+) {
+  return apiFetch<import("../pages/contracts").CollaborationTicket>(
+    `/meetings/${meetingId}/collaboration-ticket`,
+    { method: "POST", signal },
+  );
+}

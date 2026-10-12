@@ -1,3 +1,4 @@
+import { pageCollaborationTicket } from "@zilobase/features/pages";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { SessionUser } from "@zilobase/features/auth";
 import { Awareness } from "y-protocols/awareness";
@@ -9,7 +10,6 @@ import {
   applyTicketState,
   base64ToBytes,
   connectCollaborationDocument,
-  type CollaborationTicket,
 } from "./collaboration-connection";
 import { collaborationColor } from "./color";
 import { startPageConnection } from "./connection-session";
@@ -81,14 +81,7 @@ export function usePageCollaboration({
   );
 }
 function getTicket(pageId: string, signal?: AbortSignal, includeState = false) {
-  return apiFetch<CollaborationTicket>(
-    `/pages/${encodeURIComponent(pageId)}/collaboration-bootstrap`,
-    {
-      method: "POST",
-      body: JSON.stringify({ includeState }),
-      signal,
-    },
-  );
+  return pageCollaborationTicket(apiFetch, pageId, signal, includeState);
 }
 const services: PageSessionServices = {
   acquire: acquirePageDocument,
