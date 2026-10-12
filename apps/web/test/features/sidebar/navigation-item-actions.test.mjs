@@ -21,6 +21,7 @@ export function register({ assert, appPath, test }) {
       `,
       "@zilobase/features/databases/react": `
         export const useDatabase = () => ({data:runtime.database});
+        export const useDatabaseMetadata = () => ({data:runtime.database});
         ${["DeleteDatabase", "SetDatabaseFavorite", "UpdateDatabase"].map((name) => `export const use${name} = () => runtime.mutations.${name};`).join("\n")}
       `,
       "@zilobase/features/user-settings/react":

@@ -1,4 +1,4 @@
-import type { Teamspace } from "@zilobase/features/teamspaces";
+import type { Teamspace } from "./index";
 
 type SidebarTeamspace = Pick<Teamspace, "currentUserRole" | "invitePolicy" | "isDefault">;
 

@@ -279,9 +279,21 @@
       "types": "./src/calendar/react.ts",
       "default": "./src/calendar/react.ts"
     },
+    "./tasks": {
+      "types": "./src/tasks/index.ts",
+      "default": "./src/tasks/index.ts"
+    },
+    "./comments": {
+      "types": "./src/comments/index.ts",
+      "default": "./src/comments/index.ts"
+    },
     "./automations/models": {
       "types": "./src/automations/models.ts",
       "default": "./src/automations/models.ts"
+    },
+    "./library": {
+      "types": "./src/library/index.ts",
+      "default": "./src/library/index.ts"
     }
   }
 }

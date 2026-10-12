@@ -1,3 +1,5 @@
+import { isPagePublished as readPagePublished } from "@zilobase/features/pages";
+import { isDatabasePublished as readDatabasePublished } from "@zilobase/features/databases";
 import { redirect } from "@tanstack/react-router";
 import { pageQueryKey, pageQueryOptions, pagesQueryOptions } from "@zilobase/features/pages";
 import { sessionQueryOptions, type SessionResponse } from "@zilobase/features/auth";
@@ -6,9 +8,9 @@ import { workspacesQueryOptions } from "@zilobase/features/workspaces";
 import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
 import { useAppStore } from "@/features/desktop/state/app-store";
-import { ApiError, NetworkUnavailableError, apiFetch } from "@/platform/network/api";
+import { NetworkUnavailableError, apiFetch } from "@/platform/network/api";
 import { getMostRecentItemPath } from "@/features/library/model/recent-navigation";
-import { decidePublishedShareAccess } from "@/features/pages/publication/published-share-access";
+import { decidePublishedShareAccess } from "@zilobase/features/pages";
 import { getConnectivityState } from "@/platform/network/connectivity";
 import { hydratePageReadCache } from "@/features/pages/cache/page-read-cache";
 import {
@@ -31,7 +33,7 @@ export async function applyPageShareAccess(pageId: string) {
   }
 
   if (!session.user) {
-    return applyPublishedShareAccess(() => isPagePublished(pageId));
+    return applyPublishedShareAccess(() => readPagePublished(apiFetch, pageId));
   }
 
   try {
@@ -85,7 +87,7 @@ async function hydrateCachedPageQueries(
 }
 
 export function applyDatabaseShareAccess(databaseId: string) {
-  return applyPublishedShareAccess(() => isDatabasePublished(databaseId));
+  return applyPublishedShareAccess(() => readDatabasePublished(apiFetch, databaseId));
 }
 
 export async function getFreshSession(options?: { optional?: boolean }) {
@@ -158,32 +160,4 @@ async function applyPublishedShareAccess(isPublished: () => Promise<boolean>) {
   }
 
   return decision.type;
-}
-
-async function isPagePublished(pageId: string) {
-  try {
-    const result = await apiFetch<{ published: boolean }>(`/pages/${pageId}/published`, {
-      auth: false,
-      method: "GET",
-    });
-
-    return result.published;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return false;
-    throw error;
-  }
-}
-
-async function isDatabasePublished(databaseId: string) {
-  try {
-    const result = await apiFetch<{ published: boolean }>(`/databases/${databaseId}/published`, {
-      auth: false,
-      method: "GET",
-    });
-
-    return result.published;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return false;
-    throw error;
-  }
 }

@@ -84,7 +84,7 @@ import { getApiErrorMessage } from "@/platform/network/api";
 import { PageIconDisplay } from "@/features/pages/index";
 import { prefetchPageForNavigation } from "@/features/editor/collaboration/page-prefetch";
 import { markPageNavigationStart } from "@/features/pages/navigation/page-navigation-timing";
-import { getTeamspaceSidebarPermissions } from "@/features/teamspaces/model/teamspace-sidebar-permissions";
+import { getTeamspaceSidebarPermissions } from "@zilobase/features/teamspaces";
 import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
 import { getConfiguredSidebarItems } from "../model/sidebar-section-items";
 import { SidebarLibraryLink } from "./sidebar-library-link";

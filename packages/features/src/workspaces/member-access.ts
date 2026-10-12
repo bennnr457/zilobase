@@ -1,4 +1,4 @@
-import type { WorkspaceRole } from "@zilobase/features/workspaces";
+import type { WorkspaceRole } from "./index";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 

@@ -1,4 +1,4 @@
-import type { TeamspaceAccessMode } from "@zilobase/features/teamspaces";
+import type { TeamspaceAccessMode } from "./index";
 
 export function getTeamspaceCreationInput(draft: {
   accessMode: TeamspaceAccessMode;

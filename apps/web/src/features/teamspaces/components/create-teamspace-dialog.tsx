@@ -1,4 +1,4 @@
-import { getTeamspaceCreationInput } from "../model/teamspace-creation";
+import { getTeamspaceCreationInput } from "@zilobase/features/teamspaces";
 import { useState } from "react";
 
 import { toast } from "sonner";

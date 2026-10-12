@@ -39,7 +39,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("task databases require status, assignee, and due date properties", async () => {
-    const { getTaskDatabaseSchema } = await loadModule("/src/features/tasks/model/tasks-model.ts");
+    const { getTaskDatabaseSchema } = await loadModule("/packages/features/src/tasks/model.ts");
     const payload = createPayload({
       properties: [
         createProperty("state", "Workflow", "status"),
@@ -52,7 +52,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("task rows aggregate typed values and sort undated work last", async () => {
     const { buildTaskRows, sortTaskRows } = await loadModule(
-      "/src/features/tasks/model/tasks-model.ts",
+      "/packages/features/src/tasks/model.ts",
     );
     const first = createPayload({
       databaseId: "product",
@@ -79,7 +79,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("task completion follows status groups and restores the default status", async () => {
     const { buildTaskRows, filterMyTaskRows, getTaskStatusForCompletion } = await loadModule(
-      "/src/features/tasks/model/tasks-model.ts",
+      "/packages/features/src/tasks/model.ts",
     );
     const payload = createPayload({
       properties: [

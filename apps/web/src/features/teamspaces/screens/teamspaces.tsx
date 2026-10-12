@@ -1,4 +1,4 @@
-import { getTeamspaceManagementPermissions } from "../model/teamspace-settings";
+import { getTeamspaceManagementPermissions } from "@zilobase/features/teamspaces";
 import { useTeamspaceDirectory } from "../commands/use-teamspace-directory";
 import { CreateTeamspaceDialog } from "../components/create-teamspace-dialog";
 import { ManageTeamspaceDialog } from "../components/manage-teamspace-dialog";

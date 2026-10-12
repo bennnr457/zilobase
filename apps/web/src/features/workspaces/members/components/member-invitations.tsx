@@ -24,7 +24,7 @@ import type { WorkspaceInvitation } from "@zilobase/features/workspaces";
 import {
   getMaximumTemporaryExpiration,
   getMinimumTemporaryExpiration,
-} from "../model/member-access";
+} from "@zilobase/features/workspaces";
 
 import { formatDate } from "../model/member-presentation";
 import { RoleBadge } from "./member-role-badge";

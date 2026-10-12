@@ -1,5 +1,5 @@
 import { changedPageReferences } from "@/features/editor/operations/changed-page-references";
-import { resolvePageEditability } from "./page-editability";
+import { resolvePageEditability } from "@zilobase/features/pages";
 import {
   recoverMissingPlacedDatabaseBlocks,
   recoverPageEditorContent,

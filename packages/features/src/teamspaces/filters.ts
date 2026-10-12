@@ -1,4 +1,4 @@
-import type { Teamspace, TeamspaceAccessMode } from "@zilobase/features/teamspaces";
+import type { Teamspace, TeamspaceAccessMode } from "./index";
 
 export type TeamspaceFilter = {
   accessMode: "all" | TeamspaceAccessMode;

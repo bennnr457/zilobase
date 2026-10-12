@@ -1,3 +1,5 @@
+import type { ApiFetcher } from "../shared/api-fetcher";
+import { ApiError } from "../shared/api-error";
 export type PublishedShareDecision =
   | { type: "app" }
   | { type: "public" }
@@ -41,5 +43,19 @@ async function publishedOrFalse(isPublished: () => Promise<boolean>) {
     return await isPublished();
   } catch {
     return false;
+  }
+}
+
+export async function isPagePublished(apiFetch: ApiFetcher, pageId: string) {
+  try {
+    const result = await apiFetch<{ published: boolean }>(`/pages/${pageId}/published`, {
+      auth: false,
+      method: "GET",
+    });
+
+    return result.published;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return false;
+    throw error;
   }
 }

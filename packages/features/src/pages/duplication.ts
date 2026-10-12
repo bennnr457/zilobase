@@ -1,4 +1,4 @@
-import type { Page, PageMetadata } from "@zilobase/features/pages";
+import type { Page, PageMetadata } from "./index";
 export function getDuplicatePageName(name: string) {
   const trimmedName = name.trim() || "Untitled";
 

@@ -22,7 +22,7 @@ import {
   useWorkspaceInvitations,
 } from "@zilobase/features/workspaces/react";
 
-import { normalizeWorkspaceRole } from "../members/model/member-access";
+import { normalizeWorkspaceRole } from "@zilobase/features/workspaces";
 import {
   getTeamSettingsTabCounts,
   normalizeTeamSettingsTab,

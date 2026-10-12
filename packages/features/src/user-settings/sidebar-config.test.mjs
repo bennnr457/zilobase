@@ -1,0 +1,289 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+const configPath = "./sidebar-config.ts";
+
+test("empty sidebar settings resolve to an isolated canonical default", async () => {
+  const { defaultSidebarConfig, normalizeSidebarConfig } = await import(configPath);
+  const normalized = normalizeSidebarConfig({});
+
+  assert.deepEqual(normalized, defaultSidebarConfig);
+  assert.notEqual(normalized, defaultSidebarConfig);
+  assert.notEqual(normalized.defaultLayout, defaultSidebarConfig.defaultLayout);
+  assert.equal(normalized.defaultLayout.tabs[0].sections.at(-1).id, "default-teamspaces");
+});
+
+test("unsupported sidebar settings reset to the canonical layout", async () => {
+  const { defaultSidebarConfig, normalizeSidebarConfig } = await import(configPath);
+  const input = {
+    version: 2,
+    libraryView: "shared",
+    defaultLayout: { tabs: [], taskDatabaseIds: ["tasks-1"] },
+    workspaceLayouts: {},
+  };
+
+  assert.deepEqual(normalizeSidebarConfig(input), defaultSidebarConfig);
+});
+
+test("legacy Trash route shortcuts normalize to the Library tab", async () => {
+  const { normalizeSidebarWorkspaceLayout } = await import(configPath);
+  const layout = normalizeSidebarWorkspaceLayout({
+    tabs: [
+      {
+        icon: "home",
+        id: "home",
+        name: "Home",
+        sections: [],
+        shortcuts: [{ id: "trash", target: { route: "trash", type: "route" } }],
+      },
+    ],
+    taskDatabaseIds: [],
+  });
+
+  assert.deepEqual(layout.tabs[0].shortcuts[0].target, {
+    type: "library",
+    view: "trash",
+  });
+});
+
+test("sidebar normalization enforces locked Home, AI, and Calendar tabs with payload caps", async () => {
+  const { normalizeSidebarConfig } = await import(configPath);
+  const tabs = Array.from({ length: 12 }, (_, index) => ({
+    icon: index === 0 ? "<script>" : "star",
+    id: index === 0 ? "home" : `tab-${index}`,
+    name: index === 0 ? "Renamed home" : `Tab ${index}`,
+    sections: Array.from({ length: 30 }, (__, itemIndex) => ({
+      id: `section-${index}-${itemIndex}`,
+      kind: "recents",
+      limit: 100,
+      sort: "lastEdited",
+    })),
+    shortcuts: [],
+  }));
+  const config = normalizeSidebarConfig({
+    defaultLayout: { tabs, taskDatabaseIds: [] },
+    libraryView: "recents",
+    version: 3,
+    workspaceLayouts: {},
+  });
+
+  assert.equal(config.defaultLayout.tabs.length, 8);
+  assert.equal(config.defaultLayout.tabs[0].id, "home");
+  assert.equal(config.defaultLayout.tabs[0].name, "Home");
+  assert.equal(config.defaultLayout.tabs[0].icon, "home");
+  assert.equal(config.defaultLayout.tabs[0].sections.length, 24);
+  assert.equal(config.defaultLayout.tabs[1].id, "ai");
+  assert.equal(config.defaultLayout.tabs[1].name, "AI");
+  assert.equal(config.defaultLayout.tabs[1].icon, "sparkles");
+  assert.equal(config.defaultLayout.tabs[2].id, "calendar");
+  assert.equal(config.defaultLayout.tabs[2].name, "Calendar");
+});
+
+test("shared pages and teamspaces are independent sidebar sections", async () => {
+  const { defaultSidebarConfig, normalizeSidebarWorkspaceLayout } = await import(configPath);
+  assert.deepEqual(
+    defaultSidebarConfig.defaultLayout.tabs[0].sections.slice(-2).map((section) => section.kind),
+    ["shared", "teamspaces"],
+  );
+  const layout = normalizeSidebarWorkspaceLayout({
+    tabs: [
+      {
+        icon: "home",
+        id: "home",
+        name: "Home",
+        sections: [
+          { id: "shared", kind: "shared", limit: 10, sort: "lastEdited" },
+          { id: "teamspaces", kind: "teamspaces", limit: 10, sort: "lastEdited" },
+        ],
+        shortcuts: [],
+      },
+    ],
+    taskDatabaseIds: [],
+  });
+  assert.deepEqual(
+    layout.tabs[0].sections.map((section) => section.kind),
+    ["shared", "teamspaces"],
+  );
+});
+
+test("workspace layouts resolve independently and preserve the default fallback", async () => {
+  const { defaultSidebarConfig, resolveSidebarWorkspaceLayout, withSidebarWorkspaceLayout } =
+    await import(configPath);
+  const custom = {
+    tabs: [{ icon: "star", id: "home", name: "Wrong", sections: [], shortcuts: [] }],
+    taskDatabaseIds: ["database-1"],
+  };
+  const config = withSidebarWorkspaceLayout(defaultSidebarConfig, "workspace-1", custom);
+
+  assert.deepEqual(resolveSidebarWorkspaceLayout(config, "workspace-1").taskDatabaseIds, [
+    "database-1",
+  ]);
+  assert.deepEqual(resolveSidebarWorkspaceLayout(config, "workspace-2"), config.defaultLayout);
+  assert.equal(resolveSidebarWorkspaceLayout(config, "workspace-1").tabs[0].name, "Home");
+});
+
+test("AI keeps scoped customization while workspace tabs reject service navigation", async () => {
+  const { normalizeSidebarWorkspaceLayout } = await import(configPath);
+  const serviceShortcuts = [
+    { id: "ask-ai", target: { route: "ai", type: "route" } },
+    { id: "new-chat", target: { action: "createChat", type: "action" } },
+  ];
+  const layout = normalizeSidebarWorkspaceLayout({
+    tabs: [
+      {
+        icon: "star",
+        id: "home",
+        name: "Renamed Home",
+        sections: [{ id: "home-ai", kind: "aiChats", limit: 10, sort: "lastEdited" }],
+        shortcuts: serviceShortcuts,
+      },
+      {
+        icon: "circle",
+        id: "ai",
+        name: "Renamed AI",
+        sections: [
+          { id: "ai-history", kind: "aiChats", limit: 20, sort: "alphabetical" },
+          { id: "ai-recents", kind: "recents", limit: 10, sort: "lastEdited" },
+        ],
+        shortcuts: [
+          { id: "ai-new", label: "Start chat", target: { action: "createChat", type: "action" } },
+          { id: "ai-tasks", target: { route: "tasks", type: "route" } },
+        ],
+      },
+      {
+        icon: "star",
+        id: "custom",
+        name: "Custom",
+        sections: [{ id: "custom-ai", kind: "aiChats", limit: 10, sort: "lastEdited" }],
+        shortcuts: serviceShortcuts,
+      },
+    ],
+    taskDatabaseIds: [],
+  });
+
+  const [home, ai, calendar, custom] = layout.tabs;
+  assert.deepEqual(home.shortcuts, []);
+  assert.deepEqual(home.sections, []);
+  assert.deepEqual(custom.shortcuts, []);
+  assert.deepEqual(custom.sections, []);
+  assert.equal(ai.name, "AI");
+  assert.deepEqual(
+    ai.shortcuts.map((shortcut) => shortcut.id),
+    ["ai-new"],
+  );
+  assert.equal(ai.shortcuts[0].label, "Start chat");
+  assert.deepEqual(
+    ai.sections.map((section) => section.kind),
+    ["aiChats"],
+  );
+  assert.equal(ai.sections[0].limit, 20);
+  assert.deepEqual(calendar, {
+    icon: "calendar",
+    id: "calendar",
+    name: "Calendar",
+    sections: [],
+    shortcuts: [],
+  });
+});
+
+test("Calendar is restored once in saved layouts and remains a fixed route tab", async () => {
+  const { normalizeSidebarWorkspaceLayout, isFixedSidebarTabId, isStaticSidebarTabId } =
+    await import(configPath);
+  const layout = normalizeSidebarWorkspaceLayout({
+    tabs: [
+      {
+        id: "calendar",
+        name: "Renamed",
+        icon: "star",
+        sections: [{ id: "pages", kind: "recents" }],
+        shortcuts: [{ id: "tasks", target: { type: "route", route: "tasks" } }],
+      },
+      { id: "calendar", name: "Duplicate", sections: [], shortcuts: [] },
+    ],
+  });
+  assert.deepEqual(
+    layout.tabs.map((tab) => tab.id),
+    ["home", "ai", "calendar"],
+  );
+  assert.deepEqual(layout.tabs[2], {
+    id: "calendar",
+    name: "Calendar",
+    icon: "calendar",
+    sections: [],
+    shortcuts: [],
+  });
+  assert.deepEqual(normalizeSidebarWorkspaceLayout(layout), layout);
+  assert.equal(isFixedSidebarTabId("calendar"), true);
+  assert.equal(isStaticSidebarTabId("calendar"), true);
+});
+
+test("retired Mail tabs are discarded from saved layouts", async () => {
+  const { normalizeSidebarConfig } = await import(configPath);
+  const savedLayout = {
+    tabs: [
+      { icon: "mail", id: "mail", name: "Mail", sections: [], shortcuts: [] },
+      { icon: "star", id: "custom", name: "Custom", sections: [], shortcuts: [] },
+    ],
+    taskDatabaseIds: [],
+  };
+  const config = normalizeSidebarConfig({
+    defaultLayout: savedLayout,
+    libraryView: "recents",
+    version: 3,
+    workspaceLayouts: { workspace: savedLayout },
+  });
+
+  assert.deepEqual(
+    config.defaultLayout.tabs.map((tab) => tab.id),
+    ["home", "ai", "calendar", "custom"],
+  );
+  assert.deepEqual(
+    config.workspaceLayouts.workspace.tabs.map((tab) => tab.id),
+    ["home", "ai", "calendar", "custom"],
+  );
+});
+
+test("custom tab icons retain safe SVG icons and reject executable markup", async () => {
+  const { normalizeSidebarWorkspaceLayout } = await import(configPath);
+  const makeLayout = (icon) => ({
+    tabs: [
+      { icon: "home", id: "home", name: "Home", sections: [], shortcuts: [] },
+      { icon: "sparkles", id: "ai", name: "AI", sections: [], shortcuts: [] },
+      { icon, id: "custom", name: "Custom", sections: [], shortcuts: [] },
+    ],
+    taskDatabaseIds: [],
+  });
+  const safeSvg = '<svg viewBox="0 0 24 24"><path d="M1 1h2v2z" /></svg>';
+
+  assert.equal(normalizeSidebarWorkspaceLayout(makeLayout(safeSvg)).tabs[3].icon, safeSvg);
+  assert.equal(
+    normalizeSidebarWorkspaceLayout(makeLayout('<svg onload="alert(1)"></svg>')).tabs[3].icon,
+    "circle",
+  );
+});
+
+test("shortcut icon overrides retain safe icons and reject executable markup", async () => {
+  const { normalizeSidebarWorkspaceLayout } = await import(configPath);
+  const safeSvg = '<svg viewBox="0 0 24 24"><path d="M1 1h2v2z" /></svg>';
+  const makeLayout = (icon) => ({
+    tabs: [
+      {
+        icon: "home",
+        id: "home",
+        name: "Home",
+        sections: [],
+        shortcuts: [{ icon, id: "shortcut", target: { route: "tasks", type: "route" } }],
+      },
+    ],
+    taskDatabaseIds: [],
+  });
+
+  assert.equal(
+    normalizeSidebarWorkspaceLayout(makeLayout(safeSvg)).tabs[0].shortcuts[0].icon,
+    safeSvg,
+  );
+  assert.equal(
+    normalizeSidebarWorkspaceLayout(makeLayout('<svg onload="alert(1)"></svg>')).tabs[0]
+      .shortcuts[0].icon,
+    undefined,
+  );
+});

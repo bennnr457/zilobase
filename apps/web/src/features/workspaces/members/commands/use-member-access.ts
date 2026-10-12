@@ -7,13 +7,13 @@ import {
   useUpdateWorkspaceMember,
 } from "@zilobase/features/workspaces/react";
 import type { WorkspaceMember, WorkspaceRole } from "@zilobase/features/workspaces";
-import { isoToLocalDateTime, normalizeWorkspaceRole } from "../model/member-access";
+import { isoToLocalDateTime, normalizeWorkspaceRole } from "@zilobase/features/workspaces";
 
 import {
   canEditWorkspaceMember,
   getRoleAccessExpiration,
   getRoleDraftExpiration,
-} from "../model/member-access";
+} from "@zilobase/features/workspaces";
 export function useMemberAccess({
   actorRole,
   canManage,

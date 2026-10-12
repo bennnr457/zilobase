@@ -12,11 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/ui/sidebar";
-import {
-  buildTaskRows,
-  filterMyTaskRows,
-  getTaskDatabaseSchema,
-} from "@/features/tasks/model/tasks-model";
+import { buildTaskRows, filterMyTaskRows, getTaskDatabaseSchema } from "@zilobase/features/tasks";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { useSession } from "@zilobase/features/auth/react";
 import {

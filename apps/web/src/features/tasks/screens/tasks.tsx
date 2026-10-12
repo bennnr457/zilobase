@@ -86,7 +86,7 @@ import {
   getTaskDatabaseSchema,
   getTaskStatusForCompletion,
   type TaskRow,
-} from "../model/tasks-model";
+} from "@zilobase/features/tasks";
 
 const DatabaseListView = lazy(() =>
   import("@/features/databases/views/list/components/database-list-view").then((module) => ({

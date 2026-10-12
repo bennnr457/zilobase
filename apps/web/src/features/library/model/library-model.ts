@@ -1,68 +1,48 @@
 import { DEFAULT_MEETING_ITEM_ICON } from "@/features/pages/icons/item-icons";
-import { getDatabaseEmoji } from "@zilobase/features/databases/appearance";
-import {
-  type DatabasePropertyEntity,
-  type DatabaseRecordEntity,
-  type DatabaseViewEntity,
-  type DataSourceEntity,
-  type PagePropertyValueEntity,
+import type {
+  DatabasePropertyEntity,
+  DatabaseRecordEntity,
+  DatabaseViewEntity,
+  DataSourceEntity,
+  PagePropertyValueEntity,
 } from "@zilobase/features/databases";
 import { databaseOrderKeyAtPosition } from "@zilobase/features/databases/order-key";
 import type { DatabaseViewData } from "@zilobase/features/databases/models";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 import type { Teamspace } from "@zilobase/features/teamspaces";
-import type {
-  Page,
-  PageDatabase,
-  PageItemPlacement,
-  PageNavigationPayload,
-} from "@zilobase/features/pages";
-import { libraryViewIds, type LibraryView } from "@zilobase/features/user-settings/sidebar-config";
+import type { PageNavigationPayload } from "@zilobase/features/pages";
+import { libraryViewIds } from "@zilobase/features/user-settings/sidebar-config";
 import { libraryViewLabels } from "@/features/sidebar/model/index";
-import { buildHomepageHierarchy } from "./homepage-hierarchy";
-
-export const homepageViews = libraryViewIds.map((id) => ({
-  id,
-  label: libraryViewLabels[id],
-}));
-
-export type HomepageView = LibraryView;
-
-export type RecentsMode = "home" | "trash";
-
-export const libraryParentPropertyId = "library-parent-item";
-
-export type HomepageRow = {
-  createdAt: string;
-  createdBy: string;
-  deletedAt: string;
-  deletedBy: string;
-  iconKind: "database" | "page";
-  id: string;
-  isFavorite: boolean;
-  isShared: boolean;
-  itemKind: "database" | "meeting" | "page" | "teamspace";
-  teamspaceId: string | null;
-  lastVisitedAt: string | null;
-  metadata: Page["metadata"] | null;
-  name: string;
-  openDatabaseId: string | null;
-  openMeetingId: string | null;
-  openPageId: string | null;
-  parentRowId: string | null;
-  position: number;
-  source: string;
-  sourcePage: HomepageSourcePage | null;
-  updatedAt: string;
-};
-
-type HomepageSourcePage = {
-  iconKind: "database" | "page";
-  id: string;
-  metadata: Page["metadata"] | null;
-  name: string;
-};
-
+import {
+  buildHomepageRows as deriveHomepageRows,
+  applyHomepageView,
+  includeHomepageDescendants,
+  libraryParentPropertyId,
+  type HomepageView,
+  type HomepageRow,
+  type RecentsMode,
+} from "@zilobase/features/library";
+export {
+  libraryParentPropertyId,
+  getHomepageRowType,
+  buildTeamspaceLibraryRows,
+  isHomepageView,
+  applyHomepageView,
+  includeHomepageDescendants,
+} from "@zilobase/features/library";
+export type { HomepageView, HomepageRow, RecentsMode } from "@zilobase/features/library";
+export const homepageViews = libraryViewIds.map((id) => ({ id, label: libraryViewLabels[id] }));
+export function buildHomepageRows(
+  navigation: PageNavigationPayload,
+  meetings: MeetingListItem[],
+  mode: RecentsMode,
+  teamspaces: Teamspace[] = [],
+) {
+  return deriveHomepageRows(navigation, meetings, mode, teamspaces, DEFAULT_MEETING_ITEM_ICON);
+}
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
 const homepagePropertyDefinitions = [
   { id: "source", name: "Source", type: "relation", width: 220 },
   { id: "createdBy", name: "Created by", type: "text", width: 190 },
@@ -76,40 +56,6 @@ const trashPropertyDefinitions = [
   { id: "deletedAt", name: "Deleted at", type: "date", width: 210 },
   { id: "deletedBy", name: "Deleted by", type: "text", width: 190 },
 ] as const;
-
-export function getHomepageRowType(row: HomepageRow) {
-  if (row.itemKind === "database") return "Database";
-  if (row.itemKind === "meeting") return "Meeting";
-  if (row.itemKind === "teamspace") return "Teamspace";
-  return "Page";
-}
-
-export function buildTeamspaceLibraryRows(rows: HomepageRow[], teamspaceId: string) {
-  const matchingRows = rows.filter(
-    (row) => row.teamspaceId === teamspaceId && row.itemKind !== "teamspace",
-  );
-  const matchingIds = new Set(matchingRows.map((row) => row.id));
-  const childrenByParent = new Map<string | null, HomepageRow[]>();
-  for (const row of matchingRows) {
-    const parentId = row.parentRowId && matchingIds.has(row.parentRowId) ? row.parentRowId : null;
-    const siblings = childrenByParent.get(parentId) ?? [];
-    siblings.push(row);
-    childrenByParent.set(parentId, siblings);
-  }
-  for (const siblings of childrenByParent.values())
-    siblings.sort(
-      (left, right) => left.position - right.position || left.name.localeCompare(right.name),
-    );
-  const result: Array<{ depth: number; row: HomepageRow }> = [];
-  const visit = (parentId: string | null, depth: number) => {
-    for (const row of childrenByParent.get(parentId) ?? []) {
-      result.push({ depth, row });
-      visit(row.id, depth + 1);
-    }
-  };
-  visit(null, 0);
-  return result;
-}
 
 export function buildHomepageViewData({
   activeViewId,
@@ -261,331 +207,5 @@ export function buildHomepageViewData({
     hasMore: false,
     records,
     totalCount: records.length,
-  };
-}
-
-export function buildHomepageRows(
-  navigation: PageNavigationPayload,
-  meetings: MeetingListItem[],
-  mode: RecentsMode,
-  teamspaces: Teamspace[] = [],
-): HomepageRow[] {
-  const { databases: databaseRecords, pages, placements } = navigation;
-  const pagesById = new Map(pages.map((page) => [page.id, page]));
-  const databases = databaseRecords.map((database) => ({
-    database,
-    page: database.pageId ? (pagesById.get(database.pageId) ?? null) : null,
-  }));
-  const showTrash = mode === "trash";
-  const includePage = (page: Page) =>
-    page.type !== "meeting" && (showTrash ? Boolean(page.deletedAt) : !page.deletedAt);
-  const includeDatabase = (database: PageDatabase, page: Page | null) =>
-    showTrash
-      ? Boolean(database.deletedAt ?? page?.deletedAt)
-      : !database.deletedAt && !page?.deletedAt;
-  const databasesById = new Map(
-    databases.map(({ database, page }) => [database.id, { database, page }]),
-  );
-  const hierarchy = buildHomepageHierarchy(placements);
-  const parentKeys = new Set(
-    placements.map((placement) => `${placement.parentKind}:${placement.parentId}`),
-  );
-
-  const contentRows: HomepageRow[] = [
-    ...pages
-      .filter((page) => includePage(page))
-      .map((page) => {
-        const sourcePage = parentKeys.has(`page:${page.id}`)
-          ? null
-          : resolveSourcePage(placements, pagesById, databasesById, "page", page.id);
-
-        return {
-          ...getLibraryRowDates(page),
-          iconKind: "page" as const,
-          id: `page:${page.id}`,
-          ...getPageRowAppearance(page),
-          itemKind: "page" as const,
-          openDatabaseId: null,
-          openMeetingId: null,
-          openPageId: page.id,
-          ...getLibraryRowPlacement(
-            hierarchy,
-            `page:${page.id}`,
-            page.parentPageId ? `page:${page.parentPageId}` : null,
-          ),
-          source: sourcePage?.id ?? "",
-          sourcePage,
-          updatedAt: page.updatedAt,
-        };
-      }),
-    ...databases
-      .filter(({ database, page }) => includeDatabase(database, page))
-      .map(({ database, page }) => {
-        const sourcePage = parentKeys.has(`database:${database.id}`)
-          ? null
-          : (resolveSourcePage(placements, pagesById, databasesById, "database", database.id) ??
-            (page ? getPageSourcePage(page) : null));
-
-        return {
-          ...getLibraryRowDates(database, page),
-          iconKind: "database" as const,
-          id: `database:${database.id}`,
-          ...getDatabaseRowAppearance(database, page),
-          itemKind: "database" as const,
-          openDatabaseId: database.id,
-          openMeetingId: null,
-          openPageId: database.pageId,
-          ...getLibraryRowPlacement(hierarchy, `database:${database.id}`),
-          source: sourcePage?.id ?? "",
-          sourcePage,
-          updatedAt: database.updatedAt,
-        };
-      }),
-    ...(mode === "home" ? buildMeetingRows(meetings, pagesById) : []),
-  ];
-
-  if (mode === "trash") return contentRows;
-
-  const activeTeamspaces = teamspaces.filter((teamspace) => !teamspace.archivedAt);
-  const teamspaceIds = new Set(activeTeamspaces.map((teamspace) => teamspace.id));
-  const contentRowsById = new Map(contentRows.map((row) => [row.id, row]));
-  const nestedContentRows = contentRows.map((row) => {
-    if (!row.teamspaceId || !teamspaceIds.has(row.teamspaceId)) return row;
-    const parent = row.parentRowId ? contentRowsById.get(row.parentRowId) : null;
-    return parent?.teamspaceId === row.teamspaceId
-      ? row
-      : { ...row, parentRowId: `teamspace:${row.teamspaceId}` };
-  });
-
-  return [
-    ...nestedContentRows,
-    ...activeTeamspaces.map((teamspace, index): HomepageRow => ({
-      createdAt: teamspace.createdAt,
-      createdBy: "",
-      deletedAt: "",
-      deletedBy: "",
-      iconKind: "page",
-      id: `teamspace:${teamspace.id}`,
-      isFavorite: false,
-      isShared: false,
-      itemKind: "teamspace",
-      teamspaceId: teamspace.id,
-      lastVisitedAt: null,
-      metadata:
-        typeof teamspace.icon === "string" && teamspace.icon ? { emoji: teamspace.icon } : null,
-      name: teamspace.name,
-      openDatabaseId: null,
-      openMeetingId: null,
-      openPageId: null,
-      parentRowId: null,
-      position: index,
-      source: "",
-      sourcePage: null,
-      updatedAt: teamspace.updatedAt,
-    })),
-  ];
-}
-
-function buildMeetingRows(
-  meetings: MeetingListItem[],
-  pagesById: Map<string, Page>,
-): HomepageRow[] {
-  return meetings.map((meeting, index) => {
-    const hostPage = pagesById.get(meeting.pageId) ?? null;
-    const sourcePage = hostPage ? getPageSourcePage(hostPage) : null;
-
-    return {
-      createdAt: meeting.createdAt,
-      createdBy: hostPage ? formatCreator(hostPage.createdBy) : "Unknown",
-      deletedAt: meeting.deletedAt ?? "",
-      deletedBy: "Unknown",
-      iconKind: "page",
-      id: `meeting:${meeting.id}`,
-      isFavorite: false,
-      isShared: false,
-      itemKind: "meeting",
-      lastVisitedAt: null,
-      metadata: { emoji: meeting.emoji ?? DEFAULT_MEETING_ITEM_ICON },
-      name: meeting.title?.trim() || "Untitled meeting",
-      openDatabaseId: null,
-      openMeetingId: meeting.id,
-      openPageId: null,
-      parentRowId: null,
-      position: index,
-      source: sourcePage?.id ?? "",
-      sourcePage,
-      teamspaceId: null,
-      updatedAt: meeting.updatedAt,
-    };
-  });
-}
-
-export function isHomepageView(value: unknown): value is HomepageView {
-  return libraryViewIds.includes(value as HomepageView);
-}
-
-function resolveSourcePage(
-  placements: PageItemPlacement[],
-  pagesById: Map<string, Page>,
-  databasesById: Map<string, { database: PageDatabase; page: Page | null }>,
-  itemKind: "database" | "page",
-  itemId: string,
-): HomepageSourcePage | null {
-  const placement = placements.find(
-    (candidate) =>
-      candidate.itemKind === itemKind &&
-      candidate.itemId === itemId &&
-      (candidate.placementKind === "primary" || candidate.placementKind === "database_row"),
-  );
-
-  if (!placement) {
-    return null;
-  }
-
-  if (placement.parentKind === "page") {
-    const parentPage = pagesById.get(placement.parentId);
-
-    return parentPage ? getPageSourcePage(parentPage) : null;
-  }
-
-  if (placement.parentKind === "database") {
-    const parentDatabase = databasesById.get(placement.parentId)?.database;
-
-    return parentDatabase ? getDatabaseSourcePage(parentDatabase) : null;
-  }
-
-  return null;
-}
-
-function getPageSourcePage(page: Page): HomepageSourcePage {
-  return {
-    iconKind: "page",
-    id: `page:${page.id}`,
-    metadata: page.metadata ?? null,
-    name: page.name?.trim() || "Untitled",
-  };
-}
-
-function getDatabaseSourcePage(database: PageDatabase): HomepageSourcePage {
-  const emoji = getDatabaseEmoji({ config: database.dataSourceConfig });
-
-  return {
-    iconKind: "database",
-    id: `database:${database.id}`,
-    metadata: emoji ? { emoji } : null,
-    name: database.name?.trim() || "Untitled",
-  };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-export function applyHomepageView(rows: HomepageRow[], view: HomepageView) {
-  switch (view) {
-    case "favourites":
-      return rows.filter((row) => row.itemKind !== "meeting" && row.isFavorite);
-    case "meetings":
-      return rows.filter((row) => row.itemKind === "meeting");
-    case "skills":
-    case "instructions":
-      return rows.filter(
-        (row) =>
-          row.itemKind === "page" &&
-          row.metadata?.zilobaseai === (view === "skills" ? "skill" : "instruction"),
-      );
-    case "shared":
-      return rows.filter((row) => row.itemKind !== "meeting" && row.isShared && !row.teamspaceId);
-    case "teamspaces": {
-      const activeTeamspaceIds = new Set(
-        rows.filter((row) => row.itemKind === "teamspace").map((row) => row.teamspaceId),
-      );
-      return rows.filter(
-        (row) =>
-          row.itemKind !== "meeting" &&
-          Boolean(row.teamspaceId) &&
-          activeTeamspaceIds.has(row.teamspaceId),
-      );
-    }
-    case "private":
-      return rows.filter((row) => row.itemKind !== "meeting" && !row.isShared && !row.teamspaceId);
-    case "trash":
-      return rows.filter((row) => row.itemKind !== "meeting" && row.itemKind !== "teamspace");
-    case "recents":
-    default:
-      return rows.filter((row) => row.itemKind !== "meeting" && row.itemKind !== "teamspace");
-  }
-}
-
-export function includeHomepageDescendants(
-  rows: HomepageRow[],
-  selectedRows: HomepageRow[],
-): HomepageRow[] {
-  const childrenByParent = new Map<string, HomepageRow[]>();
-  for (const row of rows) {
-    if (!row.parentRowId) continue;
-    const children = childrenByParent.get(row.parentRowId) ?? [];
-    children.push(row);
-    childrenByParent.set(row.parentRowId, children);
-  }
-
-  const selectedIds = new Set(selectedRows.map((row) => row.id));
-  const pending = [...selectedIds];
-  while (pending.length > 0) {
-    const parentId = pending.pop()!;
-    for (const child of childrenByParent.get(parentId) ?? []) {
-      if (selectedIds.has(child.id)) continue;
-      selectedIds.add(child.id);
-      pending.push(child.id);
-    }
-  }
-
-  return rows.filter((row) => selectedIds.has(row.id));
-}
-
-function formatCreator(creator: Page["createdBy"] | PageDatabase["createdBy"] | undefined) {
-  return creator?.name?.trim() || creator?.email?.trim() || "Unknown";
-}
-
-function getLibraryRowDates(
-  record: Pick<Page, "createdAt" | "createdBy" | "deletedAt" | "deletedBy">,
-  backingPage?: Page | null,
-) {
-  return {
-    createdAt: record.createdAt,
-    createdBy: formatCreator(record.createdBy ?? backingPage?.createdBy),
-    deletedAt: record.deletedAt ?? backingPage?.deletedAt ?? "",
-    deletedBy: formatCreator(record.deletedBy ?? backingPage?.deletedBy),
-  };
-}
-function getPageRowAppearance(page: Page) {
-  return {
-    isFavorite: Boolean(page.isFavorite),
-    isShared: Boolean(page.isShared),
-    teamspaceId: page.teamspaceId ?? null,
-    lastVisitedAt: page.lastVisitedAt ?? null,
-    metadata: page.metadata ?? null,
-    name: page.name || "Untitled",
-  };
-}
-function getDatabaseRowAppearance(database: PageDatabase, page: Page | null) {
-  const emoji = getDatabaseEmoji({ config: database.dataSourceConfig });
-  return {
-    isFavorite: Boolean(database.isFavorite),
-    isShared: Boolean(page?.isShared),
-    teamspaceId: database.teamspaceId ?? page?.teamspaceId ?? null,
-    lastVisitedAt: database.lastVisitedAt ?? null,
-    metadata: emoji ? { emoji } : null,
-    name: database.name || "Untitled",
-  };
-}
-function getLibraryRowPlacement(
-  hierarchy: ReturnType<typeof buildHomepageHierarchy>,
-  rowId: string,
-  fallbackParentId: string | null = null,
-) {
-  return {
-    parentRowId: hierarchy.parentRowIdByRowId[rowId] ?? fallbackParentId,
-    position: hierarchy.positionByRowId[rowId] ?? Number.MAX_SAFE_INTEGER,
   };
 }

@@ -118,7 +118,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("page editability preserves comment grants, locks, read-only views and trash", async () => {
     const { resolvePageEditability } = await loadModule(
-      "/src/features/pages/pane/page-editability.ts",
+      "/packages/features/src/pages/editability.ts",
     );
     const base = { accessLevel: "edit", deletedAt: null, locked: false, readOnly: false };
     assert.deepEqual(resolvePageEditability(base), { pageEditable: true, commentsEditable: true });

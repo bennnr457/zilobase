@@ -1,7 +1,7 @@
 export function register({ readSource, assert, loadModule, test }) {
   test("homepage hierarchy follows canonical page and database placements", async () => {
     const { buildHomepageHierarchy } = await loadModule(
-      "/src/features/library/model/homepage-hierarchy.ts",
+      "/packages/features/src/library/hierarchy.ts",
     );
     const hierarchy = buildHomepageHierarchy([
       createPlacement({
@@ -61,7 +61,10 @@ export function register({ readSource, assert, loadModule, test }) {
   test("database realtime tickets use the host database id", async () => {
     const [context, controller] = await Promise.all([
       readSource("/src/features/databases/views/state/database-view-context.tsx"),
-      readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+      Promise.all([
+        readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
+        readSource("/packages/features/src/databases/records/source-commands.ts"),
+      ]).then((parts) => parts.join("\n")),
     ]);
 
     assert.match(context, /useDatabaseRealtime\(value\.hostDatabaseId, \{/);

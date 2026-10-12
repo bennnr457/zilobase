@@ -17,3 +17,6 @@ export {
   type PageDetailReference,
   type PageNavigationReference,
 } from "./cache";
+export * from "./duplication";
+export * from "./editability";
+export * from "./publication";

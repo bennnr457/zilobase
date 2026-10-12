@@ -55,7 +55,7 @@ import {
   insertCommentMention,
   tokenizeCommentMentions,
   type CommentMentionMember,
-} from "@/features/comments/components/page-comment-mentions";
+} from "@zilobase/features/comments";
 import { useOptionalPageEditorComments } from "./page-editor-comments";
 import { useSession } from "@zilobase/features/auth/react";
 import { usePagePersonAccessTargets } from "@zilobase/features/pages/react";

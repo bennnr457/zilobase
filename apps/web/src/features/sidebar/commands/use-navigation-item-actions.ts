@@ -29,7 +29,7 @@ import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 
 import { getPrimaryPageParentId, resolvePageFullWidth } from "@zilobase/features/pages/queries";
 import type { ZilobaseAiMode } from "@zilobase/features/pages";
-import { buildPageDuplicateInput } from "../model/page-duplication";
+import { buildPageDuplicateInput } from "@zilobase/features/pages";
 
 export function useNavigationItemActions({
   databaseId,

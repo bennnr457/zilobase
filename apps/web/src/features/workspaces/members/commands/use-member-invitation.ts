@@ -4,9 +4,9 @@ import { toast } from "sonner";
 
 import { useInviteWorkspaceMember } from "@zilobase/features/workspaces/react";
 import type { InvitableWorkspaceRole } from "@zilobase/features/workspaces";
-import { isValidInvitationEmail } from "../model/member-access";
+import { isValidInvitationEmail } from "@zilobase/features/workspaces";
 
-import { getRoleAccessExpiration, getRoleDraftExpiration } from "../model/member-access";
+import { getRoleAccessExpiration, getRoleDraftExpiration } from "@zilobase/features/workspaces";
 export function useMemberInvitation(workspaceId: string | null | undefined) {
   const inviteMember = useInviteWorkspaceMember();
   const [email, setEmail] = React.useState("");

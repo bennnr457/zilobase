@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { getApiErrorMessage } from "@/platform/network/api";
 
-import { filterTeamspaces } from "../model/teamspace-filters";
+import { filterTeamspaces } from "@zilobase/features/teamspaces";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { type Teamspace, type TeamspaceAccessMode } from "@zilobase/features/teamspaces";
 import {
