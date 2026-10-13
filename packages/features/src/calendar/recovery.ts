@@ -22,3 +22,13 @@ export function validCalendarInvalidation(
 export function calendarPushHealthy(lastPong: number, watchExpiresAt: number, now = Date.now()) {
   return lastPong > 0 && now - lastPong < 45_000 && watchExpiresAt > now;
 }
+
+export function decodeCalendarMessage(data: unknown): { type?: string } | null {
+  if (typeof data !== "string" || data.length > 4096) return null;
+  try {
+    const value: unknown = JSON.parse(data);
+    return value && typeof value === "object" ? value : null;
+  } catch {
+    return null;
+  }
+}

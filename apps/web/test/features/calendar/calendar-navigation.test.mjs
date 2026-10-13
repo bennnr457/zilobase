@@ -21,28 +21,30 @@ export function register({ assert, loadModule, test }) {
   });
   test("destination work overtakes queued prefetch and equal requests share one write", async () => {
     const { runCalendarSyncOnce } = await loadModule(
-      "/src/features/calendar/sync/calendar-sync-queue.ts",
+      "/packages/features/src/calendar/sync-queue.ts",
     );
     const db = { name: "priority-test" },
       order = [];
     let release;
     const first = runCalendarSyncOnce(
-      db,
+      db.name,
       "active",
       () =>
         new Promise((resolve) => {
           release = resolve;
         }),
     );
-    const background = runCalendarSyncOnce(db, "background", async () => order.push("background"));
+    const background = runCalendarSyncOnce(db.name, "background", async () =>
+      order.push("background"),
+    );
     const destination = runCalendarSyncOnce(
-      db,
+      db.name,
       "destination",
       async () => order.push("destination"),
       10,
     );
     const duplicate = runCalendarSyncOnce(
-      db,
+      db.name,
       "destination",
       async () => order.push("duplicate"),
       10,

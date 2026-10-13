@@ -1,6 +1,6 @@
+import { belongsToRange } from "@zilobase/features/calendar";
 import {
   calendarEventKey,
-  eventOverlaps,
   type CalendarEvent,
   type CalendarEventWriteRequest,
   type CalendarMutationResponse,
@@ -102,14 +102,4 @@ export async function reconcileCalendarMutations(
       return;
     }
   }
-}
-
-function belongsToRange(
-  event: CalendarEvent,
-  range: { calendarId: string; start: string; end: string },
-) {
-  return (
-    range.calendarId === event.calendarId &&
-    eventOverlaps(event, range.start, range.end, event.start.timeZone ?? "UTC")
-  );
 }

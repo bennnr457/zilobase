@@ -1,7 +1,12 @@
 import { visibleScheduleEvent } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import { useCalendarBuffers } from "../preferences/calendar-buffer-preferences";
-import { calendarRangeReady, calendarSnapshotMatches } from "@zilobase/features/calendar";
+import {
+  calendarRangeReady,
+  calendarCacheBound as cacheBound,
+  matchingCalendarSnapshots as matchingSnapshots,
+  calendarSelectionMissing as selectionMissing,
+} from "@zilobase/features/calendar";
 import {
   calendarDestinationRange,
   useCalendarNavigation,
@@ -35,8 +40,6 @@ import {
   calendarDays,
   normalizeCalendarView,
   todayInZone,
-  dayInstant,
-  addCalendarDays,
   calendarEventKey,
   type CalendarConnection,
   type CalendarEvent,
@@ -656,19 +659,6 @@ function scheduleView(searchView: string | undefined, preferenceView: CalendarVi
 function scheduleDate(searchDate: string | undefined, zone: string) {
   return searchDate ?? todayInZone(zone);
 }
-function cacheBound(explicit: string | undefined, day: string, zone: string, extraDays: number) {
-  if (explicit) return explicit;
-  return extraDays ? dayInstant(addCalendarDays(day, extraDays), zone) : dayInstant(day, zone);
-}
-function matchingSnapshots(
-  connections: CalendarConnection[],
-  snapshots: Record<string, Snapshot>,
-  userId: string,
-) {
-  return connections.flatMap((c) =>
-    calendarSnapshotMatches(snapshots[c.bindingId], userId, c) ? [snapshots[c.bindingId]!] : [],
-  );
-}
 function openPanelForSearch(event: string | undefined, openPanel: () => void) {
   if (event) openPanel();
 }
@@ -1144,17 +1134,6 @@ function eventSurfaceColor(
     "red",
   ];
   return PALETTE[hues[Number(providerColor ?? 0) % hues.length] ?? "blue"];
-}
-function selectionMissing(
-  event: CalendarEvent,
-  snapshot: Snapshot | undefined,
-  connections: CalendarConnection[],
-) {
-  if (!connections.some((c) => c.bindingId === event.bindingId)) return true;
-  return Boolean(
-    snapshot?.catalogLoaded &&
-    !snapshot.calendars.some((calendar) => calendar.id === event.calendarId),
-  );
 }
 function selectionData(
   event: CalendarEvent | null,

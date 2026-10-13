@@ -1,3 +1,5 @@
+import type { CalendarEvent } from "./contracts";
+import { dayInstant, addCalendarDays } from "../calendar-layout/time";
 import type { CalendarConnection, CalendarRecord, CalendarPreferences } from "./index";
 import { createCalendarSelectionMatcher } from "./selection";
 export type CalendarWindow = { start: string; end: string };
@@ -79,4 +81,34 @@ export function calendarRequestRanges(start: string, end: string, chunkDays = 28
     cursor = next;
   }
   return ranges;
+}
+
+export function calendarCacheBound(
+  explicit: string | undefined,
+  day: string,
+  zone: string,
+  extraDays: number,
+) {
+  if (explicit) return explicit;
+  return extraDays ? dayInstant(addCalendarDays(day, extraDays), zone) : dayInstant(day, zone);
+}
+export function matchingCalendarSnapshots<Snapshot extends { requestKey?: string }>(
+  connections: CalendarConnection[],
+  snapshots: Record<string, Snapshot>,
+  userId: string,
+) {
+  return connections.flatMap((c) =>
+    calendarSnapshotMatches(snapshots[c.bindingId], userId, c) ? [snapshots[c.bindingId]!] : [],
+  );
+}
+export function calendarSelectionMissing(
+  event: CalendarEvent,
+  snapshot: Pick<CalendarCoverageSnapshot, "catalogLoaded" | "calendars"> | undefined,
+  connections: CalendarConnection[],
+) {
+  if (!connections.some((c) => c.bindingId === event.bindingId)) return true;
+  return Boolean(
+    snapshot?.catalogLoaded &&
+    !snapshot.calendars.some((calendar) => calendar.id === event.calendarId),
+  );
 }

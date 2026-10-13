@@ -1,3 +1,4 @@
+import { decodeCalendarMessage } from "@zilobase/features/calendar";
 import { calendarRecoveryTicket } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import {
@@ -184,15 +185,6 @@ function createCalendarRecovery(
   };
 }
 
-function decodeMessage(data: unknown): { type?: string } | null {
-  if (typeof data !== "string" || data.length > 4096) return null;
-  try {
-    const value: unknown = JSON.parse(data);
-    return value && typeof value === "object" ? value : null;
-  } catch {
-    return null;
-  }
-}
 function attachCalendarSocket(
   ticket: { websocketUrl: string; websocketProtocols: string[]; expiresAt: string },
   state: () => { stopped: boolean; socket: WebSocket | null; leader: boolean },
@@ -251,7 +243,7 @@ function handleCalendarSocketMessage(
   scope: CalendarDatabase["identity"],
 ) {
   if (ignore()) return;
-  const value = decodeMessage(data);
+  const value = decodeCalendarMessage(data);
   if (!value) return;
   if (value.type === "calendar.ready" || value.type === "calendar.pong") receivedHealth(value.type);
   else if (validCalendarInvalidation(value, scope)) onInvalidate(value);

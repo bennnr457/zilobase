@@ -1,4 +1,3 @@
-import type { CalendarDatabase } from "../storage/calendar-database";
 type Job = {
   key: string;
   priority: number;
@@ -9,16 +8,16 @@ type Job = {
 const queues = new Map<string, { active: boolean; jobs: Job[] }>(),
   requests = new Map<string, Promise<unknown>>();
 export function runCalendarSyncOnce<T>(
-  database: CalendarDatabase,
+  scope: string,
   requestKey: string,
   run: () => Promise<T>,
   priority = 0,
 ): Promise<T> {
-  const key = `${database.name}:${requestKey}`;
-  let queue = queues.get(database.name);
+  const key = `${scope}:${requestKey}`;
+  let queue = queues.get(scope);
   if (!queue) {
     queue = { active: false, jobs: [] };
-    queues.set(database.name, queue);
+    queues.set(scope, queue);
   }
   const existing = requests.get(key);
   if (existing) {
@@ -45,7 +44,7 @@ export function runCalendarSyncOnce<T>(
       }
     }
     queue!.active = false;
-    queues.delete(database.name);
+    queues.delete(scope);
   };
   void drain();
   return request as Promise<T>;

@@ -173,7 +173,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("Calendar queues coalesce equal requests and serialize different ranges", async () => {
     const { runCalendarSyncOnce } = await loadModule(
-      "/src/features/calendar/sync/calendar-sync-queue.ts",
+      "/packages/features/src/calendar/sync-queue.ts",
     );
     const sequence = [];
     let release;
@@ -181,15 +181,15 @@ export function register({ assert, loadModule, test }) {
       release = resolve;
     });
     const database = { name: "queue-fixture" };
-    const first = runCalendarSyncOnce(database, "a", async () => {
+    const first = runCalendarSyncOnce(database.name, "a", async () => {
       sequence.push("a");
       await barrier;
       return 1;
     });
-    const duplicate = runCalendarSyncOnce(database, "a", async () => {
+    const duplicate = runCalendarSyncOnce(database.name, "a", async () => {
       throw new Error("not coalesced");
     });
-    const next = runCalendarSyncOnce(database, "b", async () => {
+    const next = runCalendarSyncOnce(database.name, "b", async () => {
       sequence.push("b");
       return 2;
     });

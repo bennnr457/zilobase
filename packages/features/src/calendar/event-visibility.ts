@@ -1,3 +1,4 @@
+import { eventInstant } from "../calendar-layout/time";
 import type { CalendarEvent, CalendarPreferences, CalendarRecord } from "./contracts";
 import { calendarIsVisible, calendarSelectionKey } from "./selection";
 import { orderCalendarSources } from "./source-order";
@@ -37,4 +38,23 @@ export function toggleHiddenCalendar(
       ? preferences.hiddenCalendarKeys.filter((id) => id !== key)
       : [...preferences.hiddenCalendarKeys, key],
   };
+}
+
+export function sourceCalendarEvents(
+  events: CalendarEvent[],
+  calendarId: string,
+  preferences: CalendarPreferences,
+) {
+  return events
+    .filter(
+      (event) =>
+        event.calendarId === calendarId &&
+        event.status !== "cancelled" &&
+        visibleSourceEvent(event, preferences),
+    )
+    .sort(
+      (a, b) =>
+        Date.parse(eventInstant(a.start, preferences.timeZone)) -
+        Date.parse(eventInstant(b.start, preferences.timeZone)),
+    );
 }

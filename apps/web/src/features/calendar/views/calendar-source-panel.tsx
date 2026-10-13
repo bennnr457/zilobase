@@ -1,4 +1,4 @@
-import { visibleSourceEvent } from "@zilobase/features/calendar";
+import { sourceCalendarEvents as sourcePanelEvents } from "@zilobase/features/calendar";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -6,7 +6,6 @@ import {
   dayInstant,
   todayInZone,
   eventClock,
-  eventInstant,
   type CalendarConnection,
   type CalendarEvent,
   type CalendarPreferences,
@@ -129,24 +128,6 @@ export function CalendarSourcePanel({
     </section>,
     workspace.panelElement,
   );
-}
-function sourcePanelEvents(
-  events: CalendarEvent[],
-  calendarId: string,
-  preferences: CalendarPreferences,
-) {
-  return events
-    .filter(
-      (event) =>
-        event.calendarId === calendarId &&
-        event.status !== "cancelled" &&
-        visibleSourceEvent(event, preferences),
-    )
-    .sort(
-      (a, b) =>
-        Date.parse(eventInstant(a.start, preferences.timeZone)) -
-        Date.parse(eventInstant(b.start, preferences.timeZone)),
-    );
 }
 function SourceEventList({
   events,

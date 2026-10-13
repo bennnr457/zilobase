@@ -1,3 +1,4 @@
+import { readableCalendar, freshCalendarRange } from "@zilobase/features/calendar";
 import {
   calendarRequestRanges,
   synchronizeCalendar,
@@ -7,7 +8,7 @@ import {
 import { emitCalendarMetric } from "../metrics";
 import { requestCalendarIntervals } from "./calendar-range-queue";
 import { missingCalendarRanges } from "@zilobase/features/calendar";
-import { runCalendarSyncOnce } from "./calendar-sync-queue";
+import { runCalendarSyncOnce } from "@zilobase/features/calendar";
 import { type CalendarRangeResponse, type CalendarSyncResponse } from "@zilobase/features/calendar";
 import {
   applyCalendarRange,
@@ -71,7 +72,7 @@ export async function synchronizeCalendarCache(
       await database.state.put({ key: "last_recovery", revision: Date.now(), generation: 1 });
     };
     await runCalendarSyncOnce(
-      database,
+      database.name,
       JSON.stringify(["metadata", recover, options.metadataLoaded]),
       async () => {
         if (recover) {
@@ -100,17 +101,6 @@ export async function synchronizeCalendarCache(
   })();
 }
 
-function readableCalendar(
-  calendar: { permissions: { read: boolean; freeBusyOnly: boolean }; id: string },
-  hiddenKeys: string[] | undefined,
-  bindingId: string,
-) {
-  return (
-    calendar.permissions.read &&
-    !calendar.permissions.freeBusyOnly &&
-    !hiddenKeys?.includes(JSON.stringify([bindingId, calendar.id]))
-  );
-}
 async function syncCalendarRanges(
   database: CalendarDatabase,
   calendar: { id: string },
@@ -234,14 +224,4 @@ async function loadCalendarRangePages(
     signal.throwIfAborted();
   } while (pageToken);
   emitCalendarMetric("range_pages", pages);
-}
-function freshCalendarRange(
-  prior: { fetchedAt: number; revision: number; generation: number } | undefined,
-  state: { revision: number; generation: number } | undefined,
-) {
-  return Boolean(
-    prior &&
-    Date.now() - prior.fetchedAt < 2000 &&
-    (!state || (state.revision <= prior.revision && state.generation <= prior.generation)),
-  );
 }
