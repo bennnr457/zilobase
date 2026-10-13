@@ -2,14 +2,7 @@ import { createDatabaseSourceCommands } from "@zilobase/features/databases/model
 import { shouldUseDatabaseSetupMode } from "@/features/databases/setup/model/setup-mode";
 import { useCallback, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
 
-import { useSession } from "@zilobase/features/auth/react";
-import { useZilobaseFeatures } from "@zilobase/features";
-import {
-  databaseViewQueryHash,
-  getDatabaseInitialPageSize,
-  isDatabaseLocked,
-  prefetchDatabaseWindow,
-} from "@zilobase/features/databases";
+import { isDatabaseLocked } from "@zilobase/features/databases";
 import {
   useAddDatabaseView,
   useAddDatabaseProperty,
@@ -18,9 +11,7 @@ import {
   useApplyDatabaseTemplate,
   useCreateDatabaseDataSource,
   useDatabaseBootstrap,
-  useDatabaseRecords,
-  useProjectedDatabaseRecords,
-  useDatabaseSessionId,
+  useDatabaseViewData,
   useDeleteDatabaseView,
   useLinkDatabaseDataSource,
   useReplaceDatabaseViewDataSource,
@@ -32,7 +23,7 @@ import {
 } from "@zilobase/features/databases/react";
 import { toast } from "sonner";
 import { createSampleRowContent } from "../../setup/components/database-setup-card";
-import { usePage, usePagePersonAccessTargets } from "@zilobase/features/pages/react";
+import { usePage } from "@zilobase/features/pages/react";
 import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,
@@ -40,7 +31,7 @@ import {
 } from "../../interactions/database-page-drop";
 import type { DatabaseViewProviderValue } from "../state/database-view-context";
 import { getDatabaseViewCommands } from "../../records/view-commands";
-import { getDatabaseViewModel } from "../components/database-view-model";
+import { presentDatabaseViewModel } from "../components/database-view-model";
 import { useDatabaseController } from "@zilobase/features/databases/react";
 import {
   composeDatabaseViewData,
@@ -160,50 +151,20 @@ export function useDatabaseViewController({
   const resolvedActiveViewId = isControlledActiveView
     ? (requestedViewId ?? baseViewTabs[0]?.id ?? null)
     : activeViewId;
-  const activeDataSourceId =
-    bootstrap?.views.find(({ id }) => id === resolvedActiveViewId)?.dataSourceId ??
-    bootstrap?.dataSources[0]?.id ??
-    null;
-  const recordWindow = useDatabaseRecords(
-    databaseId && !databaseDeleted && resolvedActiveViewId && activeDataSourceId
-      ? {
-          databaseId,
-          dataSourceId: activeDataSourceId,
-          includeDeleted: includeDeletedDatabases,
-          viewId: resolvedActiveViewId,
-        }
-      : null,
-  );
-  const projectedRecords = useProjectedDatabaseRecords({
+  const {
+    activeDataSourceId,
+    recordWindow,
+    viewData,
+    activeProperties,
+    model,
+    prefetchDatabaseView,
+  } = useDatabaseViewData({
     databaseId,
-    dataSourceId: activeDataSourceId,
-    sourceVersion: recordWindow.dataSourceVersion,
-    records: recordWindow.records,
+    bootstrap,
+    serverBootstrap: bootstrapState.serverData,
+    activeViewId: resolvedActiveViewId,
+    includeDeleted: includeDeletedDatabases,
   });
-  const viewData = useMemo(
-    () =>
-      composeDatabaseViewData({
-        bootstrap,
-        dataSourceId: activeDataSourceId,
-        hasMore: recordWindow.hasMore,
-        records: projectedRecords,
-        totalCount: recordWindow.totalCount,
-      }),
-    [
-      activeDataSourceId,
-      bootstrap,
-      recordWindow.hasMore,
-      projectedRecords,
-      recordWindow.totalCount,
-    ],
-  );
-  const activeProperties = useMemo(
-    () =>
-      (viewData?.bootstrap.properties ?? []).filter(
-        (property) => property.dataSourceId === viewData?.dataSourceId,
-      ),
-    [viewData],
-  );
   const setupDismissed = getDatabaseSetupDismissed(viewData?.activeDataSource?.config);
   const hasSetupContent = Boolean(
     viewData &&
@@ -231,16 +192,6 @@ export function useDatabaseViewController({
   const activeFetchNextPage = recordWindow.fetchNextPage;
   const activeHasNextPage = recordWindow.hasMore;
   const activeIsFetchingNextPage = recordWindow.isFetchingNextPage;
-  const activeViewLookupId = resolvedActiveViewId;
-  const { data: session } = useSession();
-  const needsPersonAccessTargets = useMemo(
-    () => activeProperties.some((property) => property.property.type === "person"),
-    [activeProperties],
-  );
-  const { data: accessTargets } = usePagePersonAccessTargets(
-    activeViewData?.bootstrap.database.pageId,
-    { enabled: needsPersonAccessTargets },
-  );
   const activeViewTabId = resolvedActiveViewId;
   const setSelectedActiveViewId = useCallback<DatabaseViewProviderValue["setActiveViewId"]>(
     (value) => {
@@ -254,42 +205,6 @@ export function useDatabaseViewController({
       });
     },
     [isControlledActiveView, onActiveViewIdChange, resolvedActiveViewId],
-  );
-
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-  const sessionId = useDatabaseSessionId();
-  const prefetchDatabaseView = useCallback(
-    (viewId: string) => {
-      if (!databaseId || !bootstrap || viewId === resolvedActiveViewId) return;
-      const view = bootstrapState.serverData?.views.find((candidate) => candidate.id === viewId);
-      if (!view) return;
-      void prefetchDatabaseWindow(
-        queryClient,
-        apiFetch,
-        sessionId,
-        {
-          databaseId,
-          dataSourceId: view.dataSourceId,
-          includeDeleted: includeDeletedDatabases,
-          queryHash: databaseViewQueryHash(
-            view.config ?? bootstrapState.serverData?.database.config,
-            includeDeletedDatabases,
-          ),
-          viewId: view.id,
-        },
-        getDatabaseInitialPageSize(view.config ?? bootstrap.database.config),
-      );
-    },
-    [
-      apiFetch,
-      bootstrap,
-      bootstrapState.serverData,
-      databaseId,
-      includeDeletedDatabases,
-      queryClient,
-      resolvedActiveViewId,
-      sessionId,
-    ],
   );
 
   useEffect(() => {
@@ -327,16 +242,7 @@ export function useDatabaseViewController({
     resolvedActiveViewId,
   ]);
 
-  const viewModel = useMemo(
-    () =>
-      getDatabaseViewModel({
-        accessTargets,
-        activeViewId: activeViewLookupId,
-        currentUserId: session?.user?.id,
-        viewData: activeViewData,
-      }),
-    [accessTargets, activeViewData, activeViewLookupId, session?.user?.id],
-  );
+  const viewModel = useMemo(() => presentDatabaseViewModel(model), [model]);
   const {
     activeConditionalColors,
     activeDatabaseFilters,

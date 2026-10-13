@@ -12,7 +12,7 @@ import {
 } from "../../../../../packages/features/src/shared/context";
 import { DbProvider } from "../../../../../packages/features/src/databases/queries/session";
 import { useDatabaseBootstrap } from "../../../../../packages/features/src/databases/queries/bootstrap";
-import { useDatabaseRecords } from "../../../../../packages/features/src/databases/queries/records";
+import { useDatabaseViewData } from "../../../../../packages/features/src/databases/queries/view-data";
 import { databaseBootstrapQueryKey } from "../../../../../packages/features/src/databases/queries/keys";
 import {
   databaseController,
@@ -134,7 +134,13 @@ export function mountQueryReconciliation(container: HTMLElement) {
   const output: Record<string, { config: unknown; hash?: string; status: string }> = {};
   function Capture({ viewId }: { viewId: string }) {
     const bootstrap = useDatabaseBootstrap({ databaseId: "host" });
-    const records = useDatabaseRecords({ databaseId: "host", dataSourceId: "source", viewId });
+    const { recordWindow: records } = useDatabaseViewData({
+      databaseId: "host",
+      bootstrap: bootstrap.data,
+      serverBootstrap: bootstrap.serverData,
+      activeViewId: viewId,
+      includeDeleted: false,
+    });
     output[viewId] = {
       config: bootstrap.data?.views.find(({ id }) => id === viewId)?.config,
       hash: records.scope?.queryHash,
@@ -150,7 +156,15 @@ export function mountQueryReconciliation(container: HTMLElement) {
         { client: queryClient },
         createElement(
           ZilobaseFeaturesProvider,
-          { value: { queryClient, apiFetch, auth: {} as ZilobaseFeaturesConfig["auth"] } },
+          {
+            value: {
+              queryClient,
+              apiFetch,
+              auth: {
+                getSession: async () => ({ user: null, session: null }),
+              } as ZilobaseFeaturesConfig["auth"],
+            },
+          },
           createElement(
             DbProvider,
             { queryClient, apiFetch, sessionId: "query-test" },

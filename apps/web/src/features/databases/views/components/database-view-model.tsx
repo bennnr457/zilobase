@@ -5,8 +5,7 @@ import { NameColumnGlyph } from "../../interactions/name-column-glyph";
 import { getDatabasePropertyType } from "../../schema/property-catalog";
 
 // Render field icons at the presentation boundary; row/config derivation is pure.
-export function getDatabaseViewModel(input: Parameters<typeof deriveDatabaseViewModel>[0]) {
-  const model = deriveDatabaseViewModel(input);
+export function presentDatabaseViewModel(model: ReturnType<typeof deriveDatabaseViewModel>) {
   const options = new Map<DatabaseFieldOption, DatabaseSearchableMenuOption>();
   const present = (option: DatabaseFieldOption): DatabaseSearchableMenuOption => {
     const existing = options.get(option);
@@ -33,4 +32,8 @@ export function getDatabaseViewModel(input: Parameters<typeof deriveDatabaseView
       ]),
     ),
   };
+}
+
+export function getDatabaseViewModel(input: Parameters<typeof deriveDatabaseViewModel>[0]) {
+  return presentDatabaseViewModel(deriveDatabaseViewModel(input));
 }

@@ -63,3 +63,5 @@ export {
 
 export { useDatabaseMetadata } from "./queries/metadata";
 export { useDatabaseSecondaryPayload } from "./queries/secondary-records";
+
+export { useDatabaseViewData } from "./queries/view-data";

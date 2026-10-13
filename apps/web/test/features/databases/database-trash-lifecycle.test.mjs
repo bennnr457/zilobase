@@ -6,6 +6,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
         Promise.all([
           readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
           readSource("/packages/features/src/databases/records/source-commands.ts"),
+          readSource("/packages/features/src/databases/queries/view-data.ts"),
         ]).then((parts) => parts.join("\n")),
         readSource("/src/features/databases/core/database-screen.tsx"),
         readSource("/src/features/databases/views/components/database-view.tsx"),
@@ -25,7 +26,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
     assert.match(controller, /Boolean\(bootstrap\?\.database\.deletedAt\)/);
     assert.match(
       controller,
-      /databaseId && !databaseDeleted && resolvedActiveViewId && activeDataSourceId/,
+      /databaseId && !databaseDeleted && activeViewId && activeDataSourceId/,
     );
     assert.match(controller, /realtimeEnabled: Boolean\(bootstrap\) && !databaseDeleted/);
     assert.match(controller, /requestedEditable\s*&&\s*!databaseDeleted\s*&&\s*!isDatabaseLocked/);

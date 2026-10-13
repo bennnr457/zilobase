@@ -4,9 +4,14 @@ export function register({ assert, loadModule, readSource, test }) {
       "/src/features/databases/views/controller/use-database-view-controller.tsx",
     );
     assert.match(controller, /useDatabaseBootstrap/);
-    assert.match(controller, /useDatabaseRecords/);
+    assert.match(controller, /useDatabaseViewData/);
     assert.match(controller, /composeDatabaseViewData/);
     assert.doesNotMatch(controller, /\buseDatabase\(/);
+    const shared = await readSource("/packages/features/src/databases/queries/view-data.ts");
+    assert.match(shared, /useDatabaseRecords/);
+    assert.match(shared, /useProjectedDatabaseRecords/);
+    assert.match(shared, /composeDatabaseViewData/);
+    assert.match(shared, /prefetchDatabaseWindow/);
   });
 
   test("controller view data keeps record identity and source scoping", async () => {
