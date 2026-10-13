@@ -1,49 +1,13 @@
 import {
-  getGuestPageId,
-  isSharingWorkspaceMember,
-  getSharingAccessLevel,
-  getSharingRules,
-  getSharingRuleState,
-  getDatabaseSharingAccessLevel,
-  getPendingItems,
-  getGuestActionLabel,
-} from "@zilobase/features/pages";
-import { getNavigationItemPath } from "../model/database-view-navigation";
-import * as React from "react";
-
-import { toast } from "sonner";
-
-import { useSession } from "@zilobase/features/auth/react";
-import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import {
-  useDeletePageAccess,
-  useSetPagePublished,
-  useUpsertPageAccess,
-  usePage,
-  usePageAccess,
-  usePageAccessLevel,
-  usePageAccessTargets,
-  usePagePersonAccessTargets,
-  usePageGuestInvitations,
-  usePageGuestRequests,
-  useInvitePageGuest,
-  useCancelPageGuestInvitation,
-  useRevokePageGuest,
-} from "@zilobase/features/pages/react";
-import { useWorkspaceGuestPolicy } from "@zilobase/features/workspaces/react";
-import { useDatabaseMetadata } from "@zilobase/features/databases/react";
-import {
-  useDatabaseAccess,
-  useDeleteDatabaseAccess,
-  useSetDatabasePublished,
-  useUpsertDatabaseAccess,
-} from "@zilobase/features/databases/react";
-
-import {
   type AccessLevel,
   type AccessTargetType,
   type PageAccessRule,
 } from "@zilobase/features/pages";
+import { useItemSharingController } from "@zilobase/features/pages/react";
+import { getNavigationItemPath } from "../model/database-view-navigation";
+import * as React from "react";
+import { toast } from "sonner";
+
 export type ShareTargetValue = `${AccessTargetType}:${string}`;
 export function useItemSharing({
   databaseId,
@@ -52,74 +16,32 @@ export function useItemSharing({
   databaseId?: string | null;
   pageId?: string | null;
 }) {
-  const workspaceId = useActiveWorkspaceId();
-  const { data: session } = useSession();
-  const { data: page } = usePage(pageId);
-  const { data: accessLevel } = usePageAccessLevel(pageId);
-  const { data: accessPayload } = usePageAccess(pageId);
-  const { data: databasePayload } = useDatabaseMetadata(databaseId);
-  const { data: databaseAccessPayload } = useDatabaseAccess(databaseId);
-  const { data: targets } = usePageAccessTargets(workspaceId);
-  const guestPageId = getGuestPageId(databaseId, pageId);
-  const isWorkspaceMember = isSharingWorkspaceMember(targets, session);
-  const { data: personTargets } = usePagePersonAccessTargets(pageId, {
-    enabled: Boolean(guestPageId),
-  });
-  const { data: guestInvitations } = usePageGuestInvitations(databaseId ? null : pageId);
-  const { data: guestRequests } = usePageGuestRequests(databaseId ? null : pageId);
-  const { data: guestPolicy } = useWorkspaceGuestPolicy(workspaceId, {
-    enabled: Boolean(guestPageId && isWorkspaceMember),
-  });
-  const upsertAccess = useUpsertPageAccess();
-  const upsertDatabaseAccess = useUpsertDatabaseAccess();
-  const deleteAccess = useDeletePageAccess();
-  const deleteDatabaseAccess = useDeleteDatabaseAccess();
-  const setPublished = useSetPagePublished();
-  const setDatabasePublished = useSetDatabasePublished();
-  const inviteGuest = useInvitePageGuest();
-  const cancelGuestInvitation = useCancelPageGuestInvitation();
-  const revokeGuest = useRevokePageGuest();
+  const sharing = useItemSharingController({ databaseId, pageId });
+  const {
+    session,
+    isDatabase,
+    effectiveAccessLevel,
+    canManage,
+    isWorkspaceMember,
+    shareableMembers,
+    targetByKey,
+    isPublished,
+    sharingRules,
+    pendingGuestInvitations,
+    pendingGuestRequests,
+    guestActionLabel,
+    upsertAccess,
+    upsertDatabaseAccess,
+    setPublished,
+    setDatabasePublished,
+    inviteGuest,
+    cancelGuestInvitation,
+  } = sharing;
   const [targetValue, setTargetValue] = React.useState<ShareTargetValue | "">("");
   const [targetPickerOpen, setTargetPickerOpen] = React.useState(false);
   const [nextAccessLevel, setNextAccessLevel] = React.useState<AccessLevel>("view");
   const [guestEmail, setGuestEmail] = React.useState("");
   const [guestAccessLevel, setGuestAccessLevel] = React.useState<AccessLevel>("view");
-  const isDatabase = Boolean(databaseId);
-  const effectiveAccessLevel = getSharingAccessLevel(isDatabase, databasePayload, accessLevel);
-  const canManage = effectiveAccessLevel === "full";
-
-  const shareableMembers = React.useMemo(
-    () => (targets?.members ?? []).filter((member) => member.id !== session?.user?.id),
-    [session?.user?.id, targets?.members],
-  );
-  const targetByKey = React.useMemo(() => {
-    return new Map<string, { label: string; detail?: string }>([
-      ...(targets?.members ?? []).map((member): [string, { label: string; detail: string }] => [
-        `user:${member.id}`,
-        {
-          detail: member.email,
-          label: member.name || member.email,
-        },
-      ]),
-      ...(personTargets?.guests ?? []).map((guest): [string, { label: string; detail: string }] => [
-        `user:${guest.id}`,
-        {
-          detail: `${guest.email} · Guest`,
-          label: guest.name || guest.email,
-        },
-      ]),
-    ]);
-  }, [personTargets?.guests, targets?.members]);
-  const guestUserIds = React.useMemo(
-    () => new Set((personTargets?.guests ?? []).map((guest) => guest.id)),
-    [personTargets?.guests],
-  );
-  const rules = getSharingRules(isDatabase, databaseAccessPayload, accessPayload);
-  const { isPublished, sharingRules } = getSharingRuleState(rules);
-  const pendingGuestInvitations = getPendingItems(guestInvitations);
-  const pendingGuestRequests = getPendingItems(guestRequests);
-  const guestActionLabel = getGuestActionLabel(guestPolicy);
-
   const { selectedTarget, shareDisabled } = getSharingSelection(
     targetValue,
     targetByKey,
@@ -129,140 +51,51 @@ export function useItemSharing({
   );
   const publicUrl = getSharingLink(databaseId, pageId);
 
-  const shareItem = () => {
-    if (!targetValue || (!page && !databaseId)) {
-      return;
-    }
-
-    const [targetType, targetId] = targetValue.split(":") as [AccessTargetType, string];
-
-    const options = {
+  const shareItem = () =>
+    sharing.shareItem(targetValue, nextAccessLevel, {
       onSuccess: () => {
         setTargetValue("");
         toast.success(`${isDatabase ? "Database" : "Page"} access updated.`);
       },
-      onError: (error: Error) => {
-        toast.error(error.message || "Could not share.");
-      },
-    };
-
-    if (isDatabase) {
-      upsertDatabaseAccess.mutate(
-        {
-          accessLevel: getDatabaseSharingAccessLevel(nextAccessLevel),
-          targetId,
-          targetType,
-          databaseId: databaseId as string,
-        },
-        options,
-      );
-      return;
-    }
-
-    upsertAccess.mutate(
-      {
-        accessLevel: nextAccessLevel,
-        targetId,
-        targetType,
-        pageId: page?.id as string,
-      },
-      options,
-    );
-  };
+      onError: (error) => toast.error(error.message || "Could not share."),
+    });
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(publicUrl || window.location.href);
     toast.success("Page link copied.");
   };
 
-  const invitePageGuest = () => {
-    const email = guestEmail.trim().toLowerCase();
-
-    if (!pageId || !email || !canManage || !isWorkspaceMember || inviteGuest.isPending) return;
-    inviteGuest.mutate(
-      { accessLevel: guestAccessLevel, email, pageId },
-      {
-        onError: (error) =>
-          toast.error(error instanceof Error ? error.message : "Could not invite guest."),
-        onSuccess: (result) => {
-          setGuestEmail("");
-          toast.success(
-            result.request
-              ? "Guest invitation sent for owner approval."
-              : "Page guest invitation sent.",
-          );
-        },
+  const invitePageGuest = () =>
+    sharing.invitePageGuest(guestEmail, guestAccessLevel, {
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : "Could not invite guest."),
+      onSuccess: (result) => {
+        setGuestEmail("");
+        toast.success(
+          result.request
+            ? "Guest invitation sent for owner approval."
+            : "Page guest invitation sent.",
+        );
       },
-    );
-  };
-
-  const togglePublished = (checked: boolean) => {
-    const publishingPending = isDatabase ? setDatabasePublished.isPending : setPublished.isPending;
-    if ((!page && !databaseId) || !canManage || publishingPending) {
-      return;
-    }
-
-    const options = {
-      onSuccess: () => {
-        toast.success(checked ? "Page published." : "Page unpublished.");
-      },
-      onError: (error: Error) => {
-        toast.error(error instanceof Error ? error.message : "Could not update publishing.");
-      },
-    };
-
-    if (isDatabase) {
-      setDatabasePublished.mutate(
-        { isPublished: checked, databaseId: databaseId as string },
-        options,
-      );
-      return;
-    }
-
-    setPublished.mutate({ isPublished: checked, pageId: page?.id as string }, options);
-  };
-
+    });
+  const togglePublished = (checked: boolean) =>
+    sharing.togglePublished(checked, {
+      onSuccess: () => toast.success(checked ? "Page published." : "Page unpublished."),
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : "Could not update publishing."),
+    });
   const deleteRule = (rule: Pick<PageAccessRule, "id" | "targetId">) =>
-    isDatabase
-      ? deleteDatabaseAccess.mutate(
-          { ruleId: rule.id, databaseId: databaseId as string },
-          {
-            onError: (error) => {
-              toast.error(error instanceof Error ? error.message : "Could not remove access.");
-            },
-          },
-        )
-      : guestUserIds.has(rule.targetId)
-        ? revokeGuest.mutate(
-            {
-              pageId: pageId as string,
-              userId: rule.targetId,
-            },
-            {
-              onError: (error) => {
-                toast.error(
-                  error instanceof Error ? error.message : "Could not remove guest access.",
-                );
-              },
-            },
-          )
-        : deleteAccess.mutate(
-            { ruleId: rule.id, pageId: pageId as string },
-            {
-              onError: (error) => {
-                toast.error(error instanceof Error ? error.message : "Could not remove access.");
-              },
-            },
-          );
-
-  const cancelInvitation = (invitationId: string) =>
-    cancelGuestInvitation.mutate(
-      { invitationId: invitationId, pageId: pageId as string },
-      {
-        onError: (error) =>
-          toast.error(error instanceof Error ? error.message : "Could not cancel invitation."),
-      },
+    sharing.deleteRule(
+      rule,
+      (error) => toast.error(error instanceof Error ? error.message : "Could not remove access."),
+      (error) =>
+        toast.error(error instanceof Error ? error.message : "Could not remove guest access."),
     );
+  const cancelInvitation = (invitationId: string) =>
+    sharing.cancelInvitation(invitationId, {
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : "Could not cancel invitation."),
+    });
 
   return {
     shareDisabled,

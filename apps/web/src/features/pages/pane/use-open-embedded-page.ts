@@ -4,42 +4,8 @@ import { markPageNavigationStart } from "../navigation/page-navigation-timing";
 import { usePageSidePane } from "./page-side-pane";
 import type { OpenPageSidePaneOptions } from "./page-side-pane";
 import { useZilobaseFeatures } from "@zilobase/features";
-import {
-  defaultUserSettings,
-  userSettingsQueryKey,
-  type UserSettings,
-} from "@zilobase/features/user-settings";
-import {
-  resolvePageDetailReference,
-  type PageDetailReference,
-  resolveEmbeddedItemsOpenAs,
-  pageQueryKey,
-  type Page,
-} from "@zilobase/features/pages";
-import {
-  isPublishedFallbackPage,
-  readPublishedEmbeddedItemsOpenAs,
-} from "../publication/published-page-preferences";
-
-function resolveOpenPagesAsFromCache(
-  queryClient: ReturnType<typeof useZilobaseFeatures>["queryClient"],
-  hostPageId: string | null | undefined,
-  fallbackPage: Page | null | undefined,
-) {
-  const userSettings =
-    queryClient.getQueryData<UserSettings>(userSettingsQueryKey) ?? defaultUserSettings;
-  const page =
-    resolvePageDetailReference(
-      queryClient,
-      queryClient.getQueryData<PageDetailReference | null>(pageQueryKey(hostPageId)),
-    )?.page ?? fallbackPage;
-
-  if (isPublishedFallbackPage(page)) {
-    return readPublishedEmbeddedItemsOpenAs();
-  }
-
-  return resolveEmbeddedItemsOpenAs(userSettings.embeddedItemsOpenAs);
-}
+import { resolveEmbeddedItemsOpenAsFromCache, type Page } from "@zilobase/features/pages";
+import { readPublishedEmbeddedItemsOpenAs } from "../publication/published-page-preferences";
 
 export function useOpenEmbeddedPage({
   contextPageId,
@@ -62,7 +28,12 @@ export function useOpenEmbeddedPage({
 
   const openPage = useCallback(
     (pageId: string, options?: OpenPageSidePaneOptions) => {
-      const mode = resolveOpenPagesAsFromCache(queryClient, contextPageId, page);
+      const mode = resolveEmbeddedItemsOpenAsFromCache(
+        queryClient,
+        contextPageId,
+        page,
+        readPublishedEmbeddedItemsOpenAs,
+      );
       const usesDialog = mode === "dialog";
       const activePageId = usesDialog ? dialogPageId : sidePanePageId;
       const isCurrentlyOpen = activePageId === pageId;

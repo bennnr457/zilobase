@@ -1,4 +1,4 @@
-import { usePageWorkspaceAccess } from "@zilobase/features/pages/react";
+import { usePageWorkspaceAccess, switchPageWorkspace } from "@zilobase/features/pages/react";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { Building2Icon } from "@/shared/components/icons";
@@ -17,7 +17,6 @@ import { Button } from "@/shared/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import { pageQueryKey } from "@zilobase/features/pages";
 import { useWorkspaces, useSetActiveWorkspace } from "@zilobase/features/workspaces/react";
 
 type PageWorkspaceGateProps = {
@@ -35,14 +34,12 @@ export function PageWorkspaceGate({ children, pageId }: PageWorkspaceGateProps) 
   const workspaceLabel = workspace?.name?.trim() || "this workspace";
 
   const handleSwitchWorkspace = React.useCallback(async () => {
-    if (!requiredWorkspaceId) {
-      return;
-    }
-
-    await setActiveWorkspace.mutateAsync(requiredWorkspaceId);
-    await queryClient.invalidateQueries({
-      queryKey: pageQueryKey(pageId),
-    });
+    await switchPageWorkspace(
+      queryClient,
+      setActiveWorkspace.mutateAsync,
+      requiredWorkspaceId,
+      pageId,
+    );
   }, [queryClient, requiredWorkspaceId, setActiveWorkspace, pageId]);
 
   if (requiredWorkspaceId) {

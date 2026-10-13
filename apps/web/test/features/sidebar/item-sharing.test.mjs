@@ -36,6 +36,7 @@ export function register({ assert, appPath, test }) {
         .map((name) => `export const use${name} = () => runtime.mutations.${name};`)
         .join("\n") +
       'export const useActiveWorkspaceId = () => "workspace";';
+    const sharingHook = appPath("../../packages/features/src/pages/sharing-hooks.ts");
     const result = await build({
       stdin: {
         contents: `
@@ -72,6 +73,18 @@ export function register({ assert, appPath, test }) {
         {
           name: "controlled-sharing",
           setup(build) {
+            build.onResolve({ filter: /^@zilobase\/features\/pages\/react$/ }, () => ({
+              path: sharingHook,
+            }));
+            build.onResolve({ filter: /^\./ }, (args) => {
+              if (
+                args.importer === sharingHook &&
+                /(?:hooks|mutations|metadata)$/.test(args.path)
+              ) {
+                return { path: args.path, namespace: "sharing-test" };
+              }
+            });
+
             build.onResolve(
               {
                 filter:

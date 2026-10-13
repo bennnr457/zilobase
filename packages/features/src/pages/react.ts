@@ -4,7 +4,12 @@ export {
   useAcceptPageGuestInvitation,
   useRevokePageGuest,
 } from "./guest-mutations";
-export { useUpsertPageAccess, useDeletePageAccess, useSetPagePublished } from "./access-mutations";
+export {
+  useUpsertPageAccess,
+  useDeletePageAccess,
+  useSetPagePublished,
+  switchPageWorkspace,
+} from "./access-mutations";
 export {
   useMovePageToTeamspace,
   useConvertPageToTeamspace,
@@ -30,3 +35,5 @@ export {
 } from "./query-hooks";
 export { useResolvedPageLayout, useSavePageLayout, useResetPageLayout } from "./page-layout-hooks";
 export { usePageWorkspaceAccess } from "./query-hooks";
+
+export { useItemSharingController } from "./sharing-hooks";

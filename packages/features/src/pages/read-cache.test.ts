@@ -4,8 +4,57 @@ import { QueryClient } from "@tanstack/react-query";
 import {
   hydratePageReadSnapshots,
   subscribePageReadSnapshots,
+  resolveEmbeddedItemsOpenAsFromCache,
   type PageReadSnapshot,
 } from "./read-cache";
+import { TestQueryClient } from "../data/testing";
+import { cachePageDetail } from "./cache";
+import { defaultUserSettings, userSettingsQueryKey } from "../user-settings/queries";
+import type { Page } from "./contracts";
+
+test("embedded preferences read client storage only for published pages and prefer cached page identity", () => {
+  const client = new TestQueryClient();
+  const page: Page = {
+    id: "page",
+    workspaceId: "workspace",
+    name: "Page",
+    type: "pageblock",
+    url: "#",
+    createdAt: "2026-10-12T00:00:00Z",
+    updatedAt: "2026-10-12T00:00:00Z",
+  };
+  const published = { ...page, publishedOwnerPreferences: { pageFullWidth: true } };
+  let reads = 0;
+  const readPublished = () => {
+    reads++;
+    return "dialog" as const;
+  };
+  try {
+    assert.equal(
+      resolveEmbeddedItemsOpenAsFromCache(client, page.id, page, readPublished),
+      "sidepanel",
+    );
+    client.setQueryData(userSettingsQueryKey, {
+      ...defaultUserSettings,
+      embeddedItemsOpenAs: "dialog",
+    });
+    assert.equal(
+      resolveEmbeddedItemsOpenAsFromCache(client, page.id, page, readPublished),
+      "dialog",
+    );
+    assert.equal(reads, 0);
+    assert.equal(
+      resolveEmbeddedItemsOpenAsFromCache(client, page.id, published, readPublished),
+      "dialog",
+    );
+    assert.equal(reads, 1);
+    cachePageDetail(client, { page, accessLevel: "full", databaseIds: [] });
+    resolveEmbeddedItemsOpenAsFromCache(client, page.id, published, readPublished);
+    assert.equal(reads, 1, "cached authenticated detail takes precedence over fallback");
+  } finally {
+    client.clear();
+  }
+});
 
 test("snapshot hydration preserves newer data and refuses session-owned entity reads", () => {
   const client = new QueryClient();

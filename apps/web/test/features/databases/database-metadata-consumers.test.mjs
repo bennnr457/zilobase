@@ -16,7 +16,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
     const paths = [
       "/src/app/shell/document-favicon.tsx",
       "/src/app/shell/content/app-layout.tsx",
-      "/src/features/sidebar/commands/use-item-sharing.ts",
+      "/packages/features/src/pages/sharing-hooks.ts",
       "/src/features/sidebar/commands/use-navigation-item-actions.ts",
       "/src/features/databases/setup/components/database-setup-card.tsx",
       "/src/features/databases/views/view-settings/components/data-source-settings.tsx",
@@ -27,6 +27,9 @@ export function register({ assert, readSource, readWorkspace, test }) {
       assert.match(source, /useDatabaseMetadata/);
       assert.doesNotMatch(source, /\buseDatabase\(/);
     }
+    const sharing = await readSource("/src/features/sidebar/commands/use-item-sharing.ts");
+    assert.match(sharing, /useItemSharingController/);
+    assert.doesNotMatch(sharing, /\buseDatabase\(/);
   });
 
   test("sidebar and layout previews use bounded record windows", async () => {

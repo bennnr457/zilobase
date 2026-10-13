@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMutationTestRuntime } from "../shared/mutation-runtime.test";
-import { useSetPagePublished } from "./access-mutations";
+import { switchPageWorkspace, useSetPagePublished } from "./access-mutations";
+import { QueryClient } from "@tanstack/react-query";
 import { pageAccessQueryKey, pageQueryKey } from "./queries";
 
 for (const isPublished of [true, false]) {
@@ -33,3 +34,39 @@ for (const isPublished of [true, false]) {
     }
   });
 }
+
+test("workspace switching invalidates page access only after success and skips missing workspaces", async () => {
+  const client = new QueryClient();
+  const selected = Promise.withResolvers<void>();
+  client.setQueryData(pageQueryKey("page"), { page: { id: "page" } });
+  const calls: string[] = [];
+  const switchWorkspace = (id: string) => {
+    calls.push(id);
+    return selected.promise;
+  };
+  try {
+    await switchPageWorkspace(client, switchWorkspace, null, "page");
+    assert.deepEqual(calls, []);
+    const switching = switchPageWorkspace(client, switchWorkspace, "workspace", "page");
+    assert.equal(client.getQueryState(pageQueryKey("page"))?.isInvalidated, false);
+    selected.resolve();
+    await switching;
+    assert.deepEqual(calls, ["workspace"]);
+    assert.equal(client.getQueryState(pageQueryKey("page"))?.isInvalidated, true);
+    client.setQueryData(pageQueryKey("page"), {});
+    await assert.rejects(
+      switchPageWorkspace(
+        client,
+        async () => {
+          throw new Error("denied");
+        },
+        "other",
+        "page",
+      ),
+      /denied/,
+    );
+    assert.equal(client.getQueryState(pageQueryKey("page"))?.isInvalidated, false);
+  } finally {
+    client.clear();
+  }
+});

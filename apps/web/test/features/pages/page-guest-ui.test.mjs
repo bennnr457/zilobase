@@ -18,6 +18,7 @@ export function register({ readSource, assert, loadModule, test }) {
       Promise.all([
         readSource("/src/features/sidebar/components/item-share-dropdown.tsx"),
         readSource("/src/features/sidebar/commands/use-item-sharing.ts"),
+        readSource("/packages/features/src/pages/sharing-hooks.ts"),
       ]).then((parts) => parts.join("\n")),
       Promise.all([
         readSource("/src/features/workspaces/screens/workspace-members.tsx"),

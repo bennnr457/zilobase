@@ -82,3 +82,14 @@ async function invalidatePageAccess(queryClient: QueryClient, pageId: string) {
     queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
   ]);
 }
+
+export async function switchPageWorkspace(
+  queryClient: QueryClient,
+  setActiveWorkspace: (workspaceId: string) => Promise<unknown>,
+  workspaceId: string | null | undefined,
+  pageId: string,
+) {
+  if (!workspaceId) return;
+  await setActiveWorkspace(workspaceId);
+  await queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) });
+}

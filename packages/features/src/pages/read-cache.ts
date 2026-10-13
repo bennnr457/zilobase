@@ -1,3 +1,10 @@
+import { defaultUserSettings, userSettingsQueryKey } from "../user-settings/queries";
+import type { UserSettings } from "../user-settings/contracts";
+import type { Page } from "./contracts";
+import type { EmbeddedItemsOpenAs } from "./item-relationships";
+import { resolvePageDetailReference, type PageDetailReference } from "./cache";
+import { resolveEmbeddedItemsOpenAs, pageQueryKey } from "./queries";
+import { isPublishedFallbackPage } from "./publication";
 import type { QueryClient } from "@tanstack/react-query";
 import { pageReadSnapshotOf } from "./read-snapshot";
 
@@ -52,4 +59,25 @@ export function subscribePageReadSnapshots(
     if (!snapshot) return;
     onSnapshot({ ...snapshot, updatedAt: state.dataUpdatedAt });
   });
+}
+
+export function resolveEmbeddedItemsOpenAsFromCache(
+  queryClient: QueryClient,
+  hostPageId: string | null | undefined,
+  fallbackPage: Page | null | undefined,
+  readPublishedPreference: () => EmbeddedItemsOpenAs,
+) {
+  const userSettings =
+    queryClient.getQueryData<UserSettings>(userSettingsQueryKey) ?? defaultUserSettings;
+  const page =
+    resolvePageDetailReference(
+      queryClient,
+      queryClient.getQueryData<PageDetailReference | null>(pageQueryKey(hostPageId)),
+    )?.page ?? fallbackPage;
+
+  if (isPublishedFallbackPage(page)) {
+    return readPublishedPreference();
+  }
+
+  return resolveEmbeddedItemsOpenAs(userSettings.embeddedItemsOpenAs);
 }
