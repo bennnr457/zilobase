@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { SettingsHeader } from "../components/settings-header";
 import { Button } from "@/shared/ui/button";
@@ -12,36 +12,17 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@/shared/ui/item";
-import { useZilobaseFeatures, getApiErrorMessage } from "@zilobase/features";
-import {
-  listOAuthApps,
-  createOAuthApp,
-  deleteOAuthApp,
-  type OAuthApp,
-} from "@zilobase/features/oauth";
+import { getApiErrorMessage } from "@zilobase/features";
+import { useOAuthApps, useCreateOAuthApp, useDeleteOAuthApp } from "@zilobase/features/oauth/react";
 
 export default function OAuthAppsSettingsPage() {
-  const { apiFetch } = useZilobaseFeatures();
-  const [apps, setApps] = useState<OAuthApp[]>([]);
+  const { apps, error, setError, load } = useOAuthApps();
+  const create = useCreateOAuthApp();
+  const removeApp = useDeleteOAuthApp();
   const [name, setName] = useState("");
   const [redirectUris, setRedirectUris] = useState("");
   const [publicClient, setPublicClient] = useState(true);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function load() {
-    setError(null);
-    try {
-      setApps(await listOAuthApps(apiFetch));
-    } catch (cause) {
-      setError(getApiErrorMessage(cause));
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
-
   async function createApp() {
     setError(null);
     setCreatedSecret(null);
@@ -50,7 +31,7 @@ export default function OAuthAppsSettingsPage() {
       .map((uri) => uri.trim())
       .filter(Boolean);
     try {
-      const created = await createOAuthApp(apiFetch, {
+      const created = await create({
         application_type: publicClient ? "native" : "web",
         client_name: name.trim() || "OAuth app",
         redirect_uris: uris,
@@ -68,7 +49,7 @@ export default function OAuthAppsSettingsPage() {
   async function remove(clientId: string) {
     setError(null);
     try {
-      await deleteOAuthApp(apiFetch, clientId);
+      await removeApp(clientId);
       await load();
     } catch (cause) {
       setError(getApiErrorMessage(cause));

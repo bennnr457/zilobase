@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { SettingsHeader } from "../components/settings-header";
 import { Button } from "@/shared/ui/button";
 import {
@@ -10,36 +8,18 @@ import {
   ItemGroup,
   ItemTitle,
 } from "@/shared/ui/item";
-import { useZilobaseFeatures, getApiErrorMessage } from "@zilobase/features";
-import { listOAuthConsents, revokeOAuthConsent, type OAuthConsent } from "@zilobase/features/oauth";
+import { getApiErrorMessage } from "@zilobase/features";
+import { useOAuthConsents, useRevokeOAuthConsent } from "@zilobase/features/oauth/react";
 import { labelForScope } from "@zilobase/features/oauth";
 
 export default function ConnectedAppsSettingsPage() {
-  const { apiFetch } = useZilobaseFeatures();
-  const [consents, setConsents] = useState<OAuthConsent[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  async function load() {
-    setLoading(true);
-    setError(null);
-    try {
-      setConsents(await listOAuthConsents(apiFetch));
-    } catch (cause) {
-      setError(getApiErrorMessage(cause));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
+  const { consents, error, setError, loading, load } = useOAuthConsents();
+  const revokeConsent = useRevokeOAuthConsent();
 
   async function revoke(id: string) {
     setError(null);
     try {
-      await revokeOAuthConsent(apiFetch, id);
+      await revokeConsent(id);
       await load();
     } catch (cause) {
       setError(getApiErrorMessage(cause));

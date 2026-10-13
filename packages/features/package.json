@@ -300,6 +300,10 @@
     "./tasks/react": {
       "types": "./src/tasks/react.ts",
       "default": "./src/tasks/react.ts"
+    },
+    "./oauth/react": {
+      "types": "./src/oauth/react.ts",
+      "default": "./src/oauth/react.ts"
     }
   }
 }

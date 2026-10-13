@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useActiveWorkspaceId, useWorkspaces } from "@zilobase/features/workspaces/react";
 
-import { useZilobaseFeatures, getApiErrorMessage } from "@zilobase/features";
-import { publicOAuthClient, submitOAuthConsent } from "@zilobase/features/oauth";
+import { getApiErrorMessage } from "@zilobase/features";
+import { usePublicOAuthClient, useSubmitOAuthConsent } from "@zilobase/features/oauth/react";
 import { Button } from "@/shared/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/shared/ui/item";
@@ -14,7 +14,6 @@ import { readOAuthQuery } from "@zilobase/features/oauth";
 import { labelForScope, parseRequestedScopes } from "@zilobase/features/oauth";
 
 export default function OAuthConsentPage() {
-  const { apiFetch, auth } = useZilobaseFeatures();
   const search = useSearch({ strict: false }) as Record<string, unknown>;
   const navigate = useNavigate();
   const workspacesQuery = useWorkspaces();
@@ -22,34 +21,23 @@ export default function OAuthConsentPage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<"allow" | "deny" | null>(null);
-  const [clientName, setClientName] = useState("An application");
+  const client = usePublicOAuthClient(
+    typeof search.client_id === "string" ? search.client_id : null,
+  );
+  const clientName = client?.client_name ?? client?.name ?? "An application";
+  const consent = useSubmitOAuthConsent();
 
   const scopes = parseRequestedScopes(typeof search.scope === "string" ? search.scope : null);
   const workspaces = workspacesQuery.data ?? [];
   const selectedWorkspaceId = selectWorkspaceId(workspaceId, activeWorkspaceId, workspaces);
   const selectedWorkspace = workspaces.find((workspace) => workspace.id === selectedWorkspaceId);
 
-  useEffect(() => {
-    const clientId = typeof search.client_id === "string" ? search.client_id : null;
-    if (!clientId) {
-      return;
-    }
-
-    void publicOAuthClient(apiFetch, clientId)
-      .then((client) => {
-        setClientName(client.client_name ?? client.name ?? "An application");
-      })
-      .catch(() => {
-        setClientName("An application");
-      });
-  }, [search.client_id]);
-
   async function submitConsent(accept: boolean) {
     setError(null);
     setPending(accept ? "allow" : "deny");
 
     try {
-      const result = await submitOAuthConsent(apiFetch, auth, {
+      const result = await consent({
         accept,
         workspaceId: selectedWorkspaceId,
         oauthQuery: readOAuthQuery(window.location.search),
