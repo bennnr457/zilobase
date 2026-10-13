@@ -1,3 +1,4 @@
+import { findNotionLinkedPageId } from "@zilobase/features/pages";
 import { generateJSON, type JSONContent } from "@tiptap/core";
 import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details";
 import Link from "@tiptap/extension-link";
@@ -482,27 +483,11 @@ function rewriteLinks(body: HTMLElement, pagePathMap: Map<string, string> | unde
       continue;
     }
 
-    const pageId = findLinkedPageId(href, pagePathMap);
+    const pageId = findNotionLinkedPageId(href, pagePathMap);
     if (pageId) {
       link.setAttribute("href", `/p/${pageId}`);
     }
   }
-}
-
-function findLinkedPageId(href: string, pagePathMap: Map<string, string> | undefined) {
-  if (!pagePathMap) {
-    return null;
-  }
-
-  const normalizedHref = normalizePath(href);
-  const withoutHash = normalizedHref.split("#")[0];
-
-  return (
-    pagePathMap.get(normalizedHref) ??
-    pagePathMap.get(withoutHash) ??
-    Array.from(pagePathMap.entries()).find(([path]) => withoutHash.endsWith(path))?.[1] ??
-    null
-  );
 }
 
 function stripNotionClasses(body: HTMLElement) {

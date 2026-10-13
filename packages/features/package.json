@@ -15,7 +15,8 @@
     "@zilobase/runtime-ports": "file:../runtime-ports",
     "zod": "^4.4.3",
     "date-fns": "^4.3.0",
-    "@zilobase/page-context": "file:../page-context"
+    "@zilobase/page-context": "file:../page-context",
+    "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@tanstack/react-query": "5.101.4",

@@ -120,3 +120,19 @@ function normalizePath(value: string) {
     return value.replace(/^\.\//, "").replace(/^\/+/, "");
   }
 }
+
+export function findNotionLinkedPageId(href: string, pagePathMap: Map<string, string> | undefined) {
+  if (!pagePathMap) {
+    return null;
+  }
+
+  const normalizedHref = normalizePath(href);
+  const withoutHash = normalizedHref.split("#")[0];
+
+  return (
+    pagePathMap.get(normalizedHref) ??
+    pagePathMap.get(withoutHash) ??
+    Array.from(pagePathMap.entries()).find(([path]) => withoutHash.endsWith(path))?.[1] ??
+    null
+  );
+}
