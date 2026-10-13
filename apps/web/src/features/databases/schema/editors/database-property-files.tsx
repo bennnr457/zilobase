@@ -1,5 +1,7 @@
 import {
   getFilesLimit,
+  serializeDatabaseFiles,
+  addDatabaseFile,
   getFilesValue,
   getFileHref,
   getFileLabel,
@@ -55,21 +57,13 @@ export function DatabasePropertyFiles({
   };
 
   const commitFiles = (nextFiles: string[]) => {
-    onSelect(filesLimit === "one_file" ? (nextFiles[0] ?? "") : nextFiles);
+    onSelect(serializeDatabaseFiles(nextFiles, filesLimit));
     setOpen(false);
   };
 
   const addFile = (nextFileValue: string) => {
-    const normalizedValue = nextFileValue.trim();
-
-    if (!normalizedValue) {
-      return;
-    }
-
-    const nextFiles =
-      filesLimit === "one_file"
-        ? [normalizedValue]
-        : [...files.filter((file) => file !== normalizedValue), normalizedValue];
+    const nextFiles = addDatabaseFile(files, nextFileValue, filesLimit);
+    if (!nextFiles) return;
 
     commitFiles(nextFiles);
   };
@@ -77,7 +71,7 @@ export function DatabasePropertyFiles({
   const removeFile = (fileValue: string) => {
     const nextFiles = files.filter((file) => file !== fileValue);
 
-    onSelect(filesLimit === "one_file" ? (nextFiles[0] ?? "") : nextFiles);
+    onSelect(serializeDatabaseFiles(nextFiles, filesLimit));
   };
 
   const readFile = async (file: File | undefined) => {

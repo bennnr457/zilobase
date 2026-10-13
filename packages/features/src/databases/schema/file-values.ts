@@ -1,4 +1,15 @@
 type FilesLimitValue = "one_file" | "no_limit";
+export function serializeDatabaseFiles(files: string[], limit: FilesLimitValue) {
+  return limit === "one_file" ? (files[0] ?? "") : files;
+}
+
+export function addDatabaseFile(files: string[], value: string, limit: FilesLimitValue) {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return null;
+  return limit === "one_file"
+    ? [normalizedValue]
+    : [...files.filter((file) => file !== normalizedValue), normalizedValue];
+}
 export function getFilesLimit(config: unknown): FilesLimitValue {
   if (
     config &&

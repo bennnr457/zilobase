@@ -1,3 +1,4 @@
+import { resolvePageLayoutDatabaseId } from "@zilobase/features/pages";
 import {
   createContext,
   useCallback,
@@ -152,21 +153,13 @@ function LayoutEditor({ onClose, target }: { onClose: () => void; target: Layout
   });
   const workspaceId = page?.workspaceId ?? resolved?.workspaceId ?? null;
   const { data: navigation, isLoading: navigationLoading } = usePageNavigation(workspaceId);
-  const navigationRowDatabaseId = useMemo(
-    () =>
-      pageId
-        ? (navigation?.placements.find(
-            (placement) =>
-              placement.parentKind === "database" &&
-              placement.itemKind === "page" &&
-              placement.itemId === pageId &&
-              placement.placementKind === "database_row",
-          )?.parentId ?? null)
-        : null,
-    [navigation?.placements, pageId],
-  );
-  const databaseId =
-    target.databaseId ?? resolved?.databaseId ?? cachedRowDatabaseId ?? navigationRowDatabaseId;
+  const databaseId = resolvePageLayoutDatabaseId({
+    pageId,
+    targetDatabaseId: target.databaseId,
+    resolvedDatabaseId: resolved?.databaseId,
+    cachedRowDatabaseId,
+    placements: navigation?.placements,
+  });
   const databaseBootstrap = useDatabaseBootstrap(databaseId ? { databaseId } : null);
   const databaseMetadata = databaseBootstrap.data;
   const metadataLoading = databaseBootstrap.status === "loading";

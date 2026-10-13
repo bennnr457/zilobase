@@ -18,7 +18,7 @@ import {
 } from "@/platform/network/image-upload";
 import { clearAllIndexedData } from "@/platform/storage/indexed-data-cleanup";
 import { useQueryClient } from "@tanstack/react-query";
-import { sessionQueryKey, type SessionResponse } from "@zilobase/features/auth";
+import { updateSessionImage } from "@zilobase/features/auth";
 import { useSession, useSignOut, useUpdateUserProfile } from "@zilobase/features/auth/react";
 
 export default function ProfileSettingsPage() {
@@ -97,19 +97,6 @@ function ProfileDetailsCard({
     setProfileImage(initialImage);
   }, [initialEmail, initialImage, initialName]);
 
-  const updateSessionImage = (image: string | null) => {
-    queryClient.setQueryData<SessionResponse>(sessionQueryKey, (current) => {
-      if (!current?.user) {
-        return current;
-      }
-
-      return {
-        ...current,
-        user: { ...current.user, image },
-      };
-    });
-  };
-
   const selectProfileImage = async (file: File | undefined) => {
     if (!file) {
       return;
@@ -123,7 +110,7 @@ function ProfileDetailsCard({
     try {
       const result = await uploadProfileImage(file);
       setProfileImage(result.image);
-      updateSessionImage(result.image);
+      updateSessionImage(queryClient, result.image);
       toast.success("Profile picture updated.");
     } catch (uploadError) {
       setProfileImage(previousImage);
@@ -140,7 +127,7 @@ function ProfileDetailsCard({
     try {
       await removeProfileImage();
       setProfileImage(null);
-      updateSessionImage(null);
+      updateSessionImage(queryClient, null);
       toast.success("Profile picture removed.");
     } catch (removeError) {
       toast.error(getApiErrorMessage(removeError));

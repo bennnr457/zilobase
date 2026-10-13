@@ -33,6 +33,26 @@ export type TriggerPickerSelection =
 
 export type EventTriggerPickerSelection = Exclude<TriggerPickerSelection, { type: "schedule" }>;
 
+export function propertyEditedTriggerSelection(
+  configuration: TriggerDraft,
+  property: Pick<DatabaseAutomationCatalog["properties"][number], "type" | "options">,
+): Extract<TriggerPickerSelection, { type: "property_edited" }> {
+  const normalizeAnyChoice =
+    isChoiceTriggerProperty(property.type) && configuration.operator === "was_edited";
+  return {
+    operands: normalizeAnyChoice
+      ? property.options.map((option) => option.id)
+      : configuration.operands,
+    operator: normalizeAnyChoice
+      ? property.type === "multi_select"
+        ? "contains"
+        : "is"
+      : configuration.operator,
+    propertyId: configuration.propertyId,
+    type: "property_edited",
+  };
+}
+
 export type BuilderDraft = {
   actions: NotionActionDraft[];
   customName: boolean;

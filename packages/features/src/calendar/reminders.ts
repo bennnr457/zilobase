@@ -1,5 +1,17 @@
 import { calendarEventKey, eventInstant, type CalendarEvent, type CalendarRecord } from "./index";
 export type DueCalendarReminder = { key: string; event: CalendarEvent; expiresAt: number };
+export async function canClaimCalendarReminder(
+  event: CalendarEvent | undefined,
+  reminder: DueCalendarReminder,
+  pendingCount: () => Promise<number>,
+) {
+  return Boolean(
+    event &&
+    event.status !== "cancelled" &&
+    JSON.stringify(event.start) === JSON.stringify(reminder.event.start) &&
+    !(await pendingCount()),
+  );
+}
 export function dueCalendarReminders(
   events: CalendarEvent[],
   calendars: CalendarRecord[],

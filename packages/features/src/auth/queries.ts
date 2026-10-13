@@ -1,8 +1,17 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import type { ZilobaseAuthClient } from "../shared/context";
+import type { SessionResponse } from "./contracts";
 
 export const sessionQueryKey = ["session"] as const;
+
+export function updateSessionImage(queryClient: QueryClient, image: string | null) {
+  queryClient.setQueryData<SessionResponse>(sessionQueryKey, (current) => {
+    if (!current?.user) return current;
+    return { ...current, user: { ...current.user, image } };
+  });
+}
 
 export const sessionQueryOptions = (auth: ZilobaseAuthClient) =>
   queryOptions({

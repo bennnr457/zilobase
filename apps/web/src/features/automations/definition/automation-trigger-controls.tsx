@@ -8,6 +8,7 @@ import {
   operandless,
   hasRequiredTriggerValues,
   nextTriggerOperands,
+  propertyEditedTriggerSelection,
   triggerOperatorLabel,
 } from "@zilobase/features/automations/models";
 import { AutomationPropertyIcon, TriggerOptionRow } from "../automation-picker-controls";
@@ -208,20 +209,7 @@ export function TriggerPicker({
   };
   const finishConfiguration = () => {
     if (!configuration || !configuredProperty) return;
-    const normalizeAnyChoice =
-      isChoiceTriggerProperty(configuredProperty.type) && configuration.operator === "was_edited";
-    choose({
-      operands: normalizeAnyChoice
-        ? configuredProperty.options.map((option) => option.id)
-        : configuration.operands,
-      operator: normalizeAnyChoice
-        ? configuredProperty.type === "multi_select"
-          ? "contains"
-          : "is"
-        : configuration.operator,
-      propertyId: configuration.propertyId,
-      type: "property_edited",
-    });
+    choose(propertyEditedTriggerSelection(configuration, configuredProperty));
   };
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);

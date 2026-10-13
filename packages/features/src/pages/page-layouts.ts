@@ -1,3 +1,29 @@
+import type { PageItemPlacement } from "./contracts";
+
+export function resolvePageLayoutDatabaseId(input: {
+  pageId: string | null;
+  targetDatabaseId?: string | null;
+  resolvedDatabaseId?: string | null;
+  cachedRowDatabaseId: string | null;
+  placements: readonly PageItemPlacement[] | undefined;
+}) {
+  const navigationRowDatabaseId = input.pageId
+    ? (input.placements?.find(
+        (placement) =>
+          placement.parentKind === "database" &&
+          placement.itemKind === "page" &&
+          placement.itemId === input.pageId &&
+          placement.placementKind === "database_row",
+      )?.parentId ?? null)
+    : null;
+  return (
+    input.targetDatabaseId ??
+    input.resolvedDatabaseId ??
+    input.cachedRowDatabaseId ??
+    navigationRowDatabaseId
+  );
+}
+
 export type PageLayoutScope = "workspace" | "database" | "page";
 
 export type PageLayoutStructure = "simple" | "tabbed";
