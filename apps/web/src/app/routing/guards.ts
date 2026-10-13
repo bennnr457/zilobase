@@ -1,7 +1,8 @@
-import { isPagePublished as readPagePublished } from "@zilobase/features/pages";
+import { resolveActiveWorkspaceId } from "@zilobase/features/workspaces/react";
+import { decidePageShareAccess } from "@zilobase/features/pages";
 import { isDatabasePublished as readDatabasePublished } from "@zilobase/features/databases";
 import { redirect } from "@tanstack/react-router";
-import { pageQueryKey, pageQueryOptions, pagesQueryOptions } from "@zilobase/features/pages";
+import { pagesQueryOptions } from "@zilobase/features/pages";
 import { sessionQueryOptions, type SessionResponse } from "@zilobase/features/auth";
 import { workspacesQueryOptions } from "@zilobase/features/workspaces";
 
@@ -13,61 +14,25 @@ import { getMostRecentItemPath } from "@/features/library/model/recent-navigatio
 import { decidePublishedShareAccess } from "@zilobase/features/pages";
 import { getConnectivityState } from "@/platform/network/connectivity";
 import { hydratePageReadCache } from "@/features/pages/cache/page-read-cache";
-import {
-  resolvePageDetailReference,
-  resolveNavigationReference,
-  type PageDetail,
-} from "@zilobase/features/pages";
+import { resolveNavigationReference, type PageDetail } from "@zilobase/features/pages";
 
 const NAVIGATION_AUTH_STALE_TIME = 30_000;
 
 export async function applyPageShareAccess(pageId: string) {
-  const session = await getFreshSession({ optional: true });
-  if (session.user && getConnectivityState() === "offline") {
-    const detail = resolvePageDetailReference(
-      queryClient,
-      queryClient.getQueryData(pageQueryKey(pageId)),
-    );
-    if (detail?.viewerType === "member") return "app" as const;
-    throw new NetworkUnavailableError();
-  }
-
-  if (!session.user) {
-    return applyPublishedShareAccess(() => readPagePublished(apiFetch, pageId));
-  }
-
-  try {
-    const detail = await queryClient.fetchQuery({
-      ...pageQueryOptions(apiFetch, pageId),
-      staleTime: 0,
-    });
-
-    if (session.user && detail?.viewerType === "member") {
-      await hydrateCachedPageQueries(
-        session,
-        pageId,
-        resolvePageDetailReference(queryClient, detail)!,
-      );
-    }
-
-    if (detail?.viewerType === "guest") return "guest" as const;
-    if (detail?.viewerType === "public") return "public" as const;
-    if (detail?.viewerType === "member") return "app" as const;
-  } catch (error) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      error.name === "ActiveWorkspaceMismatchError"
-    ) {
-      return "app" as const;
-    }
-    throw error;
-  }
-
-  const workspaces = await getWorkspaces();
-  if (workspaces.length === 0) throw redirect({ to: "/onboarding" });
-  return "app" as const;
+  const decision = await decidePageShareAccess({
+    apiFetch,
+    queryClient,
+    pageId,
+    getSession: () => getFreshSession({ optional: true }),
+    getWorkspaces,
+    isOnline: () => getConnectivityState() !== "offline",
+  });
+  if (decision.type === "unavailable") throw new NetworkUnavailableError();
+  if (decision.type === "login") throw redirect({ to: "/login" });
+  if (decision.type === "onboarding") throw redirect({ to: "/onboarding" });
+  if (decision.session)
+    await hydrateCachedPageQueries(decision.session, pageId, decision.memberDetail!);
+  return decision.type;
 }
 
 async function hydrateCachedPageQueries(
@@ -121,10 +86,12 @@ export async function getDefaultAppPath(
 ) {
   const preferredWorkspaceId = useAppStore.getState().activeWorkspaceId;
   const sessionWorkspaceId = session.session?.activeWorkspaceId ?? null;
-  const workspaceId =
-    workspaces.find((workspace) => workspace.id === preferredWorkspaceId)?.id ??
-    workspaces.find((workspace) => workspace.id === sessionWorkspaceId)?.id ??
-    workspaces[0]?.id;
+  const workspaceId = resolveActiveWorkspaceId({
+    preferredActiveWorkspaceId: preferredWorkspaceId,
+    sessionWorkspaceId,
+    workspaces,
+    status: "success",
+  });
 
   if (!workspaceId) return "/recents";
 

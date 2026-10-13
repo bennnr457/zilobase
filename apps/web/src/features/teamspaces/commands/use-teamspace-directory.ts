@@ -6,7 +6,11 @@ import { toast } from "sonner";
 
 import { getApiErrorMessage } from "@/platform/network/api";
 
-import { filterTeamspaces } from "@zilobase/features/teamspaces";
+import {
+  filterTeamspaces,
+  archiveTeamspaces,
+  readTeamspaceInvitation,
+} from "@zilobase/features/teamspaces";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { type Teamspace, type TeamspaceAccessMode } from "@zilobase/features/teamspaces";
 import {
@@ -84,13 +88,7 @@ export function useTeamspaceDirectory() {
   const archiveSelected = async () => {
     if (!workspaceId || selectedIds.size === 0) return;
     try {
-      for (const teamspaceId of selectedIds) {
-        await lifecycle.mutateAsync({
-          action: "archive",
-          teamspaceId,
-          workspaceId,
-        });
-      }
+      await archiveTeamspaces(lifecycle.mutateAsync, workspaceId, selectedIds);
       setSelectedIds(new Set());
       toast.success("Selected teamspaces archived.");
     } catch (error) {
@@ -100,16 +98,12 @@ export function useTeamspaceDirectory() {
 
   useEffect(() => {
     if (!workspaceId || acceptInvite.isPending || acceptInvite.isSuccess) return;
-    const token = new URLSearchParams(window.location.search).get("invite");
-    const inviteWorkspaceId = new URLSearchParams(window.location.search).get("workspace");
-    if (!token || inviteWorkspaceId !== workspaceId) return;
-    acceptInvite.mutate(
-      { token, workspaceId },
-      {
-        onError: (error) => toast.error(getApiErrorMessage(error)),
-        onSuccess: () => toast.success("Joined teamspace."),
-      },
-    );
+    const invitation = readTeamspaceInvitation(window.location.search, workspaceId);
+    if (!invitation) return;
+    acceptInvite.mutate(invitation, {
+      onError: (error) => toast.error(getApiErrorMessage(error)),
+      onSuccess: () => toast.success("Joined teamspace."),
+    });
   }, [acceptInvite, workspaceId]);
 
   return {

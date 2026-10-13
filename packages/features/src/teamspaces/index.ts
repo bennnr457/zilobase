@@ -5,3 +5,4 @@ export * from "./filters";
 export * from "./sidebar-permissions";
 export * from "./permissions";
 export * from "./principal-candidates";
+export * from "./directory-actions";

@@ -1,6 +1,67 @@
 import type { Page } from "./contracts";
 import type { ApiFetcher } from "../shared/api-fetcher";
 import { ApiError } from "../shared/api-error";
+import type { QueryClient } from "@tanstack/react-query";
+import type { SessionResponse } from "../auth/contracts";
+import type { PageDetail } from "./contracts";
+import { resolvePageDetailReference, type PageDetailReference } from "./cache";
+import { pageQueryKey, pageQueryOptions } from "./queries";
+
+export type PageShareDecision = {
+  type: "app" | "guest" | "public" | "login" | "onboarding" | "unavailable";
+  memberDetail?: PageDetail;
+  session?: SessionResponse;
+};
+
+export async function decidePageShareAccess(input: {
+  apiFetch: ApiFetcher;
+  queryClient: QueryClient;
+  pageId: string;
+  getSession: () => Promise<SessionResponse>;
+  getWorkspaces: () => Promise<unknown[]>;
+  isOnline: () => boolean;
+}): Promise<PageShareDecision> {
+  const { apiFetch, queryClient, pageId } = input;
+  const session = await input.getSession();
+  if (session.user && !input.isOnline()) {
+    const detail = resolvePageDetailReference(
+      queryClient,
+      queryClient.getQueryData<PageDetailReference>(pageQueryKey(pageId)),
+    );
+    return { type: detail?.viewerType === "member" ? "app" : "unavailable" };
+  }
+  if (!session.user)
+    return decidePublishedShareAccess({
+      getSession: input.getSession,
+      getWorkspaces: input.getWorkspaces,
+      isPublished: () => isPagePublished(apiFetch, pageId),
+    });
+  try {
+    const detail = await queryClient.fetchQuery({
+      ...pageQueryOptions(apiFetch, pageId),
+      staleTime: 0,
+    });
+    if (detail?.viewerType === "member")
+      return {
+        type: "app",
+        session,
+        memberDetail: resolvePageDetailReference(queryClient, detail)!,
+      };
+    if (detail?.viewerType === "guest") return { type: "guest" };
+    if (detail?.viewerType === "public") return { type: "public" };
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ActiveWorkspaceMismatchError"
+    )
+      return { type: "app" };
+    throw error;
+  }
+  const workspaces = await input.getWorkspaces();
+  return { type: workspaces.length === 0 ? "onboarding" : "app" };
+}
 export type PublishedShareDecision =
   | { type: "app" }
   | { type: "public" }
