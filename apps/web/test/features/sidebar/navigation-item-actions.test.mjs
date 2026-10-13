@@ -27,6 +27,7 @@ export function register({ assert, appPath, test }) {
       "@zilobase/features/user-settings/react":
         "export const useUserSettings = () => ({data:runtime.settings}); export const useUpdateUserSettings = () => runtime.mutations.UpdateUserSettings;",
     };
+    const actionHook = appPath("../../packages/features/src/pages/item-action-hooks.ts");
     const result = await build({
       stdin: {
         contents: `
@@ -54,6 +55,24 @@ export function register({ assert, appPath, test }) {
         {
           name: "controlled-navigation",
           setup(build) {
+            build.onResolve({ filter: /^@zilobase\/features\/pages\/react$/ }, () => ({
+              path: actionHook,
+            }));
+            const sharedModules = {
+              "../workspaces/hooks": "@zilobase/features/workspaces/react",
+              "./content-mutations": "@zilobase/features/pages/react",
+              "./activity-mutations": "@zilobase/features/pages/react",
+              "./query-hooks": "@zilobase/features/pages/react",
+              "../databases/mutations/databases": "@zilobase/features/databases/react",
+              "../databases/queries/metadata": "@zilobase/features/databases/react",
+              "../user-settings/hooks": "@zilobase/features/user-settings/react",
+            };
+            build.onResolve({ filter: /^\./ }, (args) =>
+              args.importer === actionHook && args.path in sharedModules
+                ? { path: sharedModules[args.path], namespace: "navigation-test" }
+                : undefined,
+            );
+
             build.onResolve({ filter: /.*/ }, (args) =>
               args.path === "navigation-test-runtime" || args.path in modules
                 ? { path: args.path, namespace: "navigation-test" }

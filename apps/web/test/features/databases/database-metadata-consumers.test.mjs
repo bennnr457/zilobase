@@ -17,7 +17,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
       "/src/app/shell/document-favicon.tsx",
       "/src/app/shell/content/app-layout.tsx",
       "/packages/features/src/pages/sharing-hooks.ts",
-      "/src/features/sidebar/commands/use-navigation-item-actions.ts",
+      "/packages/features/src/pages/item-action-hooks.ts",
       "/src/features/databases/setup/components/database-setup-card.tsx",
       "/src/features/databases/views/view-settings/components/data-source-settings.tsx",
     ];

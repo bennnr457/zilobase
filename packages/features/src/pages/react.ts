@@ -37,3 +37,4 @@ export { useResolvedPageLayout, useSavePageLayout, useResetPageLayout } from "./
 export { usePageWorkspaceAccess } from "./query-hooks";
 
 export { useItemSharingController } from "./sharing-hooks";
+export { useItemActionController } from "./item-action-hooks";
