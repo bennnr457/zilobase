@@ -126,3 +126,28 @@ export type CalendarInvalidation = CalendarScope & {
   revision: number;
   generation: number;
 };
+
+export type CalendarCacheIdentity = {
+  apiOrigin: string;
+  userId: string;
+  workspaceId: string;
+  bindingId: string;
+};
+export type CachedRange = {
+  key: string;
+  calendarId: string;
+  start: string;
+  end: string;
+  eventKeys: string[];
+  generation: number;
+  revision: number;
+  fetchedAt: number;
+  accessedAt: number;
+};
+export type PendingCalendarMutation = {
+  id: string;
+  eventKey: string;
+  before?: CalendarEvent;
+  optimistic?: CalendarEvent;
+  status: "pending" | "ambiguous";
+};

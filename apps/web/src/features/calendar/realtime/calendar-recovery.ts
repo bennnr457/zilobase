@@ -1,4 +1,4 @@
-import { decodeCalendarMessage } from "@zilobase/features/calendar";
+import { decodeCalendarMessage, newerCalendarRevision } from "@zilobase/features/calendar";
 import { calendarRecoveryTicket } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
 import {
@@ -74,12 +74,7 @@ function createCalendarRecovery(
   const invalidation = async (data: unknown) => {
     if (!validCalendarInvalidation(data, scope) || !database.isOpen()) return;
     const prior = await database.state.get(data.calendarId);
-    if (
-      prior &&
-      (prior.generation > data.generation ||
-        (prior.generation === data.generation && prior.revision > data.revision))
-    )
-      return;
+    if (newerCalendarRevision(prior, data)) return;
     await database.state.put({
       key: data.calendarId,
       generation: data.generation,

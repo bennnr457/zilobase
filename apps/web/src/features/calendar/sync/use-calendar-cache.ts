@@ -1,7 +1,14 @@
+import {
+  calendarMaterializationKey,
+  isSeparateCalendarTarget,
+  calendarReadWindows,
+  overlapCalendarWindow,
+  composeCalendarCacheSnapshot,
+} from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "../metrics";
-import { coversCalendarRange, type CalendarWindow } from "@zilobase/features/calendar";
+import { type CalendarWindow } from "@zilobase/features/calendar";
 import { useQueryClient } from "@tanstack/react-query";
-import { calendarEventKey, calendarKeys } from "@zilobase/features/calendar";
+import { calendarKeys } from "@zilobase/features/calendar";
 import { startCalendarRecovery } from "../realtime/calendar-recovery";
 import { reconcileCalendarMutations } from "../events/calendar-mutations";
 import { useEffect, useState, useCallback, useSyncExternalStore, useRef } from "react";
@@ -36,7 +43,7 @@ export function useCalendarCache(
     hiddenKey,
   ]);
   const [readLatencyMs, setReadLatency] = useState(1000);
-  const separateTarget = isSeparateTarget(targetStart, targetEnd, start, end);
+  const separateTarget = isSeparateCalendarTarget(targetStart, targetEnd, start, end);
   // Moving inside this window must not reread every buffered event.
   const materializationKey = calendarMaterializationKey(
     userId,
@@ -246,27 +253,6 @@ function markCalendarInitialized(
   if (database) initialized.current = database.name;
   return recover;
 }
-function calendarMaterializationKey(
-  userId: string,
-  connection: CalendarConnection,
-  start: string,
-  end: string,
-  hiddenKey: string,
-  separateTarget: boolean,
-  targetStart?: string,
-  targetEnd?: string,
-) {
-  return JSON.stringify([
-    userId,
-    connection.workspaceId,
-    connection.bindingId,
-    start,
-    end,
-    hiddenKey,
-    separateTarget ? targetStart : null,
-    separateTarget ? targetEnd : null,
-  ]);
-}
 function calendarCacheState(
   cached: Awaited<ReturnType<typeof readCalendarSnapshot>> | undefined,
   readLatencyMs: number,
@@ -291,18 +277,6 @@ function calendarCacheState(
     syncing,
     online,
   };
-}
-function isSeparateTarget(
-  targetStart: string | undefined,
-  targetEnd: string | undefined,
-  start: string,
-  end: string,
-) {
-  return Boolean(
-    targetStart &&
-    targetEnd &&
-    (Date.parse(targetStart) < Date.parse(start) || Date.parse(targetEnd) > Date.parse(end)),
-  );
 }
 function openBoundCalendarDatabase(
   connection: CalendarConnection,
@@ -413,36 +387,9 @@ async function materializeCalendarSnapshot(
     readable.map((c) => readCalendarWindow(database, c.id, windows)),
   );
   const known = Boolean(await database.state.get("last_recovery"));
-  return {
-    requestKey,
-    calendars,
-    events: [
-      ...new Map(
-        results
-          .flatMap((r) => r.ranges.flatMap((r) => r.events))
-          .map((e) => [calendarEventKey(e), e]),
-      ).values(),
-    ],
-    coverage: results.map((r) => ({ calendarId: r.calendarId, ranges: r.coverage })),
-    loaded: known && results.every((r) => coversCalendarRange(r.coverage, { start, end })),
-    catalogLoaded: known,
-    stale: results.some((r) => r.ranges.some((r) => r.stale)),
-  };
+  return composeCalendarCacheSnapshot(calendars, results, known, { start, end }, requestKey);
 }
-function calendarReadWindows(
-  start: string,
-  end: string,
-  separateTarget: boolean,
-  targetStart?: string,
-  targetEnd?: string,
-) {
-  if (separateTarget && targetStart && targetEnd)
-    return [
-      { start, end },
-      { start: targetStart, end: targetEnd },
-    ];
-  return [{ start, end }];
-}
+
 async function readCalendarWindow(
   database: CalendarDatabase,
   calendarId: string,
@@ -452,16 +399,8 @@ async function readCalendarWindow(
     windows.map((w) => readCalendarRangeCache(database, calendarId, w.start, w.end)),
   );
   const stored = await database.ranges.where("calendarId").equals(calendarId).toArray();
-  const coverage = stored.flatMap((r) => windows.flatMap((w) => overlapWindow(r, w)));
+  const coverage = stored.flatMap((r) => windows.flatMap((w) => overlapCalendarWindow(r, w)));
   return { ranges, calendarId, coverage };
-}
-function overlapWindow(
-  range: { start: string; end: string },
-  window: { start: string; end: string },
-) {
-  const a = Math.max(Date.parse(range.start), Date.parse(window.start)),
-    b = Math.min(Date.parse(range.end), Date.parse(window.end));
-  return a < b ? [{ start: new Date(a).toISOString(), end: new Date(b).toISOString() }] : [];
 }
 function recordForegroundLatency(
   input: Parameters<typeof refreshCalendarWindows>[0],

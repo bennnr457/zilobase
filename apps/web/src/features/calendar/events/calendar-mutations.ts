@@ -11,6 +11,8 @@ import {
   postCalendarMutation,
   readCalendarMutation,
   definiteCalendarRejection,
+  createPendingCalendarMutation,
+  calendarMutationSettlement,
   type EventAction,
 } from "@zilobase/features/calendar";
 async function presentEvent(
@@ -33,11 +35,9 @@ async function settle(
   result: CalendarMutationResponse,
 ) {
   await database.transaction("rw", database.pending, database.events, database.ranges, async () => {
-    if (result.status === "succeeded") {
-      await presentEvent(database, result.event, pending.eventKey);
-      await database.pending.delete(pending.id);
-    } else if (result.status === "failed") {
-      await presentEvent(database, pending.before, pending.eventKey);
+    const settlement = calendarMutationSettlement(pending, result);
+    if (settlement) {
+      await presentEvent(database, settlement.event, pending.eventKey);
       await database.pending.delete(pending.id);
     } else await database.pending.update(pending.id, { status: "ambiguous" });
   });
@@ -55,16 +55,14 @@ export async function runCalendarMutation(
 ) {
   const { database, event, action, write } = input,
     key = calendarEventKey(event);
-  const pending: PendingCalendarMutation = {
-    id: write.operationId,
-    eventKey: key,
-    before:
-      action === "create" || action === "duplicate"
-        ? undefined
-        : ((await database.events.get(key))?.event ?? event),
-    optimistic: action === "delete" ? undefined : { ...event, ...write.event },
-    status: "pending",
-  };
+  const pending = createPendingCalendarMutation(
+    action,
+    event,
+    write,
+    action === "create" || action === "duplicate"
+      ? undefined
+      : (await database.events.get(key))?.event,
+  );
   await database.transaction("rw", database.pending, database.events, database.ranges, async () => {
     if (await database.pending.where("eventKey").equals(key).count())
       throw new Error(
