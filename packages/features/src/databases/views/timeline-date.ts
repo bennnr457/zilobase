@@ -1,3 +1,5 @@
+import { defaultStatusOptions } from "../schema/property-defaults";
+import { getSelectOptions } from "./grouping";
 import { addDays } from "date-fns";
 import { parseLocalDateMatch } from "../schema/date-value";
 import {
@@ -122,4 +124,38 @@ function formatStoredDateValue(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+export function getTimelineStatusForValue(
+  statusValue: string,
+  statusProperty: DatabasePropertyListItem | null,
+) {
+  const normalizedValue = statusValue.trim();
+
+  if (!normalizedValue) {
+    return { color: "gray", id: "unscheduled", name: "Unscheduled" };
+  }
+
+  const options =
+    statusProperty && statusProperty.property.type === "status"
+      ? getSelectOptions(statusProperty.property.config)
+      : [];
+  const resolvedOptions = options.length > 0 ? options : defaultStatusOptions;
+  const matchedOption =
+    resolvedOptions.find((option) => option.name === normalizedValue) ??
+    resolvedOptions.find((option) => option.id === normalizedValue);
+
+  if (!matchedOption) {
+    return {
+      color: "gray",
+      id: normalizedValue,
+      name: normalizedValue,
+    };
+  }
+
+  return {
+    color: matchedOption.color ?? "gray",
+    id: matchedOption.id,
+    name: matchedOption.name,
+  };
 }

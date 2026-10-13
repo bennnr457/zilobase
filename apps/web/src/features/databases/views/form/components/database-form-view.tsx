@@ -1,3 +1,4 @@
+import { getFormConfigWithAddedOption } from "@zilobase/features/databases/models";
 import {
   AlignLeft,
   ArrowDown,
@@ -39,7 +40,6 @@ import type { DatabaseProperty } from "@zilobase/features/databases";
 import {
   getDatabasePropertyCellKind,
   getDatabasePropertyType,
-  getNextDatabaseOptionColor,
 } from "../../../schema/property-catalog";
 import { DatabasePropertyDate } from "../../../schema/editors/database-property-date";
 import { formatDatabaseDateValue } from "@zilobase/features/databases/models";
@@ -821,23 +821,10 @@ async function addFormPropertyOption(
 
   if (!optionName) return;
 
-  const options = getFormOptions(property.property.type, property.property.config, []);
-
-  if (options.some((option) => option.name === optionName)) return;
-
-  const optionId =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `option-${Date.now()}`;
-
-  await updateDatabasePropertyConfig(property.id, {
-    options: [
-      ...options,
-      {
-        color: getNextDatabaseOptionColor(options.length),
-        id: optionId,
-        name: optionName,
-      },
-    ],
-  });
+  const config = getFormConfigWithAddedOption(
+    property.property.type,
+    property.property.config,
+    optionName,
+  );
+  if (config) await updateDatabasePropertyConfig(property.id, config);
 }

@@ -10,3 +10,7 @@ export const databaseColorIds = [
   "red",
 ] as const;
 export type DatabaseColorId = (typeof databaseColorIds)[number];
+
+export function getNextDatabaseOptionColor(optionCount: number) {
+  return databaseColorIds[optionCount % databaseColorIds.length] ?? "default";
+}

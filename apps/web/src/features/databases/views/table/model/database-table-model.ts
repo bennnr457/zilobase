@@ -205,41 +205,4 @@ export function propertyInsertPositions(pending: number | undefined, property: n
   return { left: pending ?? property ?? 0, right: pending ?? (property ?? 0) + 1 };
 }
 
-export function getVisibleNestedTableRows<Row extends { id: string }>({
-  collapsedRowIds,
-  nested,
-  parentRowIdsByRowId,
-  rows,
-}: {
-  collapsedRowIds: ReadonlySet<string>;
-  nested: boolean;
-  parentRowIdsByRowId: Record<string, string[]>;
-  rows: Row[];
-}) {
-  if (!nested || collapsedRowIds.size === 0) return rows;
-
-  const childRowIdsByParentId = new Map<string, string[]>();
-
-  for (const [rowId, parentRowIds] of Object.entries(parentRowIdsByRowId)) {
-    for (const parentRowId of parentRowIds) {
-      const childRowIds = childRowIdsByParentId.get(parentRowId) ?? [];
-      childRowIds.push(rowId);
-      childRowIdsByParentId.set(parentRowId, childRowIds);
-    }
-  }
-
-  const hiddenRowIds = new Set<string>();
-  const pendingRowIds = [...collapsedRowIds].flatMap(
-    (rowId) => childRowIdsByParentId.get(rowId) ?? [],
-  );
-
-  for (let index = 0; index < pendingRowIds.length; index += 1) {
-    const rowId = pendingRowIds[index];
-    if (hiddenRowIds.has(rowId)) continue;
-
-    hiddenRowIds.add(rowId);
-    pendingRowIds.push(...(childRowIdsByParentId.get(rowId) ?? []));
-  }
-
-  return rows.filter((row) => !hiddenRowIds.has(row.id));
-}
+export { getVisibleNestedDatabaseRows as getVisibleNestedTableRows } from "@zilobase/features/databases/models";

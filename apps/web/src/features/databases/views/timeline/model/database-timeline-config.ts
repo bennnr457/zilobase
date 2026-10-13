@@ -4,19 +4,15 @@ import type { GanttFeature, GanttStatus } from "../gantt";
 
 import { getPaletteColor } from "@/shared/lib/color-tokens";
 
-import { defaultStatusOptions } from "@zilobase/features/databases/models";
-import {
-  getSelectOptions,
-  type DatabasePropertyListItem,
-} from "@zilobase/features/databases/models";
+import { getTimelineStatusForValue } from "@zilobase/features/databases/models";
+import { type DatabasePropertyListItem } from "@zilobase/features/databases/models";
 import { type DatabasePropertyValue } from "@zilobase/features/databases/models";
 
 export const UNSCHEDULED_GROUP_NAME = "Unscheduled";
 
 const defaultGanttStatus: GanttStatus = {
+  ...getTimelineStatusForValue("", null),
   color: getPaletteColor("gray")!,
-  id: "unscheduled",
-  name: "Unscheduled",
 };
 
 export type TimelineRowItem = {
@@ -32,34 +28,9 @@ export function getGanttStatusForValue(
   statusValue: string,
   statusProperty: DatabasePropertyListItem | null,
 ): GanttStatus {
-  const normalizedValue = statusValue.trim();
-
-  if (!normalizedValue) {
-    return defaultGanttStatus;
-  }
-
-  const options =
-    statusProperty && statusProperty.property.type === "status"
-      ? getSelectOptions(statusProperty.property.config)
-      : [];
-  const resolvedOptions = options.length > 0 ? options : defaultStatusOptions;
-  const matchedOption =
-    resolvedOptions.find((option) => option.name === normalizedValue) ??
-    resolvedOptions.find((option) => option.id === normalizedValue);
-
-  if (!matchedOption) {
-    return {
-      color: getPaletteColor("gray")!,
-      id: normalizedValue,
-      name: normalizedValue,
-    };
-  }
-
-  return {
-    color: getPaletteColor(matchedOption.color ?? "gray")!,
-    id: matchedOption.id,
-    name: matchedOption.name,
-  };
+  if (!statusValue.trim()) return defaultGanttStatus;
+  const status = getTimelineStatusForValue(statusValue, statusProperty);
+  return { ...status, color: getPaletteColor(status.color)! };
 }
 
 export function buildTimelineRowItem({

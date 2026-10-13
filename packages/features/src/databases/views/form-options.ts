@@ -1,3 +1,4 @@
+import { getNextDatabaseOptionColor } from "../schema/color-ids";
 import type { DatabaseProperty } from "../index";
 import { defaultStatusOptions } from "../schema/property-defaults";
 import { getPersonLimit } from "./configuration";
@@ -71,4 +72,19 @@ function getFilesLimit(config: unknown) {
     config.filesLimit === "one_file"
     ? "one_file"
     : "no_limit";
+}
+
+export function getFormConfigWithAddedOption(type: string, config: unknown, optionName: string) {
+  const options = getFormOptions(type, config, []);
+  if (options.some((option) => option.name === optionName)) return null;
+  const optionId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `option-${Date.now()}`;
+  return {
+    options: [
+      ...options,
+      { color: getNextDatabaseOptionColor(options.length), id: optionId, name: optionName },
+    ],
+  };
 }

@@ -1,3 +1,15 @@
+import {
+  parseDatabaseDateValue,
+  parseDatabaseDateRange as parseDateRange,
+  getDatabaseDateStartValue as getStartValue,
+  getDatabaseDateEndValue as getEndValue,
+  getDatabaseDateStartTimeValue as getStartTimeValue,
+  getDatabaseDateEndTimeValue as getEndTimeValue,
+  getDatabaseDatePart as getDateFromValue,
+  getDatabaseTimePart as getTimeFromValue,
+  toDatabaseDateValue as toDateValue,
+  getDatabaseTimeValue as getTimeValueFromDate,
+} from "@zilobase/features/databases/models";
 import { useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Check, ChevronRight, HelpCircle } from "@/shared/components/icons";
 import type { DateRange } from "react-day-picker";
@@ -19,8 +31,6 @@ import {
   type DateFormatValue,
   type TimeFormatValue,
 } from "@zilobase/features/databases/models";
-import { parseDatabaseDateValue } from "@zilobase/features/databases/models";
-import { firstScalarValue } from "@zilobase/features/databases/models";
 
 type DatabasePropertyDateProps = {
   editable?: boolean;
@@ -524,55 +534,4 @@ function DatabaseDateOption({
       )}
     </div>
   );
-}
-
-function parseDateRange(value: string | string[]) {
-  const [startValue, endValue] = Array.isArray(value) ? value : [value, undefined];
-
-  return {
-    end: endValue ? parseDatabaseDateValue(endValue) : undefined,
-    endTime: endValue ? getTimeFromValue(endValue) : "",
-    start: startValue ? parseDatabaseDateValue(startValue) : undefined,
-    startTime: startValue ? getTimeFromValue(startValue) : "",
-  };
-}
-
-function getStartValue(value: string | string[]) {
-  return firstScalarValue(value);
-}
-
-function getEndValue(value: string | string[]) {
-  return Array.isArray(value) ? (value[1] ?? "") : "";
-}
-
-function getStartTimeValue(value: string | string[]) {
-  return getTimeFromValue(getStartValue(value));
-}
-
-function getEndTimeValue(value: string | string[]) {
-  return getTimeFromValue(getEndValue(value));
-}
-
-function getDateFromValue(value: string) {
-  return value.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? value;
-}
-
-function getTimeFromValue(value: string) {
-  return value.match(/T(\d{2}:\d{2})/)?.[1] ?? "";
-}
-
-function toDateValue(date: Date, timeValue = "") {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const dateValue = `${year}-${month}-${day}`;
-
-  return timeValue ? `${dateValue}T${timeValue}` : dateValue;
-}
-
-function getTimeValueFromDate(date: Date) {
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${hours}:${minutes}`;
 }

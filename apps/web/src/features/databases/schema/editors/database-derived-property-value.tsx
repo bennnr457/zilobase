@@ -14,10 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { DatabasePageLink } from "../../interactions/database-page-link";
 import { DatabaseRollupPropertySettings } from "../configuration";
 import {
-  getRelationConfigWithPageSummary,
-  getRelationConfigWithSyncStatus,
+  getRelationSelectionChange,
   getRelationLimit,
-  getRelationReciprocalUpdates,
   getRelationTargetDatabaseId,
   relationPayloadFromViewData,
 } from "@zilobase/features/databases/models";
@@ -283,19 +281,12 @@ export function DatabaseRelationPropertyValue({
   };
 
   const selectPage = (page: DatabaseRecordEntity["page"]) => {
-    const wasSelected = selectedPageIds.includes(page.id);
-    const nextValue = multiple
-      ? wasSelected
-        ? selectedPageIds.filter((pageId) => pageId !== page.id)
-        : [...selectedPageIds, page.id]
-      : page.id;
-    const nextPageIds = toStringArray(nextValue);
-    const relationChanged =
-      nextPageIds.length !== selectedPageIds.length ||
-      nextPageIds.some((pageId, index) => pageId !== selectedPageIds[index]);
-
-    const reciprocalUpdates = getRelationReciprocalUpdates({
-      nextPageIds,
+    const {
+      value: nextValue,
+      config: nextConfig,
+      reciprocalUpdates,
+    } = getRelationSelectionChange({
+      page,
       propertyConfig,
       relatedDatabasePayload: relationPayloadFromViewData(relatedViewData),
       selectedPageIds,
@@ -305,15 +296,7 @@ export function DatabaseRelationPropertyValue({
         name: row.page.name,
       },
     });
-    const nextConfig = getRelationConfigWithPageSummary(propertyConfig, page);
-
-    void onPropertyConfigChange?.(
-      reciprocalUpdates.length > 0
-        ? nextConfig
-        : relationChanged
-          ? getRelationConfigWithSyncStatus(nextConfig, "not_synced")
-          : nextConfig,
-    );
+    void onPropertyConfigChange?.(nextConfig);
     onSelect(nextValue);
 
     reciprocalUpdates.forEach((update) => {

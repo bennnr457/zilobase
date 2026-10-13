@@ -582,3 +582,49 @@ function getRelationObject(propertyConfig: unknown) {
     ? (relation as Record<string, unknown>)
     : null;
 }
+
+export function getRelationSelectionChange({
+  page,
+  propertyConfig,
+  relatedDatabasePayload,
+  selectedPageIds,
+  sourcePage,
+}: {
+  page: SourcePageSummary;
+  propertyConfig: unknown;
+  relatedDatabasePayload: RelationPayload | null | undefined;
+  selectedPageIds: string[];
+  sourcePage: SourcePageSummary;
+}) {
+  const multiple = getRelationLimit(propertyConfig) !== "one_page";
+  const wasSelected = selectedPageIds.includes(page.id);
+  const nextValue = multiple
+    ? wasSelected
+      ? selectedPageIds.filter((pageId) => pageId !== page.id)
+      : [...selectedPageIds, page.id]
+    : page.id;
+  const nextPageIds = toStringArray(nextValue);
+  const relationChanged =
+    nextPageIds.length !== selectedPageIds.length ||
+    nextPageIds.some((pageId, index) => pageId !== selectedPageIds[index]);
+
+  const reciprocalUpdates = getRelationReciprocalUpdates({
+    nextPageIds,
+    propertyConfig,
+    relatedDatabasePayload,
+    selectedPageIds,
+    sourcePage,
+  });
+  const nextConfig = getRelationConfigWithPageSummary(propertyConfig, page);
+
+  return {
+    value: nextValue,
+    reciprocalUpdates,
+    config:
+      reciprocalUpdates.length > 0
+        ? nextConfig
+        : relationChanged
+          ? getRelationConfigWithSyncStatus(nextConfig, "not_synced")
+          : nextConfig,
+  };
+}

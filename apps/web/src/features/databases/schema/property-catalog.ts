@@ -29,7 +29,6 @@ import {
   type Icon,
 } from "@/shared/components/icons";
 import { type DatabasePropertyType as DatabasePropertyTypeId } from "@zilobase/features/databases/property-types";
-import { cyclingColorTokens } from "@/shared/lib/color-tokens";
 
 import type {
   DatabasePropertyFilterKind,
@@ -154,9 +153,7 @@ export const databasePropertyTypes: DatabasePropertyType[][] = databasePropertyP
 
 export const databasePropertyTypeItems = databasePropertyTypes.flat();
 
-export function getNextDatabaseOptionColor(optionCount: number) {
-  return cyclingColorTokens[optionCount % cyclingColorTokens.length]?.value ?? "default";
-}
+export { getNextDatabaseOptionColor } from "@zilobase/features/databases/models";
 
 export const textDatabasePropertyType =
   databasePropertyTypeItems.find((item) => item.type === "text") ?? databasePropertyTypes[0][0];
