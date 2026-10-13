@@ -1,6 +1,6 @@
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { toast } from "sonner";
-import type { RecordDrop } from "@zilobase/features/databases/models";
+import { getRecordDropChange, type RecordDrop } from "@zilobase/features/databases/models";
 
 /** A renderer describes a drop; the session controller owns state and persistence. */
 export function useRecordDrops(input: {
@@ -13,17 +13,7 @@ export function useRecordDrops(input: {
     submitMove(move: RecordDrop, clearSortViewId?: string) {
       if (!input.databaseId || !input.hostDatabaseId) return;
       changeRow.mutate(
-        {
-          databaseId: input.hostDatabaseId,
-          dataSourceId: input.databaseId,
-          rowId: move.rowId,
-          ...(clearSortViewId ? { clearSortViewId } : {}),
-          placement: { afterRowId: move.afterRowId, beforeRowId: move.beforeRowId },
-          ...(move.pageTitle !== undefined ? { title: move.pageTitle } : {}),
-          ...(move.group
-            ? { valuesByPropertyId: { [move.group.propertyId]: move.group.serializedValue } }
-            : {}),
-        },
+        getRecordDropChange(input.hostDatabaseId, input.databaseId, move, clearSortViewId),
         { onError: (error) => toast.error(error.message) },
       );
     },

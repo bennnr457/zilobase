@@ -13,6 +13,25 @@ export type RecordDrop = {
   pageTitle?: string;
 };
 
+export function getRecordDropChange(
+  databaseId: string,
+  dataSourceId: string,
+  move: RecordDrop,
+  clearSortViewId?: string,
+) {
+  return {
+    databaseId,
+    dataSourceId,
+    rowId: move.rowId,
+    ...(clearSortViewId ? { clearSortViewId } : {}),
+    placement: { afterRowId: move.afterRowId, beforeRowId: move.beforeRowId },
+    ...(move.pageTitle !== undefined ? { title: move.pageTitle } : {}),
+    ...(move.group
+      ? { valuesByPropertyId: { [move.group.propertyId]: move.group.serializedValue } }
+      : {}),
+  };
+}
+
 /** Convert a visible-column drop into the shared neighbor-anchored command. */
 export function getGroupedRecordMove<Row extends RecordDropRow>(input: {
   rows: Row[];

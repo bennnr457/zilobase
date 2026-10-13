@@ -7,11 +7,8 @@ import {
   TASKS_DATA_SOURCE_ID,
   TASKS_VIEW_ID,
   STATUS_COLUMN_ID,
-  STATUS_PROPERTY_ID,
   ASSIGNEE_COLUMN_ID,
-  ASSIGNEE_PROPERTY_ID,
   DUE_DATE_COLUMN_ID,
-  DUE_DATE_PROPERTY_ID,
   SOURCE_COLUMN_ID,
 } from "@zilobase/features/tasks";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
@@ -77,7 +74,9 @@ import {
   buildTaskRows,
   filterMyTaskRows,
   getTaskDatabaseSchema,
-  getTaskStatusForCompletion,
+  getTaskPropertyUpdate,
+  getTaskCreationInput,
+  getTaskCompletionUpdate,
   type TaskRow,
 } from "@zilobase/features/tasks";
 
@@ -309,31 +308,12 @@ function TasksDatabaseView({
   ) => {
     const task = rowsBySyntheticId.get(rowId);
     const sourcePayload = task ? sourcePayloadById.get(task.databaseId) : null;
-    if (!task || !sourcePayload) return;
-    const schema = getTaskDatabaseSchema(sourcePayload);
-    const sourceProperty =
-      propertyId === STATUS_PROPERTY_ID
-        ? schema.status
-        : propertyId === ASSIGNEE_PROPERTY_ID
-          ? schema.assignee
-          : propertyId === DUE_DATE_PROPERTY_ID
-            ? schema.dueDate
-            : null;
-    if (!sourceProperty) return;
-
-    updateValue.mutate(
-      {
-        databaseId: sourcePayload.activeDataSource?.id ?? task.databaseId,
-        hostDatabaseId: sourcePayload.database.id,
-        propertyId: sourceProperty.property.id,
-        rowId: task.rowId,
-        value: nextValue || null,
-      },
-      {
-        onError: (error) =>
-          toast.error(error instanceof Error ? error.message : "Could not update task."),
-      },
-    );
+    const update = getTaskPropertyUpdate(task, sourcePayload, propertyId, nextValue);
+    if (!update) return;
+    updateValue.mutate(update, {
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : "Could not update task."),
+    });
   };
   const updateDatabasePropertyConfig = async (databasePropertyId: string, config: unknown) => {
     setPropertyConfigs((current) => ({
@@ -372,32 +352,12 @@ function TasksDatabaseView({
     const sourcePayload = payloads[0];
     if (!sourcePayload || addRow.isPending) return;
 
-    const schema = getTaskDatabaseSchema(sourcePayload);
-    if (!schema.status || !schema.assignee) return;
-
-    const initialStatus = getTaskStatusForCompletion(sourcePayload, false);
-    const initialValues = [
-      ...(currentUserId
-        ? [
-            {
-              propertyId: schema.assignee.property.id,
-              value: [currentUserId],
-            },
-          ]
-        : []),
-      ...(initialStatus ? [{ propertyId: schema.status.property.id, value: initialStatus }] : []),
-    ];
-    addRow.mutate(
-      {
-        databaseId: sourcePayload.activeDataSource?.id ?? sourcePayload.database.id,
-        hostDatabaseId: sourcePayload.database.id,
-        initialValues: initialValues,
-      },
-      {
-        onError: (error) =>
-          toast.error(error instanceof Error ? error.message : "Could not create task."),
-      },
-    );
+    const input = getTaskCreationInput(sourcePayload, currentUserId);
+    if (!input) return;
+    addRow.mutate(input, {
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : "Could not create task."),
+    });
   };
 
   return (
@@ -527,12 +487,8 @@ function TasksDatabaseView({
         setRowComplete: (row, complete) => {
           const task = rowsBySyntheticId.get(row.id);
           const sourcePayload = task ? sourcePayloadById.get(task.databaseId) : null;
-          const statusProperty = sourcePayload ? getTaskDatabaseSchema(sourcePayload).status : null;
-          const nextStatus = sourcePayload
-            ? getTaskStatusForCompletion(sourcePayload, complete)
-            : null;
-
-          if (!task || !statusProperty || !nextStatus) {
+          const update = getTaskCompletionUpdate(task, sourcePayload, complete);
+          if (!update) {
             toast.error(
               complete
                 ? "This database needs a status in the Complete group."
@@ -541,19 +497,10 @@ function TasksDatabaseView({
             return;
           }
 
-          updateValue.mutate(
-            {
-              databaseId: sourcePayload?.activeDataSource?.id ?? task.databaseId,
-              hostDatabaseId: sourcePayload?.database.id,
-              propertyId: statusProperty.property.id,
-              rowId: task.rowId,
-              value: nextStatus,
-            },
-            {
-              onError: (error) =>
-                toast.error(error instanceof Error ? error.message : "Could not update the task."),
-            },
-          );
+          updateValue.mutate(update, {
+            onError: (error) =>
+              toast.error(error instanceof Error ? error.message : "Could not update the task."),
+          });
         },
         setSortPickerOpen,
         setViewGroupProperty: (groupPropertyId) =>

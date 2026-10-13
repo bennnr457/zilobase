@@ -1,3 +1,4 @@
+import { applyDatabaseRelationSelection } from "@zilobase/features/databases/models";
 import { getRelationPageSummary } from "@zilobase/features/databases/models";
 import { useMemo, useState } from "react";
 import {
@@ -14,7 +15,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { DatabasePageLink } from "../../interactions/database-page-link";
 import { DatabaseRollupPropertySettings } from "../configuration";
 import {
-  getRelationSelectionChange,
   getRelationLimit,
   getRelationTargetDatabaseId,
   relationPayloadFromViewData,
@@ -281,44 +281,19 @@ export function DatabaseRelationPropertyValue({
   };
 
   const selectPage = (page: DatabaseRecordEntity["page"]) => {
-    const {
-      value: nextValue,
-      config: nextConfig,
-      reciprocalUpdates,
-    } = getRelationSelectionChange({
-      page,
-      propertyConfig,
-      relatedDatabasePayload: relationPayloadFromViewData(relatedViewData),
-      selectedPageIds,
-      sourcePage: {
-        id: row.pageId,
-        metadata: row.page.metadata,
-        name: row.page.name,
+    applyDatabaseRelationSelection(
+      { updateProperty, updateValue },
+      {
+        page,
+        propertyConfig,
+        relatedDatabasePayload: relationPayloadFromViewData(relatedViewData),
+        selectedPageIds,
+        sourcePage: { id: row.pageId, metadata: row.page.metadata, name: row.page.name },
+        relatedViewData,
+        onPropertyConfigChange,
+        onSelect,
       },
-    });
-    void onPropertyConfigChange?.(nextConfig);
-    onSelect(nextValue);
-
-    reciprocalUpdates.forEach((update) => {
-      if (update.config && update.databasePropertyId) {
-        updateProperty.mutate({
-          configuration: diffConfiguration(
-            relatedViewData?.bootstrap.properties.find(({ id }) => id === update.databasePropertyId)
-              ?.property.config,
-            update.config,
-          ),
-          databaseId: update.databaseId,
-          databasePropertyId: update.databasePropertyId,
-        });
-      }
-
-      updateValue.mutate({
-        databaseId: update.databaseId,
-        propertyId: update.propertyId,
-        rowId: update.rowId,
-        value: update.value,
-      });
-    });
+    );
 
     if (!multiple) {
       setOpen(false);
@@ -418,5 +393,3 @@ function RelationPageOptionIcon({ page }: { page: DatabaseRecordEntity["page"] }
 
   return emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon />;
 }
-
-import { diffConfiguration } from "@zilobase/features/databases/record-interactions";

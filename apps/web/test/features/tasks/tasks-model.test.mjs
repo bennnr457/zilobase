@@ -16,7 +16,9 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(source, /newRowLabel: "New task"/);
     assert.match(source, /setRowComplete:/);
     assert.match(source, /addDatabaseRow: createTask/);
-    assert.match(source, /initialValues: initialValues/);
+    assert.match(source, /getTaskCreationInput/);
+    const sharedCreation = await readSource("/packages/features/src/tasks/record-mutations.ts");
+    assert.match(sharedCreation, /initialValues:/);
     assert.match(source, /configureDataSources: onConfigureDataSources/);
     assert.match(source, /addDataSource: \(\) => setDataSourceSetupOpen\(true\)/);
     assert.match(source, /dataSources: payloads\.flatMap/);

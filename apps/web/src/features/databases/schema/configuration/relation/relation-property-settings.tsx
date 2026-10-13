@@ -1,3 +1,4 @@
+import { createDatabaseRelationCommands } from "@zilobase/features/databases/models";
 import { getRelationConfig } from "@zilobase/features/databases/models";
 import {
   ArrowUpRight,
@@ -42,8 +43,6 @@ import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { useDatabaseSecondaryPayload } from "@zilobase/features/databases/react";
 import {
   getRelationNeedsRepair,
-  getRelationRepairMutationPlan,
-  getRelationTwoWayConfigUpdate,
   relationPayloadFromViewData,
 } from "@zilobase/features/databases/models";
 
@@ -75,6 +74,11 @@ export function RelationPropertySettings({
   const addProperty = useAddDatabaseProperty();
   const updateProperty = useUpdateDatabaseProperty();
   const updateValue = useUpdateDatabasePropertyValue();
+  const relationCommands = createDatabaseRelationCommands({
+    addProperty,
+    updateProperty,
+    updateValue,
+  });
   const [repairDialogOpen, setRepairDialogOpen] = useState(false);
   const [repairPrimarySource, setRepairPrimarySource] = useState<"source" | "related">("source");
   const [optimisticTwoWayRelation, setOptimisticTwoWayRelation] = useState<boolean | null>(null);
@@ -134,7 +138,7 @@ export function RelationPropertySettings({
     if (repairDataLoading) {
       return;
     }
-    const repairPlan = getRelationRepairMutationPlan({
+    const repaired = relationCommands.repair({
       databaseId,
       databasePropertyId,
       payload: relationPayloadFromViewData(currentDatabaseRead.data),
@@ -142,68 +146,22 @@ export function RelationPropertySettings({
       propertyConfig: config,
       relatedDatabasePayload: relationPayloadFromViewData(relatedDatabaseRead.data),
     });
-
-    if (!repairPlan) {
-      return;
-    }
-
-    repairPlan.valueUpdates.forEach((update) => {
-      updateValue.mutate({
-        databaseId: update.databaseId,
-        propertyId: update.propertyId,
-        rowId: update.rowId,
-        value: update.value,
-      });
-    });
-    repairPlan.configUpdates.forEach((update) => updateProperty.mutate(update));
-    setRepairDialogOpen(false);
+    if (repaired) setRepairDialogOpen(false);
   };
-  const saveRelation = () => {
-    if (!selectedDatabase) {
-      return;
-    }
-
-    const nextRelation = {
-      ...relationConfig,
-      relatedDatabaseId: selectedDatabase.value,
-      relatedDatabaseName: selectedDatabase.label,
-      relatedPageName: selectedDatabase.pageName,
-      relatedPropertyName: relatedPropertyName.trim() || undefined,
-      twoWayRelation,
-    };
-
-    if (!twoWayRelation || !relatedPropertyName.trim() || !sourcePropertyId) {
-      onUpdateConfig({ relation: nextRelation });
-      return;
-    }
-
-    addProperty.mutate(
+  const saveRelation = () =>
+    relationCommands.save(
       {
-        config: {
-          relation: {
-            limit,
-            relatedDatabaseId: sourceDatabaseId,
-            relatedDatabaseName: sourceDatabaseName,
-            relatedPropertyId: sourcePropertyId,
-            twoWayRelation: true,
-          },
-        },
-        databaseId: selectedDatabase.value,
-        name: relatedPropertyName.trim(),
-        type: "relation",
+        selectedDatabase,
+        relationConfig,
+        relatedPropertyName,
+        twoWayRelation,
+        limit,
+        sourceDatabaseId,
+        sourceDatabaseName,
+        sourcePropertyId,
       },
-      {
-        onSuccess: (reciprocalProperty) => {
-          onUpdateConfig({
-            relation: {
-              ...nextRelation,
-              relatedPropertyId: reciprocalProperty.property.id,
-            },
-          });
-        },
-      },
+      onUpdateConfig,
     );
-  };
 
   if (selectedDatabase) {
     return (
@@ -264,23 +222,16 @@ export function RelationPropertySettings({
             event.preventDefault();
             const nextTwoWayRelation = !twoWayRelation;
             setOptimisticTwoWayRelation(nextTwoWayRelation);
-            const relatedConfigUpdate = getRelationTwoWayConfigUpdate({
-              nextTwoWayRelation,
-              propertyConfig: config,
-              relatedDatabasePayload: relatedDatabaseSchema,
-            });
-
-            if (relatedConfigUpdate) {
-              updateProperty.mutate(relatedConfigUpdate);
-            }
-
-            onUpdateConfig({
-              relation: {
-                ...relationConfig,
-                relatedPropertyName: relatedPropertyName.trim() || undefined,
-                twoWayRelation: nextTwoWayRelation,
+            relationCommands.setTwoWay(
+              {
+                nextTwoWayRelation,
+                propertyConfig: config,
+                relatedDatabasePayload: relatedDatabaseSchema,
+                relationConfig,
+                relatedPropertyName,
               },
-            });
+              onUpdateConfig,
+            );
 
             if (nextTwoWayRelation && needsRepair) {
               setRepairDialogOpen(true);

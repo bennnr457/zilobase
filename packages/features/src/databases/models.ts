@@ -17,6 +17,7 @@ export * from "./views/field-option";
 export * from "./views/filter-sort-contracts";
 export * from "./views/type-transition";
 export * from "./records/record-drop";
+export * from "./records/relation-commands";
 export * from "./views/chart-config";
 export * from "./views/form-header-config";
 export * from "./views/form-question-config";
