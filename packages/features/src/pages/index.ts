@@ -30,3 +30,4 @@ export * from "./navigation-item-state";
 export * from "./sharing-model";
 export * from "./notion-import";
 export { pageReadSnapshotOf } from "./read-snapshot";
+export * from "./read-cache";
