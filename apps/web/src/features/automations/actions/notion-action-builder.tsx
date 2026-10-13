@@ -1,3 +1,4 @@
+import { newFilterCondition, defaultRecipient } from "@zilobase/features/automations/models";
 import {
   automationOperandValues,
   automationOperandFromValues,
@@ -735,18 +736,6 @@ function AutomationFilterValueControl({
       valueOptions={valueOptions}
     />
   );
-}
-
-function newFilterCondition(): Extract<
-  AutomationFilterDefinition["conditions"][number],
-  { type: "condition" }
-> {
-  return {
-    id: crypto.randomUUID(),
-    operator: "is_not_empty",
-    propertyId: "name",
-    type: "condition",
-  };
 }
 
 function NotificationEditor({
@@ -1750,20 +1739,6 @@ function BuilderSelect({
       </SelectContent>
     </Select>
   );
-}
-
-function defaultRecipient(
-  type: AutomationNotificationRecipient["type"],
-  catalog?: DatabaseAutomationCatalog,
-): AutomationNotificationRecipient {
-  if (type === "selected_user") return { type, userId: catalog?.users[0]?.id ?? "" };
-  if (type === "person_property")
-    return {
-      propertyId: catalog?.properties.find((property) => property.type === "person")?.id ?? "",
-      type,
-    };
-  if (type === "variable") return { type, variableName: "" };
-  return { type };
 }
 
 function recipientTypeOptions(scheduled: boolean) {
