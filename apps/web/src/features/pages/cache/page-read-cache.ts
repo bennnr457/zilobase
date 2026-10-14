@@ -1,11 +1,7 @@
-import { hydratePageReadSnapshots, subscribePageReadSnapshots } from "@zilobase/features/pages";
+import { hydrateClientReadCache, subscribeClientReadCache } from "@zilobase/features/pages";
 import type { QueryClient } from "@tanstack/react-query";
-
-import {
-  deletePageSnapshots,
-  readPageSnapshots,
-  rememberPageSnapshot,
-} from "@/features/editor/collaboration/page-document-cache";
+import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
+import { pageCacheDeploymentKey } from "@/platform/storage/page-cache-database";
 
 export async function hydratePageReadCache(input: {
   queryClient: QueryClient;
@@ -15,11 +11,11 @@ export async function hydratePageReadCache(input: {
   workspaceId: string | null;
   databaseIds: string[];
 }) {
-  const { queryClient, userId, sessionId, pageId, workspaceId, databaseIds } = input;
-  const scopes = ["user", `page:${pageId}`, ...databaseIds.map((id) => `database:${id}`)];
-  if (workspaceId) scopes.push(`workspace:${workspaceId}`);
-  const snapshots = await readPageSnapshots(userId, scopes);
-  hydratePageReadSnapshots(queryClient, sessionId, snapshots);
+  return hydrateClientReadCache({
+    ...input,
+    storage: webClientCacheStorage,
+    scope: { deployment: pageCacheDeploymentKey(), userId: input.userId },
+  });
 }
 
 export function subscribePageReadCache(
@@ -27,20 +23,9 @@ export function subscribePageReadCache(
   userId: string,
   sessionId: string,
 ) {
-  return subscribePageReadSnapshots(
-    queryClient,
+  return subscribeClientReadCache(queryClient, webClientCacheStorage, {
+    deployment: pageCacheDeploymentKey(),
+    userId,
     sessionId,
-    (snapshot) => {
-      void rememberPageSnapshot(
-        userId,
-        snapshot.scope,
-        [...snapshot.queryKey],
-        snapshot.data,
-        snapshot.updatedAt,
-      ).catch(() => undefined);
-    },
-    (scope) => {
-      void deletePageSnapshots(userId, [scope]).catch(() => undefined);
-    },
-  );
+  });
 }

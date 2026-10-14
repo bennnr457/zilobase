@@ -3,8 +3,8 @@ import { QueryClient } from "@tanstack/react-query";
 
 export function register({ assert, loadModule, test }) {
   test("unmigrated page reads stay account scoped and covered navigation never hydrates", async () => {
-    const storage = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
-    const cache = await loadModule("/src/features/pages/cache/page-read-cache.ts");
+    const storage = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const navigation = { databases: [], pages: [], placements: [] };
     await storage.rememberPageSnapshot(
       "reader-1",
@@ -20,7 +20,10 @@ export function register({ assert, loadModule, test }) {
       { properties: [], values: [] },
       Date.now() - 60_000,
     );
-    const client = new QueryClient();
+    const client = cache.createZilobaseClient({
+      deployment: "server",
+      queryClient: new QueryClient(),
+    }).queryClient;
     await cache.hydratePageReadCache({
       queryClient: client,
       userId: "reader-1",
@@ -31,7 +34,10 @@ export function register({ assert, loadModule, test }) {
     });
     assert.equal(client.getQueryData(["pages", "workspace-1", "nav", "active"]), undefined);
     assert.equal(client.getQueryData(["page", "page-1", "properties"]), undefined);
-    const other = new QueryClient();
+    const other = cache.createZilobaseClient({
+      deployment: "server",
+      queryClient: new QueryClient(),
+    }).queryClient;
     await cache.hydratePageReadCache({
       queryClient: other,
       userId: "reader-2",
@@ -41,12 +47,12 @@ export function register({ assert, loadModule, test }) {
       databaseIds: [],
     });
     assert.equal(other.getQueryData(["pages", "workspace-1", "nav", "active"]), undefined);
-    await storage.clearPageCacheForUser("reader-1");
+    await storage.clearPageSnapshotsForDeployment("reader-1");
   });
 
   test("invalid saved database windows never hydrate under a query hash", async () => {
-    const storage = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
-    const cache = await loadModule("/src/features/pages/cache/page-read-cache.ts");
+    const storage = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     await storage.rememberPageSnapshot(
       "reader-3",
       "database:db-1",
@@ -54,7 +60,10 @@ export function register({ assert, loadModule, test }) {
       { pages: [{ queryHash: "hash-b" }], pageParams: [null] },
       Date.now(),
     );
-    const client = new QueryClient();
+    const client = cache.createZilobaseClient({
+      deployment: "server",
+      queryClient: new QueryClient(),
+    }).queryClient;
     await cache.hydratePageReadCache({
       queryClient: client,
       userId: "reader-3",
@@ -67,12 +76,12 @@ export function register({ assert, loadModule, test }) {
       client.getQueryData(["db", "new-session", "db-1", "window", "source-1", "hash-a", false]),
       undefined,
     );
-    await storage.clearPageCacheForUser("reader-3");
+    await storage.clearPageSnapshotsForDeployment("reader-3");
   });
 
   test("an access denial removes a cached database view", async () => {
-    const storage = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
-    const cache = await loadModule("/src/features/pages/cache/page-read-cache.ts");
+    const storage = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const queryKey = ["db", "session-4", "db-4", "bootstrap", null, false];
     await storage.rememberPageSnapshot(
       "reader-4",
@@ -93,6 +102,6 @@ export function register({ assert, loadModule, test }) {
     assert.equal((await storage.readPageSnapshots("reader-4", ["database:db-4"])).length, 0);
     assert.equal(client.getQueryData(queryKey), undefined);
     unsubscribe();
-    await storage.clearPageCacheForUser("reader-4");
+    await storage.clearPageSnapshotsForDeployment("reader-4");
   });
 }

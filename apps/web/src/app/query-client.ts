@@ -1,5 +1,5 @@
 import { createZilobaseClient } from "@zilobase/features";
-import { resolveApiBaseUrl } from "@/platform/network/api";
+import { pageCacheDeploymentKey } from "@/platform/storage/page-cache-database";
 
-export const clientDeployment = () => resolveApiBaseUrl() || window.location.origin;
+export const clientDeployment = pageCacheDeploymentKey;
 export const { queryClient } = createZilobaseClient({ deployment: clientDeployment });

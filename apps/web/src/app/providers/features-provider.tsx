@@ -24,12 +24,13 @@ import { useAppStore } from "@/features/desktop/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/features/demo";
 import posthog from "@/shared/lib/posthog";
 import { readOAuthQuery } from "@zilobase/features/oauth";
+import { clearPageCacheForUser } from "@/features/editor/collaboration/page-document-cache";
 import {
   clearCachedSession,
-  clearPageCacheForUser,
   readCachedSession,
-  rememberCachedSession,
-} from "@/features/editor/collaboration/page-document-cache";
+  webClientCacheStorage,
+} from "@/platform/storage/client-cache-storage";
+import { rememberClientSession } from "@zilobase/features";
 import { getConnectivityState } from "@/platform/network/connectivity";
 
 function withOAuthQuery<T extends Record<string, unknown>>(input: T) {
@@ -50,11 +51,9 @@ export const webAuthClient: ZilobaseAuthClient = {
         signal,
         timeoutMs: 15_000,
       });
-      if (session.user) {
-        await rememberCachedSession(session).catch(() => undefined);
-      } else {
-        await clearCachedSession().catch(() => undefined);
-      }
+      await rememberClientSession(webClientCacheStorage, clientDeployment(), session).catch(
+        () => undefined,
+      );
       recordDesktopDiagnostic("session.request", {
         duration_ms: performance.now() - startedAt,
         session_present: Boolean(session.session),
@@ -185,6 +184,7 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
     <ZilobaseFeaturesProvider
       value={{
         deployment: clientDeployment,
+        cacheStorage: webClientCacheStorage,
         apiFetch,
         lifecycle: webClientLifecycle,
         databasePresenceColor,

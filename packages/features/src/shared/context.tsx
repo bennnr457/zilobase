@@ -1,5 +1,8 @@
 import { QueryClientProvider, useQuery, type QueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
+import { useEffect } from "react";
+import type { ClientCacheStorage } from "./cache-storage";
+import { subscribeClientReadCache } from "../pages/read-cache";
 import type { ApiFetcher } from "./api-fetcher";
 import type { ClientLifecycle } from "./lifecycle";
 import { initializeZilobaseClient, type ClientDeployment } from "./client";
@@ -14,6 +17,7 @@ export type { ZilobaseAuthClient } from "./auth-client";
 
 export type ZilobaseFeaturesConfig = {
   deployment: ClientDeployment;
+  cacheStorage?: ClientCacheStorage;
   apiFetch: ApiFetcher;
   auth: ZilobaseAuthClient;
   preferredActiveWorkspaceId?: string | null;
@@ -45,6 +49,16 @@ function SessionDatabaseProvider({
   value,
 }: React.PropsWithChildren<{ value: ZilobaseFeaturesConfig }>) {
   const { data: session } = useQuery(sessionQueryOptions(value.auth));
+  const userId = session?.user?.id;
+  const sessionId = session?.session?.id;
+  useEffect(() => {
+    if (!value.cacheStorage || !userId || !sessionId) return;
+    return subscribeClientReadCache(value.queryClient, value.cacheStorage, {
+      deployment: typeof value.deployment === "function" ? value.deployment() : value.deployment,
+      userId,
+      sessionId,
+    });
+  }, [value.queryClient, value.cacheStorage, value.deployment, userId, sessionId]);
   return (
     <DbProvider
       apiFetch={value.apiFetch}

@@ -3,7 +3,7 @@ import * as Y from "yjs";
 
 export function register({ assert, loadModule, test }) {
   test("page documents share one instance and persist updates before release", async () => {
-    const cache = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const first = await cache.acquirePageDocument("cache-user-1", "cache-page-1");
     const second = await cache.acquirePageDocument("cache-user-1", "cache-page-1");
 
@@ -24,7 +24,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("a clean cached document rehydrates after its memory entry is dropped", async () => {
-    const cache = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const first = await cache.acquirePageDocument("cache-user-2", "cache-page-2");
     first.document.transact(
       () => first.document.getText("body").insert(0, "cached"),
@@ -42,7 +42,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("local changes survive compaction and become evictable only after server verification", async () => {
-    const cache = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const entry = await cache.acquirePageDocument("cache-user-3", "cache-page-3");
     for (let index = 0; index < 120; index += 1) {
       entry.document.getText("body").insert(index, "x");
@@ -78,7 +78,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("revoked pages block editing while their Yjs recovery state remains available", async () => {
-    const cache = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const entry = await cache.acquirePageDocument("cache-user-4", "cache-page-4");
     entry.document.getText("body").insert(0, "recover me");
     await entry.flush();
@@ -91,7 +91,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("read snapshots are scoped to their account and removed on sign out", async () => {
-    const cache = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     await cache.rememberPageSnapshot(
       "cache-user-5",
       "database:db-1",
@@ -106,7 +106,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("sign out drains pending snapshot writes before clearing them", async () => {
-    const cache = await loadModule("/src/features/editor/collaboration/page-document-cache.ts");
+    const cache = await loadModule("/apps/web/test/support/fixtures/page-cache.ts");
     const writes = Array.from({ length: 20 }, (_, index) =>
       cache.rememberPageSnapshot(
         "cache-user-7",

@@ -7,12 +7,58 @@ import { resolveEmbeddedItemsOpenAs, pageQueryKey } from "./queries";
 import { isPublishedFallbackPage } from "./publication";
 import type { QueryClient } from "@tanstack/react-query";
 import { pageReadSnapshotOf } from "./read-snapshot";
+import { sharedClient } from "../data/client";
+import {
+  clientReadSnapshot,
+  type ClientCacheScope,
+  type ClientCacheStorage,
+} from "../shared/cache-storage";
 
 export type PageReadSnapshot = {
   queryKey: readonly unknown[];
   data: unknown;
   updatedAt: number;
 };
+
+export async function hydrateClientReadCache(input: {
+  queryClient: QueryClient;
+  storage: ClientCacheStorage;
+  scope: ClientCacheScope;
+  sessionId: string;
+  pageId: string;
+  workspaceId: string | null;
+  databaseIds: string[];
+}) {
+  const owner = sharedClient(input.queryClient);
+  const read = owner.capture();
+  const scopes = [
+    "user",
+    `page:${input.pageId}`,
+    ...input.databaseIds.map((id) => `database:${id}`),
+  ];
+  if (input.workspaceId) scopes.push(`workspace:${input.workspaceId}`);
+  const snapshots = await input.storage.snapshots.load(input.scope, scopes);
+  if (!owner.isCurrent(read)) return;
+  hydratePageReadSnapshots(input.queryClient, input.sessionId, snapshots);
+}
+
+export function subscribeClientReadCache(
+  queryClient: QueryClient,
+  storage: ClientCacheStorage,
+  scope: ClientCacheScope & { sessionId: string },
+) {
+  return subscribePageReadSnapshots(
+    queryClient,
+    scope.sessionId,
+    (row) => {
+      const snapshot = clientReadSnapshot(row);
+      if (snapshot) void storage.snapshots.write(scope, snapshot).catch(() => undefined);
+    },
+    (denied) => {
+      void storage.snapshots.delete(scope, [denied]).catch(() => undefined);
+    },
+  );
+}
 
 export function hydratePageReadSnapshots(
   queryClient: QueryClient,

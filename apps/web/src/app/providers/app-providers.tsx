@@ -19,7 +19,6 @@ import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useSession } from "@zilobase/features/auth/react";
 import { useDatabaseController } from "@zilobase/features/databases/react";
 import { guardPendingDatabaseWrites } from "@/features/databases/lifecycle/beforeunload";
-import { subscribePageReadCache } from "@/features/pages/cache/page-read-cache";
 
 import posthog from "@/shared/lib/posthog";
 
@@ -39,7 +38,6 @@ export function AppProviders({ children }: React.PropsWithChildren) {
   return (
     <AppIconProvider>
       <WebFeaturesProvider>
-        <WebCacheEffects />
         <DatabaseUnloadGuard />
         <PostHogIdentitySync />
         <ShortcutProvider>
@@ -69,19 +67,6 @@ export function AppProviders({ children }: React.PropsWithChildren) {
       </WebFeaturesProvider>
     </AppIconProvider>
   );
-}
-
-function WebCacheEffects() {
-  const { data: session } = useSession();
-  const userId = session?.user?.id;
-  const sessionId = session?.session?.id;
-
-  React.useEffect(() => {
-    if (!userId || !sessionId) return;
-    return subscribePageReadCache(queryClient, userId, sessionId);
-  }, [userId, sessionId]);
-
-  return null;
 }
 
 function DatabaseUnloadGuard() {

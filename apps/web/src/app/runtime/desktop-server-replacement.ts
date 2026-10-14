@@ -17,7 +17,7 @@ import {
 import type { DesktopServerReplacementDependencies } from "@/features/desktop/server/desktop-server-replacement-core";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { useAuthFlowStore } from "@/features/auth/state/auth-flow-store";
-import { clearPageSnapshotsForDeployment } from "@/features/editor/collaboration/page-document-cache";
+import { clearPageSnapshotsForDeployment } from "@/platform/storage/client-cache-storage";
 import { sessionQueryKey, type SessionResponse } from "@zilobase/features/auth";
 
 export function createDesktopServerReplacementDependencies(input: {
