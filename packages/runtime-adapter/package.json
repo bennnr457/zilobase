@@ -142,9 +142,6 @@
     "@hocuspocus/server": {
       "optional": true
     },
-    "agents": {
-      "optional": true
-    },
     "crossws": {
       "optional": true
     },
@@ -178,7 +175,6 @@
     "@types/nodemailer": "^7.0.12",
     "@zilobase/features": "file:../features",
     "@zilobase/server": "file:../../apps/server",
-    "agents": "^0.22.0",
     "bullmq": "6.3.11",
     "crossws": "^0.4.9",
     "drizzle-orm": "^0.45.2",
