@@ -9,7 +9,11 @@ import {
   resolveNavigationReference,
   type PageDetail,
 } from "@zilobase/features/pages";
-import { resolveActiveWorkspaceId, workspacesQueryOptions } from "@zilobase/features/workspaces";
+import {
+  resolveActiveWorkspaceId,
+  workspacesQueryOptions,
+  type Workspace,
+} from "@zilobase/features/workspaces";
 
 import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
@@ -22,30 +26,27 @@ import { hydratePageReadCache } from "@/components/pages/cache/page-read-cache";
 const NAVIGATION_AUTH_STALE_TIME = 30_000;
 
 export function applyPageShareAccess(pageId: string) {
-  return Effect.runPromise(
-    Effect.gen(function* () {
-      const decision = yield* Effect.tryPromise({
-        try: () =>
-          decidePageShareAccess({
-            apiFetch,
-            queryClient,
-            pageId,
-            getSession: () => getFreshSession({ optional: true }),
-            getWorkspaces,
-            isOnline: () => getConnectivityState() !== "offline",
-          }),
-        catch: (error) => error,
-      });
-      if (decision.type === "unavailable") return yield* Effect.fail(new NetworkUnavailableError());
-      if (decision.type === "login") return yield* Effect.fail(redirect({ to: "/login" }));
-      if (decision.type === "onboarding")
-        return yield* Effect.fail(redirect({ to: "/onboarding" }));
-      if (decision.session) {
-        yield* hydrateCachedPageQueries(decision.session, pageId, decision.memberDetail!);
-      }
-      return decision.type;
-    }),
-  );
+  return Effect.gen(function* () {
+    const decision = yield* Effect.tryPromise({
+      try: () =>
+        decidePageShareAccess({
+          apiFetch,
+          queryClient,
+          pageId,
+          getSession: () => Effect.runPromise(getFreshSession({ optional: true })),
+          getWorkspaces: () => Effect.runPromise(getWorkspaces()),
+          isOnline: () => getConnectivityState() !== "offline",
+        }),
+      catch: (error) => error,
+    });
+    if (decision.type === "unavailable") return yield* Effect.fail(new NetworkUnavailableError());
+    if (decision.type === "login") return yield* Effect.fail(redirect({ to: "/login" }));
+    if (decision.type === "onboarding") return yield* Effect.fail(redirect({ to: "/onboarding" }));
+    if (decision.session) {
+      yield* hydrateCachedPageQueries(decision.session, pageId, decision.memberDetail!);
+    }
+    return decision.type;
+  });
 }
 
 function hydrateCachedPageQueries(session: SessionResponse, pageId: string, detail: PageDetail) {
@@ -69,52 +70,44 @@ export function applyDatabaseShareAccess(databaseId: string) {
 }
 
 export function getFreshSession(options?: { optional?: boolean }) {
-  return Effect.runPromise(
-    Effect.tryPromise({
-      try: () =>
-        queryClient.fetchQuery({
-          ...sessionQueryOptions(webAuthClient),
-          staleTime: NAVIGATION_AUTH_STALE_TIME,
-        }),
-      catch: (error) => error,
-    }).pipe(
-      Effect.catch((error) =>
-        options?.optional && error instanceof NetworkUnavailableError
-          ? Effect.succeed({ session: null, user: null })
-          : Effect.fail(error),
-      ),
+  return Effect.tryPromise({
+    try: () =>
+      queryClient.fetchQuery({
+        ...sessionQueryOptions(webAuthClient),
+        staleTime: NAVIGATION_AUTH_STALE_TIME,
+      }),
+    catch: (error) => error,
+  }).pipe(
+    Effect.catch((error) =>
+      options?.optional && error instanceof NetworkUnavailableError
+        ? Effect.succeed({ session: null, user: null })
+        : Effect.fail(error),
     ),
   );
 }
 
 export function getWorkspaces() {
-  return Effect.runPromise(
-    Effect.tryPromise({
-      try: () =>
-        queryClient.fetchQuery({
-          ...workspacesQueryOptions(webAuthClient),
-          staleTime: NAVIGATION_AUTH_STALE_TIME,
-        }),
-      catch: (error) => error,
-    }),
-  );
+  return Effect.tryPromise({
+    try: () =>
+      queryClient.fetchQuery({
+        ...workspacesQueryOptions(webAuthClient),
+        staleTime: NAVIGATION_AUTH_STALE_TIME,
+      }),
+    catch: (error) => error,
+  });
 }
 
-export async function getDefaultAppPath(
-  session: Awaited<ReturnType<typeof getFreshSession>>,
-  workspaces: Awaited<ReturnType<typeof getWorkspaces>>,
-) {
-  const workspaceId = resolveActiveWorkspaceId({
-    preferredActiveWorkspaceId: useAppStore.getState().activeWorkspaceId,
-    sessionWorkspaceId: session.session?.activeWorkspaceId ?? null,
-    workspaces,
-    status: "success",
-  });
-  if (!workspaceId) return "/recents";
-
-  const options = pagesQueryOptions(apiFetch, workspaceId);
-  return Effect.runPromise(
-    Effect.tryPromise({
+export function getDefaultAppPath(session: SessionResponse, workspaces: Workspace[]) {
+  return Effect.suspend(() => {
+    const workspaceId = resolveActiveWorkspaceId({
+      preferredActiveWorkspaceId: useAppStore.getState().activeWorkspaceId,
+      sessionWorkspaceId: session.session?.activeWorkspaceId ?? null,
+      workspaces,
+      status: "success",
+    });
+    if (!workspaceId) return Effect.succeed("/recents");
+    const options = pagesQueryOptions(apiFetch, workspaceId);
+    return Effect.tryPromise({
       try: async () => {
         const navigation = await queryClient.fetchQuery({
           ...options,
@@ -126,26 +119,23 @@ export async function getDefaultAppPath(
           : "/recents";
       },
       catch: (error) => error,
-    }).pipe(Effect.orElseSucceed(() => "/recents")),
-  );
+    }).pipe(Effect.orElseSucceed(() => "/recents"));
+  });
 }
 
 function applyPublishedShareAccess(isPublished: () => Promise<boolean>) {
-  return Effect.runPromise(
-    Effect.gen(function* () {
-      const decision = yield* Effect.tryPromise({
-        try: () =>
-          decidePublishedShareAccess({
-            getSession: () => getFreshSession({ optional: true }),
-            getWorkspaces,
-            isPublished,
-          }),
-        catch: (error) => error,
-      });
-      if (decision.type === "login") return yield* Effect.fail(redirect({ to: "/login" }));
-      if (decision.type === "onboarding")
-        return yield* Effect.fail(redirect({ to: "/onboarding" }));
-      return decision.type;
-    }),
-  );
+  return Effect.gen(function* () {
+    const decision = yield* Effect.tryPromise({
+      try: () =>
+        decidePublishedShareAccess({
+          getSession: () => Effect.runPromise(getFreshSession({ optional: true })),
+          getWorkspaces: () => Effect.runPromise(getWorkspaces()),
+          isPublished,
+        }),
+      catch: (error) => error,
+    });
+    if (decision.type === "login") return yield* Effect.fail(redirect({ to: "/login" }));
+    if (decision.type === "onboarding") return yield* Effect.fail(redirect({ to: "/onboarding" }));
+    return decision.type;
+  });
 }

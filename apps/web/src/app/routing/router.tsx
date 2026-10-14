@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import {
   createRootRoute,
   createRoute,
@@ -40,13 +41,15 @@ const rootRoute = createRootRoute({ component: RootRouteShell });
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "app",
-  beforeLoad: async () => {
-    const session = await getFreshSession();
-    if (!session.user) throw redirect({ to: "/login" });
-
-    const workspaces = await getWorkspaces();
-    if (workspaces.length === 0) throw redirect({ to: "/onboarding" });
-  },
+  beforeLoad: () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const session = yield* getFreshSession();
+        if (!session.user) return yield* Effect.fail(redirect({ to: "/login" }));
+        const workspaces = yield* getWorkspaces();
+        if (workspaces.length === 0) return yield* Effect.fail(redirect({ to: "/onboarding" }));
+      }),
+    ),
   component: Outlet,
   pendingComponent: PendingPage,
 });
@@ -55,53 +58,66 @@ const appRoute = createRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  beforeLoad: async () => {
-    const session = await getFreshSession({ optional: true });
-    if (!session.user) throw redirect({ to: "/login" });
-
-    const workspaces = await getWorkspaces();
-    if (isHostedDemoRuntime()) {
-      const { startPath } = await apiFetch<{ startPath: string }>("/demo/bootstrap", {
-        method: "GET",
-      });
-      throw redirect({ href: startPath });
-    }
-    if (workspaces.length === 0) throw redirect({ to: "/onboarding" });
-    throw redirect({ href: await getDefaultAppPath(session, workspaces) });
-  },
+  beforeLoad: () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const session = yield* getFreshSession({ optional: true });
+        if (!session.user) return yield* Effect.fail(redirect({ to: "/login" }));
+        const workspaces = yield* getWorkspaces();
+        if (isHostedDemoRuntime()) {
+          const { startPath } = yield* Effect.tryPromise({
+            try: () =>
+              apiFetch<{ startPath: string }>("/demo/bootstrap", {
+                method: "GET",
+              }),
+            catch: (error) => error,
+          });
+          return yield* Effect.fail(redirect({ href: startPath }));
+        }
+        if (workspaces.length === 0) return yield* Effect.fail(redirect({ to: "/onboarding" }));
+        return yield* Effect.fail(
+          redirect({ href: yield* getDefaultAppPath(session, workspaces) }),
+        );
+      }),
+    ),
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   validateSearch: validateLoginSearch,
-  beforeLoad: async ({ search }) => {
-    if (isBootstrapRequiredAuthError(search.error)) {
-      throw redirect({ to: "/setup" });
-    }
-
-    const session = await getFreshSession({ optional: true });
-    if (!session.user) return;
-
-    if (isOAuthLoginSearch(search)) {
-      throw redirect({
-        search: pickOAuthSearch(search),
-        to: "/oauth/consent",
-      });
-    }
-
-    if (search.returnTo) {
-      throw redirect({
-        href: getAuthReturnPath(
-          "/recents",
-          new URLSearchParams({ returnTo: search.returnTo }).toString(),
-        ),
-      });
-    }
-
-    const workspaces = await getWorkspaces();
-    throw redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" });
-  },
+  beforeLoad: ({ search }) =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        if (isBootstrapRequiredAuthError(search.error)) {
+          return yield* Effect.fail(redirect({ to: "/setup" }));
+        }
+        const session = yield* getFreshSession({ optional: true });
+        if (!session.user) return;
+        if (isOAuthLoginSearch(search)) {
+          return yield* Effect.fail(
+            redirect({
+              search: pickOAuthSearch(search),
+              to: "/oauth/consent",
+            }),
+          );
+        }
+        if (search.returnTo) {
+          return yield* Effect.fail(
+            redirect({
+              href: getAuthReturnPath(
+                "/recents",
+                new URLSearchParams({ returnTo: search.returnTo }).toString(),
+              ),
+            }),
+          );
+        }
+        const workspaces = yield* getWorkspaces();
+        return yield* Effect.fail(
+          redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" }),
+        );
+      }),
+    ),
   component: lazyRouteComponent(() => import("@/components/auth/login")),
 });
 
@@ -118,32 +134,42 @@ const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signup",
   validateSearch: validateSignupSearch,
-  beforeLoad: async ({ search }) => {
-    const session = await getFreshSession({ optional: true });
-    if (!session.user) return;
-
-    if (search.returnTo) {
-      throw redirect({
-        href: getAuthReturnPath("/recents", `?returnTo=${encodeURIComponent(search.returnTo)}`),
-      });
-    }
-
-    const workspaces = await getWorkspaces();
-    throw redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" });
-  },
+  beforeLoad: ({ search }) =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const session = yield* getFreshSession({ optional: true });
+        if (!session.user) return;
+        if (search.returnTo) {
+          return yield* Effect.fail(
+            redirect({
+              href: getAuthReturnPath(
+                "/recents",
+                `?returnTo=${encodeURIComponent(search.returnTo)}`,
+              ),
+            }),
+          );
+        }
+        const workspaces = yield* getWorkspaces();
+        return yield* Effect.fail(
+          redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" }),
+        );
+      }),
+    ),
   component: lazyRouteComponent(() => import("@/components/auth/signup")),
 });
 
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding",
-  beforeLoad: async () => {
-    const session = await getFreshSession();
-    if (!session.user) throw redirect({ to: "/login" });
-
-    const workspaces = await getWorkspaces();
-    if (workspaces.length > 0) throw redirect({ to: "/recents" });
-  },
+  beforeLoad: () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const session = yield* getFreshSession();
+        if (!session.user) return yield* Effect.fail(redirect({ to: "/login" }));
+        const workspaces = yield* getWorkspaces();
+        if (workspaces.length > 0) return yield* Effect.fail(redirect({ to: "/recents" }));
+      }),
+    ),
   component: lazyRouteComponent(() => import("@/components/auth/onboarding")),
 });
 
@@ -160,15 +186,20 @@ const oauthConsentRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/oauth/consent",
   validateSearch: validateOAuthConsentSearch,
-  beforeLoad: async ({ search }) => {
-    const session = await getFreshSession({ optional: true });
-    if (!session.user) {
-      throw redirect({
-        search: pickOAuthSearch(search),
-        to: "/login",
-      });
-    }
-  },
+  beforeLoad: ({ search }) =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const session = yield* getFreshSession({ optional: true });
+        if (!session.user) {
+          return yield* Effect.fail(
+            redirect({
+              search: pickOAuthSearch(search),
+              to: "/login",
+            }),
+          );
+        }
+      }),
+    ),
   component: lazyRouteComponent(() => import("@/components/oauth/consent")),
 });
 
@@ -321,18 +352,24 @@ const contentRoutes = [
     getParentRoute: () => rootRoute,
     path: "/p/$pageId",
     validateSearch: validateMeetingSearch,
-    beforeLoad: async ({ params }) => ({
-      publishedShare: await applyPageShareAccess(params.pageId),
-    }),
+    beforeLoad: ({ params }) =>
+      Effect.runPromise(
+        applyPageShareAccess(params.pageId).pipe(
+          Effect.map((publishedShare) => ({ publishedShare })),
+        ),
+      ),
     component: lazyRouteComponent(() => import("@/components/pages/page")),
     pendingComponent: PendingPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/m/$meetingId",
-    beforeLoad: async () => ({
-      authenticatedMeeting: Boolean((await getFreshSession({ optional: true })).user),
-    }),
+    beforeLoad: () =>
+      Effect.runPromise(
+        getFreshSession({ optional: true }).pipe(
+          Effect.map((session) => ({ authenticatedMeeting: Boolean(session.user) })),
+        ),
+      ),
     component: lazyRouteComponent(() => import("@/components/meetings/meeting")),
     pendingComponent: PendingPage,
   }),
@@ -340,9 +377,12 @@ const contentRoutes = [
     getParentRoute: () => rootRoute,
     path: "/d/$databaseId",
     validateSearch: validateDatabaseSearch,
-    beforeLoad: async ({ params }) => ({
-      publishedShare: await applyDatabaseShareAccess(params.databaseId),
-    }),
+    beforeLoad: ({ params }) =>
+      Effect.runPromise(
+        applyDatabaseShareAccess(params.databaseId).pipe(
+          Effect.map((publishedShare) => ({ publishedShare })),
+        ),
+      ),
     component: lazyRouteComponent(() => import("@/components/databases/core/database-screen")),
     pendingComponent: PendingPage,
   }),
@@ -353,7 +393,6 @@ const routeTree = rootRoute.addChildren([
   appRoute.addChildren([...appRoutes, ...settingsRoutes]),
   ...contentRoutes,
 ]);
-
 export const router = createRouter({
   routeTree,
   defaultErrorComponent: lazyRouteComponent(() => import("./route-error-page")),

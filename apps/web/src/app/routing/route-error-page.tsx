@@ -1,6 +1,7 @@
 import { type ErrorComponentProps, useNavigate } from "@tanstack/react-router";
 import { isDesktopApp } from "@/components/desktop/index";
 import { useEffect, useState } from "react";
+import { Effect, Fiber } from "effect";
 
 import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
 import {
@@ -28,18 +29,20 @@ export default function RouteErrorPage({ error }: ErrorComponentProps) {
 
   useEffect(() => {
     if (!copy.showChangeServer) return;
-    let disposed = false;
-    void listDesktopServerProfiles()
-      .then((result) => {
-        if (!disposed) {
-          setOtherProfiles(result.profiles.filter((profile) => !profile.active));
-        }
-      })
-      .catch(() => {
-        if (!disposed) setOtherProfiles([]);
-      });
+    const fiber = Effect.runFork(
+      Effect.tryPromise({
+        try: async () => {
+          const result = await listDesktopServerProfiles();
+          return result.profiles.filter((profile) => !profile.active);
+        },
+        catch: (error) => error,
+      }).pipe(
+        Effect.orElseSucceed(() => []),
+        Effect.tap((profiles) => Effect.sync(() => setOtherProfiles(profiles))),
+      ),
+    );
     return () => {
-      disposed = true;
+      Effect.runFork(Fiber.interrupt(fiber));
     };
   }, [copy.showChangeServer]);
 
