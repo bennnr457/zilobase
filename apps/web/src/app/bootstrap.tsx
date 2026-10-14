@@ -1,7 +1,9 @@
-import { configureApplicationMeetingCapture } from "./runtime/configure-meeting-capture";
+import {
+  configureApplicationMeetingCapture,
+  configureApplicationSessions,
+  configureApplicationRequests,
+} from "./startup";
 import React from "react";
-import { configureApplicationSessions } from "./runtime/configure-sessions";
-import { configureApplicationRequests } from "./runtime/configure-requests";
 import ReactDOM from "react-dom/client";
 import App from "./app";
 import { initializeDesktopAuthToken } from "@/components/desktop/auth/index";

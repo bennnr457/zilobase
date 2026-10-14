@@ -57,6 +57,8 @@ parsing straightforward without extra Effect services or layers.
 
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.
+Web startup configuration lives in `apps/web/src/app/startup.ts`; keep request,
+session, and meeting-capture installation together and preserve bootstrap order.
 Web build feature flags and desktop environment checks live together in
 `apps/web/src/platform/environment.ts`. Keep Vite environment reads in web and
 reuse this module instead of creating a single-file application config folder.
