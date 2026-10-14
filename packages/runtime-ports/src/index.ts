@@ -322,7 +322,6 @@ export type RoomControllerFactory = (roomId: string, ports: RoomPorts) => RoomCo
 
 export type RuntimeRoomKind =
   | "calendar"
-  | "chat-agent"
   | "database"
   | "meeting"
   | "meeting-audio"

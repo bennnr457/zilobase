@@ -197,7 +197,7 @@ test("upsertDatabaseAccessRuleService rejects targets outside the workspace", as
 
 for (const [body, message] of [
   [null, "A JSON body is required"],
-  [{ targetType: "invalid" }, "targetType must be public, user, team, or agent"],
+  [{ targetType: "invalid" }, "targetType must be public, user, or team"],
   [{ targetType: "user" }, "targetId is required"],
   [{ targetId: "user-1", targetType: "user" }, "accessLevel must be view, edit, or full"],
   [

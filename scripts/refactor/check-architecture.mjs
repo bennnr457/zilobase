@@ -14,22 +14,12 @@ const packages = [
   "packages/runtime-ports",
 ];
 const intentionalExportBreaks = new Set([
-  "AI_JOB_HANDLERS",
-  "AiJobHandler",
-  "aiJob",
-  "coerceAiChatRequestBody",
-  "getAiChatThreadForUser",
   "getConfiguredImageStorageMode",
   "getRuntimeAdapter",
   "isRequiredSidebarShortcut",
-  "loadAiChatThreadMessages",
-  "maybeAutoTitleAiChatThread",
-  "runAiChatTurn",
   "runWithRuntimeAdapter",
   "ServerRuntimeAdapter",
   "setRuntimeAdapter",
-  "syncAiChatThreadMessages",
-  "touchAiChatThreadActivity",
 ]);
 
 export function checkLinks(files) {

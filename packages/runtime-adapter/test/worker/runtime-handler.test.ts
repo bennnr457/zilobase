@@ -34,14 +34,14 @@ describe("Cloudflare worker handler", () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it("forwards /agents requests to the application", async () => {
+  it("forwards meeting requests to the application", async () => {
     const appFetch = vi.fn(async () => new Response("app"));
     const handler = createWorkerHandler({
       loadApp: async () => ({ fetch: appFetch }),
     });
 
     const response = await handler.fetch(
-      new Request("https://api.example.com/agents/chat/thread-1"),
+      new Request("https://api.example.com/meetings/meeting-1"),
       {},
       {},
     );

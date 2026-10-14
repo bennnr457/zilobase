@@ -22,9 +22,6 @@ test("createApp registers every public feature route group", () => {
     "POST /desktop/authorize/consent",
     "POST /desktop/authorize/switch",
     "POST /api/auth/desktop/token",
-    "GET /api/ai/operations/limits",
-    "GET /api/ai/operations/turns",
-    "GET /api/ai/operations/turns/:turnId/tools",
     "POST /api/keys",
     "GET /databases/:id/bootstrap",
     "GET /demo/bootstrap",
@@ -50,6 +47,15 @@ test("createApp registers every public feature route group", () => {
   ]) {
     assert.ok(routes.includes(expected), `missing route: ${expected}`);
   }
+});
+
+test("Ask AI and custom agents do not register runtime API routes", () => {
+  const routes = createApp({ ports: {} }).routes;
+  assert.equal(
+    routes.some(({ path }) => /^\/(?:api\/)?(?:ai|agents)(?:\/|$)/.test(path)),
+    false,
+  );
+  assert.equal(isNodeApiPath("/agents/chat/thread-1"), false);
 });
 
 test("every registered Hono route is a Node API path", () => {

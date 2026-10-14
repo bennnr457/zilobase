@@ -3,7 +3,6 @@ const COLLABORATION_PATH = "/collaboration";
 const DATABASE_COLLABORATION_PATH = "/database-collaboration";
 const POSTHOG_PROXY_PREFIX = "/ingest";
 const API_PATH_PREFIXES = [
-  "/agents",
   "/session",
   "/sign-in",
   "/sign-up",

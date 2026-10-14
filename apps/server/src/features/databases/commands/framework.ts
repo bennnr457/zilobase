@@ -159,7 +159,7 @@ export async function executeDatabaseCommand<TResult = unknown>(
   const now = dependencies.now?.() ?? new Date();
   const randomUUID = dependencies.randomUUID ?? (() => crypto.randomUUID());
   const automationWindows: Array<{ availableAt: Date; id: string }> = [];
-  let agentTriggerFacts: DatabaseAutomationMutationFactCandidate[] = [];
+  let automationFacts: DatabaseAutomationMutationFactCandidate[] = [];
   const deliveries: Array<() => Promise<unknown>> = [];
 
   const metricAttributes = {
@@ -416,11 +416,11 @@ export async function executeDatabaseCommand<TResult = unknown>(
         });
         return { acknowledgement, eventIds: [] as string[] };
       }
-      agentTriggerFacts = dispatched.automationFacts ?? [];
-      if (agentTriggerFacts.length) {
+      automationFacts = dispatched.automationFacts ?? [];
+      if (automationFacts.length) {
         await captureDatabaseAutomationMutationFacts(
           tx,
-          agentTriggerFacts,
+          automationFacts,
           input.env ? { capturedWindows: automationWindows } : {},
         );
       }

@@ -13964,14 +13964,6 @@
     }
   },
   "@zilobase/server:.:default": {
-    "AI_JOB_HANDLERS": {
-      "value": true,
-      "type": false
-    },
-    "AiJobHandler": {
-      "value": false,
-      "type": true
-    },
     "AppBindings": {
       "value": false,
       "type": true
@@ -14033,10 +14025,6 @@
       "type": true
     },
     "cleanupDatabaseAutomationHistory": {
-      "value": true,
-      "type": false
-    },
-    "coerceAiChatRequestBody": {
       "value": true,
       "type": false
     },
@@ -14173,10 +14161,6 @@
       "type": false
     },
     "findTeamspaceIntegrityIssues": {
-      "value": true,
-      "type": false
-    },
-    "getAiChatThreadForUser": {
       "value": true,
       "type": false
     },
@@ -14328,15 +14312,7 @@
       "value": true,
       "type": false
     },
-    "loadAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "materializePageContentFromYjs": {
-      "value": true,
-      "type": false
-    },
-    "maybeAutoTitleAiChatThread": {
       "value": true,
       "type": false
     },
@@ -14484,10 +14460,6 @@
       "value": true,
       "type": false
     },
-    "runAiChatTurn": {
-      "value": true,
-      "type": false
-    },
     "runDueBackgroundMaintenance": {
       "value": true,
       "type": false
@@ -14536,10 +14508,6 @@
       "value": false,
       "type": true
     },
-    "syncAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "TeamspaceIntegrityIssue": {
       "value": false,
       "type": true
@@ -14551,10 +14519,6 @@
     "TeamspaceService": {
       "value": true,
       "type": true
-    },
-    "touchAiChatThreadActivity": {
-      "value": true,
-      "type": false
     },
     "trimAcceptedMeetingAudio": {
       "value": true,
@@ -14586,14 +14550,6 @@
     }
   },
   "@zilobase/server:.:types": {
-    "AI_JOB_HANDLERS": {
-      "value": true,
-      "type": false
-    },
-    "AiJobHandler": {
-      "value": false,
-      "type": true
-    },
     "AppBindings": {
       "value": false,
       "type": true
@@ -14655,10 +14611,6 @@
       "type": true
     },
     "cleanupDatabaseAutomationHistory": {
-      "value": true,
-      "type": false
-    },
-    "coerceAiChatRequestBody": {
       "value": true,
       "type": false
     },
@@ -14795,10 +14747,6 @@
       "type": false
     },
     "findTeamspaceIntegrityIssues": {
-      "value": true,
-      "type": false
-    },
-    "getAiChatThreadForUser": {
       "value": true,
       "type": false
     },
@@ -14950,15 +14898,7 @@
       "value": true,
       "type": false
     },
-    "loadAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "materializePageContentFromYjs": {
-      "value": true,
-      "type": false
-    },
-    "maybeAutoTitleAiChatThread": {
       "value": true,
       "type": false
     },
@@ -15106,10 +15046,6 @@
       "value": true,
       "type": false
     },
-    "runAiChatTurn": {
-      "value": true,
-      "type": false
-    },
     "runDueBackgroundMaintenance": {
       "value": true,
       "type": false
@@ -15158,10 +15094,6 @@
       "value": false,
       "type": true
     },
-    "syncAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "TeamspaceIntegrityIssue": {
       "value": false,
       "type": true
@@ -15173,10 +15105,6 @@
     "TeamspaceService": {
       "value": true,
       "type": true
-    },
-    "touchAiChatThreadActivity": {
-      "value": true,
-      "type": false
     },
     "trimAcceptedMeetingAudio": {
       "value": true,
@@ -15208,14 +15136,6 @@
     }
   },
   "@zilobase/server:./adapter-api:default": {
-    "AI_JOB_HANDLERS": {
-      "value": true,
-      "type": false
-    },
-    "AiJobHandler": {
-      "value": false,
-      "type": true
-    },
     "AppBindings": {
       "value": false,
       "type": true
@@ -15277,10 +15197,6 @@
       "type": true
     },
     "cleanupDatabaseAutomationHistory": {
-      "value": true,
-      "type": false
-    },
-    "coerceAiChatRequestBody": {
       "value": true,
       "type": false
     },
@@ -15417,10 +15333,6 @@
       "type": false
     },
     "findTeamspaceIntegrityIssues": {
-      "value": true,
-      "type": false
-    },
-    "getAiChatThreadForUser": {
       "value": true,
       "type": false
     },
@@ -15572,15 +15484,7 @@
       "value": true,
       "type": false
     },
-    "loadAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "materializePageContentFromYjs": {
-      "value": true,
-      "type": false
-    },
-    "maybeAutoTitleAiChatThread": {
       "value": true,
       "type": false
     },
@@ -15728,10 +15632,6 @@
       "value": true,
       "type": false
     },
-    "runAiChatTurn": {
-      "value": true,
-      "type": false
-    },
     "runDueBackgroundMaintenance": {
       "value": true,
       "type": false
@@ -15780,10 +15680,6 @@
       "value": false,
       "type": true
     },
-    "syncAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "TeamspaceIntegrityIssue": {
       "value": false,
       "type": true
@@ -15795,10 +15691,6 @@
     "TeamspaceService": {
       "value": true,
       "type": true
-    },
-    "touchAiChatThreadActivity": {
-      "value": true,
-      "type": false
     },
     "trimAcceptedMeetingAudio": {
       "value": true,
@@ -15830,14 +15722,6 @@
     }
   },
   "@zilobase/server:./adapter-api:types": {
-    "AI_JOB_HANDLERS": {
-      "value": true,
-      "type": false
-    },
-    "AiJobHandler": {
-      "value": false,
-      "type": true
-    },
     "AppBindings": {
       "value": false,
       "type": true
@@ -15899,10 +15783,6 @@
       "type": true
     },
     "cleanupDatabaseAutomationHistory": {
-      "value": true,
-      "type": false
-    },
-    "coerceAiChatRequestBody": {
       "value": true,
       "type": false
     },
@@ -16039,10 +15919,6 @@
       "type": false
     },
     "findTeamspaceIntegrityIssues": {
-      "value": true,
-      "type": false
-    },
-    "getAiChatThreadForUser": {
       "value": true,
       "type": false
     },
@@ -16194,15 +16070,7 @@
       "value": true,
       "type": false
     },
-    "loadAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "materializePageContentFromYjs": {
-      "value": true,
-      "type": false
-    },
-    "maybeAutoTitleAiChatThread": {
       "value": true,
       "type": false
     },
@@ -16350,10 +16218,6 @@
       "value": true,
       "type": false
     },
-    "runAiChatTurn": {
-      "value": true,
-      "type": false
-    },
     "runDueBackgroundMaintenance": {
       "value": true,
       "type": false
@@ -16402,10 +16266,6 @@
       "value": false,
       "type": true
     },
-    "syncAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "TeamspaceIntegrityIssue": {
       "value": false,
       "type": true
@@ -16417,10 +16277,6 @@
     "TeamspaceService": {
       "value": true,
       "type": true
-    },
-    "touchAiChatThreadActivity": {
-      "value": true,
-      "type": false
     },
     "trimAcceptedMeetingAudio": {
       "value": true,
@@ -16452,14 +16308,6 @@
     }
   },
   "@zilobase/server:./node-adapter-api:default": {
-    "AI_JOB_HANDLERS": {
-      "value": true,
-      "type": false
-    },
-    "AiJobHandler": {
-      "value": false,
-      "type": true
-    },
     "AppBindings": {
       "value": false,
       "type": true
@@ -16525,10 +16373,6 @@
       "type": true
     },
     "cleanupDatabaseAutomationHistory": {
-      "value": true,
-      "type": false
-    },
-    "coerceAiChatRequestBody": {
       "value": true,
       "type": false
     },
@@ -16673,10 +16517,6 @@
       "type": false
     },
     "findTeamspaceIntegrityIssues": {
-      "value": true,
-      "type": false
-    },
-    "getAiChatThreadForUser": {
       "value": true,
       "type": false
     },
@@ -16828,15 +16668,7 @@
       "value": true,
       "type": false
     },
-    "loadAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "materializePageContentFromYjs": {
-      "value": true,
-      "type": false
-    },
-    "maybeAutoTitleAiChatThread": {
       "value": true,
       "type": false
     },
@@ -16992,10 +16824,6 @@
       "value": true,
       "type": false
     },
-    "runAiChatTurn": {
-      "value": true,
-      "type": false
-    },
     "runDueBackgroundMaintenance": {
       "value": true,
       "type": false
@@ -17048,10 +16876,6 @@
       "value": false,
       "type": true
     },
-    "syncAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "TeamspaceIntegrityIssue": {
       "value": false,
       "type": true
@@ -17063,10 +16887,6 @@
     "TeamspaceService": {
       "value": true,
       "type": true
-    },
-    "touchAiChatThreadActivity": {
-      "value": true,
-      "type": false
     },
     "trimAcceptedMeetingAudio": {
       "value": true,
@@ -17098,14 +16918,6 @@
     }
   },
   "@zilobase/server:./node-adapter-api:types": {
-    "AI_JOB_HANDLERS": {
-      "value": true,
-      "type": false
-    },
-    "AiJobHandler": {
-      "value": false,
-      "type": true
-    },
     "AppBindings": {
       "value": false,
       "type": true
@@ -17171,10 +16983,6 @@
       "type": true
     },
     "cleanupDatabaseAutomationHistory": {
-      "value": true,
-      "type": false
-    },
-    "coerceAiChatRequestBody": {
       "value": true,
       "type": false
     },
@@ -17319,10 +17127,6 @@
       "type": false
     },
     "findTeamspaceIntegrityIssues": {
-      "value": true,
-      "type": false
-    },
-    "getAiChatThreadForUser": {
       "value": true,
       "type": false
     },
@@ -17474,15 +17278,7 @@
       "value": true,
       "type": false
     },
-    "loadAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "materializePageContentFromYjs": {
-      "value": true,
-      "type": false
-    },
-    "maybeAutoTitleAiChatThread": {
       "value": true,
       "type": false
     },
@@ -17638,10 +17434,6 @@
       "value": true,
       "type": false
     },
-    "runAiChatTurn": {
-      "value": true,
-      "type": false
-    },
     "runDueBackgroundMaintenance": {
       "value": true,
       "type": false
@@ -17694,10 +17486,6 @@
       "value": false,
       "type": true
     },
-    "syncAiChatThreadMessages": {
-      "value": true,
-      "type": false
-    },
     "TeamspaceIntegrityIssue": {
       "value": false,
       "type": true
@@ -17709,10 +17497,6 @@
     "TeamspaceService": {
       "value": true,
       "type": true
-    },
-    "touchAiChatThreadActivity": {
-      "value": true,
-      "type": false
     },
     "trimAcceptedMeetingAudio": {
       "value": true,

@@ -3,7 +3,7 @@ import { test } from "vitest";
 
 import { markdownToPageContent } from "./markdown-to-page-content";
 
-test("agent page markdown becomes structured editor content", () => {
+test("page markdown becomes structured editor content", () => {
   assert.deepEqual(
     markdownToPageContent(
       [
@@ -82,7 +82,7 @@ test("plain bullets under a to-do heading become unchecked task items", () => {
   assert.equal(result.content?.[3]?.type, "bulletList");
 });
 
-test("agent page markdown preserves basic inline formatting", () => {
+test("page markdown preserves basic inline formatting", () => {
   const result = markdownToPageContent(
     "**Destination:** Paris with *flexible dates* and `EUR` pricing",
   );
