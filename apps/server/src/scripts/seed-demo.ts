@@ -1,5 +1,5 @@
 import { createDbClientForUrl } from "../infrastructure/database";
-import { seedHostedDemo } from "../features/demo/seed";
+import { seedHostedDemo } from "../services/demo/seed";
 
 const databaseUrl = process.env.DATABASE_URL;
 

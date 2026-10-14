@@ -14,11 +14,11 @@ export {
 export {
   getDefaultCollaborationHocuspocus,
   setCollaborationExtensionsFactory,
-} from "../features/collaboration/service";
-export { assertSelfHostedProductionConfiguration } from "../features/instance/registration";
+} from "../services/collaboration/service";
+export { assertSelfHostedProductionConfiguration } from "../services/instance/registration";
 export { getAppEditionExtension } from "../shared/edition-extension-registry";
 export { renderPrometheusBackgroundMetrics } from "../infrastructure/background/telemetry";
-export { renderPrometheusDatabaseMetrics } from "../features/databases/observability";
+export { renderPrometheusDatabaseMetrics } from "../services/databases/observability";
 export { boundedErrorCode } from "../infrastructure/background/dispatch";
 export { db, createDbClientForUrl, runWithIndependentDbEnv } from "../infrastructure/database";
 export {
@@ -29,20 +29,20 @@ export {
   calendarProviderCalendar,
   navigationRealtimeOutbox,
 } from "../infrastructure/database/schema";
-export { isBlockedAddress } from "../features/automations/actions/webhook-egress";
+export { isBlockedAddress } from "../services/automations/actions/webhook-egress";
 export {
   CALENDAR_REALTIME_AUTH_PROTOCOL_PREFIX,
   CALENDAR_REALTIME_PROTOCOL,
   createCalendarRealtimeTicket,
   verifyCalendarRealtimeTicket,
   type CalendarRealtimeTicketClaims,
-} from "../features/calendar/realtime/calendar-realtime-ticket";
+} from "../services/calendar/realtime/calendar-realtime-ticket";
 export {
   MEETING_AUDIO_SOURCES,
   meetingAudioSourceFromCode,
   type MeetingAudioSource,
-} from "../features/meetings/audio/meeting-audio-ticket";
-export { transitionMeeting } from "../features/meetings/lifecycle/meeting-service";
+} from "../services/meetings/audio/meeting-audio-ticket";
+export { transitionMeeting } from "../services/meetings/lifecycle/meeting-service";
 export { getStringEnv } from "../shared/config/config";
 
 // Zilobase wiring owned by the server package: the core migration set points

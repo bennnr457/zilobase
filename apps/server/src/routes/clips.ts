@@ -5,12 +5,12 @@ import {
   type CreateClipRequest,
 } from "@zilobase/features/runtime";
 
-import { rejectMismatchedApiKeyWorkspace } from "../features/api-keys";
+import { rejectMismatchedApiKeyWorkspace } from "../services/api-keys";
 import { rejectMismatchedPinnedWorkspace, requireOAuthScope } from "./auth/oauth-access";
 import { getAuthenticatedUser, readAuthenticatedJson } from "../shared/http/auth";
 import type { AppBindings } from "../shared/types";
 import { ServiceMutationError } from "../shared/errors/service-mutation-error";
-import { createClipService, findDuplicateClip } from "../features/clips/create-clip-service";
+import { createClipService, findDuplicateClip } from "../services/clips/create-clip-service";
 
 export const clipRoutes = new Hono<AppBindings>();
 

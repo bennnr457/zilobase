@@ -11,7 +11,7 @@ const { getMembership, db } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("../../features/access", () => ({ getMembership }));
+vi.mock("../../services/access", () => ({ getMembership }));
 vi.mock("../../infrastructure/database", () => ({ db }));
 
 import {

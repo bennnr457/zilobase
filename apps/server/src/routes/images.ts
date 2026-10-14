@@ -4,12 +4,12 @@ import {
   normalizeContentType,
   sanitizeFilename,
   getImageObjectKey,
-} from "../features/images/image-upload-input";
+} from "../services/images/image-upload-input";
 import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { canAccessPageInWorkspace, getPageRecord } from "../features/access";
-import { rejectMismatchedApiKeyWorkspace } from "../features/api-keys";
+import { canAccessPageInWorkspace, getPageRecord } from "../services/access";
+import { rejectMismatchedApiKeyWorkspace } from "../services/api-keys";
 import { getStringEnv } from "../shared/config/config";
 import { db } from "../infrastructure/database";
 import { database, imageAsset } from "../infrastructure/database/schema";

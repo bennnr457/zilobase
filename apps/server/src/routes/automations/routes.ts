@@ -1,5 +1,5 @@
 import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
-import { getDatabaseRecord } from "../../features/databases/access/database-access";
+import { getDatabaseRecord } from "../../services/databases/access/database-access";
 import { Hono, type Context } from "hono";
 
 import {
@@ -11,7 +11,7 @@ import {
 
 import type { AppBindings } from "../../shared/types";
 import { readJsonBody } from "../../shared/http/request";
-import { getMembership } from "../../features/access";
+import { getMembership } from "../../services/access";
 import {
   getAutomationWebhookHttpDomains,
   isAutomationSlackEnabled,
@@ -32,11 +32,11 @@ import {
   setDatabaseAutomationPaused,
   updateDatabaseAutomation,
   validateDatabaseAutomation,
-} from "../../features/automations/service";
+} from "../../services/automations/service";
 import {
   getDatabaseAutomationRun,
   listDatabaseAutomationRuns,
-} from "../../features/automations/history/run-history";
+} from "../../services/automations/history/run-history";
 
 export const databaseAutomationRoutes = new Hono<AppBindings>();
 const resourceWorkspace = pinnedResourceMiddleware(

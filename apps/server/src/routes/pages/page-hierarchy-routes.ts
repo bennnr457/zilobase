@@ -9,7 +9,7 @@ import {
   getEffectiveTeamspaceAccessInWorkspace,
   getMembership,
   hasAccess,
-} from "../../features/access";
+} from "../../services/access";
 import { rejectMismatchedPinnedWorkspace } from "../auth/oauth-access";
 import { db } from "../../infrastructure/database";
 import {
@@ -26,11 +26,11 @@ import {
   softDeletePageItemPlacement,
   upsertPageItemPlacement,
   type ItemRef,
-} from "../../features/pages/placements/page-item-placements";
-import { loadWorkspacePageGraph } from "../../features/pages/graph/loader";
-import { encodePageContentAsYjs } from "../../features/collaboration/service";
+} from "../../services/pages/placements/page-item-placements";
+import { loadWorkspacePageGraph } from "../../services/pages/graph/loader";
+import { encodePageContentAsYjs } from "../../services/collaboration/service";
 
-import { TeamspaceManagementService } from "../../features/teamspaces/management";
+import { TeamspaceManagementService } from "../../services/teamspaces/management";
 import { enforceActiveWorkspace, getPage } from "./page-route-support";
 
 export const pageHierarchyRoutes = new Hono<AppBindings>();

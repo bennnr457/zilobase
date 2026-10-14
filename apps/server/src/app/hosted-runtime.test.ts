@@ -6,8 +6,8 @@ const { checkReadiness, getZilobaseDiscoveryDocument } = vi.hoisted(() => ({
   getZilobaseDiscoveryDocument: vi.fn(),
 }));
 
-vi.mock("../features/health/readiness", () => ({ checkReadiness }));
-vi.mock("../features/instance/service", () => ({
+vi.mock("../services/health/readiness", () => ({ checkReadiness }));
+vi.mock("../services/instance/service", () => ({
   getZilobaseDiscoveryDocument,
 }));
 

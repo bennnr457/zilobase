@@ -1,8 +1,8 @@
-import { processCalendarSyncTask } from "../../features/calendar/background";
-import { processDatabaseAutomationEventWindow } from "../../features/automations/triggers/event-evaluator";
-import { processDatabaseAutomationRun } from "../../features/automations/execution/run-engine";
-import { processDatabaseRealtimeTask } from "../../features/databases/realtime/background";
-import { processNotificationTask } from "../../features/notifications/background";
+import { processCalendarSyncTask } from "../../services/calendar/background";
+import { processDatabaseAutomationEventWindow } from "../../services/automations/triggers/event-evaluator";
+import { processDatabaseAutomationRun } from "../../services/automations/execution/run-engine";
+import { processDatabaseRealtimeTask } from "../../services/databases/realtime/background";
+import { processNotificationTask } from "../../services/notifications/background";
 import type { RuntimeEnv } from "../../shared/config/config";
 import {
   backgroundTaskLane,

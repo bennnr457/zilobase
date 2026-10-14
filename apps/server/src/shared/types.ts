@@ -2,7 +2,7 @@ import type { BetterAuthPlugin } from "better-auth";
 import type { Hono } from "hono";
 import type { AppPolicy, Ports } from "@zilobase/runtime-ports";
 
-import type { Auth } from "../features/auth";
+import type { Auth } from "../services/auth";
 // The public edition contract exposes the canonical Drizzle database type.
 import type { Database } from "../infrastructure/database";
 

@@ -16,7 +16,7 @@ import {
   isDatabasePublishedInWorkspace,
   isPagePublishedInWorkspace,
   isPrivilegedOrgRole,
-} from "../features/access";
+} from "../services/access";
 import { db } from "../infrastructure/database";
 import {
   dataSource,

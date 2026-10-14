@@ -8,10 +8,10 @@ import {
 import { getBackgroundCellId } from "../../../infrastructure/background/contracts";
 import { decodeBackgroundTaskV2 } from "../../../infrastructure/background/task-v2";
 
-import { prepareAutomationReplay } from "../../../features/automations/execution/delivery-failure";
-import { prepareCalendarReplay } from "../../../features/calendar/delivery-failure";
-import { prepareDatabaseRealtimeReplay } from "../../../features/databases/realtime/background";
-import { prepareNotificationReplay } from "../../../features/notifications/background";
+import { prepareAutomationReplay } from "../../../services/automations/execution/delivery-failure";
+import { prepareCalendarReplay } from "../../../services/calendar/delivery-failure";
+import { prepareDatabaseRealtimeReplay } from "../../../services/databases/realtime/background";
+import { prepareNotificationReplay } from "../../../services/notifications/background";
 import type { RuntimeEnv } from "../../../shared/config/config";
 
 export async function inspectBackgroundFailures(env: RuntimeEnv, limit = 50) {

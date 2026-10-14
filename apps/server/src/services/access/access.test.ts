@@ -71,7 +71,7 @@ import {
   isPrivilegedOrgRole,
   isWorkspaceMember,
   normalizeAccessLevel,
-} from "./index";
+} from ".";
 
 beforeEach(() => {
   mocks.ancestorIds = ["page-1"];

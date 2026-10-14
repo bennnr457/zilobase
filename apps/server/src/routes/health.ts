@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { AppBindings } from "../shared/types";
-import { checkReadiness } from "../features/health/readiness";
+import { checkReadiness } from "../services/health/readiness";
 import { runWithDbEnv } from "../infrastructure/database";
 import { getStringEnv } from "../shared/config/config";
 import { getBackgroundOperationalSnapshot } from "../infrastructure/background/health";

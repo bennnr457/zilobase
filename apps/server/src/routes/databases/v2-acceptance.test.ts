@@ -5,7 +5,7 @@ import {
   databaseMutationEventV2Schema,
 } from "@zilobase/features/runtime";
 
-import { databaseMutationEventFromJournalRow } from "../../features/databases/realtime/journal-event";
+import { databaseMutationEventFromJournalRow } from "../../services/databases/realtime/journal-event";
 
 test("the shared v2 event survives journal and runtime boundaries", () => {
   const fixture = databaseMutationEventV2Schema.parse(databaseMutationEventV2Fixture);

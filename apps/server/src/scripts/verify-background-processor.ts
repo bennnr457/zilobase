@@ -25,7 +25,7 @@ import {
   deliverBackgroundTask,
   recordBackgroundExhaustion,
 } from "../app/background/runtime-delivery";
-import { encryptCalendarSecret } from "../features/calendar/provider/credentials";
+import { encryptCalendarSecret } from "../services/calendar/provider/credentials";
 
 const connection = process.env.ZILOBASE_BACKGROUND_VERIFY_URL!;
 assert.equal(new URL(connection).pathname, "/zilobase_background_verify");

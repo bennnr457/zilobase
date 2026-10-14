@@ -10,7 +10,7 @@ import {
   session as sessionTable,
   user as userTable,
 } from "../../infrastructure/database/schema";
-import { getMembership } from "../../features/access";
+import { getMembership } from "../../services/access";
 import type { AppBindings } from "../../shared/types";
 
 export function isLikelyJwt(token: string) {

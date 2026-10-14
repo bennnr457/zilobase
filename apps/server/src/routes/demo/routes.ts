@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { db } from "../../infrastructure/database";
 import { workspace } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
-import { DEMO_IDS, DEMO_SEED_VERSION, DEMO_START_PATH } from "../../features/demo/constants";
+import { DEMO_IDS, DEMO_SEED_VERSION, DEMO_START_PATH } from "../../services/demo/constants";
 import { requireDemoContext } from "./request";
 
 export const demoRoutes = new Hono<AppBindings>();

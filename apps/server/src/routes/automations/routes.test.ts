@@ -20,9 +20,9 @@ const mocks = vi.hoisted(() => ({
   validate: vi.fn(),
 }));
 
-vi.mock("../../features/access", () => ({ getMembership: mocks.membership }));
+vi.mock("../../services/access", () => ({ getMembership: mocks.membership }));
 
-vi.mock("../../features/automations/service", () => {
+vi.mock("../../services/automations/service", () => {
   class DatabaseAutomationError extends Error {
     constructor(
       message: string,

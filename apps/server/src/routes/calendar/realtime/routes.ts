@@ -1,14 +1,14 @@
 import { getStringEnv } from "../../../shared/config/config";
-import { calendarWatchExpiry } from "../../../features/calendar/realtime/watch-health";
+import { calendarWatchExpiry } from "../../../services/calendar/realtime/watch-health";
 import { Hono } from "hono";
 import type { AppBindings } from "../../../shared/types";
-import { requireCalendarBinding } from "../../../features/calendar/connections/ownership";
+import { requireCalendarBinding } from "../../../services/calendar/connections/ownership";
 import { getCalendarRealtimeWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
 import {
   createCalendarRealtimeTicket,
   CALENDAR_REALTIME_PROTOCOL,
   CALENDAR_REALTIME_AUTH_PROTOCOL_PREFIX,
-} from "../../../features/calendar/realtime/calendar-realtime-ticket";
+} from "../../../services/calendar/realtime/calendar-realtime-ticket";
 export const calendarRealtimeRoutes = new Hono<AppBindings>();
 calendarRealtimeRoutes.post("/connections/:bindingId/realtime-ticket", async (c) => {
   const { account, binding } = await requireCalendarBinding(

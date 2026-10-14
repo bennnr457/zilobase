@@ -4,11 +4,11 @@ import type { Context } from "hono";
 const create = vi.hoisted(() =>
   vi.fn(async (_input: unknown) => ({ pageId: "clip", url: "/p/clip" })),
 );
-vi.mock("../features/clips/create-clip-service", () => ({
+vi.mock("../services/clips/create-clip-service", () => ({
   createClipService: create,
   findDuplicateClip: vi.fn(),
 }));
-vi.mock("../features/api-keys", () => ({ rejectMismatchedApiKeyWorkspace: () => null }));
+vi.mock("../services/api-keys", () => ({ rejectMismatchedApiKeyWorkspace: () => null }));
 vi.mock("./auth/oauth-access", () => ({
   rejectMismatchedPinnedWorkspace: () => null,
   requireOAuthScope: () => null,

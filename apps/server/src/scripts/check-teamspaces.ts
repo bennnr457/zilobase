@@ -1,5 +1,5 @@
 import { createDbClient, runWithDbClient } from "../infrastructure/database";
-import { inspectTeamspaceIntegrity } from "../features/teamspaces";
+import { inspectTeamspaceIntegrity } from "../services/teamspaces";
 
 const databaseClient = createDbClient(process.env);
 const issues = await runWithDbClient(databaseClient, () =>

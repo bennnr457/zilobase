@@ -12,8 +12,8 @@ import {
   getMembership,
   getWorkspaceRealtimeAccessExpiration,
   isPrivilegedOrgRole,
-} from "../../features/access";
-import { rejectMismatchedApiKeyWorkspace } from "../../features/api-keys";
+} from "../../services/access";
+import { rejectMismatchedApiKeyWorkspace } from "../../services/api-keys";
 import { db } from "../../infrastructure/database";
 import {
   invitation,
@@ -35,7 +35,7 @@ import {
   expireTemporaryMemberships,
   parseMembershipAccessExpiry,
   TemporaryMembershipValidationError,
-} from "../../features/memberships";
+} from "../../services/memberships";
 import { sendEmail } from "../../infrastructure/email/email";
 import { getPrimaryClientOrigin } from "../../shared/config/config";
 

@@ -28,12 +28,12 @@ import {
   workspace,
 } from "../infrastructure/database/schema";
 import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
-import { executeDatabaseCommand } from "../features/databases/commands/framework";
-import { dispatchDatabaseCommand } from "../features/databases/commands/dispatcher";
+import { executeDatabaseCommand } from "../services/databases/commands/framework";
+import { dispatchDatabaseCommand } from "../services/databases/commands/dispatcher";
 import {
   DatabaseViewQueryChangedError,
   getDatabaseRecordWindowService,
-} from "../features/databases/read/service";
+} from "../services/databases/read/service";
 import { pageBrowseRoutes } from "../routes/pages/page-browse-routes";
 import type { AppBindings } from "../shared/types";
 import type { PageNavigationPayload } from "@zilobase/features/runtime";

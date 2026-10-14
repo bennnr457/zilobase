@@ -7,7 +7,7 @@ import {
   hasAccess,
   rejectActiveWorkspaceMismatch,
   type AccessLevel,
-} from "../../features/access";
+} from "../../services/access";
 
 /** Authenticate before loading; deny access before checking active workspace. */
 export async function authorizePageRoute(

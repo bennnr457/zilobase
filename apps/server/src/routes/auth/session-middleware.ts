@@ -1,16 +1,16 @@
 import { createMiddleware } from "hono/factory";
 import type { MiddlewareHandler } from "hono";
 import { eq } from "drizzle-orm";
-import { readApiKeyFromHeaders, readApiKeyWorkspaceId } from "../../features/api-keys";
+import { readApiKeyFromHeaders, readApiKeyWorkspaceId } from "../../services/api-keys";
 import { getAuthHeaders } from "../../shared/security/auth-headers";
-import { createAuth } from "../../features/auth/auth";
-import { getMembership } from "../../features/access";
+import { createAuth } from "../../services/auth/auth";
+import { getMembership } from "../../services/access";
 import { runWithDbEnv } from "../../infrastructure/database";
 import { db } from "../../infrastructure/database";
 import { user as userTable } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
-import { expireTemporaryMemberships } from "../../features/memberships";
-import { DEMO_IDS } from "../../features/demo/constants";
+import { expireTemporaryMemberships } from "../../services/memberships";
+import { DEMO_IDS } from "../../services/demo/constants";
 import { isHostedDemoRequest } from "../demo/request";
 import {
   isLikelyJwt,

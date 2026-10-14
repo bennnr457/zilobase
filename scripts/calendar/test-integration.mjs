@@ -30,7 +30,7 @@ try {
         "--workspace",
         "@zilobase/server",
         "--",
-        "src/features/calendar/calendar.integration.test.ts",
+        "src/services/calendar/calendar.integration.test.ts",
       ],
       {
         env: { ...process.env, CALENDAR_TEST_DATABASE_URL: source.toString() },

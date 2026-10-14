@@ -13,23 +13,23 @@ import { readAuthenticatedJson } from "../../shared/http/auth";
 import {
   getDatabaseRecord,
   requireDatabaseEditAccess,
-} from "../../features/databases/access/database-access";
+} from "../../services/databases/access/database-access";
 import {
   requireDataSourceAccess,
   requireDataSourceEditAccess,
-} from "../../features/databases/access/data-source-access";
-import { dispatchDatabaseCommand } from "../../features/databases/commands/dispatcher";
+} from "../../services/databases/access/data-source-access";
+import { dispatchDatabaseCommand } from "../../services/databases/commands/dispatcher";
 import {
   CommandIdReusedError,
   executeDatabaseCommand,
   RowMoveConflictError,
-} from "../../features/databases/commands/framework";
+} from "../../services/databases/commands/framework";
 import { rejectMismatchedPinnedWorkspace } from "../auth/oauth-access";
 import {
   recordDatabaseCounter,
   recordDatabaseHistogram,
-} from "../../features/databases/observability";
-import { canAccessPageInWorkspace } from "../../features/access";
+} from "../../services/databases/observability";
+import { canAccessPageInWorkspace } from "../../services/access";
 import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
 
 export const databaseCommandRoutes = new Hono<AppBindings>();

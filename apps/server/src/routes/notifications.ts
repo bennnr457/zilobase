@@ -4,7 +4,7 @@ import type { AppBindings } from "../shared/types";
 import {
   listInProductNotifications,
   markInProductNotificationRead,
-} from "../features/notifications/notification-operations";
+} from "../services/notifications/notification-operations";
 
 export const notificationRoutes = new Hono<AppBindings>();
 

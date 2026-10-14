@@ -4,7 +4,7 @@ import {
   canAccessDatabaseInWorkspace,
   getPageRecord,
   rejectActiveWorkspaceMismatch,
-} from "../../features/access";
+} from "../../services/access";
 import { db } from "../../infrastructure/database";
 import {
   database,
@@ -16,7 +16,7 @@ import {
   pagePropertyValue,
 } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
-import { loadWorkspacePageGraph } from "../../features/pages/graph/loader";
+import { loadWorkspacePageGraph } from "../../services/pages/graph/loader";
 
 export const getPage = getPageRecord;
 

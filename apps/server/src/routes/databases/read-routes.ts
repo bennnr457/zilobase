@@ -8,7 +8,7 @@ import {
   getWorkspacePrincipalKind,
   getWorkspaceRealtimeAccessExpiration,
   isDatabasePublishedInWorkspace,
-} from "../../features/access";
+} from "../../services/access";
 import {
   createDatabaseRealtimeTicket,
   DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX,
@@ -16,7 +16,7 @@ import {
   verifyDatabaseRealtimeTicket,
 } from "../../shared/security/database-realtime-ticket";
 import { getDatabaseRealtimeWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
-import { getDatabaseRecord } from "../../features/databases/access/database-access";
+import { getDatabaseRecord } from "../../services/databases/access/database-access";
 import type { AppBindings } from "../../shared/types";
 import { readJsonBody } from "../../shared/http/request";
 import {
@@ -27,11 +27,11 @@ import {
   getAuthorizedDatabaseSourceIds,
   getDatabaseExportService,
   getDatabaseRecordWindowService,
-} from "../../features/databases/read/service";
+} from "../../services/databases/read/service";
 import {
   DATABASE_MUTATION_FEED_LIMIT,
   getDatabaseMutationFeed,
-} from "../../features/databases/history/service";
+} from "../../services/databases/history/service";
 
 export const databaseReadRoutes = new Hono<AppBindings>();
 const resourceWorkspace = pinnedResourceMiddleware((id) =>

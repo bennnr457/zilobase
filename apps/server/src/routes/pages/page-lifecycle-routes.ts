@@ -1,11 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { getAuthenticatedUser as requireUser } from "../../shared/http/auth";
-import { canAccessPageInWorkspace, getMembership } from "../../features/access";
+import { canAccessPageInWorkspace, getMembership } from "../../services/access";
 import { db } from "../../infrastructure/database";
 import { database, dataSource, databaseRow, page } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
-import { softDeletePageTree } from "../../features/pages/mutations/soft-delete-nav-items";
+import { softDeletePageTree } from "../../services/pages/mutations/soft-delete-nav-items";
 
 import { enforceActiveWorkspace, getPage, getPageIncludingDeleted } from "./page-route-support";
 

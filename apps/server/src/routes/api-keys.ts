@@ -7,9 +7,9 @@ import {
   API_KEY_DEFAULT_EXPIRES_IN_SECONDS,
   API_KEY_PREFIX,
   readApiKeyWorkspaceId,
-} from "../features/api-keys/api-keys";
-import { createAuth } from "../features/auth";
-import { getMembership } from "../features/access";
+} from "../services/api-keys/api-keys";
+import { createAuth } from "../services/auth";
+import { getMembership } from "../services/access";
 import { db } from "../infrastructure/database";
 import { apikey } from "../infrastructure/database/schema";
 import type { AppBindings } from "../shared/types";

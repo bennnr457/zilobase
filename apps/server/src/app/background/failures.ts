@@ -9,10 +9,10 @@ import {
   type BackgroundLane,
 } from "../../infrastructure/background/contracts";
 import type { RuntimeEnv } from "../../shared/config/config";
-import { failAutomationDelivery } from "../../features/automations/execution/delivery-failure";
-import { failCalendarDelivery } from "../../features/calendar/delivery-failure";
-import { failDatabaseRealtimeDelivery } from "../../features/databases/realtime/background";
-import { failNotificationDelivery } from "../../features/notifications/background";
+import { failAutomationDelivery } from "../../services/automations/execution/delivery-failure";
+import { failCalendarDelivery } from "../../services/calendar/delivery-failure";
+import { failDatabaseRealtimeDelivery } from "../../services/databases/realtime/background";
+import { failNotificationDelivery } from "../../services/notifications/background";
 
 export async function recordBackgroundExhaustion(
   env: RuntimeEnv,

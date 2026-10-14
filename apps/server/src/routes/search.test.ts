@@ -4,8 +4,8 @@ import { beforeEach, test, vi } from "vitest";
 import type { AppBindings } from "../shared/types";
 
 const mocks = vi.hoisted(() => ({ membership: vi.fn(), search: vi.fn() }));
-vi.mock("../features/access", () => ({ getMembership: mocks.membership }));
-vi.mock("../features/search/workspace-search", () => ({ searchWorkspaceItems: mocks.search }));
+vi.mock("../services/access", () => ({ getMembership: mocks.membership }));
+vi.mock("../services/search/workspace-search", () => ({ searchWorkspaceItems: mocks.search }));
 import { searchRoutes } from "./search";
 
 function app(

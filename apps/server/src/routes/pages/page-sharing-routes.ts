@@ -10,7 +10,7 @@ import {
   getMembership,
   hasAccess,
   normalizeAccessLevel,
-} from "../../features/access";
+} from "../../services/access";
 import { rejectMismatchedPinnedWorkspace } from "../auth/oauth-access";
 import { db } from "../../infrastructure/database";
 import {
@@ -25,8 +25,8 @@ import {
 } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
 import { readJsonBody } from "../../shared/http/request";
-import { activeMembershipCondition } from "../../features/memberships";
-import { getPageTeamspaceSecurityPolicy } from "../../features/teamspaces";
+import { activeMembershipCondition } from "../../services/memberships";
+import { getPageTeamspaceSecurityPolicy } from "../../services/teamspaces";
 
 export const pageSharingRoutes = new Hono<AppBindings>();
 export const pageVisitRoutes = new Hono<AppBindings>();

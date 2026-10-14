@@ -81,7 +81,7 @@ test("web paths select the web-and-packages workflow commands", () => {
 });
 
 test("server paths skip the web and desktop suites", () => {
-  const selected = selectJobs(["apps/server/src/features/pages/routes.ts"]);
+  const selected = selectJobs(["apps/server/src/services/pages/routes.ts"]);
   assert.ok(selected.some((job) => job.id === "architecture"));
   assert.equal(
     selected.some((job) => job.id === "web-and-packages"),

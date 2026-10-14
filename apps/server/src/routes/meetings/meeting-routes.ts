@@ -7,12 +7,12 @@ import {
   getEffectivePageAccessInWorkspace,
   getWorkspaceRealtimeAccessExpiration,
   hasAccess,
-} from "../../features/access";
-import { rejectMismatchedApiKeyWorkspace } from "../../features/api-keys";
+} from "../../services/access";
+import { rejectMismatchedApiKeyWorkspace } from "../../services/api-keys";
 import {
   createCollaborationTicket,
   documentNameForMeeting,
-} from "../../features/collaboration/service";
+} from "../../services/collaboration/service";
 import { getMeetingCollaborationWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
 import { getMeetingAudioWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
 import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
@@ -28,9 +28,9 @@ import {
   releaseMeetingRecorder,
   transitionMeeting,
   updateMeeting,
-} from "../../features/meetings/lifecycle/meeting-service";
-import { createMeetingAudioTicket } from "../../features/meetings/audio/meeting-audio-ticket";
-import { meetingLifecycleActions } from "../../features/meetings/contracts/meeting-types";
+} from "../../services/meetings/lifecycle/meeting-service";
+import { createMeetingAudioTicket } from "../../services/meetings/audio/meeting-audio-ticket";
+import { meetingLifecycleActions } from "../../services/meetings/contracts/meeting-types";
 
 const strictJson = { onExcessProperty: "error" as const };
 

@@ -1,11 +1,11 @@
-import { maintainCalendarWatches } from "../../features/calendar/realtime/watches";
-import { drainCalendarOutbox } from "../../features/calendar/realtime/outbox";
-import { recoverCalendarDispatches } from "../../features/calendar/sync/sync";
+import { maintainCalendarWatches } from "../../services/calendar/realtime/watches";
+import { drainCalendarOutbox } from "../../services/calendar/realtime/outbox";
+import { recoverCalendarDispatches } from "../../services/calendar/sync/sync";
 import { and, asc, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
 
-import { cleanupDatabaseAutomationHistory } from "../../features/automations/history/history-maintenance";
-import { scanDueDatabaseAutomationSchedules } from "../../features/automations/triggers/scheduler";
-import { expireTemporaryMemberships } from "../../features/memberships";
+import { cleanupDatabaseAutomationHistory } from "../../services/automations/history/history-maintenance";
+import { scanDueDatabaseAutomationSchedules } from "../../services/automations/triggers/scheduler";
+import { expireTemporaryMemberships } from "../../services/memberships";
 
 import type { RuntimeEnv } from "../../shared/config/config";
 import { boundedErrorCode } from "../../infrastructure/background/dispatch";

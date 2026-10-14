@@ -1,4 +1,4 @@
-export { getMembership, getWorkspaceMemberships } from "../features/access";
+export { getMembership, getWorkspaceMemberships } from "../services/access";
 export { createApp } from "../app";
 export type {
   AppErrorReport,
@@ -9,7 +9,7 @@ export type {
   SecurityEvent,
   ZilobaseEditionExtension,
 } from "../shared/types";
-export { createAuth } from "../features/auth";
+export { createAuth } from "../services/auth";
 export {
   appendMeetingTranscriptSegment,
   heartbeatMeetingRecorder,
@@ -17,7 +17,7 @@ export {
   persistMeetingTranscriptSession,
   validateMeetingRecorderLease,
   type MeetingTranscriptSessionSegment,
-} from "../features/meetings/lifecycle/meeting-service";
+} from "../services/meetings/lifecycle/meeting-service";
 export {
   createMeetingRealtimeTranscriptSink,
   getMeetingOpenAiSafetyIdentifier,
@@ -31,7 +31,7 @@ export {
   type MeetingRealtimeTranscriberCallbacks,
   type RealtimeTranscriptionSocket,
   type RealtimeTranscriptionTurn,
-} from "../features/meetings/transcription/meeting-realtime-transcription";
+} from "../services/meetings/transcription/meeting-realtime-transcription";
 export {
   COLLABORATION_WEBSOCKET_PROTOCOL,
   getAuthHeaders,
@@ -74,7 +74,7 @@ export {
   isDesktopVersionCompatible,
   type DesktopServer,
   type ZilobaseDiscoveryDocument,
-} from "../features/instance/service";
+} from "../services/instance/service";
 export {
   createImageStorage,
   resolveImageStorageMode,
@@ -110,20 +110,20 @@ export {
   meetingAudioSourceFromCode,
   verifyMeetingAudioTicket,
   type MeetingAudioTicketClaims,
-} from "../features/meetings/audio/meeting-audio-ticket";
-export { type DatabaseMutationEventV2 } from "../features/databases/realtime/outbox";
-export { expireTemporaryMemberships } from "../features/memberships";
+} from "../services/meetings/audio/meeting-audio-ticket";
+export { type DatabaseMutationEventV2 } from "../services/databases/realtime/outbox";
+export { expireTemporaryMemberships } from "../services/memberships";
 export {
   getDatabaseAutomationEventCaptureMetrics,
   promoteClosedDatabaseAutomationEventWindows,
-} from "../features/automations/triggers/event-capture";
-export { processDatabaseAutomationEventWindow } from "../features/automations/triggers/event-evaluator";
-export { processDatabaseAutomationRun } from "../features/automations/execution/run-engine";
-export { scanDueDatabaseAutomationSchedules } from "../features/automations/triggers/scheduler";
+} from "../services/automations/triggers/event-capture";
+export { processDatabaseAutomationEventWindow } from "../services/automations/triggers/event-evaluator";
+export { processDatabaseAutomationRun } from "../services/automations/execution/run-engine";
+export { scanDueDatabaseAutomationSchedules } from "../services/automations/triggers/scheduler";
 export {
   cleanupDatabaseAutomationHistory,
   getDatabaseAutomationOperationalSnapshot,
-} from "../features/automations/history/history-maintenance";
+} from "../services/automations/history/history-maintenance";
 export {
   MembershipService,
   TransactionalAdmissionError,
@@ -137,20 +137,20 @@ export {
   type TransactionalAdmissionCode,
   type TransactionalAdmissionResult,
   type ReadinessMember,
-} from "../features/memberships";
+} from "../services/memberships";
 export {
   TeamspaceService,
   ensureDefaultTeamspaceMembership,
   removeUserTeamspacePrincipals,
   type EnsureDefaultTeamspaceMembershipInput,
   type EnsureDefaultTeamspaceMembershipResult,
-} from "../features/teamspaces";
+} from "../services/teamspaces";
 export {
   inspectTeamspaceIntegrity,
   findTeamspaceIntegrityIssues,
   type TeamspaceIntegrityIssue,
   type TeamspaceIntegritySnapshot,
-} from "../features/teamspaces";
+} from "../services/teamspaces";
 export {
   appendMeetingTranscript,
   appendMeetingTranscriptInHocuspocus,
@@ -176,7 +176,7 @@ export {
   type CollaborationTicketClaims,
   type MeetingCollaborationTicketClaims,
   type PageCollaborationTicketClaims,
-} from "../features/collaboration/service";
+} from "../services/collaboration/service";
 export type { MeetingTranscriptYjsSegment } from "@zilobase/runtime-adapter/capabilities";
 export {
   BACKGROUND_TASK_KINDS,
@@ -211,8 +211,8 @@ export {
   type CalendarNotificationEvent,
 } from "@zilobase/runtime-adapter/capabilities";
 
-export { maintainCalendarWatches } from "../features/calendar/realtime/watches";
-export { drainCalendarOutbox } from "../features/calendar/realtime/outbox";
+export { maintainCalendarWatches } from "../services/calendar/realtime/watches";
+export { drainCalendarOutbox } from "../services/calendar/realtime/outbox";
 
 export {
   deliverBackgroundTask,

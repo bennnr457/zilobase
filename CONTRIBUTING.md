@@ -61,7 +61,7 @@ npm run test:selfhost
 - `apps/web/src/shared`: domain-neutral design-system UI, components, hooks,
   styles, types, and utilities.
 - `apps/server/src/app`: API and Node runtime composition.
-- `apps/server/src/features`: server routes, services, and models by domain.
+- `apps/server/src/services`: server routes, services, and models by domain.
 - `apps/server/src/infrastructure`: database, storage, email, realtime, and
   runtime mechanisms.
 - `apps/server/src/public`: compatibility entrypoints published by

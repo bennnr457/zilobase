@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { getAuthenticatedUser as requireUser } from "../shared/http/auth";
 
-import { getMembership } from "../features/access";
-import { rejectMismatchedApiKeyWorkspace } from "../features/api-keys";
+import { getMembership } from "../services/access";
+import { rejectMismatchedApiKeyWorkspace } from "../services/api-keys";
 import { rejectMismatchedPinnedWorkspace, requireOAuthScope } from "./auth/oauth-access";
 import type { AppBindings } from "../shared/types";
-import { searchWorkspaceItems } from "../features/search/workspace-search";
+import { searchWorkspaceItems } from "../services/search/workspace-search";
 
 export const searchRoutes = new Hono<AppBindings>();
 

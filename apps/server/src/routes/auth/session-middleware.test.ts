@@ -15,11 +15,11 @@ vi.mock("../../infrastructure/database", () => ({
   db: mocks.database,
   runWithDbEnv: async (_env: unknown, run: () => unknown) => run(),
 }));
-vi.mock("../../features/access", () => ({ getMembership: mocks.getMembership }));
-vi.mock("../../features/memberships", () => ({
+vi.mock("../../services/access", () => ({ getMembership: mocks.getMembership }));
+vi.mock("../../services/memberships", () => ({
   expireTemporaryMemberships: mocks.expireTemporaryMemberships,
 }));
-vi.mock("../../features/auth/auth", () => ({ createAuth: mocks.createAuth }));
+vi.mock("../../services/auth/auth", () => ({ createAuth: mocks.createAuth }));
 
 import { sessionMiddleware } from "./session-middleware";
 

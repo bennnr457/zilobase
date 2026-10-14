@@ -44,7 +44,7 @@ vi.mock("../infrastructure/database", () => ({
   runWithDbEnv: (_env: unknown, run: () => unknown) => run(),
 }));
 
-vi.mock("../features/auth", () => ({
+vi.mock("../services/auth", () => ({
   createAuth: () => ({
     api: {
       async signOut() {
@@ -80,7 +80,7 @@ vi.mock("../features/auth", () => ({
   }),
 }));
 
-vi.mock("../features/instance/service", () => ({
+vi.mock("../services/instance/service", () => ({
   getZilobaseDiscoveryDocument: async () => ({
     apiOrigin: "https://api.example.com",
     displayName: "Team Notes",
@@ -96,7 +96,7 @@ import {
   DESKTOP_AUTH_CLIENT_ID,
   hashDesktopAuthorizationCode,
   parseDesktopAuthorizationRequest,
-} from "../features/desktop-auth/authorization";
+} from "../services/desktop-auth/authorization";
 
 const env = {
   BETTER_AUTH_SECRET: "desktop-consent-test-secret-with-at-least-32-characters",

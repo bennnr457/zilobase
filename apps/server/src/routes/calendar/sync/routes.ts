@@ -1,14 +1,14 @@
-import { calendarSearchSchema, searchCalendarEvents } from "../../../features/calendar/sync/search";
+import { calendarSearchSchema, searchCalendarEvents } from "../../../services/calendar/sync/search";
 import { Hono } from "hono";
 import { and, eq } from "drizzle-orm";
 import type { AppBindings } from "../../../shared/types";
 import { db } from "../../../infrastructure/database";
 import { calendarProviderCalendar } from "../../../infrastructure/database/schema";
-import { requireCalendarBinding } from "../../../features/calendar/connections/ownership";
-import { createCalendarGateway } from "../../../features/calendar/provider/oauth";
-import { CalendarProviderError, normalizeEvent } from "../../../features/calendar/provider/gateway";
-import { refreshCalendarList } from "../../../features/calendar/sync/sync";
-import { calendarRangeSchema, readCalendarRange } from "../../../features/calendar/sync/ranges";
+import { requireCalendarBinding } from "../../../services/calendar/connections/ownership";
+import { createCalendarGateway } from "../../../services/calendar/provider/oauth";
+import { CalendarProviderError, normalizeEvent } from "../../../services/calendar/provider/gateway";
+import { refreshCalendarList } from "../../../services/calendar/sync/sync";
+import { calendarRangeSchema, readCalendarRange } from "../../../services/calendar/sync/ranges";
 export const calendarSyncRoutes = new Hono<AppBindings>();
 calendarSyncRoutes.post("/connections/:bindingId/sync", async (c) => {
   const { account, binding } = await requireCalendarBinding(

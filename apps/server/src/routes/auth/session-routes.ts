@@ -6,11 +6,11 @@ import { account, member, session as authSession } from "../../infrastructure/da
 import {
   getInstanceAdministrationSettings,
   shouldCreateOpenRegistrationMembership,
-} from "../../features/instance/registration";
+} from "../../services/instance/registration";
 import { isCommunityRegistration } from "../../shared/app-policy";
 import type { AppBindings } from "../../shared/types";
-import { MembershipService } from "../../features/memberships";
-import { activeMembershipCondition } from "../../features/memberships";
+import { MembershipService } from "../../services/memberships";
+import { activeMembershipCondition } from "../../services/memberships";
 
 export const sessionRoutes = new Hono<AppBindings>();
 

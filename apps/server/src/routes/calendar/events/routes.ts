@@ -4,11 +4,11 @@ import type { AppBindings } from "../../../shared/types";
 import {
   calendarWriteSchema,
   type CalendarMutationAction,
-} from "../../../features/calendar/events/input";
+} from "../../../services/calendar/events/input";
 import {
   mutateCalendarEvent,
   reconcileCalendarOperation,
-} from "../../../features/calendar/events/mutations";
+} from "../../../services/calendar/events/mutations";
 
 const CalendarMutationActionSchema = Schema.Literals([
   "update",

@@ -4,19 +4,19 @@ import {
 } from "@better-auth/oauth-provider";
 import { Hono, type Context } from "hono";
 import { getAuthHeaders } from "../../shared/security/auth-headers";
-import { createAuth, type Auth } from "../../features/auth/auth";
+import { createAuth, type Auth } from "../../services/auth/auth";
 import { db, runWithDbEnv } from "../../infrastructure/database";
 import { getPrimaryClientOrigin } from "../../shared/config/config";
-import { ensureOfficialClipperClient } from "../../features/auth/oauth-clients";
+import { ensureOfficialClipperClient } from "../../services/auth/oauth-clients";
 import {
   getInstanceAdministrationSettings,
   SELF_HOSTED_INVITATION_COOKIE,
   validateSelfHostedInvitationCandidate,
-} from "../../features/instance/registration";
+} from "../../services/instance/registration";
 import { isCommunityRegistration } from "../../shared/app-policy";
 import type { AppBindings } from "../../shared/types";
 import { readJsonBody } from "../../shared/http/request";
-import { expireTemporaryMemberships } from "../../features/memberships";
+import { expireTemporaryMemberships } from "../../services/memberships";
 
 export const authRoutes = new Hono<AppBindings>();
 

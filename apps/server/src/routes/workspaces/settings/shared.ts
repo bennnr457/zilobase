@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 
-import { getMembership } from "../../../features/access";
+import { getMembership } from "../../../services/access";
 import type { AppBindings } from "../../../shared/types";
 
 export async function requireActiveWorkspace(c: Context<AppBindings>) {

@@ -16,17 +16,17 @@ const mocks = vi.hoisted(() => ({
   whereQueries: [] as SQL[],
 }));
 
-vi.mock("../features/access", () => ({
+vi.mock("../services/access", () => ({
   getMembership: mocks.membership,
   isPrivilegedOrgRole: mocks.privileged,
 }));
-vi.mock("../features/api-keys/api-keys", () => ({
+vi.mock("../services/api-keys/api-keys", () => ({
   API_KEY_DEFAULT_EXPIRES_IN_SECONDS: 2_592_000,
   API_KEY_PREFIX: "zilo",
   readApiKeyWorkspaceId: (metadata: any) => metadata?.workspaceId ?? null,
   rejectMismatchedApiKeyWorkspace: () => null,
 }));
-vi.mock("../features/auth", () => ({ createAuth: vi.fn() }));
+vi.mock("../services/auth", () => ({ createAuth: vi.fn() }));
 vi.mock("../infrastructure/database", () => ({
   db: {
     select() {

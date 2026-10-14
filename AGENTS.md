@@ -16,8 +16,8 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   providers, routing, configuration, shortcuts, and the shell. `platform` owns
   physical web/desktop adapters; `lib` contains web presentation helpers and
   `styles` contains global styles. Keep editor, canvas, Tiptap, Yjs collaboration,
-  comments Yjs, Ask AI
-  chrome, meeting capture, demo runtime, Electron, and database view geometry here.
+  comments Yjs, Ask AI chrome, meeting capture, demo runtime, Electron, and database
+  view geometry here.
   Keep form/screen state machines beside their screens.
 - A future `apps/mobile` will own native screens, navigation, and native adapters.
   It will import `@zilobase/features`. Do not create the mobile app as a side
@@ -36,9 +36,9 @@ renderers. Reserve the `features` folder name for `packages/features`.
 
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.
-Server HTTP handlers, middleware, and route-specific support now live in
-`apps/server/src/routes`. During the folder migration, remaining backend
-`apps/server/src/features` modules are being relocated to `services` separately.
+Server HTTP handlers, middleware, and route-specific support live in `routes`;
+backend domain operations and models live in `services`. Do not recreate
+application `src/features` or web `src/shared` directories.
 
 If a file calls the backend or encodes domain rules and needs no platform/UI
 APIs, it belongs in features. If it mixes domain work with platform behavior,

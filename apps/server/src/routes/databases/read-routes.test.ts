@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   verifyTicket: vi.fn(),
 }));
 
-vi.mock("../../features/access", () => ({
+vi.mock("../../services/access", () => ({
   canAccessDatabaseRecord: mocks.access,
   getEffectiveDatabaseAccessForRecord: mocks.accessLevel,
   getMembership: mocks.membership,
@@ -68,11 +68,11 @@ vi.mock("../../infrastructure/database", () => {
   };
   return { db, runWithDb: (_transaction: unknown, read: () => Promise<unknown>) => read() };
 });
-vi.mock("../../features/databases/access/database-access", async (original) => ({
-  ...(await original<typeof import("../../features/databases/access/database-access")>()),
+vi.mock("../../services/databases/access/database-access", async (original) => ({
+  ...(await original<typeof import("../../services/databases/access/database-access")>()),
   getDatabaseRecord: mocks.getRecord,
 }));
-vi.mock("../../features/databases/core/payload", () => ({
+vi.mock("../../services/databases/core/payload", () => ({
   getDatabaseExportPayload: mocks.payload,
 }));
 

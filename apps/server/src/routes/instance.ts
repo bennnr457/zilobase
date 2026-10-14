@@ -1,7 +1,7 @@
 import { Hono, type Context } from "hono";
 import { Schema, SchemaTransformation } from "effect";
 
-import { getMembership } from "../features/access";
+import { getMembership } from "../services/access";
 import { isCommunityRegistration } from "../shared/app-policy";
 import type { AppBindings } from "../shared/types";
 import { parseJsonBody } from "../shared/http/schema-json";
@@ -13,8 +13,8 @@ import {
   getInstanceAdministrationSettings,
   InvalidBootstrapTokenError,
   updateInstanceAdministrationSettings,
-} from "../features/instance/registration";
-import { getZilobaseDiscoveryDocument } from "../features/instance/service";
+} from "../services/instance/registration";
+import { getZilobaseDiscoveryDocument } from "../services/instance/service";
 
 export const instanceRoutes = new Hono<AppBindings>();
 

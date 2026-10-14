@@ -5,7 +5,7 @@ const { checkReadiness } = vi.hoisted(() => ({
   checkReadiness: vi.fn(),
 }));
 
-vi.mock("../features/health/readiness", () => ({ checkReadiness }));
+vi.mock("../services/health/readiness", () => ({ checkReadiness }));
 
 import { healthRoutes } from "./health";
 

@@ -10,10 +10,10 @@ import {
   hasAccess,
   isPagePublishedInWorkspace,
   type AccessLevel,
-} from "../../features/access";
+} from "../../services/access";
 import { rejectMismatchedPinnedWorkspace } from "../auth/oauth-access";
 import { db } from "../../infrastructure/database";
-import { withDatabaseReadSnapshot } from "../../features/databases/read/snapshot";
+import { withDatabaseReadSnapshot } from "../../services/databases/read/snapshot";
 import {
   database,
   databaseActorState,
@@ -30,7 +30,7 @@ import {
   pageSettings,
 } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
-import { buildNavigationPlacements } from "../../features/pages/placements/page-item-placements";
+import { buildNavigationPlacements } from "../../services/pages/placements/page-item-placements";
 import { enforceActiveWorkspace, getPage, getPageIncludingDeleted } from "./page-route-support";
 
 export const pageBrowseRoutes = new Hono<AppBindings>();

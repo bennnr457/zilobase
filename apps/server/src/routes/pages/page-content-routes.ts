@@ -7,7 +7,7 @@ import {
   getWorkspaceRealtimeAccessExpiration,
   hasAccess,
   getWorkspacePrincipalKind,
-} from "../../features/access";
+} from "../../services/access";
 import { db } from "../../infrastructure/database";
 import {
   database,
@@ -25,12 +25,12 @@ import {
   documentNameForPage,
   getOrCreateCollaborationDocumentState,
   replacePageContent,
-} from "../../features/collaboration/service";
+} from "../../services/collaboration/service";
 import { getCollaborationWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
 
-import { commitDatabaseMutationBatch } from "../../features/databases/core";
-import { lockDatabaseAutomationFactRows } from "../../features/automations/triggers/event-capture";
-import { getDatabaseRecordEntity } from "../../features/databases/commands/record-entity";
+import { commitDatabaseMutationBatch } from "../../services/databases/core";
+import { lockDatabaseAutomationFactRows } from "../../services/automations/triggers/event-capture";
+import { getDatabaseRecordEntity } from "../../services/databases/commands/record-entity";
 import { getPagePropertyPayload } from "./page-route-support";
 
 export const pageContentRoutes = new Hono<AppBindings>();

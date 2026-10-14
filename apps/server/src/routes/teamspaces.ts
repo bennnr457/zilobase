@@ -3,7 +3,7 @@ import { Schema, SchemaTransformation } from "effect";
 
 import type { AppBindings } from "../shared/types";
 import { parseJsonBody } from "../shared/http/schema-json";
-import { TeamspaceManagementService } from "../features/teamspaces/management";
+import { TeamspaceManagementService } from "../services/teamspaces/management";
 
 export const teamspaceRoutes = new Hono<AppBindings>();
 

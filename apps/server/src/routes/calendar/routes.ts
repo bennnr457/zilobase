@@ -1,11 +1,11 @@
-import { dispatchCalendarWebhook } from "../../features/calendar/background";
-import { personalCalendarSources } from "../../features/calendar/connections/catalog";
-import { inspectCalendarConfiguration } from "../../features/calendar/configuration";
+import { dispatchCalendarWebhook } from "../../services/calendar/background";
+import { personalCalendarSources } from "../../services/calendar/connections/catalog";
+import { inspectCalendarConfiguration } from "../../services/calendar/configuration";
 import { calendarRealtimeRoutes } from "./realtime/routes";
 import {
   acceptCalendarWebhook,
   stopCalendarWatches,
-} from "../../features/calendar/realtime/watches";
+} from "../../services/calendar/realtime/watches";
 import { calendarEventRoutes } from "./events/routes";
 import { calendarSyncRoutes } from "./sync/routes";
 import { calendarPreferenceRoutes } from "./preferences";
@@ -22,15 +22,15 @@ import {
   CalendarAccessError,
   requireCalendarBinding,
   disconnectCalendarBinding,
-} from "../../features/calendar/connections/ownership";
+} from "../../services/calendar/connections/ownership";
 import {
   beginCalendarOAuth,
   consumeCalendarOAuthAttempt,
   completeCalendarOAuth,
   createCalendarGateway,
-} from "../../features/calendar/provider/oauth";
-import { CalendarProviderError } from "../../features/calendar/provider/gateway";
-import { getZilobaseDiscoveryDocument } from "../../features/instance/service";
+} from "../../services/calendar/provider/oauth";
+import { CalendarProviderError } from "../../services/calendar/provider/gateway";
+import { getZilobaseDiscoveryDocument } from "../../services/instance/service";
 export const calendarRoutes = new Hono<AppBindings>();
 export const calendarProviderRoutes = new Hono<AppBindings>();
 for (const app of [calendarRoutes, calendarProviderRoutes]) {

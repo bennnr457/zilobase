@@ -1,5 +1,5 @@
 import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
-import { getDatabaseRecord } from "../../features/databases/access/database-access";
+import { getDatabaseRecord } from "../../services/databases/access/database-access";
 import { and, eq } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 
@@ -9,17 +9,17 @@ import { getCanonicalWebOrigin, isAutomationSlackEnabled } from "../../shared/co
 import type { AppBindings } from "../../shared/types";
 import { readJsonBody } from "../../shared/http/request";
 import { requireDatabaseRouteUser } from "../databases/support";
-import { requireDataSourceAccess } from "../../features/databases/access/data-source-access";
+import { requireDataSourceAccess } from "../../services/databases/access/data-source-access";
 import {
   getDatabaseAutomationCatalog,
   invalidateDatabaseAutomationDependencies,
-} from "../../features/automations/service";
+} from "../../services/automations/service";
 import {
   beginSlackOauth,
   completeSlackOauth,
   listSlackChannels,
   SlackProviderError,
-} from "../../features/automations/actions/slack-provider";
+} from "../../services/automations/actions/slack-provider";
 
 export const automationSlackRoutes = new Hono<AppBindings>();
 const resourceWorkspace = pinnedResourceMiddleware(

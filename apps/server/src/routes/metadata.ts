@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 import { Hono } from "hono";
-import { readBookmarkMetadata } from "../features/metadata/bookmark-metadata";
+import { readBookmarkMetadata } from "../services/metadata/bookmark-metadata";
 import type { AppBindings } from "../shared/types";
 
 export const metadataRoutes = new Hono<AppBindings>();

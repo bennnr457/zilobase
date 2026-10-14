@@ -19,17 +19,17 @@ vi.mock("../../infrastructure/background/telemetry", () => ({
   recordBackgroundHistogram: vi.fn(),
   runBackgroundTaskSpan: (_task: unknown, _attributes: unknown, run: () => unknown) => run(),
 }));
-vi.mock("../../features/automations/triggers/event-evaluator", () => ({
+vi.mock("../../services/automations/triggers/event-evaluator", () => ({
   processDatabaseAutomationEventWindow: vi.fn(),
 }));
-vi.mock("../../features/automations/execution/run-engine", () => ({
+vi.mock("../../services/automations/execution/run-engine", () => ({
   processDatabaseAutomationRun: vi.fn(),
 }));
-vi.mock("../../features/databases/realtime/outbox", () => ({
+vi.mock("../../services/databases/realtime/outbox", () => ({
   drainDatabaseRealtimeOutbox: fake.database,
 }));
 
-vi.mock("../../features/notifications/outbox", () => ({
+vi.mock("../../services/notifications/outbox", () => ({
   drainInProductNotificationOutbox: fake.notification,
 }));
 

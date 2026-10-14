@@ -20,12 +20,12 @@ const mocks = vi.hoisted(() => ({
   deleteDatabase: vi.fn(),
   restoreDatabase: vi.fn(),
 }));
-vi.mock("../../features/databases/commands/framework", async (original) => ({
-  ...(await original<typeof import("../../features/databases/commands/framework")>()),
+vi.mock("../../services/databases/commands/framework", async (original) => ({
+  ...(await original<typeof import("../../services/databases/commands/framework")>()),
   executeDatabaseCommand: mocks.executeCommand,
 }));
-vi.mock("../../features/access", async (original) => ({
-  ...(await original<typeof import("../../features/access")>()),
+vi.mock("../../services/access", async (original) => ({
+  ...(await original<typeof import("../../services/access")>()),
   canAccessDatabaseRecord: mocks.canAccessDatabase,
   getEffectiveDatabaseAccessForRecord: mocks.effectiveDatabaseAccess,
   getMembership: mocks.membership,
@@ -33,25 +33,25 @@ vi.mock("../../features/access", async (original) => ({
   isDatabasePublishedInWorkspace: mocks.publishedDatabase,
 }));
 
-vi.mock("../../features/databases/access/database-access", async (original) => ({
-  ...(await original<typeof import("../../features/databases/access/database-access")>()),
+vi.mock("../../services/databases/access/database-access", async (original) => ({
+  ...(await original<typeof import("../../services/databases/access/database-access")>()),
   getDatabaseRecord: mocks.databaseRecord,
 }));
-vi.mock("../../features/databases/core/payload", () => ({
+vi.mock("../../services/databases/core/payload", () => ({
   getDatabaseExportPayload: mocks.databasePayload,
 }));
-vi.mock("../../features/databases/core/service", () => ({
+vi.mock("../../services/databases/core/service", () => ({
   createDatabaseService: mocks.createDatabase,
   deleteDatabaseService: mocks.deleteDatabase,
   restoreDatabaseService: mocks.restoreDatabase,
 }));
-vi.mock("../../features/databases/read/service", async (original) => ({
-  ...(await original<typeof import("../../features/databases/read/service")>()),
+vi.mock("../../services/databases/read/service", async (original) => ({
+  ...(await original<typeof import("../../services/databases/read/service")>()),
   getDatabaseBootstrapService: mocks.bootstrap,
   getDatabaseRecordWindowService: mocks.recordWindow,
 }));
-vi.mock("../../features/databases/history/service", async (original) => ({
-  ...(await original<typeof import("../../features/databases/history/service")>()),
+vi.mock("../../services/databases/history/service", async (original) => ({
+  ...(await original<typeof import("../../services/databases/history/service")>()),
   getDatabaseMutationFeed: mocks.mutationFeed,
 }));
 
@@ -181,7 +181,7 @@ test("v2 record route forwards exact windows and deleted scope", async () => {
 });
 
 test("v2 record route exposes stale-window and source/view conflicts", async () => {
-  const { DatabaseWindowStaleError } = await import("../../features/databases/read/service");
+  const { DatabaseWindowStaleError } = await import("../../services/databases/read/service");
   mocks.databaseRecord.mockResolvedValue({
     deletedAt: null,
     id: "database-1",
@@ -208,7 +208,7 @@ test("v2 record route exposes stale-window and source/view conflicts", async () 
 });
 
 test("record reads require a query identity and expose saved-query conflicts", async () => {
-  const { DatabaseViewQueryChangedError } = await import("../../features/databases/read/service");
+  const { DatabaseViewQueryChangedError } = await import("../../services/databases/read/service");
   mocks.databaseRecord.mockResolvedValue({
     deletedAt: null,
     id: "database-1",

@@ -1,7 +1,7 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 
-import { createAuth } from "../features/auth";
+import { createAuth } from "../services/auth";
 import {
   getCanonicalApiOrigin,
   getCanonicalWebOrigin,
@@ -10,7 +10,7 @@ import {
 } from "../shared/config/config";
 import { db, runWithDb, runWithDbEnv, type Database } from "../infrastructure/database";
 import { desktopAuthorizationCode } from "../infrastructure/database/schema";
-import { getZilobaseDiscoveryDocument } from "../features/instance/service";
+import { getZilobaseDiscoveryDocument } from "../services/instance/service";
 import type { AppBindings } from "../shared/types";
 import {
   buildDesktopCallbackUrl,
@@ -25,7 +25,7 @@ import {
   parseDesktopTokenRequest,
   verifyDesktopConsentToken,
   type DesktopAuthorizationRequest,
-} from "../features/desktop-auth/authorization";
+} from "../services/desktop-auth/authorization";
 
 export const desktopAuthRoutes = new Hono<AppBindings>();
 

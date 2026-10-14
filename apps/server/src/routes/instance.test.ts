@@ -23,11 +23,11 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("../features/access", () => ({ getMembership: mocks.membership }));
-vi.mock("../features/instance/service", () => ({
+vi.mock("../services/access", () => ({ getMembership: mocks.membership }));
+vi.mock("../services/instance/service", () => ({
   getZilobaseDiscoveryDocument: mocks.discovery,
 }));
-vi.mock("../features/instance/registration", () => ({
+vi.mock("../services/instance/registration", () => ({
   BootstrapAlreadyCompletedError: mocks.BootstrapAlreadyCompletedError,
   BootstrapStateConflictError: mocks.BootstrapStateConflictError,
   InvalidBootstrapTokenError: mocks.InvalidBootstrapTokenError,

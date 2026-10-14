@@ -9,7 +9,7 @@ loadEnv({
 });
 
 import { createApp } from "../app";
-import { createAuth } from "../features/auth";
+import { createAuth } from "../services/auth";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
 import { verification } from "../infrastructure/database/schema";
 

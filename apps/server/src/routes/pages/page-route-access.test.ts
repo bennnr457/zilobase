@@ -10,8 +10,8 @@ const state = vi.hoisted(() => ({
   mismatch: false,
   principalKind: "member" as "member" | "guest",
 }));
-vi.mock("../../features/access", async (original) => ({
-  ...(await original<typeof import("../../features/access")>()),
+vi.mock("../../services/access", async (original) => ({
+  ...(await original<typeof import("../../services/access")>()),
   getWorkspacePrincipalKind: async () => state.principalKind,
   getPageRecord: async () => {
     state.calls.push("page");

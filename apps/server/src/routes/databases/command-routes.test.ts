@@ -15,21 +15,21 @@ const mocks = vi.hoisted(() => ({
   canEditPage: vi.fn(),
 }));
 
-vi.mock("../../features/access", async (original) => ({
-  ...(await original<typeof import("../../features/access")>()),
+vi.mock("../../services/access", async (original) => ({
+  ...(await original<typeof import("../../services/access")>()),
   canAccessPageInWorkspace: mocks.canEditPage,
 }));
 
-vi.mock("../../features/databases/access/database-access", () => ({
+vi.mock("../../services/databases/access/database-access", () => ({
   getDatabaseRecord: mocks.getDatabase,
   requireDatabaseEditAccess: mocks.requireDatabase,
 }));
-vi.mock("../../features/databases/access/data-source-access", () => ({
+vi.mock("../../services/databases/access/data-source-access", () => ({
   requireDataSourceAccess: mocks.requireSourceView,
   requireDataSourceEditAccess: mocks.requireSource,
 }));
-vi.mock("../../features/databases/commands/framework", async (original) => ({
-  ...(await original<typeof import("../../features/databases/commands/framework")>()),
+vi.mock("../../services/databases/commands/framework", async (original) => ({
+  ...(await original<typeof import("../../services/databases/commands/framework")>()),
   executeDatabaseCommand: mocks.execute,
 }));
 
@@ -37,7 +37,7 @@ import { databaseCommandRoutes } from "./command-routes";
 import {
   CommandIdReusedError,
   RowMoveConflictError,
-} from "../../features/databases/commands/framework";
+} from "../../services/databases/commands/framework";
 
 const user = {
   email: "user@example.com",
