@@ -2,7 +2,7 @@ import { NetworkUnavailableError } from "@/platform/network/api";
 import { installRequestPolicy, type RequestObservation } from "@/platform/network/request-policy";
 import { applyDemoReadOverlay, interceptDemoRequest } from "@/app/demo/transport";
 import { installDesktopServerSwitch } from "@/platform/server/operations/desktop-server-switch";
-import { switchDesktopServerSession } from "./runtime/desktop-server-switch";
+import { switchDesktopServerSession } from "./desktop-session";
 import { isDesktopApp } from "@/platform/desktop/native";
 import { createNativeMeetingCaptureRuntime } from "@/platform/desktop/meetings/native-capture-runtime";
 import { BrowserMeetingCapture } from "@/components/meetings/capture/browser-meeting-capture";

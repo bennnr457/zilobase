@@ -59,6 +59,9 @@ Desktop transport, capture, persistence, window, and deep-link adapters live und
 `platform`; application state and demo runtime composition live under `app`.
 Web startup configuration lives in `apps/web/src/app/startup.ts`; keep request,
 session, and meeting-capture installation together and preserve bootstrap order.
+Desktop session switching and replacement composition live in `app/desktop-session.ts`;
+the replacement dialog controller lives beside desktop UI in `components/desktop`.
+Keep native operations in `platform` and avoid recreating an `app/runtime` folder.
 Web build feature flags and desktop environment checks live together in
 `apps/web/src/platform/environment.ts`. Keep Vite environment reads in web and
 reuse this module instead of creating a single-file application config folder.

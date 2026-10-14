@@ -1,4 +1,4 @@
-import { DesktopServerReplacementController } from "./runtime/desktop-server-replacement-controller";
+import { DesktopServerReplacementController } from "@/components/desktop/desktop-server-replacement-controller";
 import { RouterProvider } from "@tanstack/react-router";
 
 import {

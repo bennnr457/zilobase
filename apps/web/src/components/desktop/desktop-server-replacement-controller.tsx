@@ -1,4 +1,4 @@
-import { createDesktopServerReplacementDependencies } from "./desktop-server-replacement";
+import { createDesktopServerReplacementDependencies } from "@/app/desktop-session";
 import * as React from "react";
 
 import {

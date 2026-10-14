@@ -12,13 +12,39 @@ import { queryClient } from "@/app/query-client";
 import {
   commitDesktopServerCandidate,
   getSelectedDesktopServer,
+  resolveDesktopServerSwitchPath,
+  switchDesktopServerProfile,
   type DesktopServer,
 } from "@/platform/server/desktop-server";
+import type { DesktopServerSwitchRequest } from "@/platform/server/operations/desktop-server-switch";
 import type { DesktopServerReplacementDependencies } from "@/platform/server/operations/desktop-server-replacement-core";
 import { useAppStore } from "@/app/state/app-store";
 import { useAuthFlowStore } from "@/components/auth/auth-flow-store";
 import { clearPageSnapshotsForDeployment } from "@/platform/storage/client-cache-storage";
 import { sessionQueryKey, type SessionResponse } from "@zilobase/features/auth";
+
+export async function switchDesktopServerSession(request: DesktopServerSwitchRequest) {
+  beginDesktopServerNetworkShutdown();
+  await queryClient.cancelQueries();
+
+  if (request.candidateId) {
+    await commitDesktopServerCandidate(request.candidateId);
+  } else {
+    await switchDesktopServerProfile({
+      apiOrigin: request.server.apiOrigin,
+      instanceId: request.server.instanceId,
+      path: request.path,
+      workspaceId: request.workspaceId,
+    });
+  }
+
+  forgetDesktopAuthCredentials();
+  const path = resolveDesktopServerSwitchPath(request);
+  if (typeof window !== "undefined") {
+    window.location.replace(path);
+  }
+  return path;
+}
 
 export function createDesktopServerReplacementDependencies(input: {
   beforeLocalCleanup: () => Promise<void>;
