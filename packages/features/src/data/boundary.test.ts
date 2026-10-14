@@ -17,10 +17,7 @@ test("foundation imports public package entrypoints and avoids internal APIs", (
 });
 
 test("application composition installs shared data through its public entrypoint", () => {
-  const source = readFileSync(
-    join(root, "apps/web/src/app/providers/features-provider.tsx"),
-    "utf8",
-  );
-  assert.match(source, /import .*installSharedClient.*from "@zilobase\/features\/data"/);
-  assert.match(source, /installSharedClient\(queryClient/);
+  const source = readFileSync(join(root, "apps/web/src/app/query-client.ts"), "utf8");
+  assert.match(source, /import .*createZilobaseClient.*from "@zilobase\/features"/);
+  assert.match(source, /createZilobaseClient\(\{ deployment: clientDeployment \}\)/);
 });

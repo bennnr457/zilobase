@@ -1,6 +1,5 @@
 import * as React from "react";
 import { ThemeProvider, useTheme } from "next-themes";
-import { QueryClientProvider } from "@tanstack/react-query";
 
 import { Toaster } from "@/shared/ui/sonner";
 import { TooltipProvider } from "@/shared/ui/tooltip";
@@ -20,8 +19,6 @@ import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useSession } from "@zilobase/features/auth/react";
 import { useDatabaseController } from "@zilobase/features/databases/react";
 import { guardPendingDatabaseWrites } from "@/features/databases/lifecycle/beforeunload";
-import { DbProvider } from "@zilobase/features/databases/react";
-import { useZilobaseFeatures } from "@zilobase/features";
 import { subscribePageReadCache } from "@/features/pages/cache/page-read-cache";
 
 import posthog from "@/shared/lib/posthog";
@@ -41,44 +38,41 @@ installDemoCache({
 export function AppProviders({ children }: React.PropsWithChildren) {
   return (
     <AppIconProvider>
-      <QueryClientProvider client={queryClient}>
-        <WebFeaturesProvider>
-          <SessionDatabaseProvider>
-            <PostHogIdentitySync />
-            <ShortcutProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-                themes={selectableThemeIds}
-              >
-                <ThemeFamilyProvider>
-                  <ThemeDocumentSync />
-                  <DemoExperience>
-                    <TooltipProvider>
-                      <PageEditorRegistryProvider>
-                        <PageCommentsRegistryProvider>
-                          <PageEditorCommentsProvider>{children}</PageEditorCommentsProvider>
-                        </PageCommentsRegistryProvider>
-                      </PageEditorRegistryProvider>
-                      <DesktopUpdater />
-                      <Toaster />
-                    </TooltipProvider>
-                  </DemoExperience>
-                </ThemeFamilyProvider>
-              </ThemeProvider>
-            </ShortcutProvider>
-          </SessionDatabaseProvider>
-        </WebFeaturesProvider>
-      </QueryClientProvider>
+      <WebFeaturesProvider>
+        <WebCacheEffects />
+        <DatabaseUnloadGuard />
+        <PostHogIdentitySync />
+        <ShortcutProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+            themes={selectableThemeIds}
+          >
+            <ThemeFamilyProvider>
+              <ThemeDocumentSync />
+              <DemoExperience>
+                <TooltipProvider>
+                  <PageEditorRegistryProvider>
+                    <PageCommentsRegistryProvider>
+                      <PageEditorCommentsProvider>{children}</PageEditorCommentsProvider>
+                    </PageCommentsRegistryProvider>
+                  </PageEditorRegistryProvider>
+                  <DesktopUpdater />
+                  <Toaster />
+                </TooltipProvider>
+              </DemoExperience>
+            </ThemeFamilyProvider>
+          </ThemeProvider>
+        </ShortcutProvider>
+      </WebFeaturesProvider>
     </AppIconProvider>
   );
 }
 
-function SessionDatabaseProvider({ children }: React.PropsWithChildren) {
+function WebCacheEffects() {
   const { data: session } = useSession();
-  const { apiFetch, lifecycle } = useZilobaseFeatures();
   const userId = session?.user?.id;
   const sessionId = session?.session?.id;
 
@@ -87,17 +81,7 @@ function SessionDatabaseProvider({ children }: React.PropsWithChildren) {
     return subscribePageReadCache(queryClient, userId, sessionId);
   }, [userId, sessionId]);
 
-  return (
-    <DbProvider
-      apiFetch={apiFetch}
-      queryClient={queryClient}
-      sessionId={sessionId ?? null}
-      lifecycle={lifecycle}
-    >
-      <DatabaseUnloadGuard />
-      {children}
-    </DbProvider>
-  );
+  return null;
 }
 
 function DatabaseUnloadGuard() {

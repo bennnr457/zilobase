@@ -828,6 +828,11 @@ export function disposeDatabaseController(queryClient: QueryClient, sessionId: s
   sessions.get(queryClient)?.delete(sessionId);
 }
 
+export function disposeDatabaseControllers(queryClient: QueryClient) {
+  for (const controller of sessions.get(queryClient)?.values() ?? []) controller.dispose();
+  sessions.delete(queryClient);
+}
+
 function titleOnly(input: DatabaseCommandInput) {
   return (
     input.command.type === "row.change" &&

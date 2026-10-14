@@ -35,11 +35,12 @@ export class SharedClient {
   private identityKey: string | undefined;
   private readonly sessions = new Map<string, SessionEntities>();
   private readonly sessionIds = new Map<string, SessionEntities>();
+  private readonly unsubscribe?: () => void;
   constructor(
     private identity: () => SessionIdentity,
     private readonly queryClient?: QueryClient,
   ) {
-    queryClient?.getQueryCache().subscribe((event) => {
+    this.unsubscribe = queryClient?.getQueryCache().subscribe((event) => {
       if (event.query.queryKey[0] === "session") {
         this.capture();
         if (
@@ -62,6 +63,11 @@ export class SharedClient {
   configure(identity: () => SessionIdentity) {
     this.identity = identity;
     return this;
+  }
+
+  dispose() {
+    this.unsubscribe?.();
+    this.clear();
   }
 
   capture() {
@@ -261,6 +267,11 @@ export function sharedClient(queryClient: QueryClient) {
   const client = clients.get(queryClient);
   if (!client) throw new Error("Shared client must be installed by the application composition");
   return client;
+}
+
+export function disposeSharedClient(queryClient: QueryClient) {
+  clients.get(queryClient)?.dispose();
+  clients.delete(queryClient);
 }
 
 export function isAccessLoss(error: unknown) {

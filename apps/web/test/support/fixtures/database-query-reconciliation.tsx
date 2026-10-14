@@ -3,14 +3,13 @@ import { normalizeDatabaseBootstrap } from "../../../../../packages/features/src
 import { createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { TestQueryClient as QueryClient } from "../../../../../packages/features/src/data/testing";
+import { QueryClient } from "@tanstack/react-query";
+import { initializeZilobaseClient } from "@zilobase/features";
 import { sharedClient } from "../../../../../packages/features/src/data/client";
-import { QueryClientProvider } from "@tanstack/react-query";
 import {
   ZilobaseFeaturesProvider,
   type ZilobaseFeaturesConfig,
 } from "../../../../../packages/features/src/shared/context";
-import { DbProvider } from "../../../../../packages/features/src/databases/queries/session";
 import { useDatabaseBootstrap } from "../../../../../packages/features/src/databases/queries/bootstrap";
 import { useDatabaseViewData } from "../../../../../packages/features/src/databases/queries/view-data";
 import { databaseBootstrapQueryKey } from "../../../../../packages/features/src/databases/queries/keys";
@@ -25,6 +24,12 @@ export function mountQueryReconciliation(container: HTMLElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { gcTime: Infinity, retry: false } },
   });
+  const session = {
+    user: null,
+    session: { id: "query-test", userId: "user", expiresAt: "2099-01-01" },
+  };
+  queryClient.setQueryData(["session"], session);
+  initializeZilobaseClient(queryClient, "query-test");
   const now = "2026-09-29T00:00:00.000Z";
   let server: DatabaseBootstrapResponse = {
     database: {
@@ -152,26 +157,17 @@ export function mountQueryReconciliation(container: HTMLElement) {
   flushSync(() =>
     root.render(
       createElement(
-        QueryClientProvider,
-        { client: queryClient },
-        createElement(
-          ZilobaseFeaturesProvider,
-          {
-            value: {
-              queryClient,
-              apiFetch,
-              auth: {
-                getSession: async () => ({ user: null, session: null }),
-              } as ZilobaseFeaturesConfig["auth"],
-            },
+        ZilobaseFeaturesProvider,
+        {
+          value: {
+            deployment: "query-test",
+            queryClient,
+            apiFetch,
+            auth: { getSession: async () => session } as ZilobaseFeaturesConfig["auth"],
           },
-          createElement(
-            DbProvider,
-            { queryClient, apiFetch, sessionId: "query-test" },
-            createElement(Capture, { viewId: "table" }),
-            createElement(Capture, { viewId: "kanban" }),
-          ),
-        ),
+        },
+        createElement(Capture, { viewId: "table" }),
+        createElement(Capture, { viewId: "kanban" }),
       ),
     ),
   );

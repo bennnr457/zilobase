@@ -6,13 +6,12 @@ import { createElement } from "react";
 import { useProjectedDatabaseRecords } from "../../../../../packages/features/src/databases/interactions/react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { TestQueryClient as QueryClient } from "../../../../../packages/features/src/data/testing";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { initializeZilobaseClient } from "@zilobase/features";
 import {
   ZilobaseFeaturesProvider,
   type ZilobaseFeaturesConfig,
 } from "../../../../../packages/features/src/shared/context";
-import { DbProvider } from "../../../../../packages/features/src/databases/queries/session";
 import { useRecordDrops } from "../../../src/features/databases/views/controller/use-record-drop";
 import { useDatabaseKanbanCardDrag } from "../../../src/features/databases/views/kanban/controller/use-database-kanban-card-drag";
 import { buildKanbanBoard } from "@zilobase/features/databases/models";
@@ -26,6 +25,12 @@ export function mountRecordDrops(container: HTMLElement) {
       queries: { gcTime: Infinity },
     },
   });
+  const session = {
+    user: null,
+    session: { id: "kanban-test", userId: "user", expiresAt: "2099-01-01" },
+  };
+  queryClient.setQueryData(["session"], session);
+  initializeZilobaseClient(queryClient, "kanban-test");
   const requests: Array<{
     command: Record<string, unknown>;
     resolve: (version: number) => void;
@@ -62,7 +67,7 @@ export function mountRecordDrops(container: HTMLElement) {
       }),
     );
   }) as ZilobaseFeaturesConfig["apiFetch"];
-  const auth = {} as ZilobaseFeaturesConfig["auth"];
+  const auth = { getSession: async () => session } as ZilobaseFeaturesConfig["auth"];
   const row = (id: string): DatabaseRow => ({
     id,
     pageId: id,
@@ -202,22 +207,14 @@ export function mountRecordDrops(container: HTMLElement) {
     flushSync(() =>
       root.render(
         createElement(
-          QueryClientProvider,
-          { client: queryClient },
-          createElement(
-            ZilobaseFeaturesProvider,
-            { value: { queryClient, apiFetch, auth } },
-            createElement(
-              DbProvider,
-              { queryClient, apiFetch, sessionId: "kanban-test" },
-              createElement(ManualRecordPlacementProvider, {
-                editable: true,
-                sorted,
-                viewId: "view-1",
-                children: createElement(Capture),
-              }),
-            ),
-          ),
+          ZilobaseFeaturesProvider,
+          { value: { deployment: "kanban-test", queryClient, apiFetch, auth } },
+          createElement(ManualRecordPlacementProvider, {
+            editable: true,
+            sorted,
+            viewId: "view-1",
+            children: createElement(Capture),
+          }),
         ),
       ),
     );

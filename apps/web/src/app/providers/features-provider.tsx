@@ -13,14 +13,12 @@ import type {
   VerifyEmailOtpInput,
 } from "@zilobase/features/auth";
 
-import { installSharedClient } from "@zilobase/features/data";
-import { sessionQueryKey } from "@zilobase/features/auth";
-import { apiFetch, authFetch, clearApiAuthToken, resolveApiBaseUrl } from "@/platform/network/api";
+import { apiFetch, authFetch, clearApiAuthToken } from "@/platform/network/api";
 import {
   describeDesktopError,
   recordDesktopDiagnostic,
 } from "@/features/desktop/diagnostics/index";
-import { queryClient } from "@/app/query-client";
+import { clientDeployment, queryClient } from "@/app/query-client";
 import { webClientLifecycle, databasePresenceColor } from "./client-lifecycle";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/features/demo";
@@ -33,22 +31,6 @@ import {
   rememberCachedSession,
 } from "@/features/editor/collaboration/page-document-cache";
 import { getConnectivityState } from "@/platform/network/connectivity";
-
-installSharedClient(queryClient, () => {
-  const session = queryClient.getQueryData<SessionResponse>(sessionQueryKey);
-  return {
-    deployment: resolveApiBaseUrl() || window.location.origin,
-    viewer:
-      session?.user && session.session
-        ? {
-            kind: "account",
-            accountId: session.user.id,
-            actorId: session.user.id,
-            sessionId: session.session.id,
-          }
-        : { kind: "public", capabilityId: "unauthenticated" },
-  };
-});
 
 function withOAuthQuery<T extends Record<string, unknown>>(input: T) {
   if (typeof window === "undefined") {
@@ -202,6 +184,7 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
   return (
     <ZilobaseFeaturesProvider
       value={{
+        deployment: clientDeployment,
         apiFetch,
         lifecycle: webClientLifecycle,
         databasePresenceColor,

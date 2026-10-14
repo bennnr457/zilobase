@@ -1,9 +1,7 @@
-import { QueryClientProvider } from "@tanstack/react-query";
 import { TestQueryClient as QueryClient } from "../data/testing";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { ZilobaseFeaturesProvider, type ZilobaseFeaturesConfig } from "./context";
-import { DbProvider } from "../databases/queries/session";
 
 // Render the real hook once, then exercise its MutationObserver through mutateAsync.
 // These mutations do not use authentication; fail immediately if that changes.
@@ -12,6 +10,7 @@ export function createMutationTestRuntime<T>(
   apiFetch: ZilobaseFeaturesConfig["apiFetch"],
 ) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+  queryClient.setQueryData(["session"], { user: null, session: { id: "test-session" } });
   let mutation: T | undefined;
   function Capture() {
     mutation = useHook();
@@ -24,17 +23,9 @@ export function createMutationTestRuntime<T>(
   });
   renderToString(
     createElement(
-      QueryClientProvider,
-      { client: queryClient },
-      createElement(
-        ZilobaseFeaturesProvider,
-        { value: { apiFetch, queryClient, auth } },
-        createElement(
-          DbProvider,
-          { apiFetch, queryClient, sessionId: "test-session" },
-          createElement(Capture),
-        ),
-      ),
+      ZilobaseFeaturesProvider,
+      { value: { deployment: "mutation-test", apiFetch, queryClient, auth } },
+      createElement(Capture),
     ),
   );
   if (!mutation) throw new Error("Hook did not render");

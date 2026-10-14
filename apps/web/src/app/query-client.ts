@@ -1,3 +1,5 @@
-import { createZilobaseQueryClient } from "@zilobase/features";
+import { createZilobaseClient } from "@zilobase/features";
+import { resolveApiBaseUrl } from "@/platform/network/api";
 
-export const queryClient = createZilobaseQueryClient();
+export const clientDeployment = () => resolveApiBaseUrl() || window.location.origin;
+export const { queryClient } = createZilobaseClient({ deployment: clientDeployment });

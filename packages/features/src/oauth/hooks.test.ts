@@ -31,7 +31,22 @@ test("OAuth write hooks use the configured API and keep one-time credentials out
     ]);
     for (const { queryClient } of [create, remove, revoke]) {
       assert.deepEqual(queryClient.getMutationCache().getAll(), []);
-      assert.deepEqual(queryClient.getQueryCache().getAll(), []);
+      assert.deepEqual(
+        queryClient
+          .getQueryCache()
+          .getAll()
+          .map((query) => query.queryKey),
+        [["session"]],
+      );
+      assert.doesNotMatch(
+        JSON.stringify(
+          queryClient
+            .getQueryCache()
+            .getAll()
+            .map((query) => query.state.data),
+        ),
+        /one-time-secret/,
+      );
     }
   } finally {
     for (const { queryClient } of [create, remove, revoke]) queryClient.clear();

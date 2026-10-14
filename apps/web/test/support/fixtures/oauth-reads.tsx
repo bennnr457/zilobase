@@ -20,11 +20,10 @@ export function mountOAuthReads(container: HTMLElement) {
   } = {};
   const value: ZilobaseFeaturesConfig = {
     queryClient,
-    auth: new Proxy({} as ZilobaseFeaturesConfig["auth"], {
-      get() {
-        throw new Error("Unexpected auth read");
-      },
-    }),
+    deployment: "oauth-test",
+    auth: {
+      getSession: async () => ({ user: null, session: null }),
+    } as ZilobaseFeaturesConfig["auth"],
     apiFetch: async <T,>(path: string) => {
       requests.push(path);
       if (fail) throw new Error("Offline");

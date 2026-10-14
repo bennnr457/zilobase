@@ -1,10 +1,9 @@
 import "@/shared/styles/global.css";
 import "@/app/styles.css";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
-import { installSharedClient } from "@zilobase/features/data";
 import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { Editor as TiptapEditor, Node, Mark } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
@@ -31,11 +30,8 @@ import {
 import { getDraggedEditorBlockPayload } from "@/features/editor/drag-drop/block-drag-session";
 import { changedPageReferences } from "@/features/editor/operations/changed-page-references";
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-installSharedClient(queryClient, () => ({
-  deployment: "editor-test",
-  viewer: { kind: "public", capabilityId: "editor-test" },
-}));
 const features = {
+  deployment: "editor-test",
   queryClient,
   auth: { getSession: async () => ({ user: null, session: null }) } as ZilobaseAuthClient,
   apiFetch: async () => ({}),
@@ -155,15 +151,13 @@ function Panes() {
 }
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ZilobaseFeaturesProvider value={features}>
-        <ShortcutProvider>
-          <PageEditorRegistryProvider>
-            <Panes />
-          </PageEditorRegistryProvider>
-        </ShortcutProvider>
-      </ZilobaseFeaturesProvider>
-    </QueryClientProvider>
+    <ZilobaseFeaturesProvider value={features}>
+      <ShortcutProvider>
+        <PageEditorRegistryProvider>
+          <Panes />
+        </PageEditorRegistryProvider>
+      </ShortcutProvider>
+    </ZilobaseFeaturesProvider>
   </React.StrictMode>,
 );
 const comment = Mark.create({

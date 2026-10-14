@@ -169,7 +169,7 @@ const queryClient = new QueryClient();
 const auth = { getSession: async () => ({ user: { id: "user" } }) } as ZilobaseAuthClient;
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <ZilobaseFeaturesProvider value={{ queryClient, auth, apiFetch }}>
+    <ZilobaseFeaturesProvider value={{ deployment: "calendar-test", queryClient, auth, apiFetch }}>
       <ShortcutProvider>
         <CalendarWorkspaceProvider>
           <RouterProvider router={router} />
