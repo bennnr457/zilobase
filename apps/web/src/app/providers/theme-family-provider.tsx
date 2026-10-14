@@ -23,12 +23,16 @@ function readStoredThemeFamily(): ThemeFamilyId {
 }
 
 function applyThemeFamily(themeFamily: ThemeFamilyId) {
-  document.documentElement.dataset.themeFamily = themeFamily;
-  // The active document can still use the palette when storage is unavailable.
   Effect.runSync(
-    Effect.try(() => window.localStorage.setItem(THEME_FAMILY_STORAGE_KEY, themeFamily)).pipe(
-      Effect.ignore,
-    ),
+    Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        document.documentElement.dataset.themeFamily = themeFamily;
+      });
+      // The active document can still use the palette when storage is unavailable.
+      yield* Effect.try(() =>
+        window.localStorage.setItem(THEME_FAMILY_STORAGE_KEY, themeFamily),
+      ).pipe(Effect.ignore);
+    }),
   );
 }
 

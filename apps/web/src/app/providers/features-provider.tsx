@@ -76,31 +76,25 @@ export const webAuthClient: ZilobaseAuthClient = {
       ),
     );
   },
-  requestSignInOtp: (email) =>
-    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.requestSignInOtp(email),
+  requestSignInOtp: (email) => runAuthCommand(() => apiAuthClient.requestSignInOtp(email)),
   signInWithOtp: (input) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : apiAuthClient.signInWithOtp(withOAuthQuery({ ...input })),
+    runAuthCommand(() => apiAuthClient.signInWithOtp(withOAuthQuery({ ...input }))),
   signInWithPassword: (input) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : apiAuthClient.signInWithPassword(withOAuthQuery({ ...input })),
+    runAuthCommand(() => apiAuthClient.signInWithPassword(withOAuthQuery({ ...input }))),
   signUp: (input) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : apiAuthClient.signUp({
-          ...input,
-          callbackURL:
-            input.callbackURL ??
-            (input.invitationId
-              ? `/accept-invitation?id=${encodeURIComponent(input.invitationId)}`
-              : "/onboarding"),
-        }),
+    runAuthCommand(() =>
+      apiAuthClient.signUp({
+        ...input,
+        callbackURL:
+          input.callbackURL ??
+          (input.invitationId
+            ? `/accept-invitation?id=${encodeURIComponent(input.invitationId)}`
+            : "/onboarding"),
+      }),
+    ),
   requestEmailVerificationOtp: (email) =>
-    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.requestEmailVerificationOtp(email),
-  verifyEmailOtp: (input) =>
-    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.verifyEmailOtp(input),
+    runAuthCommand(() => apiAuthClient.requestEmailVerificationOtp(email)),
+  verifyEmailOtp: (input) => runAuthCommand(() => apiAuthClient.verifyEmailOtp(input)),
   signOut: () =>
     Effect.runPromise(
       Effect.gen(function* () {
@@ -128,17 +122,13 @@ export const webAuthClient: ZilobaseAuthClient = {
       }),
     ),
   createWorkspace: <TWorkspace,>(input: { name: string; slug: string }) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction<TWorkspace>()
-      : apiAuthClient.createWorkspace<TWorkspace>(input),
+    runAuthCommand(() => apiAuthClient.createWorkspace<TWorkspace>(input)),
   setActiveWorkspace: (workspaceId) =>
-    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.setActiveWorkspace(workspaceId),
+    runAuthCommand(() => apiAuthClient.setActiveWorkspace(workspaceId)),
   inviteWorkspaceMember: (input) =>
-    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.inviteWorkspaceMember(input),
+    runAuthCommand(() => apiAuthClient.inviteWorkspaceMember(input)),
   acceptWorkspaceInvitation: <TResponse,>(input: { invitationId: string }) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction<TResponse>()
-      : apiAuthClient.acceptWorkspaceInvitation<TResponse>(input),
+    runAuthCommand(() => apiAuthClient.acceptWorkspaceInvitation<TResponse>(input)),
   listWorkspaces: <TWorkspace,>(signal?: AbortSignal) =>
     isHostedDemoRuntime()
       ? Effect.runPromise(
@@ -155,8 +145,11 @@ export const webAuthClient: ZilobaseAuthClient = {
       : apiAuthClient.listWorkspaceInvitations<TInvitation>(workspaceId, signal),
 };
 
-function rejectDemoAction<T = unknown>(): Promise<T> {
-  return Effect.runPromise(Effect.fail(requestDemoGuard()));
+function runAuthCommand<T>(command: () => Promise<T>): Promise<T> {
+  if (isHostedDemoRuntime()) return Effect.runPromise(Effect.fail(requestDemoGuard()));
+  // Start the existing Promise port before bridging so synchronous throws retain their behavior.
+  const request = command();
+  return Effect.runPromise(Effect.tryPromise({ try: () => request, catch: (error) => error }));
 }
 
 export function WebFeaturesProvider({ children }: React.PropsWithChildren) {

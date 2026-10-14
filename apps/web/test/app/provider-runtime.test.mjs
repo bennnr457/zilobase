@@ -108,6 +108,108 @@ export function register({ assert, sourcePath, test }) {
     controls.reset();
   });
 
+  test("Effect auth command gate preserves all payloads, demo restrictions and failure identities", async () => {
+    const { webAuthClient, controls } = await runtime();
+    const commands = [
+      [
+        "requestSignInOtp",
+        "test@example.test",
+        "/email-otp/send-verification-otp",
+        { email: "test@example.test", type: "sign-in" },
+      ],
+      ["signInWithOtp", { email: "test@example.test", otp: "123456" }, "/sign-in/email-otp"],
+      [
+        "signInWithPassword",
+        { email: "test@example.test", password: "password" },
+        "/sign-in/email",
+      ],
+      [
+        "signUp",
+        {
+          email: "test@example.test",
+          password: "password",
+          name: "Name",
+          invitationId: "invite id",
+        },
+        "/sign-up/email",
+        {
+          email: "test@example.test",
+          password: "password",
+          name: "Name",
+          invitationId: "invite id",
+          callbackURL: "/accept-invitation?id=invite%20id",
+        },
+      ],
+      [
+        "requestEmailVerificationOtp",
+        "test@example.test",
+        "/email-otp/send-verification-otp",
+        { email: "test@example.test", type: "email-verification" },
+      ],
+      ["verifyEmailOtp", { email: "test@example.test", otp: "123456" }, "/email-otp/verify-email"],
+      ["createWorkspace", { name: "Workspace", slug: "workspace" }, "/workspace/create"],
+      ["setActiveWorkspace", "workspace", "/workspace/set-active", { workspaceId: "workspace" }],
+      [
+        "inviteWorkspaceMember",
+        { email: "test@example.test", workspaceId: "workspace", role: "member" },
+        "/workspace/invite-member",
+      ],
+      ["acceptWorkspaceInvitation", { invitationId: "invitation" }, "/workspace/accept-invitation"],
+    ];
+    for (const [name, input, path, body = input] of commands) {
+      controls.reset();
+      const response = { success: true, user: {}, token: "token" };
+      controls.responses["/api/auth" + path] = response;
+      assert.equal(await webAuthClient[name](input), response);
+      assert.deepEqual(JSON.parse(controls.requestOptions.body), body);
+      assert.equal(controls.requestOptions.method, "POST");
+      assert.deepEqual(controls.calls, ["request:/api/auth" + path]);
+      const failure = new Error(name);
+      controls.failures["request:/api/auth" + path] = failure;
+      await assert.rejects(webAuthClient[name](input), (error) => error === failure);
+      controls.reset();
+      controls.demo = true;
+      await assert.rejects(webAuthClient[name](input), (error) => error === controls.demoError);
+      assert.deepEqual(controls.calls, ["demo.guard"]);
+    }
+    controls.reset();
+    await webAuthClient.signUp({ email: "test@example.test", name: "Name", password: "password" });
+    assert.equal(JSON.parse(controls.requestOptions.body).callbackURL, "/onboarding");
+    await webAuthClient.signUp({
+      email: "test@example.test",
+      name: "Name",
+      password: "password",
+      callbackURL: "/custom",
+      invitationId: "invitation",
+    });
+    assert.equal(JSON.parse(controls.requestOptions.body).callbackURL, "/custom");
+    const circular = {};
+    circular.self = circular;
+    assert.throws(
+      () => webAuthClient.signUp(circular),
+      TypeError,
+      "synchronous request construction failures remain synchronous",
+    );
+    const saved = Object.getOwnPropertyDescriptor(globalThis, "window");
+    try {
+      globalThis.window = { location: { search: "?client_id=client&scope=openid&state=state" } };
+      await webAuthClient.signInWithPassword({ email: "test@example.test", password: "password" });
+      assert.equal(
+        JSON.parse(controls.requestOptions.body).oauth_query,
+        "client_id=client&scope=openid&state=state",
+      );
+      await webAuthClient.signInWithOtp({ email: "test@example.test", otp: "123456" });
+      assert.equal(
+        JSON.parse(controls.requestOptions.body).oauth_query,
+        "client_id=client&scope=openid&state=state",
+      );
+    } finally {
+      if (saved) Object.defineProperty(globalThis, "window", saved);
+      else delete globalThis.window;
+    }
+    controls.reset();
+  });
+
   test("AppProviders Effects preserve analytics ordering, theme updates and unload cleanup", async () => {
     const saved = Object.getOwnPropertyDescriptors(globalThis);
     const { window, document } = parseHTML(
