@@ -17,7 +17,9 @@ export function referenceInterests(
       const families = into.get(row.cacheId) ?? new Set<string>();
       into.set(row.cacheId, families);
       const add = (...names: string[]) => names.forEach((name) => families.add(name));
-      if (Array.isArray(row.sourceIds)) {
+      if (Array.isArray(row.calendarFamilies)) {
+        add(...row.calendarFamilies.filter((name): name is string => typeof name === "string"));
+      } else if (Array.isArray(row.sourceIds)) {
         add(
           "database-hosts",
           "sources",

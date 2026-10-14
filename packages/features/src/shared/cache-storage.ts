@@ -5,8 +5,8 @@ import type {
   CalendarEvent,
   CachedRange,
   PendingCalendarMutation,
-  CalendarCacheIdentity,
 } from "../calendar/contracts";
+import type { CalendarCacheStorage } from "../calendar/storage";
 
 export type ClientCacheScope = { deployment: string; userId: string };
 export type ClientReadSnapshot = PageReadSnapshot & { scope: string; bytes: number };
@@ -31,10 +31,7 @@ export type ClientCacheStorage = {
     delete(scope: ClientCacheScope, scopes: readonly string[]): Promise<void>;
     clear(scope: ClientCacheScope): Promise<void>;
   };
-  calendar?: {
-    load(identity: CalendarCacheIdentity): Promise<CalendarCacheSnapshot>;
-    clear(identity: CalendarCacheIdentity): Promise<void>;
-  };
+  calendar?: CalendarCacheStorage;
 };
 
 export function clientReadSnapshot(

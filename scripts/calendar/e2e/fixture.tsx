@@ -15,6 +15,8 @@ import {
   useCalendarWorkspace,
 } from "@/features/calendar/workspace/calendar-workspace";
 import { CalendarToolbar } from "@/features/calendar/workspace/calendar-toolbar";
+import { webClientLifecycle } from "@/app/providers/client-lifecycle";
+import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
 import { apiFetch } from "@/platform/network/api";
 import { CalendarAccountsSidebar } from "@/features/calendar/connections/calendar-accounts-sidebar";
@@ -30,7 +32,7 @@ import {
   Outlet,
   createMemoryHistory,
 } from "@tanstack/react-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { CalendarSchedule } from "@/features/calendar/views/calendar-schedule";
 import { defaultCalendarPreferences } from "@zilobase/features/calendar";
 import "@/shared/styles/global.css";
@@ -169,7 +171,16 @@ const queryClient = new QueryClient();
 const auth = { getSession: async () => ({ user: { id: "user" } }) } as ZilobaseAuthClient;
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <ZilobaseFeaturesProvider value={{ deployment: "calendar-test", queryClient, auth, apiFetch }}>
+    <ZilobaseFeaturesProvider
+      value={{
+        deployment: "calendar-test",
+        cacheStorage: webClientCacheStorage,
+        lifecycle: webClientLifecycle,
+        queryClient,
+        auth,
+        apiFetch,
+      }}
+    >
       <ShortcutProvider>
         <CalendarWorkspaceProvider>
           <RouterProvider router={router} />
@@ -180,6 +191,8 @@ createRoot(document.getElementById("root")!).render(
 );
 Object.assign(window, {
   calendarFixture: {
+    offline: () => onlineManager.setOnline(false),
+    online: () => onlineManager.setOnline(true),
     search: () => router.state.location.search,
     select: (event: string) =>
       router.navigate({

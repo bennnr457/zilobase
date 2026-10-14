@@ -1,3 +1,5 @@
+import { sharedClient } from "../data/client";
+import { normalizeCalendarCatalog } from "./store";
 import { queryOptions } from "@tanstack/react-query";
 import type { ApiFetcher } from "../shared/api-fetcher";
 import { calendarApiBasePath, calendarKeys } from "./model";
@@ -32,10 +34,22 @@ export function calendarAccountsQueryOptions(
 }
 export function calendarCatalogQueryOptions(apiFetch: ApiFetcher, connection: CalendarConnection) {
   return queryOptions({
-    queryFn: ({ signal }) =>
-      apiFetch<{ calendars: CalendarRecord[] }>(`${calendarConnectionPath(connection)}/calendars`, {
-        signal,
-      }),
+    queryFn: async ({ signal, client }) => {
+      const read = await sharedClient(client).captureRead();
+      const response = await apiFetch<{ calendars: CalendarRecord[] }>(
+        `${calendarConnectionPath(connection)}/calendars`,
+        {
+          signal,
+        },
+      );
+      return normalizeCalendarCatalog(
+        client,
+        read,
+        connection.workspaceId,
+        connection.bindingId,
+        response.calendars,
+      );
+    },
     queryKey: calendarKeys.calendars(connection),
     retry: false,
     staleTime: 60_000,

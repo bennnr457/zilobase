@@ -10,6 +10,7 @@ import {
   openCalendarDatabase,
   destroyCalendarDatabase,
   calendarDatabaseName,
+  calendarCacheStore,
 } from "@/features/calendar/storage/calendar-database";
 
 const snapshotWriteTails = new Map<string, Promise<void>>();
@@ -154,20 +155,7 @@ export const webClientCacheStorage: ClientCacheStorage = {
     clear: (scope) => clearPageSnapshotsForDeployment(scope.userId, scope.deployment),
   },
   calendar: {
-    load: async (identity) => {
-      const db = await openCalendarDatabase(identity);
-      return db.transaction(
-        "r",
-        [db.calendars, db.events, db.ranges, db.pending, db.state],
-        async () => ({
-          calendars: await db.calendars.toArray(),
-          events: await db.events.toArray(),
-          ranges: await db.ranges.toArray(),
-          pending: await db.pending.toArray(),
-          state: await db.state.toArray(),
-        }),
-      );
-    },
+    open: async (identity) => calendarCacheStore(await openCalendarDatabase(identity)),
     clear: (identity) => destroyCalendarDatabase(calendarDatabaseName(identity)),
   },
 };
