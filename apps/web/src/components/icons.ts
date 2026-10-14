@@ -1,4 +1,15 @@
+import { IconContext } from "@phosphor-icons/react";
+import { createElement, type PropsWithChildren } from "react";
+
 export type { Icon } from "@phosphor-icons/react";
+
+const appIconDefaults = {
+  weight: "bold",
+} as const;
+
+export function AppIconProvider({ children }: PropsWithChildren) {
+  return createElement(IconContext.Provider, { value: appIconDefaults }, children);
+}
 
 // App-wide Phosphor aliases keep icon intent readable while centralizing the
 // few naming differences between Phosphor and the rest of the UI.

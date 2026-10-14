@@ -30,7 +30,7 @@ export function register({ readSource, assert, test }) {
     const databasePageLinkSource = await readSource(
       "/src/components/databases/interactions/database-page-link.tsx",
     );
-    const appIconProviderSource = await readSource("/src/app/providers/app-icon-provider.tsx");
+    const appIconProviderSource = await readSource("/src/components/icons.ts");
     const iconPickerSource = await readSource("/src/components/ui/icon-emoji-picker.tsx");
     const phosphorIconPickerSource = await readSource(
       "/src/components/ui/phosphor-icon-picker.tsx",

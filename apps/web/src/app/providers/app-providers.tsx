@@ -12,7 +12,7 @@ import { queryClient } from "@/app/query-client";
 import { ShortcutProvider } from "@/app/shortcuts";
 import { getThemeColorScheme, selectableThemeIds } from "@/lib/themes";
 import { ThemeFamilyProvider, useThemeFamily } from "@/app/providers/theme-family-provider";
-import { AppIconProvider } from "@/app/providers/app-icon-provider";
+import { AppIconProvider } from "@/components/icons";
 import { DemoExperience, installDemoCache } from "@/app/demo";
 import { resolvePageDetailReference, type PageDetailReference } from "@zilobase/features/pages";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";

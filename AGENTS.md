@@ -34,6 +34,11 @@ creating another `components` directory inside each domain. Retain meaningful
 subsystems such as editor collaboration and database table/kanban/timeline
 renderers. Reserve the `features` folder name for `packages/features`.
 
+Compose app-wide providers in `app/providers/app-providers.tsx`. Keep scoped
+providers beside the UI or runtime they serve. Merge tiny provider wrappers into
+their existing owner when practical; icon defaults live in `components/icons.ts`
+so independent editor roots can use them without importing application startup.
+
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.
 Web build feature flags and desktop environment checks live together in

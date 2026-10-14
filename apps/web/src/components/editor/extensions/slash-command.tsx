@@ -1,6 +1,7 @@
 import { Extension, type Editor, type Range } from "@tiptap/core";
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion";
 import {
+  AppIconProvider,
   Bookmark,
   CalendarDays,
   CheckSquare,
@@ -29,7 +30,6 @@ import {
 import { type ComponentType, type SVGProps } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
-import { AppIconProvider } from "@/app/providers/app-icon-provider";
 import {
   EmojiPicker,
   EmojiPickerContent,

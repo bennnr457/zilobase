@@ -1,11 +1,10 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import type { Editor, Range } from "@tiptap/core";
-import { Send, Sparkles, X } from "@/components/icons";
+import { AppIconProvider, Send, Sparkles, X } from "@/components/icons";
 import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
-import { AppIconProvider } from "@/app/providers/app-icon-provider";
 import {
   PromptInput,
   PromptInputFooter,
