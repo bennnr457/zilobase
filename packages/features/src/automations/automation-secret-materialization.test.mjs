@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 test("automation secrets materialize in order without mutating the editing draft", async () => {
-  const { materializeWebhookSecrets } = await import("./materialize-webhook-secrets.ts");
+  const { materializeWebhookSecrets } = await import("./action-model.ts");
   const { emptyDraft, buildDefinition } = await import("./definition-model.ts");
   const { createNotionActionDraft } = await import("./action-model.ts");
   const action = createNotionActionDraft("send_webhook", "source-1");

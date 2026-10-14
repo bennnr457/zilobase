@@ -8,10 +8,10 @@ export function register({ assert, readSource, test }) {
         readSource("/src/features/automations/definition/automation-builder.tsx"),
         readSource("/src/features/automations/definition/automation-trigger-controls.tsx"),
         readSource("/packages/features/src/automations/definition-model.ts"),
-        readSource("/packages/features/src/automations/schedule-model.ts"),
-        readSource("/packages/features/src/automations/materialize-webhook-secrets.ts"),
+        readSource("/packages/features/src/automations/schedule.ts"),
+        readSource("/packages/features/src/automations/action-model.ts"),
         readSource("/src/features/automations/actions/property-action-controls.tsx"),
-        readSource("/packages/features/src/automations/property-action-model.ts"),
+        readSource("/packages/features/src/automations/action-model.ts"),
         readSource("/src/features/automations/database-automation-screens.tsx"),
         readSource("/src/features/automations/definition/automation-schedule.tsx"),
       ])

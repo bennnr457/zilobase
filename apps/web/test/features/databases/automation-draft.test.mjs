@@ -100,7 +100,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
     const model = await loadModule(draftPath);
     const { createNotionActionDraft } = await loadModule(actionPath);
     const { actionLiteralFromValues, actionValuesFromLiteral } = await loadModule(
-      "/packages/features/src/automations/property-action-model.ts",
+      "/packages/features/src/automations/action-model.ts",
     );
     const draft = {
       ...model.emptyDraft(),

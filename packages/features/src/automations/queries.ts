@@ -1,12 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import type { ApiFetcher } from "../../shared/api-fetcher";
+import type { ApiFetcher } from "../shared/api-fetcher";
 import type {
   DatabaseAutomationCatalog,
   DatabaseAutomationDetail,
   DatabaseAutomationRun,
   DatabaseAutomationSummary,
-} from "../contracts";
+} from "./contracts";
 
 export const databaseAutomationKeys = {
   all: ["database-automations"] as const,

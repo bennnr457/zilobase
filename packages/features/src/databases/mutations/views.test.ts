@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { createMutationTestRuntime } from "../../shared/mutation-runtime.test";
 import type { DatabaseCommandRequest, DatabaseViewEntity } from "../core/entities";
-import { useAddDatabaseView, useUpdateDatabaseView } from "./mutation-hooks";
+import { useAddDatabaseView, useUpdateDatabaseView } from "../react";
 
 const view: DatabaseViewEntity = {
   config: {},

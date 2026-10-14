@@ -35,9 +35,9 @@ export type {
 
 import type { DateFormatValue, TimeFormatValue } from "../schema/date-config";
 import type { DatabaseChartSettings } from "./chart-config";
-import type { DatabaseFormHeaderSettings } from "./form-header-config";
-import type { DatabaseFormQuestionSettingsPatch } from "./form-question-config";
-import type { DatabaseFormShareSettings } from "./form-share-config";
+import type { DatabaseFormHeaderSettings } from "./form";
+import type { DatabaseFormQuestionSettingsPatch } from "./form";
+import type { DatabaseFormShareSettings } from "./form";
 
 export type DatabaseSelectOption = {
   color?: string;

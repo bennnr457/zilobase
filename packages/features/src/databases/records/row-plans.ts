@@ -1,4 +1,4 @@
-import type { DatabaseProperty, DatabaseRow } from "../index";
+import type { DatabaseProperty, DatabaseRow } from "../core/export-payload";
 
 import { isSelectLikePropertyType } from "../schema/property-defaults";
 import { serializePropertyValue } from "../schema/property-values";

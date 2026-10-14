@@ -1,4 +1,31 @@
 import type { DatabasePropertyFilterOperator, DatabaseSortDirection } from "./configuration";
+export type DatabaseViewProperty = {
+  id: string;
+  property: {
+    config?: unknown;
+    id: string;
+    name: string;
+    type: string;
+  };
+};
+
+export type DatabaseSourceMenuItem = {
+  config?: unknown;
+  hiddenViewCount?: number;
+  id: string;
+  name: string;
+  parentDatabaseId: string;
+  position?: number;
+  viewCount: number;
+};
+
+export type DatabaseFieldOption = {
+  color?: string;
+  fieldIcon?: { kind: "name" } | { kind: "property"; propertyType: string };
+  label: string;
+  searchText?: string;
+  value: string;
+};
 
 export type DatabaseCondition = {
   id: string;

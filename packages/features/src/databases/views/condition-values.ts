@@ -1,4 +1,4 @@
-import type { DatabaseCondition } from "./filter-sort-contracts";
+import type { DatabaseCondition } from "./contracts";
 import type { DatabasePropertyFilterOperator } from "../schema/filter";
 export const DEFAULT_RELATIVE_DATE_FILTER_VALUE = "relative:this:week";
 

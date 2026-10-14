@@ -5,15 +5,17 @@ import { databaseCsvPayload, databaseTemplateRows } from "../templates/payload";
 import { getDatabaseSetupTemplate, type DatabaseSetupTemplateId } from "../templates/definitions";
 import type {
   useUpdateDataSource,
-  useApplyDatabaseTemplate,
   useCreateDatabaseDataSource,
-  useUpdateDatabaseView,
-  useAddDatabaseView,
   useLinkDatabaseDataSource,
   useReplaceDatabaseViewDataSource,
   useUnlinkDatabaseDataSource,
+} from "../mutations/data-sources";
+import type { useApplyDatabaseTemplate } from "../mutations/properties";
+import type {
+  useUpdateDatabaseView,
+  useAddDatabaseView,
   useDeleteDatabaseView,
-} from "../react";
+} from "../mutations/views";
 export type DatabaseViewType =
   | "table"
   | "kanban"

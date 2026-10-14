@@ -1,12 +1,11 @@
 import { resolveDatabaseBootstrap } from "../cache-references";
 import type { QueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { type DatabaseCommandAck } from "../core/entities";
+import type { DatabaseCommandAck } from "../core/entities";
 import type { DatabaseCommandInput } from "../mutations/execute";
 import { databaseAccessQueryKey } from "../queries/queries";
 import { pageQueryKey } from "../../pages/queries";
-import { isNavigationSnapshot } from "./favorites";
-
+import type { PageNavigationPayload } from "../../pages/contracts";
 const lifecycleResult = z.object({
   database: z.object({ workspaceId: z.string() }).nullable(),
   deletedDatabaseIds: z.array(z.string()).optional(),
@@ -77,4 +76,14 @@ export async function refreshConfirmedDatabaseReads(
   }
   for (const workspace of workspaces) invalidate(["pages", workspace, "nav"]);
   await Promise.all(refreshes);
+}
+
+export function isNavigationSnapshot(value: unknown): value is PageNavigationPayload {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<PageNavigationPayload>;
+  return (
+    Array.isArray(candidate.databases) &&
+    Array.isArray(candidate.pages) &&
+    Array.isArray(candidate.placements)
+  );
 }

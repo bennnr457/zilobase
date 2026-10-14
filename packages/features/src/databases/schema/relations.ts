@@ -1,4 +1,5 @@
-import { diffConfiguration, type ConfigurationChange } from "../interactions/index";
+import { diffConfiguration } from "../interactions/configuration";
+import type { ConfigurationChange } from "../interactions/configuration";
 import { parsePropertyValue, toStringArray } from "./property-values";
 import type { DatabaseViewData } from "../views/source-state";
 

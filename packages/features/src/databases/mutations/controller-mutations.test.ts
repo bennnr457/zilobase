@@ -1,6 +1,6 @@
 import { sharedClient } from "../../data/client";
 import { valueIdentity } from "../schema/cache-entities";
-import { resolveRecordWindow, type DatabaseWindowReference } from "../cache-window";
+import { resolveRecordWindow, type DatabaseWindowReference } from "../cache-references";
 import { databaseController } from "../interactions/store";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -14,7 +14,7 @@ import type {
   DatabaseRecordWindowResponse,
 } from "../core/entities";
 import { createMutationTestRuntime } from "../../shared/mutation-runtime.test";
-import { useUpdateDatabasePropertyValue } from "./mutation-hooks";
+import { useUpdateDatabasePropertyValue } from "../react";
 import { createTestDatabasePayload, setTestDatabaseClientState } from "./test-helpers";
 
 const SESSION = "test-session";

@@ -18,12 +18,12 @@ import {
   useRevokePageGuest,
 } from "./sharing-mutations";
 import { useDatabaseMetadata } from "../databases/queries/metadata";
-import { useDatabaseAccess } from "../databases/queries/query-hooks";
+import { useDatabaseAccess } from "../databases/access/react";
 import {
   useDeleteDatabaseAccess,
   useSetDatabasePublished,
   useUpsertDatabaseAccess,
-} from "../databases/access/access-mutations";
+} from "../databases/access/react";
 import {
   getGuestPageId,
   isSharingWorkspaceMember,

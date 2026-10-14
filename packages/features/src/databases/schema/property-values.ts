@@ -1,4 +1,4 @@
-import type { PagePropertyValueEntity } from "../index";
+import type { PagePropertyValueEntity } from "../core/entities";
 
 export type DatabasePropertyValue = string | string[];
 

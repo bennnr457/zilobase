@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 
-import { useZilobaseFeatures } from "../../shared/context";
+import { useZilobaseFeatures } from "../shared/context";
 import type {
   CreateDatabaseAutomationRequest,
   DatabaseAutomationDefinition,
@@ -9,7 +9,7 @@ import type {
   DatabaseAutomationValidationResult,
   UpdateDatabaseAutomationRequest,
   SlackAutomationChannel,
-} from "../contracts";
+} from "./contracts";
 import {
   databaseAutomationCapabilityQueryOptions,
   databaseAutomationCatalogQueryOptions,
@@ -188,3 +188,5 @@ export function useSlackAutomationChannels(
     }),
   );
 }
+
+export * from "./queries";

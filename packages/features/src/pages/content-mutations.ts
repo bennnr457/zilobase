@@ -9,7 +9,7 @@ import { hasPageBodyContent } from "./models";
 import { pageQueryKey, zilobaseAiPagesQueryKey } from "./queries";
 import type { PageDetail, AccessLevel, Page } from "./contracts";
 import type { PageMetadata } from "./item-relationships";
-import { refreshTitleMembership } from "../databases/queries/page-membership";
+import { refreshTitleMembership } from "../databases/queries/invalidation";
 import { sharedClient } from "../data/client";
 import { cachePageDetail, readCachedPage, type PageDetailReference } from "./cache";
 import { type NavDelta } from "./navigation-model";

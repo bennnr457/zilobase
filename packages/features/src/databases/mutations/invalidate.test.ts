@@ -3,7 +3,7 @@ import test from "node:test";
 import { QueryClient } from "@tanstack/react-query";
 
 import { databaseBootstrapQueryKey, databaseWindowQueryKey } from "../queries/keys";
-import { invalidateDatabaseQueries } from "./invalidate";
+import { invalidateDatabaseQueries } from "../queries/invalidation";
 
 test("invalidates only matching host under session", async () => {
   const queryClient = new QueryClient();

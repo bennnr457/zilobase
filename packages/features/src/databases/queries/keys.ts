@@ -1,7 +1,7 @@
 import { databaseBootstrapReferenceSchema } from "../cache-references";
 import type { QueryClient } from "@tanstack/react-query";
 
-import { databaseWindowReferenceSchema } from "../cache-window";
+import { databaseWindowReferenceSchema } from "../cache-references";
 
 export const databaseQueryRoot = "db" as const;
 

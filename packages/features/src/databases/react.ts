@@ -2,7 +2,7 @@ export {
   useUpsertDatabaseAccess,
   useDeleteDatabaseAccess,
   useSetDatabasePublished,
-} from "./access/access-mutations";
+} from "./access/react";
 export {
   useCreateDatabase,
   useUpdateDatabase,
@@ -48,7 +48,7 @@ export { DbProvider } from "./queries/session";
 export type { DbProviderProps } from "./queries/session";
 export { useDatabaseBootstrap } from "./queries/bootstrap";
 export { useDatabaseRecords } from "./queries/records";
-export { useDatabaseAccess } from "./queries/query-hooks";
+export { useDatabaseAccess } from "./access/react";
 export { useDatabaseRealtime } from "./realtime/realtime";
 export { useDatabaseIdForRowPage } from "./records/use-database-id-for-row-page";
 export { resolveDataSourceCommandScope } from "./mutations/scope";
@@ -62,6 +62,6 @@ export {
 } from "./interactions/react";
 
 export { useDatabaseMetadata } from "./queries/metadata";
-export { useDatabaseSecondaryPayload } from "./queries/secondary-records";
+export { useDatabaseSecondaryPayload } from "./queries/metadata";
 
 export { useDatabaseViewData } from "./queries/view-data";

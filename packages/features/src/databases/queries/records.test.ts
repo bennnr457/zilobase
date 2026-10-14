@@ -1,4 +1,4 @@
-import { normalizeRecordWindow } from "../cache-window";
+import { normalizeRecordWindow } from "../cache-references";
 import { createTestDatabasePayload, setTestDatabaseClientState } from "../mutations/test-helpers";
 import assert from "node:assert/strict";
 import test from "node:test";

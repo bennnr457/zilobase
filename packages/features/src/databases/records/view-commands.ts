@@ -1,22 +1,34 @@
 import { diffConfiguration } from "../interactions/configuration";
-import { getConvertedViewConfig, removeDatabaseGroupProperty } from "../models";
+import { getConvertedViewConfig, removeDatabaseGroupProperty } from "../views/type-transition";
 
-import type { DatabasePropertyEntity, DatabaseRow, DatabaseViewEntity } from "../index";
-import type { DatabaseViewData } from "../models";
+import type { DatabasePropertyEntity, DatabaseViewEntity } from "../core/entities";
+import type { DatabaseRow } from "../core/export-payload";
+import type { DatabaseViewData } from "../views/source-state";
 
-import { defaultStatusOption } from "../models";
-import { getGroupPropertyId, type DatabasePropertyListItem } from "../models";
-import { getDefaultKanbanHiddenPropertyIds } from "../models";
-import { ganttMoveToDateValue, getTimelineDateProperty } from "../models";
-import { getDefaultDatabasePropertyConfig, isSelectLikePropertyType } from "../models";
-import { serializePropertyValue, type DatabasePropertyValue } from "../models";
-import { areSerializedPropertyValuesEqual, hasViewHiddenPropertyIds } from "../models";
-import type { DatabasePageDragPayload } from "../models";
+import { defaultStatusOption } from "../schema/property-defaults";
+import { getGroupPropertyId } from "../views/grouping";
+import type { DatabasePropertyListItem } from "../views/grouping";
+import { getDefaultKanbanHiddenPropertyIds } from "../views/kanban-group-settings";
+import { ganttMoveToDateValue, getTimelineDateProperty } from "../views/timeline-date";
+import {
+  getDefaultDatabasePropertyConfig,
+  isSelectLikePropertyType,
+} from "../schema/property-defaults";
+import { serializePropertyValue } from "../schema/property-values";
+import type { DatabasePropertyValue } from "../schema/property-values";
+import {
+  areSerializedPropertyValuesEqual,
+  hasViewHiddenPropertyIds,
+} from "../interactions/item-utils";
+import type { DatabasePageDragPayload } from "./page-drop";
 import {
   getDatabaseFilterOperatorsForType,
+  isDatabaseFilterGroup,
+  getValidDatabaseFilterOperator,
+} from "../schema/filter";
+import {
   getDatabaseFilters,
   getDatabaseSorts,
-  isDatabaseFilterGroup,
   getDatabaseLayoutSettings,
   getDatabaseSubItemsSettings,
   getMergedDatabaseConfig,
@@ -25,36 +37,34 @@ import {
   getPropertyHidden,
   getShowPropertyTitles,
   getViewHiddenPropertyIds,
-  getValidDatabaseFilterOperator,
-  type DatabaseConditionalColorConfig,
-  type DatabasePropertyFilterConfig,
-  type DatabasePropertyConfig,
-  type DatabaseLayoutSettings,
-  type DatabaseNameColumnConfig,
-  type DatabaseSortConfig,
-  type DatabaseSubItemsSettings,
-} from "../models";
-import type { DatabaseFilterUpdatePatch } from "../models";
-import { getRelationLimitTrimUpdates, relationPayloadFromViewData } from "../models";
-import {
-  defaultDatabaseChartSettings,
-  getDatabaseChartSettings,
-  type DatabaseChartSettings,
-} from "../models";
-import { getDatabaseFormHeaderSettings, type DatabaseFormHeaderSettings } from "../models";
-import {
-  getDatabaseFormQuestionSettingsById,
-  type DatabaseFormQuestionSettingsPatch,
-} from "../models";
-import { getDatabaseFormShareSettings, type DatabaseFormShareSettings } from "../models";
+} from "../views/configuration";
+import type {
+  DatabaseConditionalColorConfig,
+  DatabasePropertyConfig,
+  DatabaseLayoutSettings,
+  DatabaseNameColumnConfig,
+  DatabaseSortConfig,
+  DatabaseSubItemsSettings,
+} from "../views/configuration";
+import type { DatabasePropertyFilterConfig } from "../schema/filter";
+import type { DatabaseFilterUpdatePatch } from "../views/contracts";
+import { getRelationLimitTrimUpdates, relationPayloadFromViewData } from "../schema/relations";
+import { defaultDatabaseChartSettings, getDatabaseChartSettings } from "../views/chart-config";
+import type { DatabaseChartSettings } from "../views/chart-config";
+import { getDatabaseFormHeaderSettings } from "../views/form";
+import type { DatabaseFormHeaderSettings } from "../views/form";
+import { getDatabaseFormQuestionSettingsById } from "../views/form";
+import type { DatabaseFormQuestionSettingsPatch } from "../views/form";
+import { getDatabaseFormShareSettings } from "../views/form";
+import type { DatabaseFormShareSettings } from "../views/form";
 
 import {
   getDraggedRowGroupSetup,
   getNewRowGroupSetup,
   getTimelineGroupPropertyId,
-} from "../models";
-import type { DatabaseMutations } from "../models";
-import { createAddDatabaseRowMutation } from "../models";
+} from "./row-plans";
+import type { DatabaseMutations } from "./mutation-bindings";
+import { createAddDatabaseRowMutation } from "./row-mutations";
 
 export type DatabaseViewCommands = ReturnType<typeof createDatabaseViewCommands>;
 

@@ -293,7 +293,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database form headers normalize editable page metadata", async () => {
     const { getDatabaseFormHeaderSettings } = await loadModule(
-      "/packages/features/src/databases/views/form-header-config.ts",
+      "/packages/features/src/databases/views/form.ts",
     );
 
     assert.deepEqual(getDatabaseFormHeaderSettings(undefined), {
@@ -325,7 +325,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database form questions normalize options and move in view order", async () => {
     const { getDatabaseFormQuestionSettings, moveDatabaseFormQuestion } = await loadModule(
-      "/packages/features/src/databases/views/form-question-config.ts",
+      "/packages/features/src/databases/views/form.ts",
     );
 
     assert.deepEqual(getDatabaseFormQuestionSettings(undefined, "name", "Task name"), {

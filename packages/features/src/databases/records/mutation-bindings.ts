@@ -1,13 +1,8 @@
-import type {
-  useAddDatabaseProperty,
-  useAddDatabaseRow,
-  useChangeDatabaseRow,
-  useAddDatabaseView,
-  useUpdateDataSource,
-  useUpdateDatabaseProperty,
-  useUpdateDatabasePropertyValue,
-  useUpdateDatabaseView,
-} from "../react";
+import type { useAddDatabaseProperty, useUpdateDatabaseProperty } from "../mutations/properties";
+import type { useAddDatabaseRow, useUpdateDatabasePropertyValue } from "../mutations/rows";
+import type { useChangeDatabaseRow } from "../interactions/react";
+import type { useAddDatabaseView, useUpdateDatabaseView } from "../mutations/views";
+import type { useUpdateDataSource } from "../mutations/data-sources";
 
 export type DatabaseRowMutations = {
   addRow: ReturnType<typeof useAddDatabaseRow>;

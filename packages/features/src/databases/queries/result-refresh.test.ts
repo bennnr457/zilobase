@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { TestQueryClient } from "../../data/testing";
-import { refreshRecordResults } from "./result-refresh";
+import { refreshRecordResults } from "./invalidation";
 
 test("record membership recovery reads only affected source windows in the same cache scope", () => {
   const client = new TestQueryClient();

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { automationOperandValues, automationOperandFromValues } from "./trigger-operand.ts";
+import { automationOperandValues, automationOperandFromValues } from "./definition-model.ts";
 
 test("trigger operands preserve zero, false, entity identities and empty selections", () => {
   assert.deepEqual(automationOperandValues(0), ["0"]);

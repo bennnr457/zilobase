@@ -1,6 +1,6 @@
-import type { DatabaseProperty } from "../index";
+import type { DatabaseProperty } from "../core/export-payload";
 import { getGroupPropertyId, type DatabasePropertyListItem } from "./grouping";
-import { getDefaultKanbanHiddenPropertyIds } from "./kanban-visibility";
+import { getDefaultKanbanHiddenPropertyIds } from "./kanban-group-settings";
 import { hasViewHiddenPropertyIds } from "../interactions/item-utils";
 import { getMergedDatabaseConfig, getViewHiddenPropertyIds } from "./configuration";
 

@@ -9,6 +9,8 @@ import {
   dataSourceEntitySchema,
   pagePropertyEntitySchema,
   type DatabaseBootstrapResponse,
+  databaseRecordWindowResponseSchema,
+  type DatabaseRecordWindowResponse,
 } from "./core/entities";
 import {
   hostCacheEntitySchema,
@@ -17,7 +19,6 @@ import {
   viewCacheEntitySchema,
   bindingCacheEntitySchema,
 } from "./schema/cache-entities";
-
 // Query owns authorized membership and read revision, not canonical entity fields.
 export const databaseBootstrapReferenceSchema = z
   .object({
@@ -31,6 +32,7 @@ export const databaseBootstrapReferenceSchema = z
     includeDeleted: z.boolean(),
   })
   .strict();
+
 export type DatabaseBootstrapReference = z.infer<typeof databaseBootstrapReferenceSchema>;
 
 export function normalizeDatabaseBootstrap(
@@ -217,4 +219,44 @@ export function reconcileBootstrapReferences(
       };
     },
   );
+}
+
+export const databaseWindowReferenceSchema = databaseRecordWindowResponseSchema
+  .omit({ records: true })
+  .extend({ cacheId: z.string(), recordIds: z.array(z.string()), dataSourceId: z.string() });
+
+export type DatabaseWindowReference = z.infer<typeof databaseWindowReferenceSchema>;
+
+export function normalizeRecordWindow(
+  client: QueryClient,
+  databaseId: string,
+  dataSourceId: string,
+  queryHash: string,
+  input: unknown,
+  cacheId?: string,
+): DatabaseWindowReference {
+  const owner = cacheId
+    ? sharedClient(client).get(cacheId)
+    : sharedClient(client).database(databaseId);
+  if (!owner) throw new Error("Record read requires an authorized bootstrap");
+  const result = owner.databases.ingestWindow(databaseId, dataSourceId, queryHash, input);
+  return { ...result, cacheId: owner.session.id, dataSourceId };
+}
+
+export function resolveRecordWindow(
+  client: QueryClient,
+  input: unknown,
+): DatabaseRecordWindowResponse | undefined {
+  const parsed = databaseWindowReferenceSchema.safeParse(input);
+  if (!parsed.success) return undefined;
+  const { cacheId, recordIds, dataSourceId, ...result } = parsed.data;
+  const owner = sharedClient(client).get(cacheId);
+  if (!owner) return undefined;
+  return {
+    ...result,
+    records: recordIds.flatMap((id) => {
+      const record = owner.databases.resolveRecord(id);
+      return record?.dataSourceId === dataSourceId ? [record] : [];
+    }),
+  };
 }

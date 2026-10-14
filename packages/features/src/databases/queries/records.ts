@@ -2,7 +2,7 @@ import {
   normalizeRecordWindow,
   resolveRecordWindow,
   type DatabaseWindowReference,
-} from "../cache-window";
+} from "../cache-references";
 import { resolveDatabaseBootstrap, type DatabaseBootstrapReference } from "../cache-references";
 import { useSharedDataRevision } from "../../data/react";
 import {

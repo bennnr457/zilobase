@@ -1,14 +1,14 @@
 import { defaultClientLifecycle, type ClientLifecycle } from "../../shared/lifecycle";
 import { type PageNavigationReference } from "../../pages/cache";
-import { refreshRecordResults } from "../queries/result-refresh";
+import { refreshRecordResults } from "../queries/invalidation";
 import { publishDatabaseEvent } from "../cache-publication";
 import { insertionPreviews } from "./shared-records";
 import { sharedMetadataCommand, sharedMetadataPreviews } from "./shared-metadata";
-import { resolveRecordWindow, type DatabaseWindowReference } from "../cache-window";
+import { resolveRecordWindow, type DatabaseWindowReference } from "../cache-references";
 import { entityPreview, entityUpsertPreview } from "../../data/commands";
 import { applyConfigurationChanges } from "./configuration";
 import { resolveDatabaseBootstrap } from "../cache-references";
-import { refreshTitleMembership, refreshPropertyMembership } from "../queries/page-membership";
+import { refreshTitleMembership, refreshPropertyMembership } from "../queries/invalidation";
 import { valueIdentity } from "../schema/cache-entities";
 import { sharedClient } from "../../data/client";
 import type { QueryClient } from "@tanstack/react-query";
@@ -31,7 +31,7 @@ import {
   type DatabaseCommandInput,
 } from "../mutations/execute";
 import { DatabaseCommandState, targetsForCommand } from "../mutations/pending";
-import { invalidateDatabaseQueries } from "../mutations/invalidate";
+import { invalidateDatabaseQueries } from "../queries/invalidation";
 import { refreshConfirmedDatabaseReads } from "./confirmation";
 
 import {

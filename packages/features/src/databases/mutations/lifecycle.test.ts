@@ -13,7 +13,7 @@ import {
   useDeleteDatabaseAccess,
   useSetDatabasePublished,
   useUpsertDatabaseAccess,
-} from "../access/access-mutations";
+} from "../access/react";
 
 function transport(
   sent: Array<{ path: string; command: DatabaseCommandRequest["command"] }>,

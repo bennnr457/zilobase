@@ -1,4 +1,4 @@
-import { normalizeRecordWindow } from "../cache-window";
+import { normalizeRecordWindow } from "../cache-references";
 import { cacheTestBootstrap } from "../../data/testing";
 import type { QueryClient } from "@tanstack/react-query";
 

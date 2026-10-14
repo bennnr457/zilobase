@@ -1,10 +1,10 @@
 import type {
   DatabasePropertyEntity,
   DatabaseRecordEntity,
-  DatabaseRow,
   DatabaseViewEntity,
   PagePropertyValueEntity,
-} from "../index";
+} from "../core/entities";
+import type { DatabaseRow } from "../core/export-payload";
 
 import {
   getConfiguredGroupProperty,
@@ -12,7 +12,7 @@ import {
   getGroupOptions,
   getKanbanGroupProperty,
 } from "./grouping";
-import { getDefaultKanbanHiddenPropertyIds } from "./kanban-visibility";
+import { getDefaultKanbanHiddenPropertyIds } from "./kanban-group-settings";
 import { getTimelineDateProperties, getTimelineDateProperty } from "./timeline-date";
 import { getDatabaseChartSettings } from "./chart-config";
 import { getPropertyValue, type DatabasePropertyValue } from "../schema/property-values";
@@ -37,9 +37,9 @@ import {
   type DatabaseConditionalColorConfig,
 } from "./configuration";
 import { getDatabaseSubItemsView } from "./sub-items";
-import type { DatabaseFieldOption } from "./field-option";
-import type { DatabaseActiveFilter } from "./filter-sort-contracts";
-import type { DatabaseActiveSort } from "./filter-sort-contracts";
+import type { DatabaseFieldOption } from "./contracts";
+import type { DatabaseActiveFilter } from "./contracts";
+import type { DatabaseActiveSort } from "./contracts";
 import {
   getFilteredDatabaseItems,
   getSortedDatabaseItems,

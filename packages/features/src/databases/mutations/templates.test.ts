@@ -4,7 +4,7 @@ import test from "node:test";
 import { createMutationTestRuntime } from "../../shared/mutation-runtime.test";
 import { pagesNavRootQueryKey } from "../../pages/queries";
 import type { DatabaseCommandRequest } from "../core/entities";
-import { useApplyDatabaseTemplate } from "./mutation-hooks";
+import { useApplyDatabaseTemplate } from "../react";
 import { createTestDatabasePayload, setTestDatabaseClientState } from "./test-helpers";
 
 test("template application ingests an idempotent source-only confirmation without refreshing navigation", async () => {

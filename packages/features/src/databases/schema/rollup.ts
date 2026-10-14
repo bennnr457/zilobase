@@ -2,7 +2,7 @@ import type {
   DatabasePropertyEntity,
   DatabaseRecordEntity,
   PagePropertyValueEntity,
-} from "../index";
+} from "../core/entities";
 
 import { getPropertyValue, toStringArray, type DatabasePropertyValue } from "./property-values";
 import { getReadOnlyTimePropertyRawValue, isReadOnlyTimeProperty } from "./read-only-time";

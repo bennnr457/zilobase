@@ -1,8 +1,8 @@
 import { defaultClientLifecycle, type ClientLifecycle } from "../../shared/lifecycle";
-import { refreshRecordResults } from "../queries/result-refresh";
+import { refreshRecordResults } from "../queries/invalidation";
 import { publishDatabaseEvent } from "../cache-publication";
 import { sharedClient } from "../../data/client";
-import { refreshTitleMembership, refreshPropertyMembership } from "../queries/page-membership";
+import { refreshTitleMembership, refreshPropertyMembership } from "../queries/invalidation";
 import type { QueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 
@@ -10,7 +10,7 @@ import { useZilobaseFeatures, type ApiFetcher } from "../../shared/context";
 import { databaseMutationEventV2Schema, type DatabaseMutationEventV2 } from "../core/entities";
 import { useDatabaseSessionId } from "../queries/session";
 import { cachedVersion } from "../queries/keys";
-import { invalidateDatabaseQueries } from "../mutations/invalidate";
+import { invalidateDatabaseQueries } from "../queries/invalidation";
 
 export type DatabasePresence = {
   columnKey: string;

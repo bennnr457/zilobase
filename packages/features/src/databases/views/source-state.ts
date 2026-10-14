@@ -1,4 +1,8 @@
-import type { DatabaseBootstrapResponse, DatabaseRecordEntity, DataSourceEntity } from "../index";
+import type {
+  DatabaseBootstrapResponse,
+  DatabaseRecordEntity,
+  DataSourceEntity,
+} from "../core/entities";
 
 import { getDatabaseViewIcon } from "./configuration";
 
