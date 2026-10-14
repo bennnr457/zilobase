@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 
 import { Spinner } from "@/shared/ui/spinner";
 
-import { useNotionImport } from "@/features/notion-import/index";
+import { useNotionImport } from "@/features/notion-import/hooks/use-notion-import";
 
 export function WorkspaceImportSection({
   workspaceId,

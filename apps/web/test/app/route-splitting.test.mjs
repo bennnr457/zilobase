@@ -17,7 +17,7 @@ export function register({ assert, readSource, test }) {
     const [routeShell, appLayout, tasks] = await Promise.all([
       readSource("/src/app/routing/route-shell.tsx"),
       readSource("/src/app/shell/content/app-layout.tsx"),
-      readSource("/src/features/tasks/screens/tasks.tsx"),
+      readSource("/src/features/tasks/tasks.tsx"),
     ]);
 
     assert.match(routeShell, /const AppLayout = lazy/);

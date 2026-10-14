@@ -5,7 +5,7 @@ import {
   libraryParentPropertyId,
   homepageViews as libraryViews,
   type RecentsMode,
-} from "../model/library-model";
+} from "./library-model";
 import { CreateTeamspaceDialog as CreateLibraryTeamspaceDialog } from "@/features/teamspaces/creation/index";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";

@@ -24,7 +24,7 @@ import {
   DesktopOAuthError,
   signInWithDesktopBrowser,
 } from "./browser-authorization";
-import { getAuthReturnPath } from "@/features/auth/lib/google-auth";
+import { getAuthReturnPath } from "@/features/auth/google-auth";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { sessionQueryOptions } from "@zilobase/features/auth";
 import { workspacesQueryOptions } from "@zilobase/features/workspaces";

@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, test }) {
-  const load = () => loadModule("/src/features/library/model/library-model.ts");
+  const load = () => loadModule("/src/features/library/library-model.ts");
   test("Skills and Instructions tabs contain only matching saved items", async () => {
     const { buildHomepageRows, applyHomepageView, buildHomepageViewData } = await load();
     const page = {

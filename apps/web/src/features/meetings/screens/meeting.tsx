@@ -4,7 +4,7 @@ import { FallbackErrorBoundary } from "@/features/desktop/diagnostics/fallback-e
 import { PageWorkspaceGate } from "@/features/workspaces";
 import { PageSidePaneLayout, usePageSidePane } from "@/features/pages/pane/page-side-pane";
 import { useOpenEmbeddedPage } from "@/features/pages/pane/use-open-embedded-page";
-import { useTitleDraft } from "@/features/pages/hooks/index";
+import { useTitleDraft } from "@/features/pages/hooks/use-title-draft";
 import { PageMetadata as PageMetadataHeader } from "@/features/databases";
 import { MeetingView } from "@/features/editor/extensions/meeting";
 import { PageEditorPane } from "@/features/pages/pane/page-editor-pane";

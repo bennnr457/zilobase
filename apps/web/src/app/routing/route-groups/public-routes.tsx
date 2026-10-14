@@ -1,7 +1,7 @@
 import { createRoute, lazyRouteComponent, redirect } from "@tanstack/react-router";
 import { isDesktopApp } from "@/features/desktop/index";
 
-import { getAuthReturnPath } from "@/features/auth/lib/google-auth";
+import { getAuthReturnPath } from "@/features/auth/google-auth";
 import { isBootstrapRequiredAuthError } from "@zilobase/features/auth";
 import { getDefaultAppPath, getFreshSession, getWorkspaces } from "../guards";
 import { rootRoute } from "../route-roots";
@@ -64,7 +64,7 @@ const loginRoute = createRoute({
     const workspaces = await getWorkspaces();
     throw redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/screens/login")),
+  component: lazyRouteComponent(() => import("@/features/auth/login")),
 });
 
 const connectRoute = createRoute({
@@ -93,7 +93,7 @@ const signupRoute = createRoute({
     const workspaces = await getWorkspaces();
     throw redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/screens/signup")),
+  component: lazyRouteComponent(() => import("@/features/auth/signup")),
 });
 
 const onboardingRoute = createRoute({
@@ -106,7 +106,7 @@ const onboardingRoute = createRoute({
     const workspaces = await getWorkspaces();
     if (workspaces.length > 0) throw redirect({ to: "/recents" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/screens/onboarding")),
+  component: lazyRouteComponent(() => import("@/features/auth/onboarding")),
 });
 
 const otpRoute = createRoute({
@@ -115,7 +115,7 @@ const otpRoute = createRoute({
   beforeLoad: async () => {
     if (isDesktopApp()) throw redirect({ to: "/login" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/screens/otp")),
+  component: lazyRouteComponent(() => import("@/features/auth/otp")),
 });
 
 const oauthConsentRoute = createRoute({
@@ -131,13 +131,13 @@ const oauthConsentRoute = createRoute({
       });
     }
   },
-  component: lazyRouteComponent(() => import("@/features/oauth/screens/consent")),
+  component: lazyRouteComponent(() => import("@/features/oauth/consent")),
 });
 
 const oauthCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/oauth/callback",
-  component: lazyRouteComponent(() => import("@/features/oauth/screens/callback")),
+  component: lazyRouteComponent(() => import("@/features/oauth/callback")),
 });
 
 export const publicRoutes = [
@@ -162,6 +162,6 @@ export const publicRoutes = [
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/setup",
-    component: lazyRouteComponent(() => import("@/features/auth/screens/setup")),
+    component: lazyRouteComponent(() => import("@/features/auth/setup")),
   }),
 ];

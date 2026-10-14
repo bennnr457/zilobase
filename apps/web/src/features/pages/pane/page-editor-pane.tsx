@@ -59,7 +59,7 @@ import { canEditOnlineDatabase } from "@/features/editor/database-editability";
 import { createPageCommentController } from "@/features/comments/index";
 import { usePageCommentsRegistry } from "@/features/comments/index";
 import { useTitleDraft } from "../hooks/use-title-draft";
-import { scrollToMeetingBlock } from "@/features/meetings/index";
+import { scrollToMeetingBlock } from "@/features/meetings/meeting-navigation";
 import { consumePageNavigationStart } from "../navigation/page-navigation-timing";
 import {
   getMissingHostedMeetingIds,

@@ -10,7 +10,7 @@ import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { NetworkUnavailableError, apiFetch } from "@/platform/network/api";
-import { getMostRecentItemPath } from "@/features/library/model/recent-navigation";
+import { getMostRecentItemPath } from "@/features/library/library-model";
 import { decidePublishedShareAccess } from "@zilobase/features/pages";
 import { getConnectivityState } from "@/platform/network/connectivity";
 import { hydratePageReadCache } from "@/features/pages/cache/page-read-cache";

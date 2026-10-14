@@ -1,9 +1,6 @@
-"use client";
-
 import * as React from "react";
 import { ArrowLeftIcon, RotateCcwIcon } from "@/shared/components/icons";
 import { Link, useNavigate } from "@tanstack/react-router";
-
 import { Button } from "@/shared/ui/button";
 import { ZilobaseLogo } from "@/shared/components/zilobase-logo";
 import { Field, FieldDescription, FieldError, FieldGroup } from "@/shared/ui/field";
@@ -16,7 +13,8 @@ import {
   useSignInWithOtp,
   useVerifyEmailOtp,
 } from "@zilobase/features/auth/react";
-import { useAuthFlowStore } from "../state/auth-flow-store";
+import { useAuthFlowStore } from "./auth-flow-store";
+("use client");
 
 export function OtpForm({ className, ...props }: React.ComponentProps<"div">) {
   const navigate = useNavigate();
@@ -156,6 +154,16 @@ export function OtpForm({ className, ...props }: React.ComponentProps<"div">) {
           </Field>
         </FieldGroup>
       </form>
+    </div>
+  );
+}
+
+export default function OtpPage() {
+  return (
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-surface-canvas p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <OtpForm />
+      </div>
     </div>
   );
 }

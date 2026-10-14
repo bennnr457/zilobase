@@ -15,11 +15,7 @@ import { PageIconDisplay } from "@/features/pages/index";
 
 import { type Teamspace, type TeamspaceAccessMode } from "@zilobase/features/teamspaces";
 
-import {
-  buildTeamspaceLibraryRows,
-  getHomepageRowType,
-  type HomepageRow,
-} from "../model/library-model";
+import { buildTeamspaceLibraryRows, getHomepageRowType, type HomepageRow } from "./library-model";
 
 const teamspaceColumns = [
   { id: "name", label: "Name", width: 280 },

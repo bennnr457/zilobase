@@ -34,12 +34,12 @@ export const appRoutes = [
     getParentRoute: () => appRoute,
     path: "/recents",
     validateSearch: validateLibrarySearch,
-    component: lazyRouteComponent(() => import("@/features/library/screens/recents")),
+    component: lazyRouteComponent(() => import("@/features/library/recents")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/tasks",
-    component: lazyRouteComponent(() => import("@/features/tasks/screens/tasks")),
+    component: lazyRouteComponent(() => import("@/features/tasks/tasks")),
   }),
   createRoute({
     getParentRoute: () => appRoute,

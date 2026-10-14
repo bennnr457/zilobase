@@ -1,8 +1,8 @@
 export function register({ readSource, readWorkspace, assert, test }) {
   test("invitation signup survives account creation and email verification", async () => {
     const [signup, otp, invitationPage, provider] = await Promise.all([
-      readSource("/src/features/auth/components/signup-form.tsx"),
-      readSource("/src/features/auth/components/otp-form.tsx"),
+      readSource("/src/features/auth/signup.tsx"),
+      readSource("/src/features/auth/otp.tsx"),
       readSource("/src/features/workspaces/screens/accept-invitation.tsx"),
       readSource("/src/app/providers/features-provider.tsx"),
     ]);

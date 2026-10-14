@@ -1,7 +1,4 @@
-"use client";
-
 import { useNavigate } from "@tanstack/react-router";
-
 import { Button } from "@/shared/ui/button";
 import { ZilobaseLogo } from "@/shared/components/zilobase-logo";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
@@ -10,6 +7,7 @@ import { getApiErrorMessage } from "@/platform/network/api";
 import { cn } from "@/shared/lib/utils";
 import { useCreateWorkspace } from "@zilobase/features/workspaces/react";
 import posthog from "@/shared/lib/posthog";
+("use client");
 
 export function OnboardingForm({ className, ...props }: React.ComponentProps<"div">) {
   const navigate = useNavigate();
@@ -64,6 +62,16 @@ export function OnboardingForm({ className, ...props }: React.ComponentProps<"di
           </Field>
         </FieldGroup>
       </form>
+    </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-surface-canvas p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <OnboardingForm />
+      </div>
     </div>
   );
 }

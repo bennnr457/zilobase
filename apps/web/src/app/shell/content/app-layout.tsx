@@ -5,7 +5,7 @@ import { Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-
 import { ChevronsRightIcon, SidebarSimpleIcon } from "@/shared/components/icons";
 
 import { AppSidebar } from "@/app/shell/navigation";
-import { AppSearchProvider } from "@/features/search";
+import { AppSearchProvider } from "@/features/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/features/desktop/components/index";
 import { ChatSidebarTrigger } from "@/features/ai/conversations/components/chat-sidebar-trigger";
 import { isFeatureEnabled } from "@/shared/config/feature-flags";

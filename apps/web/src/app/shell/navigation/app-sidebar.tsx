@@ -15,7 +15,7 @@ import { MonitorUpIcon, SlidersHorizontalIcon } from "@/shared/components/icons"
 import * as React from "react";
 import { toast } from "sonner";
 
-import { useAppSearch } from "@/features/search";
+import { useAppSearch } from "@/features/search/app-search";
 import { DatabaseViewIcon } from "@/features/databases";
 import { AiChatsSection } from "./components/ai-chats-section";
 import { NavFavorites } from "./components/nav-favorites";
@@ -87,7 +87,7 @@ import {
 import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/local-state";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
 import { isFeatureEnabled } from "@/shared/config/feature-flags";
-import { NotificationCenter } from "@/features/notifications";
+import { NotificationCenter } from "@/features/notifications/notification-center";
 
 const sidebarNavigationIcons: SidebarNavigationIcons<React.ReactNode> = {
   getDatabaseIcon: (database: Parameters<typeof getDatabaseIconNode>[0]) =>

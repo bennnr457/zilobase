@@ -1,9 +1,6 @@
-"use client";
-
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/shared/components/icons";
 import { useNavigate } from "@tanstack/react-router";
-
 import { Button } from "@/shared/ui/button";
 import { GoogleIcon } from "@/shared/components/google-icon";
 import {
@@ -22,10 +19,14 @@ import {
 } from "@/shared/ui/input-group";
 import { Input } from "@/shared/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { getInvitationAuthSearch, signInWithGoogle } from "../lib/google-auth";
+import { getInvitationAuthSearch, signInWithGoogle } from "./google-auth";
 import { cn } from "@/shared/lib/utils";
-import { useAuthFlowStore } from "../state/auth-flow-store";
+import { useAuthFlowStore } from "./auth-flow-store";
 import { useRequestEmailVerificationOtp, useSignUp } from "@zilobase/features/auth/react";
+import { isDesktopApp } from "@/features/desktop/index";
+import { AuthScreen } from "./auth-screen";
+import { DesktopBrowserAuthScreen } from "@/features/desktop/auth/index";
+("use client");
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
@@ -176,5 +177,25 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"form">
         </Field>
       </FieldGroup>
     </form>
+  );
+}
+
+export default function SignupPage() {
+  const invitationSearch = getInvitationAuthSearch();
+
+  if (isDesktopApp()) {
+    return <DesktopBrowserAuthScreen />;
+  }
+
+  return (
+    <AuthScreen
+      switchLabel="Sign in"
+      switchPrefix="Already have an account?"
+      switchSearch={invitationSearch.returnTo ? { returnTo: invitationSearch.returnTo } : {}}
+      switchTo="/login"
+      title="Create an account"
+    >
+      <SignupForm />
+    </AuthScreen>
   );
 }

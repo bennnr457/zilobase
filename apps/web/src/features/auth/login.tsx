@@ -1,8 +1,5 @@
-"use client";
-
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/shared/components/icons";
-
 import { Button } from "@/shared/ui/button";
 import { GoogleIcon } from "@/shared/components/google-icon";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/shared/ui/field";
@@ -14,13 +11,17 @@ import {
 } from "@/shared/ui/input-group";
 import { Input } from "@/shared/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { getAuthReturnPath, signInWithGoogle } from "../lib/google-auth";
+import { getAuthReturnPath, signInWithGoogle, getInvitationAuthSearch } from "./google-auth";
 import { readOAuthQuery } from "@zilobase/features/oauth";
 import { cn } from "@/shared/lib/utils";
 import { useRequestSignInOtp, useSignInWithPassword } from "@zilobase/features/auth/react";
-import { useAuthFlowStore } from "../state/auth-flow-store";
+import { useAuthFlowStore } from "./auth-flow-store";
 import { editionWebModule } from "@zilobase/edition-web";
 import posthog from "@/shared/lib/posthog";
+import { isDesktopApp } from "@/features/desktop/index";
+import { AuthScreen } from "./auth-screen";
+import { DesktopBrowserAuthScreen } from "@/features/desktop/auth/index";
+("use client");
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   const signInWithPassword = useSignInWithPassword();
@@ -171,5 +172,25 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"form">)
         </Field>
       </FieldGroup>
     </form>
+  );
+}
+
+export default function LoginPage() {
+  const signupSearch = getInvitationAuthSearch();
+
+  if (isDesktopApp()) {
+    return <DesktopBrowserAuthScreen />;
+  }
+
+  return (
+    <AuthScreen
+      switchLabel="Sign up"
+      switchPrefix="Don't have an account?"
+      switchSearch={signupSearch}
+      switchTo="/signup"
+      title="Sign in to your account"
+    >
+      <LoginForm />
+    </AuthScreen>
   );
 }

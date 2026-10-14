@@ -11,9 +11,9 @@ export function register({ assert, readSource, readWorkspace, test }) {
   test("desktop signed-out shell is browser-only", async () => {
     const [screen, login, signup, loginForm] = await Promise.all([
       readSource("/src/features/desktop/auth/desktop-browser-auth-screen.tsx"),
-      readSource("/src/features/auth/screens/login.tsx"),
-      readSource("/src/features/auth/screens/signup.tsx"),
-      readSource("/src/features/auth/components/login-form.tsx"),
+      readSource("/src/features/auth/login.tsx"),
+      readSource("/src/features/auth/signup.tsx"),
+      readSource("/src/features/auth/login.tsx"),
     ]);
 
     assert.match(screen, /phase: "waiting_for_browser"/);

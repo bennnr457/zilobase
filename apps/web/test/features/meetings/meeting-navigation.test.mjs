@@ -11,7 +11,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("meeting block lookup matches the exact rendered meeting", async () => {
     const { findMeetingBlock, scrollToMeetingBlock } = await loadModule(
-      "/src/features/meetings/model/meeting-navigation.ts",
+      "/src/features/meetings/meeting-navigation.ts",
     );
     const first = { dataset: { meetingId: "meeting-1" } };
     const calls = [];

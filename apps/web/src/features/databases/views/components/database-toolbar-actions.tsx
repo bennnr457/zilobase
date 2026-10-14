@@ -11,7 +11,7 @@ import { Button } from "@/shared/ui/button";
 
 import { useDatabaseDataContext, useDatabaseUiContext } from "../state/database-view-context";
 
-import { DatabaseAutomationManager } from "../../../automations";
+import { DatabaseAutomationManager } from "../../../automations/database-automation-manager";
 import { useDatabaseAutomationCapability } from "@zilobase/features/automations/react";
 import { DatabaseTrashRestoreButton } from "../../core/database-trash-restore-button";
 

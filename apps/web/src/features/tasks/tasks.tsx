@@ -51,7 +51,7 @@ import {
 import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
 import type { DatabaseSortUpdatePatch } from "@zilobase/features/databases";
 import { type DatabasePropertyValue } from "@zilobase/features/databases";
-import { TaskDatabaseListAdapter } from "../components/task-database-list-adapter";
+import { TaskDatabaseListAdapter } from "./task-database-list-adapter";
 import { type DatabaseExportPayload } from "@zilobase/features/databases";
 import {
   useAddDatabaseRow,
