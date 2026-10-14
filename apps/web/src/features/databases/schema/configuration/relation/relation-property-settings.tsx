@@ -1,5 +1,5 @@
-import { createDatabaseRelationCommands } from "@zilobase/features/databases/models";
-import { getRelationConfig } from "@zilobase/features/databases/models";
+import { createDatabaseRelationCommands } from "@zilobase/features/databases";
+import { getRelationConfig } from "@zilobase/features/databases";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -38,13 +38,10 @@ import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
 } from "../../../components/page-database-picker";
-import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { useDatabaseSecondaryPayload } from "@zilobase/features/databases/react";
-import {
-  getRelationNeedsRepair,
-  relationPayloadFromViewData,
-} from "@zilobase/features/databases/models";
+import { getRelationNeedsRepair, relationPayloadFromViewData } from "@zilobase/features/databases";
 
 type RelationDatabaseOption = PageDatabasePickerOption & {
   pageName: string;
@@ -371,4 +368,4 @@ export function RelationPropertySettings({
   );
 }
 
-export { getRelationConfig } from "@zilobase/features/databases/models";
+export { getRelationConfig } from "@zilobase/features/databases";

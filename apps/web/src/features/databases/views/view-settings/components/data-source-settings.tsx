@@ -34,14 +34,14 @@ import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
 } from "../../../components/page-database-picker";
-import { getDatabaseViewIcon } from "@zilobase/features/databases/models";
+import { getDatabaseViewIcon } from "@zilobase/features/databases";
 import {
   DataSourceAddGlyph,
   DataSourceMenuItem,
   DataSourceSectionLabel,
   LinkedDataSourceMenuItem,
 } from "./data-source-items";
-import { partitionManagedDataSources } from "@zilobase/features/databases/models";
+import { partitionManagedDataSources } from "@zilobase/features/databases";
 import type { DatabaseViewSettingsMenuProps } from "../view-settings-contracts";
 import { ViewTypeOptionGrid } from "./view-type-option-grid";
 import { getDatabaseViewTypePresentation, type DatabaseViewType } from "../model/view-type-options";

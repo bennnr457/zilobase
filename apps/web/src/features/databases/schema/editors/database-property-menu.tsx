@@ -1,5 +1,5 @@
-import { getRelationDeleteConfig } from "@zilobase/features/databases/models";
-import { diffConfiguration } from "@zilobase/features/databases/record-interactions";
+import { getRelationDeleteConfig } from "@zilobase/features/databases";
+import { diffConfiguration } from "@zilobase/features/databases";
 import {
   ArrowDownUp,
   ArrowLeftToLine,
@@ -79,7 +79,7 @@ import {
   upsertDatabaseSort,
   type DatabasePropertyConfig,
   type DatabaseSortDirection,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { DatabasePropertyEditSubmenu } from "../configuration";
 import { useClearDatabasePropertyDrafts } from "../../views/state/database-cell-state";
 

@@ -1,5 +1,5 @@
 import { Schema, SchemaTransformation } from "effect";
-import type { CalendarScope, CalendarRecord } from "@zilobase/features/calendar";
+import type { CalendarScope, CalendarRecord } from "@zilobase/features/runtime";
 import { CalendarProviderError, normalizeEvent, type CalendarGateway } from "../provider/gateway";
 
 const IsoDateTime = Schema.String.pipe(

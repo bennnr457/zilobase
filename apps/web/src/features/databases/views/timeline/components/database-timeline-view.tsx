@@ -1,18 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { GanttProvider, type Range } from "../gantt";
 
-import { getRawDatabaseGroupValue } from "@zilobase/features/databases/models";
-import { getDatabaseTableGroupSections } from "@zilobase/features/databases/models";
+import { getRawDatabaseGroupValue } from "@zilobase/features/databases";
+import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
 import { DatabaseRecordWindowControl } from "../../components/database-record-window-control";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/database-view-context";
-import {
-  getTimelineDatePropertyId,
-  ganttMoveToCellValue,
-} from "@zilobase/features/databases/models";
+import { getTimelineDatePropertyId, ganttMoveToCellValue } from "@zilobase/features/databases";
 import {
   buildTimelineRowItem,
   getGanttStatusForValue,

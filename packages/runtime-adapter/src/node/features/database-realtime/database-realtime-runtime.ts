@@ -8,7 +8,7 @@ import type { RuntimeEnv } from "@zilobase/server/node-adapter-api";
 import {
   databaseMutationEventV2Schema,
   type DatabaseMutationEventV2,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 import {
   consumeDatabaseMessageAllowance,
   isDatabasePresence,
@@ -17,7 +17,7 @@ import {
   toDatabaseCollaborator,
   validateDatabaseRealtimeMessage,
   type DatabasePresence,
-} from "@zilobase/features/databases/realtime/room-protocol";
+} from "@zilobase/features/runtime";
 import {
   DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX,
   DATABASE_REALTIME_PROTOCOL,

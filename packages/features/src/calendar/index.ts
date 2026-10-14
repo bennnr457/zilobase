@@ -68,3 +68,9 @@ export * from "./storage";
 export * from "./store";
 export * from "./sync";
 export * from "./commands";
+
+export {
+  type CalendarTime,
+  type TimelineAnchor,
+  type TimelineCoverage,
+} from "../calendar-layout/index";

@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { Hono } from "hono";
 import { asc, eq } from "drizzle-orm";
 import { runMigrationSets } from "@zilobase/runtime-adapter/node";
-import { databaseViewQueryHash } from "@zilobase/features/databases/query-hash";
+import { databaseViewQueryHash } from "@zilobase/features/runtime";
 import type {
   DatabaseCommand,
   DatabaseCommandRequest,
   DatabasePropertyEntity,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
 import {
   database,
@@ -36,7 +36,7 @@ import {
 } from "../features/databases/read/service";
 import { pageBrowseRoutes } from "../features/pages/page-browse-routes";
 import type { AppBindings } from "../shared/types";
-import type { PageNavigationPayload } from "@zilobase/features/pages/contracts";
+import type { PageNavigationPayload } from "@zilobase/features/runtime";
 
 const connection = process.env.ZILOBASE_CONTROLLER_VERIFY_URL;
 assert.ok(connection, "Use the isolated controller test runner; no default database is allowed");

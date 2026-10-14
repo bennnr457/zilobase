@@ -1,4 +1,4 @@
-import type { DatabaseCommand } from "@zilobase/features/databases/contracts";
+import type { DatabaseCommand } from "@zilobase/features/runtime";
 import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "./framework";
 import {
   createDatabaseService,

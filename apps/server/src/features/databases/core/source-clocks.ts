@@ -1,4 +1,4 @@
-import type { DatabaseMutationChanges } from "@zilobase/features/databases/contracts";
+import type { DatabaseMutationChanges } from "@zilobase/features/runtime";
 
 export function mutationSourceIds(changes: DatabaseMutationChanges, dataSourceId?: string | null) {
   return [

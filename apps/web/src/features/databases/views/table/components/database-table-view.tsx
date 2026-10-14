@@ -7,7 +7,7 @@ import {
 import { useTableRowLayout } from "../controller/use-table-row-layout";
 import { useTableColumns } from "../controller/use-table-columns";
 import { useTableSelection } from "../controller/use-table-selection";
-import { createCellEditHistoryAction } from "@zilobase/features/databases/models";
+import { createCellEditHistoryAction } from "@zilobase/features/databases";
 import {
   Fragment,
   useCallback,
@@ -46,12 +46,12 @@ import {
 } from "../../../schema/editors/database-property-menu";
 import { DatabasePropertyValue } from "../../../schema/editors/database-property-value";
 import { getDatabasePropertyType } from "../../../schema/property-catalog";
-import { getGroupedRecordMove } from "@zilobase/features/databases/models";
+import { getGroupedRecordMove } from "@zilobase/features/databases";
 import {
   getDatabasePropertyIcon,
   getNameColumnWrapContent,
   getPropertyWrapContent,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
@@ -60,19 +60,19 @@ import {
 import {
   getDatabaseSubItemLineParentRowId,
   getSubItemCreateRowsAfterRow,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { useDatabaseRowsScroll } from "../../../interactions/use-database-rows-scroll";
 import { useInlineDatabaseScroll } from "../../../interactions/use-inline-database-scroll";
 import {
   areSerializedPropertyValuesEqual,
   databaseItemMatchesFilter,
-} from "@zilobase/features/databases/models";
-import { getDatabaseTableGroupSections } from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
 import {
   getDatabaseCellFillRowIds,
   isDatabasePropertyFillable,
   type DatabaseCellFillHistoryChange,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { getDatabaseRowDropTarget } from "../../../interactions/database-table-layout";
 import {
   claimDatabaseRowDropOwner,
@@ -85,7 +85,7 @@ import {
   subscribeDatabaseRowDropOwner,
 } from "../../../interactions/database-row-drag";
 import { useDatabaseRowDragOverlay } from "../../../interactions/use-database-row-drag-overlay";
-import { canCreateRowInGroup } from "@zilobase/features/databases/models";
+import { canCreateRowInGroup } from "@zilobase/features/databases";
 
 import {
   ADD_PROPERTY_COLUMN_ID,

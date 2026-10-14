@@ -1,20 +1,20 @@
-import { reorderOptionsByIds } from "@zilobase/features/databases/models";
+import { reorderOptionsByIds } from "@zilobase/features/databases";
 import { Plus } from "@/shared/components/icons";
 import { Reorder } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import { DropDrawerLabel, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
 
-import { reorderStatusGroupOptions } from "@zilobase/features/databases/models";
+import { reorderStatusGroupOptions } from "@zilobase/features/databases";
 import { getNextDatabaseOptionColor } from "../../property-catalog";
-import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import { OptionCreateInput } from "../shared/option-create-input";
 import { OptionEditorSubmenu } from "../shared/option-editor-submenu";
-import { areSameOrderedIds, haveSameIds } from "@zilobase/features/databases/models";
-import { getStatusOptionGroups } from "@zilobase/features/databases/models";
-import type { StatusOption } from "@zilobase/features/databases/models";
+import { areSameOrderedIds, haveSameIds } from "@zilobase/features/databases";
+import { getStatusOptionGroups } from "@zilobase/features/databases";
+import type { StatusOption } from "@zilobase/features/databases";
 
-export type { StatusOption } from "@zilobase/features/databases/models";
+export type { StatusOption } from "@zilobase/features/databases";
 
 export function StatusPropertySettings({
   defaultOptionId,

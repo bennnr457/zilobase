@@ -41,7 +41,7 @@ import type {
   DatabaseChartReferenceLine,
   DatabaseChartSettings,
   DatabaseChartType,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import type { DatabaseViewProperty } from "../view-settings-contracts";
 import {
   chartDateIntervalOptions,
@@ -52,7 +52,7 @@ import {
   getChartSortOptions,
   isChartDateProperty,
   parseOptionalChartNumber,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { ViewSettingsRow } from "./view-settings-row";
 
 const chartTypeOptions: Array<{

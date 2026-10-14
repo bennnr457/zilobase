@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DatabaseAutomationDefinition } from "@zilobase/features/automations";
+import type { DatabaseAutomationDefinition } from "@zilobase/features/runtime";
 
 import { matchesDatabaseAutomationEvent } from "./trigger-evaluator";
 

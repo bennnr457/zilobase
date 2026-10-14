@@ -1,5 +1,5 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
-import { hasPageBodyContent } from "@zilobase/features/pages/content-state";
+import { hasPageBodyContent } from "@zilobase/features/runtime";
 import { canAccessPageInWorkspace, getAccessiblePageIds, getMembership } from "../../access";
 
 import type { RuntimeEnv } from "../../../shared/config/config";

@@ -35,7 +35,7 @@ import {
 import { type DatabaseSetupSelection } from "@/features/databases/setup/components/database-setup-card";
 import { DatabaseViewSkeleton } from "@/features/databases/views/components/database-view-skeleton";
 import { getDatabaseViewModel } from "@/features/databases/views/components/database-view-model";
-import type { DatabaseViewData } from "@zilobase/features/databases/models";
+import type { DatabaseViewData } from "@zilobase/features/databases";
 import {
   getDatabaseFilterOperatorsForType,
   getMergedDatabaseConfig,
@@ -47,10 +47,10 @@ import {
   type DatabasePropertyConfig,
   type DatabaseSortConfig,
   type DatabaseSubItemsSettings,
-} from "@zilobase/features/databases/models";
-import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases/models";
-import type { DatabaseSortUpdatePatch } from "@zilobase/features/databases/models";
-import { type DatabasePropertyValue } from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
+import type { DatabaseSortUpdatePatch } from "@zilobase/features/databases";
+import { type DatabasePropertyValue } from "@zilobase/features/databases";
 import { TaskDatabaseListAdapter } from "../components/task-database-list-adapter";
 import { type DatabaseExportPayload } from "@zilobase/features/databases";
 import {

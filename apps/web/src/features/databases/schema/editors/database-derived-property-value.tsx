@@ -1,5 +1,5 @@
-import { applyDatabaseRelationSelection } from "@zilobase/features/databases/models";
-import { getRelationPageSummary } from "@zilobase/features/databases/models";
+import { applyDatabaseRelationSelection } from "@zilobase/features/databases";
+import { getRelationPageSummary } from "@zilobase/features/databases";
 import { useMemo, useState } from "react";
 import {
   type DatabasePropertyEntity,
@@ -18,14 +18,11 @@ import {
   getRelationLimit,
   getRelationTargetDatabaseId,
   relationPayloadFromViewData,
-} from "@zilobase/features/databases/models";
-import {
-  evaluateDatabaseRollup,
-  getRollupRelationProperty,
-} from "@zilobase/features/databases/models";
-import { getRollupConfig } from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import { evaluateDatabaseRollup, getRollupRelationProperty } from "@zilobase/features/databases";
+import { getRollupConfig } from "@zilobase/features/databases";
 import { getNumberDisplayValue } from "./database-property-input";
-import { toStringArray, type DatabasePropertyValue } from "@zilobase/features/databases/models";
+import { toStringArray, type DatabasePropertyValue } from "@zilobase/features/databases";
 import { useDatabaseSecondaryPayload } from "@zilobase/features/databases/react";
 import {
   PageDatabasePicker,

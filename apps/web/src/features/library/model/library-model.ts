@@ -1,10 +1,10 @@
 import { buildHomepageViewData as deriveHomepageViewData } from "@zilobase/features/library";
 import { DEFAULT_MEETING_ITEM_ICON } from "@/features/pages/icons/item-icons";
-import type { DatabaseViewData } from "@zilobase/features/databases/models";
+import type { DatabaseViewData } from "@zilobase/features/databases";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 import type { Teamspace } from "@zilobase/features/teamspaces";
 import type { PageNavigationPayload } from "@zilobase/features/pages";
-import { libraryViewIds } from "@zilobase/features/user-settings/sidebar-config";
+import { libraryViewIds } from "@zilobase/features/user-settings";
 import { libraryViewLabels } from "@/features/sidebar/model/index";
 import {
   buildHomepageRows as deriveHomepageRows,

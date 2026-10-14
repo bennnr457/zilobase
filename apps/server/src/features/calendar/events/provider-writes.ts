@@ -2,7 +2,7 @@ import {
   calendarCapability,
   type CalendarPermissions,
   type CalendarOperation,
-} from "@zilobase/features/calendar";
+} from "@zilobase/features/runtime";
 import type { CalendarWrite } from "./input";
 import { providerEventPatch, validateEventInterval } from "./input";
 import type { CalendarMutationInput } from "./mutations";

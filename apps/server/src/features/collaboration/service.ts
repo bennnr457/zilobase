@@ -10,7 +10,7 @@ import { Database } from "@hocuspocus/extension-database";
 import { Hocuspocus, type Extension } from "@hocuspocus/server";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import * as Y from "yjs";
-import { isPageBodyEmpty } from "@zilobase/features/pages/content-state";
+import { isPageBodyEmpty } from "@zilobase/features/runtime";
 import { canAccessPageInWorkspace } from "../access";
 import { db, runWithDbEnv } from "../../infrastructure/database";
 import {

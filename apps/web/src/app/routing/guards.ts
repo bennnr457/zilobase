@@ -1,4 +1,4 @@
-import { resolveActiveWorkspaceId } from "@zilobase/features/workspaces/react";
+import { resolveActiveWorkspaceId } from "@zilobase/features/workspaces";
 import { decidePageShareAccess } from "@zilobase/features/pages";
 import { isDatabasePublished as readDatabasePublished } from "@zilobase/features/databases";
 import { redirect } from "@tanstack/react-router";

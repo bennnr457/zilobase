@@ -15,7 +15,7 @@ import { isInteractiveDatabaseCardTarget } from "../../../interactions/database-
 import {
   canMoveRowsAcrossGroups,
   type DatabasePropertyListItem,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   getKanbanCardPreview,
   getKanbanExternalDropPosition,
@@ -24,7 +24,7 @@ import {
   getGroupedRecordMove,
   type RecordDrop,
   type RecordDropRow,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { useKanbanGeometry } from "./use-kanban-geometry";
 
 type DragOption = { id: string; groupValue: string };

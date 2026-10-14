@@ -37,7 +37,7 @@ import {
   type DatabasePropertyValue,
   parsePropertyValue,
   serializePropertyValue,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { CollaborationPresence } from "@/features/editor/collaboration/collaboration-presence";
 import type { CollaborationPresenceUser } from "@/features/editor/collaboration/collaboration-presence";
 import { PageMetadataProperties } from "./page-metadata-properties";

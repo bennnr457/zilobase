@@ -1,8 +1,8 @@
 import { DATABASE_PAGE_DRAG_MIME } from "./database-drag-contracts";
 import { hasDragType, readDragPayload, writeDragPayload } from "@/shared/lib/drag-drop";
 
-import type { DatabasePageDragPayload } from "@zilobase/features/databases/models";
-export type { DatabasePageDragPayload } from "@zilobase/features/databases/models";
+import type { DatabasePageDragPayload } from "@zilobase/features/databases";
+export type { DatabasePageDragPayload } from "@zilobase/features/databases";
 
 function isDatabasePageDragPayload(value: unknown): value is DatabasePageDragPayload {
   if (typeof value !== "object" || value === null) return false;

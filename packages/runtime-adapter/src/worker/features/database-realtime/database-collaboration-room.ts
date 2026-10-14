@@ -8,14 +8,14 @@ import type { AppBindings } from "@zilobase/server/adapter-api";
 import {
   databaseMutationEventV2Schema,
   type DatabaseMutationEventV2,
-} from "@zilobase/features/databases";
+} from "@zilobase/features/runtime";
 import {
   consumeDatabaseMessageAllowance,
   isDatabasePresence,
   scopeDatabaseRealtimeMessage,
   toDatabaseCollaborator,
   type DatabasePresence,
-} from "@zilobase/features/databases/realtime/room-protocol";
+} from "@zilobase/features/runtime";
 
 import type { WorkerEnvBindings } from "../../bindings";
 import { readDatabaseRealtimeClaims, validateDatabaseRealtimeMessage } from "./security";

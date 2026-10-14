@@ -109,3 +109,61 @@ export {
 } from "./schedule";
 
 export * from "./queries";
+
+export {
+  notionActionLabel,
+  createNotionActionDraft,
+  notionActionDraftFromAction,
+  actionForDefinition,
+  resolveWebhookHeader,
+  defaultOperation,
+  defaultFilteredTarget,
+  newFilterCondition,
+  defaultRecipient,
+  actionProperties,
+  canUseCompactPropertyAction,
+  actionValuesFromLiteral,
+  actionLiteralFromValues,
+  propertyActionLabel,
+  materializeWebhookSecrets,
+  NOTION_ACTION_OPTIONS,
+} from "./action-model";
+export type { ActionType, NotionActionDraft } from "./action-model";
+export {
+  propertyEditedTriggerSelection,
+  isChoiceTriggerProperty,
+  triggerConfigurationTitle,
+  triggerOperatorLabel,
+  emptyDraft,
+  buildDefinition,
+  hasRequiredTriggerValues,
+  nextTriggerOperands,
+  generateName,
+  draftFromDefinition,
+  move,
+  automationOperandValues,
+  automationOperandFromValues,
+  operandless,
+  triggerFromSelection,
+  humanize,
+} from "./definition-model";
+export type {
+  TriggerDraft,
+  TriggerPickerSelection,
+  EventTriggerPickerSelection,
+  BuilderDraft,
+} from "./definition-model";
+export { scheduleTriggerLabel, scheduleDefinition, scheduleDraft } from "./schedule";
+export type { ScheduleDraft } from "./schedule";
+export {
+  defaultReference,
+  expressionForMode,
+  allProperties,
+  writableProperties,
+  relationProperties,
+  propertyById,
+  parseLiteral,
+  formatLiteral,
+  entityIds,
+  toggleEntityList,
+} from "./value-expression-model";

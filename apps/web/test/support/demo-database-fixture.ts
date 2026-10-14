@@ -1,8 +1,8 @@
 import type {
   DatabaseBootstrapResponse,
   DatabaseRecordWindowResponse,
-} from "@zilobase/features/databases/contracts";
-import { databaseViewQueryHash } from "@zilobase/features/databases/query-hash";
+} from "@zilobase/features/databases";
+import { databaseViewQueryHash } from "@zilobase/features/databases";
 
 export function demoDatabaseFixture() {
   const timestamp = "2026-09-29T00:00:00.000Z";

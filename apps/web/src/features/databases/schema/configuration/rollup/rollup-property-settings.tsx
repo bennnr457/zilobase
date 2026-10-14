@@ -19,7 +19,7 @@ import {
 } from "@/shared/ui/select";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 
-import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import {
   getRollupCalculationsForType,
   getRollupConfig,
@@ -31,8 +31,8 @@ import {
   rollupPercentCalculations,
   rollupShowCalculations,
   type DatabaseRollupConfig,
-} from "@zilobase/features/databases/models";
-import { getRollupRelationProperty } from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import { getRollupRelationProperty } from "@zilobase/features/databases";
 import { NumberPropertySettings } from "../number/number-property-settings";
 import { getRelationConfig } from "../relation/relation-property-settings";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";

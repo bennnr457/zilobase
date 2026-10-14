@@ -9,7 +9,7 @@ import {
   getDatabaseTimePart as getTimeFromValue,
   toDatabaseDateValue as toDateValue,
   getDatabaseTimeValue as getTimeValueFromDate,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Check, ChevronRight, HelpCircle } from "@/shared/components/icons";
 import type { DateRange } from "react-day-picker";
@@ -30,7 +30,7 @@ import {
   getDateConfigWithFormat,
   type DateFormatValue,
   type TimeFormatValue,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 type DatabasePropertyDateProps = {
   editable?: boolean;

@@ -1,4 +1,4 @@
-import { getSelectOptions, getSelectConfigWithOptions } from "@zilobase/features/databases/models";
+import { getSelectOptions, getSelectConfigWithOptions } from "@zilobase/features/databases";
 import { cn } from "@/shared/lib/utils";
 import { menuItemVariants } from "@/shared/ui/menu-styles";
 import { Check, GripVertical } from "@/shared/components/icons";
@@ -7,8 +7,8 @@ import { useState, type ReactNode } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
 import { getNextDatabaseOptionColor } from "../property-catalog";
-import type { DatabaseSelectOption } from "@zilobase/features/databases/models";
-import { toStringArray } from "@zilobase/features/databases/models";
+import type { DatabaseSelectOption } from "@zilobase/features/databases";
+import { toStringArray } from "@zilobase/features/databases";
 
 type DatabasePropertySelectOption = DatabaseSelectOption & {
   suffix?: string;

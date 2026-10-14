@@ -5,7 +5,7 @@ import {
   formatNumberValue,
   getShowFullUrl,
   stripActionScheme,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode, type FormEvent } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
@@ -16,7 +16,7 @@ import {
   getNumberDisplayDivideBy,
   getNumberDisplayShowNumber,
   getNumberDisplayStyle,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 function DatabaseInputCell({
   editable = true,

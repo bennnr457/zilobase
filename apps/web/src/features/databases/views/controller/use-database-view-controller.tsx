@@ -1,4 +1,4 @@
-import { createDatabaseSourceCommands } from "@zilobase/features/databases/models";
+import { createDatabaseSourceCommands } from "@zilobase/features/databases";
 import { shouldUseDatabaseSetupMode } from "@/features/databases/setup/model/setup-mode";
 import { useCallback, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
 
@@ -38,8 +38,8 @@ import {
   getDatabaseDataSourceSummaries,
   getDatabaseViewTabs,
   resolveRequestedDatabaseViewId,
-} from "@zilobase/features/databases/models";
-import { getDatabaseSetupDismissed } from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import { getDatabaseSetupDismissed } from "@zilobase/features/databases";
 import {
   databaseViewTypeOptions,
   type DatabaseViewType,

@@ -5,7 +5,7 @@ import {
   type CreateDatabaseAutomationRequest,
   type CreateDatabaseAutomationSecretRequest,
   type UpdateDatabaseAutomationRequest,
-} from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
 import { db } from "../../../infrastructure/database";
 import {
   databaseAutomation,

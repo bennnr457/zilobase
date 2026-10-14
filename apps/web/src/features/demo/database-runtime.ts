@@ -8,15 +8,15 @@ import {
   type DatabaseBootstrapResponse,
   type DatabaseCommandAck,
   type DatabaseRecordEntity,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/databases";
 import {
   projectDatabaseMetadata,
   projectRecordInteractions,
   type MetadataEffect,
-} from "@zilobase/features/databases/record-interactions";
-import { databaseOrderKeyAtPosition } from "@zilobase/features/databases/order-key";
-import { databaseViewQueryHash } from "@zilobase/features/databases/query-hash";
-import { evaluateDatabaseRecordsForView } from "@zilobase/features/databases/view-evaluation";
+} from "@zilobase/features/databases";
+import { databaseOrderKeyAtPosition } from "@zilobase/features/databases";
+import { databaseViewQueryHash } from "@zilobase/features/databases";
+import { evaluateDatabaseRecordsForView } from "@zilobase/features/databases";
 
 /** A browser-only authority for the supported demo edits, not a second UI controller. */
 export class DemoDatabaseRuntime {

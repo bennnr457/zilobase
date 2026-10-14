@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { defaultCalendarPreferences } from "@zilobase/features/calendar";
+import { defaultCalendarPreferences } from "@zilobase/features/runtime";
 import { calendarPreferencesSchema } from "./preferences";
 test("preferences validate IANA zones, week start and secondary axis limits", () => {
   expect(calendarPreferencesSchema.parse(defaultCalendarPreferences("Asia/Kolkata")).timeZone).toBe(

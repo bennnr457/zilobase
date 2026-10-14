@@ -3,7 +3,7 @@ import { test } from "vitest";
 import {
   databaseMutationEventV2Fixture,
   databaseMutationEventV2Schema,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 
 import { databaseMutationEventFromJournalRow } from "../realtime/journal-event";
 

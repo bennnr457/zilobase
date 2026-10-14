@@ -5,7 +5,7 @@ import {
   sanitizePageContent,
   type PageDocument,
 } from "@zilobase/html-to-page";
-import type { CreateClipRequest } from "@zilobase/features/clips";
+import type { CreateClipRequest } from "@zilobase/features/runtime";
 
 export function buildClipContent(input: CreateClipRequest): PageDocument {
   ensureDomParser();

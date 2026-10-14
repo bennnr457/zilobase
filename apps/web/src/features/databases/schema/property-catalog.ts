@@ -4,7 +4,7 @@ export {
   getDefaultDatabasePropertyConfig,
   isReadOnlyPropertyType,
   isSelectLikePropertyType,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   ArrowUpRight,
   AtSign,
@@ -28,19 +28,19 @@ import {
   Users,
   type Icon,
 } from "@/shared/components/icons";
-import { type DatabasePropertyType as DatabasePropertyTypeId } from "@zilobase/features/databases/property-types";
+import { type DatabasePropertyType as DatabasePropertyTypeId } from "@zilobase/features/databases";
 
 import type {
   DatabasePropertyFilterKind,
   DatabasePropertyCellKind,
-} from "@zilobase/features/databases/models";
-import { getDatabasePropertyCapability } from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import { getDatabasePropertyCapability } from "@zilobase/features/databases";
 export {
   getDatabasePropertyFilterKind,
   getDatabasePropertyCellKind,
   hasDatabasePropertyTypeEditSettings,
   isDateLikePropertyType,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 export type DatabasePropertyType = {
   cellKind?: DatabasePropertyCellKind;
   editable?: boolean;
@@ -153,7 +153,7 @@ export const databasePropertyTypes: DatabasePropertyType[][] = databasePropertyP
 
 export const databasePropertyTypeItems = databasePropertyTypes.flat();
 
-export { getNextDatabaseOptionColor } from "@zilobase/features/databases/models";
+export { getNextDatabaseOptionColor } from "@zilobase/features/databases";
 
 export const textDatabasePropertyType =
   databasePropertyTypeItems.find((item) => item.type === "text") ?? databasePropertyTypes[0][0];

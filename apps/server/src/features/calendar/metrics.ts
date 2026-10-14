@@ -1,4 +1,4 @@
-import { calendarMetric, type CalendarMetricName } from "@zilobase/features/calendar";
+import { calendarMetric, type CalendarMetricName } from "@zilobase/features/runtime";
 export function recordCalendarMetric(
   name: CalendarMetricName,
   value: number,

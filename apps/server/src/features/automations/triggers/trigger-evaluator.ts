@@ -3,8 +3,8 @@ import type {
   AutomationTriggerOperand,
   DatabaseAutomationDefinition,
   DatabaseAutomationTriggerOperator,
-} from "@zilobase/features/automations";
-import { getZonedDateParts } from "@zilobase/features/databases/formula";
+} from "@zilobase/features/runtime";
+import { getZonedDateParts } from "@zilobase/features/runtime";
 
 export type AutomationTriggerProperty = {
   config?: unknown;

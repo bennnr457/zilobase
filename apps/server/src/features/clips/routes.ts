@@ -3,7 +3,7 @@ import {
   isClipCaptureMode,
   isClipDuplicateStrategy,
   type CreateClipRequest,
-} from "@zilobase/features/clips";
+} from "@zilobase/features/runtime";
 
 import { rejectMismatchedApiKeyWorkspace } from "../api-keys";
 import { rejectMismatchedPinnedWorkspace, requireOAuthScope } from "../auth/oauth-access";

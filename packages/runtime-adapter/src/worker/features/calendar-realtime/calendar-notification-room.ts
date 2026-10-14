@@ -7,7 +7,7 @@ import {
 
 import type { WorkerEnvBindings } from "../../bindings";
 import { readCalendarRealtimeClaims } from "./security";
-import { createNotificationRoom } from "@zilobase/features/runtime/notification-room";
+import { createNotificationRoom } from "@zilobase/features/runtime";
 import { createWorkerRoomHost, type WorkerRoomHost } from "../../room-host";
 import { createWorkerTelemetry } from "../../telemetry";
 

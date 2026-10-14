@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, type FormEvent } from "react";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { type DatabasePropertyEntity } from "@zilobase/features/databases";
 
-import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases/models";
+import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases";
 import { DatabasePropertyButton } from "./database-property-button";
 import { DatabasePropertyDate } from "./database-property-date";
 import { DatabasePropertyFiles } from "./database-property-files";
@@ -11,9 +11,9 @@ import { DatabasePropertyInput } from "./database-property-input";
 import { DatabasePropertySelect } from "./database-property-select";
 import { getDatabasePropertyCellKind } from "../property-catalog";
 import { DatabaseFormulaValue } from "../formula/view/database-formula-value";
-import { type DatabasePropertyValue } from "@zilobase/features/databases/models";
-import { formatDatabaseDateValue } from "@zilobase/features/databases/models";
-import { getReadOnlyTimePropertyRawValue } from "@zilobase/features/databases/models";
+import { type DatabasePropertyValue } from "@zilobase/features/databases";
+import { formatDatabaseDateValue } from "@zilobase/features/databases";
+import { getReadOnlyTimePropertyRawValue } from "@zilobase/features/databases";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
@@ -24,9 +24,9 @@ import {
   useSetActiveDatabaseCell,
   useUpdateDatabaseCellDraft,
 } from "../../views/state/database-cell-state";
-import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases/models";
-import { getPersonLimit, getPropertyWrapContent } from "@zilobase/features/databases/models";
-import { type DatabasePropertyListItem } from "@zilobase/features/databases/models";
+import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases";
+import { getPersonLimit, getPropertyWrapContent } from "@zilobase/features/databases";
+import { type DatabasePropertyListItem } from "@zilobase/features/databases";
 import {
   DatabaseRelationPropertyValue,
   DatabaseRollupPropertyValue,

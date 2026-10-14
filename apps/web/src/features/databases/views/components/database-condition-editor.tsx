@@ -8,11 +8,8 @@ import {
   getNextConditionValuesForOperator,
   databaseRelativeDateDirections,
   databaseRelativeDateUnits,
-} from "@zilobase/features/databases/models";
-import type {
-  DatabaseCondition,
-  DatabaseConditionUpdatePatch,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import type { DatabaseCondition, DatabaseConditionUpdatePatch } from "@zilobase/features/databases";
 import { CalendarIcon, ChevronDownIcon, GripVertical, X } from "@/shared/components/icons";
 import { Reorder, useDragControls } from "framer-motion";
 import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
@@ -30,7 +27,7 @@ import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
 import {
   getDatabaseFilterOperatorsForType,
   type DatabasePropertyFilterOperator,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { isDateLikePropertyType } from "../../schema/property-catalog";
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
 

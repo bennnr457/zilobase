@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
-import { type DatabaseAutomationAction } from "@zilobase/features/automations";
+import { type DatabaseAutomationAction } from "@zilobase/features/runtime";
 import { isAutomationSlackEnabled, type RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import {

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { type DatabaseAutomationAction } from "@zilobase/features/automations";
-import { type FormulaValue } from "@zilobase/features/databases/formula";
+import { type DatabaseAutomationAction } from "@zilobase/features/runtime";
+import { type FormulaValue } from "@zilobase/features/runtime";
 import { type RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import { databaseRow } from "../../../infrastructure/database/schema";

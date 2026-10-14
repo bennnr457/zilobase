@@ -30,7 +30,7 @@ import {
   getColorTokenValue,
 } from "@/shared/lib/color-tokens";
 
-import type { DatabaseSelectOption } from "@zilobase/features/databases/models";
+import type { DatabaseSelectOption } from "@zilobase/features/databases";
 
 export function OptionEditorSubmenu({
   defaultOptionId,

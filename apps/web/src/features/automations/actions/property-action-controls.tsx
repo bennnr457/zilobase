@@ -4,7 +4,7 @@ import {
   propertyActionLabel,
   actionValuesFromLiteral,
   actionLiteralFromValues,
-} from "@zilobase/features/automations/models";
+} from "@zilobase/features/automations";
 import { AutomationPropertyIcon, TriggerOptionRow } from "../automation-picker-controls";
 import { useState } from "react";
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";
@@ -27,7 +27,7 @@ import { Popover, PopoverContent } from "@/shared/ui/popover";
 import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
 
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
-import { type DatabaseCondition } from "@zilobase/features/databases/models";
+import { type DatabaseCondition } from "@zilobase/features/databases";
 
 import {
   createNotionActionDraft,

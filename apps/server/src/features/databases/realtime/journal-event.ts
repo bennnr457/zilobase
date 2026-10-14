@@ -1,7 +1,7 @@
 import {
   databaseMutationEventV2Schema,
   type DatabaseMutationEventV2,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 
 import { databaseMutationEvent } from "../../../infrastructure/database/schema";
 

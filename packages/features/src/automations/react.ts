@@ -188,5 +188,3 @@ export function useSlackAutomationChannels(
     }),
   );
 }
-
-export * from "./queries";

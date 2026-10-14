@@ -3,7 +3,7 @@ import { ArrowLeftRight } from "@/shared/components/icons";
 import { DropDrawerItem } from "@/shared/ui/dropdrawer";
 import { Switch } from "@/shared/ui/switch";
 
-import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 
 export function UrlPropertySettings({
   onUpdateConfig,

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { CookieJar } from "./cookie-jar.mjs";
-import { databaseViewQueryHash } from "@zilobase/features/databases/query-hash";
+import { databaseViewQueryHash } from "@zilobase/features/databases";
 
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";

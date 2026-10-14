@@ -1,10 +1,7 @@
 import { Hono } from "hono";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { Schema, SchemaTransformation } from "effect";
-import {
-  normalizeSidebarConfig,
-  type SidebarConfig,
-} from "@zilobase/features/user-settings/sidebar-config";
+import { normalizeSidebarConfig, type SidebarConfig } from "@zilobase/features/runtime";
 import { db } from "../../infrastructure/database";
 import { account, user, pageSettings } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";

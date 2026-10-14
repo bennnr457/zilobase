@@ -1,7 +1,4 @@
-import type {
-  DatabaseActiveFilter,
-  DatabaseFilterUpdatePatch,
-} from "@zilobase/features/databases/models";
+import type { DatabaseActiveFilter, DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
 import { Filter, Plus, X } from "@/shared/components/icons";
 import { Reorder } from "framer-motion";
 import { useState, type ReactNode } from "react";

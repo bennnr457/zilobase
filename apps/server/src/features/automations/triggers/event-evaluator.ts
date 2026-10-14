@@ -1,12 +1,9 @@
 import { and, asc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
-import {
-  evaluateDatabaseFilters,
-  normalizeDatabaseFilters,
-} from "@zilobase/features/databases/filter";
+import { evaluateDatabaseFilters, normalizeDatabaseFilters } from "@zilobase/features/runtime";
 import {
   databaseAutomationDefinitionSchema,
   type DatabaseAutomationDefinition,
-} from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
 
 import {
   isDatabaseAutomationExecutionEnabled,

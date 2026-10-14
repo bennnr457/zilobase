@@ -3,9 +3,9 @@ import {
   type TriggerPickerSelection,
   triggerFromSelection,
   move,
-} from "@zilobase/features/automations/models";
+} from "@zilobase/features/automations";
 import { ScheduleTriggerCard, TriggerCard, TriggerPicker } from "./automation-trigger-controls";
-import { canUseCompactPropertyAction } from "@zilobase/features/automations/models";
+import { canUseCompactPropertyAction } from "@zilobase/features/automations";
 import { CompactPropertyActionCard, ActionPicker } from "../actions/property-action-controls";
 
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";

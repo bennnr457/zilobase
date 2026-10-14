@@ -95,7 +95,7 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(setupCard, /if \(onSelectDataSource\)/);
     assert.match(setupCard, /New empty data source/);
     assert.match(setupCard, /accept="\.csv,text\/csv"/);
-    assert.match(setupCard, /import \{ parseCsv \} from "@zilobase\/features\/databases\/models"/);
+    assert.match(setupCard, /import \{ parseCsv \} from "@zilobase\/features\/databases"/);
     assert.match(
       await readSource("/packages/features/src/databases/templates/csv.ts"),
       /export function parseCsv/,

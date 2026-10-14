@@ -1,4 +1,4 @@
-import type { DatabaseExportPayload, DatabaseProperty } from "@zilobase/features/databases";
+import type { DatabaseExportPayload, DatabaseProperty } from "../databases/core/export-payload";
 
 export type DatabaseSelectOption = {
   color?: string;

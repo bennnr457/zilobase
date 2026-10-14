@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { Schema } from "effect";
 import { db } from "../../../infrastructure/database";
 import { calendarRangeSnapshot } from "../../../infrastructure/database/schema";
-import type { CalendarRangeResponse } from "@zilobase/features/calendar";
+import type { CalendarRangeResponse } from "@zilobase/features/runtime";
 import { CalendarGateway, CalendarProviderError, normalizeEvent } from "../provider/gateway";
 
 const IsoDateTime = Schema.String.pipe(

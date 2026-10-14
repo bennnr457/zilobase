@@ -6,27 +6,15 @@ import type {
   DatabaseConditionalColorConfig,
   DatabaseLayoutSettings,
   DatabaseSubItemsSettings,
-} from "@zilobase/features/databases/models";
-import type {
-  DatabaseActiveFilter,
-  DatabaseFilterUpdatePatch,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import type { DatabaseActiveFilter, DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
-import type {
-  DatabaseActiveSort,
-  DatabaseSortUpdatePatch,
-} from "@zilobase/features/databases/models";
-import type { DatabaseChartSettings } from "@zilobase/features/databases/models";
+import type { DatabaseActiveSort, DatabaseSortUpdatePatch } from "@zilobase/features/databases";
+import type { DatabaseChartSettings } from "@zilobase/features/databases";
 import type { DatabaseViewType } from "./model/view-type-options";
 
-import type {
-  DatabaseViewProperty,
-  DatabaseSourceMenuItem,
-} from "@zilobase/features/databases/models";
-export type {
-  DatabaseViewProperty,
-  DatabaseSourceMenuItem,
-} from "@zilobase/features/databases/models";
+import type { DatabaseViewProperty, DatabaseSourceMenuItem } from "@zilobase/features/databases";
+export type { DatabaseViewProperty, DatabaseSourceMenuItem } from "@zilobase/features/databases";
 
 export type DatabaseViewSettingsMenuProps = {
   activeConditionalColors: DatabaseActiveConditionalColor[];

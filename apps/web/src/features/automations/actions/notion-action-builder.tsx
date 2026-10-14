@@ -1,4 +1,4 @@
-import { newFilterCondition, defaultRecipient } from "@zilobase/features/automations/models";
+import { newFilterCondition, defaultRecipient } from "@zilobase/features/automations";
 import {
   automationOperandValues,
   automationOperandFromValues,
@@ -12,7 +12,7 @@ import {
   formatLiteral,
   entityIds,
   toggleEntityList,
-} from "@zilobase/features/automations/models";
+} from "@zilobase/features/automations";
 import { useState } from "react";
 import type {
   AutomationFilterDefinition,
@@ -34,15 +34,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/shared/ui/textarea";
 import { useSlackAutomationChannels } from "@zilobase/features/automations/react";
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
-import { type DatabaseCondition } from "@zilobase/features/databases/models";
-import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases/models";
+import { type DatabaseCondition } from "@zilobase/features/databases";
+import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases";
 
 type CatalogProperty = DatabaseAutomationCatalog["properties"][number];
 export {
   createNotionActionDraft,
   NOTION_ACTION_OPTIONS,
   type NotionActionDraft,
-} from "@zilobase/features/automations/models";
+} from "@zilobase/features/automations";
 import {
   createNotionActionDraft,
   defaultFilteredTarget,
@@ -50,7 +50,7 @@ import {
   NOTION_ACTION_OPTIONS,
   type ActionType,
   type NotionActionDraft,
-} from "@zilobase/features/automations/models";
+} from "@zilobase/features/automations";
 
 export function NotionActionEditor({
   catalog,

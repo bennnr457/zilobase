@@ -1,5 +1,5 @@
-import type { SelectOptionSortValue } from "@zilobase/features/databases/models";
-import { getSortedSelectOptions } from "@zilobase/features/databases/models";
+import type { SelectOptionSortValue } from "@zilobase/features/databases";
+import { getSortedSelectOptions } from "@zilobase/features/databases";
 import { ArrowDownUp, Plus } from "@/shared/components/icons";
 import { Reorder } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -7,17 +7,10 @@ import { useEffect, useRef, useState } from "react";
 import { DropDrawerItem, DropDrawerLabel, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
 
 import { getNextDatabaseOptionColor } from "../../property-catalog";
-import type {
-  DatabasePropertyConfig,
-  DatabaseSelectOption,
-} from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig, DatabaseSelectOption } from "@zilobase/features/databases";
 import { OptionCreateInput } from "../shared/option-create-input";
 import { OptionEditorSubmenu } from "../shared/option-editor-submenu";
-import {
-  areSameOrderedIds,
-  haveSameIds,
-  reorderOptionsByIds,
-} from "@zilobase/features/databases/models";
+import { areSameOrderedIds, haveSameIds, reorderOptionsByIds } from "@zilobase/features/databases";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 const selectOptionSortOptions = [
@@ -190,6 +183,6 @@ export function SelectPropertySettings({
   );
 }
 
-export { getSelectOptionSort, getSelectOptions } from "@zilobase/features/databases/models";
+export { getSelectOptionSort, getSelectOptions } from "@zilobase/features/databases";
 
-export type { SelectOptionSortValue } from "@zilobase/features/databases/models";
+export type { SelectOptionSortValue } from "@zilobase/features/databases";

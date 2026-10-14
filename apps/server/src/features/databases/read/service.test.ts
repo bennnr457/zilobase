@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
-import { databaseViewQueryHash } from "@zilobase/features/databases/query-hash";
+import { databaseViewQueryHash } from "@zilobase/features/runtime";
 
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {

@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { hasPageBodyContent } from "@zilobase/features/pages/content-state";
+import { hasPageBodyContent } from "@zilobase/features/runtime";
 import {
   insertDatabaseBlockInContent,
   shouldShowInlineDatabaseTitle,

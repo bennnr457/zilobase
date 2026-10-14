@@ -1,8 +1,5 @@
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
-import {
-  databaseOrderKeyAtPosition,
-  databaseOrderKeyBetween,
-} from "@zilobase/features/databases/order-key";
+import { databaseOrderKeyAtPosition, databaseOrderKeyBetween } from "@zilobase/features/runtime";
 
 import { canAccessPage } from "../../access";
 import { encodePageContentAsYjs } from "../../collaboration/service";

@@ -1,4 +1,4 @@
-import { getFormConfigWithAddedOption } from "@zilobase/features/databases/models";
+import { getFormConfigWithAddedOption } from "@zilobase/features/databases";
 import {
   AlignLeft,
   ArrowDown,
@@ -42,33 +42,33 @@ import {
   getDatabasePropertyType,
 } from "../../../schema/property-catalog";
 import { DatabasePropertyDate } from "../../../schema/editors/database-property-date";
-import { formatDatabaseDateValue } from "@zilobase/features/databases/models";
+import { formatDatabaseDateValue } from "@zilobase/features/databases";
 import { getColorTokenDotClassName } from "@/shared/lib/color-tokens";
 import { cn } from "@/shared/lib/utils";
 import {
   getDatabasePropertyOrder,
   getPersonLimit,
   getViewHiddenPropertyIds,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/database-view-context";
-import { getDatabaseFormHeaderSettings } from "@zilobase/features/databases/models";
+import { getDatabaseFormHeaderSettings } from "@zilobase/features/databases";
 import {
   getDatabaseFormQuestionSettings,
   moveDatabaseFormQuestion,
   type DatabaseFormQuestionMove,
   type DatabaseFormQuestionSettings,
   type DatabaseFormQuestionSettingsPatch,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   getFormOptions,
   getFormQuestionDescription,
   isOptionProperty,
   type FormOption,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 type FormQuestionEntry = {
   id: string;

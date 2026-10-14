@@ -1,10 +1,10 @@
 import { and, asc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/databases/record-interactions";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
 import type {
   DataSourceCommand,
   DatabasePropertyEntity,
   DatabaseRecordEntity,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 
 import {
   databaseProperty,

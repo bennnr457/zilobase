@@ -8,7 +8,7 @@ import {
   type DatabaseCommandRequest,
   type DatabaseMutationChanges,
   type DatabaseMutationEventV2,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 
 import { db, runWithDb, type Database } from "../../../infrastructure/database";
 import type { AfterCommit } from "../../../infrastructure/database/after-commit";

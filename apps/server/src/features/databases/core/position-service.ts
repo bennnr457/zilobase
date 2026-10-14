@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { databaseOrderKeyAtPosition } from "@zilobase/features/databases/order-key";
+import { databaseOrderKeyAtPosition } from "@zilobase/features/runtime";
 
 import {
   databaseProperty,

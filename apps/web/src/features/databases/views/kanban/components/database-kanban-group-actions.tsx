@@ -1,4 +1,4 @@
-import { diffConfiguration } from "@zilobase/features/databases/record-interactions";
+import { diffConfiguration } from "@zilobase/features/databases";
 import { useEffect, useState } from "react";
 import { useUpdateDatabaseView } from "@zilobase/features/databases/react";
 import { useDeletePage } from "@zilobase/features/pages/react";
@@ -41,13 +41,13 @@ import {
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/database-view-context";
-import { getKanbanGroupValues, type KanbanGroupOption } from "@zilobase/features/databases/models";
+import { getKanbanGroupValues, type KanbanGroupOption } from "@zilobase/features/databases";
 import {
   getKanbanGroupSettings,
   updateKanbanGroupSettings,
   getKanbanGroupPageIds,
   type KanbanGroupSettings,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 export function useKanbanGroupActions(options: KanbanGroupOption[]) {
   const { activeView } = useDatabaseUiContext();

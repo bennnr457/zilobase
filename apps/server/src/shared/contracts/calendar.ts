@@ -3,4 +3,4 @@ export type {
   CalendarRecord,
   CalendarPreferences,
   CalendarMutationResponse,
-} from "@zilobase/features/calendar/contracts";
+} from "@zilobase/features/runtime";

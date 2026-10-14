@@ -3,8 +3,8 @@ import { loadWorkspacePageGraph } from "../../../pages/graph/loader";
 import { upsertPageItemPlacement } from "../../../pages/placements/page-item-placements";
 import { ServiceMutationError } from "../../../../shared/errors/service-mutation-error";
 import { and, eq, isNull } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/databases/record-interactions";
-import type { HostDatabaseCommand } from "@zilobase/features/databases/contracts";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
+import type { HostDatabaseCommand } from "@zilobase/features/runtime";
 
 import { database, pageItemPlacement } from "../../../../infrastructure/database/schema";
 import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "../framework";

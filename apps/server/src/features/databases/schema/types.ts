@@ -6,4 +6,4 @@ export {
   normalizeDatabasePropertyType,
   shouldClearValuesForPropertyTypeChange,
   type DatabasePropertyType,
-} from "@zilobase/features/databases/property-types";
+} from "@zilobase/features/runtime";

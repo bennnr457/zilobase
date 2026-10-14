@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { type DatabaseAutomationDependency } from "@zilobase/features/automations";
+import { type DatabaseAutomationDependency } from "@zilobase/features/runtime";
 import { db, type Database } from "../../../infrastructure/database";
 import {
   databaseAutomation,

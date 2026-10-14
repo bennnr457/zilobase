@@ -1,4 +1,4 @@
-import { NumberPropertyConfig } from "@zilobase/features/databases/models";
+import { NumberPropertyConfig } from "@zilobase/features/databases";
 import { Check, Hash } from "@/shared/components/icons";
 import { useState, type ReactNode } from "react";
 
@@ -18,7 +18,7 @@ import {
   type DatabaseNumberDisplayStyle,
   type DatabasePropertyConfig,
   type NumberDecimalPlacesValue,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 export function NumberPropertySettings({
@@ -293,4 +293,4 @@ function getColorSwatchClassName(color?: string | null) {
   );
 }
 
-export { getNumberPropertyConfig } from "@zilobase/features/databases/models";
+export { getNumberPropertyConfig } from "@zilobase/features/databases";

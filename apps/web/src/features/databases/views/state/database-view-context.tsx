@@ -21,20 +21,11 @@ import { type DatabasePresenceCollaborator } from "@zilobase/features/databases"
 import { useDatabaseRealtime } from "@zilobase/features/databases/react";
 import { useSession } from "@zilobase/features/auth/react";
 
-import type { DatabasePropertyValue } from "@zilobase/features/databases/models";
-import type {
-  DatabasePropertyListItem,
-  DatabaseSelectOption,
-} from "@zilobase/features/databases/models";
+import type { DatabasePropertyValue } from "@zilobase/features/databases";
+import type { DatabasePropertyListItem, DatabaseSelectOption } from "@zilobase/features/databases";
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
-import type {
-  DatabaseActiveFilter,
-  DatabaseFilterUpdatePatch,
-} from "@zilobase/features/databases/models";
-import type {
-  DatabaseActiveSort,
-  DatabaseSortUpdatePatch,
-} from "@zilobase/features/databases/models";
+import type { DatabaseActiveFilter, DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
+import type { DatabaseActiveSort, DatabaseSortUpdatePatch } from "@zilobase/features/databases";
 import type {
   DatabasePropertyFilterConfig,
   DatabaseConditionalColorConfig,
@@ -42,16 +33,16 @@ import type {
   DatabaseLayoutSettings,
   DatabaseNameColumnConfig,
   DatabaseSubItemsSettings,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import type { DatabasePageDragPayload } from "../../interactions/database-page-drop";
-import type { DatabaseChartSettings } from "@zilobase/features/databases/models";
-import type { DatabaseFormHeaderSettings } from "@zilobase/features/databases/models";
-import type { DatabaseFormQuestionSettingsPatch } from "@zilobase/features/databases/models";
-import type { DatabaseFormShareSettings } from "@zilobase/features/databases/models";
-import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
+import type { DatabaseChartSettings } from "@zilobase/features/databases";
+import type { DatabaseFormHeaderSettings } from "@zilobase/features/databases";
+import type { DatabaseFormQuestionSettingsPatch } from "@zilobase/features/databases";
+import type { DatabaseFormShareSettings } from "@zilobase/features/databases";
+import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import { DatabaseCellStateProvider, useActiveDatabaseCellKey } from "./database-cell-state";
 import { UndoHistoryScope, useOptionalUndoHistory, useUndoHistory } from "@/shared/shortcuts";
-import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases/models";
+import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases";
 
 export type DatabaseActiveConditionalColor = Omit<DatabaseConditionalColorConfig, "filter"> & {
   filter: DatabaseActiveFilter;
@@ -68,8 +59,8 @@ export type DatabaseViewTab = {
   type: string;
 };
 
-import type { DatabaseSourceViewSelection } from "@zilobase/features/databases/models";
-export type { DatabaseSourceViewSelection } from "@zilobase/features/databases/models";
+import type { DatabaseSourceViewSelection } from "@zilobase/features/databases";
+export type { DatabaseSourceViewSelection } from "@zilobase/features/databases";
 
 export type DatabaseViewProviderValue = {
   activeConditionalColors: DatabaseActiveConditionalColor[];

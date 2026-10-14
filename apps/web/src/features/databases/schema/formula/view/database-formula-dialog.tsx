@@ -38,15 +38,15 @@ import {
   escapeFormulaString,
   getFormulaExpression,
   getMergedFormulaConfig,
-} from "@zilobase/features/databases/formula";
-import { evaluateDatabaseFormula } from "@zilobase/features/databases/formula";
-import { formatFormulaValue } from "@zilobase/features/databases/formula";
+} from "@zilobase/features/databases";
+import { evaluateDatabaseFormula } from "@zilobase/features/databases";
+import { formatFormulaValue } from "@zilobase/features/databases";
 import {
   builtInReferences,
   getPropertyReferenceDescription,
   getPropertyReferenceSnippets,
   type FormulaReferenceItem,
-} from "@zilobase/features/databases/formula";
+} from "@zilobase/features/databases";
 
 type HighlightedFormulaCode = {
   bg: string;

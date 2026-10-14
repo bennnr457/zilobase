@@ -7,15 +7,15 @@ import {
   DropDrawerSubTrigger,
 } from "@/shared/ui/dropdrawer";
 
-import { isSelectLikePropertyType } from "@zilobase/features/databases/models";
+import { isSelectLikePropertyType } from "@zilobase/features/databases";
 import { hasDatabasePropertyTypeEditSettings, isDateLikePropertyType } from "../property-catalog";
 import { getNumberPropertyConfig, NumberPropertySettings } from "./number/number-property-settings";
-import { getDateFormatConfig, getTimeFormatConfig } from "@zilobase/features/databases/models";
+import { getDateFormatConfig, getTimeFormatConfig } from "@zilobase/features/databases";
 import {
   getShowFullUrl,
   getStatusDefaultOptionId,
   type DatabasePropertyConfig,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { useDatabaseActionsContext } from "../../views/state/database-view-context";
 import { DatePropertySettings } from "./date/date-property-settings";
 import { FilesPropertySettings, getFilesPropertyConfig } from "./files/files-property-settings";
@@ -27,7 +27,7 @@ import {
   getSelectOptionSort,
   SelectPropertySettings,
 } from "./select/select-property-settings";
-import { getStatusOptions } from "@zilobase/features/databases/models";
+import { getStatusOptions } from "@zilobase/features/databases";
 import { StatusPropertySettings } from "./status/status-property-settings";
 import { UrlPropertySettings } from "./url/url-property-settings";
 

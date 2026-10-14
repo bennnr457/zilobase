@@ -1,7 +1,7 @@
-import { createSampleRowContent } from "@zilobase/features/databases/models";
-export { createSampleRowContent } from "@zilobase/features/databases/models";
-import { parseCsv } from "@zilobase/features/databases/models";
-import { diffConfiguration } from "@zilobase/features/databases/record-interactions";
+import { createSampleRowContent } from "@zilobase/features/databases";
+export { createSampleRowContent } from "@zilobase/features/databases";
+import { parseCsv } from "@zilobase/features/databases";
+import { diffConfiguration } from "@zilobase/features/databases";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ArrowDownToLine,
@@ -48,19 +48,19 @@ import {
   databaseSetupMoreTemplates,
   databaseSetupSuggestedTemplates,
   type DatabaseSetupTemplate,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   getDatabaseSetupDismissed,
   getDatabaseViewIcon,
   getMergedDatabaseConfig,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import type { DatabaseSourceViewSelection } from "../../views/state/database-view-context";
 import { ViewTypeOptionGrid } from "../../views/view-settings/components/view-type-option-grid";
 import {
   getDatabaseViewTypePresentation,
   type DatabaseViewType,
 } from "../../views/view-settings/model/view-type-options";
-import { databaseCsvPayload, databaseTemplateRows } from "@zilobase/features/databases/models";
+import { databaseCsvPayload, databaseTemplateRows } from "@zilobase/features/databases";
 import { PageDatabasePicker } from "../../components/page-database-picker";
 
 type SetupView = "main" | "link";
@@ -87,8 +87,8 @@ type DatabaseSetupCardProps = {
   pageId?: string | null;
 };
 
-import type { DatabaseSetupSelection } from "@zilobase/features/databases/models";
-export type { DatabaseSetupSelection } from "@zilobase/features/databases/models";
+import type { DatabaseSetupSelection } from "@zilobase/features/databases";
+export type { DatabaseSetupSelection } from "@zilobase/features/databases";
 
 function getPageMetadataWithEmoji(metadata: unknown, emoji: string) {
   return {

@@ -9,7 +9,7 @@ import {
 import {
   databaseAutomationDefinitionSchema,
   getNextDatabaseAutomationOccurrence,
-} from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
 import type { RuntimeEnv } from "../../../shared/config/config";
 
 export type CutoverOptions = {

@@ -8,7 +8,7 @@ import {
   toWorkspacePageLayout,
   type PageLayoutConfig,
   type PageLayoutScope,
-} from "@zilobase/features/pages/layouts";
+} from "@zilobase/features/runtime";
 import {
   canAccessDatabaseInWorkspace,
   canAccessPageInWorkspace,

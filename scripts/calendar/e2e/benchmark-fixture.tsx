@@ -5,7 +5,7 @@ import type {
   CalendarSurfaceProps,
   CalendarView,
 } from "@/shared/components/calendar";
-import { eventClock } from "@zilobase/features/calendar-layout";
+import { eventClock } from "@zilobase/features/calendar";
 import "@/shared/styles/global.css";
 import "@/app/styles.css";
 const params = new URLSearchParams(location.search);

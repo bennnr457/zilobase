@@ -4,7 +4,7 @@ import {
   type DatabaseChangedAreaV2,
   type DatabaseMutationChanges,
   type DatabaseMutationEventV2,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 
 import type { RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";

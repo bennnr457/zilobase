@@ -7,7 +7,7 @@ import {
   type DatabaseAutomationDetail,
   type DatabaseAutomationSummary,
   type DatabaseAutomationValidationResult,
-} from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
 import { canAccessDatabaseRecord, getMembership } from "../../access";
 import { db, type Database } from "../../../infrastructure/database";
 import {

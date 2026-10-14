@@ -154,4 +154,4 @@ function retryAt(attempts: number, from: Date) {
   return new Date(from.getTime() + delay);
 }
 
-export type { DatabaseMutationEventV2 } from "@zilobase/features/databases/contracts";
+export type { DatabaseMutationEventV2 } from "@zilobase/features/runtime";

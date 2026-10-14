@@ -49,10 +49,6 @@
       "types": "./src/clips/index.ts",
       "default": "./src/clips/index.ts"
     },
-    "./clips/contracts": {
-      "types": "./src/clips/contracts.ts",
-      "default": "./src/clips/contracts.ts"
-    },
     "./auth": {
       "types": "./src/auth/index.ts",
       "default": "./src/auth/index.ts"
@@ -68,42 +64,6 @@
     "./automations/react": {
       "types": "./src/automations/react.ts",
       "default": "./src/automations/react.ts"
-    },
-    "./databases/property-types": {
-      "types": "./src/databases/schema/property-types.ts",
-      "default": "./src/databases/schema/property-types.ts"
-    },
-    "./databases/filter": {
-      "types": "./src/databases/schema/filter.ts",
-      "default": "./src/databases/schema/filter.ts"
-    },
-    "./databases/formula": {
-      "types": "./src/databases/schema/formula/index.ts",
-      "default": "./src/databases/schema/formula/index.ts"
-    },
-    "./databases/formula/syntax": {
-      "types": "./src/databases/schema/formula/syntax.ts",
-      "default": "./src/databases/schema/formula/syntax.ts"
-    },
-    "./databases/appearance": {
-      "types": "./src/databases/views/appearance.ts",
-      "default": "./src/databases/views/appearance.ts"
-    },
-    "./databases/record-interactions": {
-      "types": "./src/databases/interactions/index.ts",
-      "default": "./src/databases/interactions/index.ts"
-    },
-    "./databases/order-key": {
-      "types": "./src/databases/core/order-key.ts",
-      "default": "./src/databases/core/order-key.ts"
-    },
-    "./databases/view-evaluation": {
-      "types": "./src/databases/views/view-evaluation.ts",
-      "default": "./src/databases/views/view-evaluation.ts"
-    },
-    "./databases/query-hash": {
-      "types": "./src/databases/views/query-hash.ts",
-      "default": "./src/databases/views/query-hash.ts"
     },
     "./meetings": {
       "types": "./src/meetings/index.ts",
@@ -129,69 +89,9 @@
       "types": "./src/user-settings/index.ts",
       "default": "./src/user-settings/index.ts"
     },
-    "./user-settings/sidebar-config": {
-      "types": "./src/user-settings/sidebar-config.ts",
-      "default": "./src/user-settings/sidebar-config.ts"
-    },
     "./pages": {
       "types": "./src/pages/index.ts",
       "default": "./src/pages/index.ts"
-    },
-    "./pages/layouts": {
-      "types": "./src/pages/page-layouts.ts",
-      "default": "./src/pages/page-layouts.ts"
-    },
-    "./pages/content-state": {
-      "types": "./src/pages/models.ts",
-      "default": "./src/pages/models.ts"
-    },
-    "./pages/nav-delta": {
-      "types": "./src/pages/navigation-model.ts",
-      "default": "./src/pages/navigation-model.ts"
-    },
-    "./pages/queries": {
-      "types": "./src/pages/queries.ts",
-      "default": "./src/pages/queries.ts"
-    },
-    "./api-keys/contracts": {
-      "types": "./src/api-keys/contracts.ts",
-      "default": "./src/api-keys/contracts.ts"
-    },
-    "./auth/contracts": {
-      "types": "./src/auth/contracts.ts",
-      "default": "./src/auth/contracts.ts"
-    },
-    "./databases/contracts": {
-      "types": "./src/databases/contracts.ts",
-      "default": "./src/databases/contracts.ts"
-    },
-    "./databases/realtime/room-protocol": {
-      "types": "./src/databases/realtime/room-protocol.ts",
-      "default": "./src/databases/realtime/room-protocol.ts"
-    },
-    "./meetings/contracts": {
-      "types": "./src/meetings/contracts.ts",
-      "default": "./src/meetings/contracts.ts"
-    },
-    "./pages/contracts": {
-      "types": "./src/pages/contracts.ts",
-      "default": "./src/pages/contracts.ts"
-    },
-    "./search/contracts": {
-      "types": "./src/search/contracts.ts",
-      "default": "./src/search/contracts.ts"
-    },
-    "./teamspaces/contracts": {
-      "types": "./src/teamspaces/contracts.ts",
-      "default": "./src/teamspaces/contracts.ts"
-    },
-    "./user-settings/contracts": {
-      "types": "./src/user-settings/contracts.ts",
-      "default": "./src/user-settings/contracts.ts"
-    },
-    "./workspaces/contracts": {
-      "types": "./src/workspaces/contracts.ts",
-      "default": "./src/workspaces/contracts.ts"
     },
     "./api-keys/react": {
       "types": "./src/api-keys/react.ts",
@@ -237,45 +137,17 @@
       "types": "./src/calendar/index.ts",
       "default": "./src/calendar/index.ts"
     },
-    "./calendar/contracts": {
-      "types": "./src/calendar/contracts.ts",
-      "default": "./src/calendar/contracts.ts"
-    },
-    "./calendar-layout": {
-      "types": "./src/calendar-layout/index.ts",
-      "default": "./src/calendar-layout/index.ts"
-    },
-    "./runtime/room-kernel": {
-      "types": "./src/runtime/room-kernel.ts",
-      "default": "./src/runtime/room-kernel.ts"
-    },
-    "./runtime/notification-room": {
-      "types": "./src/runtime/notification-room.ts",
-      "default": "./src/runtime/notification-room.ts"
-    },
     "./oauth": {
       "types": "./src/oauth/index.ts",
       "default": "./src/oauth/index.ts"
-    },
-    "./oauth/contracts": {
-      "types": "./src/oauth/contracts.ts",
-      "default": "./src/oauth/contracts.ts"
     },
     "./instance": {
       "types": "./src/instance/index.ts",
       "default": "./src/instance/index.ts"
     },
-    "./instance/contracts": {
-      "types": "./src/instance/contracts.ts",
-      "default": "./src/instance/contracts.ts"
-    },
     "./instance/react": {
       "types": "./src/instance/react.ts",
       "default": "./src/instance/react.ts"
-    },
-    "./databases/models": {
-      "types": "./src/databases/models.ts",
-      "default": "./src/databases/models.ts"
     },
     "./calendar/react": {
       "types": "./src/calendar/react.ts",
@@ -289,10 +161,6 @@
       "types": "./src/comments/index.ts",
       "default": "./src/comments/index.ts"
     },
-    "./automations/models": {
-      "types": "./src/automations/models.ts",
-      "default": "./src/automations/models.ts"
-    },
     "./library": {
       "types": "./src/library/index.ts",
       "default": "./src/library/index.ts"
@@ -304,6 +172,10 @@
     "./oauth/react": {
       "types": "./src/oauth/react.ts",
       "default": "./src/oauth/react.ts"
+    },
+    "./runtime": {
+      "types": "./src/runtime/index.ts",
+      "default": "./src/runtime/index.ts"
     }
   }
 }

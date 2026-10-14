@@ -1,7 +1,7 @@
-import { FilesLimitValue } from "@zilobase/features/databases/models";
+import { FilesLimitValue } from "@zilobase/features/databases";
 import { Hash } from "@/shared/components/icons";
 
-import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 const filesLimitOptions = [
@@ -27,4 +27,4 @@ export function FilesPropertySettings({
   );
 }
 
-export { getFilesPropertyConfig } from "@zilobase/features/databases/models";
+export { getFilesPropertyConfig } from "@zilobase/features/databases";

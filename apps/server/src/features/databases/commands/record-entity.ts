@@ -1,8 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import {
-  databaseRecordEntitySchema,
-  type DatabaseRecordEntity,
-} from "@zilobase/features/databases/contracts";
+import { databaseRecordEntitySchema, type DatabaseRecordEntity } from "@zilobase/features/runtime";
 
 import type { DatabaseCommandContext } from "./framework";
 import {

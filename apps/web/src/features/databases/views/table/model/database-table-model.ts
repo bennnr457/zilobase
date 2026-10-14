@@ -3,10 +3,10 @@ import {
   databaseColumnDefaultWidth,
   databaseNameColumnDefaultWidth,
 } from "../../model/column-dimensions";
-import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
+import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import type { DatabaseRowDropTarget } from "../../../interactions/database-table-layout";
-import type { DatabaseTableGroupSection } from "@zilobase/features/databases/models";
-import type { RecordDrop } from "@zilobase/features/databases/models";
+import type { DatabaseTableGroupSection } from "@zilobase/features/databases";
+import type { RecordDrop } from "@zilobase/features/databases";
 
 export type InsertPropertySide = "left" | "right";
 
@@ -205,4 +205,4 @@ export function propertyInsertPositions(pending: number | undefined, property: n
   return { left: pending ?? property ?? 0, right: pending ?? (property ?? 0) + 1 };
 }
 
-export { getVisibleNestedDatabaseRows as getVisibleNestedTableRows } from "@zilobase/features/databases/models";
+export { getVisibleNestedDatabaseRows as getVisibleNestedTableRows } from "@zilobase/features/databases";

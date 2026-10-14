@@ -259,7 +259,7 @@ test.skipIf(!enabled)(
     expect(final.events[0]!.start).toEqual(occurrence.start);
     expect(final.events[0]!.end).toEqual(occurrence.end);
     expect(final.events[0]).not.toHaveProperty("pageToken");
-    const { eventOverlaps, timedLayout } = await import("@zilobase/features/calendar");
+    const { eventOverlaps, timedLayout } = await import("@zilobase/features/runtime");
     expect(eventOverlaps(final.events[0]!, input.start, input.end, "UTC")).toBe(true);
     expect(timedLayout(final.events, "2026-09-10", "UTC")[0]?.top).toBe(14 * 60);
   },

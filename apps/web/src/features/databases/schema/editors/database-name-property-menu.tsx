@@ -1,4 +1,4 @@
-import { diffConfiguration } from "@zilobase/features/databases/record-interactions";
+import { diffConfiguration } from "@zilobase/features/databases";
 import {
   ArrowDownUp,
   ArrowLeftToLine,
@@ -43,7 +43,7 @@ import {
   upsertDatabaseSort,
   type DatabaseNameColumnConfig,
   type DatabaseSortDirection,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { NameColumnGlyph } from "../../interactions/name-column-glyph";
 
 export function DatabaseNamePropertyMenu({

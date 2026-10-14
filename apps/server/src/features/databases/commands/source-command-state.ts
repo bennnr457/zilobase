@@ -1,8 +1,5 @@
 import { eq } from "drizzle-orm";
-import type {
-  DatabaseChangedAreaV2,
-  DatabaseMutationChanges,
-} from "@zilobase/features/databases/contracts";
+import type { DatabaseChangedAreaV2, DatabaseMutationChanges } from "@zilobase/features/runtime";
 
 import { dataSource, databaseDataSource } from "../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";

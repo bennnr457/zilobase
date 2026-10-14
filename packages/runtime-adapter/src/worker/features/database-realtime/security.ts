@@ -10,7 +10,7 @@ import { createWorkerLimits } from "../../limits";
 export {
   MAX_DATABASE_REALTIME_MESSAGE_BYTES,
   validateDatabaseRealtimeMessage,
-} from "@zilobase/features/databases/realtime/room-protocol";
+} from "@zilobase/features/runtime";
 const DATABASE_REALTIME_CLAIMS_HEADER = "x-zilobase-database-realtime-claims";
 const MAX_TICKET_BYTES = 8 * 1024;
 

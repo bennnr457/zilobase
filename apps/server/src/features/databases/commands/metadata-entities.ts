@@ -4,7 +4,7 @@ import {
   databasePropertyEntitySchema,
   databaseViewEntitySchema,
   dataSourceEntitySchema,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 
 import type { DatabaseCommandContext } from "./framework";
 import {

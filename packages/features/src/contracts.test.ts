@@ -1,14 +1,23 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import ts from "typescript";
 
 const packageRoot = fileURLToPath(new URL("../", import.meta.url));
-const manifest = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8"));
+function contracts(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(directory, entry.name);
+    return entry.isDirectory()
+      ? contracts(path)
+      : /(?:contracts|contract|entities)\.ts$/.test(entry.name)
+        ? [path]
+        : [];
+  });
+}
 
-test("published contracts have no runtime dependency on React or application modules", () => {
+test("shared wire contracts have no runtime dependency on React or application modules", () => {
   const visited = new Set<string>();
   function inspect(path: string) {
     if (visited.has(path)) return;
@@ -37,11 +46,6 @@ test("published contracts have no runtime dependency on React or application mod
       inspect(target);
     }
   }
-  for (const [name, entry] of Object.entries(manifest.exports)) {
-    if (!name.endsWith("contracts") && !name.endsWith("-contract")) continue;
-    inspect(
-      resolve(packageRoot, typeof entry === "string" ? entry : (entry as { types: string }).types),
-    );
-  }
+  for (const path of contracts(resolve(packageRoot, "src"))) inspect(path);
   assert.ok(visited.size > 10, "The test must cover the published contract modules");
 });

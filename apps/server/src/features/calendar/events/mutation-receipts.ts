@@ -6,7 +6,7 @@ import {
   calendarNotificationOutbox,
   calendarProviderCalendar,
 } from "../../../infrastructure/database/schema";
-import type { CalendarMutationResponse } from "@zilobase/features/calendar";
+import type { CalendarMutationResponse } from "@zilobase/features/runtime";
 import { CalendarProviderError } from "../provider/gateway";
 import type { CalendarMutationInput } from "./mutations";
 import { recordCalendarMetric } from "../metrics";

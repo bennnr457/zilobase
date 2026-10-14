@@ -6,7 +6,7 @@ import {
   useChangeDatabaseRow,
 } from "@zilobase/features/databases/react";
 
-import type { SortableDatabaseItem } from "@zilobase/features/databases/models";
+import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,

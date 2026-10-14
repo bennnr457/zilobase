@@ -1,4 +1,4 @@
-import type { AutomationReference } from "@zilobase/features/automations";
+import type { AutomationReference } from "@zilobase/features/runtime";
 
 export function optionReferenceIds(value: unknown): string[] {
   if (Array.isArray(value)) {

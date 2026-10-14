@@ -1,7 +1,7 @@
 import { Schema, SchemaTransformation } from "effect";
 import { Hono } from "hono";
 import { and, eq } from "drizzle-orm";
-import { defaultCalendarPreferences } from "@zilobase/features/calendar";
+import { defaultCalendarPreferences } from "@zilobase/features/runtime";
 import { db } from "../../infrastructure/database";
 import { calendarPreference } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
@@ -84,7 +84,7 @@ const CalendarPreferencesBase = Schema.Struct({
   remindersEnabled: Schema.Boolean,
 });
 
-import type { CalendarPreferences, CalendarTimeZoneColumn } from "@zilobase/features/calendar";
+import type { CalendarPreferences, CalendarTimeZoneColumn } from "@zilobase/features/runtime";
 
 export const calendarPreferencesSchema = {
   ...CalendarPreferencesBase,

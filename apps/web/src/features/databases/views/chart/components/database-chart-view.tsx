@@ -34,7 +34,7 @@ import { useDatabaseDataContext, useDatabaseUiContext } from "../../state/databa
 import {
   shouldSplitDatabaseChartSeries,
   type DatabaseChartReferenceLine,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   DEFAULT_CHART_COLOR,
   createChartData,

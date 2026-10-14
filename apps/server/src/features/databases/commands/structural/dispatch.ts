@@ -1,7 +1,4 @@
-import type {
-  DataSourceCommand,
-  HostDatabaseCommand,
-} from "@zilobase/features/databases/contracts";
+import type { DataSourceCommand, HostDatabaseCommand } from "@zilobase/features/runtime";
 
 import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "../framework";
 import { databaseUpdate } from "./databases";

@@ -1,7 +1,4 @@
-import {
-  getToolbarSourceIdentity,
-  getToolbarSourceTitle,
-} from "@zilobase/features/databases/models";
+import { getToolbarSourceIdentity, getToolbarSourceTitle } from "@zilobase/features/databases";
 import { DatabaseSettingsControl } from "./database-settings-control";
 import { DatabaseRowCreationControl } from "./database-row-creation-control";
 import { DatabaseSortControl } from "./database-sort-control";

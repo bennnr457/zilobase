@@ -4,7 +4,7 @@ import {
   getLatestDatabaseAutomationOccurrence,
   getNextDatabaseAutomationOccurrence,
   type DatabaseAutomationSchedule,
-} from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
 
 import {
   isDatabaseAutomationExecutionEnabled,

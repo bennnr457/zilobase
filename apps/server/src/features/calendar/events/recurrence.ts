@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import type { CalendarEventTime } from "@zilobase/features/calendar";
+import type { CalendarEventTime } from "@zilobase/features/runtime";
 import { CalendarProviderError } from "../provider/gateway";
 /** Shift a series anchor by the edited occurrence's wall-clock delta, not its elapsed UTC delta. */
 export function shiftSeriesTime(

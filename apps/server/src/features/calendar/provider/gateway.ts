@@ -5,7 +5,7 @@ import type {
   CalendarEventTime,
   CalendarIdentity,
   CalendarRecord,
-} from "@zilobase/features/calendar";
+} from "@zilobase/features/runtime";
 export class CalendarProviderError extends Error {
   constructor(
     public status: number,

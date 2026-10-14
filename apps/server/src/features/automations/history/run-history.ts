@@ -1,8 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import type {
-  DatabaseAutomationRun,
-  DatabaseAutomationStepRun,
-} from "@zilobase/features/automations";
+import type { DatabaseAutomationRun, DatabaseAutomationStepRun } from "@zilobase/features/runtime";
 
 import { db } from "../../../infrastructure/database";
 import {

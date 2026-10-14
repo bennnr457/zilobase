@@ -2,8 +2,8 @@ import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import type {
   DatabaseAutomationMutationFact,
   DatabaseMutationOrigin,
-} from "@zilobase/features/automations";
-import { databaseAutomationMutationFactSchema } from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
+import { databaseAutomationMutationFactSchema } from "@zilobase/features/runtime";
 
 import { db, type Database } from "../../../infrastructure/database";
 import { databaseAutomationEventWindow } from "../../../infrastructure/database/schema";

@@ -6,11 +6,11 @@ import {
   getColorTokenDotClassName,
 } from "@/shared/lib/color-tokens";
 import { DatabasePageLink } from "../../../interactions/database-page-link";
-import {
-  canCreateRowInGroup,
-  type DatabasePropertyListItem,
-} from "@zilobase/features/databases/models";
-import type { DatabaseRow, KanbanGroupOption } from "@zilobase/features/databases/models";
+import { canCreateRowInGroup, type DatabasePropertyListItem } from "@zilobase/features/databases";
+import type {
+  SortableDatabaseItem as DatabaseRow,
+  KanbanGroupOption,
+} from "@zilobase/features/databases";
 import type { useDatabaseKanbanCardDrag } from "../controller/use-database-kanban-card-drag";
 import {
   DatabaseKanbanGroupActions,

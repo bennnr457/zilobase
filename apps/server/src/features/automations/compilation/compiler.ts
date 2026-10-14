@@ -8,8 +8,8 @@ import {
   type DatabaseAutomationTriggerOperator,
   type DatabaseAutomationValidationError,
   type DatabaseAutomationValidationResult,
-} from "@zilobase/features/automations";
-import { FormulaParser, tokenizeFormula } from "@zilobase/features/databases/formula/syntax";
+} from "@zilobase/features/runtime";
+import { FormulaParser, tokenizeFormula } from "@zilobase/features/runtime";
 import {
   optionReferenceIds,
   visitFormulaExpressions,

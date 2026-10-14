@@ -1,5 +1,4 @@
 import { resolveActiveWorkspaceId } from "./model";
-export { resolveActiveWorkspaceId } from "./model";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useZilobaseFeatures } from "../shared/context";

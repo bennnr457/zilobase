@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import { calendarMutationReceipt } from "../../../infrastructure/database/schema";
-import type { CalendarEventTime, CalendarMutationResponse } from "@zilobase/features/calendar";
+import type { CalendarEventTime, CalendarMutationResponse } from "@zilobase/features/runtime";
 import type { RuntimeEnv } from "../../../shared/config/config";
 import { sha256Hex } from "../../../shared/crypto/sha256";
 import { requireCalendarBinding } from "../connections/ownership";

@@ -10,7 +10,7 @@ import {
   nextTriggerOperands,
   propertyEditedTriggerSelection,
   triggerOperatorLabel,
-} from "@zilobase/features/automations/models";
+} from "@zilobase/features/automations";
 import { AutomationPropertyIcon, TriggerOptionRow } from "../automation-picker-controls";
 import { useState, type ReactNode } from "react";
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";
@@ -34,11 +34,11 @@ import { cn } from "@/shared/lib/utils";
 import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
 
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
-import { type DatabaseCondition } from "@zilobase/features/databases/models";
-import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases/models";
+import { type DatabaseCondition } from "@zilobase/features/databases";
+import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases";
 
 import { ScheduleEditor } from "./automation-schedule";
-import { scheduleTriggerLabel, type ScheduleDraft } from "@zilobase/features/automations/models";
+import { scheduleTriggerLabel, type ScheduleDraft } from "@zilobase/features/automations";
 
 export function TriggerCard({
   catalog,

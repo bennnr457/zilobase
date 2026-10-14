@@ -12,4 +12,4 @@ export function splitDatabaseSelectionProperties<T>(
   };
 }
 
-export { getSharedDatabaseSelectionValue } from "@zilobase/features/databases/models";
+export { getSharedDatabaseSelectionValue } from "@zilobase/features/databases";

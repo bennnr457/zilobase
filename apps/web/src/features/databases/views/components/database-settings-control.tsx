@@ -3,7 +3,7 @@ import {
   getToolbarSourceIdentity,
   getToolbarSourceTitle,
   getToolbarFallbackSources,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 import {
   useDatabaseActionsContext,
@@ -11,10 +11,7 @@ import {
   useDatabaseUiContext,
 } from "../state/database-view-context";
 import { DatabaseViewSettingsMenu } from "../view-settings/components";
-import {
-  getNameColumnWrapContent,
-  getPropertyWrapContent,
-} from "@zilobase/features/databases/models";
+import { getNameColumnWrapContent, getPropertyWrapContent } from "@zilobase/features/databases";
 
 export function DatabaseSettingsControl({
   open,

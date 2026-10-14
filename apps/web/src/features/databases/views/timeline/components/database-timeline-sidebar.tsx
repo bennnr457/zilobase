@@ -5,7 +5,7 @@ import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared
 
 import { databaseNameColumnDefaultWidth } from "../../model/column-dimensions";
 import { DatabasePageLink } from "../../../interactions/database-page-link";
-import type { DatabasePropertyListItem } from "@zilobase/features/databases/models";
+import type { DatabasePropertyListItem } from "@zilobase/features/databases";
 import { DatabaseCellContent } from "../../components/database-cell-content";
 import type { TimelineViewRow } from "../model/database-timeline-rows";
 

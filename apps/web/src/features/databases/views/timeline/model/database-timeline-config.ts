@@ -1,12 +1,12 @@
-import { parseRowDateRange } from "@zilobase/features/databases/models";
+import { parseRowDateRange } from "@zilobase/features/databases";
 
 import type { GanttFeature, GanttStatus } from "../gantt";
 
 import { getPaletteColor } from "@/shared/lib/color-tokens";
 
-import { getTimelineStatusForValue } from "@zilobase/features/databases/models";
-import { type DatabasePropertyListItem } from "@zilobase/features/databases/models";
-import { type DatabasePropertyValue } from "@zilobase/features/databases/models";
+import { getTimelineStatusForValue } from "@zilobase/features/databases";
+import { type DatabasePropertyListItem } from "@zilobase/features/databases";
+import { type DatabasePropertyValue } from "@zilobase/features/databases";
 
 export const UNSCHEDULED_GROUP_NAME = "Unscheduled";
 

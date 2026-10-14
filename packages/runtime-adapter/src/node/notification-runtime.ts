@@ -6,7 +6,7 @@ import {
   createNotificationRoom,
   type ExpiringRoomAttachment,
   type NotificationRoomConfig,
-} from "@zilobase/features/runtime/notification-room";
+} from "@zilobase/features/runtime";
 import { createNodeRoomHost, type NodeRoomHost, type NodeRoomPeer } from "./room-host";
 import { createNodeTelemetry } from "./telemetry";
 import type { NodeRealtimeBus, RealtimeSubscription } from "./realtime-bus";

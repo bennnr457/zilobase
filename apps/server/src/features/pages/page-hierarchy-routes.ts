@@ -2,7 +2,7 @@ import { readAuthenticatedJson } from "../../shared/http/auth";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { getAuthenticatedUser as requireUser } from "../../shared/http/auth";
-import { hasPageBodyContent } from "@zilobase/features/pages/content-state";
+import { hasPageBodyContent } from "@zilobase/features/runtime";
 import {
   canAccessDatabaseInWorkspace,
   canAccessPageInWorkspace,

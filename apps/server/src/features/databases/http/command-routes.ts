@@ -4,7 +4,7 @@ import {
   databaseLifecycleCommandSchema,
   dataSourceCommandSchema,
   hostDatabaseCommandSchema,
-} from "@zilobase/features/databases/contracts";
+} from "@zilobase/features/runtime";
 import { Hono, type Context } from "hono";
 
 import { pinnedResourceMiddleware } from "../../auth/pinned-resource-middleware";

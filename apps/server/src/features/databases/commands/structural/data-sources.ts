@@ -1,9 +1,6 @@
 import { and, asc, eq, sql } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/databases/record-interactions";
-import type {
-  DataSourceCommand,
-  HostDatabaseCommand,
-} from "@zilobase/features/databases/contracts";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
+import type { DataSourceCommand, HostDatabaseCommand } from "@zilobase/features/runtime";
 
 import {
   database,

@@ -3,7 +3,7 @@ import {
   dayInstant,
   type CalendarEventTime,
   type CalendarMutationResponse,
-} from "@zilobase/features/calendar";
+} from "@zilobase/features/runtime";
 import { db } from "../../../infrastructure/database";
 import { calendarBinding, calendarMutationReceipt } from "../../../infrastructure/database/schema";
 import { sha256Hex } from "../../../shared/crypto/sha256";

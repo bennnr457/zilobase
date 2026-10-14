@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { createDatabaseViewCommands } from "@zilobase/features/databases/models";
+import { createDatabaseViewCommands } from "@zilobase/features/databases";
 
 type DomainInput = Parameters<typeof createDatabaseViewCommands>[0];
 export type DatabaseViewCommands = ReturnType<typeof getDatabaseViewCommands>;

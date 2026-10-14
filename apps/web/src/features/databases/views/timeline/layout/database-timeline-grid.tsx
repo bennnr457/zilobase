@@ -2,7 +2,7 @@ import { memo, useCallback } from "react";
 
 import { GanttAddFeatureRow, GanttFeatureItem, GanttHeader } from "../gantt";
 
-import type { DatabasePropertyListItem } from "@zilobase/features/databases/models";
+import type { DatabasePropertyListItem } from "@zilobase/features/databases";
 import {
   TimelineNameHeaderRow,
   TimelineSidebarRowCell,
@@ -10,7 +10,7 @@ import {
   type TimelineSidebarRowCellProps,
 } from "../components/database-timeline-sidebar";
 import { getTimelineViewRowKey, type TimelineViewRow } from "../model/database-timeline-rows";
-import { DEFAULT_TIMELINE_ITEM_DURATION_DAYS } from "@zilobase/features/databases/models";
+import { DEFAULT_TIMELINE_ITEM_DURATION_DAYS } from "@zilobase/features/databases";
 import { type TimelineRowItem } from "../model/database-timeline-config";
 
 type AddTimelineItem = (

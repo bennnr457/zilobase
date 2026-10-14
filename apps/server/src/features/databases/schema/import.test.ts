@@ -1,7 +1,4 @@
-import {
-  getPropertyNameKey,
-  normalizeValueForPropertyType,
-} from "@zilobase/features/databases/record-interactions";
+import { getPropertyNameKey, normalizeValueForPropertyType } from "@zilobase/features/runtime";
 import assert from "node:assert/strict";
 import { test } from "vitest";
 

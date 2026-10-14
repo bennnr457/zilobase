@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import type {
   AutomationTriggerOperand,
   DatabaseAutomationDefinition,
-} from "@zilobase/features/automations";
-import { databaseAutomationTriggerOperators } from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
+import { databaseAutomationTriggerOperators } from "@zilobase/features/runtime";
 import {
   compileDatabaseAutomationDefinition,
   operatorsForPropertyType,

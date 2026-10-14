@@ -16,17 +16,14 @@ import { DatabaseCellContent } from "../../components/database-cell-content";
 import {
   firstScalarValue,
   type DatabasePropertyValue as DatabaseCellValue,
-} from "@zilobase/features/databases/models";
-import {
-  getMergedPropertyConfig,
-  getPropertyWrapContent,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
+import { getMergedPropertyConfig, getPropertyWrapContent } from "@zilobase/features/databases";
 import { useInlineDatabaseScroll } from "../../../interactions/use-inline-database-scroll";
 import {
   type DatabasePropertyListItem,
   canCreateKanbanGroup,
   isOptionBackedGroupProperty,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
@@ -37,7 +34,7 @@ import { NameColumnGlyph } from "../../../interactions/name-column-glyph";
 import { useKanbanEdgeScroll } from "../controller/use-kanban-edge-scroll";
 import { useDatabaseKanbanCardDrag } from "../controller/use-database-kanban-card-drag";
 import { useRecordDrops } from "../../controller/use-record-drop";
-import { buildKanbanBoard } from "@zilobase/features/databases/models";
+import { buildKanbanBoard } from "@zilobase/features/databases";
 import { DatabaseKanbanColumn } from "./database-kanban-column";
 import { getKanbanBoardContentWidth } from "../layout/database-kanban-layout";
 import {
@@ -45,9 +42,9 @@ import {
   getKanbanGroupLabel,
   getSelectOptionSort,
   getSortedSelectOptions,
-  type DatabaseRow,
+  type SortableDatabaseItem as DatabaseRow,
   type KanbanGroupOption,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 const NEW_KANBAN_GROUP_TRIGGER_SELECTOR =
   ".database-input-cell-trigger, .database-date-cell-trigger";

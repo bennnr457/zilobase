@@ -1,7 +1,4 @@
-import {
-  getPropertyNameKey,
-  normalizeValueForPropertyType,
-} from "@zilobase/features/databases/record-interactions";
+import { getPropertyNameKey, normalizeValueForPropertyType } from "@zilobase/features/runtime";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 
 import type { Database } from "../../../infrastructure/database";

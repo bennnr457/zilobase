@@ -24,7 +24,7 @@ import type {
   DatabaseSubItemsFilter,
   DatabaseSubItemsProperty,
   DatabaseSubItemsSettings,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 
 const displayOptions: Array<{
   label: string;

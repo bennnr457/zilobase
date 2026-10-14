@@ -2,11 +2,11 @@ import {
   PersonDefaultValue,
   PersonLimitValue,
   PersonNotificationsValue,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { Bell, CircleUserRound, Hash, UserRound } from "@/shared/components/icons";
 import type { ReactNode } from "react";
 
-import type { DatabasePropertyConfig } from "@zilobase/features/databases/models";
+import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";
 
 const personLimitOptions = [
@@ -61,4 +61,4 @@ export function PersonPropertySettings({
   );
 }
 
-export { getPersonPropertyConfig } from "@zilobase/features/databases/models";
+export { getPersonPropertyConfig } from "@zilobase/features/databases";

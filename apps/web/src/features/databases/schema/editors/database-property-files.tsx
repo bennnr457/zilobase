@@ -5,7 +5,7 @@ import {
   getFilesValue,
   getFileHref,
   getFileLabel,
-} from "@zilobase/features/databases/models";
+} from "@zilobase/features/databases";
 import { File as FileIcon, Link as LinkIcon, Loader2, Plus, X } from "@/shared/components/icons";
 import { useRef, useState } from "react";
 

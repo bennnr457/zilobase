@@ -138,54 +138,6 @@ function aliasPlugin() {
           join(srcDir, "features/editor", args.path.replace(/^@\/packages\/editor\/?/, "")),
         ),
       }));
-      build.onResolve({ filter: /^@zilobase\/features\/databases\/property-types$/ }, () => ({
-        path: join(
-          appDir,
-          "..",
-          "..",
-          "packages",
-          "features",
-          "src",
-          "databases",
-          "schema",
-          "property-types.ts",
-        ),
-      }));
-      build.onResolve({ filter: /^@zilobase\/features\/databases\/(filter|formula)$/ }, (args) => ({
-        path: join(
-          appDir,
-          "..",
-          "..",
-          "packages",
-          "features",
-          "src",
-          "databases",
-          "schema",
-          args.path.endsWith("/filter") ? "filter.ts" : "formula/index.ts",
-        ),
-      }));
-      build.onResolve(
-        {
-          filter:
-            /^@zilobase\/features\/(databases\/views\/appearance|user-settings\/sidebar-config)$/,
-        },
-        (args) => ({
-          path: join(
-            workspaceDir,
-            "packages/features/src",
-            `${args.path.slice("@zilobase/features/".length)}.ts`,
-          ),
-        }),
-      );
-      build.onResolve({ filter: /^@zilobase\/features\/databases\/appearance$/ }, (args) => ({
-        path: join(workspaceDir, "packages/features/src", "databases/views/appearance.ts"),
-      }));
-      build.onResolve({ filter: /^@zilobase\/features\/databases\/order-key$/ }, () => ({
-        path: join(workspaceDir, "packages/features/src", "databases/core/order-key.ts"),
-      }));
-      build.onResolve({ filter: /^@zilobase\/features\/databases\/record-interactions$/ }, () => ({
-        path: join(workspaceDir, "packages/features/src", "databases/interactions/index.ts"),
-      }));
       build.onResolve({ filter: /^@\// }, async (args) => ({
         path: await resolveAliasPath(join(srcDir, args.path.slice(2))),
       }));

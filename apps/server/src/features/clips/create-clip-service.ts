@@ -1,5 +1,5 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
-import type { CreateClipRequest, CreateClipResponse } from "@zilobase/features/clips";
+import type { CreateClipRequest, CreateClipResponse } from "@zilobase/features/runtime";
 
 import { canAccessDatabaseInWorkspace, canAccessPage, getMembership } from "../access";
 import { createDatabaseRowService } from "../databases/records/service";

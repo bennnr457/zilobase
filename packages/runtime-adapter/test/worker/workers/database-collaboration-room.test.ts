@@ -6,7 +6,7 @@ import {
 } from "cloudflare:test";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { DatabaseMutationEventV2 } from "@zilobase/features/databases";
+import type { DatabaseMutationEventV2 } from "@zilobase/features/runtime";
 import { DatabaseCollaborationRoom } from "../../../src/worker/features/database-realtime/database-collaboration-room";
 
 afterEach(() => evictAllDurableObjects({ webSockets: "close" }));

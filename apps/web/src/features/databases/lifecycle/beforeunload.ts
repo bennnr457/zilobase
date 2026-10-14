@@ -1,4 +1,4 @@
-import type { DatabaseCommandState } from "@zilobase/features/databases/record-interactions";
+import type { DatabaseCommandState } from "@zilobase/features/databases";
 
 export function guardPendingDatabaseWrites(
   target: Window,

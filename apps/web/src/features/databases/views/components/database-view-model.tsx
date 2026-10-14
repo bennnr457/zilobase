@@ -1,5 +1,5 @@
-import { deriveDatabaseViewModel } from "@zilobase/features/databases/models";
-import type { DatabaseFieldOption } from "@zilobase/features/databases/models";
+import { deriveDatabaseViewModel } from "@zilobase/features/databases";
+import type { DatabaseFieldOption } from "@zilobase/features/databases";
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
 import { NameColumnGlyph } from "../../interactions/name-column-glyph";
 import { getDatabasePropertyType } from "../../schema/property-catalog";

@@ -7,7 +7,7 @@ import {
   createDatabaseAutomationSecretRequestSchema,
   updateDatabaseAutomationRequestSchema,
   validateDatabaseAutomationRequestSchema,
-} from "@zilobase/features/automations";
+} from "@zilobase/features/runtime";
 
 import type { AppBindings } from "../../../shared/types";
 import { readJsonBody } from "../../../shared/http/request";

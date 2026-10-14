@@ -6,7 +6,7 @@ import { acceptCalendarWebhook, stopCalendarWatches } from "./realtime/watches";
 import { calendarEventRoutes } from "./events/routes";
 import { calendarSyncRoutes } from "./sync/routes";
 import { calendarPreferenceRoutes } from "./preferences";
-import { calendarConnectionReturnPath } from "@zilobase/features/calendar";
+import { calendarConnectionReturnPath } from "@zilobase/features/runtime";
 import { Hono, type Context } from "hono";
 import { Schema } from "effect";
 import { and, eq } from "drizzle-orm";

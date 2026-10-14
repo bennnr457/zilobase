@@ -3,10 +3,7 @@ import { Hono } from "hono";
 import { PgDialect } from "drizzle-orm/pg-core";
 import type { SQL } from "drizzle-orm";
 import { beforeEach, test, vi } from "vitest";
-import {
-  defaultSidebarConfig,
-  normalizeSidebarConfig,
-} from "@zilobase/features/user-settings/sidebar-config";
+import { defaultSidebarConfig, normalizeSidebarConfig } from "@zilobase/features/runtime";
 
 import type { AppBindings } from "../shared/types";
 import { responseJson } from "../test-support/response";

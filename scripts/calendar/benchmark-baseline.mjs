@@ -20,7 +20,7 @@ for (const [source, target] of [
     const text = execFileSync("git", ["show", `${ref}:${file}`], {
       cwd: root,
       encoding: "utf8",
-    }).replaceAll('"@zilobase/features/calendar-layout"', '"../../../core/index"');
+    }).replaceAll('"@zilobase/features/calendar"', '"../../../core/index"');
     await mkdir(path.dirname(destination), { recursive: true });
     await writeFile(destination, text);
   }

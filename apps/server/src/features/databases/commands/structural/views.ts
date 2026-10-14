@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/databases/record-interactions";
-import type { HostDatabaseCommand } from "@zilobase/features/databases/contracts";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
+import type { HostDatabaseCommand } from "@zilobase/features/runtime";
 
 import { databaseDataSource, databaseView } from "../../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../../shared/errors/service-mutation-error";
