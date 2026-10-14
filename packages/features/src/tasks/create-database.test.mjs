@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createTaskDatabase } from "./create-database.ts";
+import { createTaskDatabase } from "./commands.ts";
 
 test("task source linking does not create a database and preserves selection limits", async () => {
   const changes = [];

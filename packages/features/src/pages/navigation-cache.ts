@@ -1,11 +1,9 @@
 import { normalizeNavigationReference } from "./navigation-references";
 import type { QueryClient } from "@tanstack/react-query";
-
-import { type NavDelta } from "./nav-delta";
+import type { NavDelta } from "./navigation-model";
 import { pagesNavRootQueryKey } from "./queries";
 import { sharedClient } from "../data/client";
-import { type PageNavigationReference } from "./cache";
-
+import type { PageNavigationReference } from "./cache";
 export function applyNavigationDeltaToCache(
   queryClient: QueryClient,
   workspaceId: string,

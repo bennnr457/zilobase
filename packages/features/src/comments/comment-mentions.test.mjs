@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-const mentionHelpersPath = "./mentions.ts";
+const mentionHelpersPath = "./index.ts";
 
 test("comment mention trigger detects @ tokens at the cursor", async () => {
   const { getCommentMentionTrigger } = await import(mentionHelpersPath);

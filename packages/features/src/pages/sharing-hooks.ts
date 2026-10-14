@@ -11,12 +11,12 @@ import {
   usePageGuestInvitations,
   usePageGuestRequests,
 } from "./query-hooks";
-import { useDeletePageAccess, useSetPagePublished, useUpsertPageAccess } from "./access-mutations";
+import { useDeletePageAccess, useSetPagePublished, useUpsertPageAccess } from "./sharing-mutations";
 import {
   useInvitePageGuest,
   useCancelPageGuestInvitation,
   useRevokePageGuest,
-} from "./guest-mutations";
+} from "./sharing-mutations";
 import { useDatabaseMetadata } from "../databases/queries/metadata";
 import { useDatabaseAccess } from "../databases/queries/query-hooks";
 import {
@@ -33,7 +33,7 @@ import {
   getPendingItems,
   getGuestActionLabel,
   getDatabaseSharingAccessLevel,
-} from "./sharing-model";
+} from "./publication";
 
 export function useItemSharingController({
   databaseId,

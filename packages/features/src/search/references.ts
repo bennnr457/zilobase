@@ -2,7 +2,7 @@ import { getDatabaseEmoji } from "../databases/views/appearance";
 import { z } from "zod";
 import type { QueryClient } from "@tanstack/react-query";
 import { sharedClient, type SharedClient } from "../data/client";
-import { pageCacheEntitySchema } from "../pages/cache-entities";
+import { pageCacheEntitySchema } from "../pages/cache-registration";
 import { hostCacheEntitySchema } from "../databases/schema/cache-entities";
 import type { AppSearchResult } from "./contracts";
 

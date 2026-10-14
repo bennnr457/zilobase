@@ -17,7 +17,7 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(source, /setRowComplete:/);
     assert.match(source, /addDatabaseRow: createTask/);
     assert.match(source, /getTaskCreationInput/);
-    const sharedCreation = await readSource("/packages/features/src/tasks/record-mutations.ts");
+    const sharedCreation = await readSource("/packages/features/src/tasks/commands.ts");
     assert.match(sharedCreation, /initialValues:/);
     assert.match(source, /configureDataSources: onConfigureDataSources/);
     assert.match(source, /addDataSource: \(\) => setDataSourceSetupOpen\(true\)/);

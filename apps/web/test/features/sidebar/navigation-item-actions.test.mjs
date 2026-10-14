@@ -61,7 +61,7 @@ export function register({ assert, appPath, test }) {
             const sharedModules = {
               "../workspaces/react": "@zilobase/features/workspaces/react",
               "./content-mutations": "@zilobase/features/pages/react",
-              "./activity-mutations": "@zilobase/features/pages/react",
+              "./navigation-mutations": "@zilobase/features/pages/react",
               "./query-hooks": "@zilobase/features/pages/react",
               "../databases/mutations/databases": "@zilobase/features/databases/react",
               "../databases/queries/metadata": "@zilobase/features/databases/react",

@@ -4,7 +4,7 @@ import {
   getTaskPropertyUpdate,
   getTaskCreationInput,
   getTaskCompletionUpdate,
-} from "./record-mutations.ts";
+} from "./commands.ts";
 import { STATUS_PROPERTY_ID, ASSIGNEE_PROPERTY_ID } from "./view-data.ts";
 const payload = {
   database: { id: "host" },

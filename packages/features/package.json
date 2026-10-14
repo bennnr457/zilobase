@@ -142,12 +142,12 @@
       "default": "./src/pages/page-layouts.ts"
     },
     "./pages/content-state": {
-      "types": "./src/pages/content-state.ts",
-      "default": "./src/pages/content-state.ts"
+      "types": "./src/pages/models.ts",
+      "default": "./src/pages/models.ts"
     },
     "./pages/nav-delta": {
-      "types": "./src/pages/nav-delta.ts",
-      "default": "./src/pages/nav-delta.ts"
+      "types": "./src/pages/navigation-model.ts",
+      "default": "./src/pages/navigation-model.ts"
     },
     "./pages/queries": {
       "types": "./src/pages/queries.ts",

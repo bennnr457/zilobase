@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getDatabaseSharingAccessLevel, getSharingRuleState } from "./sharing-model.ts";
+import { getDatabaseSharingAccessLevel, getSharingRuleState } from "./publication.ts";
 
 test("public wildcard publishes an item while public rules stay out of individual sharing", () => {
   const user = { targetType: "user", targetId: "user-1", accessLevel: "edit" };

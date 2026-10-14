@@ -39,7 +39,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("breadcrumbs follow page, database, and database-row ancestry", async () => {
     const { buildCanonicalBreadcrumbTrail } = await loadModule(
-      "/packages/features/src/pages/breadcrumb-navigation.ts",
+      "/packages/features/src/pages/navigation-model.ts",
     );
     const pages = [
       page("meeting", "Meeting", { isShared: false }),
@@ -64,7 +64,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("linked databases resolve breadcrumbs from their original placement", async () => {
     const { buildCanonicalBreadcrumbTrail } = await loadModule(
-      "/packages/features/src/pages/breadcrumb-navigation.ts",
+      "/packages/features/src/pages/navigation-model.ts",
     );
     const pages = [page("original", "Original"), page("link-host", "Link host")];
     const databases = [database("tasks", "Tasks", "original")];
@@ -86,7 +86,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("breadcrumb roots distinguish private, shared, and named teamspaces", async () => {
     const { getBreadcrumbNavigationSection } = await loadModule(
-      "/packages/features/src/pages/breadcrumb-navigation.ts",
+      "/packages/features/src/pages/navigation-model.ts",
     );
     const trail = (value) => [{ id: value.id, kind: "page", page: value }];
 

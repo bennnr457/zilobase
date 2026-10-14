@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMutationTestRuntime } from "../shared/mutation-runtime.test";
-import { switchPageWorkspace, useSetPagePublished } from "./access-mutations";
+import { switchPageWorkspace, useSetPagePublished } from "./sharing-mutations";
 import { QueryClient } from "@tanstack/react-query";
 import { pageAccessQueryKey, pageQueryKey } from "./queries";
 

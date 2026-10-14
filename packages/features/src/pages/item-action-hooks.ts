@@ -1,6 +1,6 @@
 import { useActiveWorkspaceId } from "../workspaces/react";
 import { useCreatePage, useUpdatePage, useDeletePage } from "./content-mutations";
-import { useSetPageFavorite } from "./activity-mutations";
+import { useSetPageFavorite } from "./navigation-mutations";
 import { usePage, usePageAccessLevel, usePageNavigation } from "./query-hooks";
 import { getNavigationItemState } from "./navigation-item-state";
 import {
@@ -11,7 +11,7 @@ import {
 import { useDatabaseMetadata } from "../databases/queries/metadata";
 import { useUpdateUserSettings, useUserSettings } from "../user-settings/react";
 import { getPrimaryPageParentId, resolvePageFullWidth } from "./queries";
-import { buildPageDuplicateInput } from "./duplication";
+import { buildPageDuplicateInput } from "./models";
 
 type ActionCallbacks = { onSuccess?: () => void; onError?: (error: Error) => void };
 export function useItemActionController({

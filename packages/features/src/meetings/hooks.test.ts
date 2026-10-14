@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createMutationTestRuntime } from "../shared/mutation-runtime.test";
-import { useCreateMeeting } from "./hooks";
+import { useCreateMeeting } from "./react";
 import type { MeetingResponse } from "./contracts";
 
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));

@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { DataSession } from "../../packages/features/src/data/session";
 import { useSharedEntity } from "../../packages/features/src/data/react";
-import { pageCacheEntitySchema } from "../../packages/features/src/pages/cache-entities";
+import { pageCacheEntitySchema } from "../../packages/features/src/pages/cache-registration";
 import { propertyCacheEntitySchema } from "../../packages/features/src/databases/schema/cache-entities";
 
 const session = new DataSession({

@@ -3,7 +3,7 @@ import {
   resolvePlacement,
   pagePreferenceSchema,
 } from "./navigation-references";
-import { pageCacheEntitySchema } from "./cache-entities";
+import { pageCacheEntitySchema } from "./cache-registration";
 import type { QueryClient } from "@tanstack/react-query";
 import { sharedClient, type SharedClient } from "../data/client";
 import type { Page, PageDetail, PageNavigationPayload } from "./contracts";

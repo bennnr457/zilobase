@@ -3,7 +3,7 @@ import { useDatabaseController } from "../interactions/react";
 import { useZilobaseFeatures } from "../../shared/context";
 import { pagesQueryKey } from "../../pages/queries";
 import { useMutation } from "@tanstack/react-query";
-import type { NavDelta } from "../../pages/nav-delta";
+import type { NavDelta } from "../../pages/navigation-model";
 import type { DatabaseHostEntity, DataSourceEntity } from "../core/entities";
 type CreateDatabaseInput = {
   name?: string;

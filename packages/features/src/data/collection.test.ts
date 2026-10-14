@@ -5,7 +5,7 @@ import { createElement } from "react";
 
 import { DataSession, type DataSessionScope } from "./session";
 import { useSharedEntity } from "./react";
-import { pageCacheEntitySchema } from "../pages/cache-entities";
+import { pageCacheEntitySchema } from "../pages/cache-registration";
 import { propertyCacheEntitySchema } from "../databases/schema/cache-entities";
 
 const scope: DataSessionScope = {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { hasPageBodyContent, isPageBodyEmpty } from "./content-state";
+import { hasPageBodyContent, isPageBodyEmpty } from "./models";
 
 test("page content state ignores empty structural nodes", () => {
   assert.equal(isPageBodyEmpty(null), true);

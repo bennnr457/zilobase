@@ -3,21 +3,21 @@ export {
   useCancelPageGuestInvitation,
   useAcceptPageGuestInvitation,
   useRevokePageGuest,
-} from "./guest-mutations";
+} from "./sharing-mutations";
 export {
   useUpsertPageAccess,
   useDeletePageAccess,
   useSetPagePublished,
   switchPageWorkspace,
-} from "./access-mutations";
+} from "./sharing-mutations";
 export {
   useMovePageToTeamspace,
   useConvertPageToTeamspace,
   useEmbedPageItem,
   useRemovePageEmbed,
-} from "./placement-mutations";
+} from "./navigation-mutations";
 export { useCreatePage, useUpdatePage, useDeletePage, useRestorePage } from "./content-mutations";
-export { useSetPageFavorite, useRecordItemVisit } from "./activity-mutations";
+export { useSetPageFavorite, useRecordItemVisit } from "./navigation-mutations";
 export {
   usePages,
   usePageNavigation,

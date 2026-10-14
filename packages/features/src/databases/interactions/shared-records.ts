@@ -1,6 +1,6 @@
 import type { SessionEntities } from "../../data/client";
 import { entityUpsertPreview, type EntityPreview } from "../../data/commands";
-import { pageCacheEntitySchema } from "../../pages/cache-entities";
+import { pageCacheEntitySchema } from "../../pages/cache-registration";
 import {
   valueIdentity,
   recordCacheEntitySchema,

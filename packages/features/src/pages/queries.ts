@@ -1,3 +1,4 @@
+export { getPrimaryPageParentId } from "./navigation-model";
 import { normalizeAccessReferences, revokeAccessReferences } from "./access-references";
 import { normalizeAiPageReferences } from "./summary-references";
 import { normalizeNavigationReference } from "./navigation-references";
@@ -41,17 +42,6 @@ export const embeddedItemsOpenAsLabels: Record<EmbeddedItemsOpenAs, string> = {
 };
 
 export const embeddedItemsOpenAsModes: EmbeddedItemsOpenAs[] = ["sidepanel", "dialog"];
-
-export function getPrimaryPageParentId(placements: PageItemPlacement[], pageId: string) {
-  return (
-    placements.find(
-      (placement) =>
-        placement.itemKind === "page" &&
-        placement.itemId === pageId &&
-        placement.placementKind === "primary",
-    )?.parentId ?? null
-  );
-}
 
 export function resolvePageFullWidth(
   page:

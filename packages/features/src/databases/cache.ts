@@ -2,7 +2,7 @@ import { parseDatabaseOrderKey } from "./core/order-key";
 import type { DataSession } from "../data/session";
 import type { EntityCollection, PreparedIngestion } from "../data/collection";
 import { entityTimestamp } from "../data/clock";
-import { pageCacheEntitySchema, type PageCacheEntity } from "../pages/cache-entities";
+import { pageCacheEntitySchema, type PageCacheEntity } from "../pages/cache-registration";
 import {
   databaseBootstrapResponseSchema,
   databaseRecordEntitySchema,

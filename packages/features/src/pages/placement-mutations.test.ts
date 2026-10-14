@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMutationTestRuntime } from "../shared/mutation-runtime.test";
-import { useEmbedPageItem } from "./placement-mutations";
+import { useEmbedPageItem } from "./navigation-mutations";
 
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
 

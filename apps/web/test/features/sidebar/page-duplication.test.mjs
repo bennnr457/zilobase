@@ -9,7 +9,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("page duplication clones nested content and strips comment marks without changing the source", async () => {
     const { clonePageContent, getDuplicatePageName } = await loadModule(
-      "/packages/features/src/pages/duplication.ts",
+      "/packages/features/src/pages/models.ts",
     );
     const source = {
       type: "doc",
