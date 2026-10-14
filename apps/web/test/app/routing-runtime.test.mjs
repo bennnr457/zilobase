@@ -144,6 +144,48 @@ export function register({ assert, sourcePath, test }) {
     controls.reset();
   });
 
+  test("authentication Effects stay lazy and route failures retain their identity", async () => {
+    const { router, guards, controls, Effect } = await runtime();
+    controls.reset();
+    const workflows = [
+      guards.applyAppAccess(),
+      guards.applyStartRedirect(),
+      guards.applyLoginAccess({}),
+      guards.applySignupAccess({}),
+      guards.applyOnboardingAccess(),
+      guards.applyOAuthConsentAccess({}),
+    ];
+    assert.ok(workflows.every(Effect.isEffect));
+    assert.equal(controls.sessionReads, 0);
+    assert.equal(controls.workspaceReads, 0);
+    assert.deepEqual(controls.requests, []);
+    const routes = [
+      router.routesById["/app"],
+      ...["/", "/login", "/signup", "/onboarding", "/oauth/consent"].map((path) =>
+        Object.values(router.routesById).find(
+          (item) => item.fullPath === path && item.id !== "__root__" && item.id !== "/app",
+        ),
+      ),
+    ];
+    for (const route of routes) {
+      controls.reset();
+      const failure = new Error("Session read failed");
+      controls.errors.session = failure;
+      await assert.rejects(route.options.beforeLoad({ search: {} }), (error) => error === failure);
+      assert.equal(controls.workspaceReads, 0);
+    }
+    for (const route of routes.filter((route) => route.fullPath !== "/oauth/consent")) {
+      controls.reset();
+      controls.session = { user: { id: "user" }, session: { id: "session" } };
+      const failure = new Error("Workspace read failed");
+      controls.errors.workspaces = failure;
+      await assert.rejects(route.options.beforeLoad({ search: {} }), (error) => error === failure);
+      assert.equal(controls.sessionReads, 1);
+      assert.equal(controls.workspaceReads, 1);
+    }
+    controls.reset();
+  });
+
   test("TanStack Router accepts Effect redirects and resolved sharing context", async () => {
     const { router, controls, createMemoryHistory, createRouter } = await runtime();
     const load = async (path) => {

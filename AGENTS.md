@@ -47,8 +47,10 @@ with screens loaded lazily. Keep route guards and URL validation separate. Group
 the shell, pending UI, authenticated fallback, and edition host in `route-shell.tsx`;
 keep global error recovery in `route-error-page.tsx` and load it lazily. Avoid
 forwarding route-group modules and extra files for small route surfaces.
-Use Effect for asynchronous route-guard workflows, with `Effect.runPromise` at
-the router adapter boundary. Preserve original errors and redirect responses.
+Keep authentication, onboarding, OAuth, start-page, and share-access workflows
+together in `guards.ts`. Compose them as Effects; `router.tsx` declares routes and
+runs them with `Effect.runPromise` at the router adapter boundary. Preserve original
+errors and redirect responses.
 Use `Effect.runSync` for synchronous guards and browser actions to preserve
 callback timing.
 Compose routing helpers directly as Effects; convert to Promises only in router

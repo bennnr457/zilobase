@@ -35,12 +35,15 @@ export default function RouteErrorPage({ error }: ErrorComponentProps) {
     if (!copy.showChangeServer) return;
     const fiber = Effect.runFork(
       Effect.tryPromise({
-        try: async () => {
-          const result = await listDesktopServerProfiles();
-          return result.profiles.filter((profile) => !profile.active);
-        },
+        try: () => listDesktopServerProfiles(),
         catch: (error) => error,
       }).pipe(
+        Effect.flatMap((result) =>
+          Effect.try({
+            try: () => result.profiles.filter((profile) => !profile.active),
+            catch: (error) => error,
+          }),
+        ),
         Effect.orElseSucceed(() => []),
         Effect.tap((profiles) => Effect.sync(() => setOtherProfiles(profiles))),
       ),
