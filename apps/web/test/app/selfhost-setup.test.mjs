@@ -6,7 +6,7 @@ export function register({ loadModule, readSource, readWorkspace, assert, test }
         readSource("/src/components/auth/setup/bootstrap-instance.ts"),
         readWorkspace("packages/features/src/instance/bootstrap.ts"),
       ]).then((parts) => parts.join("\n")),
-      readSource("/src/app/routing/route-groups/public-routes.tsx"),
+      readSource("/src/app/routing/router.tsx"),
     ]);
 
     assert.match(router, /path: "\/setup"/);
@@ -24,7 +24,7 @@ export function register({ loadModule, readSource, readWorkspace, assert, test }
   test("bootstrap-required login errors redirect to self-host setup", async () => {
     const [redirects, router, validators] = await Promise.all([
       loadModule("/packages/features/src/auth/model.ts"),
-      readSource("/src/app/routing/route-groups/public-routes.tsx"),
+      readSource("/src/app/routing/router.tsx"),
       readSource("/src/app/routing/search-validators.ts"),
     ]);
 

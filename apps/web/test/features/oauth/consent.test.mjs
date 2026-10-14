@@ -61,7 +61,7 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("oauth consent and callback are public lazy routes", async () => {
-    const source = await readSource("/src/app/routing/route-groups/public-routes.tsx");
+    const source = await readSource("/src/app/routing/router.tsx");
     assert.match(source, /path: "\/oauth\/consent"/);
     assert.match(source, /path: "\/oauth\/callback"/);
     assert.match(source, /components\/oauth\/consent/);

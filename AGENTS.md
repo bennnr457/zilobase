@@ -39,6 +39,10 @@ providers beside the UI or runtime they serve. Merge tiny provider wrappers into
 their existing owner when practical; icon defaults live in `components/icons.ts`
 so independent editor roots can use them without importing application startup.
 
+Keep web route declarations and root routes together in `app/routing/router.tsx`,
+with screens loaded lazily. Keep route guards, URL validation, shell rendering,
+and error surfaces separate; avoid forwarding route-group modules.
+
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.
 Web build feature flags and desktop environment checks live together in

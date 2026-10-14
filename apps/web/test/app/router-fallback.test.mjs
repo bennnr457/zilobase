@@ -2,16 +2,7 @@ export function register({ readSource, assert, test }) {
   test("route authentication never leaves a blank screen", async () => {
     const source = (
       await Promise.all(
-        [
-          "router",
-          "route-shell",
-          "route-error-page",
-          "guards",
-          "route-roots",
-          "route-groups/app-routes",
-          "route-groups/public-routes",
-          "route-groups/content-routes",
-        ].map((path) =>
+        ["router", "route-shell", "route-error-page", "guards"].map((path) =>
           readSource(`/src/app/routing/${path}.tsx`).catch(() =>
             readSource(`/src/app/routing/${path}.ts`),
           ),
@@ -45,9 +36,7 @@ export function register({ readSource, assert, test }) {
   test("published routes keep the authenticated shell after route authorization", async () => {
     const routerSource = (
       await Promise.all(
-        ["router.tsx", "route-roots.tsx", "route-shell.tsx", "route-groups/content-routes.tsx"].map(
-          (path) => readSource(`/src/app/routing/${path}`),
-        ),
+        ["router.tsx", "route-shell.tsx"].map((path) => readSource(`/src/app/routing/${path}`)),
       )
     ).join("\n");
     const pageSource = await readSource("/src/components/pages/page.tsx");

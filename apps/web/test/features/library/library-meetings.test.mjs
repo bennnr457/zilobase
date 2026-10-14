@@ -34,7 +34,7 @@ export function register({ readSource, assert, loadModule, test }) {
   test("Trash is a Library tab backed by the deleted navigation query", async () => {
     const { libraryViewIds, normalizeSidebarConfig } = await loadModule(sidebarConfigPath);
     const librarySource = await readLibrarySource();
-    const routes = await readSource("/src/app/routing/route-groups/app-routes.tsx");
+    const routes = await readSource("/src/app/routing/router.tsx");
     const icons = await readSource("/src/app/shell/navigation/components/sidebar-layout-icons.tsx");
 
     assert.ok(libraryViewIds.includes("trash"));

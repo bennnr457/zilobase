@@ -1,16 +1,10 @@
-const routeGroups = ["app-routes", "content-routes", "public-routes", "settings-routes"];
-
 export function register({ assert, readSource, test }) {
   test("top-level routes load feature pages on demand", async () => {
-    const sources = await Promise.all(
-      routeGroups.map((name) => readSource(`/src/app/routing/route-groups/${name}.tsx`)),
-    );
+    const source = await readSource("/src/app/routing/router.tsx");
 
-    for (const source of sources) {
-      assert.match(source, /lazyRouteComponent/);
-      assert.match(source, /\(\) => import\("@\/components\//);
-      assert.doesNotMatch(source, /import [^\n]+ from "@\/components\/[^\n]+\/pages\//);
-    }
+    assert.match(source, /lazyRouteComponent/);
+    assert.match(source, /\(\) => import\("@\/components\//);
+    assert.doesNotMatch(source, /import [^\n]+ from "@\/components\/[^\n]+\/pages\//);
   });
 
   test("the application shell and expensive optional surfaces are lazy", async () => {

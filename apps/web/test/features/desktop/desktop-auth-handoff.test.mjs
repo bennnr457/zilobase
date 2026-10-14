@@ -71,7 +71,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
   test("desktop connection route accepts signed-out and connection-error startup", async () => {
     const [routeErrorPage, publicRoutes] = await Promise.all([
       readSource("/src/app/routing/route-error-page.tsx"),
-      readSource("/src/app/routing/route-groups/public-routes.tsx"),
+      readSource("/src/app/routing/router.tsx"),
     ]);
 
     assert.match(routeErrorPage, /navigate\(\{ to: "\/connect" \}\)/);
