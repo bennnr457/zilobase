@@ -85,7 +85,7 @@ import { PageIconDisplay } from "@/features/pages/index";
 import { prefetchPageForNavigation } from "@/features/editor/collaboration/page-prefetch";
 import { markPageNavigationStart } from "@/features/pages/navigation/page-navigation-timing";
 import { getTeamspaceSidebarPermissions } from "@zilobase/features/teamspaces";
-import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
+import { useSidebarSectionOpen } from "../model/local-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";
 import { SidebarLibraryLink } from "./sidebar-library-link";
 import type {

@@ -1,6 +1,6 @@
 import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { applyDatabaseShareAccess, applyPageShareAccess, getFreshSession } from "../guards";
-import { PendingPage } from "../pending-page";
+import { PendingPage } from "../route-shell";
 import { rootRoute } from "../route-roots";
 import { validateDatabaseSearch, validateMeetingSearch } from "../search-validators";
 

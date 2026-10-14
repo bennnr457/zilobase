@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { CalendarDays, ChevronRightIcon } from "@/shared/components/icons";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
-import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
+import { useSidebarSectionOpen } from "../model/local-state";
 
 import {
   SidebarGroup,

@@ -84,7 +84,7 @@ import {
   hideUnconfiguredIntegrationTabs,
   restoreUnconfiguredIntegrationTabs,
 } from "./model/sidebar-layout-model";
-import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/sidebar-persistence";
+import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/local-state";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
 import { isFeatureEnabled } from "@/shared/config/feature-flags";
 import { NotificationCenter } from "@/features/notifications";

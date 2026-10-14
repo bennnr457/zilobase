@@ -14,7 +14,7 @@ import {
 import { buildTaskRows, filterMyTaskRows, getTaskDatabaseSchema } from "@zilobase/features/tasks";
 import { useSession } from "@zilobase/features/auth/react";
 
-import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
+import { useSidebarSectionOpen } from "../model/local-state";
 
 export function SidebarTasksSection({
   databaseIds,

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("sidebar expansion is scoped by workspace and section", async () => {
     const { getSidebarExpansionStorageKey } = await loadModule(
-      "/src/features/sidebar/model/sidebar-expansion-state.ts",
+      "/src/app/shell/navigation/model/local-state.ts",
     );
 
     assert.equal(
@@ -20,7 +20,7 @@ export function register({ assert, loadModule, test }) {
 
   test("sidebar expansion safely round trips expanded items", async () => {
     const { readExpandedSidebarItems, setSidebarItemExpanded, writeExpandedSidebarItems } =
-      await loadModule("/src/features/sidebar/model/sidebar-expansion-state.ts");
+      await loadModule("/src/app/shell/navigation/model/local-state.ts");
     const values = new Map();
     const storage = {
       getItem: (key) => values.get(key) ?? null,
@@ -38,7 +38,7 @@ export function register({ assert, loadModule, test }) {
 
   test("sidebar expansion ignores invalid or unavailable storage", async () => {
     const { readExpandedSidebarItems } = await loadModule(
-      "/src/features/sidebar/model/sidebar-expansion-state.ts",
+      "/src/app/shell/navigation/model/local-state.ts",
     );
     const blockedStorage = {
       getItem: () => {

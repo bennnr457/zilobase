@@ -1,28 +1,30 @@
 export function register({ readSource, assert, test }) {
   test("sidebar aligns the workspace switcher and notifications at the top", async () => {
-    const sidebarSource = await readSource("/src/features/sidebar/app-sidebar.tsx");
-    const workspaceSource = await readSource("/src/features/sidebar/workspace-switcher.tsx");
+    const sidebarSource = await readSource("/src/app/shell/navigation/app-sidebar.tsx");
+    const workspaceSource = await readSource("/src/app/shell/navigation/workspace-switcher.tsx");
     const sidebarPrimitiveSource = await readSource("/src/shared/ui/sidebar.tsx");
     const sidebarTabsSource = await readSource(
-      "/src/features/sidebar/components/sidebar-layout-tabs.tsx",
+      "/src/app/shell/navigation/components/sidebar-layout-tabs.tsx",
     );
     const sidebarCustomizeSource = await readSource(
-      "/src/features/sidebar/components/sidebar-customize-panel.tsx",
+      "/src/app/shell/navigation/components/sidebar-customize-panel.tsx",
     );
     const pageDatabasePickerSource = await readSource(
       "/src/features/databases/components/page-database-picker.tsx",
     );
     const runtimeSectionDragSource = await readSource(
-      "/src/features/sidebar/components/runtime-section-drag-item.tsx",
+      "/src/app/shell/navigation/components/runtime-section-drag-item.tsx",
     );
     const sidebarShortcutSource = await readSource(
-      "/src/features/sidebar/components/sidebar-shortcut-list.tsx",
+      "/src/app/shell/navigation/components/sidebar-shortcut-list.tsx",
     );
     const sidebarDatabaseViewSource = await readSource(
-      "/src/features/sidebar/components/sidebar-database-view-section.tsx",
+      "/src/app/shell/navigation/components/sidebar-database-view-section.tsx",
     );
-    const navPagesSource = await readSource("/src/features/sidebar/components/nav-pages.tsx");
-    const navListSource = await readSource("/src/features/sidebar/components/sidebar-nav-list.tsx");
+    const navPagesSource = await readSource("/src/app/shell/navigation/components/nav-pages.tsx");
+    const navListSource = await readSource(
+      "/src/app/shell/navigation/components/sidebar-nav-list.tsx",
+    );
     const defaultIconsSource = await readSource("/src/features/pages/icons/item-icons.ts");
     const pageIconSource = await readSource("/src/features/pages/icons/page-icon.tsx");
     const databasePageLinkSource = await readSource(

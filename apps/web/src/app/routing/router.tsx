@@ -1,6 +1,6 @@
 import { createRouter, lazyRouteComponent } from "@tanstack/react-router";
 
-import { PendingPage } from "./pending-page";
+import { PendingPage } from "./route-shell";
 import { appRoutes } from "./route-groups/app-routes";
 import { contentRoutes } from "./route-groups/content-routes";
 import { publicRoutes } from "./route-groups/public-routes";

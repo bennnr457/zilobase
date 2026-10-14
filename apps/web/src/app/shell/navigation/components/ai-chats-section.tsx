@@ -3,7 +3,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from "@/shared/ui/sidebar";
 import { AiChatHistoryList } from "@/features/ai/conversations/components/elements/index";
 import { useAiChatThreadState } from "@/features/ai/index";
-import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
+import { useSidebarSectionOpen } from "../model/local-state";
 
 export function AiChatsSection({ limit, storageKey }: { limit: number; storageKey: string }) {
   const { activeThreadId, setActiveThreadId } = useAiChatThreadState();

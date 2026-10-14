@@ -4,7 +4,7 @@ export function register({ readSource, assert, test }) {
       await Promise.all(
         [
           "router",
-          "pending-page",
+          "route-shell",
           "route-error-page",
           "guards",
           "route-roots",

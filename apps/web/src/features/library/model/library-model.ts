@@ -5,7 +5,7 @@ import type { MeetingListItem } from "@zilobase/features/meetings";
 import type { Teamspace } from "@zilobase/features/teamspaces";
 import type { PageNavigationPayload } from "@zilobase/features/pages";
 import { libraryViewIds } from "@zilobase/features/user-settings";
-import { libraryViewLabels } from "@/features/sidebar/model/index";
+import { libraryViewLabels } from "@/app/shell/navigation/model/sidebar-layout-model";
 import {
   buildHomepageRows as deriveHomepageRows,
   libraryParentPropertyId,

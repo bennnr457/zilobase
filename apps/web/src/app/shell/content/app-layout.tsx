@@ -4,7 +4,7 @@ import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronsRightIcon, SidebarSimpleIcon } from "@/shared/components/icons";
 
-import { AppSidebar } from "@/features/sidebar";
+import { AppSidebar } from "@/app/shell/navigation";
 import { AppSearchProvider } from "@/features/search";
 import { DesktopTabs, getDesktopTabTitle } from "@/features/desktop/components/index";
 import { ChatSidebarTrigger } from "@/features/ai/conversations/components/chat-sidebar-trigger";
@@ -21,7 +21,7 @@ import {
   APP_SIDEBAR_PANEL_WIDTH,
   getRightSidebarEditorDefaultSize,
   type SidebarResizeIntent,
-} from "@/features/sidebar";
+} from "@/app/shell/navigation";
 
 import { getDatabaseId, useRoutePageId } from "@/features/pages/pane/page-pane-header";
 import {

@@ -35,10 +35,10 @@ import {
 } from "./sidebar-nav-list";
 import { SidebarNavItemAction } from "@/shared/ui/sidebar-nav-item-action";
 import { useOpenInNewTab } from "@/features/desktop/components/index";
-import { getSidebarExpansionStorageKey } from "../model/sidebar-expansion-state";
+import { getSidebarExpansionStorageKey } from "../model/local-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";
 import { SidebarLibraryLink } from "./sidebar-library-link";
-import { useSidebarSectionOpen } from "../model/sidebar-section-open-state";
+import { useSidebarSectionOpen } from "../model/local-state";
 import type { SidebarSectionLimit, SidebarSectionSort } from "@zilobase/features/user-settings";
 
 export function NavFavorites({

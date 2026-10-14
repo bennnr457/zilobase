@@ -42,7 +42,7 @@ export function register({ assert, appPath, test }) {
         contents: `
       import {createElement} from "react";
       import {renderToString} from "react-dom/server";
-      import {useItemSharing} from "./src/features/sidebar/commands/use-item-sharing";
+      import {useItemSharing} from "./src/app/shell/navigation/commands/use-item-sharing";
       import {runtime} from "sharing-test-runtime";
       export function capture(input, dependencies, selection) {
         Object.assign(runtime,dependencies);

@@ -19,7 +19,7 @@ import {
 } from "@/shared/components/icons";
 import { toast } from "sonner";
 
-import { NavActions } from "@/features/sidebar";
+import { NavActions } from "@/app/shell/navigation";
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
@@ -38,8 +38,8 @@ import {
 } from "@/shared/ui/breadcrumb";
 import { Separator } from "@/shared/ui/separator";
 import { SidebarTrigger } from "@/shared/ui/sidebar";
-import { libraryViewIcons } from "@/features/sidebar";
-import { libraryViewLabels } from "@/features/sidebar";
+import { libraryViewIcons } from "@/app/shell/navigation";
+import { libraryViewLabels } from "@/app/shell/navigation";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useDatabaseBootstrap, useDatabaseRecords } from "@zilobase/features/databases/react";
 import { useMeeting } from "@zilobase/features/meetings/react";

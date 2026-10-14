@@ -33,7 +33,7 @@ export function register({ assert, appPath, test }) {
         contents: `
       import { createElement } from "react";
       import { renderToString } from "react-dom/server";
-      import { useNavigationItemActions } from "./src/features/sidebar/commands/use-navigation-item-actions";
+      import { useNavigationItemActions } from "./src/app/shell/navigation/commands/use-navigation-item-actions";
       import { runtime } from "navigation-test-runtime";
       export function capture(input, dependencies) {
         Object.assign(runtime, dependencies);

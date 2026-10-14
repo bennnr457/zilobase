@@ -1,7 +1,7 @@
 import { createRootRoute, createRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { getFreshSession, getWorkspaces } from "./guards";
-import { PendingPage } from "./pending-page";
+import { PendingPage } from "./route-shell";
 import { RootRouteShell } from "./route-shell";
 
 export const rootRoute = createRootRoute({ component: RootRouteShell });

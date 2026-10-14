@@ -13,12 +13,12 @@ import {
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRightIcon, ChevronRightIcon } from "@/shared/components/icons";
 
-import { getSidebarDatabaseViewSearchId } from "@/features/sidebar/model/database-view-navigation";
+import { getSidebarDatabaseViewSearchId } from "@/app/shell/navigation/model/database-view-navigation";
 import {
   readExpandedSidebarItems,
   setSidebarItemExpanded,
   writeExpandedSidebarItems,
-} from "../model/sidebar-expansion-state";
+} from "../model/local-state";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
 import { SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/sidebar";
 import {

@@ -27,14 +27,14 @@ export function register({ assert, readSource, readWorkspace, test }) {
       assert.match(source, /useDatabaseMetadata/);
       assert.doesNotMatch(source, /\buseDatabase\(/);
     }
-    const sharing = await readSource("/src/features/sidebar/commands/use-item-sharing.ts");
+    const sharing = await readSource("/src/app/shell/navigation/commands/use-item-sharing.ts");
     assert.match(sharing, /useItemSharingController/);
     assert.doesNotMatch(sharing, /\buseDatabase\(/);
   });
 
   test("sidebar and layout previews use bounded record windows", async () => {
     const sidebar = await readSource(
-      "/src/features/sidebar/components/sidebar-database-view-section.tsx",
+      "/src/app/shell/navigation/components/sidebar-database-view-section.tsx",
     );
     const layout = await readSource("/src/features/pages/layout/layout-editor.tsx");
     const pane = await readSource("/src/features/pages/pane/page-pane-header.tsx");

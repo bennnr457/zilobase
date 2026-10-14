@@ -1,4 +1,8 @@
-import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
+import {
+  ZilobaseFeaturesProvider,
+  type ZilobaseAuthClient,
+  rememberClientSession,
+} from "@zilobase/features";
 import type {
   AcceptWorkspaceInvitationResponse,
   Workspace,
@@ -12,14 +16,12 @@ import type {
   SignUpInput,
   VerifyEmailOtpInput,
 } from "@zilobase/features/auth";
-
 import { apiFetch, authFetch, clearApiAuthToken } from "@/platform/network/api";
 import {
   describeDesktopError,
   recordDesktopDiagnostic,
 } from "@/features/desktop/diagnostics/index";
 import { clientDeployment, queryClient } from "@/app/query-client";
-import { webClientLifecycle, databasePresenceColor } from "./client-lifecycle";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/features/demo";
 import posthog from "@/shared/lib/posthog";
@@ -30,9 +32,8 @@ import {
   readCachedSession,
   webClientCacheStorage,
 } from "@/platform/storage/client-cache-storage";
-import { rememberClientSession } from "@zilobase/features";
 import { getConnectivityState } from "@/platform/network/connectivity";
-
+import type { ClientLifecycle } from "@zilobase/features";
 function withOAuthQuery<T extends Record<string, unknown>>(input: T) {
   if (typeof window === "undefined") {
     return input;
@@ -198,4 +199,27 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
       {children}
     </ZilobaseFeaturesProvider>
   );
+}
+
+export const webClientLifecycle: ClientLifecycle = {
+  isOnline: () => navigator.onLine !== false,
+  isVisible: () => document.visibilityState !== "hidden",
+  subscribe(listener) {
+    window.addEventListener("online", listener);
+    window.addEventListener("offline", listener);
+    document.addEventListener("visibilitychange", listener);
+    return () => {
+      window.removeEventListener("online", listener);
+      window.removeEventListener("offline", listener);
+      document.removeEventListener("visibilitychange", listener);
+    };
+  },
+};
+
+export function databasePresenceColor(value: string) {
+  const colors = ["blue", "purple", "pink", "orange", "green", "yellow", "red", "brown"];
+  let hash = 0;
+  for (let index = 0; index < value.length; index++)
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  return `var(--editor-${colors[hash % colors.length]})`;
 }

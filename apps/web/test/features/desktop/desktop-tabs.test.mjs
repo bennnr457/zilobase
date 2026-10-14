@@ -68,7 +68,7 @@ export function register({ readSource, assert, loadModule, test }) {
     const titlebarSource = await readSource(
       "/src/features/desktop/components/desktop-window-titlebar.tsx",
     );
-    const sidebarSource = await readSource("/src/features/sidebar/app-sidebar.tsx");
+    const sidebarSource = await readSource("/src/app/shell/navigation/app-sidebar.tsx");
     const appSource = await readSource("/src/app/app.tsx");
     const stylesSource = await readSource("/src/shared/styles/global.css");
 

@@ -16,7 +16,7 @@ import {
   resolveSidebarPanelPercentage,
   RIGHT_SIDEBAR_TRANSITION_MS,
   type SidebarResizeIntent,
-} from "@/features/sidebar";
+} from "@/app/shell/navigation";
 import { ResizableHandle, ResizablePanel } from "@/shared/ui/resizable";
 import { cn } from "@/shared/lib/utils";
 

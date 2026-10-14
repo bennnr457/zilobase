@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("navigation links use the database owner and preserve page link representation", async () => {
     const { getNavigationItemPath } = await loadModule(
-      "/src/features/sidebar/model/database-view-navigation.ts",
+      "/src/app/shell/navigation/model/database-view-navigation.ts",
     );
     assert.equal(getNavigationItemPath({ databaseId: "db", pageId: "backing-page" }), "/d/db");
     assert.equal(getNavigationItemPath({ pageId: "page" }), "/p/page");

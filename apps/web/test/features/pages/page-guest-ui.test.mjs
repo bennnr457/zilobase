@@ -16,8 +16,8 @@ export function register({ readSource, assert, loadModule, test }) {
     const [acceptance, shareMenu, teamSettings, pageShell, sharedHeader] = await Promise.all([
       readSource("/src/features/pages/screens/accept-page-invitation.tsx"),
       Promise.all([
-        readSource("/src/features/sidebar/components/item-share-dropdown.tsx"),
-        readSource("/src/features/sidebar/commands/use-item-sharing.ts"),
+        readSource("/src/app/shell/navigation/components/item-share-dropdown.tsx"),
+        readSource("/src/app/shell/navigation/commands/use-item-sharing.ts"),
         readSource("/packages/features/src/pages/sharing-hooks.ts"),
       ]).then((parts) => parts.join("\n")),
       Promise.all([

@@ -43,7 +43,7 @@ export function CalendarToolbar({
   const workspace = useCalendarWorkspace(),
     search = useSearch({ from: "/app/calendar" }),
     navigate = useNavigate();
-  const route = (search: import("../workspace/calendar-navigation").CalendarDestination) =>
+  const route = (search: import("./calendar-navigation").CalendarDestination) =>
     workspace.navigateCalendar(search, () => {
       void navigate({ to: "/calendar", search });
     });
