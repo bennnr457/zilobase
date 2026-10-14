@@ -71,7 +71,20 @@ export function register({ assert, loadModule, sourcePath, test }) {
     const settle = () => new Promise((resolve) => setTimeout(resolve, 10));
     try {
       fixture = await loadErrorSurface(sourcePath);
-      const { RouteErrorPage, createElement, createRoot, flushSync, controls } = fixture;
+      const {
+        RouteErrorPage,
+        AuthenticatedRouteError,
+        PendingPage,
+        createElement,
+        createRoot,
+        flushSync,
+        controls,
+      } = fixture;
+      window.location = {
+        reload() {
+          controls.reloads = (controls.reloads ?? 0) + 1;
+        },
+      };
       const profiles = [
         {
           active: true,
@@ -104,6 +117,8 @@ export function register({ assert, loadModule, sourcePath, test }) {
       assert.doesNotMatch(document.body.textContent, /Switch to Current/);
       const button = (text) =>
         [...document.querySelectorAll("button")].find((item) => item.textContent === text);
+      button("Try again").click();
+      assert.equal(controls.reloads, 1);
       button("Switch to Other").click();
       button("Change server").click();
       assert.equal(controls.switched.server, profiles[1].server);
@@ -132,6 +147,20 @@ export function register({ assert, loadModule, sourcePath, test }) {
       await settle();
       assert.doesNotMatch(document.body.textContent, /Switch to Other|Change server/);
       assert.equal(controls.reads, 4);
+      flushSync(() => root.unmount());
+      root = createRoot(document.getElementById("root"));
+      flushSync(() => root.render(createElement(PendingPage)));
+      assert.match(document.body.textContent, /Connecting to Zilobase/);
+      assert.deepEqual(controls.diagnostics.at(-1), ["router.pending", { status: "started" }]);
+      for (const resource of ["page", "database"]) {
+        flushSync(() => root.render(createElement(AuthenticatedRouteError, { resource })));
+        assert.match(
+          document.body.textContent,
+          new RegExp("This " + resource + " could not be opened"),
+        );
+        button("Try again").click();
+      }
+      assert.equal(controls.reloads, 3);
     } finally {
       if (root) fixture.flushSync(() => root.unmount());
       await settle();
@@ -144,17 +173,20 @@ export function register({ assert, loadModule, sourcePath, test }) {
 
 async function loadErrorSurface(sourcePath) {
   const mocks = {
-    "error-test-ports": `export const controls = { selected: { instanceId: "active" }, reads: 0 };`,
-    "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; };`,
+    "@/components/ui/spinner": `import { createElement } from "react"; export const Spinner = props => createElement("span", props);`,
+    "@/app/shell/document-favicon": `export const DocumentFavicon = () => null;`,
+    "@/app/shell/content/app-layout": `export const AppLayout = ({ children }) => children;`,
+    "error-test-ports": `export const controls = { selected: { instanceId: "active" }, reads: 0, diagnostics: [] };`,
+    "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; }; export const Outlet = () => null; export const useRouterState = () => [];`,
     "@/components/desktop/index": `export const isDesktopApp = () => true;`,
-    "@/platform/diagnostics/index": `export const describeDesktopError = () => ({}); export const recordDesktopDiagnostic = () => {};`,
+    "@/platform/diagnostics/index": `import { controls } from "error-test-ports"; export const describeDesktopError = () => ({}); export const recordDesktopDiagnostic = (name, data) => { controls.diagnostics.push([name, data]); };`,
     "@/platform/server/operations/index": `import { controls } from "error-test-ports"; export const getSelectedDesktopServer = () => controls.selected; export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function executeDesktopServerSwitch(options) { controls.switched = options; }`,
     "@/lib/posthog": `export const captureProductException = () => {};`,
     "@/components/ui/button": `import { createElement } from "react"; export function Button({ variant, ...props }) { return createElement("button", props); }`,
   };
   const result = await build({
     stdin: {
-      contents: `export { default as RouteErrorPage } from "./route-error-page"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "error-test-ports";`,
+      contents: `export { default as RouteErrorPage } from "./route-error-page"; export { AuthenticatedRouteError } from "./authenticated-route-error"; export { PendingPage } from "./route-shell"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "error-test-ports";`,
       resolveDir: sourcePath("/src/app/routing"),
     },
     bundle: true,

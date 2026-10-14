@@ -1,5 +1,6 @@
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense, useRef, useEffect } from "react";
+import { Effect } from "effect";
 import { recordDesktopDiagnostic } from "@/platform/diagnostics/index";
 import { Spinner } from "@/components/ui/spinner";
 const DocumentFavicon = lazy(() =>
@@ -60,7 +61,9 @@ export function RootRouteShell() {
 
 export function PendingPage() {
   useEffect(() => {
-    recordDesktopDiagnostic("router.pending", { status: "started" });
+    Effect.runSync(
+      Effect.sync(() => recordDesktopDiagnostic("router.pending", { status: "started" })),
+    );
   }, []);
 
   return (

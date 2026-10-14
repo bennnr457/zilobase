@@ -47,6 +47,8 @@ with screens loaded lazily. Keep route guards, URL validation, shell rendering,
 and error surfaces separate; avoid forwarding route-group modules.
 Use Effect for asynchronous route-guard workflows, with `Effect.runPromise` at
 the router adapter boundary. Preserve original errors and redirect responses.
+Use `Effect.runSync` for synchronous guards and browser actions to preserve
+callback timing.
 Compose routing helpers directly as Effects; convert to Promises only in router
 callbacks or when supplying an existing Promise-based shared-client port.
 Interrupt asynchronous UI fibers in React cleanup to prevent late state updates.

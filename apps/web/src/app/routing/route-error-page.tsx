@@ -23,8 +23,12 @@ export default function RouteErrorPage({ error }: ErrorComponentProps) {
   const [otherProfiles, setOtherProfiles] = useState<DesktopServerProfile[]>([]);
 
   useEffect(() => {
-    captureProductException(error, { error_boundary: "router.error" });
-    recordDesktopDiagnostic("router.error", describeDesktopError(error), "error");
+    Effect.runSync(
+      Effect.sync(() => {
+        captureProductException(error, { error_boundary: "router.error" });
+        recordDesktopDiagnostic("router.error", describeDesktopError(error), "error");
+      }),
+    );
   }, [error]);
 
   useEffect(() => {
@@ -54,17 +58,23 @@ export default function RouteErrorPage({ error }: ErrorComponentProps) {
           <p className="mt-1 text-sm text-content-secondary">{copy.description}</p>
         </div>
         <div className="flex w-full flex-col items-stretch gap-3">
-          <Button onClick={() => window.location.reload()}>Try again</Button>
+          <Button onClick={() => Effect.runSync(Effect.sync(() => window.location.reload()))}>
+            Try again
+          </Button>
           {otherProfiles.map((profile) => (
             <Button
               key={`${profile.server.instanceId}:${profile.server.apiOrigin}`}
               onClick={() => {
-                void executeDesktopServerSwitch({
-                  hasCredentials: profile.hasCredentials,
-                  path: profile.hasCredentials ? (profile.lastPath ?? "/recents") : "/login",
-                  server: profile.server,
-                  workspaceId: profile.lastActiveWorkspaceId,
-                });
+                void Effect.runSync(
+                  Effect.sync(() =>
+                    executeDesktopServerSwitch({
+                      hasCredentials: profile.hasCredentials,
+                      path: profile.hasCredentials ? (profile.lastPath ?? "/recents") : "/login",
+                      server: profile.server,
+                      workspaceId: profile.lastActiveWorkspaceId,
+                    }),
+                  ),
+                );
               }}
               variant="outline"
             >
@@ -72,7 +82,10 @@ export default function RouteErrorPage({ error }: ErrorComponentProps) {
             </Button>
           ))}
           {copy.showChangeServer ? (
-            <Button onClick={() => void navigate({ to: "/connect" })} variant="outline">
+            <Button
+              onClick={() => void Effect.runSync(Effect.sync(() => navigate({ to: "/connect" })))}
+              variant="outline"
+            >
               Change server
             </Button>
           ) : null}

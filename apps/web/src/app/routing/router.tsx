@@ -124,9 +124,12 @@ const loginRoute = createRoute({
 const connectRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/connect",
-  beforeLoad: () => {
-    if (!isDesktopApp()) throw redirect({ to: "/login" });
-  },
+  beforeLoad: () =>
+    Effect.runSync(
+      Effect.suspend(() =>
+        isDesktopApp() ? Effect.void : Effect.fail(redirect({ to: "/login" })),
+      ),
+    ),
   component: lazyRouteComponent(() => import("@/components/desktop/pages/connect")),
 });
 
@@ -176,9 +179,12 @@ const onboardingRoute = createRoute({
 const otpRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/otp",
-  beforeLoad: async () => {
-    if (isDesktopApp()) throw redirect({ to: "/login" });
-  },
+  beforeLoad: () =>
+    Effect.runPromise(
+      Effect.suspend(() =>
+        isDesktopApp() ? Effect.fail(redirect({ to: "/login" })) : Effect.void,
+      ),
+    ),
   component: lazyRouteComponent(() => import("@/components/auth/otp")),
 });
 
@@ -246,11 +252,14 @@ const appRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/ai",
-    beforeLoad: () => {
-      if (!isFeatureEnabled("askAi")) {
-        throw redirect({ to: "/recents", search: { view: "recents" } });
-      }
-    },
+    beforeLoad: () =>
+      Effect.runSync(
+        Effect.suspend(() =>
+          isFeatureEnabled("askAi")
+            ? Effect.void
+            : Effect.fail(redirect({ to: "/recents", search: { view: "recents" } })),
+        ),
+      ),
     component: lazyRouteComponent(() => import("@/components/ai/ai")),
   }),
   createRoute({
@@ -272,9 +281,8 @@ const appRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/trash",
-    beforeLoad: () => {
-      throw redirect({ search: { view: "trash" }, to: "/recents" });
-    },
+    beforeLoad: () =>
+      Effect.runSync(Effect.fail(redirect({ search: { view: "trash" }, to: "/recents" }))),
   }),
 ];
 
@@ -283,9 +291,7 @@ const settingsRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings",
-    beforeLoad: () => {
-      throw redirect({ to: "/settings/preferences" });
-    },
+    beforeLoad: () => Effect.runSync(Effect.fail(redirect({ to: "/settings/preferences" }))),
   }),
   createRoute({
     getParentRoute: () => appRoute,

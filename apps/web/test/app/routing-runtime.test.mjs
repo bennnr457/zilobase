@@ -50,6 +50,34 @@ export function register({ assert, sourcePath, test }) {
     );
     controls.reset();
   });
+  test("synchronous Effect route guards retain throws and OTP keeps its Promise boundary", async () => {
+    const { router, controls } = await runtime();
+    const route = (path) => Object.values(router.routesById).find((item) => item.fullPath === path);
+    controls.reset();
+    assert.throws(
+      () => route("/connect").options.beforeLoad(),
+      (error) => error.options.to === "/login",
+    );
+    controls.desktop = true;
+    assert.equal(route("/connect").options.beforeLoad(), undefined);
+    assert.throws(
+      () => route("/settings").options.beforeLoad(),
+      (error) => error.options.to === "/settings/preferences",
+    );
+    assert.throws(
+      () => route("/ai").options.beforeLoad(),
+      (error) => error.options.to === "/recents" && error.options.search.view === "recents",
+    );
+    controls.askAi = true;
+    assert.equal(route("/ai").options.beforeLoad(), undefined);
+    const otp = route("/otp").options.beforeLoad();
+    assert.ok(otp instanceof Promise);
+    await assert.rejects(otp, (error) => error.options.to === "/login");
+    controls.desktop = false;
+    assert.equal(await route("/otp").options.beforeLoad(), undefined);
+    controls.reset();
+  });
+
   test("routing composes lazy Effects and preserves OAuth, signup, onboarding and demo redirects", async () => {
     const { router, guards, controls, Effect } = await runtime();
     const route = (path) =>
@@ -317,7 +345,7 @@ async function loadRoutingRuntime(sourcePath) {
     const client = createZilobaseClient({ deployment: "routing-test", queryClient: new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } }) });
     export const controls = {
       queryClient: client.queryClient,
-      reset() { this.queryClient.clear(); this.session = { user: null, session: null }; this.workspaces = []; this.errors = {}; this.responses = {}; this.requests = []; this.sessionReads = 0; this.workspaceReads = 0; this.desktop = false; this.offline = false; this.demo = false; this.hydrated = []; this.storageError = null; this.preferredWorkspace = null; }
+      reset() { this.queryClient.clear(); this.session = { user: null, session: null }; this.workspaces = []; this.errors = {}; this.responses = {}; this.requests = []; this.sessionReads = 0; this.workspaceReads = 0; this.desktop = false; this.offline = false; this.demo = false; this.askAi = false; this.hydrated = []; this.storageError = null; this.preferredWorkspace = null; }
     };
     controls.reset();
     export class NetworkUnavailableError extends Error { constructor() { super("Offline"); this.name = "NetworkUnavailableError"; } }
@@ -335,7 +363,7 @@ async function loadRoutingRuntime(sourcePath) {
     "@/app/state/app-store": `import { controls } from "routing-test-ports"; export const useAppStore = { getState: () => ({ activeWorkspaceId: controls.preferredWorkspace }) };`,
     "@/platform/network/connectivity": `import { controls } from "routing-test-ports"; export const getConnectivityState = () => controls.offline ? "offline" : "online";`,
     "@/components/pages/cache/page-read-cache": `import { controls } from "routing-test-ports"; export async function hydratePageReadCache(input) { controls.hydrated.push(input); if (controls.storageError) throw controls.storageError; }`,
-    "@/platform/environment": `export const isFeatureEnabled = () => false;`,
+    "@/platform/environment": `import { controls } from "routing-test-ports"; export const isFeatureEnabled = () => controls.askAi;`,
     "@/components/desktop/index": `import { controls } from "routing-test-ports"; export const isDesktopApp = () => controls.desktop;`,
     "@/app/demo": `import { controls } from "routing-test-ports"; export const isHostedDemoRuntime = () => controls.demo;`,
     "@zilobase/edition-web": `export const editionWebModule = { routePrefix: "/edition", routes: [] };`,
