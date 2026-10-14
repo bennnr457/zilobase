@@ -3,7 +3,11 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const featureRoots = ["apps/server/src/features", "packages/features/src"];
+const featureRoots = [
+  "apps/server/src/features",
+  "apps/server/src/routes",
+  "packages/features/src",
+];
 const runtimeRoots = ["apps/server/src", "packages/runtime-adapter/src"];
 const retiredRuntimeFiles = [
   "apps/server/src/app/node/node-runtime.ts",
@@ -51,6 +55,7 @@ export function checkRuntimeBoundaries(repositoryRoot = root) {
 }
 
 function sourceFiles(directory) {
+  if (!existsSync(directory)) return [];
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(path);

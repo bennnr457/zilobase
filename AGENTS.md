@@ -36,8 +36,9 @@ renderers. Reserve the `features` folder name for `packages/features`.
 
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.
-During the folder migration, remaining `apps/server/src/features` modules are
-being relocated in separate commits.
+Server HTTP handlers, middleware, and route-specific support now live in
+`apps/server/src/routes`. During the folder migration, remaining backend
+`apps/server/src/features` modules are being relocated to `services` separately.
 
 If a file calls the backend or encodes domain rules and needs no platform/UI
 APIs, it belongs in features. If it mixes domain work with platform behavior,

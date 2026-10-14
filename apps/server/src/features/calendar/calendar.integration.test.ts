@@ -550,7 +550,7 @@ test.skipIf(!enabled)(
 // A refresh reads the local catalog; it must not depend on a Google request.
 test.skipIf(!enabled)("catalog refresh is mounted, scoped, and provider-independent", async () => {
   const { Hono } = await import("hono");
-  const { calendarSyncRoutes } = await import("./sync/routes");
+  const { calendarSyncRoutes } = await import("../../routes/calendar/sync/routes");
   const { CalendarAccessError } = await import("./connections/ownership");
   const [binding] = (await database!.select().from(schema.calendarBinding)).filter(
     (row) => row.accountId === secondAccount,

@@ -34,7 +34,7 @@ import {
   DatabaseViewQueryChangedError,
   getDatabaseRecordWindowService,
 } from "../features/databases/read/service";
-import { pageBrowseRoutes } from "../features/pages/page-browse-routes";
+import { pageBrowseRoutes } from "../routes/pages/page-browse-routes";
 import type { AppBindings } from "../shared/types";
 import type { PageNavigationPayload } from "@zilobase/features/runtime";
 

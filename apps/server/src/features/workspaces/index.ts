@@ -1,1 +1,1 @@
-export { requireActiveWorkspace } from "./settings/shared";
+export { requireActiveWorkspace } from "../../routes/workspaces/settings/shared";

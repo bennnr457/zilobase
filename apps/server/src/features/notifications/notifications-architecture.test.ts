@@ -9,7 +9,7 @@ test("notifications use a durable inbox, delivery receipt, and polling-safe outb
     ),
     readFile(new URL("./notification-operations.ts", import.meta.url), "utf8"),
     readFile(new URL("./outbox.ts", import.meta.url), "utf8"),
-    readFile(new URL("./routes.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../routes/notifications.ts", import.meta.url), "utf8"),
   ]);
   expect(migration).toContain('CREATE UNIQUE INDEX "in_product_notification_run_recipient_unique"');
   expect(migration).toContain('CREATE TABLE "in_product_notification_outbox"');

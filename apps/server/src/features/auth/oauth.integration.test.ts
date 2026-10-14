@@ -8,7 +8,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "../../infrastructure/database/schema";
 import { eq } from "drizzle-orm";
 import { decodeJwt } from "jose";
-import { resolveOAuthBearer } from "./oauth-access";
+import { resolveOAuthBearer } from "../../routes/auth/oauth-access";
 test.skipIf(!process.env.OAUTH_TEST_DATABASE_URL)(
   "real provider grants stay pinned and revoked consent blocks refresh",
   async () => {

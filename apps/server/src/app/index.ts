@@ -7,7 +7,7 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import { createCorsMiddleware } from "./cors";
 import { registerRoutes } from "./routes";
-import { authenticatedSessionMiddleware } from "../features/auth/session-guard";
+import { authenticatedSessionMiddleware } from "../routes/auth/session-guard";
 import { REQUEST_ID_HEADER, serverTimingMiddleware } from "./timing";
 import {
   DATABASE_UNAVAILABLE_CODE,
@@ -20,7 +20,7 @@ import { httpRouteErrorResponse } from "../shared/http/route-error";
 import { registerAppEditionExtension } from "../shared/edition-extension-registry";
 import type { AppBindings, AppErrorReporter } from "../shared/types";
 import type { EditionExtensionOptions } from "../shared/types";
-import { demoWriteGuard } from "../features/demo/write-guard";
+import { demoWriteGuard } from "../routes/demo/write-guard";
 import { runWithBackgroundTraceContext } from "../infrastructure/background/contracts";
 import { communityAppPolicy } from "../shared/app-policy";
 import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";

@@ -11,7 +11,7 @@ describe("database automation mutation-path audit", () => {
       read("databases/records/service.ts"),
       read("databases/commands/records.ts"),
       read("databases/commands/template-apply-handler.ts"),
-      read("pages/page-content-routes.ts"),
+      read("../routes/pages/page-content-routes.ts"),
     ]);
 
     expect(cell).toMatch(/automationFacts:[\s\S]*before: previous\?\.value/);

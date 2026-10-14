@@ -4,8 +4,8 @@ import { test } from "vitest";
 
 import type { AppBindings } from "../../shared/types";
 import { getHostedDemoSeedDefinition } from "./seed";
-import { isHostedDemoEnabled, isHostedDemoRequest } from "./request";
-import { demoWriteGuard } from "./write-guard";
+import { isHostedDemoEnabled, isHostedDemoRequest } from "../../routes/demo/request";
+import { demoWriteGuard } from "../../routes/demo/write-guard";
 
 test("hosted demo identity is disabled unless explicitly enabled and marked", () => {
   const marked = new Headers({ "x-zilobase-demo": "1" });

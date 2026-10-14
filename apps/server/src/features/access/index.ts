@@ -22,5 +22,5 @@ export {
   isWorkspaceMember,
 } from "./principal-access";
 export { hasAccess, normalizeAccessLevel, type AccessLevel } from "./access-level";
-export { rejectActiveWorkspaceMismatch } from "./workspace-mismatch";
+export { rejectActiveWorkspaceMismatch } from "../../routes/access/workspace-mismatch";
 export { getPageRecord } from "./resource-access-records";

@@ -76,11 +76,11 @@ vi.mock("../infrastructure/database", () => ({
   runWithDbEnv: async (_env: unknown, operation: () => unknown) => operation(),
 }));
 
-import { apiKeyRoutes } from "../features/api-keys/routes";
-import { sessionRoutes } from "../features/auth/session-routes";
-import { pageSettingsRoutes } from "../features/user-settings";
-import { profileImageRoutes } from "../features/user-settings/profile-image-routes";
-import { workspaceRoutes } from "../features/workspaces/routes";
+import { apiKeyRoutes } from "../routes/api-keys";
+import { sessionRoutes } from "../routes/auth/session-routes";
+import { pageSettingsRoutes } from "../routes/user-settings";
+import { profileImageRoutes } from "../routes/user-settings/profile-image-routes";
+import { workspaceRoutes } from "../routes/workspaces/routes";
 
 const user = {
   email: "user@example.com",

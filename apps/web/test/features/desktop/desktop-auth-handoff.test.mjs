@@ -46,7 +46,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
     const [provider, token, routes] = await Promise.all([
       readSource("/src/app/providers/features-provider.tsx"),
       readSource("/src/platform/auth/desktop-auth-token.ts"),
-      readWorkspace("/apps/server/src/features/desktop-auth/routes.ts"),
+      readWorkspace("/apps/server/src/routes/desktop-auth.ts"),
     ]);
 
     assert.match(provider, /apiAuthClient\.signOut\(\)/);
