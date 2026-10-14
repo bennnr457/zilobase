@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("page edit bridge closes on offline, errors, denial, and startup expiry", async () => {
     const { canEditPageDuringConnection } = await loadModule(
-      "/src/features/editor/collaboration/collaboration-readiness.ts",
+      "/src/components/editor/collaboration/collaboration-readiness.ts",
     );
     const connecting = {
       online: true,

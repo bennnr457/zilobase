@@ -8,7 +8,7 @@ export function register({ readSource, assert, test }) {
         readSource("/src/components/ui/button.tsx"),
         readSource("/src/components/ui/input.tsx"),
         readSource("/src/components/ui/sidebar.tsx"),
-        readSource("/src/features/databases/styles/database.css"),
+        readSource("/src/components/databases/styles/database.css"),
       ]);
 
     assert.match(buttonSource, /const buttonControlHeightClassName = "h-7"/);
@@ -33,7 +33,7 @@ export function register({ readSource, assert, test }) {
   test("tab layout choices are shared props and discussions use the default surface", async () => {
     const [tabsSource, discussionsSource] = await Promise.all([
       readSource("/src/components/ui/app-tabs.tsx"),
-      readSource("/src/features/comments/components/discussions-sidebar.tsx"),
+      readSource("/src/components/comments/discussions-sidebar.tsx"),
     ]);
 
     assert.match(tabsSource, /const tabsVariants = cva/);

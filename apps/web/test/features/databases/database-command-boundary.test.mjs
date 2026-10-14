@@ -22,7 +22,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
       "/packages/features/src/databases/views/model.ts",
     );
     const { getDatabaseViewModel } = await loadModule(
-      "/src/features/databases/views/components/database-view-model.tsx",
+      "/src/components/databases/views/components/database-view-model.tsx",
     );
     const input = { activeViewId: null, viewData: null };
     const data = deriveDatabaseViewModel(input);
@@ -37,7 +37,7 @@ export function register({ assert, loadModule, sourcePath, test }) {
 
   test("view commands report clipboard outcomes and date-property failure through supplied feedback", async () => {
     const { getDatabaseViewCommands } = await loadModule(
-      "/src/features/databases/records/view-commands.ts",
+      "/src/components/databases/records/view-commands.ts",
     );
     const events = [];
     let dateCallbacks;

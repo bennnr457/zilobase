@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("list drop indicators distinguish inactive, internal and external drags at row edges", async () => {
     const { listRowDragAttributes, listRowCompletionLabel } = await loadModule(
-      "/src/features/databases/views/list/list-row-presentation.ts",
+      "/src/components/databases/views/list/list-row-presentation.ts",
     );
     const idle = {
       draggedRowId: null,

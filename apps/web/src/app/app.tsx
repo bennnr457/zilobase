@@ -6,7 +6,7 @@ import {
   DesktopServerSwitchOverlay,
   DesktopWindowTitlebar,
   isLinuxDesktopApp,
-} from "@/features/desktop/components/index";
+} from "@/components/desktop/ui";
 import { router } from "@/app/routing/router";
 
 export default function App() {

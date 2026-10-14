@@ -1,7 +1,7 @@
 export function register({ readSource, assert, loadModule, test }) {
   test("desktop tabs close safely and persist drag reordering", async () => {
     const { closeDesktopTabState, setDesktopTabOrderState, useAppStore } = await loadModule(
-      "/src/features/desktop/state/app-store.ts",
+      "/src/app/state/app-store.ts",
     );
     const tabs = [
       { href: "/p/one", id: "one", title: "One" },
@@ -61,13 +61,9 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("desktop tabs keep the trailing action stable through drag settling", async () => {
-    const tabsSource = await readSource("/src/features/desktop/components/desktop-tabs.tsx");
-    const tabStripSource = await readSource(
-      "/src/features/desktop/components/desktop-tab-strip.tsx",
-    );
-    const titlebarSource = await readSource(
-      "/src/features/desktop/components/desktop-window-titlebar.tsx",
-    );
+    const tabsSource = await readSource("/src/components/desktop/desktop-tabs.tsx");
+    const tabStripSource = await readSource("/src/components/desktop/desktop-tab-strip.tsx");
+    const titlebarSource = await readSource("/src/components/desktop/desktop-window-titlebar.tsx");
     const sidebarSource = await readSource("/src/app/shell/navigation/app-sidebar.tsx");
     const appSource = await readSource("/src/app/app.tsx");
     const stylesSource = await readSource("/src/styles/global.css");

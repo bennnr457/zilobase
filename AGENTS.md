@@ -34,8 +34,10 @@ creating another `components` directory inside each domain. Retain meaningful
 subsystems such as editor collaboration and database table/kanban/timeline
 renderers. Reserve the `features` folder name for `packages/features`.
 
-During the folder migration, remaining `apps/web/src/features` and
-`apps/server/src/features` modules are being relocated in separate commits.
+Desktop transport, capture, persistence, window, and deep-link adapters live under
+`platform`; application state and demo runtime composition live under `app`.
+During the folder migration, remaining `apps/server/src/features` modules are
+being relocated in separate commits.
 
 If a file calls the backend or encodes domain rules and needs no platform/UI
 APIs, it belongs in features. If it mixes domain work with platform behavior,

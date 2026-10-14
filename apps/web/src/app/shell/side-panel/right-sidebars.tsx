@@ -7,7 +7,7 @@ import { useRouterState } from "@tanstack/react-router";
 import {
   CalendarDockMount,
   useCalendarWorkspace,
-} from "@/features/calendar/workspace/calendar-workspace";
+} from "@/components/calendar/workspace/calendar-workspace";
 
 import {
   APP_SIDEBAR_PANEL_WIDTH,

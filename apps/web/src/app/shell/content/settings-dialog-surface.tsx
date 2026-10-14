@@ -1,5 +1,5 @@
-import { SettingsDialog } from "@/features/settings/components/settings-dialog";
-import type { SettingsSection } from "@/features/settings/components/settings-sidebar";
+import { SettingsDialog } from "@/components/settings/settings-dialog";
+import type { SettingsSection } from "@/components/settings/settings-sidebar";
 import { SettingsSectionContent } from "./settings-section-content";
 
 export function SettingsDialogSurface({

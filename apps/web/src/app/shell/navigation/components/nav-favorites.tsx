@@ -34,7 +34,7 @@ import {
   type SidebarNavItem,
 } from "./sidebar-nav-list";
 import { SidebarNavItemAction } from "@/components/ui/sidebar-nav-item-action";
-import { useOpenInNewTab } from "@/features/desktop/components/index";
+import { useOpenInNewTab } from "@/components/desktop/ui";
 import { getSidebarExpansionStorageKey } from "../model/local-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";
 import { SidebarLibraryLink } from "./sidebar-library-link";

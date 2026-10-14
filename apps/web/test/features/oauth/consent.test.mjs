@@ -64,7 +64,7 @@ export function register({ assert, loadModule, readSource, test }) {
     const source = await readSource("/src/app/routing/route-groups/public-routes.tsx");
     assert.match(source, /path: "\/oauth\/consent"/);
     assert.match(source, /path: "\/oauth\/callback"/);
-    assert.match(source, /features\/oauth\/consent/);
-    assert.match(source, /features\/oauth\/callback/);
+    assert.match(source, /components\/oauth\/consent/);
+    assert.match(source, /components\/oauth\/callback/);
   });
 }

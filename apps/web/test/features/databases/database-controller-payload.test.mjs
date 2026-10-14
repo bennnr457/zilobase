@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("database controller composes bootstrap metadata and live record windows", async () => {
     const controller = await readSource(
-      "/src/features/databases/views/controller/use-database-view-controller.tsx",
+      "/src/components/databases/views/controller/use-database-view-controller.tsx",
     );
     assert.match(controller, /useDatabaseBootstrap/);
     assert.match(controller, /useDatabaseViewData/);

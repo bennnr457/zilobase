@@ -1,6 +1,6 @@
 export function register({ assert, readSource, readWorkspace, test }) {
   test("desktop browser auth is owned by the native PKCE coordinator", async () => {
-    const source = await readSource("/src/features/desktop/auth/browser-authorization.ts");
+    const source = await readSource("/src/platform/auth/browser-authorization.ts");
 
     assert.match(source, /desktopBridge\(\)\.auth\.startBrowser\(\)/);
     assert.match(source, /desktopBridge\(\)\.auth\.cancelBrowser\(\)/);
@@ -10,10 +10,10 @@ export function register({ assert, readSource, readWorkspace, test }) {
 
   test("desktop signed-out shell is browser-only", async () => {
     const [screen, login, signup, loginForm] = await Promise.all([
-      readSource("/src/features/desktop/auth/desktop-browser-auth-screen.tsx"),
-      readSource("/src/features/auth/login.tsx"),
-      readSource("/src/features/auth/signup.tsx"),
-      readSource("/src/features/auth/login.tsx"),
+      readSource("/src/components/desktop/auth/desktop-browser-auth-screen.tsx"),
+      readSource("/src/components/auth/login.tsx"),
+      readSource("/src/components/auth/signup.tsx"),
+      readSource("/src/components/auth/login.tsx"),
     ]);
 
     assert.match(screen, /phase: "waiting_for_browser"/);

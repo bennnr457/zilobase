@@ -104,7 +104,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("settings lists saved desktop servers and can remove one instance", async () => {
-    const source = await readSource("/src/features/settings/screens/preferences.tsx");
+    const source = await readSource("/src/components/settings/preferences.tsx");
     assert.match(source, /listDesktopServerProfiles/);
     assert.match(source, /Remove from this device/);
     assert.match(source, /Connect another server/);
@@ -114,9 +114,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("connect another server omits Cloud when it is already saved", async () => {
-    const source = await readSource(
-      "/src/features/desktop/components/desktop-connect-server-dialog.tsx",
-    );
+    const source = await readSource("/src/components/desktop/desktop-connect-server-dialog.tsx");
 
     assert.match(source, /cloudAlreadySaved \? null/);
     assert.match(source, /DesktopDevCustomServerSelect/);
@@ -125,7 +123,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("development custom servers are a dropdown supplied by the desktop host", async () => {
     const [selector, server] = await Promise.all([
-      readSource("/src/features/desktop/components/desktop-dev-custom-server-select.tsx"),
+      readSource("/src/components/desktop/desktop-dev-custom-server-select.tsx"),
       readSource("/src/platform/server/desktop-server.ts"),
     ]);
 
@@ -138,10 +136,10 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("desktop auth picks a server before continuing in the browser", async () => {
     const [connect, screen, login, signup, router] = await Promise.all([
-      readSource("/src/features/desktop/pages/connect.tsx"),
-      readSource("/src/features/desktop/auth/desktop-browser-auth-screen.tsx"),
-      readSource("/src/features/auth/login.tsx"),
-      readSource("/src/features/auth/signup.tsx"),
+      readSource("/src/components/desktop/pages/connect.tsx"),
+      readSource("/src/components/desktop/auth/desktop-browser-auth-screen.tsx"),
+      readSource("/src/components/auth/login.tsx"),
+      readSource("/src/components/auth/signup.tsx"),
       readSource("/src/app/routing/route-groups/public-routes.tsx"),
     ]);
 

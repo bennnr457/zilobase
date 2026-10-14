@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("search preserves page and database result destinations", async () => {
     const { getSearchResultDestination } = await loadModule(
-      "/src/features/search/search-results.ts",
+      "/src/components/search/search-results.ts",
     );
     assert.deepEqual(getSearchResultDestination({ type: "database", id: "db" }), {
       to: "/d/$databaseId",

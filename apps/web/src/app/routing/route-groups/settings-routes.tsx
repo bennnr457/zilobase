@@ -14,17 +14,17 @@ export const settingsRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/preferences",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/preferences")),
+    component: lazyRouteComponent(() => import("@/components/settings/preferences")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/profile",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/profile")),
+    component: lazyRouteComponent(() => import("@/components/settings/profile")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/security",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/security")),
+    component: lazyRouteComponent(() => import("@/components/settings/security")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -34,34 +34,34 @@ export const settingsRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/api-keys",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/api-keys")),
+    component: lazyRouteComponent(() => import("@/components/settings/api-keys")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/connected-apps",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/connected-apps")),
+    component: lazyRouteComponent(() => import("@/components/settings/connected-apps")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/oauth-apps",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/oauth-apps")),
+    component: lazyRouteComponent(() => import("@/components/settings/oauth-apps")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/team",
     validateSearch: validateTeamSettingsSearch,
-    component: lazyRouteComponent(() => import("@/features/workspaces/screens/workspace-members")),
+    component: lazyRouteComponent(() => import("@/components/workspaces/workspace-members")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/calendar",
-    component: lazyRouteComponent(() => import("@/features/settings/screens/calendar")),
+    component: lazyRouteComponent(() => import("@/components/settings/calendar")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/teamspaces",
     validateSearch: validateTeamspaceSettingsSearch,
-    component: lazyRouteComponent(() => import("@/features/teamspaces/screens/teamspaces")),
+    component: lazyRouteComponent(() => import("@/components/teamspaces/teamspaces")),
   }),
   createRoute({
     getParentRoute: () => appRoute,

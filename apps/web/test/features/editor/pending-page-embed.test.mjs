@@ -2,7 +2,7 @@ export function register({ assert, loadModule, test }) {
   async function setup() {
     const { Schema } = await import("@tiptap/pm/model");
     const { EditorState } = await import("@tiptap/pm/state");
-    const module = await loadModule("/src/features/editor/drag-drop/pending-page-embed.ts");
+    const module = await loadModule("/src/components/editor/drag-drop/pending-page-embed.ts");
     const schema = new Schema({
       nodes: {
         doc: { content: "block+" },

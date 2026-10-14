@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 export function register({ assert, appPath, test }) {
   test("block conversion retains text only for paragraphs and headings", async () => {
     const result = await build({
-      entryPoints: [appPath("/src/features/editor/commands/block-insert.ts")],
+      entryPoints: [appPath("/src/components/editor/commands/block-insert.ts")],
       bundle: true,
       write: false,
       platform: "node",
@@ -13,7 +13,7 @@ export function register({ assert, appPath, test }) {
         {
           name: "controlled-database-setup",
           setup(build) {
-            build.onResolve({ filter: /^@\/features\/databases$/ }, () => ({
+            build.onResolve({ filter: /^@\/components\/databases$/ }, () => ({
               path: "database",
               namespace: "conversion-test",
             }));

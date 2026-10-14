@@ -1,21 +1,21 @@
-import { CalendarWorkspaceProvider } from "@/features/calendar/workspace/calendar-workspace";
+import { CalendarWorkspaceProvider } from "@/components/calendar/workspace/calendar-workspace";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronsRightIcon, SidebarSimpleIcon } from "@/components/icons";
 
 import { AppSidebar } from "@/app/shell/navigation";
-import { AppSearchProvider } from "@/features/search/app-search";
-import { DesktopTabs, getDesktopTabTitle } from "@/features/desktop/components/index";
-import { ChatSidebarTrigger } from "@/features/ai/components/chat-sidebar-trigger";
+import { AppSearchProvider } from "@/components/search/app-search";
+import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/ui";
+import { ChatSidebarTrigger } from "@/components/ai/chat-sidebar-trigger";
 import { isFeatureEnabled } from "@/app/config/feature-flags";
-import type { ChatPresentationMode } from "@/features/ai/components/chat-sidebar";
+import type { ChatPresentationMode } from "@/components/ai/chat-sidebar";
 import {
   usePageSidePaneState,
   PageSidePaneContext,
   PageSidePaneShell,
-} from "@/features/pages/pane/page-side-pane";
-import { DiscussionsSidebarPanel } from "@/features/comments/index";
+} from "@/components/pages/pane/page-side-pane";
+import { DiscussionsSidebarPanel } from "@/components/comments/index";
 import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/side-panel/right-sidebars";
 import {
   APP_SIDEBAR_PANEL_WIDTH,
@@ -23,11 +23,8 @@ import {
   type SidebarResizeIntent,
 } from "@/app/shell/navigation";
 
-import { getDatabaseId, useRoutePageId } from "@/features/pages/pane/page-pane-header";
-import {
-  getSettingsSection,
-  type SettingsSection,
-} from "@/features/settings/components/settings-sidebar";
+import { getDatabaseId, useRoutePageId } from "@/components/pages/pane/page-pane-header";
+import { getSettingsSection, type SettingsSection } from "@/components/settings/settings-sidebar";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import {
   Sheet,
@@ -37,7 +34,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import { isEmbeddedMobileViewer } from "@/features/pages/pane/embedded-view";
+import { isEmbeddedMobileViewer } from "@/components/pages/pane/embedded-view";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 import { getPageEmoji } from "@zilobase/features/pages";
@@ -45,13 +42,13 @@ import { usePage, useRecordItemVisit } from "@zilobase/features/pages/react";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import { LayoutEditorProvider } from "@/features/pages/layout";
-import { usePageEditorComments } from "@/features/comments/index";
-import { usePageCommentController } from "@/features/comments/index";
+import { LayoutEditorProvider } from "@/components/pages/layout";
+import { usePageEditorComments } from "@/components/comments/index";
+import { usePageCommentController } from "@/components/comments/index";
 import {
   PageLayoutSidebarProvider,
   useOptionalPageLayoutSidebar,
-} from "@/features/pages/layout/page-layout-sidebar";
+} from "@/components/pages/layout/page-layout-sidebar";
 import { Button } from "@/components/ui/button";
 import { FloatingWidget } from "@/components/floating-widget";
 import { AppHeader } from "./app-header";
@@ -67,7 +64,7 @@ const SettingsDialogSurface = lazy(() =>
   })),
 );
 const ChatSidebarPanel = lazy(() =>
-  import("@/features/ai/components/chat-sidebar").then((module) => ({
+  import("@/components/ai/chat-sidebar").then((module) => ({
     default: module.ChatSidebarPanel,
   })),
 );
@@ -75,7 +72,7 @@ const ChatSidebarPanel = lazy(() =>
 const CHAT_PRESENTATION_MODE_STORAGE_KEY = "zilobase:ai-chat-presentation-mode";
 
 const CalendarReminderHost = lazy(
-  () => import("@/features/calendar/reminders/calendar-reminder-host"),
+  () => import("@/components/calendar/reminders/calendar-reminder-host"),
 );
 
 export function AppLayout({

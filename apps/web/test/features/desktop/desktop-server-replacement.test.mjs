@@ -25,7 +25,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("replacement stops old traffic and deletes local state before commit", async () => {
     const { executeDesktopServerReplacement } = await loadModule(
-      "/src/features/desktop/server/desktop-server-replacement-core.ts",
+      "/src/platform/server/operations/desktop-server-replacement-core.ts",
     );
     const order = [];
     await executeDesktopServerReplacement(prepared, currentServer, "/p/page-1", {
@@ -62,7 +62,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("failed best-effort revocation does not block secure local deletion", async () => {
     const { executeDesktopServerReplacement } = await loadModule(
-      "/src/features/desktop/server/desktop-server-replacement-core.ts",
+      "/src/platform/server/operations/desktop-server-replacement-core.ts",
     );
     const order = [];
     await executeDesktopServerReplacement(prepared, currentServer, undefined, {
@@ -83,7 +83,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("instance binding rejects a server substituted behind an open link", async () => {
     const { assertPreparedServerMatchesRequest } = await loadModule(
-      "/src/features/desktop/server/desktop-server-replacement-core.ts",
+      "/src/platform/server/operations/desktop-server-replacement-core.ts",
     );
     assert.throws(() =>
       assertPreparedServerMatchesRequest(prepared, {
@@ -132,9 +132,7 @@ export function register({ readSource, assert, loadModule, test }) {
     const controller = await readSource(
       "/src/app/runtime/desktop-server-replacement-controller.tsx",
     );
-    const handler = await readSource(
-      "/src/features/desktop/components/desktop-deep-link-handler.tsx",
-    );
+    const handler = await readSource("/src/components/desktop/desktop-deep-link-handler.tsx");
 
     assert.match(replacement, /queryClient\.clear\(\)/);
     assert.match(replacement, /resetAccountState\(\)/);

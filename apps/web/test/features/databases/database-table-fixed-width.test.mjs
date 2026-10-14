@@ -1,8 +1,8 @@
 export function register({ assert, readSource, test }) {
   test("database column sizing cannot be overridden by inline or editor table stretching", async () => {
-    const table = await readSource("/src/features/databases/styles/database-table.css");
-    const inline = await readSource("/src/features/databases/styles/database.css");
-    const editor = await readSource("/src/features/editor/styles/editor-chrome.css");
+    const table = await readSource("/src/components/databases/styles/database-table.css");
+    const inline = await readSource("/src/components/databases/styles/database.css");
+    const editor = await readSource("/src/components/editor/styles/editor-chrome.css");
     const tableRule = table.match(/\.database-table\s*\{([^}]+)\}/)?.[1];
     const inlineRule = inline.match(
       /\.database-table-wrap\[data-inline-scroll="true"\] \.database-table\s*\{([^}]+)\}/,

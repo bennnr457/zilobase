@@ -77,13 +77,13 @@ import {
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
   SidebarNavItemAction,
 } from "@/components/ui/sidebar-nav-item-action";
-import { useOpenInNewTab } from "@/features/desktop/components/index";
-import { DATABASE_PAGE_DRAG_MIME } from "@/features/databases";
+import { useOpenInNewTab } from "@/components/desktop/ui";
+import { DATABASE_PAGE_DRAG_MIME } from "@/components/databases";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { PageIconDisplay } from "@/features/pages/index";
-import { prefetchPageForNavigation } from "@/features/editor/collaboration/page-prefetch";
-import { markPageNavigationStart } from "@/features/pages/navigation/page-navigation-timing";
+import { PageIconDisplay } from "@/components/pages/index";
+import { prefetchPageForNavigation } from "@/components/editor/collaboration/page-prefetch";
+import { markPageNavigationStart } from "@/components/pages/navigation/page-navigation-timing";
 import { getTeamspaceSidebarPermissions } from "@zilobase/features/teamspaces";
 import { useSidebarSectionOpen } from "../model/local-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";

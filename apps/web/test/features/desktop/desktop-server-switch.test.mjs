@@ -70,7 +70,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("switch requests notify progress before the installed session operation and propagate failures", async () => {
     const { installDesktopServerSwitch, executeDesktopServerSwitch, subscribeDesktopServerSwitch } =
-      await loadModule("/src/features/desktop/server/desktop-server-switch.ts");
+      await loadModule("/src/platform/server/operations/desktop-server-switch.ts");
     const events = [];
     const request = { server: { instanceId: "target" }, path: "/recents" };
     const unsubscribe = subscribeDesktopServerSwitch((progress) =>

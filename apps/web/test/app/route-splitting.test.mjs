@@ -8,8 +8,8 @@ export function register({ assert, readSource, test }) {
 
     for (const source of sources) {
       assert.match(source, /lazyRouteComponent/);
-      assert.match(source, /\(\) => import\("@\/features\//);
-      assert.doesNotMatch(source, /import [^\n]+ from "@\/features\/[^\n]+\/pages\//);
+      assert.match(source, /\(\) => import\("@\/components\//);
+      assert.doesNotMatch(source, /import [^\n]+ from "@\/components\/[^\n]+\/pages\//);
     }
   });
 
@@ -17,7 +17,7 @@ export function register({ assert, readSource, test }) {
     const [routeShell, appLayout, tasks] = await Promise.all([
       readSource("/src/app/routing/route-shell.tsx"),
       readSource("/src/app/shell/content/app-layout.tsx"),
-      readSource("/src/features/tasks/tasks.tsx"),
+      readSource("/src/components/tasks/tasks.tsx"),
     ]);
 
     assert.match(routeShell, /const AppLayout = lazy/);

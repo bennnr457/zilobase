@@ -30,7 +30,7 @@ export function register({ assert, loadModule, test }) {
   test("normalizeNotionHtmlBlocks converts basic and advanced Notion blocks", async () => {
     installDomParser();
     const { normalizeNotionHtmlBlocks } = await loadModule(
-      "/src/features/notion-import/conversion/notion-html-blocks.ts",
+      "/src/components/notion-import/conversion/notion-html-blocks.ts",
     );
 
     const result = normalizeNotionHtmlBlocks(
@@ -71,7 +71,7 @@ export function register({ assert, loadModule, test }) {
   test("normalizeNotionHtmlBlocks rewrites internal Notion links", async () => {
     installDomParser();
     const { normalizeNotionHtmlBlocks } = await loadModule(
-      "/src/features/notion-import/conversion/notion-html-blocks.ts",
+      "/src/components/notion-import/conversion/notion-html-blocks.ts",
     );
     const pagePathMap = new Map([["Root/Child.html", "page-child"]]);
 
@@ -89,7 +89,7 @@ export function register({ assert, loadModule, test }) {
   test("normalizeNotionHtmlBlocks drops exported spacer blocks", async () => {
     installDomParser();
     const { normalizeNotionHtmlBlocks } = await loadModule(
-      "/src/features/notion-import/conversion/notion-html-blocks.ts",
+      "/src/components/notion-import/conversion/notion-html-blocks.ts",
     );
 
     const result = normalizeNotionHtmlBlocks(
@@ -114,7 +114,7 @@ export function register({ assert, loadModule, test }) {
     installDomParser();
     const { strToU8, zipSync } = await import("fflate");
     const { importNotionZipFile } = await loadModule(
-      "/src/features/notion-import/conversion/notion-import.ts",
+      "/src/components/notion-import/conversion/notion-import.ts",
     );
     const zip = zipSync({
       "Root.html": strToU8(
@@ -163,7 +163,7 @@ export function register({ assert, loadModule, test }) {
     installDomParser();
     const { strToU8, zipSync } = await import("fflate");
     const { importNotionZipFile, NotionImportError } = await loadModule(
-      "/src/features/notion-import/conversion/notion-import.ts",
+      "/src/components/notion-import/conversion/notion-import.ts",
     );
     const file = new File([zipSync({ "Page.md": strToU8("# Page") })], "notion.zip");
 

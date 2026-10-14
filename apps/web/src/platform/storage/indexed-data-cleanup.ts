@@ -1,4 +1,4 @@
-import { prepareCalendarDatabasesForDeletion } from "@/features/calendar/storage/calendar-database";
+import { prepareCalendarDatabasesForDeletion } from "@/components/calendar/storage/calendar-database";
 import type { DesktopServer } from "@/platform/server/desktop-server";
 
 /** Drops re-fetchable calendar caches during identity changes. */

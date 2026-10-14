@@ -1,7 +1,7 @@
 import {
   ManualRecordPlacementProvider,
   useManualRecordPlacement,
-} from "../../../src/features/databases/views/state/manual-record-placement";
+} from "../../../src/components/databases/views/state/manual-record-placement";
 import { createElement } from "react";
 import { useProjectedDatabaseRecords } from "../../../../../packages/features/src/databases/interactions/react";
 import { flushSync } from "react-dom";
@@ -12,8 +12,8 @@ import {
   ZilobaseFeaturesProvider,
   type ZilobaseFeaturesConfig,
 } from "../../../../../packages/features/src/shared/context";
-import { useRecordDrops } from "../../../src/features/databases/views/controller/use-record-drop";
-import { useDatabaseKanbanCardDrag } from "../../../src/features/databases/views/kanban/use-database-kanban-card-drag";
+import { useRecordDrops } from "../../../src/components/databases/views/controller/use-record-drop";
+import { useDatabaseKanbanCardDrag } from "../../../src/components/databases/views/kanban/use-database-kanban-card-drag";
 import { buildKanbanBoard } from "@zilobase/features/databases";
 import type {
   SortableDatabaseItem as DatabaseRow,

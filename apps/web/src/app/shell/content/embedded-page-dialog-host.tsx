@@ -1,6 +1,6 @@
-import { EmbeddedPageDialog } from "@/features/pages/pane/embedded-page-dialog";
-import { useOpenEmbeddedPage } from "@/features/pages/pane/use-open-embedded-page";
-import { PageEditorPane } from "@/features/pages/pane/page-editor-pane";
+import { EmbeddedPageDialog } from "@/components/pages/pane/embedded-page-dialog";
+import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
+import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
 import { usePage } from "@zilobase/features/pages/react";
 
 export function EmbeddedPageDialogHost({

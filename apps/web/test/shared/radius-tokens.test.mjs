@@ -55,9 +55,9 @@ export function register({ readSource, assert, test }) {
     const [badge, editorStyles, discussions, toolbar] = await Promise.all(
       [
         "components/ui/badge.tsx",
-        "features/databases/styles/database-table.css",
-        "features/comments/components/discussions-sidebar.tsx",
-        "features/databases/views/components/database-view-toolbar.tsx",
+        "components/databases/styles/database-table.css",
+        "components/comments/discussions-sidebar.tsx",
+        "components/databases/views/components/database-view-toolbar.tsx",
       ].map((path) => readSource(`/src/${path}`)),
     );
 

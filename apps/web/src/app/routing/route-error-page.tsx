@@ -1,18 +1,15 @@
 import { type ErrorComponentProps, useNavigate } from "@tanstack/react-router";
-import { isDesktopApp } from "@/features/desktop/index";
+import { isDesktopApp } from "@/components/desktop/index";
 import { useEffect, useState } from "react";
 
 import { describeRouteError } from "./route-error";
-import {
-  describeDesktopError,
-  recordDesktopDiagnostic,
-} from "@/features/desktop/diagnostics/index";
+import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
 import {
   getSelectedDesktopServer,
   listDesktopServerProfiles,
   type DesktopServerProfile,
-} from "@/features/desktop/server/index";
-import { executeDesktopServerSwitch } from "@/features/desktop/server/index";
+} from "@/platform/server/operations/index";
+import { executeDesktopServerSwitch } from "@/platform/server/operations/index";
 import { Button } from "@/components/ui/button";
 import { captureProductException } from "@/lib/posthog";
 

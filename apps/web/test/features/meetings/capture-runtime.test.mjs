@@ -24,7 +24,7 @@ const settled = async () => {
 export function register({ assert, loadModule, test }) {
   test("native capture scopes events, deduplicates warnings and clears stopped transcripts", async () => {
     const { createNativeMeetingCaptureRuntime } = await loadModule(
-      "/src/features/desktop/meetings/native-capture-runtime.ts",
+      "/src/platform/desktop/meetings/native-capture-runtime.ts",
     );
     const handlers = new Map(),
       removed = [],
@@ -107,7 +107,7 @@ export function register({ assert, loadModule, test }) {
 
   test("native capture discards async results after disposal", async () => {
     const { createNativeMeetingCaptureRuntime } = await loadModule(
-      "/src/features/desktop/meetings/native-capture-runtime.ts",
+      "/src/platform/desktop/meetings/native-capture-runtime.ts",
     );
     const resolvers = [],
       removed = [];
@@ -134,7 +134,7 @@ export function register({ assert, loadModule, test }) {
 
   test("browser capture filters snapshots and stops observing without closing the recorder", async () => {
     const { createBrowserMeetingCaptureRuntime } = await loadModule(
-      "/src/features/meetings/capture/browser-capture-runtime.ts",
+      "/src/components/meetings/capture/browser-capture-runtime.ts",
     );
     let notify,
       unlistened = false,

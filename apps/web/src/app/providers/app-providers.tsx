@@ -3,22 +3,22 @@ import { ThemeProvider, useTheme } from "next-themes";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { PageEditorCommentsProvider } from "@/features/comments/index";
-import { PageEditorRegistryProvider } from "@/features/editor/runtime/page-editor-registry";
-import { PageCommentsRegistryProvider } from "@/features/comments/index";
-import { DesktopUpdater } from "@/features/desktop/components/index";
+import { PageEditorCommentsProvider } from "@/components/comments/index";
+import { PageEditorRegistryProvider } from "@/components/editor/runtime/page-editor-registry";
+import { PageCommentsRegistryProvider } from "@/components/comments/index";
+import { DesktopUpdater } from "@/components/desktop/ui";
 import { WebFeaturesProvider } from "@/app/providers/features-provider";
 import { queryClient } from "@/app/query-client";
 import { ShortcutProvider } from "@/app/shortcuts";
 import { getThemeColorScheme, selectableThemeIds } from "@/lib/themes";
 import { ThemeFamilyProvider, useThemeFamily } from "@/app/providers/theme-family-provider";
 import { AppIconProvider } from "@/app/providers/app-icon-provider";
-import { DemoExperience, installDemoCache } from "@/features/demo";
+import { DemoExperience, installDemoCache } from "@/app/demo";
 import { resolvePageDetailReference, type PageDetailReference } from "@zilobase/features/pages";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useSession } from "@zilobase/features/auth/react";
 import { useDatabaseController } from "@zilobase/features/databases/react";
-import { guardPendingDatabaseWrites } from "@/features/databases/lifecycle/beforeunload";
+import { guardPendingDatabaseWrites } from "@/components/databases/lifecycle/beforeunload";
 
 import posthog from "@/lib/posthog";
 

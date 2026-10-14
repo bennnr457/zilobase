@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("block drag insert pos picks before or after block midpoint", async () => {
     const { resolveBlockInsertPos } = await loadModule(
-      "/src/features/editor/drag-drop/block-drag.ts",
+      "/src/components/editor/drag-drop/block-drag.ts",
     );
 
     assert.equal(resolveBlockInsertPos(10, 4, 100, 40, 110), 10);
@@ -11,7 +11,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database block drag image keeps the block anchored when dragging from the handle", async () => {
     const { getDatabaseBlockDragImagePlacement } = await loadModule(
-      "/src/features/editor/drag-drop/block-drag.ts",
+      "/src/components/editor/drag-drop/block-drag.ts",
     );
 
     assert.deepEqual(getDatabaseBlockDragImagePlacement(700, 120, 744, 100), {
@@ -23,7 +23,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database block drag image tracks the pointer inside the block", async () => {
     const { getDatabaseBlockDragImagePlacement } = await loadModule(
-      "/src/features/editor/drag-drop/block-drag.ts",
+      "/src/components/editor/drag-drop/block-drag.ts",
     );
 
     assert.deepEqual(getDatabaseBlockDragImagePlacement(760, 148, 744, 100), {
@@ -35,7 +35,7 @@ export function register({ assert, loadModule, test }) {
 
   test("block drag payload parser rejects malformed payloads", async () => {
     const { EDITOR_BLOCK_DRAG_MIME, getDraggedEditorBlockPayload } = await loadModule(
-      "/src/features/editor/drag-drop/block-drag.ts",
+      "/src/components/editor/drag-drop/block-drag.ts",
     );
 
     const dataTransfer = {
@@ -56,7 +56,7 @@ export function register({ assert, loadModule, test }) {
 
   test("block drag payload requires an operation and complete source slice", async () => {
     const { EDITOR_BLOCK_DRAG_MIME, getDraggedEditorBlockPayload } = await loadModule(
-      "/src/features/editor/drag-drop/block-drag-session.ts",
+      "/src/components/editor/drag-drop/block-drag-session.ts",
     );
     const payload = {
       operationId: "operation",
@@ -84,7 +84,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("database cycle checks distinguish host and ancestor placements", async () => {
     const { canMoveDatabaseBlockToPage } = await loadModule(
-      "/src/features/editor/drag-drop/block-drag-session.ts",
+      "/src/components/editor/drag-drop/block-drag-session.ts",
     );
     assert.equal(canMoveDatabaseBlockToPage("a", "a", []), false);
     assert.equal(canMoveDatabaseBlockToPage("a", "b", ["a"]), false);

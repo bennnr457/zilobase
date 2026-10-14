@@ -5,4 +5,4 @@ export {
   getConnectivityState,
   subscribeConnectivity,
 } from "../../src/platform/network/connectivity";
-export { installDemoTransport } from "../../src/features/demo/transport";
+export { installDemoTransport } from "../../src/app/demo/transport";

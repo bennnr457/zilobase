@@ -15,8 +15,10 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.match(wheel, /SCROLL_END_DEBOUNCE_MS = 150/);
     assert.match(wheel, /CALENDAR_SNAP_ANIMATION_MS = 200/);
     assert.match(wheel, /event\.preventDefault\(\)/);
-    const schedule = await readSource("/src/features/calendar/views/calendar-schedule.tsx");
-    const navigation = await readSource("/src/features/calendar/workspace/calendar-navigation.ts");
+    const schedule = await readSource("/src/components/calendar/views/calendar-schedule.tsx");
+    const navigation = await readSource(
+      "/src/components/calendar/workspace/calendar-navigation.ts",
+    );
     assert.match(schedule, /bookmarkVisibleDate/);
     assert.match(schedule, /date: anchorDate/);
     assert.match(navigation, /useCalendarVisibleDate/);

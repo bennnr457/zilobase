@@ -5,15 +5,15 @@ export function register({ readSource, assert, loadModule, test }) {
   const readLibrarySource = async () =>
     (
       await Promise.all([
-        readSource("/src/features/library/recents.tsx"),
-        readSource("/src/features/teamspaces/components/create-teamspace-dialog.tsx"),
+        readSource("/src/components/library/recents.tsx"),
+        readSource("/src/components/teamspaces/create-teamspace-dialog.tsx"),
       ])
     ).join("\n");
   const readToolbarSource = async () =>
     (
       await Promise.all([
-        readSource("/src/features/databases/views/components/database-view-toolbar.tsx"),
-        readSource("/src/features/databases/views/components/database-view-toolbar-dialogs.tsx"),
+        readSource("/src/components/databases/views/components/database-view-toolbar.tsx"),
+        readSource("/src/components/databases/views/components/database-view-toolbar-dialogs.tsx"),
       ])
     ).join("\n");
   test("Library Teamspaces uses the shared hierarchy table", async () => {

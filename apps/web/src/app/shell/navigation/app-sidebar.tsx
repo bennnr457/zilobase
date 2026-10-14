@@ -9,14 +9,14 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { isDesktopApp } from "@/features/desktop/index";
+import { isDesktopApp } from "@/components/desktop/index";
 import { useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
 import { MonitorUpIcon, SlidersHorizontalIcon } from "@/components/icons";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { useAppSearch } from "@/features/search/app-search";
-import { DatabaseViewIcon } from "@/features/databases";
+import { useAppSearch } from "@/components/search/app-search";
+import { DatabaseViewIcon } from "@/components/databases";
 import { AiChatsSection } from "./components/ai-chats-section";
 import { NavFavorites } from "./components/nav-favorites";
 import { NavMeetings } from "./components/nav-meetings";
@@ -47,15 +47,15 @@ import { WorkspaceSwitcher } from "./workspace-switcher";
 import {
   clearPromotedFullPagePath,
   usePromotedFullPagePath,
-} from "@/features/pages/pane/page-side-pane";
-import { buildDesktopDeepLink } from "@/features/desktop/deep-links/index";
+} from "@/components/pages/pane/page-side-pane";
+import { buildDesktopDeepLink } from "@/platform/desktop/deep-links/index";
 import {
   discoverRuntimeDesktopServer,
   getSelectedDesktopServer,
   type DesktopServer,
-} from "@/features/desktop/server/index";
-import { DEFAULT_DATABASE_ITEM_ICON, DEFAULT_MEETING_ITEM_ICON } from "@/features/pages/index";
-import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "@/features/pages/index";
+} from "@/platform/server/operations/index";
+import { DEFAULT_DATABASE_ITEM_ICON, DEFAULT_MEETING_ITEM_ICON } from "@/components/pages/index";
+import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "@/components/pages/index";
 import { useSession } from "@zilobase/features/auth/react";
 import {
   useAddDatabaseRow,
@@ -86,7 +86,7 @@ import {
 import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/local-state";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
 import { isFeatureEnabled } from "@/app/config/feature-flags";
-import { NotificationCenter } from "@/features/notifications/notification-center";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 
 const sidebarNavigationIcons: SidebarNavigationIcons<React.ReactNode> = {
   getDatabaseIcon: (database: Parameters<typeof getDatabaseIconNode>[0]) =>
@@ -101,7 +101,7 @@ const sidebarNavigationIcons: SidebarNavigationIcons<React.ReactNode> = {
 };
 
 const CalendarAccountsSidebar = React.lazy(() =>
-  import("@/features/calendar/connections/calendar-accounts-sidebar").then((module) => ({
+  import("@/components/calendar/connections/calendar-accounts-sidebar").then((module) => ({
     default: module.CalendarAccountsSidebar,
   })),
 );

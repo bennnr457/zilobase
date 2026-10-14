@@ -18,8 +18,8 @@ export function register({ assert, readSource, readWorkspace, test }) {
       "/src/app/shell/content/app-layout.tsx",
       "/packages/features/src/pages/sharing-hooks.ts",
       "/packages/features/src/pages/item-action-hooks.ts",
-      "/src/features/databases/setup/components/database-setup-card.tsx",
-      "/src/features/databases/views/view-settings/data-source-settings.tsx",
+      "/src/components/databases/setup/components/database-setup-card.tsx",
+      "/src/components/databases/views/view-settings/data-source-settings.tsx",
     ];
 
     for (const path of paths) {
@@ -36,8 +36,8 @@ export function register({ assert, readSource, readWorkspace, test }) {
     const sidebar = await readSource(
       "/src/app/shell/navigation/components/sidebar-database-view-section.tsx",
     );
-    const layout = await readSource("/src/features/pages/layout/layout-editor.tsx");
-    const pane = await readSource("/src/features/pages/pane/page-pane-header.tsx");
+    const layout = await readSource("/src/components/pages/layout/layout-editor.tsx");
+    const pane = await readSource("/src/components/pages/pane/page-pane-header.tsx");
 
     assert.match(sidebar, /useDatabaseRecords/);
     assert.match(sidebar, /composeDatabaseViewData/);
@@ -45,6 +45,6 @@ export function register({ assert, readSource, readWorkspace, test }) {
     assert.match(layout, /useDatabaseRecords/);
     assert.match(layout, /Load more pages/);
     assert.match(pane, /function DatabaseBreadcrumb[\s\S]*useDatabaseBootstrap/);
-    assert.doesNotMatch(pane, /@\/features\/databases\/hooks\/use-database-/);
+    assert.doesNotMatch(pane, /@\/components\/databases\/hooks\/use-database-/);
   });
 }

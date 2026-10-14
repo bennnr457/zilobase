@@ -3,9 +3,9 @@ import {
   MainPaneHeaderLeadingControl,
   PagePaneHeader,
   PageSidePaneCollapseButton,
-} from "@/features/pages/pane/page-pane-header";
-import { PageSidePaneHeaderCell } from "@/features/pages/pane/page-side-pane";
-import { useOptionalPageLayoutSidebar } from "@/features/pages/layout/page-layout-sidebar";
+} from "@/components/pages/pane/page-pane-header";
+import { PageSidePaneHeaderCell } from "@/components/pages/pane/page-side-pane";
+import { useOptionalPageLayoutSidebar } from "@/components/pages/layout/page-layout-sidebar";
 
 type AppHeaderProps = {
   auxiliarySidePaneCloseLabel?: string;

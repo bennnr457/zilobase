@@ -10,7 +10,7 @@ export function register({ readSource, assert, test }) {
       "/src/app/shell/navigation/components/sidebar-customize-panel.tsx",
     );
     const pageDatabasePickerSource = await readSource(
-      "/src/features/databases/components/page-database-picker.tsx",
+      "/src/components/databases/page-database-picker.tsx",
     );
     const runtimeSectionDragSource = await readSource(
       "/src/app/shell/navigation/components/runtime-section-drag-item.tsx",
@@ -25,10 +25,10 @@ export function register({ readSource, assert, test }) {
     const navListSource = await readSource(
       "/src/app/shell/navigation/components/sidebar-nav-list.tsx",
     );
-    const defaultIconsSource = await readSource("/src/features/pages/icons/item-icons.ts");
-    const pageIconSource = await readSource("/src/features/pages/icons/page-icon.tsx");
+    const defaultIconsSource = await readSource("/src/components/pages/icons/item-icons.ts");
+    const pageIconSource = await readSource("/src/components/pages/icons/page-icon.tsx");
     const databasePageLinkSource = await readSource(
-      "/src/features/databases/interactions/database-page-link.tsx",
+      "/src/components/databases/interactions/database-page-link.tsx",
     );
     const appIconProviderSource = await readSource("/src/app/providers/app-icon-provider.tsx");
     const iconPickerSource = await readSource("/src/components/ui/icon-emoji-picker.tsx");
@@ -150,7 +150,9 @@ export function register({ readSource, assert, test }) {
       /group\/workspace-row|hover:bg-action-neutral-hover focus-within:bg-action-neutral-hover/,
     );
     assert.match(sidebarPrimitiveSource, /navigation \? <div className="-mx-2">/);
-    const pagePaneHeaderSource = await readSource("/src/features/pages/pane/page-pane-header.tsx");
+    const pagePaneHeaderSource = await readSource(
+      "/src/components/pages/pane/page-pane-header.tsx",
+    );
     const leadingControl = pagePaneHeaderSource.slice(
       pagePaneHeaderSource.indexOf("export function MainPaneHeaderLeadingControl"),
       pagePaneHeaderSource.indexOf("export function PageSidePaneCollapseButton"),

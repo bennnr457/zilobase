@@ -8,7 +8,7 @@ export const appRoutes = [
     getParentRoute: () => appRoute,
     path: "/calendar",
     validateSearch: validateCalendarSearch,
-    component: lazyRouteComponent(() => import("@/features/calendar/screens/calendar")),
+    component: lazyRouteComponent(() => import("@/components/calendar/calendar")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -18,23 +18,23 @@ export const appRoutes = [
         throw redirect({ to: "/recents", search: { view: "recents" } });
       }
     },
-    component: lazyRouteComponent(() => import("@/features/ai/screens/ai")),
+    component: lazyRouteComponent(() => import("@/components/ai/ai")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/canvas",
-    component: lazyRouteComponent(() => import("@/features/canvas/screens/canvas")),
+    component: lazyRouteComponent(() => import("@/components/canvas/canvas")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/recents",
     validateSearch: validateLibrarySearch,
-    component: lazyRouteComponent(() => import("@/features/library/recents")),
+    component: lazyRouteComponent(() => import("@/components/library/recents")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/tasks",
-    component: lazyRouteComponent(() => import("@/features/tasks/tasks")),
+    component: lazyRouteComponent(() => import("@/components/tasks/tasks")),
   }),
   createRoute({
     getParentRoute: () => appRoute,

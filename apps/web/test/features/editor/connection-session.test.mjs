@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, test }) {
-  const load = () => loadModule("/src/features/editor/collaboration/connection-session.ts");
+  const load = () => loadModule("/src/components/editor/collaboration/connection-session.ts");
   function fixture(startPageConnection, { preparedTicket = null } = {}) {
     let start, input, resolve, reject, signal;
     const ticket = { documentName: "page:p1", token: "test" };

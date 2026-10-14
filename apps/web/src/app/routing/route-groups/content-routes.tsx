@@ -12,7 +12,7 @@ export const contentRoutes = [
     beforeLoad: async ({ params }) => ({
       publishedShare: await applyPageShareAccess(params.pageId),
     }),
-    component: lazyRouteComponent(() => import("@/features/pages/screens/page")),
+    component: lazyRouteComponent(() => import("@/components/pages/page")),
     pendingComponent: PendingPage,
   }),
   createRoute({
@@ -21,7 +21,7 @@ export const contentRoutes = [
     beforeLoad: async () => ({
       authenticatedMeeting: Boolean((await getFreshSession({ optional: true })).user),
     }),
-    component: lazyRouteComponent(() => import("@/features/meetings/screens/meeting")),
+    component: lazyRouteComponent(() => import("@/components/meetings/meeting")),
     pendingComponent: PendingPage,
   }),
   createRoute({
@@ -31,7 +31,7 @@ export const contentRoutes = [
     beforeLoad: async ({ params }) => ({
       publishedShare: await applyDatabaseShareAccess(params.databaseId),
     }),
-    component: lazyRouteComponent(() => import("@/features/databases/core/database-screen")),
+    component: lazyRouteComponent(() => import("@/components/databases/core/database-screen")),
     pendingComponent: PendingPage,
   }),
 ];

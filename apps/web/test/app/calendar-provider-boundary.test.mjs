@@ -5,7 +5,7 @@ import { transform } from "esbuild";
 export function register({ assert, readSource, test }) {
   test("application sidebar and content share the Calendar workspace provider", async () => {
     const workspaceSource = await readSource(
-      "/src/features/calendar/workspace/calendar-workspace.tsx",
+      "/src/components/calendar/workspace/calendar-workspace.tsx",
     );
     const workspace = await transform(
       workspaceSource.replace(/^import[\s\S]*?;\n/gm, "").replaceAll("export ", ""),

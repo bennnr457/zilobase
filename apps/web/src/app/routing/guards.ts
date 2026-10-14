@@ -8,12 +8,12 @@ import { workspacesQueryOptions } from "@zilobase/features/workspaces";
 
 import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
-import { useAppStore } from "@/features/desktop/state/app-store";
+import { useAppStore } from "@/app/state/app-store";
 import { NetworkUnavailableError, apiFetch } from "@/platform/network/api";
-import { getMostRecentItemPath } from "@/features/library/library-model";
+import { getMostRecentItemPath } from "@/components/library/library-model";
 import { decidePublishedShareAccess } from "@zilobase/features/pages";
 import { getConnectivityState } from "@/platform/network/connectivity";
-import { hydratePageReadCache } from "@/features/pages/cache/page-read-cache";
+import { hydratePageReadCache } from "@/components/pages/cache/page-read-cache";
 import { resolveNavigationReference, type PageDetail } from "@zilobase/features/pages";
 
 const NAVIGATION_AUTH_STALE_TIME = 30_000;

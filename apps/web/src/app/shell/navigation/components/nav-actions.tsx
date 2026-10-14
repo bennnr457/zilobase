@@ -31,7 +31,7 @@ import {
 
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { usePageCommentsSnapshot } from "@/features/comments/index";
+import { usePageCommentsSnapshot } from "@/components/comments/index";
 import { Switch } from "@/components/ui/switch";
 
 const moreActions = [

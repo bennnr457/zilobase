@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("kanban movement preserves hidden and unloaded row anchors", async () => {
     const { getAnchoredReorderedRowIds, getFilteredReorderedRowIds } = await loadModule(
-      "/src/features/databases/interactions/database-row-drag.ts",
+      "/src/components/databases/interactions/database-row-drag.ts",
     );
     const allRows = ["hidden-a", "visible-a", "hidden-b", "visible-b", "unloaded-boundary"].map(
       (id) => ({ id }),
@@ -29,7 +29,7 @@ export function register({ assert, loadModule, readSource, test }) {
       "/packages/features/src/databases/interactions/group-values.ts",
     );
     const { getKanbanEdgeScrollSpeed } = await loadModule(
-      "/src/features/databases/views/kanban/database-kanban-card-drag.ts",
+      "/src/components/databases/views/kanban/database-kanban-card-drag.ts",
     );
 
     assert.deepEqual(
@@ -54,15 +54,15 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("sorted confirmation and geometry invalidation stay wired to optimistic moves", async () => {
     const controller = await readSource(
-      "/src/features/databases/views/kanban/use-database-kanban-card-drag.ts",
+      "/src/components/databases/views/kanban/use-database-kanban-card-drag.ts",
     );
 
     const geometry = await readSource(
-      "/src/features/databases/views/kanban/use-kanban-geometry.ts",
+      "/src/components/databases/views/kanban/use-kanban-geometry.ts",
     );
     assert.match(controller, /manualPlacement\.request/);
     assert.match(
-      await readSource("/src/features/databases/views/state/manual-record-placement.tsx"),
+      await readSource("/src/components/databases/views/state/manual-record-placement.tsx"),
       /await pending\.run\(viewId\)/,
     );
     assert.match(geometry, /new ResizeObserver/);

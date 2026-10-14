@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { isDesktopApp } from "@/features/desktop/index";
+import { isDesktopApp } from "@/components/desktop/index";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,14 +33,14 @@ import {
   useSetActiveWorkspace,
 } from "@zilobase/features/workspaces/react";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { DesktopConnectServerDialog } from "@/features/desktop/components/index";
+import { DesktopConnectServerDialog } from "@/components/desktop/ui";
 import {
   getSelectedDesktopServer,
   listDesktopServerProfiles,
   updateDesktopServerProfileSnapshot,
   type DesktopServerProfile,
-} from "@/features/desktop/server/index";
-import { executeDesktopServerSwitch } from "@/features/desktop/server/index";
+} from "@/platform/server/operations/index";
+import { executeDesktopServerSwitch } from "@/platform/server/operations/index";
 import {
   Building2Icon,
   CheckIcon,

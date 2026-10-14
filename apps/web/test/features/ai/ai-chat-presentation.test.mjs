@@ -3,7 +3,7 @@ import { readChatbotSource } from "./ai-chatbot-source.mjs";
 export function register({ readSource, assert, test }) {
   test("Ask AI supports persistent docked and floating desktop modes", async () => {
     const layoutSource = await readSource("/src/app/shell/content/app-layout.tsx");
-    const sidebarSource = await readSource("/src/features/ai/components/chat-sidebar.tsx");
+    const sidebarSource = await readSource("/src/components/ai/chat-sidebar.tsx");
 
     assert.match(
       layoutSource,
@@ -21,8 +21,8 @@ export function register({ readSource, assert, test }) {
   });
 
   test("full-page Ask AI uses the page viewport and hides the duplicate launcher", async () => {
-    const aiPageSource = await readSource("/src/features/ai/screens/ai.tsx");
-    const workspaceSource = await readSource("/src/features/ai/components/ask-ai-workspace.tsx");
+    const aiPageSource = await readSource("/src/components/ai/ai.tsx");
+    const workspaceSource = await readSource("/src/components/ai/ask-ai-workspace.tsx");
     const chatbotSource = await readChatbotSource(readSource);
     const layoutSource = await readSource("/src/app/shell/content/app-layout.tsx");
 
@@ -37,7 +37,7 @@ export function register({ readSource, assert, test }) {
   });
 
   test("Ask AI keeps the composer outside its scrolling history", async () => {
-    const personal = await readSource("/src/features/ai/components/elements/chatbot.tsx");
+    const personal = await readSource("/src/components/ai/elements/chatbot.tsx");
     assert.match(personal, /data-ai-scroll-shell[\s\S]*?overflow-y-auto/);
     assert.match(
       personal,

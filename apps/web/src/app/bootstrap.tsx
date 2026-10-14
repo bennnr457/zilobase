@@ -4,22 +4,22 @@ import { configureApplicationSessions } from "./runtime/configure-sessions";
 import { configureApplicationRequests } from "./runtime/configure-requests";
 import ReactDOM from "react-dom/client";
 import App from "./app";
-import { initializeDesktopAuthToken } from "@/features/desktop/auth/index";
+import { initializeDesktopAuthToken } from "@/components/desktop/auth/index";
 import {
   applyActiveDesktopProfileWorkspace,
   initializeDesktopServer,
   listDesktopServerProfiles,
-} from "@/features/desktop/server/index";
-import { useAppStore } from "@/features/desktop/state/app-store";
-import { useAuthFlowStore } from "@/features/auth/auth-flow-store";
+} from "@/platform/server/operations/index";
+import { useAppStore } from "@/app/state/app-store";
+import { useAuthFlowStore } from "@/components/auth/auth-flow-store";
 import {
   installDesktopDiagnostics,
   markDesktopAppReady,
   markDesktopRootMounted,
   recordDesktopDiagnostic,
-} from "@/features/desktop/diagnostics/index";
+} from "@/platform/diagnostics/index";
 import { AppProviders } from "@/app/providers/app-providers";
-import { initializeDesktopTranslucency } from "@/features/desktop/window/index";
+import { initializeDesktopTranslucency } from "@/platform/desktop/window/index";
 import { captureProductException } from "@/lib/posthog";
 
 configureApplicationSessions();

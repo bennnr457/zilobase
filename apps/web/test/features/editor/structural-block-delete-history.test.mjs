@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, readSource, test }) {
-  const load = () => loadModule("/src/features/editor/operations/resource-history.ts");
+  const load = () => loadModule("/src/components/editor/operations/resource-history.ts");
   test("structural deletion awaits resource history before advancing editor history", async () => {
     const { createResourceHistoryAction } = await load();
     const events = [];
@@ -123,9 +123,9 @@ export function register({ assert, loadModule, readSource, test }) {
   });
   test("database deletion registers a captured receipt with resource restoration", async () => {
     const [menu, pane, types] = await Promise.all([
-      readSource("/src/features/editor/drag-drop/drag-block-menu.tsx"),
-      readSource("/src/features/pages/pane/page-editor-pane.tsx"),
-      readSource("/src/features/editor/core/types.ts"),
+      readSource("/src/components/editor/drag-drop/drag-block-menu.tsx"),
+      readSource("/src/components/pages/pane/page-editor-pane.tsx"),
+      readSource("/src/components/editor/core/types.ts"),
     ]);
     assert.match(types, /Promise<StructuralBlockDeleteHistory \| void>/);
     assert.match(menu, /workspace\.history\.suppress\(deleteEditorBlock\)/);

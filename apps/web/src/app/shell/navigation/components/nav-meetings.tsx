@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { PageIconDisplay } from "@/features/pages/index";
+import { PageIconDisplay } from "@/components/pages/index";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 
 export function NavMeetings({

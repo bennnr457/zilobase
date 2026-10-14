@@ -67,7 +67,7 @@ test("parseArgs recognizes hook, staged, and dry-run flags", () => {
 });
 
 test("web paths select the web-and-packages workflow commands", () => {
-  const selected = selectJobs(["apps/web/src/features/pages/Page.tsx"]);
+  const selected = selectJobs(["apps/web/src/components/pages/Page.tsx"]);
   assert.ok(selected.some((job) => job.id === "web-and-packages"));
   assert.ok(selected.some((job) => job.id === "tokens"));
   assert.equal(

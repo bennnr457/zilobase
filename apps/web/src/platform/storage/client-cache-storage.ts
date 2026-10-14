@@ -11,7 +11,7 @@ import {
   destroyCalendarDatabase,
   calendarDatabaseName,
   calendarCacheStore,
-} from "@/features/calendar/storage/calendar-database";
+} from "@/components/calendar/storage/calendar-database";
 
 const snapshotWriteTails = new Map<string, Promise<void>>();
 const blockedSnapshotUsers = new Set<string>();

@@ -1,7 +1,7 @@
 import { createRoute, lazyRouteComponent, redirect } from "@tanstack/react-router";
-import { isDesktopApp } from "@/features/desktop/index";
+import { isDesktopApp } from "@/components/desktop/index";
 
-import { getAuthReturnPath } from "@/features/auth/google-auth";
+import { getAuthReturnPath } from "@/components/auth/google-auth";
 import { isBootstrapRequiredAuthError } from "@zilobase/features/auth";
 import { getDefaultAppPath, getFreshSession, getWorkspaces } from "../guards";
 import { rootRoute } from "../route-roots";
@@ -11,7 +11,7 @@ import {
   validateOAuthConsentSearch,
   validateSignupSearch,
 } from "../search-validators";
-import { isHostedDemoRuntime } from "@/features/demo";
+import { isHostedDemoRuntime } from "@/app/demo";
 import { apiFetch } from "@/platform/network/api";
 
 const indexRoute = createRoute({
@@ -64,7 +64,7 @@ const loginRoute = createRoute({
     const workspaces = await getWorkspaces();
     throw redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/login")),
+  component: lazyRouteComponent(() => import("@/components/auth/login")),
 });
 
 const connectRoute = createRoute({
@@ -73,7 +73,7 @@ const connectRoute = createRoute({
   beforeLoad: () => {
     if (!isDesktopApp()) throw redirect({ to: "/login" });
   },
-  component: lazyRouteComponent(() => import("@/features/desktop/pages/connect")),
+  component: lazyRouteComponent(() => import("@/components/desktop/pages/connect")),
 });
 
 const signupRoute = createRoute({
@@ -93,7 +93,7 @@ const signupRoute = createRoute({
     const workspaces = await getWorkspaces();
     throw redirect({ to: workspaces.length > 0 ? "/recents" : "/onboarding" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/signup")),
+  component: lazyRouteComponent(() => import("@/components/auth/signup")),
 });
 
 const onboardingRoute = createRoute({
@@ -106,7 +106,7 @@ const onboardingRoute = createRoute({
     const workspaces = await getWorkspaces();
     if (workspaces.length > 0) throw redirect({ to: "/recents" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/onboarding")),
+  component: lazyRouteComponent(() => import("@/components/auth/onboarding")),
 });
 
 const otpRoute = createRoute({
@@ -115,7 +115,7 @@ const otpRoute = createRoute({
   beforeLoad: async () => {
     if (isDesktopApp()) throw redirect({ to: "/login" });
   },
-  component: lazyRouteComponent(() => import("@/features/auth/otp")),
+  component: lazyRouteComponent(() => import("@/components/auth/otp")),
 });
 
 const oauthConsentRoute = createRoute({
@@ -131,13 +131,13 @@ const oauthConsentRoute = createRoute({
       });
     }
   },
-  component: lazyRouteComponent(() => import("@/features/oauth/consent")),
+  component: lazyRouteComponent(() => import("@/components/oauth/consent")),
 });
 
 const oauthCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/oauth/callback",
-  component: lazyRouteComponent(() => import("@/features/oauth/callback")),
+  component: lazyRouteComponent(() => import("@/components/oauth/callback")),
 });
 
 export const publicRoutes = [
@@ -152,16 +152,16 @@ export const publicRoutes = [
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/accept-invitation",
-    component: lazyRouteComponent(() => import("@/features/workspaces/screens/accept-invitation")),
+    component: lazyRouteComponent(() => import("@/components/workspaces/accept-invitation")),
   }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/accept-page-invitation",
-    component: lazyRouteComponent(() => import("@/features/pages/screens/accept-page-invitation")),
+    component: lazyRouteComponent(() => import("@/components/pages/accept-page-invitation")),
   }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/setup",
-    component: lazyRouteComponent(() => import("@/features/auth/setup")),
+    component: lazyRouteComponent(() => import("@/components/auth/setup")),
   }),
 ];

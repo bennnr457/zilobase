@@ -1,8 +1,8 @@
 export function register({ readSource, assert, loadModule, test }) {
   test("page topbars have no border or fading shadow", async () => {
     const [headerSource, viewportSource] = await Promise.all([
-      readSource("/src/features/pages/pane/page-pane-header.tsx"),
-      readSource("/src/features/pages/pane/page-side-pane.tsx"),
+      readSource("/src/components/pages/pane/page-pane-header.tsx"),
+      readSource("/src/components/pages/pane/page-side-pane.tsx"),
     ]);
 
     assert.doesNotMatch(headerSource, /bordered|border-b/);
@@ -12,7 +12,7 @@ export function register({ readSource, assert, loadModule, test }) {
   test("breadcrumb links and current pages align icons with labels", async () => {
     const [primitiveSource, headerSource] = await Promise.all([
       readSource("/src/components/ui/breadcrumb.tsx"),
-      readSource("/src/features/pages/pane/page-pane-header.tsx"),
+      readSource("/src/components/pages/pane/page-pane-header.tsx"),
     ]);
 
     assert.match(primitiveSource, /inline-flex items-center transition-colors/);
@@ -30,7 +30,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("Library breadcrumbs reflect the active view label and icon", async () => {
-    const source = await readSource("/src/features/pages/pane/page-pane-header.tsx");
+    const source = await readSource("/src/components/pages/pane/page-pane-header.tsx");
 
     assert.match(source, /libraryViewIds\.includes\(requestedView/);
     assert.match(source, /libraryViewIcons\[libraryView\]/);

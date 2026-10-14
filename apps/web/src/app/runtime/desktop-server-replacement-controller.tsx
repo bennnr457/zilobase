@@ -27,13 +27,13 @@ import {
 import {
   subscribeDesktopServerReplacement,
   type DesktopServerReplacementRequest,
-} from "../../features/desktop/server/desktop-server-replacement";
+} from "../../platform/server/operations/desktop-server-replacement";
 import {
   assertPreparedServerMatchesRequest,
   executeDesktopServerReplacement,
-} from "../../features/desktop/server/desktop-server-replacement-core";
-import { executeDesktopServerSwitch } from "../../features/desktop/server/desktop-server-switch";
-import { cancelDesktopBrowserSignIn } from "../../features/desktop/auth/browser-authorization";
+} from "../../platform/server/operations/desktop-server-replacement-core";
+import { executeDesktopServerSwitch } from "../../platform/server/operations/desktop-server-switch";
+import { cancelDesktopBrowserSignIn } from "../../platform/auth/browser-authorization";
 
 type ReplacementContext = {
   prepared: PreparedDesktopServer;

@@ -7,7 +7,7 @@ import {
 } from "@/platform/server/desktop-server";
 import { queryClient } from "@/app/query-client";
 
-import type { DesktopServerSwitchRequest } from "@/features/desktop/server/desktop-server-switch";
+import type { DesktopServerSwitchRequest } from "@/platform/server/operations/desktop-server-switch";
 
 export async function switchDesktopServerSession(request: DesktopServerSwitchRequest) {
   beginDesktopServerNetworkShutdown();

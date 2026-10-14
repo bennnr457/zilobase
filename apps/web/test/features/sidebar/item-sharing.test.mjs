@@ -88,7 +88,7 @@ export function register({ assert, appPath, test }) {
             build.onResolve(
               {
                 filter:
-                  /^(sharing-test-runtime|sonner)$|^@zilobase\/features\/.*\/react$|^@\/features\/databases\/access\/use-database-metadata$/,
+                  /^(sharing-test-runtime|sonner)$|^@zilobase\/features\/.*\/react$|^@\/components\/databases\/access\/use-database-metadata$/,
               },
               (args) => ({ path: args.path, namespace: "sharing-test" }),
             );

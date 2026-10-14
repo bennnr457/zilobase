@@ -3,10 +3,10 @@ import { readFile } from "node:fs/promises";
 export function register({ readSource, assert, loadModule, test }) {
   test("Tasks uses the shared database list view", async () => {
     const [source, listView, dataSourceSettings, styles] = await Promise.all([
-      readSource("/src/features/tasks/tasks.tsx"),
-      readSource("/src/features/databases/views/list/database-list-view.tsx"),
-      readSource("/src/features/databases/views/view-settings/data-source-settings.tsx"),
-      readSource("/src/features/databases/styles/database.css"),
+      readSource("/src/components/tasks/tasks.tsx"),
+      readSource("/src/components/databases/views/list/database-list-view.tsx"),
+      readSource("/src/components/databases/views/view-settings/data-source-settings.tsx"),
+      readSource("/src/components/databases/styles/database.css"),
     ]);
 
     assert.match(source, /<TaskDatabaseListAdapter/);

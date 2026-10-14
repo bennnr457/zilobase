@@ -40,11 +40,11 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { SidebarLayoutTabs } from "./sidebar-layout-tabs";
-import { DatabaseViewIcon } from "@/features/databases";
+import { DatabaseViewIcon } from "@/components/databases";
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
-} from "@/features/databases/components/page-database-picker";
+} from "@/components/databases/page-database-picker";
 import { libraryViewIcons, SidebarShortcutIcon, SidebarTabIcon } from "./sidebar-layout-icons";
 import {
   getSectionLabel,
@@ -83,7 +83,7 @@ import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "@/features/pages/index";
+import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "@/components/pages/index";
 import { useAppSearchResults } from "@zilobase/features/search/react";
 import type { Page, PageDatabase, PageDatabaseView } from "@zilobase/features/pages";
 import {

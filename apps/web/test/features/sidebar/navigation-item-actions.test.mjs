@@ -7,9 +7,9 @@ export function register({ assert, appPath, test }) {
       "@tanstack/react-router": "export const useNavigate = () => runtime.navigate;",
       sonner:
         'export const toast = { error: value => runtime.calls.push(["error",value]), success: value => runtime.calls.push(["success",value]) };',
-      "@/features/pages/layout":
+      "@/components/pages/layout":
         'export const useLayoutEditor = () => ({openLayoutEditor: input => runtime.calls.push(["layout",input])});',
-      "@/features/databases/access/use-database-metadata":
+      "@/components/databases/access/use-database-metadata":
         "export const useDatabaseMetadata = () => ({data:runtime.database});",
       "@zilobase/features/workspaces/react":
         'export const useActiveWorkspaceId = () => "workspace";',

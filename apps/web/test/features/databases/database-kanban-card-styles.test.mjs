@@ -1,13 +1,13 @@
 export function register({ readSource, assert, test }) {
   test("kanban drops suppress stale transforms while subsequent drags retain preview animation", async () => {
-    const styles = await readSource("/src/features/databases/styles/database.css");
+    const styles = await readSource("/src/components/databases/styles/database.css");
     assert.match(
       styles,
       /\.database-kanban-board\[data-move-pending="true"\]:not\(\[data-drag-active="true"\]\)[\s\S]*?transition: none/,
     );
   });
   test("kanban cards stay separated from tinted group columns", async () => {
-    const styles = await readSource("/src/features/databases/styles/database.css");
+    const styles = await readSource("/src/components/databases/styles/database.css");
     const cardRule = readRule(styles, ".database-kanban-card");
     const newCardRule = readRule(styles, ".database-kanban-new-card");
 

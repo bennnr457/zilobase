@@ -1,6 +1,6 @@
 import { NetworkUnavailableError } from "@/platform/network/api";
 import { installRequestPolicy, type RequestObservation } from "@/platform/network/request-policy";
-import { applyDemoReadOverlay, interceptDemoRequest } from "@/features/demo/transport";
+import { applyDemoReadOverlay, interceptDemoRequest } from "@/app/demo/transport";
 
 /** Install before startup work or rendering can issue feature requests. */
 export function configureApplicationRequests() {

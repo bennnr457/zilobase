@@ -14,19 +14,19 @@ export function register({ assert, readSource, test }) {
       readSource("/src/app/main.tsx"),
       readSource("/src/styles/global.css"),
       readSource("/src/styles/app.css"),
-      readSource("/src/features/editor/styles/editor.css"),
-      readSource("/src/features/databases/styles/database.css"),
-      readSource("/src/features/databases/styles/database-table.css"),
-      readSource("/src/features/editor/styles/editor-chrome.css"),
-      readSource("/src/features/meetings/styles/meeting.css"),
-      readSource("/src/features/editor/styles/editor-comments.css"),
+      readSource("/src/components/editor/styles/editor.css"),
+      readSource("/src/components/databases/styles/database.css"),
+      readSource("/src/components/databases/styles/database-table.css"),
+      readSource("/src/components/editor/styles/editor-chrome.css"),
+      readSource("/src/components/meetings/styles/meeting.css"),
+      readSource("/src/components/editor/styles/editor-comments.css"),
     ]);
 
     assert.match(globalStyles, /@import "\.\/design-tokens\.css";/);
     assert.ok(main.indexOf("../styles/global.css") < main.indexOf("../styles/app.css"));
     assert.match(
       featureEntry,
-      /@import "\.\.\/features\/editor\/styles\/editor\.css";\s*@import "\.\.\/features\/databases\/styles\/database\.css";\s*@import "\.\.\/features\/databases\/styles\/database-table\.css";\s*@import "\.\.\/features\/editor\/styles\/editor-chrome\.css";\s*@import "\.\.\/features\/meetings\/styles\/meeting\.css";\s*@import "\.\.\/features\/editor\/styles\/editor-comments\.css";/,
+      /@import "\.\.\/components\/editor\/styles\/editor\.css";\s*@import "\.\.\/components\/databases\/styles\/database\.css";\s*@import "\.\.\/components\/databases\/styles\/database-table\.css";\s*@import "\.\.\/components\/editor\/styles\/editor-chrome\.css";\s*@import "\.\.\/components\/meetings\/styles\/meeting\.css";\s*@import "\.\.\/components\/editor\/styles\/editor-comments\.css";/,
     );
 
     for (const styles of [

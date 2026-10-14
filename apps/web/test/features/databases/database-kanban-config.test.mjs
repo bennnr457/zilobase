@@ -26,7 +26,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database kanban drag targets card midpoints", async () => {
     const { getKanbanCardDropTargetIndex, getKanbanExternalDropPosition } = await loadModule(
-      "/src/features/databases/views/kanban/database-kanban-card-drag.ts",
+      "/src/components/databases/views/kanban/database-kanban-card-drag.ts",
     );
     const cards = [
       { height: 40, top: 0 },

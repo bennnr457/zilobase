@@ -2,31 +2,31 @@ export function register({ assert, readSource, test }) {
   const readAutomationManager = async () =>
     (
       await Promise.all([
-        readSource("/src/features/automations/database-automation-manager.tsx"),
-        readSource("/src/features/automations/use-automation-manager.ts"),
-        readSource("/src/features/automations/automation-picker-controls.tsx"),
-        readSource("/src/features/automations/definition/automation-builder.tsx"),
-        readSource("/src/features/automations/definition/automation-trigger-controls.tsx"),
+        readSource("/src/components/automations/database-automation-manager.tsx"),
+        readSource("/src/components/automations/use-automation-manager.ts"),
+        readSource("/src/components/automations/automation-picker-controls.tsx"),
+        readSource("/src/components/automations/definition/automation-builder.tsx"),
+        readSource("/src/components/automations/definition/automation-trigger-controls.tsx"),
         readSource("/packages/features/src/automations/definition-model.ts"),
         readSource("/packages/features/src/automations/schedule.ts"),
         readSource("/packages/features/src/automations/action-model.ts"),
-        readSource("/src/features/automations/actions/property-action-controls.tsx"),
+        readSource("/src/components/automations/actions/property-action-controls.tsx"),
         readSource("/packages/features/src/automations/action-model.ts"),
-        readSource("/src/features/automations/database-automation-screens.tsx"),
-        readSource("/src/features/automations/definition/automation-schedule.tsx"),
+        readSource("/src/components/automations/database-automation-screens.tsx"),
+        readSource("/src/components/automations/definition/automation-schedule.tsx"),
       ])
     ).join("\n");
   const readNotionActions = async () =>
     (
       await Promise.all([
-        readSource("/src/features/automations/actions/notion-action-builder.tsx"),
+        readSource("/src/components/automations/actions/notion-action-builder.tsx"),
         readSource("/packages/features/src/automations/action-model.ts"),
       ])
     ).join("\n");
   test("database automation release is server-capability gated and source scoped", async () => {
     const [manager, toolbar] = await Promise.all([
       readAutomationManager(),
-      readSource("/src/features/databases/views/components/database-toolbar-actions.tsx"),
+      readSource("/src/components/databases/views/components/database-toolbar-actions.tsx"),
     ]);
     assert.match(toolbar, /useDatabaseAutomationCapability/);
     assert.match(toolbar, /const automationUiAvailable = import\.meta\.env\.DEV/);
@@ -182,7 +182,7 @@ export function register({ assert, readSource, test }) {
 
   test("data-source settings launches the shared automation manager", async () => {
     const settings = await readSource(
-      "/src/features/databases/views/view-settings/data-source-settings.tsx",
+      "/src/components/databases/views/view-settings/data-source-settings.tsx",
     );
     assert.match(settings, /onOpenAutomations/);
     assert.doesNotMatch(settings, /Automation settings/);
@@ -209,7 +209,7 @@ export function register({ assert, readSource, test }) {
 
   test("shared filter and automation calendars keep range selection visible until it is complete", async () => {
     const conditionEditor = await readSource(
-      "/src/features/databases/views/components/database-condition-editor.tsx",
+      "/src/components/databases/views/components/database-condition-editor.tsx",
     );
 
     assert.match(conditionEditor, /const rangeStartPending = Boolean/);
@@ -229,7 +229,7 @@ export function register({ assert, readSource, test }) {
 
   test("filters and automation triggers share checkbox option selection", async () => {
     const [conditionEditor, manager] = await Promise.all([
-      readSource("/src/features/databases/views/components/database-condition-editor.tsx"),
+      readSource("/src/components/databases/views/components/database-condition-editor.tsx"),
       readAutomationManager(),
     ]);
 

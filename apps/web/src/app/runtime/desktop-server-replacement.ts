@@ -14,9 +14,9 @@ import {
   getSelectedDesktopServer,
   type DesktopServer,
 } from "@/platform/server/desktop-server";
-import type { DesktopServerReplacementDependencies } from "@/features/desktop/server/desktop-server-replacement-core";
-import { useAppStore } from "@/features/desktop/state/app-store";
-import { useAuthFlowStore } from "@/features/auth/auth-flow-store";
+import type { DesktopServerReplacementDependencies } from "@/platform/server/operations/desktop-server-replacement-core";
+import { useAppStore } from "@/app/state/app-store";
+import { useAuthFlowStore } from "@/components/auth/auth-flow-store";
 import { clearPageSnapshotsForDeployment } from "@/platform/storage/client-cache-storage";
 import { sessionQueryKey, type SessionResponse } from "@zilobase/features/auth";
 

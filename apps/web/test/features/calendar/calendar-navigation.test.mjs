@@ -63,9 +63,9 @@ export function register({ assert, loadModule, test }) {
       applyCalendarRange,
       readCalendarRangeCache,
       destroyCalendarDatabase,
-    } = await loadModule("/src/features/calendar/storage/calendar-database.ts");
+    } = await loadModule("/src/components/calendar/storage/calendar-database.ts");
     const { synchronizeCalendarCache } = await loadModule(
-      "/src/features/calendar/sync/calendar-cache-sync.ts",
+      "/src/components/calendar/sync/calendar-cache-sync.ts",
     );
     const db = await openCalendarDatabase({
       apiOrigin: "https://navigation.test",
@@ -127,7 +127,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("chrome date prefers settled viewport over the route bookmark", async () => {
     const { chromeCalendarDate } = await loadModule(
-      "/src/features/calendar/workspace/calendar-navigation.ts",
+      "/src/components/calendar/workspace/calendar-navigation.ts",
     );
     assert.equal(chromeCalendarDate("2026-10-20", "2026-09-09", "UTC"), "2026-10-20");
     assert.equal(chromeCalendarDate(null, "2026-09-09", "UTC"), "2026-09-09");

@@ -1,6 +1,6 @@
 export function register({ readSource, assert, test }) {
   test("top-level content blocks share the text inset", async () => {
-    const editorCss = await readSource("/src/features/editor/styles/editor.css");
+    const editorCss = await readSource("/src/components/editor/styles/editor.css");
     const insetRule = editorCss.match(
       /\/\* Keep top-level content blocks on the same horizontal content line\. \*\/[\s\S]*?@apply px-3;\s*\}/,
     )?.[0];
@@ -29,12 +29,12 @@ export function register({ readSource, assert, test }) {
 
   test("block and dragged text selection use one transparent tint", async () => {
     const [editorCss, editorChromeCss, editorChrome, databaseCss, tokens] = await Promise.all([
-      readSource("/src/features/editor/styles/editor.css"),
-      readSource("/src/features/editor/styles/editor-chrome.css"),
-      readSource("/src/features/editor/composition/editor-chrome.tsx"),
+      readSource("/src/components/editor/styles/editor.css"),
+      readSource("/src/components/editor/styles/editor-chrome.css"),
+      readSource("/src/components/editor/composition/editor-chrome.tsx"),
       Promise.all([
-        readSource("/src/features/databases/styles/database.css"),
-        readSource("/src/features/databases/styles/database-table.css"),
+        readSource("/src/components/databases/styles/database.css"),
+        readSource("/src/components/databases/styles/database-table.css"),
       ]).then((sources) => sources.join("\n")),
       readSource("/src/styles/color-tokens.css"),
     ]);
@@ -98,10 +98,10 @@ export function register({ readSource, assert, test }) {
 
   test("task list selection uses the shared overlay with even first-row geometry", async () => {
     const [editorCss, databaseCss] = await Promise.all([
-      readSource("/src/features/editor/styles/editor.css"),
+      readSource("/src/components/editor/styles/editor.css"),
       Promise.all([
-        readSource("/src/features/databases/styles/database.css"),
-        readSource("/src/features/databases/styles/database-table.css"),
+        readSource("/src/components/databases/styles/database.css"),
+        readSource("/src/components/databases/styles/database-table.css"),
       ]).then((sources) => sources.join("\n")),
     ]);
     const css = `${editorCss}\n${databaseCss}`;
@@ -125,10 +125,10 @@ export function register({ readSource, assert, test }) {
 
   test("database selection does not restyle any database content", async () => {
     const [editorCss, databaseCss] = await Promise.all([
-      readSource("/src/features/editor/styles/editor.css"),
+      readSource("/src/components/editor/styles/editor.css"),
       Promise.all([
-        readSource("/src/features/databases/styles/database.css"),
-        readSource("/src/features/databases/styles/database-table.css"),
+        readSource("/src/components/databases/styles/database.css"),
+        readSource("/src/components/databases/styles/database-table.css"),
       ]).then((sources) => sources.join("\n")),
     ]);
     const css = `${editorCss}\n${databaseCss}`;
@@ -147,8 +147,8 @@ export function register({ readSource, assert, test }) {
 
   test("outer meeting selection uses one overlaid block with standard spacing", async () => {
     const [css, meetingExtension] = await Promise.all([
-      readSource("/src/features/meetings/styles/meeting.css"),
-      readSource("/src/features/editor/extensions/meeting/meeting-extension.tsx"),
+      readSource("/src/components/meetings/styles/meeting.css"),
+      readSource("/src/components/editor/extensions/meeting/meeting-extension.tsx"),
     ]);
 
     assert.match(css, /\.tiptap-editor \.node-meetingBlock \{\s*@apply min-w-0;/);

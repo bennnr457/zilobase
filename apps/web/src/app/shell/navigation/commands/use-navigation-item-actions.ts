@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { useItemActionController } from "@zilobase/features/pages/react";
 import { getNavigationPendingState } from "../model/navigation-item-state";
-import { useLayoutEditor } from "@/features/pages/layout";
+import { useLayoutEditor } from "@/components/pages/layout";
 
 export function useNavigationItemActions({
   databaseId,

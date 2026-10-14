@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { getDatabaseViewModel } from "@/features/databases";
+import { getDatabaseViewModel } from "@/components/databases";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { composeDatabaseViewData } from "@zilobase/features/databases";
 import { useSidebarSectionOpen } from "../model/local-state";

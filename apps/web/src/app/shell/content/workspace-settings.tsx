@@ -1,4 +1,4 @@
-import { WorkspaceSettingsPage } from "@/features/workspaces";
+import { WorkspaceSettingsPage } from "@/components/workspaces";
 
 export default function WorkspaceSettings() {
   return <WorkspaceSettingsPage />;

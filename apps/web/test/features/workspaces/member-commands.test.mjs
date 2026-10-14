@@ -8,8 +8,8 @@ export function register({ assert, appPath, test }) {
         contents: `
       import {createElement} from "react";
       import {renderToString} from "react-dom/server";
-      import {useMemberAccess} from "./src/features/workspaces/members/commands/use-member-access";
-      import {useMemberInvitation} from "./src/features/workspaces/members/commands/use-member-invitation";
+      import {useMemberAccess} from "./src/components/workspaces/members/commands/use-member-access";
+      import {useMemberInvitation} from "./src/components/workspaces/members/commands/use-member-invitation";
       import {runtime} from "member-test-runtime";
       export function capture(kind,input,dependencies,draft,submit) {
         Object.assign(runtime,dependencies);

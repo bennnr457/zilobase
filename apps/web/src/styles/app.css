@@ -1,6 +1,6 @@
-@import "../features/editor/styles/editor.css";
-@import "../features/databases/styles/database.css";
-@import "../features/databases/styles/database-table.css";
-@import "../features/editor/styles/editor-chrome.css";
-@import "../features/meetings/styles/meeting.css";
-@import "../features/editor/styles/editor-comments.css";
+@import "../components/editor/styles/editor.css";
+@import "../components/databases/styles/database.css";
+@import "../components/databases/styles/database-table.css";
+@import "../components/editor/styles/editor-chrome.css";
+@import "../components/meetings/styles/meeting.css";
+@import "../components/editor/styles/editor-comments.css";

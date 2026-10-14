@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useCalendarWorkspace } from "@/features/calendar/workspace/calendar-workspace";
+import { useCalendarWorkspace } from "@/components/calendar/workspace/calendar-workspace";
 
 /** Visibility is independent of AI's persisted sidebar/floating preference. */
 export function useCalendarChatVisibility() {

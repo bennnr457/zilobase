@@ -25,7 +25,7 @@ import type {
   SidebarShortcut,
   SidebarTabIconId,
 } from "@zilobase/features/user-settings";
-import { PageIconDisplay } from "@/features/pages/index";
+import { PageIconDisplay } from "@/components/pages/index";
 
 export const libraryViewIcons = {
   skills: SparklesIcon,

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("structural insertion stays pending until the created block is inserted", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/features/editor/commands/structural-insertion.ts",
+      "/src/components/editor/commands/structural-insertion.ts",
     );
     const events = [];
 
@@ -20,7 +20,7 @@ export function register({ assert, loadModule, test }) {
 
   test("failed structural creation always releases the recovery guard", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/features/editor/commands/structural-insertion.ts",
+      "/src/components/editor/commands/structural-insertion.ts",
     );
     const pendingChanges = [];
 

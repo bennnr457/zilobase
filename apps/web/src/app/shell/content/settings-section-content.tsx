@@ -9,10 +9,10 @@ import {
   SecuritySettingsPage,
   settingsUi,
   type SettingsSection,
-} from "@/features/settings";
-import { TeamspacesSettingsPage } from "@/features/teamspaces";
-import { TeamSettingsPage } from "@/features/workspaces";
-import CalendarSettingsPage from "@/features/settings/screens/calendar";
+} from "@/components/settings";
+import { TeamspacesSettingsPage } from "@/components/teamspaces";
+import { TeamSettingsPage } from "@/components/workspaces";
+import CalendarSettingsPage from "@/components/settings/calendar";
 import WorkspaceSettingsPage from "./workspace-settings";
 
 export function SettingsSectionContent({ section }: { section: SettingsSection }) {
