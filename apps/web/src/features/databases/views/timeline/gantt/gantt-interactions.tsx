@@ -1,16 +1,16 @@
 import { addDays, differenceInCalendarDays, format, formatDate } from "date-fns";
-import { PlusIcon, TrashIcon } from "@/shared/components/icons";
+import { PlusIcon, TrashIcon } from "@/components/icons";
 import type { PointerEvent as ReactPointerEvent, PointerEventHandler, ReactNode } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Card } from "@/shared/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/shared/ui/context-menu";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/context-menu";
+import { cn } from "@/lib/utils";
 
 import { useGanttContext, useSetGanttDragging } from "./gantt-context";
 import {

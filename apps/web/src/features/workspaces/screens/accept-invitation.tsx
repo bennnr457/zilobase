@@ -1,15 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircleIcon,
-  CheckCircle2Icon,
-  MailCheckIcon,
-  SendIcon,
-} from "@/shared/components/icons";
+import { AlertCircleIcon, CheckCircle2Icon, MailCheckIcon, SendIcon } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup } from "@/shared/ui/field";
-import { Spinner } from "@/shared/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
 import { useSession } from "@zilobase/features/auth/react";
 import { useAcceptWorkspaceInvitation } from "@zilobase/features/workspaces/react";
 import { getApiErrorMessage } from "@/platform/network/api";

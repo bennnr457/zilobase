@@ -1,9 +1,15 @@
 import { DatabaseKanbanGroupDialogs, useKanbanGroupActions } from "./database-kanban-group-actions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus } from "@/shared/components/icons";
+import { Loader2, Plus } from "@/components/icons";
 import { toast } from "sonner";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getNextDatabaseOptionColor, getDatabasePropertyType } from "../../schema/property-catalog";
 import { DatabasePropertyDate } from "../../schema/editors/database-property-date";
 import { DatabasePropertyInput } from "../../schema/editors/database-property-input";

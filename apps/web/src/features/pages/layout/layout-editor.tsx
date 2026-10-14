@@ -8,18 +8,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Check, ChevronDown, SidebarSimpleIcon, X } from "@/shared/components/icons";
+import { Check, ChevronDown, SidebarSimpleIcon, X } from "@/components/icons";
 import { toast } from "sonner";
 
 import { LayoutEditorSettings } from "./layout-editor-settings";
 import { LayoutApplyDialog } from "@/features/pages/layout/layout-apply-dialog";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { Editor } from "@/features/editor";
 import {
   useDatabaseBootstrap,

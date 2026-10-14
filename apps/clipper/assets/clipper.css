@@ -1,11 +1,11 @@
 @import "tailwindcss";
-@import "../../web/src/shared/styles/color-tokens.css";
-@import "../../web/src/shared/styles/design-tokens.css";
+@import "../../web/src/styles/color-tokens.css";
+@import "../../web/src/styles/design-tokens.css";
 
 @source "../entrypoints/**/*.{ts,tsx}";
 @source "../components/**/*.{ts,tsx}";
-@source "../../web/src/shared/**/*.{ts,tsx}";
-@source "../../web/src/shared/lib/color-tokens.ts";
+@source "../../web/src/components/**/*.{ts,tsx}";
+@source "../../web/src/lib/color-tokens.ts";
 
 @custom-variant dark (&:where(.dark *));
 

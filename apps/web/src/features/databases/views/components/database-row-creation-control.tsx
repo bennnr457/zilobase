@@ -1,5 +1,5 @@
-import { Eye, Plus } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { Eye, Plus } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 
 import {
   useDatabaseActionsContext,

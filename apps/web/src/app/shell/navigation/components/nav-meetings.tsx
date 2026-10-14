@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, ChevronRightIcon } from "@/shared/components/icons";
+import { CalendarDays, ChevronRightIcon } from "@/components/icons";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSidebarSectionOpen } from "../model/local-state";
 
 import {
@@ -11,7 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { PageIconDisplay } from "@/features/pages/index";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 

@@ -1,7 +1,7 @@
 import { Link, useParams } from "@tanstack/react-router";
-import { ArrowRight, Maximize2 } from "@/shared/components/icons";
+import { ArrowRight, Maximize2 } from "@/components/icons";
 import { PageSidePaneLayout, PageSidePaneProvider, usePageSidePane } from "../pane/page-side-pane";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import { usePage } from "@zilobase/features/pages/react";
 import { EmbeddedPageDialog } from "../pane/embedded-page-dialog";
 import { useOpenEmbeddedPage } from "../pane/use-open-embedded-page";

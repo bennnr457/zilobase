@@ -8,7 +8,7 @@ import {
   Plus,
   Settings2,
   Sparkles,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { useEffect, useState } from "react";
 
 import {
@@ -18,8 +18,8 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { type PageDatabase } from "@zilobase/features/pages";
 import { usePageNavigation } from "@zilobase/features/pages/react";

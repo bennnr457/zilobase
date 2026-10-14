@@ -8,9 +8,9 @@ import {
   MoreHorizontalIcon,
   MessageSquareTextIcon,
   StarIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,19 +20,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 
 import {
   DropDrawer,
   DropDrawerContent,
   DropDrawerItem,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { cn } from "@/shared/lib/utils";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { usePageCommentsSnapshot } from "@/features/comments/index";
-import { Switch } from "@/shared/ui/switch";
+import { Switch } from "@/components/ui/switch";
 
 const moreActions = [
   "Customize layout",

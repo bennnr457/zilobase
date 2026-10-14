@@ -16,14 +16,14 @@ import {
   CheckIcon,
   ArrowUpRightIcon,
   TrashIcon,
-} from "@/shared/components/icons";
-import { GoogleIcon } from "@/shared/components/google-icon";
-import { PALETTE } from "@/shared/lib/color-tokens";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/sidebar";
+} from "@/components/icons";
+import { GoogleIcon } from "@/components/google-icon";
+import { PALETTE } from "@/lib/color-tokens";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
   SidebarNavItemAction,
-} from "@/shared/ui/sidebar-nav-item-action";
+} from "@/components/ui/sidebar-nav-item-action";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -33,7 +33,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -43,7 +43,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { calendarSelectionKey } from "@zilobase/features/calendar";
 const colors: CalendarColor[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray"];

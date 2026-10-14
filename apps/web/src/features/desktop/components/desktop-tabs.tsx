@@ -5,12 +5,12 @@ import { isDesktopApp } from "@/platform/desktop/native";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { useShallow } from "zustand/react/shallow";
 
-import { cn } from "@/shared/lib/utils";
-import { isOpenInNewTabShortcut } from "@/shared/shortcuts";
+import { cn } from "@/lib/utils";
+import { isOpenInNewTabShortcut } from "@/app/shortcuts";
 import { useAppStore, type DesktopTab } from "@/features/desktop/state/app-store";
 import { DesktopTabStrip } from "./desktop-tab-strip";
 import { DesktopWindowTitlebar } from "./desktop-window-titlebar";
-import { useSidebar } from "@/shared/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function DesktopTabs({ icon, title }: { icon?: string | null; title: string }) {
   const router = useRouter();

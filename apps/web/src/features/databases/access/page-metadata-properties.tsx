@@ -2,7 +2,7 @@ import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import type { PageLayoutConfig } from "@zilobase/features/pages";
 import { usePageProperties } from "@zilobase/features/pages/react";
 
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { DatabasePropertyButton } from "../schema/editors/database-property-button";
 import { DatabasePropertyDate } from "../schema/editors/database-property-date";

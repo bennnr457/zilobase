@@ -1,7 +1,7 @@
 import { memo, type CSSProperties } from "react";
-import { ChevronDown, ChevronRight, Plus } from "@/shared/components/icons";
+import { ChevronDown, ChevronRight, Plus } from "@/components/icons";
 
-import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
+import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 
 import { databaseNameColumnDefaultWidth } from "../model/column-dimensions";
 import { DatabasePageLink } from "../../interactions/database-page-link";

@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 
-import { FieldDescription } from "@/shared/ui/field";
-import { ZilobaseLogo } from "@/shared/components/zilobase-logo";
+import { FieldDescription } from "@/components/ui/field";
+import { ZilobaseLogo } from "@/components/zilobase-logo";
 
 const OAUTH_CALLBACK_MESSAGE = "zilobase-oauth-callback";
 

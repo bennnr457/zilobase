@@ -1,30 +1,30 @@
 import { orderCalendarSources, moveCalendarSource } from "@zilobase/features/calendar";
-import { MoreHorizontalIcon, LogOutIcon } from "@/shared/components/icons";
+import { MoreHorizontalIcon, LogOutIcon } from "@/components/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarNavItemAction,
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
-} from "@/shared/ui/sidebar-nav-item-action";
+} from "@/components/ui/sidebar-nav-item-action";
 import { useCalendarCatalog } from "@zilobase/features/calendar/react";
 import { calendarSelectionKey, resolveDefaultCalendar } from "@zilobase/features/calendar";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { PlusIcon } from "@/shared/components/icons";
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/shared/ui/sidebar";
+import { PlusIcon } from "@/components/icons";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import { CalendarMiniCalendar } from "./calendar-mini-calendar";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogHeader,
@@ -34,7 +34,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { CalendarList } from "./calendar-list";
 import { CalendarConnectButton } from "./calendar-connect-button";
 import { useCalendarAccounts } from "./use-calendar-accounts";

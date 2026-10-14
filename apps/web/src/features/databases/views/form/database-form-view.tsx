@@ -13,12 +13,12 @@ import {
   MoveVertical,
   Plus,
   Trash2,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { useState, type ReactNode } from "react";
 
 import { PageMetadata } from "../../access/page-metadata";
-import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -29,12 +29,18 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Switch } from "@/shared/ui/switch";
-import { Textarea } from "@/shared/ui/textarea";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import type { DatabaseProperty } from "@zilobase/features/databases";
 
 import {
@@ -43,8 +49,8 @@ import {
 } from "../../schema/property-catalog";
 import { DatabasePropertyDate } from "../../schema/editors/database-property-date";
 import { formatDatabaseDateValue } from "@zilobase/features/databases";
-import { getColorTokenDotClassName } from "@/shared/lib/color-tokens";
-import { cn } from "@/shared/lib/utils";
+import { getColorTokenDotClassName } from "@/lib/color-tokens";
+import { cn } from "@/lib/utils";
 import {
   getDatabasePropertyOrder,
   getPersonLimit,

@@ -1,9 +1,9 @@
-import { Sparkles } from "@/shared/components/icons";
+import { Sparkles } from "@/components/icons";
 import * as React from "react";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function SelectionAiMenu() {
   const [isOpen, setIsOpen] = React.useState(false);

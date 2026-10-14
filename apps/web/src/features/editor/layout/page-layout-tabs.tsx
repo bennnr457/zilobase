@@ -8,10 +8,10 @@ import {
   List,
   Table2,
   Trash2,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { LinkedDataSourcePicker } from "@/features/databases";
 import type { PageLayoutConfig, PageLayoutLinkedTab } from "@zilobase/features/pages";
 

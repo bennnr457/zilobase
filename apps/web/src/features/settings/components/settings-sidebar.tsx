@@ -9,14 +9,14 @@ import {
   UsersIcon,
   Layers3Icon,
   LockIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { useEffect, type ComponentType } from "react";
 import { useSession } from "@zilobase/features/auth/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
 import { isSettingsSectionAvailable } from "../model/settings-section-availability";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   SidebarContent,
   SidebarGroup,
@@ -25,7 +25,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { getUserImageUrl } from "@/platform/network/image-upload";
 import { editionWebModule } from "@zilobase/edition-web";
 

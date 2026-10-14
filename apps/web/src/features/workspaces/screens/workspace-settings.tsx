@@ -4,9 +4,9 @@ import { DeleteWorkspaceSection } from "../settings/delete-workspace";
 import type { ReactNode } from "react";
 
 import { SettingsHeader } from "@/features/settings";
-import { isFeatureEnabled } from "@/shared/config/feature-flags";
+import { isFeatureEnabled } from "@/app/config/feature-flags";
 
-import { Separator } from "@/shared/ui/separator";
+import { Separator } from "@/components/ui/separator";
 
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useWorkspaces } from "@zilobase/features/workspaces/react";

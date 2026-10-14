@@ -1,5 +1,5 @@
-import { GoogleIcon } from "@/shared/components/google-icon";
-import { Button } from "@/shared/ui/button";
+import { GoogleIcon } from "@/components/google-icon";
+import { Button } from "@/components/ui/button";
 import type { useCalendarAccounts } from "./use-calendar-accounts";
 
 export function CalendarConnectButton({

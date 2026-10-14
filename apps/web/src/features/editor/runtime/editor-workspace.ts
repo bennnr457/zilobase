@@ -11,7 +11,7 @@ import {
 } from "../drag-drop/block-drag-session";
 import { setMultiBlockDragImage, setDatabaseBlockDragImage } from "../drag-drop/block-drag-preview";
 import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
-import { writeDragPayload } from "@/shared/lib/drag-drop";
+import { writeDragPayload } from "@/lib/drag-drop";
 
 export type DragPhase =
   | "idle"

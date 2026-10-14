@@ -12,10 +12,10 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { GripVertical, Plus } from "@/shared/components/icons";
+import { GripVertical, Plus } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useOptionalPageLayoutSidebar } from "@/features/pages/layout/page-layout-sidebar";
 import type { PageLayoutPanelMode } from "../core/types";
 import {

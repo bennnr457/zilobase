@@ -32,7 +32,7 @@ import {
   Trash2Icon,
   UploadIcon,
   UserPlusIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import {
@@ -44,8 +44,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
+} from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import {
   DropDrawer,
@@ -56,7 +56,7 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 import {
   SidebarGroup,
   SidebarGroupAction,
@@ -66,7 +66,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import {
   getActiveDatabaseId,
   getActivePageId,
@@ -76,10 +76,10 @@ import {
 import {
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
   SidebarNavItemAction,
-} from "@/shared/ui/sidebar-nav-item-action";
+} from "@/components/ui/sidebar-nav-item-action";
 import { useOpenInNewTab } from "@/features/desktop/components/index";
 import { DATABASE_PAGE_DRAG_MIME } from "@/features/databases";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { PageIconDisplay } from "@/features/pages/index";
 import { prefetchPageForNavigation } from "@/features/editor/collaboration/page-prefetch";

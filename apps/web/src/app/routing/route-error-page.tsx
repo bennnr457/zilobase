@@ -13,8 +13,8 @@ import {
   type DesktopServerProfile,
 } from "@/features/desktop/server/index";
 import { executeDesktopServerSwitch } from "@/features/desktop/server/index";
-import { Button } from "@/shared/ui/button";
-import { captureProductException } from "@/shared/lib/posthog";
+import { Button } from "@/components/ui/button";
+import { captureProductException } from "@/lib/posthog";
 
 export default function RouteErrorPage({ error }: ErrorComponentProps) {
   const navigate = useNavigate();

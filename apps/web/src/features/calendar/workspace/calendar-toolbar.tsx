@@ -9,16 +9,22 @@ import {
   type CalendarPreferences,
   type CalendarView,
 } from "@zilobase/features/calendar";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   SearchIcon,
   SidebarSimpleIcon,
@@ -26,7 +32,7 @@ import {
   ChevronRightIcon,
   SettingsIcon,
   MoreHorizontalIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { chromeCalendarDate } from "./calendar-navigation";
 import { useCalendarWorkspace } from "./calendar-workspace";
 export function CalendarToolbar({

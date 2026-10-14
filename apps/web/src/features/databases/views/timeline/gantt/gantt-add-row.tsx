@@ -1,8 +1,8 @@
-import { PlusIcon } from "@/shared/components/icons";
+import { PlusIcon } from "@/components/icons";
 import type { CSSProperties, MouseEvent, PointerEventHandler } from "react";
 import { useCallback, useRef } from "react";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { useGanttContext } from "./gantt-context";
 import { getGanttSelection, getTimelineXFromElement, type GanttSelection } from "./gantt-geometry";

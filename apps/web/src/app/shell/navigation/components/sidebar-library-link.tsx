@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon } from "@/shared/components/icons";
+import { ArrowUpRightIcon } from "@/components/icons";
 
-import { SidebarGroupAction } from "@/shared/ui/sidebar";
-import { cn } from "@/shared/lib/utils";
+import { SidebarGroupAction } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import type { LibraryView, SidebarSectionId } from "@zilobase/features/user-settings";
 
 export function SidebarLibraryLink({

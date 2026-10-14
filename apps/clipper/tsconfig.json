@@ -6,7 +6,7 @@
     "jsx": "react-jsx",
     "types": ["node"],
     "paths": {
-      "@/shared/*": ["../web/src/shared/*"]
+      "@/*": ["../web/src/*"]
     }
   },
   "include": ["entrypoints", "lib", "components", "wxt.config.ts", "wxt-env.d.ts"]

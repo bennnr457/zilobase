@@ -1,8 +1,8 @@
 import { listRowDragAttributes, listRowCompletionLabel } from "./list-row-presentation";
 import { useMemo } from "react";
-import { GripVertical, Plus } from "@/shared/components/icons";
+import { GripVertical, Plus } from "@/components/icons";
 
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatabasePageLink } from "../../interactions/database-page-link";
 import { DatabasePropertyValue } from "../../schema/editors/database-property-value";
 import {

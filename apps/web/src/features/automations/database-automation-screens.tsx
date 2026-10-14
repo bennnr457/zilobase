@@ -10,10 +10,10 @@ import {
   Trash2,
   TriangleAlertIcon,
   Zap,
-} from "@/shared/components/icons";
-import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button";
-import { DropDrawerItem, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
+} from "@/components/icons";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DropDrawerItem, DropDrawerSeparator } from "@/components/ui/dropdrawer";
 
 export function ManagerHeader({ onBack, title }: { onBack?: () => void; title: string }) {
   return (

@@ -5,7 +5,7 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 
 import { isSelectLikePropertyType } from "@zilobase/features/databases";
 import { hasDatabasePropertyTypeEditSettings, isDateLikePropertyType } from "../property-catalog";

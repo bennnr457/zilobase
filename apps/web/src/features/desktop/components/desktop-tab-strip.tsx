@@ -21,13 +21,13 @@ import {
   SparklesIcon,
   Trash2Icon,
   XIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { cn } from "@/shared/lib/utils";
-import { isOpenInNewTabShortcut } from "@/shared/shortcuts";
+import { cn } from "@/lib/utils";
+import { isOpenInNewTabShortcut } from "@/app/shortcuts";
 import type { DesktopTab } from "@/features/desktop/state/app-store";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { hasEditorBlockDragData } from "@/features/editor/drag-drop/block-drag-session";
 
 type DesktopTabStripProps = {

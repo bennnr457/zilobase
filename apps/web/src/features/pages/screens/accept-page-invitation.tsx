@@ -1,15 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircleIcon,
-  CheckCircle2Icon,
-  FileCheck2Icon,
-  SendIcon,
-} from "@/shared/components/icons";
+import { AlertCircleIcon, CheckCircle2Icon, FileCheck2Icon, SendIcon } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup } from "@/shared/ui/field";
-import { Spinner } from "@/shared/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { readSingleInvitationId } from "@/features/workspaces";
 import { useSession } from "@zilobase/features/auth/react";
@@ -17,7 +12,7 @@ import {
   useAcceptPageGuestInvitation,
   usePageGuestInvitation,
 } from "@zilobase/features/pages/react";
-import posthog from "@/shared/lib/posthog";
+import posthog from "@/lib/posthog";
 
 export default function AcceptPageInvitationPage() {
   const navigate = useNavigate();

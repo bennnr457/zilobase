@@ -1,4 +1,4 @@
-import { useAppShortcut } from "@/shared/shortcuts/shortcut-provider";
+import { useAppShortcut } from "@/app/shortcuts/shortcut-provider";
 import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 
 import { createDocumentSessionRegistry } from "../collaboration/document-session-registry";

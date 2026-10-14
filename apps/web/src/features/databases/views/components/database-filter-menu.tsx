@@ -1,9 +1,9 @@
 import type { DatabaseActiveFilter, DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
-import { Filter, Plus, X } from "@/shared/components/icons";
+import { Filter, Plus, X } from "@/components/icons";
 import { Reorder } from "framer-motion";
 import { useState, type ReactNode } from "react";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -11,8 +11,8 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+} from "@/components/ui/dropdrawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { DatabaseConditionEditor } from "./database-condition-editor";
 

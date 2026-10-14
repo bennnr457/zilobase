@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isDesktopApp } from "@/platform/desktop/native";
 import { desktopBridge } from "@/platform/desktop/native";
-import { CopyIcon, MinusIcon, SquareIcon, XIcon } from "@/shared/components/icons";
+import { CopyIcon, MinusIcon, SquareIcon, XIcon } from "@/components/icons";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function isLinuxDesktopApp() {
   return isDesktopApp() && navigator.userAgent.includes("Linux");

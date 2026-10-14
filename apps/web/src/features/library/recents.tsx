@@ -9,10 +9,10 @@ import {
 import { CreateTeamspaceDialog as CreateLibraryTeamspaceDialog } from "@/features/teamspaces/creation/index";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { ChevronDown, Database, FileText, Loader2, Plus } from "@/shared/components/icons";
+import { ChevronDown, Database, FileText, Loader2, Plus } from "@/components/icons";
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
 import { libraryViewIcons } from "@/app/shell/navigation";
 
@@ -39,7 +39,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 
 import { useCreateDatabase } from "@zilobase/features/databases/react";
 

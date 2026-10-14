@@ -1,8 +1,14 @@
-import { Label } from "@/shared/ui/label";
-import { Input } from "@/shared/ui/input";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { TimePicker } from "@/shared/ui/time-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TimePicker } from "@/components/ui/time-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { EventEditorDraft } from "./event-editor-model";
 import { RecurrenceControls, RecurrenceScope } from "./recurrence-controls";
 import type { CalendarEvent } from "@zilobase/features/calendar";

@@ -1,14 +1,14 @@
-import { ShortcutProvider } from "@/shared/shortcuts";
+import { ShortcutProvider } from "@/app/shortcuts";
 import { CalendarSettings } from "@/features/calendar/preferences/calendar-settings";
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateCalendarSearch } from "@/app/routing/search-validators";
 import { useCalendarChatVisibility } from "@/app/shell/side-panel/use-calendar-chat-visibility";
 import { useState } from "react";
 import { RightSidebars, RightSidebarMobilePanels } from "@/app/shell/side-panel/right-sidebars";
-import { ResizablePanelGroup, ResizablePanel } from "@/shared/ui/resizable";
+import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import { PagePaneHeader } from "@/features/pages/pane/page-pane-header";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { Button } from "@/shared/ui/button";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 import {
   CalendarWorkspaceProvider,
   CalendarDockMount,
@@ -22,7 +22,7 @@ import { apiFetch } from "@/platform/network/api";
 import { CalendarAccountsSidebar } from "@/features/calendar/connections/calendar-accounts-sidebar";
 import { RemovedCalendars } from "@/features/calendar/preferences/removed-calendars";
 import { useCalendarPreferences } from "@/features/calendar/preferences/use-calendar-preferences";
-import { SidebarProvider } from "@/shared/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { createRoot } from "react-dom/client";
 import {
   createRootRoute,
@@ -35,8 +35,8 @@ import {
 import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { CalendarSchedule } from "@/features/calendar/views/calendar-schedule";
 import { defaultCalendarPreferences } from "@zilobase/features/calendar";
-import "@/shared/styles/global.css";
-import "@/app/styles.css";
+import "@/styles/global.css";
+import "@/styles/app.css";
 const preferences = defaultCalendarPreferences("Asia/Kolkata");
 const connections = [
   {

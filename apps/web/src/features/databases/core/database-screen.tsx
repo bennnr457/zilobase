@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useRouteContext, useSearch } from "@tanstack/react-router";
-import { ArrowRight, ArrowUpRight, Maximize2 } from "@/shared/components/icons";
+import { ArrowRight, ArrowUpRight, Maximize2 } from "@/components/icons";
 
-import { AuthenticatedRouteError } from "@/shared/components/authenticated-route-error";
+import { AuthenticatedRouteError } from "@/app/routing/authenticated-route-error";
 import { FallbackErrorBoundary } from "@/features/desktop/diagnostics/fallback-error-boundary";
 import {
   PageSidePaneLayout,
   PageSidePaneProvider,
   usePageSidePane,
 } from "@/features/pages/pane/page-side-pane";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { getDatabaseCover, getDatabaseEmoji, isDatabaseLocked } from "@zilobase/features/databases";
 import { usePage, usePageAccessLevel } from "@zilobase/features/pages/react";
 import { useUpdateDatabase, useUpdateDataSource } from "@zilobase/features/databases/react";

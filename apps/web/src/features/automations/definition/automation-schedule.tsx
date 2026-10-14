@@ -1,12 +1,12 @@
 import { type ScheduleDraft } from "@zilobase/features/automations";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
-import { DatePicker } from "@/shared/ui/date-picker";
+import { DatePicker } from "@/components/ui/date-picker";
 
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 
-import { TimePicker } from "@/shared/ui/time-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 
 import { AutomationSelect } from "./automation-select";
 

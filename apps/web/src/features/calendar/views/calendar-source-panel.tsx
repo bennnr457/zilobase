@@ -15,7 +15,7 @@ import { useCalendarWorkspace } from "../workspace/calendar-workspace";
 import { useCalendarCache } from "../sync/use-calendar-cache";
 import { useCalendarPreferences } from "../preferences/use-calendar-preferences";
 import { CalendarList } from "../connections/calendar-list";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 
 export function CalendarSourcePanel({

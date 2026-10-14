@@ -1,4 +1,4 @@
-import { Check, Flag, GripVertical, Trash2 } from "@/shared/components/icons";
+import { Check, Flag, GripVertical, Trash2 } from "@/components/icons";
 import { Reorder, useDragControls } from "framer-motion";
 import { useState } from "react";
 
@@ -11,7 +11,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 
 import {
   DropDrawerItem,
@@ -21,14 +21,14 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
 import {
   colorTokens,
   getColorTokenBadgeClassName,
   getColorTokenDotClassName,
   getColorTokenValue,
-} from "@/shared/lib/color-tokens";
+} from "@/lib/color-tokens";
 
 import type { DatabaseSelectOption } from "@zilobase/features/databases";
 

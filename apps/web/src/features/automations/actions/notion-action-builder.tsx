@@ -26,12 +26,18 @@ import type {
   DatabaseAutomationTriggerOperator,
   SlackAutomationRichTextExpression,
 } from "@zilobase/features/automations";
-import { ChevronDownIcon, Plus, Sparkles, Trash2 } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Textarea } from "@/shared/ui/textarea";
+import { ChevronDownIcon, Plus, Sparkles, Trash2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useSlackAutomationChannels } from "@zilobase/features/automations/react";
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
 import { type DatabaseCondition } from "@zilobase/features/databases";

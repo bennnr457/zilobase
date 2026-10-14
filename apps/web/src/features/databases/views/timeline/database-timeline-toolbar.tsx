@@ -1,5 +1,5 @@
 import { addMonths, format } from "date-fns";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/shared/components/icons";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/icons";
 import { useContext, useMemo } from "react";
 
 import {
@@ -8,8 +8,14 @@ import {
   useGanttScrollX,
   type Range,
 } from "./gantt/index";
-import { Button } from "@/shared/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const rangeOptions: { label: string; value: Range }[] = [
   { label: "Day", value: "daily" },

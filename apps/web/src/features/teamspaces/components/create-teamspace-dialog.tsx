@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
 import {
   Dialog,
@@ -12,16 +12,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
-import { Label } from "@/shared/ui/label";
+import { Label } from "@/components/ui/label";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { Spinner } from "@/shared/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
-import { Textarea } from "@/shared/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 
 import { getApiErrorMessage } from "@/platform/network/api";
 

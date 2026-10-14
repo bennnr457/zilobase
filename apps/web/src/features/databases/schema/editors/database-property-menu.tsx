@@ -21,7 +21,7 @@ import {
   TextWrap,
   Trash2,
   X,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { useState, type ButtonHTMLAttributes } from "react";
 
 import {
@@ -33,8 +33,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Button } from "@/shared/ui/button";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -44,12 +44,12 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { PageIconDisplay } from "@/features/pages/index";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -57,7 +57,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   useDeleteDatabaseProperty,
   useDuplicateDatabaseProperty,
@@ -65,9 +65,9 @@ import {
   useUpdateDatabaseProperty,
 } from "@zilobase/features/databases/react";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
-import { Separator } from "@/shared/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
-import { Textarea } from "@/shared/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 import { databasePropertyTypes, getDatabasePropertyType } from "../property-catalog";
 import {

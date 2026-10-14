@@ -35,7 +35,7 @@ import {
   StarIcon,
   Trash2Icon,
   UsersIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -56,7 +56,7 @@ import {
   sidebarSectionLabels,
   updateSidebarTab,
 } from "../model/sidebar-layout-model";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +66,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -77,12 +77,12 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Switch } from "@/shared/ui/switch";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "@/features/pages/index";
 import { useAppSearchResults } from "@zilobase/features/search/react";
 import type { Page, PageDatabase, PageDatabaseView } from "@zilobase/features/pages";

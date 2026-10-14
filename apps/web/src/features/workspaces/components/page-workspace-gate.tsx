@@ -1,7 +1,7 @@
 import { usePageWorkspaceAccess, switchPageWorkspace } from "@zilobase/features/pages/react";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { Building2Icon } from "@/shared/components/icons";
+import { Building2Icon } from "@/components/icons";
 
 import {
   AlertDialog,
@@ -12,8 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Button } from "@/shared/ui/button";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";

@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRightIcon, ChevronRightIcon } from "@/shared/components/icons";
+import { ArrowUpRightIcon, ChevronRightIcon } from "@/components/icons";
 
 import { getSidebarDatabaseViewSearchId } from "@/app/shell/navigation/model/database-view-navigation";
 import {
@@ -19,13 +19,13 @@ import {
   setSidebarItemExpanded,
   writeExpandedSidebarItems,
 } from "../model/local-state";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
-import { SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
   SidebarNavItemAction,
-} from "@/shared/ui/sidebar-nav-item-action";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/sidebar-nav-item-action";
+import { cn } from "@/lib/utils";
 
 export type SidebarNavItem = NavigationItem<ReactNode>;
 

@@ -27,8 +27,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/shared/ui/chart";
-import { getPaletteColor } from "@/shared/lib/color-tokens";
+} from "@/components/ui/chart";
+import { getPaletteColor } from "@/lib/color-tokens";
 import { DatabaseRecordWindowControl } from "../components/database-record-window-control";
 import { useDatabaseDataContext, useDatabaseUiContext } from "../state/database-view-context";
 import {

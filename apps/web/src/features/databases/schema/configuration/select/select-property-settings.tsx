@@ -1,10 +1,10 @@
 import type { SelectOptionSortValue } from "@zilobase/features/databases";
 import { getSortedSelectOptions } from "@zilobase/features/databases";
-import { ArrowDownUp, Plus } from "@/shared/components/icons";
+import { ArrowDownUp, Plus } from "@/components/icons";
 import { Reorder } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
-import { DropDrawerItem, DropDrawerLabel, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
+import { DropDrawerItem, DropDrawerLabel, DropDrawerSeparator } from "@/components/ui/dropdrawer";
 
 import { getNextDatabaseOptionColor } from "../../property-catalog";
 import type { DatabasePropertyConfig, DatabaseSelectOption } from "@zilobase/features/databases";

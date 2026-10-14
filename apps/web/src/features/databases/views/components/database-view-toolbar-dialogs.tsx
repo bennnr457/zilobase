@@ -1,4 +1,4 @@
-import { ArrowRight, FilePenLine, Table2 } from "@/shared/components/icons";
+import { ArrowRight, FilePenLine, Table2 } from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,15 +8,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Button } from "@/shared/ui/button";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import { DatabaseFormView } from "../form/database-form-view";
 
 export function DatabaseViewToolbarDialogs({

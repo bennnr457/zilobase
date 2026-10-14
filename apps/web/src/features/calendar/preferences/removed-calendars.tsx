@@ -2,7 +2,7 @@ import { useCalendarAccounts } from "../connections/use-calendar-accounts";
 import { useCalendarCatalog } from "@zilobase/features/calendar/react";
 import { calendarSelectionKey } from "@zilobase/features/calendar";
 import { useCalendarPreferences } from "./use-calendar-preferences";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import { SettingsRow, SettingsSectionLayout } from "@/features/settings";
 export function RemovedCalendars({ workspaceId }: { workspaceId: string }) {
   const { accounts } = useCalendarAccounts(workspaceId),

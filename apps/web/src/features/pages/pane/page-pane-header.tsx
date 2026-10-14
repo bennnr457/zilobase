@@ -16,17 +16,17 @@ import {
   CalendarIcon,
   Maximize2,
   UsersIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import { NavActions } from "@/app/shell/navigation";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -35,9 +35,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/shared/ui/breadcrumb";
-import { Separator } from "@/shared/ui/separator";
-import { SidebarTrigger } from "@/shared/ui/sidebar";
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { libraryViewIcons } from "@/app/shell/navigation";
 import { libraryViewLabels } from "@/app/shell/navigation";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";

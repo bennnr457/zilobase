@@ -4,7 +4,7 @@ import { useCalendarDisplayPreferences } from "../preferences/calendar-travel";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { todayInZone, type CalendarPreferences } from "@zilobase/features/calendar";
-import { DateCalendar } from "@/shared/ui/calendar";
+import { DateCalendar } from "@/components/ui/calendar";
 
 export function CalendarMiniCalendar({
   preferences: savedPreferences,

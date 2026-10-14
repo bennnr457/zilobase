@@ -1,4 +1,4 @@
-import { Copy, Database, MoreHorizontal, Plus, X } from "@/shared/components/icons";
+import { Copy, Database, MoreHorizontal, Plus, X } from "@/components/icons";
 import { useState, type ReactNode } from "react";
 
 import {
@@ -6,7 +6,7 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 
 import type { DatabaseSourceMenuItem } from "./view-settings-contracts";
 import type { DatabaseViewType } from "./view-type-options";

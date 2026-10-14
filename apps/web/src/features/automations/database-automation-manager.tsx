@@ -2,11 +2,11 @@ import { useAutomationManager, type Screen } from "./use-automation-manager";
 
 import { AutomationBuilder } from "./definition/automation-builder";
 
-import { Check, Loader2, X, Zap } from "@/shared/components/icons";
+import { Check, Loader2, X, Zap } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 
 import {
   AlertDialog,
@@ -17,9 +17,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 
-import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/shared/ui/dropdrawer";
+import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/components/ui/dropdrawer";
 
 import {
   Dialog,
@@ -27,7 +27,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 
 import { DatabaseViewToolbarButton } from "../databases/views/components/database-view-toolbar-button";
 

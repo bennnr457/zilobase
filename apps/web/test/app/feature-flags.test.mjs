@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   test("Ask AI, notion import, and the web clipper stay disabled unless config enables them", async () => {
-    const { isFeatureEnabled } = await loadModule("/src/shared/config/feature-flags.ts");
+    const { isFeatureEnabled } = await loadModule("/src/app/config/feature-flags.ts");
 
     assert.equal(isFeatureEnabled("askAi"), false);
     assert.equal(isFeatureEnabled("notionImport"), false);
@@ -8,7 +8,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("readBooleanFeatureFlag accepts common boolean config values", async () => {
-    const { readBooleanFeatureFlag } = await loadModule("/src/shared/config/feature-flags.ts");
+    const { readBooleanFeatureFlag } = await loadModule("/src/app/config/feature-flags.ts");
 
     assert.equal(readBooleanFeatureFlag("true"), true);
     assert.equal(readBooleanFeatureFlag("1"), true);

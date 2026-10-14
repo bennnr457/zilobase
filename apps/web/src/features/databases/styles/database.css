@@ -1,4 +1,4 @@
-@reference "../../../shared/styles/global.css";
+@reference "../../../styles/global.css";
 
 @layer components {
   .tiptap-editor .node-databaseBlock .database-toolbar-section {

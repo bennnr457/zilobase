@@ -2,9 +2,15 @@ import { useInstanceSettings, useUpdateInstanceSettings } from "@zilobase/featur
 import type { RegistrationMode } from "@zilobase/features/instance";
 import { toast } from "sonner";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/shared/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function RegistrationSettingsSection() {
   const settingsQuery = useInstanceSettings();

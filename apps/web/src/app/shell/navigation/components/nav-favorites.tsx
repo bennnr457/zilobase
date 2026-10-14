@@ -7,16 +7,16 @@ import {
   LinkIcon,
   MoreHorizontalIcon,
   StarOffIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropDrawer,
   DropDrawerContent,
   DropDrawerItem,
   DropDrawerSeparator,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -24,7 +24,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import {
   getActiveDatabaseId,
   getActiveDatabaseViewId,
@@ -33,7 +33,7 @@ import {
   SidebarNavList,
   type SidebarNavItem,
 } from "./sidebar-nav-list";
-import { SidebarNavItemAction } from "@/shared/ui/sidebar-nav-item-action";
+import { SidebarNavItemAction } from "@/components/ui/sidebar-nav-item-action";
 import { useOpenInNewTab } from "@/features/desktop/components/index";
 import { getSidebarExpansionStorageKey } from "../model/local-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";

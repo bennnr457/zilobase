@@ -1,13 +1,7 @@
 import { Fragment, useRef, useState, type CSSProperties } from "react";
 
-import {
-  ChevronRight,
-  Globe2Icon,
-  Layers3Icon,
-  LockIcon,
-  UsersIcon,
-} from "@/shared/components/icons";
-import { useResizableTableColumns } from "@/shared/hooks/use-resizable-table-columns";
+import { ChevronRight, Globe2Icon, Layers3Icon, LockIcon, UsersIcon } from "@/components/icons";
+import { useResizableTableColumns } from "@/lib/hooks/use-resizable-table-columns";
 
 import { DatabasePageLink } from "@/features/databases";
 

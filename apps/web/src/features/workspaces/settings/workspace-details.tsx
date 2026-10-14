@@ -1,12 +1,12 @@
 import { useWorkspaceDetails } from "./workspace-details-state";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
-import { Spinner } from "@/shared/ui/spinner";
-import { Textarea } from "@/shared/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 
 export function WorkspaceDetailsSection({
   workspace,

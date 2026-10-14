@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { SettingsSidebar, type SettingsSection } from "./settings-sidebar";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 export function SettingsDialog({
   activeSection,

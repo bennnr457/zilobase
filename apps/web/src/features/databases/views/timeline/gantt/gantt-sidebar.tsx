@@ -1,7 +1,7 @@
 import { addDays, formatDistance, isSameDay } from "date-fns";
 import type { KeyboardEventHandler, MouseEventHandler, ReactNode } from "react";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { useGanttContext } from "./gantt-context";
 import type { GanttFeature } from "./gantt-types";

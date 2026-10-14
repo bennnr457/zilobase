@@ -2,13 +2,13 @@ import { CalendarWorkspaceProvider } from "@/features/calendar/workspace/calenda
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
-import { ChevronsRightIcon, SidebarSimpleIcon } from "@/shared/components/icons";
+import { ChevronsRightIcon, SidebarSimpleIcon } from "@/components/icons";
 
 import { AppSidebar } from "@/app/shell/navigation";
 import { AppSearchProvider } from "@/features/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/features/desktop/components/index";
 import { ChatSidebarTrigger } from "@/features/ai/components/chat-sidebar-trigger";
-import { isFeatureEnabled } from "@/shared/config/feature-flags";
+import { isFeatureEnabled } from "@/app/config/feature-flags";
 import type { ChatPresentationMode } from "@/features/ai/components/chat-sidebar";
 import {
   usePageSidePaneState,
@@ -28,9 +28,15 @@ import {
   getSettingsSection,
   type SettingsSection,
 } from "@/features/settings/components/settings-sidebar";
-import { ResizablePanel, ResizablePanelGroup } from "@/shared/ui/resizable";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/shared/ui/sheet";
-import { SidebarInset, SidebarProvider, useSidebar } from "@/shared/ui/sidebar";
+import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { isEmbeddedMobileViewer } from "@/features/pages/pane/embedded-view";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
@@ -46,8 +52,8 @@ import {
   PageLayoutSidebarProvider,
   useOptionalPageLayoutSidebar,
 } from "@/features/pages/layout/page-layout-sidebar";
-import { Button } from "@/shared/ui/button";
-import { FloatingWidget } from "@/shared/components/floating-widget";
+import { Button } from "@/components/ui/button";
+import { FloatingWidget } from "@/components/floating-widget";
 import { AppHeader } from "./app-header";
 
 const EmbeddedPageDialogHost = lazy(() =>

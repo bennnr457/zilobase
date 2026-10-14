@@ -36,7 +36,7 @@ export function register({ readSource, assert, test }) {
         readSource("/src/features/databases/styles/database.css"),
         readSource("/src/features/databases/styles/database-table.css"),
       ]).then((sources) => sources.join("\n")),
-      readSource("/src/shared/styles/color-tokens.css"),
+      readSource("/src/styles/color-tokens.css"),
     ]);
     const css = `${editorCss}\n${editorChromeCss}\n${databaseCss}`;
     const normalizedTokens = tokens.replace(/\s+/g, " ");

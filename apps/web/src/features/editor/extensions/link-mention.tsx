@@ -1,9 +1,9 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
-import { Globe2 } from "@/shared/components/icons";
+import { Globe2 } from "@/components/icons";
 import { useState } from "react";
 
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/shared/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 function LinkMentionView({ node }: ReactNodeViewProps) {
   const [faviconFailed, setFaviconFailed] = useState(false);

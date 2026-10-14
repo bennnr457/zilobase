@@ -11,7 +11,7 @@ import {
   type RefObject,
 } from "react";
 import { defaultRangeExtractor, useVirtualizer, type Range } from "@tanstack/react-virtual";
-import { getColorToken } from "@/shared/lib/color-tokens";
+import { getColorToken } from "@/lib/color-tokens";
 import { getDatabaseHorizontalScrollSync } from "../../interactions/database-wheel-scroll";
 import {
   isVerticalScrollContainer,

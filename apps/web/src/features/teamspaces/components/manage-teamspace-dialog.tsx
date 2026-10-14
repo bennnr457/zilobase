@@ -1,10 +1,10 @@
 import { useTeamspaceManagement } from "../commands/use-teamspace-management";
 
-import { Layers3Icon, UsersIcon } from "@/shared/components/icons";
+import { Layers3Icon, UsersIcon } from "@/components/icons";
 
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
 import {
   Dialog,
@@ -12,16 +12,22 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
-import { Input } from "@/shared/ui/input";
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
-import { Label } from "@/shared/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
-import { Textarea } from "@/shared/ui/textarea";
-import { Switch } from "@/shared/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { PageIconDisplay } from "@/features/pages/index";
 

@@ -1,5 +1,5 @@
 import { DATABASE_PAGE_DRAG_MIME } from "./database-drag-contracts";
-import { hasDragType, readDragPayload, writeDragPayload } from "@/shared/lib/drag-drop";
+import { hasDragType, readDragPayload, writeDragPayload } from "@/lib/drag-drop";
 
 import type { DatabasePageDragPayload } from "@zilobase/features/databases";
 export type { DatabasePageDragPayload } from "@zilobase/features/databases";

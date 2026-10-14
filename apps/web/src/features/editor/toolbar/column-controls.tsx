@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent } from "react";
 import type { Editor } from "@tiptap/react";
 import { Fragment, type Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Copy, Eraser, MoreHorizontal, SidebarSimpleIcon, Trash2 } from "@/shared/components/icons";
+import { Copy, Eraser, MoreHorizontal, SidebarSimpleIcon, Trash2 } from "@/components/icons";
 import {
   columnHandleGap,
   columnHandleHeight,

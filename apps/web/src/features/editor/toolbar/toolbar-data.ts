@@ -18,7 +18,7 @@ import {
   Strikethrough,
   Table2,
   Underline,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
 import type { ToolbarItem } from "./toolbar-contracts";
 

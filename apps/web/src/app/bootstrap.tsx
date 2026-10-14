@@ -20,7 +20,7 @@ import {
 } from "@/features/desktop/diagnostics/index";
 import { AppProviders } from "@/app/providers/app-providers";
 import { initializeDesktopTranslucency } from "@/features/desktop/window/index";
-import { captureProductException } from "@/shared/lib/posthog";
+import { captureProductException } from "@/lib/posthog";
 
 configureApplicationSessions();
 configureApplicationRequests();

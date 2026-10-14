@@ -1,11 +1,11 @@
-import { Check, Palette } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { ButtonGroup } from "@/shared/ui/button-group";
-import { Card, CardContent } from "@/shared/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupText } from "@/shared/ui/input-group";
-import { Slider } from "@/shared/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+import { Check, Palette } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupText } from "@/components/ui/input-group";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {

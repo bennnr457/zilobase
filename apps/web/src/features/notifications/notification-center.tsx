@@ -3,9 +3,9 @@ import {
   useInProductNotifications,
   useMarkInProductNotificationRead,
 } from "@zilobase/features/notifications/react";
-import { Bell, Check, Loader2 } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/shared/ui/dropdrawer";
+import { Bell, Check, Loader2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/components/ui/dropdrawer";
 
 export function NotificationCenter({ workspaceId }: { workspaceId: string }) {
   const navigate = useNavigate();

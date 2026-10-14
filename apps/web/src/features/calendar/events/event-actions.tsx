@@ -7,9 +7,15 @@ import {
   type CalendarRecord,
 } from "@zilobase/features/calendar";
 import type { CalendarDatabase } from "../storage/calendar-database";
-import { Button } from "@/shared/ui/button";
-import { ButtonGroup } from "@/shared/ui/button-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -18,7 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { runCalendarMutation } from "./calendar-mutations";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/platform/network/api";

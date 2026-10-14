@@ -23,8 +23,8 @@ import { apiFetch } from "@/platform/network/api";
 import { setHostedEditorAuthToken } from "@/platform/auth/hosted-editor-auth";
 import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { pageCacheDeploymentKey } from "@/platform/storage/page-cache-database";
-import { TooltipProvider } from "@/shared/ui/tooltip";
-import { ShortcutProvider } from "@/shared/shortcuts";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ShortcutProvider } from "@/app/shortcuts";
 import {
   PageCommentsRegistryProvider,
   PageEditorCommentsProvider,

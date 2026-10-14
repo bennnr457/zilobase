@@ -4,10 +4,10 @@ export function register({ readSource, assert, test }) {
   test("all shared tabs use the canonical control, text, spacing, and icon sizes", async () => {
     const [tabsSource, buttonSource, inputSource, sidebarSource, databaseStyles] =
       await Promise.all([
-        readSource("/src/shared/ui/app-tabs.tsx"),
-        readSource("/src/shared/ui/button.tsx"),
-        readSource("/src/shared/ui/input.tsx"),
-        readSource("/src/shared/ui/sidebar.tsx"),
+        readSource("/src/components/ui/app-tabs.tsx"),
+        readSource("/src/components/ui/button.tsx"),
+        readSource("/src/components/ui/input.tsx"),
+        readSource("/src/components/ui/sidebar.tsx"),
         readSource("/src/features/databases/styles/database.css"),
       ]);
 
@@ -32,7 +32,7 @@ export function register({ readSource, assert, test }) {
 
   test("tab layout choices are shared props and discussions use the default surface", async () => {
     const [tabsSource, discussionsSource] = await Promise.all([
-      readSource("/src/shared/ui/app-tabs.tsx"),
+      readSource("/src/components/ui/app-tabs.tsx"),
       readSource("/src/features/comments/components/discussions-sidebar.tsx"),
     ]);
 

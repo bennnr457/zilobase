@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { Plus } from "@/shared/components/icons";
+import { Plus } from "@/components/icons";
 import {
   getColorToken,
   getColorTokenBadgeClassName,
   getColorTokenDotClassName,
-} from "@/shared/lib/color-tokens";
+} from "@/lib/color-tokens";
 import { DatabasePageLink } from "../../interactions/database-page-link";
 import { canCreateRowInGroup, type DatabasePropertyListItem } from "@zilobase/features/databases";
 import type {

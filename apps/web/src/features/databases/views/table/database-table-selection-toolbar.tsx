@@ -1,9 +1,9 @@
 import { useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { Check, Link2, List, Minus, MoreHorizontal, X } from "@/shared/components/icons";
-import { cn } from "@/shared/lib/utils";
-import { ButtonGroup, ButtonGroupItem, ButtonGroupSection } from "@/shared/ui/button-group";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Check, Link2, List, Minus, MoreHorizontal, X } from "@/components/icons";
+import { cn } from "@/lib/utils";
+import { ButtonGroup, ButtonGroupItem, ButtonGroupSection } from "@/components/ui/button-group";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -14,7 +14,7 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 import { DatabasePropertyDate } from "../../schema/editors/database-property-date";
 import { DatabasePropertySelect } from "../../schema/editors/database-property-select";
 import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases";

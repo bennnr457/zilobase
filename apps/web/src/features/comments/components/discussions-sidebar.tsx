@@ -1,17 +1,17 @@
 "use client";
 
-import { ChevronsRightIcon, FilterIcon, MessageSquarePlusIcon } from "@/shared/components/icons";
+import { ChevronsRightIcon, FilterIcon, MessageSquarePlusIcon } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 
 import { PageCommentThread } from "./page-comments";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import { Tabs, TabsBadge, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsBadge, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import {
   usePageCommentController,
   usePageCommentsSnapshot,

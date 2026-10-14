@@ -14,14 +14,14 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
-import { PlusIcon, SearchIcon } from "@/shared/components/icons";
+import { PlusIcon, SearchIcon } from "@/components/icons";
 import type * as React from "react";
 
 import { SidebarTabIcon } from "./sidebar-layout-icons";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
-import { cn } from "@/shared/lib/utils";
-import { getAppTabTriggerClassName } from "@/shared/ui/app-tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { getAppTabTriggerClassName } from "@/components/ui/app-tabs";
 import { isFixedSidebarTabId, type SidebarTab } from "@zilobase/features/user-settings";
 
 export function SidebarLayoutTabs({

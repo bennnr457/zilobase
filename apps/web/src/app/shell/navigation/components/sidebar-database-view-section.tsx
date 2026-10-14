@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronRightIcon, DatabaseIcon, FileIcon, PlusIcon } from "@/shared/components/icons";
+import { ChevronRightIcon, DatabaseIcon, FileIcon, PlusIcon } from "@/components/icons";
 import * as React from "react";
 import { toast } from "sonner";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupAction,
@@ -12,7 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { getDatabaseViewModel } from "@/features/databases";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { composeDatabaseViewData } from "@zilobase/features/databases";

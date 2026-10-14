@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import { ThreadAvatar, ThreadLine } from "@/shared/ui/thread-line";
+import { ThreadAvatar, ThreadLine } from "@/components/ui/thread-line";
 import {
   ArrowUp,
   AtSign,
@@ -14,7 +14,7 @@ import {
   SmilePlus,
   Trash2,
   X,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
 import {
   AlertDialog,
@@ -26,28 +26,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/shared/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
-import { Button } from "@/shared/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/shared/ui/command";
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   EmojiPicker,
   EmojiPickerContent,
   EmojiPickerFooter,
   EmojiPickerSearch,
-} from "@/shared/ui/emoji-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/emoji-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { getUserImageUrl } from "@/platform/network/image-upload";
 
-import { Skeleton } from "@/shared/ui/skeleton";
-import { Textarea } from "@/shared/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import {
   filterCommentMentionMembers,
   getCommentMentionLabels,

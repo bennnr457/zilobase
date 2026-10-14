@@ -1,7 +1,7 @@
 import { getSearchResultDestination, type SearchResult } from "./search-results";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { DatabaseIcon } from "@/shared/components/icons";
+import { DatabaseIcon } from "@/components/icons";
 
 import {
   Command,
@@ -12,11 +12,11 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "@/shared/ui/command";
+} from "@/components/ui/command";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useAppSearchResults } from "@zilobase/features/search/react";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { useAppShortcut } from "@/shared/shortcuts";
+import { useAppShortcut } from "@/app/shortcuts";
 
 type AppSearchContextValue = {
   openSearch: () => void;

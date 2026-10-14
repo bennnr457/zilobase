@@ -41,7 +41,7 @@ import type { DatabaseFormQuestionSettingsPatch } from "@zilobase/features/datab
 import type { DatabaseFormShareSettings } from "@zilobase/features/databases";
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import { DatabaseCellStateProvider, useActiveDatabaseCellKey } from "./database-cell-state";
-import { UndoHistoryScope, useOptionalUndoHistory, useUndoHistory } from "@/shared/shortcuts";
+import { UndoHistoryScope, useOptionalUndoHistory, useUndoHistory } from "@/app/shortcuts";
 import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases";
 
 export type DatabaseActiveConditionalColor = Omit<DatabaseConditionalColorConfig, "filter"> & {

@@ -1,14 +1,14 @@
 import { getPageEmoji, type Page } from "@zilobase/features/pages";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
-import { getIconTextClassName } from "@/shared/lib/color-tokens";
+import { getIconTextClassName } from "@/lib/color-tokens";
 import { DEFAULT_PAGE_ITEM_ICON } from "./item-icons";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   getDatabaseIconConfig,
   getStoredIconColor,
   isSvgIcon,
   sanitizeStoredSvg,
-} from "@/shared/lib/page-icon-utils";
+} from "@/lib/page-icon-utils";
 
 const iconSizeClasses = {
   sm: "size-4 text-base [&_svg]:size-4",

@@ -8,7 +8,7 @@ export function register({ readSource, assert, loadModule, test }) {
       isThemeFamilyId,
       selectableThemeIds,
       themeFamilies,
-    } = await loadModule("/src/shared/lib/themes.ts");
+    } = await loadModule("/src/lib/themes.ts");
 
     assert.deepEqual(
       appearanceModes.map((mode) => mode.value),
@@ -28,7 +28,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("removed stored families normalize to Default and are synchronized", async () => {
-    const provider = await readSource("/src/shared/providers/theme-family-provider.tsx");
+    const provider = await readSource("/src/app/providers/theme-family-provider.tsx");
     const document = await readSource("/index.html");
 
     assert.match(
@@ -46,7 +46,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("theme families expose their specified light and dark core palettes", async () => {
-    const css = await readSource("/src/shared/styles/color-tokens.css");
+    const css = await readSource("/src/styles/color-tokens.css");
     const defaultLight = declarations(readRule(css, ".light"));
     const defaultDark = merge(defaultLight, declarations(readRule(css, ".dark")));
     const notionLight = merge(
@@ -225,7 +225,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("dark themes keep raised chrome and overlays on one surface tier", async () => {
-    const css = await readSource("/src/shared/styles/color-tokens.css");
+    const css = await readSource("/src/styles/color-tokens.css");
     const defaultLight = declarations(readRule(css, ".light"));
     const defaultDark = merge(defaultLight, declarations(readRule(css, ".dark")));
     const notionDark = merge(
@@ -284,7 +284,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("all theme palettes provide accessible content and action pairs", async () => {
-    const css = await readSource("/src/shared/styles/color-tokens.css");
+    const css = await readSource("/src/styles/color-tokens.css");
     const defaultLight = declarations(readRule(css, ".light"));
     const defaultDark = merge(defaultLight, declarations(readRule(css, ".dark")));
     const notionLight = merge(

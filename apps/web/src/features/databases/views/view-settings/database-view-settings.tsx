@@ -10,7 +10,7 @@ import {
   Palette,
   SlidersHorizontalIcon,
   X,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { useState } from "react";
 
 import {
@@ -22,11 +22,11 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { PageIconDisplay } from "@/features/pages/index";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getDatabasePropertyType } from "../../schema/property-catalog";
 import { getDatabaseViewIcon, getPropertyHiddenForView } from "@zilobase/features/databases";

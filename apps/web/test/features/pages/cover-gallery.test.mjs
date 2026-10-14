@@ -57,11 +57,11 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.match(picker, /<TabsTrigger value="gallery">/);
     assert.match(picker, /<TabsTrigger value="upload">Upload<\/TabsTrigger>/);
     assert.doesNotMatch(picker, /Create with AI|aiImageOptions|describe your idea/i);
-    assert.match(gallery, /from "@\/shared\/ui\/app-tabs"/);
-    assert.match(gallery, /from "@\/shared\/ui\/button-group"/);
-    assert.match(gallery, /from "@\/shared\/ui\/card"/);
-    assert.match(gallery, /from "@\/shared\/ui\/field"/);
-    assert.match(gallery, /from "@\/shared\/ui\/input-group"/);
+    assert.match(gallery, /from "@\/components\/ui\/app-tabs"/);
+    assert.match(gallery, /from "@\/components\/ui\/button-group"/);
+    assert.match(gallery, /from "@\/components\/ui\/card"/);
+    assert.match(gallery, /from "@\/components\/ui\/field"/);
+    assert.match(gallery, /from "@\/components\/ui\/input-group"/);
     assert.match(gallery, /<TabsTrigger value="solid">Solid<\/TabsTrigger>/);
     assert.match(gallery, /<TabsTrigger value="gradient">Gradient<\/TabsTrigger>/);
     assert.match(gallery, /<TabsTrigger value="dither">Dither<\/TabsTrigger>/);

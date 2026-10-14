@@ -10,8 +10,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Spinner } from "@/shared/ui/spinner";
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/platform/network/api";
 import {
   describeDesktopError,

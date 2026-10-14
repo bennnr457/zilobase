@@ -18,7 +18,7 @@ import {
   StarIcon,
   Trash2Icon,
   UsersIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
 import type {
   LibraryView,

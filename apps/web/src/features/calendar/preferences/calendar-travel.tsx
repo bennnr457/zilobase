@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { calendarTravelPreferences, type CalendarPreferences } from "@zilobase/features/calendar";
 import { useCalendarWorkspace } from "../workspace/calendar-workspace";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import { CalendarZonePicker } from "./calendar-zone-picker";
-import { CommandDialog } from "@/shared/ui/command";
+import { CommandDialog } from "@/components/ui/command";
 export function useCalendarDisplayPreferences(value: CalendarPreferences) {
   const { travelZone } = useCalendarWorkspace();
   return useMemo(() => calendarTravelPreferences(value, travelZone), [value, travelZone]);

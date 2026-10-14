@@ -20,7 +20,7 @@ import {
   Sparkles,
   Volume2,
   X,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { meetingKeys, type MeetingLifecycleAction } from "@zilobase/features/meetings";
 import {
   useMeeting,
@@ -35,7 +35,7 @@ import { getPageEmoji, isMeetingLocked, type PageMetadata } from "@zilobase/feat
 import { usePage, useUpdatePage } from "@zilobase/features/pages/react";
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +45,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -54,18 +54,18 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 import {
   DropdownMenuCheckboxItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-} from "@/shared/ui/dropdown-menu";
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+} from "@/components/ui/dropdown-menu";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { useOpenEmbeddedPage } from "@/features/pages/pane/use-open-embedded-page";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import type { OpenPageOptions } from "@/features/pages";
 import { MeetingCollaborativeEditor } from "./meeting-collaborative-editor";
 import {

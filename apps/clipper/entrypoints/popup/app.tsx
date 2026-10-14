@@ -2,12 +2,18 @@ import { useEffect, useState } from "react";
 import { browser } from "wxt/browser";
 import type { ClipCaptureMode } from "@zilobase/features/clips";
 
-import { Bookmark, SettingsIcon } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/shared/ui/empty";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
-import { Spinner } from "@/shared/ui/spinner";
+import { Bookmark, SettingsIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { createClip, openClippedPage } from "../../lib/api";
 import type { ExtractResult } from "../../lib/messages";
 import {

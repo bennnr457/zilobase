@@ -1,5 +1,5 @@
-import { cn } from "@/shared/lib/utils";
-import { menuItemVariants } from "@/shared/ui/menu-styles";
+import { cn } from "@/lib/utils";
+import { menuItemVariants } from "@/components/ui/menu-styles";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -11,10 +11,10 @@ import {
   List,
   Plus,
   Table2,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { usePageNavigation } from "@zilobase/features/pages/react";
 import type { PageLayoutLinkedTab } from "@zilobase/features/pages";

@@ -5,10 +5,10 @@ import {
   recoverPageEditorContent,
 } from "./page-content-recovery";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { TrashedItemBanner } from "../components/trashed-item-banner";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   getPageCover,

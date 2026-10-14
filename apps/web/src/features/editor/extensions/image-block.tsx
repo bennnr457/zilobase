@@ -1,9 +1,9 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
-import { Image as ImageIcon } from "@/shared/components/icons";
+import { Image as ImageIcon } from "@/components/icons";
 import { useRef, useState } from "react";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ImageSourcePicker } from "@/features/pages/images/image-source-picker";
 
 const minImageWidth = 160;

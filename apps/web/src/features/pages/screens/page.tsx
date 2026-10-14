@@ -1,5 +1,5 @@
 import { useParams, useRouteContext } from "@tanstack/react-router";
-import { AuthenticatedRouteError } from "@/shared/components/authenticated-route-error";
+import { AuthenticatedRouteError } from "@/app/routing/authenticated-route-error";
 import { FallbackErrorBoundary } from "@/features/desktop/diagnostics/fallback-error-boundary";
 import { PublicPage, GuestPage } from "../publication/shared-page";
 import { AuthenticatedPage } from "./authenticated-page";

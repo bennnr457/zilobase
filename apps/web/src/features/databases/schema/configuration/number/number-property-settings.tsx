@@ -1,5 +1,5 @@
 import { NumberPropertyConfig } from "@zilobase/features/databases";
-import { Check, Hash } from "@/shared/components/icons";
+import { Check, Hash } from "@/components/icons";
 import { useState, type ReactNode } from "react";
 
 import {
@@ -9,10 +9,10 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
-import { Switch } from "@/shared/ui/switch";
-import { colorTokens, getColorTokenValue } from "@/shared/lib/color-tokens";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { colorTokens, getColorTokenValue } from "@/lib/color-tokens";
 
 import {
   type DatabaseNumberDisplayStyle,

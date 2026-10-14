@@ -3,7 +3,7 @@ import {
   PersonLimitValue,
   PersonNotificationsValue,
 } from "@zilobase/features/databases";
-import { Bell, CircleUserRound, Hash, UserRound } from "@/shared/components/icons";
+import { Bell, CircleUserRound, Hash, UserRound } from "@/components/icons";
 import type { ReactNode } from "react";
 
 import type { DatabasePropertyConfig } from "@zilobase/features/databases";

@@ -1,6 +1,6 @@
 export function register({ assert, readSource, test }) {
   test("sidebar primitives expose only the supported Zilobase layout", async () => {
-    const source = await readSource("/src/shared/ui/sidebar.tsx");
+    const source = await readSource("/src/components/ui/sidebar.tsx");
 
     for (const removedComponent of [
       "SidebarInput",

@@ -10,19 +10,25 @@ import {
   databaseRelativeDateUnits,
 } from "@zilobase/features/databases";
 import type { DatabaseCondition, DatabaseConditionUpdatePatch } from "@zilobase/features/databases";
-import { CalendarIcon, ChevronDownIcon, GripVertical, X } from "@/shared/components/icons";
+import { CalendarIcon, ChevronDownIcon, GripVertical, X } from "@/components/icons";
 import { Reorder, useDragControls } from "framer-motion";
 import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 
-import { Button } from "@/shared/ui/button";
-import { DateCalendar } from "@/shared/ui/calendar";
-import { Checkbox } from "@/shared/ui/checkbox";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { cn } from "@/shared/lib/utils";
-import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
+import { Button } from "@/components/ui/button";
+import { DateCalendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { getColorTokenBadgeClassName } from "@/lib/color-tokens";
 
 import {
   getDatabaseFilterOperatorsForType,

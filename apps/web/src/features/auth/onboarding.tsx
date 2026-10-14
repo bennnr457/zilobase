@@ -1,12 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "@/shared/ui/button";
-import { ZilobaseLogo } from "@/shared/components/zilobase-logo";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { Button } from "@/components/ui/button";
+import { ZilobaseLogo } from "@/components/zilobase-logo";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import { useCreateWorkspace } from "@zilobase/features/workspaces/react";
-import posthog from "@/shared/lib/posthog";
+import posthog from "@/lib/posthog";
 
 export function OnboardingForm({ className, ...props }: React.ComponentProps<"div">) {
   const navigate = useNavigate();

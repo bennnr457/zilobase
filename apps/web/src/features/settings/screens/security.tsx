@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Trash2Icon } from "@/shared/components/icons";
+import { Trash2Icon } from "@/components/icons";
 import { toast } from "sonner";
 
 import { clearApiAuthToken, getApiErrorMessage } from "@/platform/network/api";
@@ -15,12 +15,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Button } from "@/shared/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
-import { Separator } from "@/shared/ui/separator";
-import { Spinner } from "@/shared/ui/spinner";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 import {
   useChangePassword,
   useDeleteAccount,

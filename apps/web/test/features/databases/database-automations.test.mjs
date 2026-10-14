@@ -78,7 +78,7 @@ export function register({ assert, readSource, test }) {
     const [manager, actions, menuStyles] = await Promise.all([
       readAutomationManager(),
       readNotionActions(),
-      readSource("/src/shared/ui/menu-styles.ts"),
+      readSource("/src/components/ui/menu-styles.ts"),
     ]);
 
     assert.match(manager, /<DropDrawer[\s\S]*?defaultSubDisplayMode="inline"/);
@@ -173,7 +173,7 @@ export function register({ assert, readSource, test }) {
   });
 
   test("enabled command options do not inherit the disabled cursor", async () => {
-    const globalStyles = await readSource("/src/shared/styles/global.css");
+    const globalStyles = await readSource("/src/styles/global.css");
 
     assert.match(globalStyles, /\[data-disabled="true"\]/);
     assert.match(globalStyles, /\[data-disabled=""\]/);
@@ -234,7 +234,7 @@ export function register({ assert, readSource, test }) {
     ]);
 
     assert.match(conditionEditor, /function DatabaseChoiceConditionValueControl/);
-    assert.match(conditionEditor, /import \{ Checkbox \} from "@\/shared\/ui\/checkbox"/);
+    assert.match(conditionEditor, /import \{ Checkbox \} from "@\/components\/ui\/checkbox"/);
     assert.match(conditionEditor, /\["multi_select", "person", "select", "status"\]/);
     assert.match(conditionEditor, /<Checkbox/);
     assert.match(conditionEditor, /getColorTokenBadgeClassName\(option\.color\)/);
@@ -265,7 +265,7 @@ export function register({ assert, readSource, test }) {
     const [manager, actions] = await Promise.all([readAutomationManager(), readNotionActions()]);
     const source = `${manager}\n${actions}`;
 
-    assert.match(source, /from "@\/shared\/ui\/select"/);
+    assert.match(source, /from "@\/components\/ui\/select"/);
     assert.match(source, /<SelectTrigger/);
     assert.match(source, /<SelectContent/);
     assert.match(source, /<SelectItem/);

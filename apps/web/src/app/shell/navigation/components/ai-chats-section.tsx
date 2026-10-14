@@ -1,6 +1,6 @@
-import { ChevronRightIcon } from "@/shared/components/icons";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
-import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from "@/shared/ui/sidebar";
+import { ChevronRightIcon } from "@/components/icons";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from "@/components/ui/sidebar";
 import { useSidebarSectionOpen } from "../model/local-state";
 
 export function AiChatsSection({ storageKey }: { storageKey: string }) {

@@ -1,12 +1,18 @@
 import { Reorder } from "framer-motion";
-import { Plus, Search, Trash2 } from "@/shared/components/icons";
+import { Plus, Search, Trash2 } from "@/components/icons";
 import { useMemo, useState } from "react";
 
-import { Button } from "@/shared/ui/button";
-import { DropDrawerSeparator } from "@/shared/ui/dropdrawer";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { cyclingColorTokens, getColorToken } from "@/shared/lib/color-tokens";
-import { cn } from "@/shared/lib/utils";
+import { Button } from "@/components/ui/button";
+import { DropDrawerSeparator } from "@/components/ui/dropdrawer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cyclingColorTokens, getColorToken } from "@/lib/color-tokens";
+import { cn } from "@/lib/utils";
 
 import { DatabaseConditionEditor } from "../components/database-condition-editor";
 import {

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { importNotionZipFile, NotionImportError } from "../conversion/notion-import";
 import { useCreatePage, useUpdatePage } from "@zilobase/features/pages/react";
-import posthog from "@/shared/lib/posthog";
+import posthog from "@/lib/posthog";
 
 export function useNotionImport({
   navigateToEntry = true,

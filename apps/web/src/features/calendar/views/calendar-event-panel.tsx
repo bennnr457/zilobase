@@ -1,10 +1,10 @@
 import { useCalendarWorkspace } from "../workspace/calendar-workspace";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import type { CalendarEvent, CalendarRecord } from "@zilobase/features/calendar";
 import type { CalendarDatabase } from "../storage/calendar-database";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, type ReactNode } from "react";
-import { XIcon } from "@/shared/components/icons";
+import { XIcon } from "@/components/icons";
 import { EventEditor } from "../events/event-editor";
 import { CalendarEventDetails } from "./calendar-event-details";
 type PanelProps = {

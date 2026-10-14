@@ -19,11 +19,11 @@ import {
   Loader2Icon,
   PlusIcon,
   Settings2Icon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import { type DatabaseSetupSelection } from "@/features/databases/setup/components/database-setup-card";
 import { DatabaseViewSkeleton } from "@/features/databases/views/components/database-view-skeleton";
 import { getDatabaseViewModel } from "@/features/databases/views/components/database-view-model";

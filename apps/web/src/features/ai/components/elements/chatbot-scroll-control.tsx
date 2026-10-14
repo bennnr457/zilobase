@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
-import { ArrowDownIcon } from "@/shared/components/icons";
+import { Button } from "@/components/ui/button";
+import { ArrowDownIcon } from "@/components/icons";
 import { useCallback, useEffect, useState } from "react";
 
 export const AI_SCROLL_SHELL_SELECTOR = "[data-ai-scroll-shell], [data-page-scroll-viewport]";

@@ -6,7 +6,7 @@ import { CalendarSettings } from "@/features/calendar/preferences/calendar-setti
 import { RemovedCalendars } from "@/features/calendar/preferences/removed-calendars";
 import { useCalendarPreferences } from "@/features/calendar/preferences/use-calendar-preferences";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,8 +15,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Separator } from "@/shared/ui/separator";
+} from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 
 export default function CalendarSettingsPage() {

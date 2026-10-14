@@ -1,21 +1,21 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import type { Editor, Range } from "@tiptap/core";
-import { Send, Sparkles, X } from "@/shared/components/icons";
+import { Send, Sparkles, X } from "@/components/icons";
 import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
-import { AppIconProvider } from "@/shared/components/app-icon-provider";
+import { AppIconProvider } from "@/app/providers/app-icon-provider";
 import {
   PromptInput,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/features/ai/components/elements/index";
-import { Button } from "@/shared/ui/button";
-import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
-import { Textarea } from "@/shared/ui/textarea";
-import { isFeatureEnabled } from "@/shared/config/feature-flags";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { isFeatureEnabled } from "@/app/config/feature-flags";
 
 type AskAiBlockOptions = {
   workspaceId?: string | null;

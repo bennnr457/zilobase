@@ -13,7 +13,7 @@ import {
 import { clientDeployment, queryClient } from "@/app/query-client";
 import { useAppStore } from "@/features/desktop/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/features/demo";
-import posthog from "@/shared/lib/posthog";
+import posthog from "@/lib/posthog";
 import { readOAuthQuery } from "@zilobase/features/oauth";
 import { clearPageCacheForUser } from "@/features/editor/collaboration/page-document-cache";
 import {

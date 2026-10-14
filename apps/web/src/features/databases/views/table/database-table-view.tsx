@@ -23,14 +23,14 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
-import { ChevronDown, ChevronRight, Loader2, Plus } from "@/shared/components/icons";
+import { ChevronDown, ChevronRight, Loader2, Plus } from "@/components/icons";
 import { toast } from "sonner";
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalPageSidePane } from "@/features/pages/pane/page-side-pane";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { cn } from "@/shared/lib/utils";
-import { useUndoHistory } from "@/shared/shortcuts";
-import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
+import { cn } from "@/lib/utils";
+import { useUndoHistory } from "@/app/shortcuts";
+import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 
 import { AddDatabasePropertyMenu } from "../../schema/editors/add-database-property-menu";
 import { DatabaseCellContent } from "../components/database-cell-content";

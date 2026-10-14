@@ -8,7 +8,7 @@ import {
   type SortableDatabaseItem,
 } from "@zilobase/features/databases";
 import type { GanttFeature, GanttStatus } from "./gantt/index";
-import { getPaletteColor } from "@/shared/lib/color-tokens";
+import { getPaletteColor } from "@/lib/color-tokens";
 export const UNSCHEDULED_GROUP_NAME = "Unscheduled";
 
 const defaultGanttStatus: GanttStatus = {

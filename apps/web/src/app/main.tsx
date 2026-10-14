@@ -1,5 +1,5 @@
-import "../shared/styles/global.css";
-import "./styles.css";
+import "../styles/global.css";
+import "../styles/app.css";
 
 if (window.location.pathname === "/editor") {
   void import("@/features/editor/hosted/bootstrap");

@@ -1,5 +1,5 @@
 import { createRoute, lazyRouteComponent, redirect } from "@tanstack/react-router";
-import { isFeatureEnabled } from "@/shared/config/feature-flags";
+import { isFeatureEnabled } from "@/app/config/feature-flags";
 import { appRoute } from "../route-roots";
 import { validateCalendarSearch, validateLibrarySearch } from "../search-validators";
 

@@ -1,13 +1,13 @@
 import { getDatabaseViewTypePresentation } from "../view-settings/view-type-options";
 
-import { X } from "@/shared/components/icons";
+import { X } from "@/components/icons";
 
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { PageIconDisplay } from "@/features/pages/index";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
   useDatabaseActionsContext,

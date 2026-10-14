@@ -1,14 +1,14 @@
-import { Palette } from "@/shared/components/icons";
+import { Palette } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
   colorTokens,
   colorWithAlpha,
   getPaletteColor,
   isPaletteColorActive,
-} from "@/shared/lib/color-tokens";
+} from "@/lib/color-tokens";
 import type { ColorToken, EditorControlProps } from "./toolbar-contracts";
 
 function ColorSwatch({ token, variant }: { token: ColorToken; variant: "text" | "background" }) {

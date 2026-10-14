@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { GanttContext, useSetGanttScrollX } from "./gantt-context";
 import {

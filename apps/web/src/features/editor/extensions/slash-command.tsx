@@ -25,21 +25,21 @@ import {
   Sparkles,
   Table2,
   Video,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { type ComponentType, type SVGProps } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
-import { AppIconProvider } from "@/shared/components/app-icon-provider";
+import { AppIconProvider } from "@/app/providers/app-icon-provider";
 import {
   EmojiPicker,
   EmojiPickerContent,
   EmojiPickerFooter,
   EmojiPickerSearch,
-} from "@/shared/ui/emoji-picker";
+} from "@/components/ui/emoji-picker";
 import { createDatabaseSetupBlockContent } from "@/features/databases";
 import { ExcalidrawIcon, FigmaIcon, MiroIcon, YouTubeIcon } from "./embed-block";
 import { openAskAiPopover } from "./ask-ai-block";
-import { isFeatureEnabled } from "@/shared/config/feature-flags";
+import { isFeatureEnabled } from "@/app/config/feature-flags";
 import type { CreatedPage } from "./page-block";
 import {
   insertCreatedBlock,

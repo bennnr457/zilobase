@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { XIcon } from "@/shared/components/icons";
+import { XIcon } from "@/components/icons";
 
-import { Dialog, DialogContent, DialogDescription } from "@/shared/ui/dialog";
-import { Button } from "@/shared/ui/button";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { PageScrollViewport, usePageSidePane } from "./page-side-pane";
 import { PageWorkspaceGate } from "@/features/workspaces";
 import { PagePaneHeader } from "./page-pane-header";

@@ -11,7 +11,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("breadcrumb links and current pages align icons with labels", async () => {
     const [primitiveSource, headerSource] = await Promise.all([
-      readSource("/src/shared/ui/breadcrumb.tsx"),
+      readSource("/src/components/ui/breadcrumb.tsx"),
       readSource("/src/features/pages/pane/page-pane-header.tsx"),
     ]);
 

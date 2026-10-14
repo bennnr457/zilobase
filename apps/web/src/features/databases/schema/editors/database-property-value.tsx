@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, type FormEvent } from "react";
 
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { type DatabasePropertyEntity } from "@zilobase/features/databases";
 
 import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases";

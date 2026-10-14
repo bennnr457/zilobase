@@ -1,8 +1,14 @@
 import * as React from "react";
 
 import { desktopDevelopmentTargets } from "@/features/desktop/server/index";
-import { Field, FieldLabel } from "@/shared/ui/field";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function DesktopDevCustomServerSelect({
   disabled,

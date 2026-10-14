@@ -1,23 +1,35 @@
 "use client";
 
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/shared/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/shared/ui/hover-card";
+} from "@/components/ui/dropdown-menu";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupTextarea,
-} from "@/shared/ui/input-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Spinner } from "@/shared/ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   CornerDownLeftIcon,
   FileIcon,
@@ -26,7 +38,7 @@ import {
   PlusIcon,
   SquareIcon,
   XIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { nanoid } from "nanoid";
 import type {
   ChangeEvent,

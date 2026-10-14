@@ -15,8 +15,8 @@ import { AutomationPropertyIcon, TriggerOptionRow } from "../automation-picker-c
 import { useState, type ReactNode } from "react";
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";
 
-import { ArrowLeft, ChevronDownIcon, Clock, Pencil, Plus, X } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { ArrowLeft, ChevronDownIcon, Clock, Pencil, Plus, X } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 
 import {
   Command,
@@ -26,12 +26,12 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/shared/ui/command";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 
-import { Popover, PopoverContent } from "@/shared/ui/popover";
-import { cn } from "@/shared/lib/utils";
-import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
+import { Popover, PopoverContent } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { getColorTokenBadgeClassName } from "@/lib/color-tokens";
 
 import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
 import { type DatabaseCondition } from "@zilobase/features/databases";

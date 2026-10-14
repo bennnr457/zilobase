@@ -21,7 +21,7 @@
   "ignorePatterns": ["packages/features/src/**/*.test.ts"],
   "settings": {
     "shadcn": {
-      "ui": "@/shared/ui",
+      "ui": "@/components/ui",
       "note": "Use shared UI variants and props instead of restyling component internals."
     }
   }

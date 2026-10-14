@@ -1,7 +1,7 @@
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense, useRef, useEffect } from "react";
 import { recordDesktopDiagnostic } from "@/features/desktop/diagnostics/index";
-import { Spinner } from "@/shared/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 const DocumentFavicon = lazy(() =>
   import("@/app/shell/document-favicon").then((module) => ({
     default: module.DocumentFavicon,

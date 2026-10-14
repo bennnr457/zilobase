@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   useDatabaseEntityCommandState,
   useDatabaseInteractionRecovery,

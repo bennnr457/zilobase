@@ -1,11 +1,11 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
-import { CodeXml, FileWarning, Link, RefreshCw } from "@/shared/components/icons";
+import { CodeXml, FileWarning, Link, RefreshCw } from "@/components/icons";
 import { useEffect, useRef, useState, type PointerEvent, type SVGProps } from "react";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type SetEmbedAttrs = {
   src: string;

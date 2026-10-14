@@ -5,9 +5,9 @@ import {
   type ReactNode,
 } from "react";
 import { Reorder, useDragControls } from "framer-motion";
-import { GripVertical } from "@/shared/components/icons";
-import { cn } from "@/shared/lib/utils";
-import { Checkbox } from "@/shared/ui/checkbox";
+import { GripVertical } from "@/components/icons";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getRowTitle, type RowLayout, type TableRow } from "./database-table-model";
 
 export function DatabaseHeaderReorderItem({

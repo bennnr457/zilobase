@@ -1,15 +1,15 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CameraIcon, LogOutIcon, Trash2Icon } from "@/shared/components/icons";
+import { CameraIcon, LogOutIcon, Trash2Icon } from "@/components/icons";
 import { toast } from "sonner";
 
 import { SettingsHeader } from "../components/settings-header";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
-import { Button } from "@/shared/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
-import { Spinner } from "@/shared/ui/spinner";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/platform/network/api";
 import {
   getUserImageUrl,

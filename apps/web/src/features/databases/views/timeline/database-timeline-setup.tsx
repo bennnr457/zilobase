@@ -1,6 +1,12 @@
-import { CalendarPlus } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { CalendarPlus } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getDatabasePropertyType } from "../../schema/property-catalog";
 import type { DatabasePropertyListItem } from "@zilobase/features/databases";
 

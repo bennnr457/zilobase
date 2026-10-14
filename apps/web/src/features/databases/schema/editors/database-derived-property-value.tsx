@@ -11,7 +11,7 @@ import {
 } from "@zilobase/features/databases/react";
 import { getPageEmoji, type PageMetadata } from "@zilobase/features/pages";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatabasePageLink } from "../../interactions/database-page-link";
 import { DatabaseRollupPropertySettings } from "../configuration";
 import {

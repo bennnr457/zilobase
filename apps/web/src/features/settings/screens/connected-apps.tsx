@@ -1,5 +1,5 @@
 import { SettingsHeader } from "../components/settings-header";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Item,
   ItemActions,
@@ -7,7 +7,7 @@ import {
   ItemDescription,
   ItemGroup,
   ItemTitle,
-} from "@/shared/ui/item";
+} from "@/components/ui/item";
 import { getApiErrorMessage } from "@zilobase/features";
 import { useOAuthConsents, useRevokeOAuthConsent } from "@zilobase/features/oauth/react";
 import { labelForScope } from "@zilobase/features/oauth";

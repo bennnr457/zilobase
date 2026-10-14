@@ -1,16 +1,16 @@
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { ReactNodeViewProps } from "@tiptap/react";
-import { Check, ChevronsUpDown, Copy } from "@/shared/components/icons";
+import { Check, ChevronsUpDown, Copy } from "@/components/icons";
 import { useState } from "react";
 import CodeBlockShikiBase from "tiptap-extension-code-block-shiki";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropDrawer,
   DropDrawerContent,
   DropDrawerItem,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 
 const codeBlockLanguages = [
   { label: "Auto detect", value: "auto" },

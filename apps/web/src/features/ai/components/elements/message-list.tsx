@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import type { ComponentProps } from "react";
 import { StickToBottom } from "use-stick-to-bottom";
 

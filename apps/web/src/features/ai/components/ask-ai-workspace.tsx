@@ -6,8 +6,8 @@ import {
   PictureInPicture2Icon,
   SidebarSimpleIcon,
   XIcon,
-} from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+} from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { PageSidePaneLayout } from "@/features/pages/pane/page-side-pane";
 
 import type { ChatPresentationMode } from "./chat-sidebar";

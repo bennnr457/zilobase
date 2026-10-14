@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import { Plus } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { PopoverTrigger } from "@/shared/ui/popover";
+import { Plus } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { PopoverTrigger } from "@/components/ui/popover";
 
 import { useMemo } from "react";
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";
 
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import { getColorTokenBadgeClassName } from "@/shared/lib/color-tokens";
+import { getColorTokenBadgeClassName } from "@/lib/color-tokens";
 import { PageIconDisplay } from "@/features/pages/index";
 import { getDatabasePropertyType } from "../databases/schema/property-catalog";
 

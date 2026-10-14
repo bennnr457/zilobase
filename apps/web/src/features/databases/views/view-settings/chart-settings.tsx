@@ -17,10 +17,10 @@ import {
   Type,
   X,
   Zap,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropDrawerItem,
   DropDrawerLabel,
@@ -28,12 +28,18 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
-import { Switch } from "@/shared/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { cyclingColorTokens, getColorToken, getPaletteColor } from "@/shared/lib/color-tokens";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cyclingColorTokens, getColorToken, getPaletteColor } from "@/lib/color-tokens";
+import { cn } from "@/lib/utils";
 
 import { getDatabasePropertyType } from "../../schema/property-catalog";
 import { NameColumnGlyph } from "../../interactions/name-column-glyph";

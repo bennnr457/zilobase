@@ -30,12 +30,12 @@ import {
   Smile,
   Trash2,
   X,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
-import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
-import { IconEmojiPicker } from "@/shared/ui/icon-emoji-picker";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
+import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { PageIconDisplay } from "@/features/pages/index";
 import {
   DropDrawer,
@@ -46,9 +46,9 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/dropdrawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 
 import { DatabaseSearchableMenuItems } from "./database-searchable-menu-items";

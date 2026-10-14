@@ -6,8 +6,8 @@ import { DatabaseFilterControl } from "./database-query-controls";
 import { DatabaseSaveStatus } from "./database-save-status";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Maximize2 } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { Maximize2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 
 import { useDatabaseDataContext, useDatabaseUiContext } from "../state/database-view-context";
 

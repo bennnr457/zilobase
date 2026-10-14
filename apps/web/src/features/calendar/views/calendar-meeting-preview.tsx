@@ -11,7 +11,7 @@ import {
   type CalendarPreferences,
 } from "@zilobase/features/calendar";
 import { useCalendarCache } from "../sync/use-calendar-cache";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
 function Source({
   connection,

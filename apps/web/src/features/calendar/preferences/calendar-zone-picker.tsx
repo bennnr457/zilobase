@@ -8,7 +8,7 @@ import {
   CommandEmpty,
   CommandItem,
   CommandGroup,
-} from "@/shared/ui/command";
+} from "@/components/ui/command";
 import { canonicalZone, zoneDescription } from "@zilobase/features/calendar";
 export function CalendarZonePicker({
   onSelect,

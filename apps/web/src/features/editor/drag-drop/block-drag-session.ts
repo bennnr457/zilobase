@@ -1,4 +1,4 @@
-import { hasDragType, readDragPayload } from "@/shared/lib/drag-drop";
+import { hasDragType, readDragPayload } from "@/lib/drag-drop";
 export const EDITOR_BLOCK_DRAG_MIME = "application/x-zilobase-editor-block-drag";
 export type BlockDragPayload = {
   operationId: string;

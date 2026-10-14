@@ -13,9 +13,9 @@ import {
   MailPlusIcon,
   Share2Icon,
   Trash2Icon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
 import {
   Command,
@@ -24,15 +24,21 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/shared/ui/command";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { Switch } from "@/shared/ui/switch";
+import { Switch } from "@/components/ui/switch";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { type AccessLevel, type PageAccessRule } from "@zilobase/features/pages";
 
 const accessLabels: Record<AccessLevel, string> = {

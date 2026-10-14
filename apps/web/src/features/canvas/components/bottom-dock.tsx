@@ -1,7 +1,7 @@
-import { ChevronUpIcon, RotateCcwIcon } from "@/shared/components/icons";
+import { ChevronUpIcon, RotateCcwIcon } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { canvasToolOptions } from "../model/constants";
 import type { CanvasTool } from "../model/types";

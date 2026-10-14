@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Plus } from "@/shared/components/icons";
+import { ChevronDown, ChevronRight, Plus } from "@/components/icons";
 import { getPageCover, getPageEmoji, type PageMetadata } from "@zilobase/features/pages";
 
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
+import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
 import { canCreateRowInGroup } from "@zilobase/features/databases";
 import {

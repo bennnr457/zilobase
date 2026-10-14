@@ -17,9 +17,15 @@ import {
   uniqueSearchEvents,
 } from "@zilobase/features/calendar";
 import { useCalendarSearch } from "@zilobase/features/calendar/react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 export function CalendarSearchResults({
   query,
   connections,

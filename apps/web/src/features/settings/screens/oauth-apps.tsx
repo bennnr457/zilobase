@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 import { SettingsHeader } from "../components/settings-header";
-import { Button } from "@/shared/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Item,
   ItemActions,
@@ -11,7 +11,7 @@ import {
   ItemDescription,
   ItemGroup,
   ItemTitle,
-} from "@/shared/ui/item";
+} from "@/components/ui/item";
 import { getApiErrorMessage } from "@zilobase/features";
 import { useOAuthApps, useCreateOAuthApp, useDeleteOAuthApp } from "@zilobase/features/oauth/react";
 

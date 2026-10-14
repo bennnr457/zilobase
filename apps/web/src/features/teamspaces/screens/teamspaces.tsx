@@ -3,20 +3,26 @@ import { useTeamspaceDirectory } from "../commands/use-teamspace-directory";
 import { CreateTeamspaceDialog } from "../components/create-teamspace-dialog";
 import { ManageTeamspaceDialog } from "../components/manage-teamspace-dialog";
 
-import { Layers3Icon, MoreHorizontalIcon, PlusIcon } from "@/shared/components/icons";
+import { Layers3Icon, MoreHorizontalIcon, PlusIcon } from "@/components/icons";
 
 import { toast } from "sonner";
 
 import { SettingsHeader } from "@/features/settings";
-import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Separator } from "@/shared/ui/separator";
-import { Spinner } from "@/shared/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 
 import { getApiErrorMessage } from "@/platform/network/api";
 import { PageIconDisplay } from "@/features/pages/index";

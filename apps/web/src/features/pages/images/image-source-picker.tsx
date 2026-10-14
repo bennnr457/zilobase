@@ -6,13 +6,13 @@ import {
   Palette,
   Search,
   Upload,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { useRef, useState } from "react";
 
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent } from "@/shared/ui/card";
-import { Input } from "@/shared/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { uploadPageImage } from "@/platform/network/image-upload";
 import { CoverGalleryPicker } from "./cover-gallery-picker";

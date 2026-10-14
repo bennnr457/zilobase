@@ -1,15 +1,7 @@
-import { closeEditorHistory } from "@/shared/shortcuts/editor-history";
+import { closeEditorHistory } from "@/app/shortcuts/editor-history";
 import type { Editor } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Clipboard,
-  Copy,
-  GripVertical,
-  Palette,
-  Plus,
-  Trash2,
-  Type,
-} from "@/shared/components/icons";
+import { Clipboard, Copy, GripVertical, Palette, Plus, Trash2, Type } from "@/components/icons";
 
 import {
   DropDrawer,
@@ -22,8 +14,8 @@ import {
   DropDrawerSubContent,
   DropDrawerSubTrigger,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,13 +25,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { slashCommandItems, type SlashCommandItem } from "../extensions/slash-command";
 import { SlashCommandMenu } from "../extensions/slash-command-menu";
 
 import { blockContentForConversion, insertBlockFromPlus } from "../commands/block-insert";
 import { useEditorWorkspace } from "../runtime/page-editor-registry";
-import { colorWithAlpha, getPaletteColor } from "@/shared/lib/color-tokens";
+import { colorWithAlpha, getPaletteColor } from "@/lib/color-tokens";
 import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
 import type {
   StructuralBlockDeleteAction,

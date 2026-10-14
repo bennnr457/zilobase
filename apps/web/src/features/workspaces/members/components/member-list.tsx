@@ -1,11 +1,17 @@
 import { useMemberAccess } from "../commands/use-member-access";
 
-import { CalendarClockIcon, Trash2Icon, UsersIcon } from "@/shared/components/icons";
+import { CalendarClockIcon, Trash2Icon, UsersIcon } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/shared/ui/empty";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 import {
   Item,
   ItemActions,
@@ -14,10 +20,16 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from "@/shared/ui/item";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+} from "@/components/ui/item";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import { Spinner } from "@/shared/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 import type { WorkspaceMember, WorkspaceRole } from "@zilobase/features/workspaces";
 

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { isDesktopApp } from "@/features/desktop/index";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -20,10 +20,10 @@ import {
   DropDrawerSeparator,
   DropDrawerShortcut,
   DropDrawerTrigger,
-} from "@/shared/ui/dropdrawer";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/sidebar";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/dropdrawer";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "@tanstack/react-router";
 import { useSession } from "@zilobase/features/auth/react";
 import {
@@ -48,7 +48,7 @@ import {
   PlusIcon,
   ServerIcon,
   Settings2Icon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 
 export function WorkspaceSwitcher({
   onOpenSettings,

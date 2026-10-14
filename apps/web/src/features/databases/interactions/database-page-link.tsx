@@ -2,7 +2,7 @@ import { useZilobaseFeatures } from "@zilobase/features";
 import { useSharedDataRevision } from "@zilobase/features/data/react";
 import { readCachedPage } from "@zilobase/features/pages";
 import { useEffect, useRef, useState } from "react";
-import { DatabaseIcon, SidebarSimpleIcon, SquareIcon, X } from "@/shared/components/icons";
+import { DatabaseIcon, SidebarSimpleIcon, SquareIcon, X } from "@/components/icons";
 import { toast } from "sonner";
 
 import { useOptionalPageSidePane } from "@/features/pages/pane/page-side-pane";
@@ -11,8 +11,8 @@ import { useUpdatePage } from "@zilobase/features/pages/react";
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalDatabaseDataContext } from "../views/state/database-view-context";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { useOptionalUndoHistory } from "@/shared/shortcuts";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useOptionalUndoHistory } from "@/app/shortcuts";
 
 type DatabasePageSummary = {
   iconKind?: "database" | "page";

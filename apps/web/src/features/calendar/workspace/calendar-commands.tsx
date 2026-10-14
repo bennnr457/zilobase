@@ -8,7 +8,7 @@ import {
   type CalendarPreferences,
   type CalendarView,
 } from "@zilobase/features/calendar";
-import { useAppShortcut } from "@/shared/shortcuts";
+import { useAppShortcut } from "@/app/shortcuts";
 import {
   Command,
   CommandDialog,
@@ -17,8 +17,8 @@ import {
   CommandEmpty,
   CommandItem,
   CommandShortcut,
-} from "@/shared/ui/command";
-import { Button } from "@/shared/ui/button";
+} from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { chromeCalendarDate } from "./calendar-navigation";

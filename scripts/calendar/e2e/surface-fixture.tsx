@@ -5,9 +5,9 @@ import {
   type CalendarItem,
   type CalendarView,
   type CalendarDisplayPreferences,
-} from "@/shared/components/calendar";
-import "@/shared/styles/global.css";
-import "@/app/styles.css";
+} from "@/components/calendar/primitives";
+import "@/styles/global.css";
+import "@/styles/app.css";
 const defaults: CalendarDisplayPreferences = {
   timeZone: "Asia/Kolkata",
   timeFormat: "24",

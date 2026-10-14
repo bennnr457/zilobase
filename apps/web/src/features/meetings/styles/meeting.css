@@ -1,4 +1,4 @@
-@reference "../../../shared/styles/global.css";
+@reference "../../../styles/global.css";
 
 .tiptap-editor .node-meetingBlock {
   @apply min-w-0;

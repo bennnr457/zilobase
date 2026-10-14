@@ -1,6 +1,6 @@
-import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia } from "@/shared/ui/item";
+import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia } from "@/components/ui/item";
 
-import { Skeleton } from "@/shared/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function RowsSkeleton() {
   return (

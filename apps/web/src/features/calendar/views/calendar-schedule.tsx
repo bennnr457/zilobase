@@ -27,11 +27,11 @@ import {
   type CalendarDisplayPreferences,
   type CalendarItem,
   type CalendarRange,
-} from "@/shared/components/calendar";
+} from "@/components/calendar/primitives";
 import { runCalendarMutation } from "../events/calendar-mutations";
 import { toast } from "sonner";
 import { newCalendarEvent } from "@zilobase/features/calendar";
-import { PALETTE, type ColorTokenId } from "@/shared/lib/color-tokens";
+import { PALETTE, type ColorTokenId } from "@/lib/color-tokens";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
@@ -49,7 +49,7 @@ import {
 } from "@zilobase/features/calendar";
 import { useCalendarCache } from "../sync/use-calendar-cache";
 import { calendarSelectionKey, resolveDefaultCalendar } from "@zilobase/features/calendar";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/platform/network/api";
 import type { CalendarDatabase } from "../storage/calendar-database";
 type Snapshot = {

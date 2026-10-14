@@ -8,7 +8,7 @@ import {
 } from "@zilobase/features/databases";
 import { useCallback, useMemo, useState, type MutableRefObject } from "react";
 import { toast } from "sonner";
-import type { useUndoHistory } from "@/shared/shortcuts";
+import type { useUndoHistory } from "@/app/shortcuts";
 import type { TableRow } from "./database-table-model";
 import type { DatabaseViewProviderValue } from "../state/database-view-context";
 export const DATABASE_SELECTION_PRIMARY_PROPERTY_LIMIT = 5;

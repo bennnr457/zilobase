@@ -17,10 +17,10 @@ const opacityColorUtility = new RegExp(
 );
 const systemColor = /\[(?:Canvas|CanvasText|Highlight|HighlightText)\]/g;
 const literalExceptions = new Set([
-  "src/shared/components/google-icon.tsx",
+  "src/components/google-icon.tsx",
   "src/features/editor/extensions/embed-block.tsx",
   "src/features/pages/images/cover-gallery.ts",
-  "src/shared/styles/typeset.css",
+  "src/styles/typeset.css",
 ]);
 const legacyVariables = [
   "background",
@@ -68,7 +68,7 @@ const legacyUtilityPattern = new RegExp(
 export function register({ appPath, assert, test }) {
   test("literal color exceptions are documented with an owner and reason", async () => {
     const exceptions = JSON.parse(
-      await readFile(join(appPath("."), "src/shared/styles/color-exceptions.json"), "utf8"),
+      await readFile(join(appPath("."), "src/styles/color-exceptions.json"), "utf8"),
     );
     const documentedWebSourceFiles = new Set(
       exceptions
@@ -90,7 +90,7 @@ export function register({ appPath, assert, test }) {
 
     for (const file of files) {
       const relativeFile = relative(appDir, file);
-      if (relativeFile === "src/shared/styles/color-tokens.css") continue;
+      if (relativeFile === "src/styles/color-tokens.css") continue;
       const source = await readFile(file, "utf8");
 
       for (const [lineIndex, line] of source.split("\n").entries()) {
@@ -131,7 +131,7 @@ export function register({ appPath, assert, test }) {
   });
 
   test("every public alias points to one declared canonical token", async () => {
-    const css = await readFile(join(appPath("."), "src/shared/styles/color-tokens.css"), "utf8");
+    const css = await readFile(join(appPath("."), "src/styles/color-tokens.css"), "utf8");
     const canonical = new Set(
       [...css.matchAll(/(--zb-color-[a-z0-9-]+):/g)].map((match) => match[1]),
     );
@@ -159,7 +159,7 @@ export function register({ appPath, assert, test }) {
   });
 
   test("canonical references are defined and acyclic", async () => {
-    const css = await readFile(join(appPath("."), "src/shared/styles/color-tokens.css"), "utf8");
+    const css = await readFile(join(appPath("."), "src/styles/color-tokens.css"), "utf8");
     const declarations = new Map(
       [...css.matchAll(/(--zb-color-[a-z0-9-]+):\s*([^;]+);/g)].map((match) => [
         match[1],

@@ -1,4 +1,4 @@
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { databaseViewTypeOptions, type DatabaseViewType } from "./view-type-options";
 

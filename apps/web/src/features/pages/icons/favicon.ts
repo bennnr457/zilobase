@@ -1,4 +1,4 @@
-import { getStoredIconColor, isSvgIcon, sanitizeStoredSvg } from "@/shared/lib/page-icon-utils";
+import { getStoredIconColor, isSvgIcon, sanitizeStoredSvg } from "@/lib/page-icon-utils";
 
 export const DEFAULT_DOCUMENT_TITLE = "Zilobase";
 

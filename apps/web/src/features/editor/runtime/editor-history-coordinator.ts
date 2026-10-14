@@ -6,7 +6,7 @@ import {
   getEditorHistoryTransition,
   getEditorUndoManager,
   isEditorHistoryOperation,
-} from "@/shared/shortcuts/editor-history";
+} from "@/app/shortcuts/editor-history";
 
 type HistoryAction = {
   label: string;

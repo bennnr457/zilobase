@@ -4,7 +4,7 @@ import {
   describeDesktopError,
   recordDesktopDiagnostic,
 } from "@/features/desktop/diagnostics/index";
-import { captureProductException } from "@/shared/lib/posthog";
+import { captureProductException } from "@/lib/posthog";
 
 type FallbackErrorBoundaryProps = {
   children: ReactNode;

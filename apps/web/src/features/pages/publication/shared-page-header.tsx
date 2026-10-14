@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { CopyIcon } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { Badge } from "@/shared/ui/badge";
+import { CopyIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { isEmbeddedMobileViewer } from "../pane/embedded-view";
 import { toast } from "sonner";
 import { formatPageBreadcrumbLabel } from "../icons/page-icon";

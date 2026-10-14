@@ -1,11 +1,11 @@
 import { getSelectOptions, getSelectConfigWithOptions } from "@zilobase/features/databases";
-import { cn } from "@/shared/lib/utils";
-import { menuItemVariants } from "@/shared/ui/menu-styles";
-import { Check, GripVertical } from "@/shared/components/icons";
+import { cn } from "@/lib/utils";
+import { menuItemVariants } from "@/components/ui/menu-styles";
+import { Check, GripVertical } from "@/components/icons";
 import { useState, type ReactNode } from "react";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/shared/lib/color-tokens";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 import { getNextDatabaseOptionColor } from "../property-catalog";
 import type { DatabaseSelectOption } from "@zilobase/features/databases";
 import { toStringArray } from "@zilobase/features/databases";

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { isDesktopApp } from "@/platform/desktop/native";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Field,
   FieldDescription,
@@ -17,8 +17,8 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
 import {
   desktopCloudConnectUrl,

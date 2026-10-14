@@ -1,4 +1,4 @@
-import { GripVertical } from "@/shared/components/icons";
+import { GripVertical } from "@/components/icons";
 import { DefaultPageIcon } from "@/features/pages/index";
 
 import type { SortableDatabaseItem } from "@zilobase/features/databases";

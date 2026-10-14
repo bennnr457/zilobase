@@ -2,7 +2,7 @@ export function register({ readSource, assert, test }) {
   test("sidebar aligns the workspace switcher and notifications at the top", async () => {
     const sidebarSource = await readSource("/src/app/shell/navigation/app-sidebar.tsx");
     const workspaceSource = await readSource("/src/app/shell/navigation/workspace-switcher.tsx");
-    const sidebarPrimitiveSource = await readSource("/src/shared/ui/sidebar.tsx");
+    const sidebarPrimitiveSource = await readSource("/src/components/ui/sidebar.tsx");
     const sidebarTabsSource = await readSource(
       "/src/app/shell/navigation/components/sidebar-layout-tabs.tsx",
     );
@@ -30,9 +30,11 @@ export function register({ readSource, assert, test }) {
     const databasePageLinkSource = await readSource(
       "/src/features/databases/interactions/database-page-link.tsx",
     );
-    const appIconProviderSource = await readSource("/src/shared/components/app-icon-provider.tsx");
-    const iconPickerSource = await readSource("/src/shared/ui/icon-emoji-picker.tsx");
-    const phosphorIconPickerSource = await readSource("/src/shared/ui/phosphor-icon-picker.tsx");
+    const appIconProviderSource = await readSource("/src/app/providers/app-icon-provider.tsx");
+    const iconPickerSource = await readSource("/src/components/ui/icon-emoji-picker.tsx");
+    const phosphorIconPickerSource = await readSource(
+      "/src/components/ui/phosphor-icon-picker.tsx",
+    );
 
     assert.doesNotMatch(sidebarSource, /ZilobaseLogo|SidebarThemeSwitcher|SidebarTrigger/);
     assert.doesNotMatch(sidebarSource, /<NewMenu/);

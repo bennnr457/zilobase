@@ -1,7 +1,7 @@
-import { Loader2, Plus } from "@/shared/components/icons";
+import { Loader2, Plus } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 
-import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/shared/ui/dropdrawer";
+import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/components/ui/dropdrawer";
 
 import { databasePropertyTypes } from "../property-catalog";
 import { PropertyTypePicker } from "../shared/property-type-picker";

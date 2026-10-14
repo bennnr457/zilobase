@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/shared/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 import type { SlashCommandItem } from "./slash-command";
 

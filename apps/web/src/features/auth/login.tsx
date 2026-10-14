@@ -1,23 +1,23 @@
 import { useState } from "react";
-import { EyeIcon, EyeOffIcon } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { GoogleIcon } from "@/shared/components/google-icon";
-import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/shared/ui/field";
+import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { GoogleIcon } from "@/components/google-icon";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/shared/ui/input-group";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { getAuthReturnPath, signInWithGoogle, getInvitationAuthSearch } from "./google-auth";
 import { readOAuthQuery } from "@zilobase/features/oauth";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import { useRequestSignInOtp, useSignInWithPassword } from "@zilobase/features/auth/react";
 import { useAuthFlowStore } from "./auth-flow-store";
 import { editionWebModule } from "@zilobase/edition-web";
-import posthog from "@/shared/lib/posthog";
+import posthog from "@/lib/posthog";
 import { isDesktopApp } from "@/features/desktop/index";
 import { AuthScreen } from "./auth-screen";
 import { DesktopBrowserAuthScreen } from "@/features/desktop/auth/index";

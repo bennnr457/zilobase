@@ -70,7 +70,7 @@ export function register({ readSource, assert, loadModule, test }) {
     );
     const sidebarSource = await readSource("/src/app/shell/navigation/app-sidebar.tsx");
     const appSource = await readSource("/src/app/app.tsx");
-    const stylesSource = await readSource("/src/shared/styles/global.css");
+    const stylesSource = await readSource("/src/styles/global.css");
 
     assert.match(tabsSource, /DesktopTabStrip/);
     assert.match(tabStripSource, /data-desktop-tab-strip/);

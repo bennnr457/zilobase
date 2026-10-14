@@ -7,9 +7,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/shared/ui/command";
-import { Loader2 } from "@/shared/components/icons";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/command";
+import { Loader2 } from "@/components/icons";
+import { cn } from "@/lib/utils";
 import {
   filterPageDatabasePickerOptions,
   type PageDatabasePickerSearchOption,

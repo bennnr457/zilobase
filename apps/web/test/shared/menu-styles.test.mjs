@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   test("shared menu variants keep one default item geometry", async () => {
-    const { menuItemVariants } = await loadModule("/apps/web/src/shared/ui/menu-styles.ts");
+    const { menuItemVariants } = await loadModule("/apps/web/src/components/ui/menu-styles.ts");
 
     const defaultItem = menuItemVariants();
     assert.match(defaultItem, /min-h-7/);
@@ -15,7 +15,7 @@ export function register({ assert, loadModule, test }) {
 
   test("destructive menu styling is a declared variant", async () => {
     const { menuContentVariants, menuItemVariants } = await loadModule(
-      "/apps/web/src/shared/ui/menu-styles.ts",
+      "/apps/web/src/components/ui/menu-styles.ts",
     );
     const destructiveItem = menuItemVariants({ variant: "destructive" });
 

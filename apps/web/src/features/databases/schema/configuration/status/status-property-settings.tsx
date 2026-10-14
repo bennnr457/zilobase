@@ -1,9 +1,9 @@
 import { reorderOptionsByIds } from "@zilobase/features/databases";
-import { Plus } from "@/shared/components/icons";
+import { Plus } from "@/components/icons";
 import { Reorder } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
-import { DropDrawerLabel, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
+import { DropDrawerLabel, DropDrawerSeparator } from "@/components/ui/dropdrawer";
 
 import { reorderStatusGroupOptions } from "@zilobase/features/databases";
 import { getNextDatabaseOptionColor } from "../../property-catalog";

@@ -4,12 +4,18 @@ import { useActiveWorkspaceId, useWorkspaces } from "@zilobase/features/workspac
 
 import { getApiErrorMessage } from "@zilobase/features";
 import { usePublicOAuthClient, useSubmitOAuthConsent } from "@zilobase/features/oauth/react";
-import { Button } from "@/shared/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/shared/ui/item";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Spinner } from "@/shared/ui/spinner";
-import { ZilobaseLogo } from "@/shared/components/zilobase-logo";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from "@/components/ui/item";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { ZilobaseLogo } from "@/components/zilobase-logo";
 import { readOAuthQuery } from "@zilobase/features/oauth";
 import { labelForScope, parseRequestedScopes } from "@zilobase/features/oauth";
 

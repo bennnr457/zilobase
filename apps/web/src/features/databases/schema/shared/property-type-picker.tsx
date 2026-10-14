@@ -1,7 +1,7 @@
 import { useMemo, useState, type ComponentType } from "react";
 
-import { Search } from "@/shared/components/icons";
-import { DropDrawerItem, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
+import { Search } from "@/components/icons";
+import { DropDrawerItem, DropDrawerSeparator } from "@/components/ui/dropdrawer";
 
 export type PropertyTypeChoice = {
   icon: ComponentType<{ className?: string }>;

@@ -1,8 +1,8 @@
 import { useTaskDatabases } from "@zilobase/features/tasks/react";
 import { Link } from "@tanstack/react-router";
-import { ChevronRightIcon, ListChecksIcon } from "@/shared/components/icons";
+import { ChevronRightIcon, ListChecksIcon } from "@/components/icons";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,7 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { buildTaskRows, filterMyTaskRows, getTaskDatabaseSchema } from "@zilobase/features/tasks";
 import { useSession } from "@zilobase/features/auth/react";
 

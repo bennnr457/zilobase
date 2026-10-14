@@ -3,27 +3,21 @@ import { useEffect, useState } from "react";
 import { useUpdateDatabaseView } from "@zilobase/features/databases/react";
 import { useDeletePage } from "@zilobase/features/pages/react";
 import { toast } from "sonner";
-import {
-  EyeOff,
-  MoreHorizontal,
-  Plus,
-  SlidersHorizontalIcon,
-  Trash2,
-} from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { EyeOff, MoreHorizontal, Plus, SlidersHorizontalIcon, Trash2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/shared/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -33,9 +27,15 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/shared/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Checkbox } from "@/shared/ui/checkbox";
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,

@@ -1,13 +1,13 @@
 import { useState } from "react";
 
-import { CheckIcon, SidebarSimpleIcon, SquareIcon } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { CheckIcon, SidebarSimpleIcon, SquareIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   embeddedItemsOpenAsLabels,
   embeddedItemsOpenAsModes,

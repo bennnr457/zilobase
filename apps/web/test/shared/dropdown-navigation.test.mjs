@@ -18,7 +18,7 @@ export function register({ assert, appPath, test }) {
             import * as React from "react";
             import {createRoot} from "react-dom/client";
             import {flushSync} from "react-dom";
-            import {DropdownMenu, DropdownMenuContent, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem} from "./src/shared/ui/dropdown-menu";
+            import {DropdownMenu, DropdownMenuContent, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem} from "./src/components/ui/dropdown-menu";
             export function mount(container) {
               const root = createRoot(container);
               let setOpen, setLabel;
@@ -71,10 +71,10 @@ export function register({ assert, appPath, test }) {
                 export const DropdownMenu={Root, Content, Item, CheckboxItem:Item, RadioItem:Item, Portal:({children})=>children, Sub:({children})=><div data-outside="true">{children}</div>, SubTrigger:Plain, SubContent:Plain, ItemIndicator:Plain};
               `,
               }));
-              builder.onResolve(
-                { filter: /^@\/shared\/(components\/icons|ui\/button)$/ },
-                (args) => ({ path: args.path, namespace: "controls" }),
-              );
+              builder.onResolve({ filter: /^@\/components\/(icons|ui\/button)$/ }, (args) => ({
+                path: args.path,
+                namespace: "controls",
+              }));
               builder.onLoad({ filter: /.*/, namespace: "controls" }, () => ({
                 resolveDir: appPath("/"),
                 loader: "tsx",

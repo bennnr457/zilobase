@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function RuntimeSectionDragItem({
   children,

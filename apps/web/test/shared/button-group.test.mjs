@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("button groups expose shared layout variants instead of feature styles", async () => {
     const { buttonGroupItemVariants, buttonGroupVariants } = await loadModule(
-      "/apps/web/src/shared/ui/button-group.tsx",
+      "/apps/web/src/components/ui/button-group.tsx",
     );
 
     const connected = buttonGroupVariants({ variant: "connected" });

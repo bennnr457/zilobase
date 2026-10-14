@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { databaseColumnMinWidth } from "../model/column-dimensions";
-import { useResizableTableColumns } from "@/shared/hooks/use-resizable-table-columns";
+import { useResizableTableColumns } from "@/lib/hooks/use-resizable-table-columns";
 
 import { getDatabasePropertyOrder } from "@zilobase/features/databases";
 

@@ -4,17 +4,17 @@ import type {
   CalendarItem,
   CalendarSurfaceProps,
   CalendarView,
-} from "@/shared/components/calendar";
+} from "@/components/calendar/primitives";
 import { eventClock } from "@zilobase/features/calendar";
-import "@/shared/styles/global.css";
-import "@/app/styles.css";
+import "@/styles/global.css";
+import "@/styles/app.css";
 const params = new URLSearchParams(location.search);
 const baselinePath = "/.dev/calendar-baseline/shared/components/calendar/index.ts";
 const { CalendarSurface } = params.has("baseline")
   ? ((await import(/* @vite-ignore */ baselinePath)) as {
       CalendarSurface: React.ComponentType<CalendarSurfaceProps>;
     })
-  : await import("@/shared/components/calendar");
+  : await import("@/components/calendar/primitives");
 const count = Number(params.get("count") ?? 10000);
 const items: CalendarItem[] = Array.from({ length: count }, (_, index) => ({
   id: `item-${index}`,

@@ -1,4 +1,4 @@
-import { Badge } from "@/shared/ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 import { capitalize } from "../model/member-presentation";
 

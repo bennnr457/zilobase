@@ -3,12 +3,18 @@ import { Link } from "@tanstack/react-router";
 import type { CalendarPreferences } from "@zilobase/features/calendar";
 
 import { SettingsRow, SettingsSectionLayout } from "@/features/settings";
-import { Minus, Plus, RotateCcw } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-import { Spinner } from "@/shared/ui/spinner";
-import { Switch } from "@/shared/ui/switch";
+import { Minus, Plus, RotateCcw } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
 
 import { CalendarBufferSettings } from "./calendar-buffer-preferences";
 import { CalendarTimeZones } from "./calendar-time-zones";

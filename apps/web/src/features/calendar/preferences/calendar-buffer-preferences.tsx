@@ -6,7 +6,7 @@ import {
 import { useSyncExternalStore } from "react";
 import { useSession } from "@zilobase/features/auth/react";
 import { toApiUrl } from "@/platform/network/api";
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 import { SettingsRow } from "@/features/settings";
 const changed = "calendar:buffers-changed";
 function subscribe(listener: () => void) {

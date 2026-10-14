@@ -2,7 +2,7 @@ import { BubbleMenu } from "@tiptap/react/menus";
 import { AllSelection, NodeSelection } from "@tiptap/pm/state";
 import { useEffect } from "react";
 
-import { ButtonGroup, ButtonGroupSeparator } from "@/shared/ui/button-group";
+import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
 
 import { blockSelectionPluginKey } from "../extensions/block-selection";
 
@@ -11,7 +11,7 @@ import { SelectionAiMenu } from "./selection-ai-menu";
 import { toolbarGroups } from "../toolbar/toolbar-data";
 import { ToolbarButton } from "../toolbar/toolbar-button";
 import type { EditorControlProps, RunToolbarCommand } from "../toolbar/toolbar-contracts";
-import { isFeatureEnabled } from "@/shared/config/feature-flags";
+import { isFeatureEnabled } from "@/app/config/feature-flags";
 
 const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";
 

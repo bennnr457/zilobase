@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 
-import { Trash2Icon } from "@/shared/components/icons";
+import { Trash2Icon } from "@/components/icons";
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -13,11 +13,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Field, FieldError, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/alert-dialog";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
-import { Spinner } from "@/shared/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 import { getApiErrorMessage } from "@/platform/network/api";
 

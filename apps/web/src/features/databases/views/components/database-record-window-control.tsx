@@ -1,5 +1,5 @@
-import { Loader2 } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { Loader2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 
 import { useDatabaseRowsScroll } from "../../interactions/use-database-rows-scroll";
 import { useDatabaseActionsContext, useDatabaseDataContext } from "../state/database-view-context";

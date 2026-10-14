@@ -7,6 +7,10 @@ export default defineConfig({
   srcDir: ".",
   outDir: ".output",
   imports: false,
+  alias: {
+    "@/components": path.resolve(__dirname, "../web/src/components"),
+    "@/lib": path.resolve(__dirname, "../web/src/lib"),
+  },
   // Keep WXT's HMR server off the Node API (3000), health (3001), and Worker API (3010).
   dev: {
     server: {
@@ -38,10 +42,5 @@ export default defineConfig({
   },
   vite: () => ({
     plugins: [tailwindcss()],
-    resolve: {
-      alias: {
-        "@/shared": path.resolve(__dirname, "../web/src/shared"),
-      },
-    },
   }),
 });

@@ -1,5 +1,5 @@
-import "@/shared/styles/global.css";
-import "@/app/styles.css";
+import "@/styles/global.css";
+import "@/styles/app.css";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
 import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -15,7 +15,7 @@ import {
   PageEditorRegistryProvider,
   useEditorWorkspace,
 } from "@/features/editor/runtime/page-editor-registry";
-import { ShortcutProvider } from "@/shared/shortcuts";
+import { ShortcutProvider } from "@/app/shortcuts";
 import { createEditorWorkspace } from "@/features/editor/runtime/editor-workspace";
 import { EditorIntegration } from "@/features/editor/runtime/editor-integration";
 import { transferBlocks } from "@/features/editor/operations/block-operations";

@@ -1,11 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { Trash2Icon, UsersIcon } from "@/shared/components/icons";
+import { Trash2Icon, UsersIcon } from "@/components/icons";
 
 import { toast } from "sonner";
 
-import { Button } from "@/shared/ui/button";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/shared/ui/empty";
-import { Field, FieldLabel } from "@/shared/ui/field";
+import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import {
   Item,
@@ -15,8 +21,14 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from "@/shared/ui/item";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+} from "@/components/ui/item";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   usePromoteWorkspaceGuest,

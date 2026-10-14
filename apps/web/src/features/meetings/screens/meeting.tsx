@@ -21,7 +21,7 @@ import {
 import { usePage, usePageAccessLevel, useUpdatePage } from "@zilobase/features/pages/react";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useSession } from "@zilobase/features/auth/react";
-import { LoaderCircle } from "@/shared/components/icons";
+import { LoaderCircle } from "@/components/icons";
 import type { OpenPageOptions } from "@/features/pages";
 
 export default function MeetingPage() {

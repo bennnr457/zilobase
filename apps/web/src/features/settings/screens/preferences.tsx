@@ -1,13 +1,7 @@
 import * as React from "react";
 import { isDesktopApp } from "@/features/desktop/index";
 import { useTheme } from "next-themes";
-import {
-  BugIcon,
-  CheckIcon,
-  DownloadIcon,
-  FolderOpenIcon,
-  ServerIcon,
-} from "@/shared/components/icons";
+import { BugIcon, CheckIcon, DownloadIcon, FolderOpenIcon, ServerIcon } from "@/components/icons";
 import { toast } from "sonner";
 
 import { SettingsHeader } from "../components/settings-header";
@@ -20,8 +14,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
-import { Button } from "@/shared/ui/button";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -30,10 +24,10 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui/select";
-import { Separator } from "@/shared/ui/separator";
-import { Slider } from "@/shared/ui/slider";
-import { Spinner } from "@/shared/ui/spinner";
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/platform/network/api";
 import {
   describeDesktopError,
@@ -60,8 +54,8 @@ import {
   themeFamilies,
   type AppearanceModeId,
   type ThemeFamilyId,
-} from "@/shared/lib/themes";
-import { useThemeFamily } from "@/shared/providers/theme-family-provider";
+} from "@/lib/themes";
+import { useThemeFamily } from "@/app/providers/theme-family-provider";
 import {
   getDesktopTranslucency,
   MAX_DESKTOP_TRANSLUCENCY,

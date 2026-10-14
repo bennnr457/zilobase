@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import postcss from "postcss";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const canonicalPath = path.join(repositoryRoot, "apps/web/src/shared/styles/color-tokens.css");
+const canonicalPath = path.join(repositoryRoot, "apps/web/src/styles/color-tokens.css");
 const targets = [path.join(repositoryRoot, "apps/server/src/features/desktop-auth/routes.ts")];
 const tokenNames = [
   "--zb-color-surface-background-canvas",

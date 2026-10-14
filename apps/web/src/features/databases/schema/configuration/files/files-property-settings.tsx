@@ -1,5 +1,5 @@
 import { FilesLimitValue } from "@zilobase/features/databases";
-import { Hash } from "@/shared/components/icons";
+import { Hash } from "@/components/icons";
 
 import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import { PropertySettingSubmenu } from "../shared/property-setting-submenu";

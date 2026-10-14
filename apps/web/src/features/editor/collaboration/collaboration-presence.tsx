@@ -4,8 +4,8 @@ import {
   AvatarGroup,
   AvatarGroupCount,
   AvatarImage,
-} from "@/shared/ui/avatar";
-import { cn } from "@/shared/lib/utils";
+} from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import { getUserImageUrl } from "@/platform/network/image-upload";
 
 export type CollaborationPresenceUser = {

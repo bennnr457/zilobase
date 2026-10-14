@@ -27,7 +27,7 @@ import {
   Type,
   Users,
   type Icon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { type DatabasePropertyType as DatabasePropertyTypeId } from "@zilobase/features/databases";
 
 import type {

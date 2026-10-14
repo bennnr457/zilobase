@@ -1,8 +1,8 @@
-import { UploadIcon } from "@/shared/components/icons";
+import { UploadIcon } from "@/components/icons";
 
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 
-import { Spinner } from "@/shared/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useNotionImport } from "@/features/notion-import/hooks/use-notion-import";
 

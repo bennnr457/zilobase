@@ -10,8 +10,8 @@ import { CompactPropertyActionCard, ActionPicker } from "../actions/property-act
 
 import type { DatabaseAutomationCatalog } from "@zilobase/features/automations";
 
-import { TriangleAlertIcon, Loader2 } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
+import { TriangleAlertIcon, Loader2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 
 import {
   createNotionActionDraft,

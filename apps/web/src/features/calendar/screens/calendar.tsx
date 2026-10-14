@@ -9,7 +9,7 @@ import type { CalendarConnection, CalendarPreferences } from "@zilobase/features
 import { CalendarSchedule } from "../views/calendar-schedule";
 import { useSession } from "@zilobase/features/auth/react";
 import { CalendarConnectButton } from "../connections/calendar-connect-button";
-import { GoogleIcon } from "@/shared/components/google-icon";
+import { GoogleIcon } from "@/components/google-icon";
 import {
   MainPaneHeaderLeadingControl,
   PagePaneHeader,
@@ -17,10 +17,10 @@ import {
 import { PageSidePaneHeaderCell, PageSidePaneShell } from "@/features/pages/pane/page-side-pane";
 import { useEffect, useState } from "react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import { Button } from "@/shared/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
-import { Skeleton } from "@/shared/ui/skeleton";
-import { SettingsIcon } from "@/shared/components/icons";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SettingsIcon } from "@/components/icons";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { useCalendarAccounts } from "../connections/use-calendar-accounts";
 import { useCalendarPreferences } from "../preferences/use-calendar-preferences";

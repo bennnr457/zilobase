@@ -1,6 +1,6 @@
-import { Filter, ArrowDownUp } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/shared/ui/dropdrawer";
+import { Filter, ArrowDownUp } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { DropDrawer, DropDrawerContent, DropDrawerTrigger } from "@/components/ui/dropdrawer";
 import { DatabaseSearchableMenuItems } from "./database-searchable-menu-items";
 import {
   useDatabaseActionsContext,

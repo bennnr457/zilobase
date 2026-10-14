@@ -11,14 +11,14 @@ import {
   getDatabaseTimeValue as getTimeValueFromDate,
 } from "@zilobase/features/databases";
 import { useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Check, ChevronRight, HelpCircle } from "@/shared/components/icons";
+import { Check, ChevronRight, HelpCircle } from "@/components/icons";
 import type { DateRange } from "react-day-picker";
 
-import { Button } from "@/shared/ui/button";
-import { DateCalendar } from "@/shared/ui/calendar";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Switch } from "@/shared/ui/switch";
+import { Button } from "@/components/ui/button";
+import { DateCalendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import {
   dateFormatOptions,
   formatDatabaseDateValueWithFormats,

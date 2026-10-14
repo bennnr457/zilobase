@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { SessionUser } from "@zilobase/features/auth";
 import { Awareness } from "y-protocols/awareness";
 import { ApiError, apiFetch } from "@/platform/network/api";
-import { scheduleRealtimeAfterPagePaint } from "@/shared/lib/deferred-realtime";
+import { scheduleRealtimeAfterPagePaint } from "@/lib/deferred-realtime";
 import { getConnectivityState, subscribeConnectivity } from "@/platform/network/connectivity";
 import { usePageEditorRegistry } from "../runtime/page-editor-registry";
 import {

@@ -1,5 +1,5 @@
 import { ChatLayout } from "../chat-layout";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import { ChatbotComposer } from "./chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";

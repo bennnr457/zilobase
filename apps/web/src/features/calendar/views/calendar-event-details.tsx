@@ -8,8 +8,8 @@ import {
   type CalendarAttendee,
 } from "@zilobase/features/calendar";
 import type { CalendarDatabase } from "../storage/calendar-database";
-import { Button } from "@/shared/ui/button";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Clock,
   Globe2Icon,
@@ -20,7 +20,7 @@ import {
   Bell,
   CalendarIcon,
   ArrowUpRightIcon,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { EventActions } from "../events/event-actions";
 
 type Props = {

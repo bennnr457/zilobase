@@ -1,8 +1,8 @@
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { DropDrawerItem, DropDrawerSeparator } from "@/shared/ui/dropdrawer";
-import { Input } from "@/shared/ui/input";
+import { DropDrawerItem, DropDrawerSeparator } from "@/components/ui/dropdrawer";
+import { Input } from "@/components/ui/input";
 
 export function DatabaseSearchableMenuItems({
   emptyMessage = "No options found.",

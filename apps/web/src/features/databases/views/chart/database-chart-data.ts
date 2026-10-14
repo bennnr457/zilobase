@@ -3,7 +3,7 @@ import {
   createSplitChartData as deriveSplitChartData,
   createOuterPieSegments as deriveOuterPieSegments,
 } from "@zilobase/features/databases";
-import { getPaletteColor } from "@/shared/lib/color-tokens";
+import { getPaletteColor } from "@/lib/color-tokens";
 export type {
   DatabaseChartDataItem,
   DatabaseChartSeriesItem,

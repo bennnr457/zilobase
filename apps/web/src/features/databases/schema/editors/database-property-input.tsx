@@ -8,8 +8,8 @@ import {
 } from "@zilobase/features/databases";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode, type FormEvent } from "react";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { getColorToken } from "@/shared/lib/color-tokens";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getColorToken } from "@/lib/color-tokens";
 
 import {
   getNumberDisplayColor,

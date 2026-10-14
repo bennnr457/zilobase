@@ -24,7 +24,7 @@ import {
   dropCrossEditorBlock,
   getBlockDragDatabaseId,
 } from "../drag-drop/block-drag";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   DatabaseBlockDropDialog,

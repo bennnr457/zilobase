@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { EyeIcon, EyeOffIcon } from "@/shared/components/icons";
+import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { useNavigate } from "@tanstack/react-router";
-import { Button } from "@/shared/ui/button";
-import { GoogleIcon } from "@/shared/components/google-icon";
+import { Button } from "@/components/ui/button";
+import { GoogleIcon } from "@/components/google-icon";
 import {
   Field,
   FieldDescription,
@@ -10,17 +10,17 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/shared/ui/field";
+} from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/shared/ui/input-group";
-import { Input } from "@/shared/ui/input";
+} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { getInvitationAuthSearch, signInWithGoogle } from "./google-auth";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/lib/utils";
 import { useAuthFlowStore } from "./auth-flow-store";
 import { useRequestEmailVerificationOtp, useSignUp } from "@zilobase/features/auth/react";
 import { isDesktopApp } from "@/features/desktop/index";

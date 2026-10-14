@@ -1,18 +1,18 @@
 import * as React from "react";
 import { ThemeProvider, useTheme } from "next-themes";
 
-import { Toaster } from "@/shared/ui/sonner";
-import { TooltipProvider } from "@/shared/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageEditorCommentsProvider } from "@/features/comments/index";
 import { PageEditorRegistryProvider } from "@/features/editor/runtime/page-editor-registry";
 import { PageCommentsRegistryProvider } from "@/features/comments/index";
 import { DesktopUpdater } from "@/features/desktop/components/index";
 import { WebFeaturesProvider } from "@/app/providers/features-provider";
 import { queryClient } from "@/app/query-client";
-import { ShortcutProvider } from "@/shared/shortcuts";
-import { getThemeColorScheme, selectableThemeIds } from "@/shared/lib/themes";
-import { ThemeFamilyProvider, useThemeFamily } from "@/shared/providers/theme-family-provider";
-import { AppIconProvider } from "@/shared/components/app-icon-provider";
+import { ShortcutProvider } from "@/app/shortcuts";
+import { getThemeColorScheme, selectableThemeIds } from "@/lib/themes";
+import { ThemeFamilyProvider, useThemeFamily } from "@/app/providers/theme-family-provider";
+import { AppIconProvider } from "@/app/providers/app-icon-provider";
 import { DemoExperience, installDemoCache } from "@/features/demo";
 import { resolvePageDetailReference, type PageDetailReference } from "@zilobase/features/pages";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
@@ -20,7 +20,7 @@ import { useSession } from "@zilobase/features/auth/react";
 import { useDatabaseController } from "@zilobase/features/databases/react";
 import { guardPendingDatabaseWrites } from "@/features/databases/lifecycle/beforeunload";
 
-import posthog from "@/shared/lib/posthog";
+import posthog from "@/lib/posthog";
 
 installDemoCache({
   getQueriesData: (filters) => queryClient.getQueriesData(filters),

@@ -1,6 +1,6 @@
-import { SparklesIcon } from "@/shared/components/icons";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { SparklesIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function ChatSidebarTrigger({
   adjacentSidebarOpen = false,

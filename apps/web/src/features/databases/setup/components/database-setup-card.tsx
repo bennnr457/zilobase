@@ -17,7 +17,7 @@ import {
   Plus,
   Sparkles,
   X,
-} from "@/shared/components/icons";
+} from "@/components/icons";
 import { toast } from "sonner";
 
 import {
@@ -27,13 +27,13 @@ import {
   PromptInputTextarea,
   type PromptInputMessage,
 } from "@/features/ai/components/elements/index";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { getIconSolidClassName } from "@/shared/lib/color-tokens";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { getIconSolidClassName } from "@/lib/color-tokens";
 import { DEFAULT_DATABASE_ITEM_ICON } from "@/features/pages/index";
 import { getDatabaseIconNode, PageIconDisplay } from "@/features/pages/index";
-import { cn } from "@/shared/lib/utils";
-import posthog from "@/shared/lib/posthog";
+import { cn } from "@/lib/utils";
+import posthog from "@/lib/posthog";
 import {
   useApplyDatabaseTemplate,
   useLinkDatabaseDataSource,

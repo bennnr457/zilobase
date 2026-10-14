@@ -6,15 +6,15 @@ import {
   getFileHref,
   getFileLabel,
 } from "@zilobase/features/databases";
-import { File as FileIcon, Link as LinkIcon, Loader2, Plus, X } from "@/shared/components/icons";
+import { File as FileIcon, Link as LinkIcon, Loader2, Plus, X } from "@/components/icons";
 import { useRef, useState } from "react";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { uploadPageImage } from "@/platform/network/image-upload";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 
 export function DatabasePropertyFiles({
   editable = true,

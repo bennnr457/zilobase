@@ -1,4 +1,4 @@
-import { ArrowUpRight, Check, Sigma, Type } from "@/shared/components/icons";
+import { ArrowUpRight, Check, Sigma, Type } from "@/components/icons";
 import type { ReactNode } from "react";
 
 import {
@@ -7,7 +7,7 @@ import {
   DropDrawerSub,
   DropDrawerSubContent,
   DropDrawerSubTrigger,
-} from "@/shared/ui/dropdrawer";
+} from "@/components/ui/dropdrawer";
 import {
   Select,
   SelectContent,
@@ -16,7 +16,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui/select";
+} from "@/components/ui/select";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 
 import type { DatabasePropertyConfig } from "@zilobase/features/databases";

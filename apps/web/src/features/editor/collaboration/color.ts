@@ -1,4 +1,4 @@
-import { collaboratorColorIds } from "@/shared/lib/color-tokens";
+import { collaboratorColorIds } from "@/lib/color-tokens";
 
 const collaboratorColorTokens = collaboratorColorIds.map(
   (id) => `--zb-color-palette-text-${id}` as const,

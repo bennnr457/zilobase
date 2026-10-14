@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { browser } from "wxt/browser";
 
-import { Button } from "@/shared/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/shared/ui/field";
-import { Input } from "@/shared/ui/input";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { clearSession, readSession, writeSession } from "../../lib/session";
 
 export function OptionsApp() {

@@ -7,7 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/sidebar";
+} from "@/components/ui/sidebar";
 import { SidebarShortcutIcon } from "./sidebar-layout-icons";
 import { getShortcutLabel, isShortcutActive } from "../model/sidebar-layout-model";
 

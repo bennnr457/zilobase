@@ -1,11 +1,11 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
-import { Bookmark, CircleX, Globe2, Loader2 } from "@/shared/components/icons";
+import { Bookmark, CircleX, Globe2, Loader2 } from "@/components/icons";
 import { useState } from "react";
 
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { apiFetch } from "@/platform/network/api";
 
 import type { BookmarkMetadata } from "@zilobase/features/pages";

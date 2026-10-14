@@ -1,6 +1,6 @@
 export function register({ readSource, assert, test }) {
   test("radius tokens share one source of truth and one concentric step", async () => {
-    const css = await readSource("/src/shared/styles/design-tokens.css");
+    const css = await readSource("/src/styles/design-tokens.css");
 
     const radiusSources = [...css.matchAll(/^\s*--radius:\s*([^;]+);/gm)];
 
@@ -17,14 +17,14 @@ export function register({ readSource, assert, test }) {
   test("shared nested controls use adjacent concentric radius tokens", async () => {
     const [tabs, dropdown, contextMenu] = await Promise.all(
       ["app-tabs", "dropdown-menu", "context-menu"].map((component) =>
-        readSource(`/src/shared/ui/${component}.tsx`),
+        readSource(`/src/components/ui/${component}.tsx`),
       ),
     );
 
     assert.match(tabs, /rounded-lg p-0/);
     assert.match(tabs, /rounded-md[^"\n]*data-active:bg-action-neutral-hover/);
     assert.doesNotMatch(tabs, /TabsPrimitive\.Indicator/);
-    const styles = await readSource("/src/shared/ui/menu-styles.ts");
+    const styles = await readSource("/src/components/ui/menu-styles.ts");
     assert.match(styles, /menuSurfaceVariants[^]*?rounded-lg/);
     assert.match(styles, /menuItemVariants[^]*?rounded-md/);
     for (const menu of [dropdown, contextMenu]) {
@@ -36,10 +36,10 @@ export function register({ readSource, assert, test }) {
   test("sidebar rows, tabs, and buttons share the control radius", async () => {
     const [button, sidebar, sidebarAction, tabs] = await Promise.all(
       [
-        "shared/ui/button.tsx",
-        "shared/ui/sidebar.tsx",
-        "shared/ui/sidebar-nav-item-action.tsx",
-        "shared/ui/app-tabs.tsx",
+        "components/ui/button.tsx",
+        "components/ui/sidebar.tsx",
+        "components/ui/sidebar-nav-item-action.tsx",
+        "components/ui/app-tabs.tsx",
       ].map((path) => readSource(`/src/${path}`)),
     );
 
@@ -54,7 +54,7 @@ export function register({ readSource, assert, test }) {
   test("rectangular badges and pills share the control radius", async () => {
     const [badge, editorStyles, discussions, toolbar] = await Promise.all(
       [
-        "shared/ui/badge.tsx",
+        "components/ui/badge.tsx",
         "features/databases/styles/database-table.css",
         "features/comments/components/discussions-sidebar.tsx",
         "features/databases/views/components/database-view-toolbar.tsx",

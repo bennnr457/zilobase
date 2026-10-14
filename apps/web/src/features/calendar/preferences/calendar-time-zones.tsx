@@ -1,16 +1,16 @@
 import { useRef, useState } from "react";
 import type { CalendarPreferences } from "@zilobase/features/calendar";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/shared/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CalendarZonePicker } from "./calendar-zone-picker";
 import {
   canonicalZone,

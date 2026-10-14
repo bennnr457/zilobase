@@ -1,5 +1,5 @@
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { Plus } from "@/shared/components/icons";
+import { Plus } from "@/components/icons";
 import { useDatabaseCellIsActive, useSetActiveDatabaseCell } from "../state/database-cell-state";
 import { useDatabaseRealtimeState } from "../state/database-view-context";
 

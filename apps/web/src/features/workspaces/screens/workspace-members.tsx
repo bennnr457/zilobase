@@ -3,15 +3,21 @@ import { InviteMemberSection, InvitationList } from "../members/components/membe
 import { GuestList, GuestPolicySection } from "../guests/components/workspace-guests";
 import { RegistrationSettingsSection } from "../settings/registration-settings";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { UsersIcon } from "@/shared/components/icons";
+import { UsersIcon } from "@/components/icons";
 
 import { SettingsHeader } from "@/features/settings";
 
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/shared/ui/empty";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
-import { Separator } from "@/shared/ui/separator";
+import { Separator } from "@/components/ui/separator";
 
-import { Tabs, TabsBadge, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/app-tabs";
+import { Tabs, TabsBadge, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { useSession } from "@zilobase/features/auth/react";
 import {
   useActiveWorkspaceId,

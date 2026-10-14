@@ -7,7 +7,7 @@ export function register({ readSource, assert, test }) {
       ])
     ).join("\n");
   test("inline database and meeting titles use editor heading two typography", async () => {
-    const appStyles = await readSource("/src/shared/styles/global.css");
+    const appStyles = await readSource("/src/styles/global.css");
     const databaseToolbarSource = await readToolbarSource();
     const meetingSource = await readSource(
       "/src/features/editor/extensions/meeting/meeting-view.tsx",

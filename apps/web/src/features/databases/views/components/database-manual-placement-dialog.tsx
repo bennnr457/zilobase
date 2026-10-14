@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { useManualRecordPlacement } from "../state/manual-record-placement";
 
 export function DatabaseManualPlacementDialog() {

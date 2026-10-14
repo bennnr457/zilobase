@@ -1,21 +1,17 @@
 import type { Editor as TiptapEditor } from "@tiptap/react";
-import {
-  ChevronsLeftIcon,
-  MessageSquareIcon,
-  MessageSquarePlusIcon,
-} from "@/shared/components/icons";
+import { ChevronsLeftIcon, MessageSquareIcon, MessageSquarePlusIcon } from "@/components/icons";
 
 import type { PageCommentController } from "@/features/comments/index";
 import { usePageEditorComments } from "@/features/comments/index";
 import { PageCommentThread } from "@/features/comments/index";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/shared/ui/popover";
+} from "@/components/ui/popover";
 import { usePageCommentsSnapshot } from "@/features/comments/index";
 import { getCommentIdsInRange } from "../extensions/comment-selection";
 

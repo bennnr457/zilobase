@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/shared/ui/button";
-import { ButtonGroup, ButtonGroupText } from "@/shared/ui/button-group";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
-import { cn } from "@/shared/lib/utils";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/components/icons";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import type { ComponentProps, HTMLAttributes } from "react";
 import {
   Children,
