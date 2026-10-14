@@ -14,7 +14,6 @@ import {
   workspacesQueryOptions,
   type Workspace,
 } from "@zilobase/features/workspaces";
-
 import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
 import { useAppStore } from "@/app/state/app-store";

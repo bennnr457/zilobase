@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Effect } from "effect";
 import { ThemeProvider, useTheme } from "next-themes";
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PageEditorCommentsProvider } from "@/components/comments/index";
