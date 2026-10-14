@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   const load = () => loadModule("/src/features/library/library-model.ts");
-  test("Skills and Instructions tabs contain only matching saved items", async () => {
+  test("Skills and Instructions tabs remain UI placeholders", async () => {
     const { buildHomepageRows, applyHomepageView, buildHomepageViewData } = await load();
     const page = {
       name: "Saved item",
@@ -14,24 +14,21 @@ export function register({ assert, loadModule, test }) {
       {
         pages: [
           { ...page, id: "ordinary" },
-          { ...page, id: "skill", metadata: { zilobaseai: "skill" } },
-          { ...page, id: "instruction", metadata: { zilobaseai: "instruction" } },
-          { ...page, id: "deleted", deletedAt: "2026-09-08", metadata: { zilobaseai: "skill" } },
-          { ...page, id: "meeting", type: "meeting", metadata: { zilobaseai: "instruction" } },
+          { ...page, id: "skill", metadata: {} },
+          { ...page, id: "instruction", metadata: {} },
+          { ...page, id: "deleted", deletedAt: "2026-09-08", metadata: {} },
+          { ...page, id: "meeting", type: "meeting", metadata: {} },
         ],
-        databases: [{ ...page, id: "database", metadata: { zilobaseai: "skill" } }],
+        databases: [{ ...page, id: "database", metadata: {} }],
         placements: [],
       },
       [],
       "home",
     );
-    for (const [view, id] of [
-      ["skills", "skill"],
-      ["instructions", "instruction"],
-    ]) {
+    for (const view of ["skills", "instructions"]) {
       assert.deepEqual(
         applyHomepageView(rows, view).map((row) => row.id),
-        [`page:${id}`],
+        [],
       );
       const viewData = buildHomepageViewData({
         activeViewId: view,
@@ -44,9 +41,8 @@ export function register({ assert, loadModule, test }) {
       });
       assert.deepEqual(
         viewData.records.map((record) => record.id),
-        [`page:${id}`],
+        [],
       );
-      assert.equal(rows.find((row) => row.id === `page:${id}`).openPageId, id);
     }
     assert.deepEqual(applyHomepageView([], "skills"), []);
     assert.deepEqual(applyHomepageView([], "instructions"), []);

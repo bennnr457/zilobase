@@ -41,7 +41,7 @@ import { useSession } from "@zilobase/features/auth/react";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { usePageEditorRegistry } from "@/features/editor/runtime/page-editor-registry";
 import { createPageEditorHandle } from "@/features/editor/runtime/page-editor-handle";
-import { Editor, type PageEditPreviewControls } from "@/features/editor";
+import { Editor } from "@/features/editor";
 import type {
   PageLayoutPanelMode,
   StructuralBlockDeleteRequest,
@@ -82,7 +82,6 @@ type PageEditorPaneProps = {
   readOnly?: boolean;
   showCollaborationPresence?: boolean;
   showConnectionIndicator?: boolean;
-  reviewDiff?: { beforeMarkdown: string; afterMarkdown: string } | null;
   pageId: string;
 };
 
@@ -102,7 +101,6 @@ export function PageEditorPane({
   readOnly = false,
   showCollaborationPresence = true,
   showConnectionIndicator = false,
-  reviewDiff,
   pageId,
 }: PageEditorPaneProps) {
   const demoMode = isHostedDemoRuntime();
@@ -166,7 +164,6 @@ export function PageEditorPane({
   const [editorReadyRevision, setEditorReadyRevision] = useState(0);
   const editorContentRef = useRef<(() => unknown) | null>(null);
   const editorInstanceRef = useRef<import("@tiptap/core").Editor | null>(null);
-  const pageEditPreviewRef = useRef<PageEditPreviewControls | null>(null);
   const onlineActionsReadyRef = useRef(demoMode);
   const paneId = useId();
   const paneRef = useRef<HTMLElement | null>(null);
@@ -650,7 +647,6 @@ export function PageEditorPane({
         isSynchronized: () =>
           !collaboration.document || (collaboration.synced && collaboration.unsyncedChanges === 0),
         onContentChange: updateContent,
-        pageEditPreviewRef,
       }),
     );
   }, [
@@ -937,7 +933,6 @@ export function PageEditorPane({
           layoutConfig: hideChrome ? undefined : appliedLayout,
           layoutPanelMode,
           title: name,
-          reviewDiff,
         }}
         actions={{
           onContentChange: updateContent,
@@ -954,7 +949,7 @@ export function PageEditorPane({
           onStructuralInsertionPendingChange: handleStructuralInsertionPendingChange,
           onTitleChange: setName,
         }}
-        view={{ editorContentRef, onEditorReady: handleEditorReady, pageEditPreviewRef, paneId }}
+        view={{ editorContentRef, onEditorReady: handleEditorReady, paneId }}
       />
     </section>
   );

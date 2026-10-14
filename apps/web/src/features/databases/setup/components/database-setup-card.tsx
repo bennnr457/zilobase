@@ -26,7 +26,7 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
   type PromptInputMessage,
-} from "@/features/ai/conversations/components/elements/index";
+} from "@/features/ai/components/elements/index";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { getIconSolidClassName } from "@/shared/lib/color-tokens";

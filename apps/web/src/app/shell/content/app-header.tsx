@@ -69,7 +69,6 @@ function SideHeader({
         label={props.auxiliarySidePaneCloseLabel ?? "Close AI settings"}
         onClick={props.onCloseAuxiliarySidePane}
       />
-      <div id="agent-settings-header-actions" className="ml-auto" />
     </div>
   );
 }

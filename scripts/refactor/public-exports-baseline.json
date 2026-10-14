@@ -8204,22 +8204,6 @@
       "value": false,
       "type": true
     },
-    "DbProvider": {
-      "value": true,
-      "type": false
-    },
-    "DbProviderProps": {
-      "value": false,
-      "type": true
-    },
-    "getDatabaseRowMoveAnchors": {
-      "value": true,
-      "type": false
-    },
-    "resolveDataSourceCommandScope": {
-      "value": true,
-      "type": false
-    },
     "useAddDatabaseProperty": {
       "value": true,
       "type": false
@@ -8405,22 +8389,6 @@
     "DatabaseWindowFetchScope": {
       "value": false,
       "type": true
-    },
-    "DbProvider": {
-      "value": true,
-      "type": false
-    },
-    "DbProviderProps": {
-      "value": false,
-      "type": true
-    },
-    "getDatabaseRowMoveAnchors": {
-      "value": true,
-      "type": false
-    },
-    "resolveDataSourceCommandScope": {
-      "value": true,
-      "type": false
     },
     "useAddDatabaseProperty": {
       "value": true,
@@ -9939,26 +9907,6 @@
     "toWorkspacePageLayout": {
       "value": true,
       "type": false
-    },
-    "ZilobaseAiMode": {
-      "value": false,
-      "type": true
-    },
-    "zilobaseAiModeLabels": {
-      "value": true,
-      "type": false
-    },
-    "zilobaseAiPagesQueryKey": {
-      "value": true,
-      "type": false
-    },
-    "zilobaseAiPagesQueryOptions": {
-      "value": true,
-      "type": false
-    },
-    "ZilobaseAiPageSummary": {
-      "value": false,
-      "type": true
     }
   },
   "@zilobase/features:./pages:types": {
@@ -10645,26 +10593,6 @@
     "toWorkspacePageLayout": {
       "value": true,
       "type": false
-    },
-    "ZilobaseAiMode": {
-      "value": false,
-      "type": true
-    },
-    "zilobaseAiModeLabels": {
-      "value": true,
-      "type": false
-    },
-    "zilobaseAiPagesQueryKey": {
-      "value": true,
-      "type": false
-    },
-    "zilobaseAiPagesQueryOptions": {
-      "value": true,
-      "type": false
-    },
-    "ZilobaseAiPageSummary": {
-      "value": false,
-      "type": true
     }
   },
   "@zilobase/features:./pages/react:default": {

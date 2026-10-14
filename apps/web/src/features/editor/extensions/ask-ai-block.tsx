@@ -11,7 +11,7 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-} from "@/features/ai/conversations/components/elements/index";
+} from "@/features/ai/components/elements/index";
 import { Button } from "@/shared/ui/button";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import { Textarea } from "@/shared/ui/textarea";

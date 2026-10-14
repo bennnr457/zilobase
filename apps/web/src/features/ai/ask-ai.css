@@ -1,0 +1,4 @@
+/* Page proportions adapt to the available pane, including split views. */
+.ask-ai-content {
+  padding-inline: clamp(20px, calc(20% - 84px), 96px);
+}

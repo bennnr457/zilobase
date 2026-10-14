@@ -246,17 +246,12 @@ function SidebarNavRow({
 }
 
 function ItemIndicators({ item }: { item: SidebarNavItem }) {
-  const showAiMode = item.zilobaseai && !item.isDatabase;
-
-  if (!showAiMode && !item.isLinked) {
+  if (!item.isLinked) {
     return null;
   }
 
   return (
     <span className="ml-auto flex shrink-0 items-center gap-1.5 transition-opacity group-hover/nav-row:opacity-0 group-has-[>[data-nav-menu-action=menu]:focus-visible]/nav-row:opacity-0 group-has-[>[data-nav-menu-action=menu][aria-expanded=true]]/nav-row:opacity-0 group-has-[>[data-nav-menu-action=menu][data-state=open]]/nav-row:opacity-0">
-      {showAiMode ? (
-        <span className="text-xs text-content-secondary">{item.zilobaseai}</span>
-      ) : null}
       {item.isLinked ? (
         <ArrowUpRightIcon
           aria-label="Linked from another parent"

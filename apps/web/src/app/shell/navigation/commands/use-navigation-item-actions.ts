@@ -8,8 +8,6 @@ import { useItemActionController } from "@zilobase/features/pages/react";
 import { getNavigationPendingState } from "../model/navigation-item-state";
 import { useLayoutEditor } from "@/features/pages/layout";
 
-import type { ZilobaseAiMode } from "@zilobase/features/pages";
-
 export function useNavigationItemActions({
   databaseId,
   pageId,
@@ -37,7 +35,6 @@ export function useNavigationItemActions({
     locked,
     canToggleLock,
     effectiveFullWidth,
-    zilobaseAiMode,
     createPage,
     deletePage,
     deleteDatabase,
@@ -48,29 +45,24 @@ export function useNavigationItemActions({
     updateUserSettings,
   } = actions;
 
-  const {
-    fullWidthUpdatePending,
-    isDeleting,
-    lockUpdatePending,
-    favoriteDisabled,
-    aiModeDisabled,
-  } = getNavigationPendingState(
-    {
-      isDatabase: isDatabasePage,
-      hasDatabase: Boolean(databasePayload),
-      hasPage: Boolean(page),
-      hasPageId: Boolean(pageId),
-    },
-    {
-      userSettings: updateUserSettings.isPending,
-      pageUpdate: updatePage.isPending,
-      databaseUpdate: updateDatabase.isPending,
-      pageDelete: deletePage.isPending,
-      databaseDelete: deleteDatabase.isPending,
-      pageFavorite: setFavorite.isPending,
-      databaseFavorite: setDatabaseFavorite.isPending,
-    },
-  );
+  const { fullWidthUpdatePending, isDeleting, lockUpdatePending, favoriteDisabled } =
+    getNavigationPendingState(
+      {
+        isDatabase: isDatabasePage,
+        hasDatabase: Boolean(databasePayload),
+        hasPage: Boolean(page),
+        hasPageId: Boolean(pageId),
+      },
+      {
+        userSettings: updateUserSettings.isPending,
+        pageUpdate: updatePage.isPending,
+        databaseUpdate: updateDatabase.isPending,
+        pageDelete: deletePage.isPending,
+        databaseDelete: deleteDatabase.isPending,
+        pageFavorite: setFavorite.isPending,
+        databaseFavorite: setDatabaseFavorite.isPending,
+      },
+    );
   const toggleLock = () =>
     actions.toggleLock({
       onError: (error) =>
@@ -154,28 +146,6 @@ export function useNavigationItemActions({
         ),
     });
 
-  const setZilobaseAiMode = (mode: ZilobaseAiMode) => {
-    if (!page || updatePage.isPending) {
-      return;
-    }
-
-    updatePage.mutate(
-      {
-        id: page.id,
-        metadata: {
-          zilobaseai: zilobaseAiMode === mode ? null : mode,
-        },
-      },
-      {
-        onError: (error) => {
-          toast.error(
-            error instanceof Error ? error.message : "Could not update Zilobase AI setting.",
-          );
-        },
-      },
-    );
-  };
-
   return {
     item: {
       pageId: actionPageId,
@@ -200,11 +170,6 @@ export function useNavigationItemActions({
       pending: fullWidthUpdatePending,
       fullWidth: effectiveFullWidth,
       toggle: togglePageFullWidth,
-    },
-    aiMode: {
-      disabled: aiModeDisabled,
-      value: zilobaseAiMode,
-      set: setZilobaseAiMode,
     },
     moreMenu: {
       open: isOpen,

@@ -11,7 +11,6 @@ import {
   resolvePageReference,
 } from "../pages/cache";
 import { normalizeSearchReferences, resolveSearchReferences } from "../search/references";
-import { normalizeAiPageReferences, resolveAiPageReferences } from "../pages/summary-references";
 import {
   normalizeDatabaseExportReference,
   resolveDatabaseExportReference,
@@ -56,7 +55,7 @@ const page = {
   type: "pageblock",
   url: "#",
   hasContent: false,
-  metadata: { emoji: "📚", zilobaseai: "skill" as const },
+  metadata: { emoji: "📚" },
   createdAt: stamp(1),
   updatedAt: stamp(1),
   deletedAt: null,
@@ -125,7 +124,7 @@ const nav = {
   ],
 };
 
-test("navigation, search, AI summaries and complete exports join current entities without retaining their labels", () => {
+test("navigation, search and complete exports join current entities without retaining their labels", () => {
   const client = new TestQueryClient();
   const cache = sharedClient(client);
   try {
@@ -155,16 +154,6 @@ test("navigation, search, AI summaries and complete exports join current entitie
         path: "/page",
         excerpt: "Ranked snippet",
         entity: page,
-      },
-    ]);
-    const ai = normalizeAiPageReferences(client, cache.capture(), "workspace", [
-      {
-        id: page.id,
-        name: page.name,
-        workspaceId: page.workspaceId,
-        updatedAt: page.updatedAt,
-        url: page.url,
-        metadata: page.metadata,
       },
     ]);
     const context = normalizeDatabaseExportReference(client, cache.capture(), "host", exported);
@@ -202,7 +191,6 @@ test("navigation, search, AI summaries and complete exports join current entitie
     });
     assert.equal(resolveNavigationReference(client, navigation).pages[0]!.name, "Current");
     assert.equal(resolveSearchReferences(client, search)[0]!.title, "Current");
-    assert.equal(resolveAiPageReferences(client, ai)[0]!.name, "Current");
     const snapshot = resolveDatabaseExportReference(client, context)!;
     assert.equal(snapshot.rows[0]!.page.name, "Current");
     assert.equal(snapshot.values[0]!.value, "Current");

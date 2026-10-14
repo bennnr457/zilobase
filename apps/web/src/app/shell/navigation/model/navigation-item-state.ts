@@ -22,6 +22,5 @@ export function getNavigationPendingState(
     favoriteDisabled: item.isDatabase
       ? !item.hasDatabase || pending.databaseFavorite
       : !item.hasPageId || pending.pageFavorite,
-    aiModeDisabled: !item.hasPage || pending.pageUpdate,
   };
 }

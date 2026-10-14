@@ -7,9 +7,9 @@ import { ChevronsRightIcon, SidebarSimpleIcon } from "@/shared/components/icons"
 import { AppSidebar } from "@/app/shell/navigation";
 import { AppSearchProvider } from "@/features/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/features/desktop/components/index";
-import { ChatSidebarTrigger } from "@/features/ai/conversations/components/chat-sidebar-trigger";
+import { ChatSidebarTrigger } from "@/features/ai/components/chat-sidebar-trigger";
 import { isFeatureEnabled } from "@/shared/config/feature-flags";
-import type { ChatPresentationMode } from "@/features/ai/conversations/components/chat-sidebar";
+import type { ChatPresentationMode } from "@/features/ai/components/chat-sidebar";
 import {
   usePageSidePaneState,
   PageSidePaneContext,
@@ -61,7 +61,7 @@ const SettingsDialogSurface = lazy(() =>
   })),
 );
 const ChatSidebarPanel = lazy(() =>
-  import("@/features/ai/conversations/components/chat-sidebar").then((module) => ({
+  import("@/features/ai/components/chat-sidebar").then((module) => ({
     default: module.ChatSidebarPanel,
   })),
 );

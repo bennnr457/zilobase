@@ -1,6 +1,6 @@
 "use client";
 
-import { AgentChatWorkspace } from "./agent-chat-workspace";
+import { AskAiWorkspace } from "./ask-ai-workspace";
 export type ChatPresentationMode = "floating" | "sidebar";
 
 export function ChatSidebarPanel({
@@ -19,7 +19,7 @@ export function ChatSidebarPanel({
   presentationMode?: ChatPresentationMode;
 }) {
   return (
-    <AgentChatWorkspace
+    <AskAiWorkspace
       databaseId={databaseId}
       isSidebar
       onClose={onClose}

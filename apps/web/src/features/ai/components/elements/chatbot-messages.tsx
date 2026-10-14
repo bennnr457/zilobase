@@ -1,8 +1,9 @@
 "use client";
 
-import type { ChatMessage } from "../../conversation-interface";
-import { Conversation, ConversationContent } from "./conversation";
+import { MessageList, MessageListContent } from "./message-list";
 import { Message, MessageContent, MessageResponse } from "./message";
+
+export type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
 
 export function ChatbotMessages({
   isSidebar,
@@ -12,10 +13,10 @@ export function ChatbotMessages({
   messages: ChatMessage[];
 }) {
   return (
-    <Conversation
+    <MessageList
       className={isSidebar ? undefined : "h-auto! overflow-visible! [scrollbar-gutter:auto]!"}
     >
-      <ConversationContent>
+      <MessageListContent>
         {messages.map((message) => (
           <Message from={message.role} key={message.id}>
             <MessageContent>
@@ -23,7 +24,7 @@ export function ChatbotMessages({
             </MessageContent>
           </Message>
         ))}
-      </ConversationContent>
-    </Conversation>
+      </MessageListContent>
+    </MessageList>
   );
 }

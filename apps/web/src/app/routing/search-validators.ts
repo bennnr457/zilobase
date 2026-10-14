@@ -61,13 +61,6 @@ export function validateLibrarySearch(search: Record<string, unknown>): {
     : {};
 }
 
-export function validateAiSearch(search: Record<string, unknown>) {
-  return {
-    thread:
-      typeof search.thread === "string" && search.thread.trim() ? search.thread.trim() : undefined,
-  };
-}
-
 export function validateMeetingSearch(search: Record<string, unknown>): {
   meeting?: string;
 } {

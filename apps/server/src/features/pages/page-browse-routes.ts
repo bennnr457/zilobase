@@ -31,11 +31,6 @@ import {
 } from "../../infrastructure/database/schema";
 import type { AppBindings } from "../../shared/types";
 import { buildNavigationPlacements } from "./placements/page-item-placements";
-import {
-  parseZilobaseAiModes,
-  readZilobaseAiMode,
-  toZilobaseAiPageSummary,
-} from "./page-ai-metadata";
 import { enforceActiveWorkspace, getPage, getPageIncludingDeleted } from "./page-route-support";
 
 export const pageBrowseRoutes = new Hono<AppBindings>();
@@ -65,8 +60,6 @@ pageBrowseRoutes.get("/", async (c) => {
       return c.json({ error: "Forbidden" }, 403);
     }
 
-    const zilobaseAiModes = parseZilobaseAiModes(c.req.query("zilobaseai"));
-    const isSummary = c.req.query("fields") === "summary";
     const deletedFilter = c.req.query("deleted") === "only" ? "only" : "active";
     const [accessibleIds, records] = await Promise.all([
       getAccessiblePageIds(workspaceId, user.id, {
@@ -98,22 +91,6 @@ pageBrowseRoutes.get("/", async (c) => {
     ]);
     let accessibleRecords =
       deletedFilter === "only" ? records : records.filter((record) => accessibleIds.has(record.id));
-
-    if (zilobaseAiModes) {
-      accessibleRecords = accessibleRecords
-        .filter((record) => {
-          const mode = readZilobaseAiMode(record.metadata);
-
-          return Boolean(mode && zilobaseAiModes.includes(mode));
-        })
-        .sort((first, second) => second.updatedAt.getTime() - first.updatedAt.getTime());
-    }
-
-    if (isSummary) {
-      return c.json({
-        pages: accessibleRecords.map((record) => toZilobaseAiPageSummary(record)),
-      });
-    }
 
     const [sharedPageRows, favoriteRows, visitRows, databaseRecords, placementRecords] =
       await Promise.all([

@@ -10,19 +10,17 @@ import {
 import { Button } from "@/shared/ui/button";
 import { PageSidePaneLayout } from "@/features/pages/pane/page-side-pane";
 
-import { useAiChatThreadState } from "../use-ai-chat-thread-state";
 import type { ChatPresentationMode } from "./chat-sidebar";
 
 const Chatbot = lazy(() => import("./elements/chatbot"));
 
-export function AgentChatWorkspace({
+export function AskAiWorkspace({
   externalSidePane = null,
   externalSidePaneOpen = false,
   externalSidePaneVisible = false,
   isSidebar = false,
   onClose,
   onPresentationModeChange,
-  open = true,
   presentationMode = "sidebar",
 }: {
   databaseId?: string | null;
@@ -36,10 +34,7 @@ export function AgentChatWorkspace({
   pageId?: string | null;
   presentationMode?: ChatPresentationMode;
 }) {
-  const { isBootstrapping } = useAiChatThreadState({ enabled: open });
-  const chat = isBootstrapping ? (
-    <LoadingChat />
-  ) : (
+  const chat = (
     <Suspense fallback={<LoadingChat />}>
       <Chatbot isSidebar={isSidebar} />
     </Suspense>

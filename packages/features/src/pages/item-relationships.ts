@@ -23,7 +23,6 @@ export type PageMetadata = {
   iconPosition?: PageIconPosition | null;
   locked?: boolean | null;
   meetingLocked?: boolean | null;
-  zilobaseai?: "instruction" | "skill" | null;
 };
 
 export function isPageLocked(page: { metadata?: PageMetadata | null } | null | undefined) {

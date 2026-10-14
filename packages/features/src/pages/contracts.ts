@@ -1,7 +1,5 @@
 import type { PageMetadata } from "./item-relationships";
 
-export type ZilobaseAiMode = "instruction" | "skill";
-
 export type PageDatabaseView = {
   id: string;
   databaseId: string;
@@ -88,18 +86,6 @@ export type PageCreator = {
   id: string;
   image?: string | null;
   name: string;
-};
-
-export type ZilobaseAiPageSummary = {
-  id: string;
-  name: string;
-  workspaceId: string;
-  updatedAt: string;
-  url: string;
-  metadata: {
-    emoji?: string | null;
-    zilobaseai: ZilobaseAiMode | null;
-  };
 };
 
 export type PageProperty = {

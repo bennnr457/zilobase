@@ -33,38 +33,6 @@ export type PasteChoiceState = {
   url: string;
 };
 
-export type SelectionAiDiffPreview = {
-  baselineMarkdown?: string;
-  from: number;
-  generatedMarkdown: string;
-  isStreaming: boolean;
-  source?: "selection" | "page-edit";
-  to: number;
-  toolCallId?: string;
-  useBeforeBaseline?: boolean;
-};
-
-export type PageEditPreviewRequest = {
-  afterMarkdown: string;
-  beforeMarkdown?: string;
-  onAccepted?: () => void;
-  onDeclined?: () => void;
-  toolCallId: string;
-  useBeforeBaseline?: boolean;
-};
-
-export type PageEditPreviewClearOptions = {
-  silent?: boolean;
-};
-
-export type PageEditPreviewControls = {
-  accept: () => boolean;
-  clear: (options?: PageEditPreviewClearOptions) => void;
-  isActive: () => boolean;
-  show: (request: PageEditPreviewRequest) => boolean;
-  toolCallId: () => string | null;
-};
-
 export type PageLayoutPanelMode = "auto" | "overlay";
 
 export type StructuralBlockDeleteRequest = {
@@ -147,7 +115,6 @@ export type EditorPresentation = {
   layoutPreview?: boolean;
   onLayoutChange?: (config: PageLayoutConfig) => void;
   title?: string;
-  reviewDiff?: { beforeMarkdown: string; afterMarkdown: string } | null;
 };
 export type EditorViewHandle = {
   viewId?: string;
@@ -155,7 +122,6 @@ export type EditorViewHandle = {
   editorContentRef?: MutableRefObject<(() => unknown) | null>;
   editorTabIndex?: number;
   onEditorReady?: (editor: Editor | null) => void;
-  pageEditPreviewRef?: MutableRefObject<PageEditPreviewControls | null>;
 };
 export type EditorProps = {
   session?: DocumentSession;

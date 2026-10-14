@@ -2,13 +2,11 @@ import { useNavigationItemActions } from "../commands/use-navigation-item-action
 import { ItemShareDropdown } from "./item-share-dropdown";
 
 import {
-  CheckIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   LockIcon,
   MoreHorizontalIcon,
   MessageSquareTextIcon,
-  SparklesIcon,
   StarIcon,
 } from "@/shared/components/icons";
 
@@ -28,9 +26,6 @@ import {
   DropDrawer,
   DropDrawerContent,
   DropDrawerItem,
-  DropDrawerSub,
-  DropDrawerSubContent,
-  DropDrawerSubTrigger,
   DropDrawerTrigger,
 } from "@/shared/ui/dropdrawer";
 
@@ -38,10 +33,6 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/lib/utils";
 import { usePageCommentsSnapshot } from "@/features/comments/index";
 import { Switch } from "@/shared/ui/switch";
-
-import { zilobaseAiModeLabels, type ZilobaseAiMode } from "@zilobase/features/pages";
-
-const zilobaseAiModes: ZilobaseAiMode[] = ["instruction", "skill"];
 
 const moreActions = [
   "Customize layout",
@@ -68,7 +59,7 @@ export function NavActions({
   pageId?: string | null;
   meetingId?: string | null;
 }) {
-  const { item, favorite, lock, layout, aiMode, moreMenu, trash } = useNavigationItemActions({
+  const { item, favorite, lock, layout, moreMenu, trash } = useNavigationItemActions({
     databaseId,
     pageId,
     meetingId,
@@ -183,13 +174,6 @@ export function NavActions({
                   </DropDrawerItem>
                 </>
               ) : null}
-              {!item.isDatabase ? (
-                <ZilobaseAiSubmenu
-                  disabled={aiMode.disabled}
-                  mode={aiMode.value}
-                  onSelect={aiMode.set}
-                />
-              ) : null}
               {moreActions.map((label) => (
                 <DropDrawerItem
                   className={
@@ -231,40 +215,5 @@ export function NavActions({
         </>
       ) : null}
     </div>
-  );
-}
-
-function ZilobaseAiSubmenu({
-  disabled,
-  mode,
-  onSelect,
-}: {
-  disabled: boolean;
-  mode: ZilobaseAiMode | null;
-  onSelect: (mode: ZilobaseAiMode) => void;
-}) {
-  return (
-    <DropDrawerSub>
-      <DropDrawerSubTrigger disabled={disabled}>
-        <SparklesIcon />
-        <span className="flex-1">Zilobase AI</span>
-        {mode ? <span className="text-content-secondary">{mode}</span> : null}
-      </DropDrawerSubTrigger>
-      <DropDrawerSubContent className="w-64">
-        {zilobaseAiModes.map((value) => (
-          <DropDrawerItem
-            key={value}
-            disabled={disabled}
-            onSelect={(event) => {
-              event.preventDefault();
-              onSelect(value);
-            }}
-          >
-            <span>{zilobaseAiModeLabels[value]}</span>
-            {mode === value ? <CheckIcon className="ml-auto" /> : null}
-          </DropDrawerItem>
-        ))}
-      </DropDrawerSubContent>
-    </DropDrawerSub>
   );
 }

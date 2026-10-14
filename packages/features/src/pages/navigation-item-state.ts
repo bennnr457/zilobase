@@ -14,7 +14,6 @@ type NavigationItem = {
 export function getNavigationItemState(item: NavigationItem) {
   return {
     displayName: getDisplayName(item),
-    zilobaseAiMode: item.page?.metadata?.zilobaseai ?? null,
     isFavorite: getFavorite(item),
     lockLabel: getLockLabel(item),
     locked: getLocked(item),

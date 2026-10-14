@@ -3,7 +3,7 @@ export function register({ readSource, assert, test }) {
     const inputSource = await readSource("/src/shared/ui/input.tsx");
     const textareaSource = await readSource("/src/shared/ui/textarea.tsx");
     const promptInputSource = await readSource(
-      "/src/features/ai/conversations/components/elements/prompt-input.tsx",
+      "/src/features/ai/components/elements/prompt-input.tsx",
     );
     const selectSource = await readSource("/src/shared/ui/select.tsx");
 

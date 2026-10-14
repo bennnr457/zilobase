@@ -15,7 +15,6 @@ export function register({ assert, loadModule, test }) {
     };
     const denied = createPageEditorHandle({ editable: false, getEditor: () => editor });
     assert.equal(denied.setContentJson({ changed: true }), false);
-    assert.equal(denied.setContentFromMarkdown("changed"), false);
     const handle = createPageEditorHandle({
       editable: true,
       getEditor: () => editor,
@@ -29,36 +28,14 @@ export function register({ assert, loadModule, test }) {
     assert.equal(handle.isSynchronized(), false);
   });
 
-  test("editor handle follows editor readiness and current preview controls", async () => {
+  test("editor handle follows editor readiness", async () => {
     const { createPageEditorHandle } = await load();
-    const ref = { current: null };
     const handle = createPageEditorHandle({
       editable: true,
       getEditor: () => null,
-      pageEditPreviewRef: ref,
     });
     assert.equal(handle.setContentJson({}), false);
-    assert.equal(handle.setContentFromMarkdown("content"), false);
     assert.equal(handle.getContentJson(), null);
-    assert.equal(handle.acceptEditDiffPreview(), false);
     assert.equal(handle.isSynchronized(), true);
-    const calls = [];
-    ref.current = {
-      accept: () => true,
-      clear: (options) => calls.push(options),
-      isActive: () => true,
-      show: (request) => {
-        calls.push(request);
-        return true;
-      },
-      toolCallId: () => "tool-1",
-    };
-    assert.equal(handle.acceptEditDiffPreview(), true);
-    assert.equal(handle.isEditDiffPreviewActive(), true);
-    assert.equal(handle.getActiveEditDiffToolCallId(), "tool-1");
-    const request = { afterMarkdown: "next", toolCallId: "tool-1" };
-    assert.equal(handle.showEditDiffPreview(request), true);
-    handle.clearEditDiffPreview({ silent: true });
-    assert.deepEqual(calls, [request, { silent: true }]);
   });
 }

@@ -18,7 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/shared/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { cn } from "@/shared/lib/utils";
-import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "ai";
 import {
   CornerDownLeftIcon,
   FileIcon,
@@ -42,7 +41,7 @@ import type {
   ReactNode,
   RefObject,
 } from "react";
-import { captureScreenshot, convertBlobUrlToDataUrl } from "../../../files/prompt-attachments";
+import { captureScreenshot, convertBlobUrlToDataUrl } from "../../files/prompt-attachments";
 import {
   Children,
   createContext,
@@ -57,6 +56,16 @@ import {
 // ============================================================================
 // Provider Context & Types
 // ============================================================================
+
+type ChatStatus = "submitted" | "streaming" | "ready" | "error";
+type FileUIPart = { type: "file"; mediaType: string; filename?: string; url: string };
+type SourceDocumentUIPart = {
+  type: "source-document";
+  sourceId: string;
+  mediaType: string;
+  title: string;
+  filename?: string;
+};
 
 interface AttachmentsContext {
   files: (FileUIPart & { id: string })[];

@@ -1,12 +1,9 @@
 import { ChevronRightIcon } from "@/shared/components/icons";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible";
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from "@/shared/ui/sidebar";
-import { AiChatHistoryList } from "@/features/ai/conversations/components/elements/index";
-import { useAiChatThreadState } from "@/features/ai/index";
 import { useSidebarSectionOpen } from "../model/local-state";
 
-export function AiChatsSection({ limit, storageKey }: { limit: number; storageKey: string }) {
-  const { activeThreadId, setActiveThreadId } = useAiChatThreadState();
+export function AiChatsSection({ storageKey }: { storageKey: string }) {
   const [open, setOpen] = useSidebarSectionOpen(storageKey);
 
   return (
@@ -25,12 +22,7 @@ export function AiChatsSection({ limit, storageKey }: { limit: number; storageKe
         </CollapsibleTrigger>
         <CollapsibleContent className="pb-4 pt-0.5">
           <SidebarGroupContent>
-            <AiChatHistoryList
-              activeThreadId={activeThreadId}
-              className="px-0 py-0"
-              limit={limit}
-              onSelectThread={setActiveThreadId}
-            />
+            <p className="text-xs text-content-secondary">No chats yet</p>
           </SidebarGroupContent>
         </CollapsibleContent>
       </SidebarGroup>

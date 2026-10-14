@@ -4,7 +4,6 @@ import { Button } from "@/shared/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/shared/ui/button-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/ui/tooltip";
 import { cn } from "@/shared/lib/utils";
-import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/components/icons";
 import type { ComponentProps, HTMLAttributes } from "react";
 import {
@@ -22,7 +21,7 @@ import {
 } from "react";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
-  from: UIMessage["role"];
+  from: "user" | "assistant" | "system";
 };
 
 export const Message = ({ className, from, ...props }: MessageProps) => (

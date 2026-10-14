@@ -9,7 +9,7 @@ import {
   updatePageContexts,
   type PageDetailReference,
 } from "../pages/cache";
-import { zilobaseAiPagesQueryKey, pagesNavRootQueryKey, pageQueryKey } from "../pages/queries";
+import { pagesNavRootQueryKey, pageQueryKey } from "../pages/queries";
 import type { Page } from "../pages/contracts";
 
 export type DeletedItemIds = {
@@ -62,12 +62,10 @@ export async function favoritePages({
 }
 
 export async function invalidateDeletedItems({
-  includeZilobaseAi = false,
   workspaceId,
   queryClient,
   result,
 }: {
-  includeZilobaseAi?: boolean;
   workspaceId: string | null | undefined;
   queryClient: QueryClient;
   result: DeletedItemIds;
@@ -80,11 +78,6 @@ export async function invalidateDeletedItems({
     queryClient.invalidateQueries({
       queryKey: pagesNavRootQueryKey(workspaceId),
     }),
-    includeZilobaseAi
-      ? queryClient.invalidateQueries({
-          queryKey: zilobaseAiPagesQueryKey(workspaceId),
-        })
-      : Promise.resolve(),
   ]);
 
   for (const databaseId of result.deletedDatabaseIds) {
@@ -111,12 +104,10 @@ export async function invalidateDeletedItems({
 }
 
 export async function invalidateRestoredItems({
-  includeZilobaseAi = false,
   workspaceId,
   queryClient,
   result,
 }: {
-  includeZilobaseAi?: boolean;
   workspaceId: string;
   queryClient: QueryClient;
   result: RestoredItemIds;
@@ -125,11 +116,6 @@ export async function invalidateRestoredItems({
     queryClient.invalidateQueries({
       queryKey: pagesNavRootQueryKey(workspaceId),
     }),
-    includeZilobaseAi
-      ? queryClient.invalidateQueries({
-          queryKey: zilobaseAiPagesQueryKey(workspaceId),
-        })
-      : Promise.resolve(),
     ...result.restoredDatabaseIds.map((databaseId) =>
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "db" && query.queryKey.includes(databaseId),

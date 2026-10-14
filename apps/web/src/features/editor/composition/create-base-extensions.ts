@@ -34,7 +34,6 @@ import { MeetingTranscriptPreview } from "../extensions/meeting-transcript-previ
 import { PageBlock, type CreatedPage } from "../extensions/page-block";
 import { BlockSelection } from "../extensions/block-selection";
 import { ShadcnTaskItem } from "../extensions/shadcn-task-item";
-import { SelectionAiPreview } from "../extensions/selection-ai-preview";
 import { SlashCommand } from "../extensions/slash-command";
 import { VideoBlock } from "../extensions/video-block";
 import type { OpenPageOptions } from "@/features/pages";
@@ -188,7 +187,6 @@ export const createBaseExtensions = ({
   }),
   CharacterCount,
   BlockSelection,
-  SelectionAiPreview,
   MeetingTranscriptPreview,
   AskAiBlock.configure({ workspaceId }),
   ...(structuralEditingEnabled

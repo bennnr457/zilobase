@@ -1,22 +1,13 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { EditorContent } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
-import { SelectionAiDiffDock } from "../selection/selection-ai-diff-dock";
 import { MobileActionBar } from "../toolbar/mobile-action-bar";
 import { PageMetadata, type PageMetadataHandle } from "@/features/databases";
 import { PageLayoutModuleCanvas } from "../layout/page-layout-module-canvas";
 import { PageLayoutTabs } from "../layout/page-layout-tabs";
 import { starterContent } from "../core/constants";
-import { getFullDocumentPreviewRange, parseMarkdownContent } from "../commands/editor-ai-utils";
 import { EditorChrome } from "./editor-chrome";
-import { setSelectionAiPreviewMeta } from "../extensions/selection-ai-preview";
-import type {
-  EditorProps,
-  PasteChoiceState,
-  SelectionAiDiffPreview,
-  PageEditPreviewControls,
-  PageEditPreviewRequest,
-} from "../core/types";
+import type { EditorProps, PasteChoiceState } from "../core/types";
 import { useEditorDatabaseActions } from "../commands/use-editor-database-actions";
 import { useEditorMeetingActions } from "../commands/use-editor-meeting-actions";
 import { resolveBlockDragTargetFromPoint } from "../drag-drop/block-drag-geometry";
@@ -71,10 +62,9 @@ export function Editor({
     layoutPreview = false,
     onLayoutChange,
     title,
-    reviewDiff,
     enableComments = true,
   } = presentation;
-  const { editorContentRef, editorTabIndex, onEditorReady, pageEditPreviewRef } = view;
+  const { editorContentRef, editorTabIndex, onEditorReady } = view;
   const {
     onContentChange,
     onCoverChange,
@@ -114,7 +104,6 @@ export function Editor({
   const [dragHandleMenuOpen, setDragHandleMenuOpen] = useState(false);
   const [blockCommentOpen, setBlockCommentOpen] = useState(false);
   const [pasteChoice, setPasteChoice] = useState<PasteChoiceState | null>(null);
-  const [selectionAiPreview, setSelectionAiPreview] = useState<SelectionAiDiffPreview | null>(null);
   const [pendingDatabaseBlockDrop, setPendingDatabaseBlockDrop] =
     useState<PendingDatabaseBlockDrop | null>(null);
   const [activeLayoutTab, setActiveLayoutTab] = useState("content");
@@ -127,7 +116,6 @@ export function Editor({
     },
     [],
   );
-  const pendingPageEditRef = useRef<PageEditPreviewRequest | null>(null);
   const pageContentLayout = fullWidth
     ? { className: "", mode: "full" as const }
     : { className: "mx-auto max-w-[900px]", mode: "narrow" as const };
@@ -310,198 +298,6 @@ export function Editor({
 
   const handleClosePasteChoice = useCallback(() => setPasteChoice(null), []);
 
-  const clearPageEditPreview = useCallback((options?: { silent?: boolean }) => {
-    if (!options?.silent && pendingPageEditRef.current) {
-      pendingPageEditRef.current.onDeclined?.();
-    }
-
-    pendingPageEditRef.current = null;
-    setSelectionAiPreview((current) => (current?.source === "page-edit" ? null : current));
-  }, []);
-
-  const clearSelectionAiPreview = useCallback(() => {
-    if (pendingPageEditRef.current) {
-      clearPageEditPreview();
-      return;
-    }
-
-    setSelectionAiPreview(null);
-  }, [clearPageEditPreview]);
-
-  const handleSelectionAiPreviewChange = useCallback((preview: SelectionAiDiffPreview | null) => {
-    if (preview && preview.source !== "page-edit") {
-      pendingPageEditRef.current = null;
-    }
-
-    setSelectionAiPreview(preview);
-  }, []);
-
-  const showPageEditPreview = useCallback(
-    (request: PageEditPreviewRequest) => {
-      if (!editor || editor.isDestroyed || !editable) {
-        return false;
-      }
-
-      const parsedPreview = parseMarkdownContent(editor, request.afterMarkdown, {
-        unwrapPlainFencedBlock: true,
-      });
-
-      if (!parsedPreview) {
-        return false;
-      }
-
-      const range = getFullDocumentPreviewRange(editor);
-      pendingPageEditRef.current = request;
-      setSelectionAiPreview({
-        baselineMarkdown: request.beforeMarkdown,
-        from: range.from,
-        generatedMarkdown: request.afterMarkdown,
-        isStreaming: false,
-        source: "page-edit",
-        to: range.to,
-        toolCallId: request.toolCallId,
-        useBeforeBaseline: request.useBeforeBaseline,
-      });
-
-      return true;
-    },
-    [editable, editor],
-  );
-
-  const acceptPageEditPreview = useCallback(() => {
-    const pendingEdit = pendingPageEditRef.current;
-
-    if (!editor || !pendingEdit || editor.isDestroyed) {
-      return false;
-    }
-
-    const parsed = parseMarkdownContent(editor, pendingEdit.afterMarkdown, {
-      unwrapPlainFencedBlock: true,
-    });
-
-    if (!parsed) {
-      return false;
-    }
-
-    editor.view.dispatch(setSelectionAiPreviewMeta(editor.state.tr, null));
-    editor.commands.setContent({
-      type: "doc",
-      content: parsed.content,
-    });
-    onContentChange?.(() => editor.getJSON());
-    pendingEdit.onAccepted?.();
-    pendingPageEditRef.current = null;
-    setSelectionAiPreview(null);
-    return true;
-  }, [editor, onContentChange]);
-
-  useEffect(() => {
-    if (!pageEditPreviewRef) {
-      return;
-    }
-
-    const controls: PageEditPreviewControls = {
-      accept: () => acceptPageEditPreview(),
-      clear: (options) => clearPageEditPreview(options),
-      isActive: () => pendingPageEditRef.current != null,
-      show: (request) => showPageEditPreview(request),
-      toolCallId: () => pendingPageEditRef.current?.toolCallId ?? null,
-    };
-
-    pageEditPreviewRef.current = controls;
-
-    return () => {
-      pageEditPreviewRef.current = null;
-    };
-  }, [acceptPageEditPreview, clearPageEditPreview, showPageEditPreview, pageEditPreviewRef]);
-
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) {
-      return;
-    }
-
-    const parsedPreview = selectionAiPreview
-      ? parseMarkdownContent(editor, selectionAiPreview.generatedMarkdown, {
-          unwrapPlainFencedBlock: true,
-        })
-      : null;
-    const parsedBaseline = selectionAiPreview?.baselineMarkdown
-      ? parseMarkdownContent(editor, selectionAiPreview.baselineMarkdown, {
-          unwrapPlainFencedBlock: true,
-        })
-      : null;
-
-    editor.view.dispatch(
-      setSelectionAiPreviewMeta(
-        editor.state.tr,
-        selectionAiPreview
-          ? {
-              baselineContent: parsedBaseline?.content,
-              baselineMarkdown: selectionAiPreview.baselineMarkdown,
-              from: selectionAiPreview.from,
-              generatedContent: parsedPreview?.content,
-              generatedMarkdown: selectionAiPreview.generatedMarkdown,
-              isStreaming: selectionAiPreview.isStreaming,
-              to: selectionAiPreview.to,
-              useBeforeBaseline: selectionAiPreview.useBeforeBaseline,
-            }
-          : null,
-      ),
-    );
-  }, [editor, selectionAiPreview]);
-
-  useEffect(() => {
-    if (!editor || editor.isDestroyed) return;
-    if (!reviewDiff) {
-      setSelectionAiPreview((current) =>
-        current?.toolCallId === "agent-settings-review" ? null : current,
-      );
-      return;
-    }
-    const range = getFullDocumentPreviewRange(editor);
-    setSelectionAiPreview({
-      baselineMarkdown: reviewDiff.beforeMarkdown,
-      generatedMarkdown: reviewDiff.afterMarkdown,
-      from: range.from,
-      to: range.to,
-      isStreaming: false,
-      source: "page-edit",
-      toolCallId: "agent-settings-review",
-      useBeforeBaseline: true,
-    });
-  }, [editor, reviewDiff?.beforeMarkdown, reviewDiff?.afterMarkdown]);
-
-  const acceptSelectionAiPreview = useCallback(() => {
-    if (pendingPageEditRef.current) {
-      acceptPageEditPreview();
-      return;
-    }
-
-    if (!editor || !selectionAiPreview || selectionAiPreview.isStreaming) {
-      return;
-    }
-
-    const parsed = parseMarkdownContent(editor, selectionAiPreview.generatedMarkdown, {
-      unwrapPlainFencedBlock: true,
-    });
-
-    if (!parsed) {
-      clearSelectionAiPreview();
-      return;
-    }
-
-    editor.view.dispatch(setSelectionAiPreviewMeta(editor.state.tr, null));
-    editor
-      .chain()
-      .focus()
-      .replaceBlocksRange(
-        { from: selectionAiPreview.from, to: selectionAiPreview.to },
-        parsed.content,
-      )
-      .run();
-    clearSelectionAiPreview();
-  }, [acceptPageEditPreview, clearSelectionAiPreview, editor, selectionAiPreview]);
-
   const focusPageBodyFromTitle = useCallback(() => {
     if (!editor || !editable) return;
 
@@ -638,10 +434,8 @@ export function Editor({
           getStructuralBlockDeleteAction={getStructuralBlockDeleteAction}
           onClosePasteChoice={handleClosePasteChoice}
           onDeleteStructuralBlock={onDeleteStructuralBlock}
-          onSelectionAiPreviewChange={handleSelectionAiPreviewChange}
           onStructuralInsertionPendingChange={onStructuralInsertionPendingChange}
           pageId={pageId}
-          workspaceId={workspaceId}
           pasteChoice={pasteChoice}
           plusMenuOpen={plusMenuOpen}
           setDragHandleMenuOpen={setDragHandleMenuOpen}
@@ -740,13 +534,6 @@ export function Editor({
             canMoveUp={canMoveMobileTarget("up")}
             onMoveDown={() => moveMobileTarget("down")}
             onMoveUp={() => moveMobileTarget("up")}
-          />
-        ) : null}
-        {contentEditable && selectionAiPreview && selectionAiPreview.source !== "page-edit" ? (
-          <SelectionAiDiffDock
-            isStreaming={selectionAiPreview.isStreaming}
-            onAccept={acceptSelectionAiPreview}
-            onDecline={clearSelectionAiPreview}
           />
         ) : null}
       </section>

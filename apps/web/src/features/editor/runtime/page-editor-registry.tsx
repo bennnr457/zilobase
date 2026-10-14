@@ -5,8 +5,6 @@ import { createDocumentSessionRegistry } from "../collaboration/document-session
 import type { PageDocumentSession } from "../collaboration/page-document-session";
 import { createEditorWorkspace } from "./editor-workspace";
 
-import type { PageEditPreviewClearOptions, PageEditPreviewRequest } from "../core/types";
-
 export type PageEditorHandle = {
   focus?: () => void;
   flushLocal?: () => Promise<void>;
@@ -14,19 +12,11 @@ export type PageEditorHandle = {
   getError?: () => "storage" | "connection" | null;
   paneId?: string;
   viewId?: string;
-  acceptEditDiffPreview: () => boolean;
-  clearEditDiffPreview: (options?: PageEditPreviewClearOptions) => void;
-  getActiveEditDiffToolCallId: () => string | null;
   getContentJson: () => unknown | null;
-  isEditDiffPreviewActive: () => boolean;
   isEditable: () => boolean;
   isSynchronized: () => boolean;
-  setContentFromMarkdown: (markdown: string) => boolean;
   setContentJson: (content: unknown) => boolean;
-  showEditDiffPreview: (request: PageEditPreviewRequest) => boolean;
 };
-
-export type { PageEditPreviewClearOptions, PageEditPreviewRequest };
 
 type PageEditorRegistryValue = {
   getEditorHandle: (pageId: string) => PageEditorHandle | null;

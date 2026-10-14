@@ -21,7 +21,6 @@ export { useSetPageFavorite, useRecordItemVisit } from "./navigation-mutations";
 export {
   usePages,
   usePageNavigation,
-  useZilobaseAiPages,
   usePage,
   usePageAccessLevel,
   usePageDatabaseIds,

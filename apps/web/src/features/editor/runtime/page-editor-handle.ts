@@ -1,8 +1,5 @@
 import type { Content, Editor } from "@tiptap/core";
-import type { MutableRefObject } from "react";
 import type { PageEditorHandle } from "./page-editor-registry";
-import type { PageEditPreviewControls } from "../core/types";
-import { parseMarkdownContent } from "../commands/editor-ai-utils";
 
 export function createPageEditorHandle(input: {
   editable: boolean;
@@ -12,7 +9,6 @@ export function createPageEditorHandle(input: {
   getEditor: () => Editor | null;
   isSynchronized?: () => boolean;
   onContentChange?: (content: unknown) => void;
-  pageEditPreviewRef?: MutableRefObject<PageEditPreviewControls | null>;
 }): PageEditorHandle {
   const applyContent = (content: unknown) => {
     const editor = input.getEditor();
@@ -26,43 +22,14 @@ export function createPageEditorHandle(input: {
     return true;
   };
 
-  const getPreviewControls = () => input.pageEditPreviewRef?.current ?? null;
-
   return {
     flushLocal: input.flushLocal,
     isServerConfirmed: input.isServerConfirmed,
     getError: input.getError,
     focus: () => input.getEditor()?.view.dom.focus({ preventScroll: true }),
-    acceptEditDiffPreview: () => getPreviewControls()?.accept() ?? false,
-    clearEditDiffPreview: (options) => {
-      getPreviewControls()?.clear(options);
-    },
-    getActiveEditDiffToolCallId: () => getPreviewControls()?.toolCallId() ?? null,
     getContentJson: () => input.getEditor()?.getJSON() ?? null,
-    isEditDiffPreviewActive: () => getPreviewControls()?.isActive() ?? false,
     isEditable: () => input.editable,
     isSynchronized: () => input.isSynchronized?.() ?? true,
-    setContentFromMarkdown: (markdown) => {
-      const editor = input.getEditor();
-
-      if (!editor || !input.editable) {
-        return false;
-      }
-
-      const parsed = parseMarkdownContent(editor, markdown, {
-        unwrapPlainFencedBlock: true,
-      });
-
-      if (!parsed) {
-        return false;
-      }
-
-      return applyContent({
-        type: "doc",
-        content: parsed.content,
-      });
-    },
     setContentJson: (content) => applyContent(content),
-    showEditDiffPreview: (request) => getPreviewControls()?.show(request) ?? false,
   };
 }

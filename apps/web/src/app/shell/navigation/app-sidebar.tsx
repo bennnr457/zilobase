@@ -48,7 +48,6 @@ import {
   clearPromotedFullPagePath,
   usePromotedFullPagePath,
 } from "@/features/pages/pane/page-side-pane";
-import { useAiChatThreadState } from "@/features/ai/index";
 import { buildDesktopDeepLink } from "@/features/desktop/deep-links/index";
 import {
   discoverRuntimeDesktopServer,
@@ -173,7 +172,6 @@ export function AppSidebar({
     () => hideUnconfiguredIntegrationTabs(storedLayout, sidebarAvailability),
     [sidebarAvailability, storedLayout],
   );
-  const { activeThreadId, setActiveThreadId } = useAiChatThreadState({ enabled: false });
   const [activeTabId, setActiveTabId] = React.useState("home");
   React.useEffect(() => {
     const stored = readActiveSidebarTab(workspaceId);
@@ -196,12 +194,12 @@ export function AppSidebar({
       if (tabId === "calendar") {
         void navigate({ to: "/calendar" });
       } else if (tabId === "ai") {
-        void navigate({ search: { thread: activeThreadId ?? undefined }, to: "/ai" });
+        void navigate({ to: "/ai" });
       } else if (pathname === "/ai" || pathname === "/calendar") {
         void navigate({ search: { view: "recents" }, to: "/recents" });
       }
     },
-    [activeThreadId, navigate, pathname, selectTab],
+    [navigate, pathname, selectTab],
   );
   React.useEffect(() => {
     if (customizing) return;
@@ -279,9 +277,8 @@ export function AppSidebar({
     [createDatabase, isCreatingDatabase, navigate, workspaceId],
   );
   const handleCreateChat = React.useCallback(async () => {
-    setActiveThreadId(null);
-    await navigate({ search: { thread: undefined }, to: "/ai" });
-  }, [navigate, setActiveThreadId]);
+    await navigate({ to: "/ai" });
+  }, [navigate]);
   const handleDropPageOnDatabase = React.useCallback(
     (input: {
       databaseId: string;
@@ -406,7 +403,7 @@ export function AppSidebar({
       );
     }
     if (section.kind === "aiChats") {
-      return <AiChatsSection key={section.id} limit={section.limit} storageKey={storageKey} />;
+      return <AiChatsSection key={section.id} storageKey={storageKey} />;
     }
     if (section.kind === "tasks") {
       return (

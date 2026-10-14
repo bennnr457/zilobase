@@ -10,7 +10,6 @@ import { ColorMenu } from "../toolbar/color-menu";
 import { SelectionAiMenu } from "./selection-ai-menu";
 import { toolbarGroups } from "../toolbar/toolbar-data";
 import { ToolbarButton } from "../toolbar/toolbar-button";
-import type { SelectionAiDiffPreview } from "../core/types";
 import type { EditorControlProps, RunToolbarCommand } from "../toolbar/toolbar-contracts";
 import { isFeatureEnabled } from "@/shared/config/feature-flags";
 
@@ -18,12 +17,8 @@ const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";
 
 export function SelectionBubbleMenu({
   editor,
-  onSelectionAiPreviewChange,
-  workspaceId,
   runCommand,
 }: EditorControlProps & {
-  onSelectionAiPreviewChange: (preview: SelectionAiDiffPreview | null) => void;
-  workspaceId?: string | null;
   runCommand: RunToolbarCommand;
 }) {
   useEffect(() => {
@@ -124,11 +119,7 @@ export function SelectionBubbleMenu({
         {isFeatureEnabled("askAi") ? (
           <>
             <ButtonGroupSeparator />
-            <SelectionAiMenu
-              editor={editor}
-              onPreviewChange={onSelectionAiPreviewChange}
-              workspaceId={workspaceId}
-            />
+            <SelectionAiMenu />
             <ButtonGroupSeparator />
           </>
         ) : (

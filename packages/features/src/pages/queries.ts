@@ -1,14 +1,11 @@
 export { getPrimaryPageParentId } from "./navigation-model";
 import { normalizeAccessReferences, revokeAccessReferences } from "./access-references";
-import { normalizeAiPageReferences } from "./summary-references";
 import { normalizeNavigationReference } from "./navigation-references";
 import { normalizePageProperties } from "./property-cache";
 import type {
-  ZilobaseAiMode,
   PageDatabase,
   PageItemPlacement,
   Page,
-  ZilobaseAiPageSummary,
   PagePropertiesPayload,
   AccessLevel,
   PageAccessPayload,
@@ -30,11 +27,6 @@ import type { ApiFetcher } from "../shared/api-fetcher";
 import type { EmbeddedItemsOpenAs } from "./item-relationships";
 import { sharedClient } from "../data/client";
 import { stageAuthorizedPages, type PageDetailReference } from "./cache";
-
-export const zilobaseAiModeLabels: Record<ZilobaseAiMode, string> = {
-  instruction: "Use as instruction",
-  skill: "Use as skill",
-};
 
 export const embeddedItemsOpenAsLabels: Record<EmbeddedItemsOpenAs, string> = {
   dialog: "Dialog",
@@ -70,9 +62,6 @@ export const pagesRootQueryKey = () => ["pages"] as const;
 
 export const pagesNavRootQueryKey = (workspaceId: string | null | undefined) =>
   ["pages", workspaceId ?? "none", "nav"] as const;
-
-export const zilobaseAiPagesQueryKey = (workspaceId: string | null | undefined) =>
-  ["pages", workspaceId ?? "none", "zilobase-ai"] as const;
 
 export const pageQueryKey = (pageId: string | null | undefined) =>
   ["page", pageId ?? "none"] as const;
@@ -164,46 +153,6 @@ export const pagesQueryOptions = (
         ) {
           if (sharedClient(client).isCurrent(read)) sharedClient(client).revokeReferences(retained);
           return { databases: [], pages: [], placements: [] };
-        }
-
-        throw error;
-      }
-    },
-  });
-
-export const zilobaseAiPagesQueryOptions = (
-  apiFetch: ApiFetcher,
-  workspaceId: string | null | undefined,
-) =>
-  queryOptions({
-    queryKey: zilobaseAiPagesQueryKey(workspaceId),
-    enabled: Boolean(workspaceId),
-    queryFn: async ({ client, signal }) => {
-      if (!workspaceId) {
-        return [];
-      }
-
-      try {
-        const read = await sharedClient(client).captureRead();
-        const params = new URLSearchParams({
-          fields: "summary",
-          zilobaseai: "instruction,skill",
-          workspaceId,
-        });
-        const result = await apiFetch<{ pages: ZilobaseAiPageSummary[] }>(
-          `/pages?${params.toString()}`,
-          { method: "GET", signal },
-        );
-
-        return normalizeAiPageReferences(client, read, workspaceId, result.pages);
-      } catch (error) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "status" in error &&
-          error.status === 401
-        ) {
-          return [];
         }
 
         throw error;

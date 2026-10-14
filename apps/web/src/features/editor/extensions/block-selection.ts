@@ -11,8 +11,6 @@ import {
 } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
 
-import { selectionAiPreviewPluginKey } from "./selection-ai-preview";
-
 export const blockSelectionPluginKey = new PluginKey("blockSelection");
 
 export type BlockRange = { from: number; to: number };
@@ -264,10 +262,6 @@ export const BlockSelection = Extension.create({
         state: {
           init: emptyPluginState,
           apply(tr, previous, _oldState, newState) {
-            if (selectionAiPreviewPluginKey.getState(newState)) {
-              return emptyPluginState();
-            }
-
             const meta = tr.getMeta(blockSelectionPluginKey) as BlockSelectionMeta | undefined;
 
             if (meta?.type === "select-all") {

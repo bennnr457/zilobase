@@ -1,5 +1,5 @@
 import type { Page, PageDatabase, PageDatabaseView, PageItemPlacement } from "./contracts";
-import type { MeetingListItem } from "../meetings/contracts";
+import type { MeetingListItem } from "../meetings/index";
 
 import type { SidebarNavItem } from "./sidebar-nav-item";
 
@@ -306,7 +306,6 @@ function createPageNode<Icon>(
     lastVisitedAt: page.lastVisitedAt,
     name: page.name,
     emoji: icons.getPageIcon(page),
-    zilobaseai: page.metadata?.zilobaseai ?? null,
     pageId: page.id,
     pages: [],
     teamspaceId: page.teamspaceId,

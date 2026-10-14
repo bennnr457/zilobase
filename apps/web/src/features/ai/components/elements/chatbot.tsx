@@ -1,18 +1,36 @@
-import { AgentChatLayout } from "./agent-chat-layout";
+import { ChatLayout } from "../chat-layout";
 import { Button } from "@/shared/ui/button";
-import { ChatbotComposer } from "./elements/chatbot-composer";
-import { ChatbotMessages } from "./elements/chatbot-messages";
-import { useChatbotConversation } from "../use-chatbot-conversation";
-import type { ChatbotConversationInput } from "../conversation-interface";
+import { ChatbotComposer } from "./chatbot-composer";
+import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
+import { useSession } from "@zilobase/features/auth/react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
+import type { PromptInputMessage } from "./prompt-input";
 
-export function ChatbotConversationController(props: ChatbotConversationInput) {
-  const { isSidebar = false, beforeComposer } = props;
-  const { rootRef, hasMessages, session, setText, messagesProps, composerProps } =
-    useChatbotConversation(props);
+export default function Chatbot({
+  isSidebar = false,
+  beforeComposer,
+}: {
+  isSidebar?: boolean;
+  beforeComposer?: ReactNode;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
+  const [text, setText] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const onSubmit = useCallback((message: PromptInputMessage) => {
+    const nextText = message.text.trim();
+    if (!nextText) return;
+    setMessages((current) => [
+      ...current,
+      { id: crypto.randomUUID(), role: "user", text: nextText },
+    ]);
+    setText("");
+  }, []);
+  const hasMessages = messages.length > 0;
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <div ref={rootRef} data-ai-scroll-shell className="min-h-0 flex-1 overflow-y-auto">
-        <AgentChatLayout sidebar={isSidebar}>
+        <ChatLayout sidebar={isSidebar}>
           {!hasMessages && (
             <div className="mx-auto mb-6 grid w-full max-w-3xl justify-items-center gap-3 px-4 text-center">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-surface-secondary text-lg font-semibold">
@@ -41,13 +59,19 @@ export function ChatbotConversationController(props: ChatbotConversationInput) {
               </div>
             </div>
           )}
-          <ChatbotMessages {...messagesProps} />
-        </AgentChatLayout>
+          <ChatbotMessages isSidebar={isSidebar} messages={messages} />
+        </ChatLayout>
       </div>
-      <AgentChatLayout sidebar={isSidebar}>
+      <ChatLayout sidebar={isSidebar}>
         {beforeComposer}
-        <ChatbotComposer {...composerProps} />
-      </AgentChatLayout>
+        <ChatbotComposer
+          isSidebar={isSidebar}
+          onSubmit={onSubmit}
+          onTextChange={(event) => setText(event.target.value)}
+          rootRef={rootRef}
+          text={text}
+        />
+      </ChatLayout>
     </div>
   );
 }

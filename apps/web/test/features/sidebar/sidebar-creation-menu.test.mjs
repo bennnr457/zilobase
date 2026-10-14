@@ -190,11 +190,8 @@ export function register({ readSource, assert, test }) {
     assert.match(sidebarSource, /useWorkspaceMeetings\(needsMeetings \? workspaceId : null/);
     assert.match(sidebarSource, /usePageNavigation\(workspaceId\)/);
     assert.doesNotMatch(sidebarSource, /useCreateAiChatThread/);
-    assert.match(sidebarSource, /setActiveThreadId\(null\)/);
-    assert.match(
-      sidebarSource,
-      /tabId === "ai"[\s\S]*activeThreadId \?\? undefined[\s\S]*to: "\/ai"/,
-    );
+    assert.doesNotMatch(sidebarSource, /useAiChatThreadState|setActiveThreadId/);
+    assert.match(sidebarSource, /tabId === "ai"[\s\S]*navigate\(\{ to: "\/ai" \}\)/);
     assert.match(
       sidebarSource,
       /staticTabId\s*=\s*pathname === "\/ai"\s*\?\s*"ai"\s*:\s*pathname === "\/calendar"\s*\?\s*"calendar"\s*:\s*null/,

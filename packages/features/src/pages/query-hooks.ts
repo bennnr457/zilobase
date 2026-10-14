@@ -1,6 +1,5 @@
 import { parseActiveWorkspaceMismatchError } from "../shared/api-errors";
 import { resolvePageAccessReferences } from "./access-references";
-import { resolveAiPageReferences } from "./summary-references";
 import { resolvePageProperties } from "./property-cache";
 import { useMemo } from "react";
 import { useSharedDataRevision } from "../data/react";
@@ -18,7 +17,6 @@ import {
   pagePropertiesQueryOptions,
   pageQueryOptions,
   pagesQueryOptions,
-  zilobaseAiPagesQueryOptions,
 } from "./queries";
 import type { PagesDeletedFilter } from "./contracts";
 
@@ -58,23 +56,6 @@ export function usePageNavigation(
     isSuccess: query.isSuccess,
     status: query.status,
     refetch: query.refetch,
-  };
-}
-
-export function useZilobaseAiPages(workspaceId: string | null | undefined) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-  const query = useQuery(zilobaseAiPagesQueryOptions(apiFetch, workspaceId));
-  useSharedDataRevision(queryClient);
-  return {
-    error: query.error,
-    isLoading: query.isLoading,
-    isPending: query.isPending,
-    isFetching: query.isFetching,
-    isError: query.isError,
-    isSuccess: query.isSuccess,
-    status: query.status,
-    refetch: query.refetch,
-    data: query.data && resolveAiPageReferences(queryClient, query.data),
   };
 }
 

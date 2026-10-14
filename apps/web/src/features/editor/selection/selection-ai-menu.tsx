@@ -4,15 +4,8 @@ import * as React from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import type { SelectionAiDiffPreview } from "../core/types";
 
-type SelectionAiMenuProps = {
-  editor: unknown;
-  onPreviewChange: (preview: SelectionAiDiffPreview | null) => void;
-  workspaceId?: string | null;
-};
-
-export function SelectionAiMenu({ onPreviewChange }: SelectionAiMenuProps) {
+export function SelectionAiMenu() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [prompt, setPrompt] = React.useState("");
 
@@ -21,7 +14,6 @@ export function SelectionAiMenu({ onPreviewChange }: SelectionAiMenuProps) {
       onOpenChange={(nextOpen) => {
         setIsOpen(nextOpen);
         if (!nextOpen) {
-          onPreviewChange(null);
           setPrompt("");
         }
       }}

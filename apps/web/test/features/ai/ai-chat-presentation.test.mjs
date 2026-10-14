@@ -3,9 +3,7 @@ import { readChatbotSource } from "./ai-chatbot-source.mjs";
 export function register({ readSource, assert, test }) {
   test("Ask AI supports persistent docked and floating desktop modes", async () => {
     const layoutSource = await readSource("/src/app/shell/content/app-layout.tsx");
-    const sidebarSource = await readSource(
-      "/src/features/ai/conversations/components/chat-sidebar.tsx",
-    );
+    const sidebarSource = await readSource("/src/features/ai/components/chat-sidebar.tsx");
 
     assert.match(
       layoutSource,
@@ -24,9 +22,7 @@ export function register({ readSource, assert, test }) {
 
   test("full-page Ask AI uses the page viewport and hides the duplicate launcher", async () => {
     const aiPageSource = await readSource("/src/features/ai/screens/ai.tsx");
-    const workspaceSource = await readSource(
-      "/src/features/ai/conversations/components/agent-chat-workspace.tsx",
-    );
+    const workspaceSource = await readSource("/src/features/ai/components/ask-ai-workspace.tsx");
     const chatbotSource = await readChatbotSource(readSource);
     const layoutSource = await readSource("/src/app/shell/content/app-layout.tsx");
 
@@ -35,19 +31,17 @@ export function register({ readSource, assert, test }) {
       /!askAiEnabled \|\| chatSidebarOpen \|\| isAiPage \|\| isFullPanePage \? null/,
     );
     assert.match(chatbotSource, /\[data-ai-scroll-shell\], \[data-page-scroll-viewport\]/);
-    assert.match(aiPageSource, /<AgentChatWorkspace/);
+    assert.match(aiPageSource, /<AskAiWorkspace/);
     assert.match(workspaceSource, /mainScrollClassName="overscroll-y-none"/);
     assert.doesNotMatch(workspaceSource, /standalone/);
   });
 
   test("Ask AI keeps the composer outside its scrolling history", async () => {
-    const personal = await readSource(
-      "/src/features/ai/conversations/components/chatbot-conversation.tsx",
-    );
+    const personal = await readSource("/src/features/ai/components/elements/chatbot.tsx");
     assert.match(personal, /data-ai-scroll-shell[\s\S]*?overflow-y-auto/);
     assert.match(
       personal,
-      /<\/AgentChatLayout>\s*<\/div>\s*<AgentChatLayout[^>]*>\s*\{beforeComposer\}\s*<ChatbotComposer/,
+      /<\/ChatLayout>\s*<\/div>\s*<ChatLayout[^>]*>\s*\{beforeComposer\}\s*<ChatbotComposer/,
     );
   });
 }

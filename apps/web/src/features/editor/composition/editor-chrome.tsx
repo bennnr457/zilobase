@@ -18,7 +18,6 @@ import { runToolbarCommand } from "../commands/run-toolbar-command";
 import type {
   BlockDropLine,
   PasteChoiceState,
-  SelectionAiDiffPreview,
   StructuralBlockDeleteAction,
   StructuralBlockDeleteHistory,
   StructuralBlockDeleteRequest,
@@ -42,10 +41,8 @@ type EditorChromeProps = {
   onDeleteStructuralBlock?: (
     request: StructuralBlockDeleteRequest,
   ) => Promise<StructuralBlockDeleteHistory | void>;
-  onSelectionAiPreviewChange: (preview: SelectionAiDiffPreview | null) => void;
   onStructuralInsertionPendingChange?: StructuralInsertionPendingChange;
   pageId?: string | null;
-  workspaceId?: string | null;
   pasteChoice: PasteChoiceState | null;
   plusMenuOpen: boolean;
   setDragHandleMenuOpen: (open: boolean) => void;
@@ -67,10 +64,8 @@ export function EditorChrome({
   getStructuralBlockDeleteAction,
   onClosePasteChoice,
   onDeleteStructuralBlock,
-  onSelectionAiPreviewChange,
   onStructuralInsertionPendingChange,
   pageId,
-  workspaceId,
   pasteChoice,
   plusMenuOpen,
   setDragHandleMenuOpen,
@@ -137,8 +132,6 @@ export function EditorChrome({
         <>
           <SelectionBubbleMenu
             editor={editor}
-            onSelectionAiPreviewChange={onSelectionAiPreviewChange}
-            workspaceId={workspaceId}
             runCommand={(action, attrs) => runToolbarCommand(editor, action, attrs)}
           />
           <ColumnControls editor={editor} />

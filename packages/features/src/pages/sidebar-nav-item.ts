@@ -1,5 +1,3 @@
-import type { ZilobaseAiMode } from "./contracts";
-
 export type SidebarNavItem<Icon = unknown> = {
   databaseId?: string | null;
   databaseViewId?: string | null;
@@ -19,5 +17,4 @@ export type SidebarNavItem<Icon = unknown> = {
   pages: SidebarNavItem<Icon>[];
   teamspaceId?: string | null;
   updatedAt?: string;
-  zilobaseai?: ZilobaseAiMode | null;
 };

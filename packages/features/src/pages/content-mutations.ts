@@ -6,7 +6,7 @@ import {
   setPageDetailCache,
 } from "../shared/item-action-cache";
 import { hasPageBodyContent } from "./models";
-import { pageQueryKey, zilobaseAiPagesQueryKey } from "./queries";
+import { pageQueryKey } from "./queries";
 import type { PageDetail, AccessLevel, Page } from "./contracts";
 import type { PageMetadata } from "./item-relationships";
 import { refreshTitleMembership } from "../databases/queries/invalidation";
@@ -110,12 +110,6 @@ export function useCreatePage() {
         pageRecord.workspaceId,
         navDelta ?? { upsertPages: [pageRecord] },
       );
-
-      if (pageRecord.metadata?.zilobaseai) {
-        await queryClient.invalidateQueries({
-          queryKey: zilobaseAiPagesQueryKey(pageRecord.workspaceId),
-        });
-      }
     },
   });
 }
@@ -173,10 +167,6 @@ export function useUpdatePage() {
     },
     onSuccess: (page, variables) => {
       if (variables.name !== undefined) refreshTitleMembership(queryClient, [page.id]);
-      if (variables.metadata?.zilobaseai !== undefined)
-        void queryClient
-          .invalidateQueries({ queryKey: zilobaseAiPagesQueryKey(page.workspaceId) })
-          .catch(() => undefined);
     },
   });
 }
@@ -203,7 +193,6 @@ export function useDeletePage() {
       }),
     onSuccess: async (result) =>
       invalidateDeletedItems({
-        includeZilobaseAi: true,
         workspaceId: result.page?.workspaceId,
         queryClient,
         result,
@@ -221,7 +210,6 @@ export function useRestorePage() {
       }),
     onSuccess: async (result) => {
       await invalidateRestoredItems({
-        includeZilobaseAi: true,
         workspaceId: result.page.workspaceId,
         queryClient,
         result,
