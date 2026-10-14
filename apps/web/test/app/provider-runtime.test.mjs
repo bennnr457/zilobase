@@ -108,6 +108,149 @@ export function register({ assert, sourcePath, test }) {
     controls.reset();
   });
 
+  test("AppProviders Effects preserve analytics ordering, theme updates and unload cleanup", async () => {
+    const saved = Object.getOwnPropertyDescriptors(globalThis);
+    const { window, document } = parseHTML(
+      "<html><head><meta name='theme-color'></head><body><div id='root'></div></body></html>",
+    );
+    Object.assign(globalThis, { window, document });
+    let fixture;
+    let root;
+    try {
+      fixture = await runtime();
+      const { AppProviders, createElement, createRoot, flushSync, StrictMode, controls } = fixture;
+      controls.reset();
+      globalThis.getComputedStyle = () => ({ backgroundColor: controls.background });
+      const analytics = () => controls.calls.filter((call) => call.startsWith("posthog."));
+      const render = () =>
+        flushSync(() => root.render(createElement(AppProviders, null, "Content")));
+      root = createRoot(document.getElementById("root"));
+      render();
+      assert.deepEqual(analytics(), [], "unknown sessions do not change analytics identity");
+      assert.equal(document.documentElement.dataset.themeFamily, "default");
+      assert.equal(document.documentElement.style.colorScheme, "light");
+      assert.equal(document.querySelector("meta").getAttribute("content"), controls.background);
+      assert.equal(controls.demoInstalls, 1);
+      controls.queryValues[JSON.stringify(["test"])] = "cached";
+      assert.equal(controls.demoCache.getQueryData(["test"]), "cached");
+
+      controls.session = { user: { id: "first" } };
+      controls.workspace = "workspace";
+      render();
+      assert.deepEqual(analytics(), [
+        "posthog.identify:first",
+        "posthog.group:workspace:workspace",
+      ]);
+      render();
+      assert.equal(analytics().length, 2, "unchanged inputs do not repeat identity effects");
+      controls.workspace = null;
+      render();
+      assert.equal(analytics().at(-1), "posthog.groups.reset");
+      controls.distinctId = "external";
+      controls.workspace = "another";
+      render();
+      assert.deepEqual(analytics().slice(-2), [
+        "posthog.identify:first",
+        "posthog.group:workspace:another",
+      ]);
+      controls.session = { user: { id: "second" } };
+      render();
+      assert.deepEqual(analytics().slice(-3), [
+        "posthog.reset",
+        "posthog.identify:second",
+        "posthog.group:workspace:another",
+      ]);
+      controls.distinctId = "external";
+      controls.session = { user: null };
+      render();
+      assert.equal(
+        analytics().at(-1),
+        "posthog.group:workspace:another",
+        "sign-out does not reset an unrelated analytics identity",
+      );
+      controls.session = { user: { id: "second" } };
+      render();
+      controls.session = { user: null };
+      render();
+      assert.equal(analytics().at(-1), "posthog.reset");
+      controls.enablePosthog(false);
+      const count = analytics().length;
+      controls.session = { user: { id: "disabled" } };
+      render();
+      assert.equal(analytics().length, count);
+
+      controls.resolvedTheme = "dark";
+      controls.themeFamily = "forest";
+      controls.background = "rgb(20, 30, 40)";
+      render();
+      assert.equal(document.documentElement.dataset.themeFamily, "forest");
+      assert.equal(document.documentElement.style.colorScheme, "dark");
+      assert.equal(document.querySelector("meta").getAttribute("content"), controls.background);
+      controls.resolvedTheme = undefined;
+      controls.themeFamily = "ocean";
+      render();
+      assert.equal(
+        document.documentElement.dataset.themeFamily,
+        "forest",
+        "unresolved appearance preserves the document theme",
+      );
+      document.querySelector("meta").remove();
+      controls.resolvedTheme = "light";
+      render();
+      assert.equal(document.documentElement.dataset.themeFamily, "ocean");
+
+      controls.pending = true;
+      controls.subscriptions.forEach((callback) => callback());
+      const blocked = new window.Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(blocked);
+      assert.equal(blocked.defaultPrevented, true);
+      assert.equal(blocked.returnValue, "");
+      flushSync(() => root.unmount());
+      assert.equal(controls.subscriptions.size, 0);
+      const unblocked = new window.Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(unblocked);
+      assert.equal(unblocked.defaultPrevented, false);
+
+      controls.reset();
+      controls.pending = true;
+      root = createRoot(document.getElementById("root"));
+      flushSync(() =>
+        root.render(createElement(StrictMode, null, createElement(AppProviders, null, "Content"))),
+      );
+      assert.equal(controls.subscriptions.size, 1);
+      flushSync(() => root.unmount());
+      assert.equal(controls.subscriptions.size, 0);
+      assert.equal(
+        controls.calls.filter((call) => call === "command.subscribe").length,
+        controls.calls.filter((call) => call === "command.unsubscribe").length,
+      );
+
+      controls.reset();
+      const failure = new Error("Analytics failed");
+      controls.session = { user: { id: "failure" } };
+      controls.failures["posthog.identify:failure"] = failure;
+      let uncaught;
+      root = createRoot(document.getElementById("root"), {
+        onUncaughtError: (error) => {
+          uncaught = error;
+        },
+      });
+      render();
+      assert.equal(
+        uncaught,
+        failure,
+        "synchronous Effect failures reach the React boundary unchanged",
+      );
+      assert.equal(controls.subscriptions.size, 0);
+    } finally {
+      if (root) fixture.flushSync(() => root.unmount());
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      for (const key of Object.getOwnPropertyNames(globalThis))
+        if (!saved[key]) delete globalThis[key];
+      Object.defineProperties(globalThis, saved);
+    }
+  });
+
   test("theme provider preserves document updates when local storage fails", async () => {
     const saved = Object.getOwnPropertyDescriptors(globalThis);
     const { window, document } = parseHTML("<html><body><div id='root'></div></body></html>");
@@ -173,7 +316,7 @@ export function register({ assert, sourcePath, test }) {
 async function loadProviderRuntime(sourcePath) {
   const ports = `
     export const controls = {
-      reset() { this.calls = []; this.failures = {}; this.responses = {}; this.diagnostics = []; this.cached = null; this.offline = false; this.demo = false; this.demoError = new Error("Demo read-only"); },
+      reset() { this.calls = []; this.failures = {}; this.responses = {}; this.diagnostics = []; this.cached = null; this.offline = false; this.demo = false; this.demoError = new Error("Demo read-only"); this.session = undefined; this.workspace = null; this.resolvedTheme = "light"; this.themeFamily = "default"; this.background = "rgb(255, 255, 255)"; this.queryValues = {}; this.distinctId = "anonymous"; this.enablePosthog?.(true); this.pending = false; this.subscriptions = new Set(); this.controller = { commandState: { hasPending: () => this.pending, subscribe: callback => { const subscriptions = this.subscriptions; subscriptions.add(callback); this.step("command.subscribe"); return () => { subscriptions.delete(callback); this.step("command.unsubscribe"); }; } } }; },
       step(name) { this.calls.push(name); if (this.failures[name]) throw this.failures[name]; }
     };
     controls.reset();
@@ -187,19 +330,34 @@ async function loadProviderRuntime(sourcePath) {
   `;
   const mocks = {
     "provider-test-ports": ports,
+    "app-provider-pass-through": `export function PassThrough({ children }) { return children; } export const Empty = () => null;`,
+    "next-themes": `import { controls } from "provider-test-ports"; export { PassThrough as ThemeProvider } from "app-provider-pass-through"; export const useTheme = () => ({ resolvedTheme: controls.resolvedTheme });`,
+    "@/components/ui/sonner": `export { Empty as Toaster } from "app-provider-pass-through";`,
+    "@/components/ui/tooltip": `export { PassThrough as TooltipProvider } from "app-provider-pass-through";`,
+    "@/components/comments/index": `export { PassThrough as PageEditorCommentsProvider, PassThrough as PageCommentsRegistryProvider } from "app-provider-pass-through";`,
+    "@/components/editor/runtime/page-editor-registry": `export { PassThrough as PageEditorRegistryProvider } from "app-provider-pass-through";`,
+    "@/components/desktop/ui": `export { Empty as DesktopUpdater } from "app-provider-pass-through";`,
+    "@/app/providers/features-provider": `export { PassThrough as WebFeaturesProvider } from "app-provider-pass-through";`,
+    "@/app/providers/theme-family-provider": `import { controls } from "provider-test-ports"; export { PassThrough as ThemeFamilyProvider } from "app-provider-pass-through"; export const useThemeFamily = () => ({ themeFamily: controls.themeFamily });`,
+    "@/components/icons": `export { PassThrough as AppIconProvider } from "app-provider-pass-through";`,
+    "@/app/shortcuts": `export { PassThrough as ShortcutProvider } from "app-provider-pass-through";`,
+    "@zilobase/features/auth/react": `import { controls } from "provider-test-ports"; export const useSession = () => ({ data: controls.session });`,
+    "@zilobase/features/workspaces/react": `import { controls } from "provider-test-ports"; export const useActiveWorkspaceId = () => controls.workspace;`,
+    "@zilobase/features/databases/react": `import { controls } from "provider-test-ports"; export const useDatabaseController = () => controls.controller;`,
+
     "@/platform/network/api": `export { apiFetch } from "provider-test-ports"; import { controls } from "provider-test-ports"; export async function clearApiAuthToken() { controls.step("token.clear"); }`,
     "@/platform/storage/client-cache-storage": `export { webClientCacheStorage, readCachedSession, clearCachedSession } from "provider-test-ports";`,
     "@/platform/network/connectivity": `import { controls } from "provider-test-ports"; export const webClientLifecycle = {}; export const getConnectivityState = () => controls.offline ? "offline" : "online";`,
     "@/platform/diagnostics/index": `import { controls } from "provider-test-ports"; export const describeDesktopError = error => ({ message: error.message }); export function recordDesktopDiagnostic(name, data, level) { controls.diagnostics.push({ name, data, level }); if (controls.failures["diagnostic:" + data.status]) throw controls.failures["diagnostic:" + data.status]; }`,
-    "@/app/query-client": `export const queryClient = {}; export const clientDeployment = () => "deployment";`,
+    "@/app/query-client": `import { controls } from "provider-test-ports"; export const queryClient = { getQueryData: key => controls.queryValues[JSON.stringify(key)], getQueriesData: () => [] }; export const clientDeployment = () => "deployment";`,
     "@/app/state/app-store": `import { controls } from "provider-test-ports"; export function useAppStore(select) { return select({}); } useAppStore.getState = () => ({ resetAccountState() { controls.step("account.reset"); } });`,
-    "@/app/demo": `import { controls } from "provider-test-ports"; export const isHostedDemoRuntime = () => controls.demo; export function requestDemoGuard() { controls.step("demo.guard"); return controls.demoError; }`,
-    "@/lib/posthog": `import { controls } from "provider-test-ports"; export default { reset() { controls.step("posthog.reset"); } };`,
+    "@/app/demo": `import { controls } from "provider-test-ports"; export { PassThrough as DemoExperience } from "app-provider-pass-through"; export function installDemoCache(value) { controls.demoCache = value; controls.demoInstalls = (controls.demoInstalls ?? 0) + 1; } export const isHostedDemoRuntime = () => controls.demo; export function requestDemoGuard() { controls.step("demo.guard"); return controls.demoError; }`,
+    "@/lib/posthog": `import { controls } from "provider-test-ports"; const posthog = { reset() { controls.step("posthog.reset"); controls.distinctId = "anonymous"; }, get_distinct_id: () => controls.distinctId, identify(id) { controls.step("posthog.identify:" + id); controls.distinctId = id; }, group(kind, id) { controls.step("posthog.group:" + kind + ":" + id); }, resetGroups() { controls.step("posthog.groups.reset"); } }; let client = posthog; controls.enablePosthog = enabled => { client = enabled ? posthog : null; }; export { client as default };`,
     "@/components/editor/collaboration/page-document-cache": `import { controls } from "provider-test-ports"; export async function clearPageCacheForUser(id) { controls.step("page.clear:" + id); }`,
   };
   const result = await build({
     stdin: {
-      contents: `export { webAuthClient } from "./features-provider"; export { ThemeFamilyProvider, useThemeFamily } from "./theme-family-provider"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "provider-test-ports";`,
+      contents: `export { webAuthClient } from "./features-provider"; export { AppProviders } from "./app-providers"; export { ThemeFamilyProvider, useThemeFamily } from "./theme-family-provider"; export { createElement, StrictMode } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "provider-test-ports";`,
       resolveDir: sourcePath("/src/app/providers"),
     },
     bundle: true,
