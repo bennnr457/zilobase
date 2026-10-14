@@ -628,6 +628,24 @@ export function PageEditorPane({
       createPageEditorHandle({
         editable: pageEditable && liveEditingReady,
         getEditor: () => editorInstanceRef.current,
+        getError: () =>
+          collaboration.entry?.persistenceError
+            ? "storage"
+            : collaboration.error
+              ? "connection"
+              : null,
+        isServerConfirmed: () =>
+          Boolean(
+            collaboration.entry &&
+            collaboration.synced &&
+            collaboration.unsyncedChanges === 0 &&
+            !collaboration.entry.locallyChanged,
+          ),
+        flushLocal: async () => {
+          if (!collaboration.entry) throw new Error("Editor storage is not ready.");
+          await collaboration.entry.flush();
+          if (collaboration.entry.persistenceError) throw collaboration.entry.persistenceError;
+        },
         isSynchronized: () =>
           !collaboration.document || (collaboration.synced && collaboration.unsyncedChanges === 0),
         onContentChange: updateContent,
@@ -637,6 +655,8 @@ export function PageEditorPane({
   }, [
     liveEditingReady,
     collaboration.document,
+    collaboration.error,
+    collaboration.entry,
     collaboration.synced,
     collaboration.unsyncedChanges,
     pageEditable,

@@ -272,6 +272,10 @@
       "value": true,
       "type": false
     },
+    "createApiAuthClient": {
+      "value": true,
+      "type": false
+    },
     "getAuthReturnPath": {
       "value": true,
       "type": false
@@ -327,6 +331,10 @@
   },
   "@zilobase/features:./auth:types": {
     "addLoopbackOriginAliases": {
+      "value": true,
+      "type": false
+    },
+    "createApiAuthClient": {
       "value": true,
       "type": false
     },
@@ -9232,6 +9240,10 @@
     }
   },
   "@zilobase/features:./pages:default": {
+    "acceptEditorChangeNotification": {
+      "value": true,
+      "type": false
+    },
     "AccessLevel": {
       "value": false,
       "type": true
@@ -9328,6 +9340,10 @@
       "value": true,
       "type": false
     },
+    "createEditorBridge": {
+      "value": true,
+      "type": false
+    },
     "DatabasePlacement": {
       "value": false,
       "type": true
@@ -9339,6 +9355,42 @@
     "decidePublishedShareAccess": {
       "value": true,
       "type": false
+    },
+    "EDITOR_BRIDGE_VERSION": {
+      "value": true,
+      "type": false
+    },
+    "EditorBridgeAdapter": {
+      "value": false,
+      "type": true
+    },
+    "EditorBridgeEvent": {
+      "value": false,
+      "type": true
+    },
+    "EditorBridgeMessage": {
+      "value": false,
+      "type": true
+    },
+    "editorBridgeMessageSchema": {
+      "value": true,
+      "type": false
+    },
+    "EditorBridgeRequest": {
+      "value": false,
+      "type": true
+    },
+    "editorBridgeRequestSchema": {
+      "value": true,
+      "type": false
+    },
+    "EditorBridgeScope": {
+      "value": false,
+      "type": true
+    },
+    "EditorBridgeStatus": {
+      "value": false,
+      "type": true
     },
     "EmbeddedItemsOpenAs": {
       "value": false,
@@ -9841,6 +9893,10 @@
       "type": false
     },
     "resolvePageReference": {
+      "value": true,
+      "type": false
+    },
+    "sameEditorBridgeScope": {
       "value": true,
       "type": false
     },
@@ -9890,6 +9946,10 @@
     }
   },
   "@zilobase/features:./pages:types": {
+    "acceptEditorChangeNotification": {
+      "value": true,
+      "type": false
+    },
     "AccessLevel": {
       "value": false,
       "type": true
@@ -9986,6 +10046,10 @@
       "value": true,
       "type": false
     },
+    "createEditorBridge": {
+      "value": true,
+      "type": false
+    },
     "DatabasePlacement": {
       "value": false,
       "type": true
@@ -9997,6 +10061,42 @@
     "decidePublishedShareAccess": {
       "value": true,
       "type": false
+    },
+    "EDITOR_BRIDGE_VERSION": {
+      "value": true,
+      "type": false
+    },
+    "EditorBridgeAdapter": {
+      "value": false,
+      "type": true
+    },
+    "EditorBridgeEvent": {
+      "value": false,
+      "type": true
+    },
+    "EditorBridgeMessage": {
+      "value": false,
+      "type": true
+    },
+    "editorBridgeMessageSchema": {
+      "value": true,
+      "type": false
+    },
+    "EditorBridgeRequest": {
+      "value": false,
+      "type": true
+    },
+    "editorBridgeRequestSchema": {
+      "value": true,
+      "type": false
+    },
+    "EditorBridgeScope": {
+      "value": false,
+      "type": true
+    },
+    "EditorBridgeStatus": {
+      "value": false,
+      "type": true
     },
     "EmbeddedItemsOpenAs": {
       "value": false,
@@ -10499,6 +10599,10 @@
       "type": false
     },
     "resolvePageReference": {
+      "value": true,
+      "type": false
+    },
+    "sameEditorBridgeScope": {
       "value": true,
       "type": false
     },

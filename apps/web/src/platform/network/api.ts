@@ -1,3 +1,4 @@
+import { getHostedEditorAuthToken } from "@/platform/auth/hosted-editor-auth";
 import { ApiError } from "@zilobase/features";
 export { ApiError, getApiErrorMessage } from "@zilobase/features";
 import {
@@ -170,7 +171,7 @@ export function isRequestAbort(error: unknown) {
 export function getApiRequestHeaders(headers?: HeadersInit) {
   const requestHeaders = new Headers(headers);
   const mobileViewerCookie = readEmbeddedMobileAuthCookie();
-  const desktopAuthToken = getDesktopAuthToken();
+  const desktopAuthToken = getHostedEditorAuthToken() ?? getDesktopAuthToken();
 
   if (desktopAuthToken && !requestHeaders.has("authorization")) {
     requestHeaders.set("authorization", `Bearer ${desktopAuthToken}`);

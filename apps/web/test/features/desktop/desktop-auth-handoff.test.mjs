@@ -58,7 +58,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
   });
 
   test("desktop server metadata initializes before credentials and providers", async () => {
-    const source = await readSource("/src/app/main.tsx");
+    const source = await readSource("/src/app/bootstrap.tsx");
     const server = source.indexOf("await initializeDesktopServer()");
     const credentials = source.indexOf("await initializeDesktopAuthToken()");
     const providers = source.indexOf("<AppProviders>");

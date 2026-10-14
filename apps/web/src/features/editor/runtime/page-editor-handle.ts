@@ -6,6 +6,9 @@ import { parseMarkdownContent } from "../commands/editor-ai-utils";
 
 export function createPageEditorHandle(input: {
   editable: boolean;
+  flushLocal?: () => Promise<void>;
+  isServerConfirmed?: () => boolean;
+  getError?: () => "storage" | "connection" | null;
   getEditor: () => Editor | null;
   isSynchronized?: () => boolean;
   onContentChange?: (content: unknown) => void;
@@ -26,6 +29,9 @@ export function createPageEditorHandle(input: {
   const getPreviewControls = () => input.pageEditPreviewRef?.current ?? null;
 
   return {
+    flushLocal: input.flushLocal,
+    isServerConfirmed: input.isServerConfirmed,
+    getError: input.getError,
     focus: () => input.getEditor()?.view.dom.focus({ preventScroll: true }),
     acceptEditDiffPreview: () => getPreviewControls()?.accept() ?? false,
     clearEditDiffPreview: (options) => {

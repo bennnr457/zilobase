@@ -25,3 +25,16 @@ export * from "./navigation-item-state";
 export * from "./notion-import";
 export * from "./notion-archive";
 export * from "./read-cache";
+export {
+  EDITOR_BRIDGE_VERSION,
+  editorBridgeRequestSchema,
+  editorBridgeMessageSchema,
+  sameEditorBridgeScope,
+  type EditorBridgeScope,
+  type EditorBridgeRequest,
+  type EditorBridgeMessage,
+  type EditorBridgeStatus,
+  type EditorBridgeEvent,
+} from "./editor-bridge";
+export { createEditorBridge, type EditorBridgeAdapter } from "./editor-bridge-controller";
+export { acceptEditorChangeNotification } from "./editor-host";

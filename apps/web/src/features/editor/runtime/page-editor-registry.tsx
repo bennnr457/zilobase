@@ -9,6 +9,9 @@ import type { PageEditPreviewClearOptions, PageEditPreviewRequest } from "../cor
 
 export type PageEditorHandle = {
   focus?: () => void;
+  flushLocal?: () => Promise<void>;
+  isServerConfirmed?: () => boolean;
+  getError?: () => "storage" | "connection" | null;
   paneId?: string;
   viewId?: string;
   acceptEditDiffPreview: () => boolean;

@@ -1,3 +1,4 @@
+import { getHostedEditorAuthToken } from "@/platform/auth/hosted-editor-auth";
 import { HocuspocusProvider, type HocuspocusProviderConfiguration } from "@hocuspocus/provider";
 import * as Y from "yjs";
 import type { Awareness } from "y-protocols/awareness";
@@ -61,7 +62,7 @@ export function connectCollaborationDocument(input: {
 
 class CollaborationWebSocket extends WebSocket {
   constructor(url: string | URL) {
-    const sessionToken = getDesktopAuthToken();
+    const sessionToken = getHostedEditorAuthToken() ?? getDesktopAuthToken();
 
     if (sessionToken) {
       const encodedToken = bytesToBase64(new TextEncoder().encode(sessionToken))
