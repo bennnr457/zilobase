@@ -9,7 +9,7 @@ export function register({ readSource, assert, test }) {
         ),
       )
     ).join("\n");
-    const errorSource = await readSource("/src/app/routing/route-error.ts");
+    const errorSource = await readSource("/src/app/routing/route-error-page.tsx");
 
     assert.match(source, /export function PendingPage\(\)/);
     assert.match(source, /defaultPendingComponent: PendingPage/);

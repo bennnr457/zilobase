@@ -42,6 +42,10 @@ so independent editor roots can use them without importing application startup.
 Keep web route declarations and root routes together in `app/routing/router.tsx`,
 with screens loaded lazily. Keep route guards, URL validation, shell rendering,
 and error surfaces separate; avoid forwarding route-group modules.
+Use Effect for asynchronous route-guard workflows, with `Effect.runPromise` at
+the router adapter boundary. Preserve original errors and redirect responses.
+TanStack Query retains request/cache/retry ownership; keep rendering and URL
+parsing straightforward without extra Effect services or layers.
 
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.

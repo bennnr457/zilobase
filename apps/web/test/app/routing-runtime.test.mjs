@@ -46,6 +46,152 @@ export function register({ assert, sourcePath, test }) {
     controls.reset();
   });
 
+  test("TanStack Router accepts Effect redirects and resolved sharing context", async () => {
+    const { router, controls, createMemoryHistory, createRouter } = await runtime();
+    const load = async (path) => {
+      const current = createRouter({
+        ...router.options,
+        history: createMemoryHistory({ initialEntries: [path] }),
+      });
+      await current.load();
+      return current.state;
+    };
+    controls.reset();
+    assert.equal((await load("/calendar")).redirect.options.to, "/login");
+    controls.session = { user: { id: "user" }, session: { id: "session" } };
+    controls.queryClient.clear();
+    assert.equal((await load("/calendar")).redirect.options.to, "/onboarding");
+    controls.workspaces = [{ id: "workspace", name: "Workspace", slug: "workspace" }];
+    controls.queryClient.clear();
+    const calendar = await load("/calendar?view=week");
+    assert.equal(calendar.redirect, undefined);
+    assert.equal(calendar.matches.at(-1).status, "success");
+    assert.equal(calendar.matches.at(-1).search.view, "week");
+    controls.reset();
+    controls.responses["/pages/shared/published"] = { published: true };
+    assert.equal((await load("/p/shared")).matches.at(-1).context.publishedShare, "public");
+    controls.reset();
+  });
+
+  test("routing reuses fresh queries and preserves original failures through Effect", async () => {
+    const { guards, controls, NetworkUnavailableError } = await runtime();
+    controls.reset();
+    const session = { user: { id: "user" }, session: { id: "session" } };
+    controls.session = session;
+    await guards.getFreshSession();
+    await guards.getFreshSession();
+    assert.equal(controls.sessionReads, 1);
+    await guards.getWorkspaces();
+    await guards.getWorkspaces();
+    assert.equal(controls.workspaceReads, 1);
+    controls.queryClient.setQueryData(["session"], session, { updatedAt: Date.now() - 31_000 });
+    await guards.getFreshSession();
+    assert.equal(controls.sessionReads, 2);
+
+    controls.reset();
+    const offline = new NetworkUnavailableError();
+    controls.errors.session = offline;
+    assert.deepEqual(await guards.getFreshSession({ optional: true }), {
+      user: null,
+      session: null,
+    });
+    await assert.rejects(guards.getFreshSession(), (error) => error === offline);
+    for (const failure of [
+      new Error("Unexpected"),
+      Object.assign(new Error("Forbidden"), { status: 403 }),
+      new DOMException("Cancelled", "AbortError"),
+    ]) {
+      controls.errors.session = failure;
+      await assert.rejects(
+        guards.getFreshSession({ optional: true }),
+        (error) => error === failure,
+      );
+      controls.errors.workspaces = failure;
+      await assert.rejects(guards.getWorkspaces(), (error) => error === failure);
+    }
+    controls.reset();
+  });
+
+  test("routing keeps hydration optional and trusts only cached members offline", async () => {
+    const { guards, controls, NetworkUnavailableError } = await runtime();
+    const page = {
+      id: "page",
+      workspaceId: "workspace",
+      name: "Page",
+      type: "pageblock",
+      url: "#",
+      createdAt: "2026-10-12T00:00:00Z",
+      updatedAt: "2026-10-12T00:00:00Z",
+    };
+    for (const viewerType of ["member", "guest", "public"]) {
+      controls.reset();
+      controls.session = { user: { id: "user" }, session: { id: "session" } };
+      controls.responses["/pages/page"] = { page, viewerType, databaseIds: ["database"] };
+      controls.storageError = new Error("Storage unavailable");
+      assert.equal(
+        await guards.applyPageShareAccess("page"),
+        viewerType === "member" ? "app" : viewerType,
+      );
+      assert.equal(controls.hydrated.length, viewerType === "member" ? 1 : 0);
+      if (viewerType === "member") {
+        const { queryClient, ...input } = controls.hydrated[0];
+        assert.equal(queryClient, controls.queryClient);
+        assert.deepEqual(input, {
+          userId: "user",
+          sessionId: "session",
+          pageId: "page",
+          workspaceId: "workspace",
+          databaseIds: ["database"],
+        });
+      }
+      const requestCount = controls.requests.length;
+      controls.offline = true;
+      if (viewerType === "member") assert.equal(await guards.applyPageShareAccess("page"), "app");
+      else await assert.rejects(guards.applyPageShareAccess("page"), NetworkUnavailableError);
+      assert.equal(controls.requests.length, requestCount);
+      assert.equal(controls.hydrated.length, viewerType === "member" ? 1 : 0);
+    }
+    controls.reset();
+  });
+
+  test("routing chooses the preferred workspace and recovers navigation failures", async () => {
+    const { guards, controls } = await runtime();
+    controls.reset();
+    const session = {
+      user: { id: "user" },
+      session: { id: "session", activeWorkspaceId: "first" },
+    };
+    const workspaces = ["first", "preferred"].map((id) => ({ id, name: id, slug: id }));
+    controls.preferredWorkspace = "preferred";
+    const path = "/pages?fields=nav&workspaceId=preferred";
+    controls.errors[path] = new Error("Navigation unavailable");
+    assert.equal(await guards.getDefaultAppPath(session, workspaces), "/recents");
+    assert.deepEqual(controls.requests, [path]);
+    delete controls.errors[path];
+    controls.responses[path] = { pages: [], databases: [], placements: [] };
+    assert.equal(await guards.getDefaultAppPath(session, workspaces), "/recents");
+    controls.queryClient.removeQueries({ queryKey: ["pages"] });
+    controls.responses[path] = {
+      pages: [
+        {
+          id: "recent page",
+          workspaceId: "preferred",
+          name: "Recent",
+          type: "pageblock",
+          url: "#",
+          createdAt: "2026-10-12T00:00:00Z",
+          updatedAt: "2026-10-12T00:00:00Z",
+          lastVisitedAt: "2026-10-14T00:00:00Z",
+        },
+      ],
+      databases: [],
+      placements: [],
+    };
+    assert.equal(await guards.getDefaultAppPath(session, workspaces), "/p/recent%20page");
+    assert.equal(await guards.getDefaultAppPath(session, []), "/recents");
+    controls.reset();
+  });
+
   test("routing preserves URL validation and disabled-feature redirects", async () => {
     const { router, controls } = await runtime();
     const route = (path) => Object.values(router.routesById).find((item) => item.fullPath === path);
@@ -108,7 +254,6 @@ async function loadRoutingRuntime(sourcePath) {
     "@/app/state/app-store": `import { controls } from "routing-test-ports"; export const useAppStore = { getState: () => ({ activeWorkspaceId: controls.preferredWorkspace }) };`,
     "@/platform/network/connectivity": `import { controls } from "routing-test-ports"; export const getConnectivityState = () => controls.offline ? "offline" : "online";`,
     "@/components/pages/cache/page-read-cache": `import { controls } from "routing-test-ports"; export async function hydratePageReadCache(input) { controls.hydrated.push(input); if (controls.storageError) throw controls.storageError; }`,
-    "@/components/library/library-model": `export const getMostRecentItemPath = () => null;`,
     "@/platform/environment": `export const isFeatureEnabled = () => false;`,
     "@/components/desktop/index": `import { controls } from "routing-test-ports"; export const isDesktopApp = () => controls.desktop;`,
     "@/app/demo": `export const isHostedDemoRuntime = () => false;`,
@@ -118,13 +263,9 @@ async function loadRoutingRuntime(sourcePath) {
     "./edition-route-host": `export default () => null;`,
     "../shell/content/workspace-settings": `export default () => null;`,
   };
-  const realComponents = new Set([
-    "@/components/auth/google-auth",
-    "@/components/workspaces/members/model/member-settings-tabs",
-  ]);
   const result = await build({
     stdin: {
-      contents: `export { router } from "./router"; export * as guards from "./guards"; export { controls, NetworkUnavailableError } from "routing-test-ports";`,
+      contents: `export { router } from "./router"; export { createMemoryHistory, createRouter } from "@tanstack/react-router"; export * as guards from "./guards"; export { controls, NetworkUnavailableError } from "routing-test-ports";`,
       resolveDir: sourcePath("/src/app/routing"),
     },
     bundle: true,
@@ -140,9 +281,9 @@ async function loadRoutingRuntime(sourcePath) {
       {
         name: "routing-platform-ports",
         setup(builder) {
-          builder.onResolve({ filter: /./ }, ({ path }) => {
+          builder.onResolve({ filter: /./ }, ({ path, kind }) => {
             if (path in mocks) return { path, namespace: "routing-mock" };
-            if (path.startsWith("@/components/") && !realComponents.has(path))
+            if (path.startsWith("@/components/") && kind === "dynamic-import")
               return { path: "screen", namespace: "routing-mock" };
             if (path.startsWith("@/")) return { path: sourcePath(`/src/${path.slice(2)}.ts`) };
           });
