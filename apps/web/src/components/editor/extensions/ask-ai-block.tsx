@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { isFeatureEnabled } from "@/app/config/feature-flags";
+import { isFeatureEnabled } from "@/platform/environment";
 
 type AskAiBlockOptions = {
   workspaceId?: string | null;

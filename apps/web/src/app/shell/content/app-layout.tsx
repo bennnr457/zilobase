@@ -8,7 +8,7 @@ import { AppSidebar } from "@/app/shell/navigation";
 import { AppSearchProvider } from "@/components/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/ui";
 import { ChatSidebarTrigger } from "@/components/ai/chat-sidebar-trigger";
-import { isFeatureEnabled } from "@/app/config/feature-flags";
+import { isFeatureEnabled } from "@/platform/environment";
 import type { ChatPresentationMode } from "@/components/ai/chat-sidebar";
 import {
   usePageSidePaneState,

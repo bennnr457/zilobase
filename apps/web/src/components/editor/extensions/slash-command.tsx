@@ -39,7 +39,7 @@ import {
 import { createDatabaseSetupBlockContent } from "@/components/databases";
 import { ExcalidrawIcon, FigmaIcon, MiroIcon, YouTubeIcon } from "./embed-block";
 import { openAskAiPopover } from "./ask-ai-block";
-import { isFeatureEnabled } from "@/app/config/feature-flags";
+import { isFeatureEnabled } from "@/platform/environment";
 import type { CreatedPage } from "./page-block";
 import {
   insertCreatedBlock,

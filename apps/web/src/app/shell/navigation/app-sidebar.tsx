@@ -85,7 +85,7 @@ import {
 } from "./model/sidebar-layout-model";
 import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/local-state";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
-import { isFeatureEnabled } from "@/app/config/feature-flags";
+import { isFeatureEnabled } from "@/platform/environment";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 
 const sidebarNavigationIcons: SidebarNavigationIcons<React.ReactNode> = {

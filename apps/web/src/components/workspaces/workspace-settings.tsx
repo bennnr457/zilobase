@@ -4,7 +4,7 @@ import { DeleteWorkspaceSection } from "./settings/delete-workspace";
 import type { ReactNode } from "react";
 
 import { SettingsHeader } from "@/components/settings";
-import { isFeatureEnabled } from "@/app/config/feature-flags";
+import { isFeatureEnabled } from "@/platform/environment";
 
 import { Separator } from "@/components/ui/separator";
 

@@ -13,7 +13,7 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
 - `apps/web/src/components/<domain>` owns domain screens, widgets, local hooks,
   and presentation state. `components/ui` contains generic UI primitives; shared
   calendar renderers live in `components/calendar/primitives`. `app` owns startup,
-  providers, routing, configuration, shortcuts, and the shell. `platform` owns
+  providers, routing, shortcuts, and the shell. `platform` owns
   physical web/desktop adapters; `lib` contains web presentation helpers and
   `styles` contains global styles. Keep editor, canvas, Tiptap, Yjs collaboration,
   comments Yjs, Ask AI chrome, meeting capture, demo runtime, Electron, and database
@@ -36,6 +36,9 @@ renderers. Reserve the `features` folder name for `packages/features`.
 
 Desktop transport, capture, persistence, window, and deep-link adapters live under
 `platform`; application state and demo runtime composition live under `app`.
+Web build feature flags and desktop environment checks live together in
+`apps/web/src/platform/environment.ts`. Keep Vite environment reads in web and
+reuse this module instead of creating a single-file application config folder.
 Server HTTP handlers, middleware, and route-specific support live in `routes`;
 backend domain operations and models live in `services`. Do not recreate
 application `src/features` or web `src/shared` directories.

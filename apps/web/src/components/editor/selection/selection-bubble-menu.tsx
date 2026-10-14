@@ -11,7 +11,7 @@ import { SelectionAiMenu } from "./selection-ai-menu";
 import { toolbarGroups } from "../toolbar/toolbar-data";
 import { ToolbarButton } from "../toolbar/toolbar-button";
 import type { EditorControlProps, RunToolbarCommand } from "../toolbar/toolbar-contracts";
-import { isFeatureEnabled } from "@/app/config/feature-flags";
+import { isFeatureEnabled } from "@/platform/environment";
 
 const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";
 
