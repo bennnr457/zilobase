@@ -62,6 +62,11 @@ session, and meeting-capture installation together and preserve bootstrap order.
 Desktop session switching and replacement composition live in `app/desktop-session.ts`;
 the replacement dialog controller lives beside desktop UI in `components/desktop`.
 Keep native operations in `platform` and avoid recreating an `app/runtime` folder.
+Use Effect for startup installation and desktop session workflows. Run synchronous
+installation and browser callbacks with `Effect.runSync`; keep native/cleanup ports
+Promise-based with `Effect.runPromise` at their boundaries. Preserve candidate
+verification counters, cleanup order, and the two-frame React teardown wait.
+Use finalizers for revocation timer cleanup without changing its timeout scope.
 Web build feature flags and desktop environment checks live together in
 `apps/web/src/platform/environment.ts`. Keep Vite environment reads in web and
 reuse this module instead of creating a single-file application config folder.
