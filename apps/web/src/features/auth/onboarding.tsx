@@ -7,7 +7,6 @@ import { getApiErrorMessage } from "@/platform/network/api";
 import { cn } from "@/shared/lib/utils";
 import { useCreateWorkspace } from "@zilobase/features/workspaces/react";
 import posthog from "@/shared/lib/posthog";
-("use client");
 
 export function OnboardingForm({ className, ...props }: React.ComponentProps<"div">) {
   const navigate = useNavigate();

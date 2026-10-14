@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, statSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -41,11 +41,14 @@ test("shared wire contracts have no runtime dependency on React or application m
       );
       if (!name.startsWith(".")) continue;
       const base = resolve(dirname(path), name);
-      const target = [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`].find(existsSync);
+      const target = [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`].find(
+        (candidate) => existsSync(candidate) && statSync(candidate).isFile(),
+      );
       assert.ok(target, `Unresolved contract import ${path}: ${name}`);
       inspect(target);
     }
   }
   for (const path of contracts(resolve(packageRoot, "src"))) inspect(path);
-  assert.ok(visited.size > 10, "The test must cover the published contract modules");
+  inspect(resolve(packageRoot, "src/runtime/index.ts"));
+  assert.ok(visited.size > 10, "The test must cover shared contract modules");
 });

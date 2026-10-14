@@ -3,7 +3,8 @@ import test from "node:test";
 
 import { createMutationTestRuntime } from "../../shared/mutation-runtime.test";
 import type { DatabaseCommandRequest, DatabaseRecordEntity } from "../core/entities";
-import { getDatabaseRowMoveAnchors, useAddDatabaseRow } from "../react";
+import { useAddDatabaseRow } from "../react";
+import { getDatabaseRowMoveAnchors } from "../records/row-reorder";
 import { createTestDatabasePayload, setTestDatabaseClientState } from "./test-helpers";
 
 const record: DatabaseRecordEntity = {

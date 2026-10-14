@@ -1,6 +1,3 @@
-import type { CalendarEvent } from "./contracts";
-import { timedLayoutByKey } from "../calendar-layout/time";
-
 export type * from "./contracts";
 export { orderCalendarSources, moveCalendarSource } from "./source-order";
 export { calendarConnectionReturnPath } from "./onboarding";
@@ -40,9 +37,7 @@ export {
 } from "../calendar-layout/timeline";
 export { timedLayoutByKey } from "../calendar-layout/time";
 
-export function timedLayout(events: CalendarEvent[], date: string, zone: string) {
-  return timedLayoutByKey(events, date, zone, (event) => event.eventId);
-}
+export { timedLayout } from "./context";
 
 export { calendarMetric, type CalendarMetricName } from "./telemetry";
 export { normalizeCalendarView } from "../calendar-layout/types";

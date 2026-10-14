@@ -3,20 +3,9 @@ import {
   type ZilobaseAuthClient,
   rememberClientSession,
 } from "@zilobase/features";
-import type {
-  AcceptWorkspaceInvitationResponse,
-  Workspace,
-  WorkspaceInvitation,
-  WorkspaceRole,
-} from "@zilobase/features/workspaces";
-import type {
-  SessionResponse,
-  SignInWithOtpInput,
-  SignInWithPasswordInput,
-  SignUpInput,
-  VerifyEmailOtpInput,
-} from "@zilobase/features/auth";
-import { apiFetch, authFetch, clearApiAuthToken } from "@/platform/network/api";
+import type { Workspace } from "@zilobase/features/workspaces";
+import { createApiAuthClient, type SessionResponse } from "@zilobase/features/auth";
+import { apiFetch, clearApiAuthToken } from "@/platform/network/api";
 import {
   describeDesktopError,
   recordDesktopDiagnostic,
@@ -32,8 +21,7 @@ import {
   readCachedSession,
   webClientCacheStorage,
 } from "@/platform/storage/client-cache-storage";
-import { getConnectivityState } from "@/platform/network/connectivity";
-import type { ClientLifecycle } from "@zilobase/features";
+import { getConnectivityState, webClientLifecycle } from "@/platform/network/connectivity";
 function withOAuthQuery<T extends Record<string, unknown>>(input: T) {
   if (typeof window === "undefined") {
     return input;
@@ -43,6 +31,7 @@ function withOAuthQuery<T extends Record<string, unknown>>(input: T) {
   return oauthQuery ? { ...input, oauth_query: oauthQuery } : input;
 }
 
+const apiAuthClient = createApiAuthClient(apiFetch);
 export const webAuthClient: ZilobaseAuthClient = {
   getSession: async (signal) => {
     const startedAt = performance.now();
@@ -79,27 +68,19 @@ export const webAuthClient: ZilobaseAuthClient = {
     }
   },
   requestSignInOtp: (email) =>
+    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.requestSignInOtp(email),
+  signInWithOtp: (input) =>
     isHostedDemoRuntime()
       ? rejectDemoAction()
-      : authFetch<{ success: boolean }>("/email-otp/send-verification-otp", {
-          email,
-          type: "sign-in",
-        }),
-  signInWithOtp: (input: SignInWithOtpInput) =>
+      : apiAuthClient.signInWithOtp(withOAuthQuery({ ...input })),
+  signInWithPassword: (input) =>
     isHostedDemoRuntime()
       ? rejectDemoAction()
-      : authFetch<{ token: string; user: unknown }>(
-          "/sign-in/email-otp",
-          withOAuthQuery({ ...input }),
-        ),
-  signInWithPassword: (input: SignInWithPasswordInput) =>
+      : apiAuthClient.signInWithPassword(withOAuthQuery({ ...input })),
+  signUp: (input) =>
     isHostedDemoRuntime()
       ? rejectDemoAction()
-      : authFetch<{ token: string; user: unknown }>("/sign-in/email", withOAuthQuery({ ...input })),
-  signUp: (input: SignUpInput) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : authFetch<{ user: unknown }>("/sign-up/email", {
+      : apiAuthClient.signUp({
           ...input,
           callbackURL:
             input.callbackURL ??
@@ -108,20 +89,13 @@ export const webAuthClient: ZilobaseAuthClient = {
               : "/onboarding"),
         }),
   requestEmailVerificationOtp: (email) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : authFetch<{ success: boolean }>("/email-otp/send-verification-otp", {
-          email,
-          type: "email-verification",
-        }),
-  verifyEmailOtp: (input: VerifyEmailOtpInput) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : authFetch<{ user: unknown }>("/email-otp/verify-email", input),
+    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.requestEmailVerificationOtp(email),
+  verifyEmailOtp: (input) =>
+    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.verifyEmailOtp(input),
   signOut: async () => {
     if (isHostedDemoRuntime()) throw requestDemoGuard();
     const previousSession = await readCachedSession();
-    const result = await authFetch("/sign-out", {});
+    const result = await apiAuthClient.signOut();
     await clearCachedSession();
     if (previousSession?.user) await clearPageCacheForUser(previousSession.user.id);
     posthog?.reset();
@@ -132,45 +106,25 @@ export const webAuthClient: ZilobaseAuthClient = {
   createWorkspace: <TWorkspace,>(input: { name: string; slug: string }) =>
     isHostedDemoRuntime()
       ? rejectDemoAction<TWorkspace>()
-      : (authFetch<Workspace>("/workspace/create", input) as Promise<TWorkspace>),
-  setActiveWorkspace: (workspaceId: string) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : authFetch("/workspace/set-active", { workspaceId }),
-  inviteWorkspaceMember: (input: { email: string; workspaceId: string; role: string }) =>
-    isHostedDemoRuntime()
-      ? rejectDemoAction()
-      : authFetch("/workspace/invite-member", {
-          ...input,
-          role: input.role as WorkspaceRole,
-        }),
+      : apiAuthClient.createWorkspace<TWorkspace>(input),
+  setActiveWorkspace: (workspaceId) =>
+    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.setActiveWorkspace(workspaceId),
+  inviteWorkspaceMember: (input) =>
+    isHostedDemoRuntime() ? rejectDemoAction() : apiAuthClient.inviteWorkspaceMember(input),
   acceptWorkspaceInvitation: <TResponse,>(input: { invitationId: string }) =>
     isHostedDemoRuntime()
       ? rejectDemoAction<TResponse>()
-      : (authFetch<AcceptWorkspaceInvitationResponse>(
-          "/workspace/accept-invitation",
-          input,
-        ) as Promise<TResponse>),
+      : apiAuthClient.acceptWorkspaceInvitation<TResponse>(input),
   listWorkspaces: <TWorkspace,>(signal?: AbortSignal) =>
     isHostedDemoRuntime()
-      ? apiFetch<{ workspace: Workspace }>("/demo/bootstrap", {
-          method: "GET",
-          signal,
-        }).then(({ workspace }) => [workspace] as TWorkspace[])
-      : (apiFetch<Workspace[]>("/api/auth/workspace/list", {
-          method: "GET",
-          signal,
-        }) as Promise<TWorkspace[]>),
+      ? apiFetch<{ workspace: Workspace }>("/demo/bootstrap", { method: "GET", signal }).then(
+          ({ workspace }) => [workspace] as TWorkspace[],
+        )
+      : apiAuthClient.listWorkspaces<TWorkspace>(signal),
   listWorkspaceInvitations: <TInvitation,>(workspaceId: string, signal?: AbortSignal) =>
     isHostedDemoRuntime()
       ? Promise.resolve([])
-      : (apiFetch<WorkspaceInvitation[]>(
-          `/api/auth/workspace/list-invitations?workspaceId=${encodeURIComponent(workspaceId)}`,
-          {
-            method: "GET",
-            signal,
-          },
-        ) as Promise<TInvitation[]>),
+      : apiAuthClient.listWorkspaceInvitations<TInvitation>(workspaceId, signal),
 };
 
 function rejectDemoAction<T = unknown>(): Promise<T> {
@@ -200,21 +154,6 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
     </ZilobaseFeaturesProvider>
   );
 }
-
-export const webClientLifecycle: ClientLifecycle = {
-  isOnline: () => navigator.onLine !== false,
-  isVisible: () => document.visibilityState !== "hidden",
-  subscribe(listener) {
-    window.addEventListener("online", listener);
-    window.addEventListener("offline", listener);
-    document.addEventListener("visibilitychange", listener);
-    return () => {
-      window.removeEventListener("online", listener);
-      window.removeEventListener("offline", listener);
-      document.removeEventListener("visibilitychange", listener);
-    };
-  },
-};
 
 export function databasePresenceColor(value: string) {
   const colors = ["blue", "purple", "pink", "orange", "green", "yellow", "red", "brown"];

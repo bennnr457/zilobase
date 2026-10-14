@@ -39,7 +39,7 @@ test.afterAll(async () => {
   await server?.destroy();
   document?.destroy();
 });
-async function load(page) {
+async function load(page, accessLevel = "full") {
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
@@ -70,7 +70,7 @@ async function load(page) {
         ).toString("base64"),
       };
     else if (path === "/pages/p")
-      json = { page: pageData, databaseIds: [], accessLevel: "full", viewerType: "member" };
+      json = { page: pageData, databaseIds: [], accessLevel, viewerType: "member" };
     else if (path === "/pages") json = { pages: [pageData], databases: [], placements: [] };
     else if (path.endsWith("/access"))
       json = { access: [{ id: "access", pageId: "p", userId: "a", accessLevel: "full" }] };
@@ -81,7 +81,12 @@ async function load(page) {
     else if (path.startsWith("/page-layout")) json = { config: {}, sources: {} };
     else if (path.startsWith("/api/auth/workspace"))
       json = [{ id: "w", name: "Workspace", slug: "workspace", role: "owner" }];
-    return route.fulfill({ json });
+    return route.fulfill({
+      json,
+      ...(path === "/session"
+        ? { headers: { "Set-Cookie": "native-session=native-secret; Path=/; SameSite=Lax" } }
+        : {}),
+    });
   });
   await page.goto("/scripts/editor/e2e/hosted.html");
   await page.waitForFunction(() => window.hostedReady?.());
@@ -186,4 +191,19 @@ test("hosted startup requires connectivity and rejects another deployment", asyn
     (await send(page, { type: "initialize", sessionToken: "native-secret" }, { scope })).result.ok,
   ).toBe(false);
   expect((await send(page, { type: "status" })).result.code).toBe("not_initialized");
+});
+
+test("read-only pages acknowledge their confirmed read and close without a document lease", async ({
+  page,
+}) => {
+  await load(page, "view");
+  expect((await send(page, { type: "initialize", sessionToken: "native-secret" })).result.ok).toBe(
+    true,
+  );
+  expect((await send(page, { type: "openPage", pageId: "p" })).result.ok).toBe(true);
+  const editor = page.frameLocator("iframe").locator(".tiptap-editor[contenteditable]").first();
+  await expect(editor).toHaveAttribute("contenteditable", "false");
+  expect((await send(page, { type: "status" })).result.status.state).toBe("synchronized");
+  expect((await send(page, { type: "flushLocal" })).result.locallyFlushed).toBe(true);
+  expect((await send(page, { type: "close" })).result.status.state).toBe("closed");
 });

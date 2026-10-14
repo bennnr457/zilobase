@@ -52,6 +52,7 @@ import { setPageConnectionIndicator } from "@/features/editor/collaboration/page
 import {
   blockCachedPage,
   exportCachedPageState,
+  flushCachedPage,
 } from "@/features/editor/collaboration/page-document-cache";
 import { ApiError } from "@/platform/network/api";
 import { isHostedDemoRuntime } from "@/features/demo";
@@ -635,16 +636,16 @@ export function PageEditorPane({
               ? "connection"
               : null,
         isServerConfirmed: () =>
-          Boolean(
-            collaboration.entry &&
-            collaboration.synced &&
-            collaboration.unsyncedChanges === 0 &&
-            !collaboration.entry.locallyChanged,
-          ),
+          !collaborationEnabled
+            ? Boolean(page && !pageQueryError)
+            : Boolean(
+                collaboration.entry &&
+                collaboration.synced &&
+                collaboration.unsyncedChanges === 0 &&
+                !collaboration.entry.locallyChanged,
+              ),
         flushLocal: async () => {
-          if (!collaboration.entry) throw new Error("Editor storage is not ready.");
-          await collaboration.entry.flush();
-          if (collaboration.entry.persistenceError) throw collaboration.entry.persistenceError;
+          if (session?.user) await flushCachedPage(session.user.id, pageId);
         },
         isSynchronized: () =>
           !collaboration.document || (collaboration.synced && collaboration.unsyncedChanges === 0),
@@ -654,6 +655,10 @@ export function PageEditorPane({
     );
   }, [
     liveEditingReady,
+    collaborationEnabled,
+    page,
+    pageQueryError,
+    session?.user?.id,
     collaboration.document,
     collaboration.error,
     collaboration.entry,

@@ -60,7 +60,7 @@ export async function apiFetch<T>(
     response = await desktopNetworkFetch(toApiUrl(path), {
       ...init,
       body,
-      credentials: auth ? "include" : "same-origin",
+      credentials: getHostedEditorAuthToken() ? "omit" : auth ? "include" : "same-origin",
       headers: requestHeaders,
       signal: requestTimeout.signal,
     });

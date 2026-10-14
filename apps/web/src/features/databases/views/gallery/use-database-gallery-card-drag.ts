@@ -1,11 +1,9 @@
+import { getDatabaseRowMoveAnchors } from "@zilobase/features/databases";
 import { useManualRecordPlacement } from "../state/manual-record-placement";
 import { getGroupedRecordMove } from "@zilobase/features/databases";
 import { useCallback, useRef, useState, type DragEvent, type PointerEvent } from "react";
 import { toast } from "sonner";
-import {
-  getDatabaseRowMoveAnchors,
-  useChangeDatabaseRow,
-} from "@zilobase/features/databases/react";
+import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import {

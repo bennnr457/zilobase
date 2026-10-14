@@ -1,3 +1,4 @@
+import { getDatabaseRowMoveAnchors } from "@zilobase/features/databases";
 import { useManualRecordPlacement } from "../state/manual-record-placement";
 import {
   retainTableRowDropTarget,
@@ -24,10 +25,7 @@ import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
 import { ChevronDown, ChevronRight, Loader2, Plus } from "@/shared/components/icons";
 import { toast } from "sonner";
-import {
-  getDatabaseRowMoveAnchors,
-  useChangeDatabaseRow,
-} from "@zilobase/features/databases/react";
+import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalPageSidePane } from "@/features/pages/pane/page-side-pane";
 import { DefaultPageIcon, PageIconDisplay } from "@/features/pages/index";
 import { cn } from "@/shared/lib/utils";

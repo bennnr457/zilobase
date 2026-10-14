@@ -3448,10 +3448,6 @@
       "value": true,
       "type": false
     },
-    "installSharedClient": {
-      "value": true,
-      "type": false
-    },
     "PreparedIngestion": {
       "value": false,
       "type": true
@@ -3495,10 +3491,6 @@
       "type": true
     },
     "entityTimestamp": {
-      "value": true,
-      "type": false
-    },
-    "installSharedClient": {
       "value": true,
       "type": false
     },
@@ -4424,6 +4416,10 @@
       "value": true,
       "type": false
     },
+    "DataSourceCommandScope": {
+      "value": false,
+      "type": true
+    },
     "DataSourceEntity": {
       "value": false,
       "type": true
@@ -4765,6 +4761,10 @@
       "type": false
     },
     "getDatabasePropertyOrder": {
+      "value": true,
+      "type": false
+    },
+    "getDatabaseRowMoveAnchors": {
       "value": true,
       "type": false
     },
@@ -5685,6 +5685,10 @@
       "type": false
     },
     "resolveDatabaseExportReference": {
+      "value": true,
+      "type": false
+    },
+    "resolveDataSourceCommandScope": {
       "value": true,
       "type": false
     },
@@ -6742,6 +6746,10 @@
       "value": true,
       "type": false
     },
+    "DataSourceCommandScope": {
+      "value": false,
+      "type": true
+    },
     "DataSourceEntity": {
       "value": false,
       "type": true
@@ -7083,6 +7091,10 @@
       "type": false
     },
     "getDatabasePropertyOrder": {
+      "value": true,
+      "type": false
+    },
+    "getDatabaseRowMoveAnchors": {
       "value": true,
       "type": false
     },
@@ -8003,6 +8015,10 @@
       "type": false
     },
     "resolveDatabaseExportReference": {
+      "value": true,
+      "type": false
+    },
+    "resolveDataSourceCommandScope": {
       "value": true,
       "type": false
     },

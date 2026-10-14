@@ -49,7 +49,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
       readWorkspace("/apps/server/src/features/desktop-auth/routes.ts"),
     ]);
 
-    assert.match(provider, /authFetch\("\/sign-out"/);
+    assert.match(provider, /apiAuthClient\.signOut\(\)/);
     assert.match(provider, /clearApiAuthToken/);
     assert.doesNotMatch(provider, /revokeSessions|signOutAll/);
     assert.match(token, /desktopBridge\(\)\.auth\.setToken\(/);

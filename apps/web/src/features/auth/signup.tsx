@@ -26,7 +26,6 @@ import { useRequestEmailVerificationOtp, useSignUp } from "@zilobase/features/au
 import { isDesktopApp } from "@/features/desktop/index";
 import { AuthScreen } from "./auth-screen";
 import { DesktopBrowserAuthScreen } from "@/features/desktop/auth/index";
-("use client");
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"form">) {
   const navigate = useNavigate();

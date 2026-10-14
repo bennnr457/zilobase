@@ -32,7 +32,7 @@ test("clock ticks and unrelated updates leave event cards untouched", async ({ p
   await page.goto("/scripts/calendar/e2e/benchmark.html?count=1000");
   await page.waitForFunction(() => Boolean(window.surfaceFixture));
   await page.evaluate(() => window.surfaceFixture.navigate("week"));
-  await expect(page.locator('[data-calendar-period-ready="true"]')).toHaveCount(3);
+  await expect(page.locator("[data-calendar-time-content]").first()).toBeVisible();
   await page.evaluate(() => window.surfaceFixture.reset());
   await page.clock.fastForward(60000);
   expect(await page.evaluate(() => window.surfaceFixture.metrics.cards)).toBe(0);

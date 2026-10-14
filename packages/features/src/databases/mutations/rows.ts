@@ -247,18 +247,6 @@ function useDatabaseRowStateMutation(type: "row.archive" | "row.restore") {
   });
 }
 
-export function getDatabaseRowMoveAnchors(rowIds: string[], rowId: string) {
-  const index = rowIds.indexOf(rowId);
-  if (index < 0) {
-    throw new Error("Moved row is missing from the requested order");
-  }
-  return {
-    afterRowId: rowIds[index - 1] ?? null,
-    beforeRowId: rowIds[index + 1] ?? null,
-    rowId,
-  };
-}
-
 function resolveCreateAnchors(records: DatabaseRecordEntity[], input: AddRowInput) {
   if (input.beforeRowId !== undefined || input.afterRowId !== undefined)
     return { afterRowId: input.afterRowId ?? null, beforeRowId: input.beforeRowId ?? null };

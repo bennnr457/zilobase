@@ -129,3 +129,15 @@ export function getGroupedReorderedRowIds({
     targetIndex - groupStartIndex,
   );
 }
+
+export function getDatabaseRowMoveAnchors(rowIds: string[], rowId: string) {
+  const index = rowIds.indexOf(rowId);
+  if (index < 0) {
+    throw new Error("Moved row is missing from the requested order");
+  }
+  return {
+    afterRowId: rowIds[index - 1] ?? null,
+    beforeRowId: rowIds[index + 1] ?? null,
+    rowId,
+  };
+}

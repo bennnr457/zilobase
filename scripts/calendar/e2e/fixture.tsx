@@ -15,7 +15,7 @@ import {
   useCalendarWorkspace,
 } from "@/features/calendar/workspace/calendar-workspace";
 import { CalendarToolbar } from "@/features/calendar/workspace/calendar-toolbar";
-import { webClientLifecycle } from "@/app/providers/features-provider";
+import { webClientLifecycle } from "@/platform/network/connectivity";
 import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
 import { apiFetch } from "@/platform/network/api";

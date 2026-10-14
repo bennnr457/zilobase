@@ -39,7 +39,8 @@ const preferences = {
   weekStartsOn: 1 as const,
   showWeekends: true,
   showWeekNumbers: false,
-  secondaryTimeZones: [],
+  timeZoneColumns: [{ zone: "Asia/Kolkata", label: "Kolkata" }],
+  hourHeight: 48,
 };
 const metrics = { cards: 0, ranges: 0 };
 function Fixture() {

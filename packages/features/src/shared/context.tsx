@@ -1,13 +1,20 @@
-import { QueryClientProvider, useQuery, type QueryClient } from "@tanstack/react-query";
+import {
+  QueryClientProvider,
+  useQuery,
+  onlineManager,
+  focusManager,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { createContext, useContext } from "react";
 import { useEffect } from "react";
 import type { ClientCacheStorage } from "./cache-storage";
 import { subscribeClientReadCache } from "../pages/read-cache";
 import type { ApiFetcher } from "./api-fetcher";
-import type { ClientLifecycle } from "./lifecycle";
+import { defaultClientLifecycle, type ClientLifecycle } from "./lifecycle";
 import { initializeZilobaseClient, type ClientDeployment } from "./client";
 import { sessionQueryOptions } from "../auth/queries";
-import { DbProvider } from "../databases/queries/session";
+import { DatabaseSessionContext } from "../databases/queries/session";
+import { retainDatabaseController } from "../databases/interactions/store";
 export type { ClientLifecycle } from "./lifecycle";
 
 export type { ApiFetcher } from "./api-fetcher";
@@ -35,22 +42,24 @@ export function ZilobaseFeaturesProvider({
   value,
 }: React.PropsWithChildren<{ value: ZilobaseFeaturesConfig }>) {
   initializeZilobaseClient(value.queryClient, value.deployment);
-  return (
-    <QueryClientProvider client={value.queryClient}>
-      <ZilobaseFeaturesContext.Provider value={value}>
-        <SessionDatabaseProvider value={value}>{children}</SessionDatabaseProvider>
-      </ZilobaseFeaturesContext.Provider>
-    </QueryClientProvider>
-  );
-}
-
-function SessionDatabaseProvider({
-  children,
-  value,
-}: React.PropsWithChildren<{ value: ZilobaseFeaturesConfig }>) {
-  const { data: session } = useQuery(sessionQueryOptions(value.auth));
+  useEffect(() => {
+    if (!value.lifecycle) return;
+    const publish = () => {
+      onlineManager.setOnline(value.lifecycle!.isOnline());
+      focusManager.setFocused(value.lifecycle!.isVisible());
+    };
+    publish();
+    return value.lifecycle.subscribe(publish);
+  }, [value.lifecycle]);
+  const { data: session } = useQuery(sessionQueryOptions(value.auth), value.queryClient);
   const userId = session?.user?.id;
   const sessionId = session?.session?.id;
+  const lifecycle = value.lifecycle ?? defaultClientLifecycle;
+  useEffect(
+    () =>
+      retainDatabaseController(value.queryClient, sessionId ?? "public", value.apiFetch, lifecycle),
+    [value.queryClient, sessionId, value.apiFetch, lifecycle],
+  );
   useEffect(() => {
     if (!value.cacheStorage || !userId || !sessionId) return;
     return subscribeClientReadCache(value.queryClient, value.cacheStorage, {
@@ -60,14 +69,13 @@ function SessionDatabaseProvider({
     });
   }, [value.queryClient, value.cacheStorage, value.deployment, userId, sessionId]);
   return (
-    <DbProvider
-      apiFetch={value.apiFetch}
-      queryClient={value.queryClient}
-      sessionId={session?.session?.id ?? null}
-      lifecycle={value.lifecycle}
-    >
-      {children}
-    </DbProvider>
+    <QueryClientProvider client={value.queryClient}>
+      <ZilobaseFeaturesContext.Provider value={value}>
+        <DatabaseSessionContext.Provider value={sessionId ?? "public"}>
+          {children}
+        </DatabaseSessionContext.Provider>
+      </ZilobaseFeaturesContext.Provider>
+    </QueryClientProvider>
   );
 }
 

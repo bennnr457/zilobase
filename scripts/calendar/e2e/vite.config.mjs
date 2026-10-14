@@ -8,6 +8,7 @@ const { default: react } = await import(pathToFileURL(require.resolve("@vitejs/p
 const { default: tailwind } = await import(pathToFileURL(require.resolve("@tailwindcss/vite")));
 export default defineConfig({
   root,
+  cacheDir: path.join(root, "node_modules/.cache/zilobase-calendar-e2e"),
   optimizeDeps: { entries: ["scripts/calendar/e2e/index.html"] },
   configFile: false,
   envDir: false,

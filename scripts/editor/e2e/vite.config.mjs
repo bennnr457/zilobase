@@ -7,9 +7,18 @@ const { default: tailwindcss } = await import(pathToFileURL(require.resolve("@ta
 import { fileURLToPath } from "node:url";
 export default defineConfig({
   root: fileURLToPath(new URL("../../../", import.meta.url)),
+  cacheDir: fileURLToPath(
+    new URL("../../../node_modules/.cache/zilobase-editor-e2e", import.meta.url),
+  ),
   plugins: [tailwindcss(), react()],
   envDir: false,
-  optimizeDeps: { entries: ["scripts/editor/e2e/index.html"] },
+  optimizeDeps: {
+    entries: [
+      "scripts/editor/e2e/index.html",
+      "scripts/editor/e2e/hosted.html",
+      "scripts/editor/e2e/hosted-editor.html",
+    ],
+  },
   define: { "import.meta.env.VITE_API_URL": JSON.stringify("http://127.0.0.1:1502") },
   resolve: {
     alias: {

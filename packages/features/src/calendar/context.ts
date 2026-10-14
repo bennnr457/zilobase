@@ -1,3 +1,4 @@
+import { timedLayoutByKey } from "../calendar-layout/time";
 import type { CalendarEvent } from "./contracts";
 
 export function calendarLocationUrl(location: string, provider: "google" | "apple" = "google") {
@@ -28,4 +29,8 @@ export function upcomingCalendarMeeting(
         Date.parse(event.start.dateTime!) <= now + previewMinutes * 60_000,
     )
     .sort((a, b) => Date.parse(a.start.dateTime!) - Date.parse(b.start.dateTime!))[0];
+}
+
+export function timedLayout(events: CalendarEvent[], date: string, zone: string) {
+  return timedLayoutByKey(events, date, zone, (event) => event.eventId);
 }

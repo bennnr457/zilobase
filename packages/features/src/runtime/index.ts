@@ -149,4 +149,4 @@ export type { ExpiringRoomAttachment, NotificationRoomConfig } from "./notificat
 export * from "./room-kernel";
 export * from "./notification-room";
 export { eventOverlaps } from "../calendar-layout/time";
-export { timedLayout } from "../calendar/index";
+export { timedLayout } from "../calendar/context";

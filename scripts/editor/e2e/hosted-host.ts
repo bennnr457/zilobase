@@ -12,11 +12,12 @@ const apiFetch = async <T>(path: string, input?: RequestInit) => {
   const result = await fetch(path, {
     ...input,
     headers: { Authorization: "Bearer native-secret" },
+    credentials: "omit",
   });
   if (!result.ok) throw new Error("Request denied");
   return result.json() as Promise<T>;
 };
-const runtime = createZilobaseClient({ deployment: "native" });
+const runtime = createZilobaseClient({ deployment: `${location.origin}|${location.origin}` });
 runtime.queryClient.setQueryData(["session"], await createApiAuthClient(apiFetch).getSession());
 let scope: EditorBridgeScope | null = null;
 const messages: EditorBridgeMessage[] = [];
@@ -28,7 +29,11 @@ window.addEventListener("message", async (event) => {
     event.origin !== location.origin
   )
     return;
-  if (event.data.type === "ready") {
+  if (
+    event.data.type === "ready" &&
+    event.data.version === 1 &&
+    event.data.deployment === `${location.origin}|${location.origin}`
+  ) {
     scope = { deployment: event.data.deployment, accountId: "a", sessionId: "s", workspaceId: "w" };
     return;
   }

@@ -5,6 +5,7 @@ import { createServer } from "vite";
 
 const server = await createServer({
   configFile: false,
+  cacheDir: fileURLToPath(new URL("../../node_modules/.cache/zilobase-data-e2e", import.meta.url)),
   root: fileURLToPath(new URL("../../", import.meta.url)),
   optimizeDeps: { entries: ["scripts/data/shared-cache-fixture.html"] },
   server: { host: "127.0.0.1", port: 1500, strictPort: true },

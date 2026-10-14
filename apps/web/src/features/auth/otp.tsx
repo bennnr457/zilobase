@@ -14,7 +14,6 @@ import {
   useVerifyEmailOtp,
 } from "@zilobase/features/auth/react";
 import { useAuthFlowStore } from "./auth-flow-store";
-("use client");
 
 export function OtpForm({ className, ...props }: React.ComponentProps<"div">) {
   const navigate = useNavigate();

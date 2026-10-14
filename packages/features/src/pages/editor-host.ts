@@ -1,3 +1,6 @@
+import { sharedClient } from "../data/client";
+import { sessionQueryKey } from "../auth/queries";
+import type { SessionResponse } from "../auth/contracts";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   editorBridgeMessageSchema,
@@ -19,6 +22,15 @@ export async function acceptEditorChangeNotification(
     !sameEditorBridgeScope(message.scope, binding.scope) ||
     message.type !== "event" ||
     message.event.type !== "changed"
+  )
+    return false;
+  const session = queryClient.getQueryData<SessionResponse>(sessionQueryKey);
+  const identity = sharedClient(queryClient).capture().identity;
+  if (
+    identity.deployment !== binding.scope.deployment ||
+    session?.user?.id !== binding.scope.accountId ||
+    session?.session?.id !== binding.scope.sessionId ||
+    session.session.activeWorkspaceId !== binding.scope.workspaceId
   )
     return false;
   const records = message.event.records;

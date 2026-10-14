@@ -186,6 +186,18 @@ test("independent host/editor Query and DB runtimes reconcile only scoped confir
   );
   await host.queryClient.fetchQuery(pageQueryOptions(fetchPage, "p"));
   assert.equal(get(host), "Confirmed");
+  host.queryClient.setQueryData(sessionQueryKey, {
+    ...session,
+    session: { ...session.session, activeWorkspaceId: "another-workspace" },
+  });
+  assert.equal(
+    await acceptEditorChangeNotification(
+      host.queryClient,
+      { instanceId: "editor", scope },
+      message,
+    ),
+    false,
+  );
   editor.dispose();
   assert.equal(get(host), "Confirmed");
   host.dispose();

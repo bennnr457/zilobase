@@ -40,18 +40,14 @@ export {
   useArchiveDatabaseRow,
   useRestoreDatabaseRow,
   useUpdateDatabasePropertyValue,
-  getDatabaseRowMoveAnchors,
 } from "./mutations/rows";
 export { useDatabaseEntityCommandState } from "./interactions/react";
 export { useDatabaseSessionId } from "./queries/session";
-export { DbProvider } from "./queries/session";
-export type { DbProviderProps } from "./queries/session";
 export { useDatabaseBootstrap } from "./queries/bootstrap";
 export { useDatabaseRecords } from "./queries/records";
 export { useDatabaseAccess } from "./access/react";
 export { useDatabaseRealtime } from "./realtime/realtime";
 export { useDatabaseIdForRowPage } from "./records/use-database-id-for-row-page";
-export { resolveDataSourceCommandScope } from "./mutations/scope";
 export type { DatabaseScope } from "./queries/bootstrap";
 export type { DatabaseViewScope, DatabaseWindowFetchScope } from "./queries/records";
 export {

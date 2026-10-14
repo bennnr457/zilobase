@@ -21,7 +21,6 @@ import posthog from "@/shared/lib/posthog";
 import { isDesktopApp } from "@/features/desktop/index";
 import { AuthScreen } from "./auth-screen";
 import { DesktopBrowserAuthScreen } from "@/features/desktop/auth/index";
-("use client");
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   const signInWithPassword = useSignInWithPassword();

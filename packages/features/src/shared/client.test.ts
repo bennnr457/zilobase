@@ -54,3 +54,28 @@ test("independent runtimes isolate accounts and disposal removes installed owner
     second.dispose();
   }
 });
+
+test("account changes clear ordinary queries and cancel late requests from the previous identity", async () => {
+  const runtime = createZilobaseClient({ deployment: "server" });
+  const client = runtime.queryClient;
+  client.setQueryData(["session"], { user: { id: "first" }, session: { id: "s1" } });
+  client.setQueryData(["user-settings"], { private: "first" });
+  let complete!: (value: string) => void;
+  const request = client.fetchQuery({
+    queryKey: ["account-details"],
+    queryFn: () =>
+      new Promise<string>((resolve) => {
+        complete = resolve;
+      }),
+  });
+  const canceled = assert.rejects(request);
+  client.setQueryData(["session"], { user: { id: "second" }, session: { id: "s2" } });
+  assert.equal(client.getQueryData(["user-settings"]), undefined);
+  complete("old account");
+  await canceled;
+  assert.equal(client.getQueryData(["account-details"]), undefined);
+  client.setQueryData(["user-settings"], { private: "second" });
+  client.setQueryData(["session"], { user: null, session: null });
+  assert.equal(client.getQueryData(["user-settings"]), undefined);
+  runtime.dispose();
+});

@@ -10,7 +10,10 @@ const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
 if (!entryKey) throw new Error("Web build manifest has no entry module");
 
 const entry = manifest[entryKey];
-const initialBytes = await fileSize(entry.file);
+const bootstrapKey = (entry.dynamicImports ?? []).find((key) => key === "src/app/bootstrap.tsx");
+const applicationEntry = bootstrapKey ? manifest[bootstrapKey] : entry;
+const initialBytes =
+  (await fileSize(entry.file)) + (bootstrapKey ? await fileSize(applicationEntry.file) : 0);
 const maxInitialBytes = 1_500_000;
 const maxRouteBytes = 1_000_000;
 const failures = [];
@@ -21,7 +24,9 @@ if (initialBytes > maxInitialBytes) {
   );
 }
 
-const routeEntries = (entry.dynamicImports ?? [])
+const routeEntries = [
+  ...new Set([...(applicationEntry.dynamicImports ?? []), ...(entry.dynamicImports ?? [])]),
+]
   .map((key) => ({ key, value: manifest[key] }))
   .filter(
     ({ key, value }) => value && !key.includes("node_modules/") && !key.startsWith("src/app/"),
@@ -36,7 +41,15 @@ for (const { key, value } of routeEntries) {
   }
 }
 
-const shikiAllowedRoutes = new Set(["ai", "database", "meeting", "page", "recents", "trash"]);
+const shikiAllowedRoutes = new Set([
+  "ai",
+  "database",
+  "meeting",
+  "page",
+  "recents",
+  "trash",
+  "bootstrap",
+]);
 
 for (const { key, value } of routeEntries) {
   const routeName = value.name ?? key;

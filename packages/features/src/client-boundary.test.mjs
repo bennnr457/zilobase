@@ -43,3 +43,18 @@ test("all public shared client entrypoints load without a browser", async () => 
     await import(new URL(entry.default, new URL("../", source)).href);
   }
 });
+
+test("public imports expose one initialization path, domain APIs, domain hooks and one runtime entry", async () => {
+  const manifest = JSON.parse(readFileSync(new URL("../package.json", source), "utf8"));
+  for (const entry of Object.keys(manifest.exports))
+    assert.match(entry, /^(?:\.|\.\/[a-z-]+(?:\/react)?)$/, entry);
+  assert.deepEqual(
+    Object.keys(manifest.exports).filter((entry) => entry.startsWith("./runtime")),
+    ["./runtime"],
+  );
+  const databaseHooks = await import("./databases/react.ts");
+  assert.equal("DbProvider" in databaseHooks, false);
+  assert.equal("getDatabaseRowMoveAnchors" in databaseHooks, false);
+  const data = await import("./data/index.ts");
+  assert.equal("installSharedClient" in data, false);
+});

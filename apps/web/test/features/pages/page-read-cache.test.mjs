@@ -91,7 +91,11 @@ export function register({ assert, loadModule, test }) {
       Date.now(),
     );
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const unsubscribe = cache.subscribePageReadCache(client, "reader-4", "session-4");
+    const unsubscribe = cache.subscribeClientReadCache(client, storage.webClientCacheStorage, {
+      deployment: storage.pageCacheDeploymentKey(),
+      userId: "reader-4",
+      sessionId: "session-4",
+    });
     await assert.rejects(
       client.fetchQuery({ queryKey, queryFn: () => Promise.reject({ status: 403 }) }),
     );

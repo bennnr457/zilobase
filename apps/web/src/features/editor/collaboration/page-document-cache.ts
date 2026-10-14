@@ -282,3 +282,11 @@ async function dropIdleEntry(entry: PageDocumentEntry) {
   writeTails.delete(entry.key);
   return true;
 }
+
+export async function flushCachedPage(userId: string, pageId: string) {
+  const key = cacheKey(userId, pageId);
+  const entry = entries.get(key) ?? (await opening.get(key));
+  if (!entry) return;
+  await entry.flush();
+  if (entry.persistenceError) throw entry.persistenceError;
+}

@@ -1,3 +1,4 @@
+import { webClientLifecycle } from "@/platform/network/connectivity";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -51,7 +52,11 @@ type MountedEditor = {
 };
 let runtime: Runtime | null = null;
 let scope: EditorBridgeScope | null = null;
-const auth = createApiAuthClient(apiFetch);
+const auth = {
+  ...createApiAuthClient(apiFetch),
+  getSession: (signal?: AbortSignal) =>
+    apiFetch<SessionResponse>("/session", { signal, timeoutMs: 15_000 }),
+};
 const bridge = createEditorBridge(
   {
     async initialize(identity, sessionToken) {
@@ -116,6 +121,7 @@ const bridge = createEditorBridge(
               auth: { ...auth, getSession },
               apiFetch,
               cacheStorage: webClientCacheStorage,
+              lifecycle: webClientLifecycle,
               preferredActiveWorkspaceId: identity.workspaceId,
             }}
           >

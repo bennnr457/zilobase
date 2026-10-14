@@ -36,6 +36,7 @@ export class SharedClient {
   private readonly sessions = new Map<string, SessionEntities>();
   private readonly sessionIds = new Map<string, SessionEntities>();
   private readonly unsubscribe?: () => void;
+  private onIdentityChange?: () => void;
   constructor(
     private identity: () => SessionIdentity,
     private readonly queryClient?: QueryClient,
@@ -60,8 +61,9 @@ export class SharedClient {
     });
   }
 
-  configure(identity: () => SessionIdentity) {
+  configure(identity: () => SessionIdentity, onIdentityChange?: () => void) {
     this.identity = identity;
+    if (onIdentityChange) this.onIdentityChange = onIdentityChange;
     return this;
   }
 
@@ -74,8 +76,10 @@ export class SharedClient {
     const identity = this.identity();
     const key = JSON.stringify(identity);
     if (this.identityKey !== key) {
+      const hadIdentity = this.identityKey !== undefined;
       this.identityKey = key;
       this.clear();
+      if (hadIdentity) this.onIdentityChange?.();
       this.publication.changed([]);
     }
     return {

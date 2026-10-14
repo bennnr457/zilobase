@@ -498,3 +498,6 @@ export {
 export { createSampleRowContent } from "./templates/sample-content";
 export { getTimelineRowMove, indexTimelineGroupSections } from "./records/timeline-row-move";
 export type { TimelineRowMoveInput } from "./records/timeline-row-move";
+
+export { getDatabaseRowMoveAnchors } from "./records/row-reorder";
+export { resolveDataSourceCommandScope, type DataSourceCommandScope } from "./mutations/scope";

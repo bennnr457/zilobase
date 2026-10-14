@@ -12,11 +12,8 @@ import { useDatabaseSessionId } from "../queries/session";
 import { cachedVersion } from "../queries/keys";
 import { invalidateDatabaseQueries } from "../queries/invalidation";
 
-export type DatabasePresence = {
-  columnKey: string;
-  rowId: string;
-  viewId: string | null;
-};
+import type { DatabasePresence } from "./room-protocol";
+export type { DatabasePresence } from "./room-protocol";
 
 export type DatabasePresenceCollaborator = {
   color: string;
