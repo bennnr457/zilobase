@@ -23,7 +23,7 @@ export function register({ loadModule, readSource, readWorkspace, assert, test }
 
   test("bootstrap-required login errors redirect to self-host setup", async () => {
     const [redirects, router, validators] = await Promise.all([
-      loadModule("/packages/features/src/auth/bootstrap-redirect.ts"),
+      loadModule("/packages/features/src/auth/model.ts"),
       readSource("/src/app/routing/route-groups/public-routes.tsx"),
       readSource("/src/app/routing/search-validators.ts"),
     ]);

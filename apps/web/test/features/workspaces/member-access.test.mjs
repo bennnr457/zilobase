@@ -6,7 +6,7 @@ const DAY_IN_MS = 24 * 60 * MINUTE_IN_MS;
 export function register({ readSource, assert, loadModule, test }) {
   test("temporary access date helpers round-trip local date-time values", async () => {
     const { isoToLocalDateTime, localDateTimeToIso } = await loadModule(
-      "/packages/features/src/workspaces/member-access.ts",
+      "/packages/features/src/workspaces/model.ts",
     );
     const iso = "2030-04-05T12:34:00.000Z";
 
@@ -22,7 +22,7 @@ export function register({ readSource, assert, loadModule, test }) {
       getMaximumTemporaryExpiration,
       getMinimumTemporaryExpiration,
       localDateTimeToIso,
-    } = await loadModule("/packages/features/src/workspaces/member-access.ts");
+    } = await loadModule("/packages/features/src/workspaces/model.ts");
     const now = Date.parse("2030-01-01T10:00:00.000Z");
     const toTimestamp = (value) => Date.parse(localDateTimeToIso(value));
 
@@ -33,7 +33,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("workspace role normalization recognizes temporary access", async () => {
     const { normalizeWorkspaceRole } = await loadModule(
-      "/packages/features/src/workspaces/member-access.ts",
+      "/packages/features/src/workspaces/model.ts",
     );
 
     assert.equal(normalizeWorkspaceRole("temporary"), "temporary");
@@ -77,7 +77,7 @@ export function register({ readSource, assert, loadModule, test }) {
   });
   test("membership editing respects owner roles and workspace selection", async () => {
     const { canEditWorkspaceMember } = await loadModule(
-      "/packages/features/src/workspaces/member-access.ts",
+      "/packages/features/src/workspaces/model.ts",
     );
     const input = {
       actorRole: "admin",
@@ -101,7 +101,7 @@ export function register({ readSource, assert, loadModule, test }) {
       getRoleAccessExpiration,
       localDateTimeToIso,
       isValidInvitationEmail,
-    } = await loadModule("/packages/features/src/workspaces/member-access.ts");
+    } = await loadModule("/packages/features/src/workspaces/model.ts");
     const expiration = "2030-04-05T12:34";
     assert.equal(getRoleDraftExpiration("temporary", expiration), expiration);
     assert.equal(getRoleDraftExpiration("member", expiration), "");

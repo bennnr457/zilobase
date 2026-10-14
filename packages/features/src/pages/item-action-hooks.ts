@@ -1,4 +1,4 @@
-import { useActiveWorkspaceId } from "../workspaces/hooks";
+import { useActiveWorkspaceId } from "../workspaces/react";
 import { useCreatePage, useUpdatePage, useDeletePage } from "./content-mutations";
 import { useSetPageFavorite } from "./activity-mutations";
 import { usePage, usePageAccessLevel, usePageNavigation } from "./query-hooks";
@@ -9,7 +9,7 @@ import {
   useUpdateDatabase,
 } from "../databases/mutations/databases";
 import { useDatabaseMetadata } from "../databases/queries/metadata";
-import { useUpdateUserSettings, useUserSettings } from "../user-settings/hooks";
+import { useUpdateUserSettings, useUserSettings } from "../user-settings/react";
 import { getPrimaryPageParentId, resolvePageFullWidth } from "./queries";
 import { buildPageDuplicateInput } from "./duplication";
 

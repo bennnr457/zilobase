@@ -82,3 +82,16 @@ export const teamspacePrincipalsQueryOptions = (
       return result.principals;
     },
   });
+
+export async function archiveTeamspaces(
+  mutate: (input: {
+    action: "archive";
+    teamspaceId: string;
+    workspaceId: string;
+  }) => Promise<unknown>,
+  workspaceId: string,
+  teamspaceIds: Iterable<string>,
+) {
+  for (const teamspaceId of teamspaceIds)
+    await mutate({ action: "archive", teamspaceId, workspaceId });
+}

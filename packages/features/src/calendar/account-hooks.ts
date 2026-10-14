@@ -1,4 +1,4 @@
-import { useSession } from "../auth/hooks";
+import { useSession } from "../auth/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useZilobaseFeatures } from "../shared/context";
 import type { CalendarConnection } from "./contracts";

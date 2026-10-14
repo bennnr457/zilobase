@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useSession } from "../../auth/hooks";
+import { useSession } from "../../auth/react";
 import { usePagePersonAccessTargets } from "../../pages/query-hooks";
 import { useZilobaseFeatures } from "../../shared/context";
 import type { DatabaseBootstrapResponse } from "../core/entities";

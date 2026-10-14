@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 test("teamspace administration filters by text, access, and membership", async () => {
-  const { filterTeamspaces } = await import("./filters.ts");
+  const { filterTeamspaces } = await import("./model.ts");
   const teamspaces = [
     {
       accessMode: "open",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createMutationTestRuntime } from "../shared/mutation-runtime.test";
-import { useCreateOAuthApp, useDeleteOAuthApp, useRevokeOAuthConsent } from "./hooks";
+import { useCreateOAuthApp, useDeleteOAuthApp, useRevokeOAuthConsent } from "./react";
 
 test("OAuth write hooks use the configured API and keep one-time credentials outside mutation cache", async () => {
   const requests: { path: string; body: unknown }[] = [];

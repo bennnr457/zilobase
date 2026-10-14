@@ -90,3 +90,26 @@ function readSingleNonEmpty(parameters: URLSearchParams, key: string) {
   const value = values[0]?.trim();
   return values.length === 1 && value ? value : null;
 }
+
+const bootstrapRequiredMessage = "this zilobase instance must be bootstrapped before registration.";
+
+export function isBootstrapRequiredAuthError(error: unknown) {
+  if (typeof error !== "string") return false;
+
+  const normalized = error.trim().replaceAll("_", " ").toLowerCase();
+  return normalized === "bootstrap required" || normalized === bootstrapRequiredMessage;
+}
+
+export function addLoopbackOriginAliases(origins: Set<string>, origin: string) {
+  origins.add(origin);
+  try {
+    const url = new URL(origin);
+    if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) return;
+    for (const hostname of ["localhost", "127.0.0.1", "[::1]"]) {
+      url.hostname = hostname;
+      origins.add(url.origin);
+    }
+  } catch {
+    // Ignore unparseable origins.
+  }
+}

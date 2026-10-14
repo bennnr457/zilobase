@@ -79,7 +79,7 @@ export function register({ assert, appPath, test }) {
             build.onResolve({ filter: /^\./ }, (args) => {
               if (
                 args.importer === sharingHook &&
-                /(?:hooks|mutations|metadata)$/.test(args.path)
+                /(?:hooks|react|mutations|metadata)$/.test(args.path)
               ) {
                 return { path: args.path, namespace: "sharing-test" };
               }

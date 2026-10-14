@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { ZilobaseAuthClient } from "../shared/context";
+import type { ZilobaseAuthClient } from "../shared/auth-client";
 import type { SessionResponse } from "./contracts";
 
 export const sessionQueryKey = ["session"] as const;

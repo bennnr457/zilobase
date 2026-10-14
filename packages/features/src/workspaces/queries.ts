@@ -8,7 +8,8 @@ import type {
 } from "./contracts";
 import { queryOptions } from "@tanstack/react-query";
 
-import type { ApiFetcher, ZilobaseAuthClient } from "../shared/context";
+import type { ApiFetcher } from "../shared/api-fetcher";
+import type { ZilobaseAuthClient } from "../shared/auth-client";
 
 export const workspaceGuestsQueryKey = (workspaceId: string | null | undefined) =>
   ["workspace", workspaceId ?? "none", "guests"] as const;

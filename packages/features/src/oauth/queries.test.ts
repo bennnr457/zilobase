@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ApiFetcher } from "../shared/api-fetcher";
 import { listOAuthApps, listOAuthConsents } from "./queries";
-import { requestGoogleAuthorization, submitOAuthConsent } from "./mutations";
-import { readOAuthQuery } from "./search";
-import { getAuthReturnPath, getInvitationAuthSearch } from "../auth/return-path";
+import { requestGoogleAuthorization, submitOAuthConsent } from "./queries";
+import { readOAuthQuery } from "./model";
+import { getAuthReturnPath, getInvitationAuthSearch } from "../auth/model";
 
 test("OAuth list reads retain array/envelope responses and GET requests", async () => {
   const paths: string[] = [];

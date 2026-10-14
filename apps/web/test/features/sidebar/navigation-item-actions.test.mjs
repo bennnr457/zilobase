@@ -59,13 +59,13 @@ export function register({ assert, appPath, test }) {
               path: actionHook,
             }));
             const sharedModules = {
-              "../workspaces/hooks": "@zilobase/features/workspaces/react",
+              "../workspaces/react": "@zilobase/features/workspaces/react",
               "./content-mutations": "@zilobase/features/pages/react",
               "./activity-mutations": "@zilobase/features/pages/react",
               "./query-hooks": "@zilobase/features/pages/react",
               "../databases/mutations/databases": "@zilobase/features/databases/react",
               "../databases/queries/metadata": "@zilobase/features/databases/react",
-              "../user-settings/hooks": "@zilobase/features/user-settings/react",
+              "../user-settings/react": "@zilobase/features/user-settings/react",
             };
             build.onResolve({ filter: /^\./ }, (args) =>
               args.importer === actionHook && args.path in sharedModules

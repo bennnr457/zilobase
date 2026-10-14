@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 test("teamspace sidebar permissions follow role and invite policy", async () => {
-  const { getTeamspaceSidebarPermissions } = await import("./sidebar-permissions.ts");
+  const { getTeamspaceSidebarPermissions } = await import("./model.ts");
 
   assert.deepEqual(
     getTeamspaceSidebarPermissions(
@@ -52,7 +52,7 @@ test("teamspace sidebar permissions follow role and invite policy", async () => 
 });
 
 test("default teamspaces cannot be left or archived from the sidebar", async () => {
-  const { getTeamspaceSidebarPermissions } = await import("./sidebar-permissions.ts");
+  const { getTeamspaceSidebarPermissions } = await import("./model.ts");
   const permissions = getTeamspaceSidebarPermissions(
     {
       currentUserRole: "owner",

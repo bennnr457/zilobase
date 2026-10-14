@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 test("teamspace creation requires a workspace and normalizes the shared draft", async () => {
-  const { getTeamspaceCreationInput } = await import("./creation.ts");
+  const { getTeamspaceCreationInput } = await import("./model.ts");
   const draft = {
     accessMode: "closed",
     description: " Project team ",
@@ -20,7 +20,7 @@ test("teamspace creation requires a workspace and normalizes the shared draft", 
   assert.equal(getTeamspaceCreationInput({ ...draft, description: " " }).description, null);
 });
 test("teamspace management distinguishes owner rights from workspace recovery rights", async () => {
-  const { getTeamspaceManagementPermissions } = await import("./permissions.ts");
+  const { getTeamspaceManagementPermissions } = await import("./model.ts");
   const space = { currentUserRole: "owner", isDefault: false, ownerIds: [] };
   assert.deepEqual(getTeamspaceManagementPermissions(space, false), {
     canManage: true,

@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 export function register({ readSource, assert, loadModule, test }) {
   test("invitation links require exactly one non-empty id", async () => {
     const { readSingleInvitationId } = await loadModule(
-      "/packages/features/src/workspaces/invitation-link.ts",
+      "/packages/features/src/workspaces/model.ts",
     );
 
     assert.equal(readSingleInvitationId("?id=page-invite-1"), "page-invite-1");

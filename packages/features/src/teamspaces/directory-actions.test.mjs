@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { archiveTeamspaces, readTeamspaceInvitation } from "./directory-actions.ts";
+import { archiveTeamspaces, readTeamspaceInvitation } from "./index.ts";
 test("bulk archiving runs sequentially and stops at the first rejection", async () => {
   const calls = [];
   const first = Promise.withResolvers();

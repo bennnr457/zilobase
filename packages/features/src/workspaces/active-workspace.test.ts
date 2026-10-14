@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { resolveActiveWorkspaceId } from "./hooks";
+import { resolveActiveWorkspaceId } from "./model";
 
 test("active workspace waits for the workspace list before trusting stored IDs", () => {
   assert.equal(

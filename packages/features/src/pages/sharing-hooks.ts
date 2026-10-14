@@ -1,7 +1,7 @@
 import type { AccessLevel, AccessTargetType, PageAccessRule } from "./contracts";
 import { useMemo } from "react";
-import { useSession } from "../auth/hooks";
-import { useActiveWorkspaceId, useWorkspaceGuestPolicy } from "../workspaces/hooks";
+import { useSession } from "../auth/react";
+import { useActiveWorkspaceId, useWorkspaceGuestPolicy } from "../workspaces/react";
 import {
   usePage,
   usePageAccessLevel,
