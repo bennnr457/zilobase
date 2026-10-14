@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { DatabaseFormView } from "../form/components/database-form-view";
+import { DatabaseFormView } from "../form/database-form-view";
 
 export function DatabaseViewToolbarDialogs({
   formDialogOpen,

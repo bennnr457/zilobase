@@ -1,4 +1,4 @@
-import { getDatabaseViewTypePresentation } from "../view-settings/model/view-type-options";
+import { getDatabaseViewTypePresentation } from "../view-settings/view-type-options";
 
 import { X } from "@/shared/components/icons";
 

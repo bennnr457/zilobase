@@ -17,7 +17,7 @@ export { DatabaseViewProvider } from "./views/state/database-view-context";
 export type { DatabaseViewProviderValue } from "./views/state/database-view-context";
 export { DatabaseViewToolbar } from "./views/components/database-view-toolbar";
 export { DatabaseViewSkeleton } from "./views/components/database-view-skeleton";
-export { DatabaseTableView } from "./views/table/components/database-table-view";
+export { DatabaseTableView } from "./views/table/database-table-view";
 export { LinkedDataSourcePicker } from "./views/components/linked-data-source-picker";
 export {
   getMergedDatabaseConfig,

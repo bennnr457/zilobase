@@ -13,7 +13,7 @@ export function register({ readSource, assert, loadModule, test }) {
     ).join("\n");
   test("link existing data source owns its nested picker state", async () => {
     const settings = await readSource(
-      "/src/features/databases/views/view-settings/components/data-source-settings.tsx",
+      "/src/features/databases/views/view-settings/data-source-settings.tsx",
     );
 
     assert.match(settings, /function LinkExistingDataSourcePicker/);
@@ -119,7 +119,7 @@ export function register({ readSource, assert, loadModule, test }) {
         readSource("/src/features/databases/views/controller/use-database-view-controller.tsx"),
         readSource("/packages/features/src/databases/records/source-commands.ts"),
       ]).then((parts) => parts.join("\n")),
-      readSource("/src/features/databases/views/view-settings/components/data-source-items.tsx"),
+      readSource("/src/features/databases/views/view-settings/data-source-items.tsx"),
     ]);
 
     assert.match(
@@ -175,9 +175,9 @@ export function register({ readSource, assert, loadModule, test }) {
     const [dropdrawer, dropdrawerContent, menu, settings, subItems, toolbar] = await Promise.all([
       readSource("/src/shared/ui/dropdown-menu.tsx"),
       readSource("/src/shared/ui/dropdrawer.tsx"),
-      readSource("/src/features/databases/views/view-settings/components/index.tsx"),
-      readSource("/src/features/databases/views/view-settings/components/data-source-settings.tsx"),
-      readSource("/src/features/databases/views/view-settings/components/sub-items-settings.tsx"),
+      readSource("/src/features/databases/views/view-settings/database-view-settings.tsx"),
+      readSource("/src/features/databases/views/view-settings/data-source-settings.tsx"),
+      readSource("/src/features/databases/views/view-settings/sub-items-settings.tsx"),
       readToolbarSource(),
     ]);
 
@@ -238,7 +238,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database view settings expose one canonical layout catalog", async () => {
     const { databaseViewTypeOptions, getDatabaseViewTypePresentation } = await loadModule(
-      "/src/features/databases/views/view-settings/model/view-type-options.ts",
+      "/src/features/databases/views/view-settings/view-type-options.ts",
     );
 
     assert.deepEqual(

@@ -1,5 +1,5 @@
 import { DatabaseViewTabAppearance } from "./database-view-tab-appearance";
-import { getDatabaseViewTypePresentation } from "../view-settings/model/view-type-options";
+import { getDatabaseViewTypePresentation } from "../view-settings/view-type-options";
 import { getVisibleToolbarViewCount, partitionToolbarViews } from "../model/toolbar-view-overflow";
 import { DatabaseToolbarActions } from "./database-toolbar-actions";
 import {
@@ -69,8 +69,8 @@ import {
 } from "../controller/database-view-scroll";
 
 import { DatabaseViewToolbarDialogs } from "./database-view-toolbar-dialogs";
-import { ViewTypeOptionGrid } from "../view-settings/components/view-type-option-grid";
-import type { DatabaseViewType } from "../view-settings/model/view-type-options";
+import { ViewTypeOptionGrid } from "../view-settings/view-type-option-grid";
+import type { DatabaseViewType } from "../view-settings/view-type-options";
 
 function ToolbarMenuRow({
   icon,

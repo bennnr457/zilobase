@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   const model = () =>
-    loadModule("/src/features/databases/views/kanban/model/database-kanban-card-drag.ts");
+    loadModule("/src/features/databases/views/kanban/database-kanban-card-drag.ts");
   const board = { left: 300, right: 1100, scrollLeft: 200, maxScrollLeft: 700 };
   test("kanban edge scrolling accelerates in both directions and stays idle in the middle", async () => {
     const { getKanbanEdgeScrollSpeed: speed } = await model();

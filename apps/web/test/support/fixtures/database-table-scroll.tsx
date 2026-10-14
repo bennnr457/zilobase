@@ -1,12 +1,12 @@
 import { createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { DatabaseVirtualizedTable } from "../../../src/features/databases/views/table/components/database-table-shell";
+import { DatabaseVirtualizedTable } from "../../../src/features/databases/views/table/database-table-shell";
 import {
   DatabaseCellStateProvider,
   useSetActiveDatabaseCell,
 } from "../../../src/features/databases/views/state/database-cell-state";
-import type { TableRow } from "../../../src/features/databases/views/table/model/database-table-model";
+import type { TableRow } from "../../../src/features/databases/views/table/database-table-model";
 
 export function mountScrollTable(container: HTMLElement, count: number) {
   const renders = new Map<number, number>();

@@ -3,13 +3,13 @@ import { DatabaseSetupCard } from "../../setup/components/database-setup-card";
 import { DatabaseViewProvider } from "../state/database-view-context";
 import { DatabaseViewSkeleton } from "./database-view-skeleton";
 import { DatabaseViewToolbar } from "./database-view-toolbar";
-import { DatabaseKanbanView } from "../kanban/components/database-kanban-view";
-import { DatabaseTableView } from "../table/components/database-table-view";
-import { DatabaseTimelineView } from "../timeline/components/database-timeline-view";
-import { DatabaseChartView } from "../chart/components/database-chart-view";
-import { DatabaseGalleryView } from "../gallery/components/database-gallery-view";
-import { DatabaseListView } from "../list/components/database-list-view";
-import { DatabaseFormView } from "../form/components/database-form-view";
+import { DatabaseKanbanView } from "../kanban/database-kanban-view";
+import { DatabaseTableView } from "../table/database-table-view";
+import { DatabaseTimelineView } from "../timeline/database-timeline-view";
+import { DatabaseChartView } from "../chart/database-chart-view";
+import { DatabaseGalleryView } from "../gallery/database-gallery-view";
+import { DatabaseListView } from "../list/database-list-view";
+import { DatabaseFormView } from "../form/database-form-view";
 import {
   useDatabaseViewController,
   type DatabaseViewProps,

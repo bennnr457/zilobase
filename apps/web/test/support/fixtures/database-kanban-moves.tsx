@@ -13,7 +13,7 @@ import {
   type ZilobaseFeaturesConfig,
 } from "../../../../../packages/features/src/shared/context";
 import { useRecordDrops } from "../../../src/features/databases/views/controller/use-record-drop";
-import { useDatabaseKanbanCardDrag } from "../../../src/features/databases/views/kanban/controller/use-database-kanban-card-drag";
+import { useDatabaseKanbanCardDrag } from "../../../src/features/databases/views/kanban/use-database-kanban-card-drag";
 import { buildKanbanBoard } from "@zilobase/features/databases";
 import type {
   SortableDatabaseItem as DatabaseRow,

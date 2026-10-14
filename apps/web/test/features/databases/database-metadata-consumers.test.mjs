@@ -19,7 +19,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
       "/packages/features/src/pages/sharing-hooks.ts",
       "/packages/features/src/pages/item-action-hooks.ts",
       "/src/features/databases/setup/components/database-setup-card.tsx",
-      "/src/features/databases/views/view-settings/components/data-source-settings.tsx",
+      "/src/features/databases/views/view-settings/data-source-settings.tsx",
     ];
 
     for (const path of paths) {

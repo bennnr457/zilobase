@@ -7,7 +7,7 @@ import {
   useDatabaseUiContext,
 } from "../state/database-view-context";
 
-import { DatabaseFormShareMenu } from "../form/components/database-form-share-menu";
+import { DatabaseFormShareMenu } from "../form/database-form-share-menu";
 
 export function DatabaseRowCreationControl({ onPreviewForm }: { onPreviewForm: () => void }) {
   const { canAddDatabaseRows, editable } = useDatabaseDataContext();

@@ -25,9 +25,7 @@ export function register({ assert, loadModule, readSource, test }) {
   test("editor and database toolbars select shared button group variants", async () => {
     const [selectionBubbleMenu, databaseSelectionToolbar, editorStyles] = await Promise.all([
       readSource("/src/features/editor/selection/selection-bubble-menu.tsx"),
-      readSource(
-        "/src/features/databases/views/table/components/database-table-selection-toolbar.tsx",
-      ),
+      readSource("/src/features/databases/views/table/database-table-selection-toolbar.tsx"),
       readSource("/src/features/editor/styles/editor-chrome.css"),
     ]);
 

@@ -11,7 +11,7 @@ import type { DatabaseActiveFilter, DatabaseFilterUpdatePatch } from "@zilobase/
 import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
 import type { DatabaseActiveSort, DatabaseSortUpdatePatch } from "@zilobase/features/databases";
 import type { DatabaseChartSettings } from "@zilobase/features/databases";
-import type { DatabaseViewType } from "./model/view-type-options";
+import type { DatabaseViewType } from "./view-type-options";
 
 import type { DatabaseViewProperty, DatabaseSourceMenuItem } from "@zilobase/features/databases";
 export type { DatabaseViewProperty, DatabaseSourceMenuItem } from "@zilobase/features/databases";

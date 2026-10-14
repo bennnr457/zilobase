@@ -182,7 +182,7 @@ export function register({ assert, readSource, test }) {
 
   test("data-source settings launches the shared automation manager", async () => {
     const settings = await readSource(
-      "/src/features/databases/views/view-settings/components/data-source-settings.tsx",
+      "/src/features/databases/views/view-settings/data-source-settings.tsx",
     );
     assert.match(settings, /onOpenAutomations/);
     assert.doesNotMatch(settings, /Automation settings/);

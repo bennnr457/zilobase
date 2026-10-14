@@ -40,10 +40,7 @@ import {
   resolveRequestedDatabaseViewId,
 } from "@zilobase/features/databases";
 import { getDatabaseSetupDismissed } from "@zilobase/features/databases";
-import {
-  databaseViewTypeOptions,
-  type DatabaseViewType,
-} from "../view-settings/model/view-type-options";
+import { databaseViewTypeOptions, type DatabaseViewType } from "../view-settings/view-type-options";
 
 export type DatabaseViewProps = {
   activeViewId?: string | null;

@@ -55,11 +55,11 @@ import {
   getMergedDatabaseConfig,
 } from "@zilobase/features/databases";
 import type { DatabaseSourceViewSelection } from "../../views/state/database-view-context";
-import { ViewTypeOptionGrid } from "../../views/view-settings/components/view-type-option-grid";
+import { ViewTypeOptionGrid } from "../../views/view-settings/view-type-option-grid";
 import {
   getDatabaseViewTypePresentation,
   type DatabaseViewType,
-} from "../../views/view-settings/model/view-type-options";
+} from "../../views/view-settings/view-type-options";
 import { databaseCsvPayload, databaseTemplateRows } from "@zilobase/features/databases";
 import { PageDatabasePicker } from "../../components/page-database-picker";
 

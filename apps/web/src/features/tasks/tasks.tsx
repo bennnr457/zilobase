@@ -81,7 +81,7 @@ import {
 } from "@zilobase/features/tasks";
 
 const DatabaseListView = lazy(() =>
-  import("@/features/databases/views/list/components/database-list-view").then((module) => ({
+  import("@/features/databases/views/list/database-list-view").then((module) => ({
     default: module.DatabaseListView,
   })),
 );

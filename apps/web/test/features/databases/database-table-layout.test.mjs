@@ -6,10 +6,10 @@ export function register({ readSource, assert, loadModule, test }) {
       databaseNameColumnDefaultWidth,
     } = await loadModule("/src/features/databases/views/model/column-dimensions.ts");
     const tableSource = await readSource(
-      "/src/features/databases/views/table/components/database-table-shell.tsx",
+      "/src/features/databases/views/table/database-table-shell.tsx",
     );
     const tableViewSource = await readSource(
-      "/src/features/databases/views/table/components/database-table-view.tsx",
+      "/src/features/databases/views/table/database-table-view.tsx",
     );
 
     assert.equal(databaseColumnDefaultWidth, 200);

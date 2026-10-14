@@ -1,8 +1,8 @@
 import { getToolbarSourceIdentity, getToolbarSourceTitle } from "@zilobase/features/databases";
 import { DatabaseSettingsControl } from "./database-settings-control";
 import { DatabaseRowCreationControl } from "./database-row-creation-control";
-import { DatabaseSortControl } from "./database-sort-control";
-import { DatabaseFilterControl } from "./database-filter-control";
+import { DatabaseSortControl } from "./database-query-controls";
+import { DatabaseFilterControl } from "./database-query-controls";
 import { DatabaseSaveStatus } from "./database-save-status";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";

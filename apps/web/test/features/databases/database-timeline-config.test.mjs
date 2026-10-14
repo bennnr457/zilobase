@@ -11,9 +11,7 @@ export function register({ assert, loadModule, test }) {
       UNSCHEDULED_GROUP_NAME,
     } = {
       ...(await loadModule("/packages/features/src/databases/views/timeline-date.ts")),
-      ...(await loadModule(
-        "/src/features/databases/views/timeline/model/database-timeline-config.ts",
-      )),
+      ...(await loadModule("/src/features/databases/views/timeline/presentation-model.ts")),
     };
 
     const singleDate = parseRowDateRange("2026-06-15");

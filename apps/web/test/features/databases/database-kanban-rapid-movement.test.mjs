@@ -29,7 +29,7 @@ export function register({ assert, loadModule, readSource, test }) {
       "/packages/features/src/databases/interactions/group-values.ts",
     );
     const { getKanbanEdgeScrollSpeed } = await loadModule(
-      "/src/features/databases/views/kanban/model/database-kanban-card-drag.ts",
+      "/src/features/databases/views/kanban/database-kanban-card-drag.ts",
     );
 
     assert.deepEqual(
@@ -54,11 +54,11 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("sorted confirmation and geometry invalidation stay wired to optimistic moves", async () => {
     const controller = await readSource(
-      "/src/features/databases/views/kanban/controller/use-database-kanban-card-drag.ts",
+      "/src/features/databases/views/kanban/use-database-kanban-card-drag.ts",
     );
 
     const geometry = await readSource(
-      "/src/features/databases/views/kanban/controller/use-kanban-geometry.ts",
+      "/src/features/databases/views/kanban/use-kanban-geometry.ts",
     );
     assert.match(controller, /manualPlacement\.request/);
     assert.match(
