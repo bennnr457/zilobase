@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Effect } from "effect";
 
 import { isThemeFamilyId, THEME_FAMILY_STORAGE_KEY, type ThemeFamilyId } from "@/lib/themes";
 
@@ -12,23 +13,23 @@ const ThemeFamilyContext = React.createContext<ThemeFamilyContextValue | null>(n
 function readStoredThemeFamily(): ThemeFamilyId {
   if (typeof window === "undefined") return "default";
 
-  try {
-    const storedFamily = window.localStorage.getItem(THEME_FAMILY_STORAGE_KEY);
-    if (isThemeFamilyId(storedFamily)) return storedFamily;
-
-    return "default";
-  } catch {
-    return "default";
-  }
+  return Effect.runSync(
+    Effect.try<ThemeFamilyId>(() => {
+      const storedFamily = window.localStorage.getItem(THEME_FAMILY_STORAGE_KEY);
+      if (isThemeFamilyId(storedFamily)) return storedFamily;
+      return "default";
+    }).pipe(Effect.orElseSucceed(() => "default" as const)),
+  );
 }
 
 function applyThemeFamily(themeFamily: ThemeFamilyId) {
   document.documentElement.dataset.themeFamily = themeFamily;
-  try {
-    window.localStorage.setItem(THEME_FAMILY_STORAGE_KEY, themeFamily);
-  } catch {
-    // The active document can still use the palette when storage is unavailable.
-  }
+  // The active document can still use the palette when storage is unavailable.
+  Effect.runSync(
+    Effect.try(() => window.localStorage.setItem(THEME_FAMILY_STORAGE_KEY, themeFamily)).pipe(
+      Effect.ignore,
+    ),
+  );
 }
 
 export function ThemeFamilyProvider({ children }: React.PropsWithChildren) {

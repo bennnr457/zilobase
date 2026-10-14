@@ -38,6 +38,9 @@ Compose app-wide providers in `app/providers/app-providers.tsx`. Keep scoped
 providers beside the UI or runtime they serve. Merge tiny provider wrappers into
 their existing owner when practical; icon defaults live in `components/icons.ts`
 so independent editor roots can use them without importing application startup.
+Provider adapter workflows use Effect for session recovery, ordered cleanup, and
+fallible storage. Keep their auth ports Promise-based and React lifecycle/context
+composition unchanged; avoid adding another runtime or service layer.
 
 Keep web route declarations and root routes together in `app/routing/router.tsx`,
 with screens loaded lazily. Keep route guards, URL validation, shell rendering,
