@@ -169,15 +169,66 @@ export function register({ assert, loadModule, sourcePath, test }) {
       Object.defineProperties(globalThis, saved);
     }
   });
+
+  test("routing surfaces preserve pending shell visibility and edition route matching", async () => {
+    const saved = Object.getOwnPropertyDescriptors(globalThis);
+    const { window, document } = parseHTML("<html><body><div id='root'></div></body></html>");
+    Object.assign(globalThis, { window, document });
+    let fixture;
+    let root;
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 10));
+    try {
+      fixture = await loadErrorSurface(sourcePath);
+      const { RootRouteShell, EditionRouteHost, createElement, createRoot, flushSync, controls } =
+        fixture;
+      root = createRoot(document.getElementById("root"));
+      const render = (Component) => flushSync(() => root.render(createElement(Component)));
+      const shellVisible = () => Boolean(document.querySelector("[data-app-shell]"));
+      controls.matches = [{ routeId: "/app", status: "success" }];
+      render(RootRouteShell);
+      for (let attempt = 0; !shellVisible() && attempt < 100; attempt++) await settle();
+      assert.equal(shellVisible(), true);
+      controls.matches = [{ routeId: "/login", status: "pending" }];
+      render(RootRouteShell);
+      assert.equal(shellVisible(), true, "pending routes retain the last resolved shell");
+      controls.matches[0].status = "success";
+      render(RootRouteShell);
+      assert.equal(shellVisible(), false);
+      for (const [routeId, context, expected] of [
+        ["/p/$pageId", { publishedShare: "app" }, true],
+        ["/p/$pageId", { publishedShare: "public" }, false],
+        ["/d/$databaseId", { publishedShare: "app" }, true],
+        ["/m/$meetingId", { authenticatedMeeting: true }, true],
+        ["/m/$meetingId", { authenticatedMeeting: false }, false],
+      ]) {
+        controls.matches = [{ routeId, context, status: "success" }];
+        render(RootRouteShell);
+        assert.equal(shellVisible(), expected);
+      }
+      controls.pathname = "/edition/billing";
+      render(EditionRouteHost);
+      assert.match(document.body.textContent, /Billing/);
+      controls.pathname = "/edition/missing";
+      render(EditionRouteHost);
+      assert.match(document.body.textContent, /Edition page not found/);
+    } finally {
+      if (root) fixture.flushSync(() => root.unmount());
+      await settle();
+      for (const key of Object.getOwnPropertyNames(globalThis))
+        if (!saved[key]) delete globalThis[key];
+      Object.defineProperties(globalThis, saved);
+    }
+  });
 }
 
 async function loadErrorSurface(sourcePath) {
   const mocks = {
+    "@zilobase/edition-web": `import { createElement } from "react"; export const editionWebModule = { routePrefix: "/edition", routes: [{ path: "/billing", component: () => createElement("div", null, "Billing") }] };`,
     "@/components/ui/spinner": `import { createElement } from "react"; export const Spinner = props => createElement("span", props);`,
     "@/app/shell/document-favicon": `export const DocumentFavicon = () => null;`,
-    "@/app/shell/content/app-layout": `export const AppLayout = ({ children }) => children;`,
+    "@/app/shell/content/app-layout": `import { createElement } from "react"; export const AppLayout = ({ children }) => createElement("div", { "data-app-shell": true }, children);`,
     "error-test-ports": `export const controls = { selected: { instanceId: "active" }, reads: 0, diagnostics: [] };`,
-    "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; }; export const Outlet = () => null; export const useRouterState = () => [];`,
+    "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; }; export const Outlet = () => null; export const useRouterState = ({ select }) => select({ matches: controls.matches ?? [], location: { pathname: controls.pathname ?? "/" } });`,
     "@/components/desktop/index": `export const isDesktopApp = () => true;`,
     "@/platform/diagnostics/index": `import { controls } from "error-test-ports"; export const describeDesktopError = () => ({}); export const recordDesktopDiagnostic = (name, data) => { controls.diagnostics.push([name, data]); };`,
     "@/platform/server/operations/index": `import { controls } from "error-test-ports"; export const getSelectedDesktopServer = () => controls.selected; export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function executeDesktopServerSwitch(options) { controls.switched = options; }`,
@@ -186,7 +237,7 @@ async function loadErrorSurface(sourcePath) {
   };
   const result = await build({
     stdin: {
-      contents: `export { default as RouteErrorPage } from "./route-error-page"; export { AuthenticatedRouteError } from "./authenticated-route-error"; export { PendingPage } from "./route-shell"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "error-test-ports";`,
+      contents: `export { default as RouteErrorPage } from "./route-error-page"; export { AuthenticatedRouteError, PendingPage, RootRouteShell, EditionRouteHost } from "./route-shell"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "error-test-ports";`,
       resolveDir: sourcePath("/src/app/routing"),
     },
     bundle: true,

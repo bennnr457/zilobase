@@ -43,8 +43,10 @@ fallible storage. Keep their auth ports Promise-based and React lifecycle/contex
 composition unchanged; avoid adding another runtime or service layer.
 
 Keep web route declarations and root routes together in `app/routing/router.tsx`,
-with screens loaded lazily. Keep route guards, URL validation, shell rendering,
-and error surfaces separate; avoid forwarding route-group modules.
+with screens loaded lazily. Keep route guards and URL validation separate. Group
+the shell, pending UI, authenticated fallback, and edition host in `route-shell.tsx`;
+keep global error recovery in `route-error-page.tsx` and load it lazily. Avoid
+forwarding route-group modules and extra files for small route surfaces.
 Use Effect for asynchronous route-guard workflows, with `Effect.runPromise` at
 the router adapter boundary. Preserve original errors and redirect responses.
 Use `Effect.runSync` for synchronous guards and browser actions to preserve

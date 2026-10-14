@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useRouteContext, useSearch } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Maximize2 } from "@/components/icons";
 
-import { AuthenticatedRouteError } from "@/app/routing/authenticated-route-error";
+import { AuthenticatedRouteError } from "@/app/routing/route-shell";
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
 import {
   PageSidePaneLayout,

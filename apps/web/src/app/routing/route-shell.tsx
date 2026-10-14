@@ -1,6 +1,8 @@
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense, useRef, useEffect } from "react";
 import { Effect } from "effect";
+import { editionWebModule } from "@zilobase/edition-web";
+import { Button } from "@/components/ui/button";
 import { recordDesktopDiagnostic } from "@/platform/diagnostics/index";
 import { Spinner } from "@/components/ui/spinner";
 const DocumentFavicon = lazy(() =>
@@ -74,4 +76,42 @@ export function PendingPage() {
       </div>
     </main>
   );
+}
+
+export function AuthenticatedRouteError({ resource }: { resource: "database" | "page" }) {
+  return (
+    <main className="flex min-h-[calc(100svh-3rem)] flex-1 items-center justify-center px-6">
+      <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+        <p className="text-sm text-content-secondary">This {resource} could not be opened.</p>
+        <Button
+          onClick={() => Effect.runSync(Effect.sync(() => window.location.reload()))}
+          type="button"
+          variant="outline"
+        >
+          Try again
+        </Button>
+      </div>
+    </main>
+  );
+}
+
+export function EditionRouteHost() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const route = editionWebModule.routes.find(
+    (candidate) =>
+      `${editionWebModule.routePrefix}/${candidate.path.replace(/^\/+/, "")}` === pathname,
+  );
+
+  if (!route) {
+    return (
+      <main className="flex min-h-full items-center justify-center p-6">
+        <p className="text-sm text-content-secondary">Edition page not found.</p>
+      </main>
+    );
+  }
+
+  const EditionComponent = route.component;
+  return <EditionComponent />;
 }

@@ -367,9 +367,8 @@ async function loadRoutingRuntime(sourcePath) {
     "@/components/desktop/index": `import { controls } from "routing-test-ports"; export const isDesktopApp = () => controls.desktop;`,
     "@/app/demo": `import { controls } from "routing-test-ports"; export const isHostedDemoRuntime = () => controls.demo;`,
     "@zilobase/edition-web": `export const editionWebModule = { routePrefix: "/edition", routes: [] };`,
-    "./route-shell": `export const PendingPage = () => null; export const RootRouteShell = () => null;`,
+    "./route-shell": `export const PendingPage = () => null; export const RootRouteShell = () => null; export const EditionRouteHost = () => null;`,
     "./route-error-page": `export default () => null;`,
-    "./edition-route-host": `export default () => null;`,
     "../shell/content/workspace-settings": `export default () => null;`,
   };
   const result = await build({

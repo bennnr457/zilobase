@@ -348,7 +348,7 @@ const settingsRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: `${editionWebModule.routePrefix}/$`,
-    component: lazyRouteComponent(() => import("./edition-route-host")),
+    component: lazyRouteComponent(() => import("./route-shell"), "EditionRouteHost"),
   }),
 ];
 
