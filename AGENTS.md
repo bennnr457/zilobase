@@ -55,8 +55,12 @@ state plain.
 
 Keep shell composition at `app/shell/app-shell.tsx`, the fallback screen header
 in `app/shell/header`, favicon installation/conversion beside the shell, and tool-panel
-composition in `app/shell/panels`, and settings content/dialogs in
-`components/settings`. Page chrome and body scrolling belong to
+composition in `app/shell/panels`, and settings shell/dialogs in `components/settings/shell` with section screens
+in `components/settings/sections`. Workspace settings, members, guests, invitations,
+and page access gates live under the matching workspace subfolders; keep their
+hooks beside their UI without nested components/commands/model buckets. Teamspace
+UI and local hooks stay together at the teamspace domain root. Route-mounted
+screens use explicit `*-screen.tsx` names; route settings use `*-settings-screen.tsx`. Page chrome and body scrolling belong to
 `components/pages/layout/page-layout.tsx`, with one placement-aware header in
 `components/pages/header/page-header.tsx`. Main routes, desktop panes, and desktop dialogs compose
 this layout around the existing editor body. Page presentation state, opening/closing commands, and promotion live in

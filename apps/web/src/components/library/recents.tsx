@@ -7,7 +7,7 @@ import {
   homepageViews as libraryViews,
   type RecentsMode,
 } from "./library-model";
-import { CreateTeamspaceDialog as CreateLibraryTeamspaceDialog } from "@/components/teamspaces/creation/index";
+import { CreateTeamspaceDialog as CreateLibraryTeamspaceDialog } from "@/components/teamspaces/create-teamspace-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { ChevronDown, Database, FileText, Loader2, Plus } from "@/components/icons";

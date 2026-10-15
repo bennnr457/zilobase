@@ -57,7 +57,7 @@ const loginRoute = createRoute({
   path: "/login",
   validateSearch: validateLoginSearch,
   beforeLoad: ({ search }) => Effect.runPromise(applyLoginAccess(search)),
-  component: lazyRouteComponent(() => import("@/components/auth/login")),
+  component: lazyRouteComponent(() => import("@/components/auth/login-screen")),
 });
 
 const connectRoute = createRoute({
@@ -79,14 +79,14 @@ const signupRoute = createRoute({
   path: "/signup",
   validateSearch: validateSignupSearch,
   beforeLoad: ({ search }) => Effect.runPromise(applySignupAccess(search)),
-  component: lazyRouteComponent(() => import("@/components/auth/signup")),
+  component: lazyRouteComponent(() => import("@/components/auth/signup-screen")),
 });
 
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding",
   beforeLoad: () => Effect.runPromise(applyOnboardingAccess()),
-  component: lazyRouteComponent(() => import("@/components/auth/onboarding")),
+  component: lazyRouteComponent(() => import("@/components/auth/onboarding-screen")),
 });
 
 const otpRoute = createRoute({
@@ -98,7 +98,7 @@ const otpRoute = createRoute({
         isDesktopApp() ? Effect.fail(redirect({ to: "/login" })) : Effect.void,
       ),
     ),
-  component: lazyRouteComponent(() => import("@/components/auth/otp")),
+  component: lazyRouteComponent(() => import("@/components/auth/otp-screen")),
 });
 
 const oauthConsentRoute = createRoute({
@@ -106,13 +106,13 @@ const oauthConsentRoute = createRoute({
   path: "/oauth/consent",
   validateSearch: validateOAuthConsentSearch,
   beforeLoad: ({ search }) => Effect.runPromise(applyOAuthConsentAccess(search)),
-  component: lazyRouteComponent(() => import("@/components/oauth/consent")),
+  component: lazyRouteComponent(() => import("@/components/oauth/consent-screen")),
 });
 
 const oauthCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/oauth/callback",
-  component: lazyRouteComponent(() => import("@/components/oauth/callback")),
+  component: lazyRouteComponent(() => import("@/components/oauth/callback-screen")),
 });
 
 const publicRoutes = [
@@ -127,7 +127,9 @@ const publicRoutes = [
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/accept-invitation",
-    component: lazyRouteComponent(() => import("@/components/workspaces/accept-invitation")),
+    component: lazyRouteComponent(
+      () => import("@/components/workspaces/invitations/accept-workspace-invitation-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => rootRoute,
@@ -139,7 +141,7 @@ const publicRoutes = [
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/setup",
-    component: lazyRouteComponent(() => import("@/components/auth/setup")),
+    component: lazyRouteComponent(() => import("@/components/auth/setup-screen")),
   }),
 ];
 
@@ -198,54 +200,74 @@ const settingsRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/preferences",
-    component: lazyRouteComponent(() => import("@/components/settings/preferences")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/preferences-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/profile",
-    component: lazyRouteComponent(() => import("@/components/settings/profile")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/profile-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/security",
-    component: lazyRouteComponent(() => import("@/components/settings/security")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/security-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/workspace",
-    component: lazyRouteComponent(() => import("@/components/workspaces/workspace-settings")),
+    component: lazyRouteComponent(
+      () => import("@/components/workspaces/settings/workspace-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/api-keys",
-    component: lazyRouteComponent(() => import("@/components/settings/api-keys")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/api-keys-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/connected-apps",
-    component: lazyRouteComponent(() => import("@/components/settings/connected-apps")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/connected-apps-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/oauth-apps",
-    component: lazyRouteComponent(() => import("@/components/settings/oauth-apps")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/oauth-apps-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/team",
     validateSearch: validateTeamSettingsSearch,
-    component: lazyRouteComponent(() => import("@/components/workspaces/workspace-members")),
+    component: lazyRouteComponent(
+      () => import("@/components/workspaces/members/workspace-members-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/calendar",
-    component: lazyRouteComponent(() => import("@/components/settings/calendar")),
+    component: lazyRouteComponent(
+      () => import("@/components/settings/sections/calendar-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/teamspaces",
     validateSearch: validateTeamspaceSettingsSearch,
-    component: lazyRouteComponent(() => import("@/components/teamspaces/teamspaces")),
+    component: lazyRouteComponent(
+      () => import("@/components/teamspaces/teamspaces-settings-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => appRoute,

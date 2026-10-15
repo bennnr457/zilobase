@@ -30,7 +30,10 @@ import {
   getDatabaseId,
   useRoutePageId,
 } from "@/components/pages/header/page-header";
-import { getSettingsSection, type SettingsSection } from "@/components/settings/settings-sidebar";
+import {
+  getSettingsSection,
+  type SettingsSection,
+} from "@/components/settings/shell/settings-sidebar";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import {
   Sheet,
@@ -70,7 +73,7 @@ const EmbeddedPageDialogHost = lazy(() =>
   })),
 );
 const SettingsDialog = lazy(() =>
-  import("@/components/settings/settings-dialog").then((module) => ({
+  import("@/components/settings/shell/settings-dialog").then((module) => ({
     default: module.SettingsDialog,
   })),
 );

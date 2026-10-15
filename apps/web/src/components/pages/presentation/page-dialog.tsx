@@ -6,7 +6,7 @@ import {
   usePageSidePane,
   getFullPagePath,
 } from "@/components/pages/presentation/page-presentation";
-import { PageWorkspaceGate } from "@/components/workspaces/index";
+import { PageWorkspaceGate } from "@/components/workspaces/access/page-workspace-gate";
 import { useOptionalPageDesignSidebar } from "../design/page-design-sidebar";
 import { PageLayout } from "../layout/page-layout";
 import { PageContent } from "../content/page-content";

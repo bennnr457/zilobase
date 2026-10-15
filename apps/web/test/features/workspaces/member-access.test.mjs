@@ -43,7 +43,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("team settings tabs normalize deep links", async () => {
     const { normalizeTeamSettingsTab } = await loadModule(
-      "/src/components/workspaces/members/model/member-settings-tabs.ts",
+      "/src/components/workspaces/members/member-settings-tabs.ts",
     );
 
     assert.equal(normalizeTeamSettingsTab("team"), "team");
@@ -53,7 +53,9 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("team settings can open from the settings dialog on any route", async () => {
-    const source = await readSource("/src/components/workspaces/workspace-members.tsx");
+    const source = await readSource(
+      "/src/components/workspaces/members/workspace-members-settings-screen.tsx",
+    );
 
     assert.match(source, /useSearch\(\{\s*strict: false,/);
     assert.match(source, /normalizeTeamSettingsTab\(search\.tab\)/);
@@ -62,7 +64,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("team settings tab counts include pending work", async () => {
     const { getTeamSettingsTabCounts } = await loadModule(
-      "/src/components/workspaces/members/model/member-settings-tabs.ts",
+      "/src/components/workspaces/members/member-settings-tabs.ts",
     );
 
     assert.deepEqual(

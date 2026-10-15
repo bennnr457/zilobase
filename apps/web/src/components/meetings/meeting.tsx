@@ -2,7 +2,7 @@ import { PageLayout } from "@/components/pages/layout/page-layout";
 import { useParams } from "@tanstack/react-router";
 
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
-import { PageWorkspaceGate } from "@/components/workspaces";
+import { PageWorkspaceGate } from "@/components/workspaces/access/page-workspace-gate";
 import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";

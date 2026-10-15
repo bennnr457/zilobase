@@ -1,4 +1,4 @@
-import { PageWorkspaceGate } from "@/components/workspaces/index";
+import { PageWorkspaceGate } from "@/components/workspaces/access/page-workspace-gate";
 import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { usePage } from "@zilobase/features/pages/react";

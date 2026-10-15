@@ -104,7 +104,9 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("settings lists saved desktop servers and can remove one instance", async () => {
-    const source = await readSource("/src/components/settings/preferences.tsx");
+    const source = await readSource(
+      "/src/components/settings/sections/preferences-settings-screen.tsx",
+    );
     assert.match(source, /listDesktopServerProfiles/);
     assert.match(source, /Remove from this device/);
     assert.match(source, /Connect another server/);
@@ -140,8 +142,8 @@ export function register({ readSource, assert, loadModule, test }) {
     const [connect, screen, login, signup, router] = await Promise.all([
       readSource("/src/components/desktop/servers/desktop-connect-screen.tsx"),
       readSource("/src/components/desktop/auth/desktop-browser-auth-screen.tsx"),
-      readSource("/src/components/auth/login.tsx"),
-      readSource("/src/components/auth/signup.tsx"),
+      readSource("/src/components/auth/login-screen.tsx"),
+      readSource("/src/components/auth/signup-screen.tsx"),
       readSource("/src/app/routing/router.tsx"),
     ]);
 

@@ -21,8 +21,8 @@ export function register({ readSource, assert, loadModule, test }) {
         readSource("/packages/features/src/pages/sharing-hooks.ts"),
       ]).then((parts) => parts.join("\n")),
       Promise.all([
-        readSource("/src/components/workspaces/workspace-members.tsx"),
-        readSource("/src/components/workspaces/guests/components/workspace-guests.tsx"),
+        readSource("/src/components/workspaces/members/workspace-members-settings-screen.tsx"),
+        readSource("/src/components/workspaces/guests/workspace-guests.tsx"),
       ]).then((parts) => parts.join("\n")),
       readSource("/src/components/pages/page-screen.tsx"),
       readSource("/src/components/pages/header/public-page-header.tsx"),

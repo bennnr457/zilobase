@@ -3,7 +3,10 @@ import { useCalendarCatalog } from "@zilobase/features/calendar/react";
 import { calendarSelectionKey } from "@zilobase/features/calendar";
 import { useCalendarPreferences } from "./use-calendar-preferences";
 import { Button } from "@/components/ui/button";
-import { SettingsRow, SettingsSectionLayout } from "@/components/settings";
+import {
+  SettingsRow,
+  SettingsSection as SettingsSectionLayout,
+} from "@/components/settings/shell/settings-layout";
 export function RemovedCalendars({ workspaceId }: { workspaceId: string }) {
   const { accounts } = useCalendarAccounts(workspaceId),
     preferences = useCalendarPreferences(workspaceId);

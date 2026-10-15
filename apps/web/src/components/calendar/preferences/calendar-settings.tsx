@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import type { CalendarPreferences } from "@zilobase/features/calendar";
 
-import { SettingsRow, SettingsSectionLayout } from "@/components/settings";
+import {
+  SettingsRow,
+  SettingsSection as SettingsSectionLayout,
+} from "@/components/settings/shell/settings-layout";
 import { Minus, Plus, RotateCcw } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

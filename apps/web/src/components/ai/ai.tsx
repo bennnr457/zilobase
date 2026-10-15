@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/pages/layout/page-layout";
-import { PageWorkspaceGate } from "@/components/workspaces";
+import { PageWorkspaceGate } from "@/components/workspaces/access/page-workspace-gate";
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { DatabaseMainPane } from "@/components/databases/screen/database-screen";

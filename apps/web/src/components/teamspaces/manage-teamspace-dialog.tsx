@@ -1,4 +1,4 @@
-import { useTeamspaceManagement } from "./commands/use-teamspace-management";
+import { useTeamspaceManagement } from "./use-teamspace-management";
 
 import { Layers3Icon, UsersIcon } from "@/components/icons";
 
@@ -33,7 +33,7 @@ import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 
 import { type Teamspace, type TeamspaceAccessMode } from "@zilobase/features/teamspaces";
 
-import { type TeamspaceSettingsTab } from "./model/teamspace-settings";
+import { type TeamspaceSettingsTab } from "./teamspace-settings";
 export function ManageTeamspaceDialog({
   canInvite,
   canManage,
