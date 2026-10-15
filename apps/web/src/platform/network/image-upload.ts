@@ -1,5 +1,5 @@
 import { apiFetch, getApiRequestHeaders, toApiUrl } from "@/platform/network/api";
-import { desktopNetworkFetch } from "@/platform/network/index";
+import { desktopNetworkFetch } from "@/platform/network/desktop-network";
 
 type ImageAsset = {
   byteSize: number;

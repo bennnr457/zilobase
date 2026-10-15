@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { desktopDevelopmentTargets } from "@/platform/server/operations/index";
+import { desktopDevelopmentTargets } from "@/platform/server/desktop-server";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,

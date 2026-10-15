@@ -230,11 +230,13 @@ async function loadErrorSurface(sourcePath) {
     "error-test-ports": `export const controls = { selected: { instanceId: "active" }, reads: 0, diagnostics: [] };`,
     "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; }; export const Outlet = () => null; export const useRouterState = ({ select }) => select({ matches: controls.matches ?? [], location: { pathname: controls.pathname ?? "/" } });`,
     "@/platform/environment": `export const isDesktopApp = () => true;`,
-    "@/platform/diagnostics/index": `import { controls } from "error-test-ports"; export const describeDesktopError = () => ({}); export const recordDesktopDiagnostic = (name, data) => { controls.diagnostics.push([name, data]); };`,
-    "@/platform/server/operations/index": `import { controls } from "error-test-ports"; export const getSelectedDesktopServer = () => controls.selected; export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function executeDesktopServerSwitch(options) { controls.switched = options; }`,
+    "@/platform/diagnostics/desktop-diagnostics": `import { controls } from "error-test-ports"; export const describeDesktopError = () => ({}); export const recordDesktopDiagnostic = (name, data) => { controls.diagnostics.push([name, data]); };`,
+    "@/platform/server/desktop-server": `import { controls } from "error-test-ports"; export const getSelectedDesktopServer = () => controls.selected; export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function executeDesktopServerSwitch(options) { controls.switched = options; }`,
     "@/lib/posthog": `export const captureProductException = () => {};`,
     "@/components/ui/button": `import { createElement } from "react"; export function Button({ variant, ...props }) { return createElement("button", props); }`,
   };
+  mocks["@/platform/server/operations/desktop-server-switch"] =
+    mocks["@/platform/server/desktop-server"];
   const result = await build({
     stdin: {
       contents: `export { default as RouteErrorPage } from "./route-error-page"; export { AuthenticatedRouteError, PendingPage, RootRouteShell, EditionRouteHost } from "./route-shell"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "error-test-ports";`,

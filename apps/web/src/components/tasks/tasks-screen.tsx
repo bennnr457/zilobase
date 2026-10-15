@@ -98,7 +98,7 @@ const DatabaseViewToolbar = lazy(() =>
 
 const emptyAsync = async () => undefined;
 
-export default function TasksPage() {
+export default function TasksScreen() {
   const workspaceId = useActiveWorkspaceId();
   const { data: session } = useSession();
   const { data: navigation, isLoading: navigationLoading } = usePageNavigation(workspaceId);

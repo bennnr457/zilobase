@@ -43,11 +43,9 @@ import {
   SidebarNavItemAction,
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
 } from "@/components/ui/sidebar";
-import { buildDesktopDeepLink } from "@/platform/desktop/deep-links/index";
-import {
-  type DesktopServerProfile,
-  executeDesktopServerSwitch,
-} from "@/platform/server/operations/index";
+import { buildDesktopDeepLink } from "@/platform/desktop/deep-links/desktop-deep-link";
+import { type DesktopServerProfile } from "@/platform/server/desktop-server";
+import { executeDesktopServerSwitch } from "@/platform/server/operations/desktop-server-switch";
 import {
   DEFAULT_DATABASE_ITEM_ICON,
   DEFAULT_MEETING_ITEM_ICON,

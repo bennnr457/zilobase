@@ -4,7 +4,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 
 import { FlowCanvas } from "./flow-canvas";
 
-export default function CanvasPage() {
+export default function CanvasScreen() {
   return (
     <main className="h-full">
       <ReactFlowProvider>

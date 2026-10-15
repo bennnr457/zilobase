@@ -22,12 +22,12 @@ import { CalendarSourcePanel } from "./calendar-source-panel";
 import { useCalendarWorkspace, type CalendarCommand } from "../workspace/calendar-workspace";
 import { CalendarEventPanel } from "./calendar-event-panel";
 import { CalendarStatus } from "./calendar-status";
+import { CalendarSurface } from "@/components/calendar/primitives/calendar-surface";
 import {
-  CalendarSurface,
   type CalendarDisplayPreferences,
   type CalendarItem,
   type CalendarRange,
-} from "@/components/calendar/primitives";
+} from "@/components/calendar/primitives/types";
 import { runCalendarMutation } from "../events/calendar-mutations";
 import { toast } from "sonner";
 import { newCalendarEvent } from "@zilobase/features/calendar";

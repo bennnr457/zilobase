@@ -9,7 +9,7 @@ import type { CalendarConnection, CalendarPreferences } from "@zilobase/features
 import { CalendarSchedule } from "./views/calendar-schedule";
 import { useSession } from "@zilobase/features/auth/react";
 import { CalendarConnectButton } from "./connections/calendar-connect-button";
-import { GoogleIcon } from "@/components/google-icon";
+import { GoogleIcon } from "@/components/branding/google-icon";
 import { MainPaneHeaderLeadingControl, PageHeader } from "@/components/pages/header/page-header";
 import { PageSidePaneShell } from "@/components/pages/presentation/page-side-pane";
 import { useEffect, useState } from "react";

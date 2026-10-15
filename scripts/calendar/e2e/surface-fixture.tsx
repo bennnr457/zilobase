@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { CalendarSurface } from "@/components/calendar/primitives/calendar-surface";
 import {
-  CalendarSurface,
   type CalendarItem,
-  type CalendarView,
   type CalendarDisplayPreferences,
-} from "@/components/calendar/primitives";
+} from "@/components/calendar/primitives/types";
+import { type CalendarView } from "@zilobase/features/calendar";
 import "@/styles/global.css";
 import "@/styles/app.css";
 const defaults: CalendarDisplayPreferences = {

@@ -5,7 +5,7 @@ import { Link } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
-import { ZilobaseLogo } from "@/components/zilobase-logo";
+import { ZilobaseLogo } from "@/components/branding/zilobase-logo";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { reloadDesktopAuthCredentials } from "../../../platform/auth/desktop-auth-token";
 import {

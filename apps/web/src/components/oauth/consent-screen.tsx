@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { ZilobaseLogo } from "@/components/zilobase-logo";
+import { ZilobaseLogo } from "@/components/branding/zilobase-logo";
 import { readOAuthQuery } from "@zilobase/features/oauth";
 import { labelForScope, parseRequestedScopes } from "@zilobase/features/oauth";
 

@@ -1,6 +1,9 @@
 import { Component, type ReactNode } from "react";
 
-import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
+import {
+  describeDesktopError,
+  recordDesktopDiagnostic,
+} from "@/platform/diagnostics/desktop-diagnostics";
 import { captureProductException } from "@/lib/posthog";
 
 type FallbackErrorBoundaryProps = {

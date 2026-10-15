@@ -12,7 +12,7 @@ import {
   resolveRuntimeWebSocketUrl,
   type DesktopServer,
 } from "@/platform/server/desktop-server";
-import { desktopNetworkFetch } from "@/platform/network/index";
+import { desktopNetworkFetch } from "@/platform/network/desktop-network";
 import { getRequestPolicy } from "./request-policy";
 
 declare global {

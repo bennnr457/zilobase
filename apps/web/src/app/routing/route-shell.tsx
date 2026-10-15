@@ -3,7 +3,7 @@ import { lazy, Suspense, useRef, useEffect } from "react";
 import { Effect } from "effect";
 import { editionWebModule } from "@zilobase/edition-web";
 import { Button } from "@/components/ui/button";
-import { recordDesktopDiagnostic } from "@/platform/diagnostics/index";
+import { recordDesktopDiagnostic } from "@/platform/diagnostics/desktop-diagnostics";
 import { Spinner } from "@/components/ui/spinner";
 const DocumentFavicon = lazy(() =>
   import("@/app/shell/document-favicon").then((module) => ({

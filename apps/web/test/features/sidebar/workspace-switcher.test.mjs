@@ -152,7 +152,7 @@ async function loadSwitcher(sourcePath) {
     "@/platform/environment": `import { controls } from "switcher-ports"; export const isDesktopApp = () => controls.desktop;`,
     "@/components/desktop/servers/desktop-connect-server-dialog": `export const DesktopConnectServerDialog = () => null;`,
     "@/platform/network/api": `export const getApiErrorMessage = error => error.message;`,
-    "@/platform/server/operations/index": `import { controls } from "switcher-ports"; export const getSelectedDesktopServer = () => ({instanceId:"current",displayName:"Current",apiOrigin:"https://current.test"}); export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function updateDesktopServerProfileSnapshot(input) { controls.snapshots.push(input); } export async function executeDesktopServerSwitch() {}`,
+    "@/platform/server/desktop-server": `import { controls } from "switcher-ports"; export const getSelectedDesktopServer = () => ({instanceId:"current",displayName:"Current",apiOrigin:"https://current.test"}); export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function updateDesktopServerProfileSnapshot(input) { controls.snapshots.push(input); } export async function executeDesktopServerSwitch() {}`,
     "@zilobase/features/auth/react": `export const useSession = () => ({data:{workspacePinned:false}});`,
     "@zilobase/features/workspaces/react": `import { controls } from "switcher-ports"; export const useWorkspaces = () => ({data:controls.workspaces}); export const useActiveWorkspaceId = () => "workspace"; export const useSetActiveWorkspace = () => ({mutate(){}}); export const useCreateWorkspace = () => ({reset(){},async mutateAsync(name) { controls.calls.push("create:"+name); if (controls.createFailure) throw controls.createFailure; return await controls.create; }});`,
     "@/components/icons": part([
@@ -185,6 +185,8 @@ async function loadSwitcher(sourcePath) {
     "@/components/ui/field": part(["Field", "FieldError", "FieldGroup", "FieldLabel"]),
     "@/components/ui/input": part(["Input"]),
   };
+  mocks["@/platform/server/operations/desktop-server-switch"] =
+    mocks["@/platform/server/desktop-server"];
   const result = await build({
     stdin: {
       contents: await workspaceFixtureSource(sourcePath),

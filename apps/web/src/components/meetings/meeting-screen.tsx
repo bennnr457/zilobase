@@ -26,7 +26,7 @@ import { useSession } from "@zilobase/features/auth/react";
 import { LoaderCircle } from "@/components/icons";
 import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
 
-export default function MeetingPage() {
+export default function MeetingScreen() {
   const { meetingId } = useParams({ from: "/m/$meetingId" });
   const { data: session } = useSession();
 

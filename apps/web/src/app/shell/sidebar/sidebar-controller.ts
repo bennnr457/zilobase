@@ -42,7 +42,7 @@ import {
   listDesktopServerProfiles,
   updateDesktopServerProfileSnapshot,
   type DesktopServerProfile,
-} from "@/platform/server/operations/index";
+} from "@/platform/server/desktop-server";
 import { useSession } from "@zilobase/features/auth/react";
 import {
   useAddDatabaseRow,

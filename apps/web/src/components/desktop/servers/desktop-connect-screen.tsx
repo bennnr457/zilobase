@@ -10,16 +10,16 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { ZilobaseLogo } from "@/components/zilobase-logo";
+import { ZilobaseLogo } from "@/components/branding/zilobase-logo";
 import {
   desktopCloudConnectUrl,
   getSelectedDesktopServer,
   isCloudDesktopServer,
   listDesktopServerProfiles,
   type DesktopServerProfile,
-} from "@/platform/server/operations/index";
-import { requestDesktopServerReplacement } from "@/platform/server/operations/index";
-import { executeDesktopServerSwitch } from "@/platform/server/operations/index";
+} from "@/platform/server/desktop-server";
+import { requestDesktopServerReplacement } from "@/platform/server/operations/desktop-server-replacement";
+import { executeDesktopServerSwitch } from "@/platform/server/operations/desktop-server-switch";
 import { DesktopDevCustomServerSelect } from "@/components/desktop/servers/desktop-dev-custom-server-select";
 
 export default function DesktopConnectScreen() {

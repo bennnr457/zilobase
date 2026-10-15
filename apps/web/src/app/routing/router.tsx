@@ -151,7 +151,7 @@ const appRoutes = [
     getParentRoute: () => appRoute,
     path: "/calendar",
     validateSearch: validateCalendarSearch,
-    component: lazyRouteComponent(() => import("@/components/calendar/calendar")),
+    component: lazyRouteComponent(() => import("@/components/calendar/calendar-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -164,23 +164,23 @@ const appRoutes = [
             : Effect.fail(redirect({ to: "/recents", search: { view: "recents" } })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/ai/ai")),
+    component: lazyRouteComponent(() => import("@/components/ai/ai-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/canvas",
-    component: lazyRouteComponent(() => import("@/components/canvas/canvas")),
+    component: lazyRouteComponent(() => import("@/components/canvas/canvas-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/recents",
     validateSearch: validateLibrarySearch,
-    component: lazyRouteComponent(() => import("@/components/library/recents")),
+    component: lazyRouteComponent(() => import("@/components/library/recents-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/tasks",
-    component: lazyRouteComponent(() => import("@/components/tasks/tasks")),
+    component: lazyRouteComponent(() => import("@/components/tasks/tasks-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -300,7 +300,7 @@ const contentRoutes = [
           Effect.map((session) => ({ authenticatedMeeting: Boolean(session.user) })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/meetings/meeting")),
+    component: lazyRouteComponent(() => import("@/components/meetings/meeting-screen")),
     pendingComponent: PendingPage,
   }),
   createRoute({

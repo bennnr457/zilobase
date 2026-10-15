@@ -1,6 +1,6 @@
 [
   {
-    "path": "apps/web/src/components/google-icon.tsx",
+    "path": "apps/web/src/components/branding/google-icon.tsx",
     "owner": "Authentication",
     "reason": "Official Google logo artwork must retain its published brand colors."
   },

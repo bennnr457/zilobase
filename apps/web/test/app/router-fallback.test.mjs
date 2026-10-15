@@ -41,7 +41,7 @@ export function register({ readSource, assert, test }) {
     ).join("\n");
     const pageSource = await readSource("/src/components/pages/page-screen.tsx");
     const databaseSource = await readSource("/src/components/databases/screen/database-screen.tsx");
-    const meetingSource = await readSource("/src/components/meetings/meeting.tsx");
+    const meetingSource = await readSource("/src/components/meetings/meeting-screen.tsx");
 
     for (const source of [pageSource, databaseSource]) {
       assert.match(source, /if \(publishedShare === "public"\)/);

@@ -59,7 +59,7 @@ const homepageViews = libraryViews.map((view) => ({ ...view, icon: libraryViewIc
 
 const emptyAsync = async () => undefined;
 
-export default function RecentsPage() {
+export default function RecentsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const workspaceId = useActiveWorkspaceId();

@@ -3,13 +3,16 @@ import { isDesktopApp } from "@/platform/environment";
 import { useEffect, useState } from "react";
 import { Effect, Fiber } from "effect";
 
-import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
 import {
-  executeDesktopServerSwitch,
+  describeDesktopError,
+  recordDesktopDiagnostic,
+} from "@/platform/diagnostics/desktop-diagnostics";
+import { executeDesktopServerSwitch } from "@/platform/server/operations/desktop-server-switch";
+import {
   getSelectedDesktopServer,
   listDesktopServerProfiles,
   type DesktopServerProfile,
-} from "@/platform/server/operations/index";
+} from "@/platform/server/desktop-server";
 import { Button } from "@/components/ui/button";
 import { captureProductException } from "@/lib/posthog";
 

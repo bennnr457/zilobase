@@ -7,7 +7,10 @@ import {
 import type { Workspace } from "@zilobase/features/workspaces";
 import { createApiAuthClient, type SessionResponse } from "@zilobase/features/auth";
 import { apiFetch, clearApiAuthToken } from "@/platform/network/api";
-import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
+import {
+  describeDesktopError,
+  recordDesktopDiagnostic,
+} from "@/platform/diagnostics/desktop-diagnostics";
 import { clientDeployment, queryClient } from "@/app/query-client";
 import { useAppStore } from "@/app/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/app/demo/runtime";

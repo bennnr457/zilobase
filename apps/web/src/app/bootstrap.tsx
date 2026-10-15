@@ -11,7 +11,7 @@ import {
   applyActiveDesktopProfileWorkspace,
   initializeDesktopServer,
   listDesktopServerProfiles,
-} from "@/platform/server/operations/index";
+} from "@/platform/server/desktop-server";
 import { useAppStore } from "@/app/state/app-store";
 import { useAuthFlowStore } from "@/components/auth/auth-flow-store";
 import {
@@ -19,9 +19,9 @@ import {
   markDesktopAppReady,
   markDesktopRootMounted,
   recordDesktopDiagnostic,
-} from "@/platform/diagnostics/index";
+} from "@/platform/diagnostics/desktop-diagnostics";
 import { AppProviders } from "@/app/providers/app-providers";
-import { initializeDesktopTranslucency } from "@/platform/desktop/window/index";
+import { initializeDesktopTranslucency } from "@/platform/desktop/window/desktop-translucency";
 import { captureProductException } from "@/lib/posthog";
 
 configureApplicationSessions();

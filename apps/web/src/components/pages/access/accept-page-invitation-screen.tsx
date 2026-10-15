@@ -14,7 +14,7 @@ import {
 } from "@zilobase/features/pages/react";
 import posthog from "@/lib/posthog";
 
-export default function AcceptPageInvitationPage() {
+export default function AcceptPageInvitationScreen() {
   const navigate = useNavigate();
   const invitationId = readSingleInvitationId(window.location.search);
   const { data: session, isLoading: isLoadingSession } = useSession();

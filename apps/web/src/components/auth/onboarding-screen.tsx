@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ZilobaseLogo } from "@/components/zilobase-logo";
+import { ZilobaseLogo } from "@/components/branding/zilobase-logo";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/platform/network/api";

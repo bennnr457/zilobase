@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { GoogleIcon } from "@/components/google-icon";
+import { GoogleIcon } from "@/components/branding/google-icon";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import {
   InputGroup,

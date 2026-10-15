@@ -1,4 +1,4 @@
-import { desktopNetworkFetch } from "@/platform/network/index";
+import { desktopNetworkFetch } from "@/platform/network/desktop-network";
 
 export async function convertBlobUrlToDataUrl(url: string): Promise<string | null> {
   try {

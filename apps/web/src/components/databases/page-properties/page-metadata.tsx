@@ -16,18 +16,18 @@ import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { usePageEditorComments } from "@/components/comments/index";
+import { usePageEditorComments } from "@/components/comments/page-editor-comments";
 import { useSession } from "@zilobase/features/auth/react";
 import { type DatabasePresenceCollaborator } from "@zilobase/features/databases";
 import { useChangeDatabaseRow, useDatabaseRealtime } from "@zilobase/features/databases/react";
 import { usePagePersonAccessTargets, usePageProperties } from "@zilobase/features/pages/react";
-import { usePageCommentsSnapshot } from "@/components/comments/index";
+import { usePageCommentsSnapshot } from "@/components/comments/context/page-comments-registry";
 import type {
   PageIconPosition,
   PageLayoutConfig,
   PagePropertyPresenceTarget,
 } from "@zilobase/features/pages";
-import { formatCommentButtonLabel, PageCommentThread } from "@/components/comments/index";
+import { formatCommentButtonLabel, PageCommentThread } from "@/components/comments/page-comments";
 
 import { ImageSourcePicker } from "@/components/pages/appearance/image-source-picker";
 import { buildRandomCoverGalleryDataUrl } from "@/components/pages/appearance/page-cover-gallery";

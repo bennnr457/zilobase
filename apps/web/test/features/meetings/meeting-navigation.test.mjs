@@ -31,7 +31,7 @@ export function register({ readSource, assert, loadModule, test }) {
   test("meeting sidebar links target full meeting pages", async () => {
     const [sidebarSource, meetingPageSource, meetingViewSource, routerSource] = await Promise.all([
       readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
-      readSource("/src/components/meetings/meeting.tsx"),
+      readSource("/src/components/meetings/meeting-screen.tsx"),
       readSource("/src/components/editor/extensions/meeting/meeting-view.tsx"),
       readSource("/src/app/routing/router.tsx"),
     ]);

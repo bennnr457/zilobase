@@ -18,7 +18,7 @@ import {
   usePromotedFullPagePath,
 } from "@/components/pages/presentation/page-presentation";
 import { PageSidePaneShell } from "@/components/pages/presentation/page-side-pane";
-import { DiscussionsSidebarPanel } from "@/components/comments/index";
+import { DiscussionsSidebarPanel } from "@/components/comments/discussions-sidebar";
 import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/tool-panels";
 import {
   getRightSidebarEditorDefaultSize,
@@ -57,14 +57,14 @@ import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
-import { usePageEditorComments } from "@/components/comments/index";
-import { usePageCommentController } from "@/components/comments/index";
+import { usePageEditorComments } from "@/components/comments/page-editor-comments";
+import { usePageCommentController } from "@/components/comments/context/page-comments-registry";
 import {
   PageDesignSidebarProvider,
   useOptionalPageDesignSidebar,
 } from "@/components/pages/design/page-design-sidebar";
 import { Button } from "@/components/ui/button";
-import { FloatingWidget } from "@/components/floating-widget";
+import { FloatingWidget } from "@/components/ui/floating-widget";
 import { AppHeader } from "@/app/shell/header/app-header";
 
 const EmbeddedPageDialogHost = lazy(() =>

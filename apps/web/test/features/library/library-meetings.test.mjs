@@ -5,7 +5,7 @@ export function register({ readSource, assert, loadModule, test }) {
   const readLibrarySource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/library/recents.tsx"),
+        readSource("/src/components/library/recents-screen.tsx"),
         readSource("/src/components/teamspaces/create-teamspace-dialog.tsx"),
       ])
     ).join("\n");

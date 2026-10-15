@@ -17,7 +17,7 @@ import {
   ArrowUpRightIcon,
   TrashIcon,
 } from "@/components/icons";
-import { GoogleIcon } from "@/components/google-icon";
+import { GoogleIcon } from "@/components/branding/google-icon";
 import { PALETTE } from "@/lib/color-tokens";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {

@@ -29,21 +29,24 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
+import {
+  describeDesktopError,
+  recordDesktopDiagnostic,
+} from "@/platform/diagnostics/desktop-diagnostics";
 import {
   exportDesktopDiagnostics,
   openDesktopDiagnosticsFolder,
-} from "@/platform/diagnostics/index";
+} from "@/platform/diagnostics/diagnostics-actions";
 import { clearIndexedDataForServer } from "@/platform/storage/indexed-data-cleanup";
 import { DesktopConnectServerDialog } from "@/components/desktop/servers/desktop-connect-server-dialog";
-import { clearDesktopPersistKeys } from "@/platform/storage/desktop/index";
+import { clearDesktopPersistKeys } from "@/platform/storage/desktop/desktop-persist-storage";
 import {
   getSelectedDesktopServer,
   listDesktopServerProfiles,
   removeDesktopServerProfile,
   type DesktopServerProfile,
-} from "@/platform/server/operations/index";
-import { executeDesktopServerSwitch } from "@/platform/server/operations/index";
+} from "@/platform/server/desktop-server";
+import { executeDesktopServerSwitch } from "@/platform/server/operations/desktop-server-switch";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/app/state/app-store";
 import {
@@ -57,7 +60,7 @@ import {
   getDesktopTranslucency,
   MAX_DESKTOP_TRANSLUCENCY,
   setDesktopTranslucency,
-} from "@/platform/desktop/window/index";
+} from "@/platform/desktop/window/desktop-translucency";
 
 export default function PreferencesSettingsScreen() {
   return (

@@ -5,7 +5,7 @@ import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import type { TableOfContentDataItem } from "@tiptap/extension-table-of-contents";
-import type { PageCommentController } from "@/components/comments/index";
+import type { PageCommentController } from "@/components/comments/model/yjs-comments";
 import { getBlockCommentHandleRect } from "../drag-drop/block-drag";
 import { BlockCommentPopover } from "../selection/block-comment-popover";
 import { ColumnControls } from "../toolbar/column-controls";

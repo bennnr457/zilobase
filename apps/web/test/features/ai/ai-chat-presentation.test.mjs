@@ -21,7 +21,7 @@ export function register({ readSource, assert, test }) {
   });
 
   test("full-page Ask AI uses the page viewport and hides the duplicate launcher", async () => {
-    const aiPageSource = await readSource("/src/components/ai/ai.tsx");
+    const aiPageSource = await readSource("/src/components/ai/ai-screen.tsx");
     const workspaceSource = await readSource("/src/components/ai/workspace/ask-ai-workspace.tsx");
     const chatbotSource = await readChatbotSource(readSource);
     const layoutSource = await readSource("/src/app/shell/app-shell.tsx");

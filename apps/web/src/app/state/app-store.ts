@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { desktopPersistOptions } from "@/platform/storage/desktop/index";
+import { desktopPersistOptions } from "@/platform/storage/desktop/desktop-persist-storage";
 
 export type DesktopTab = {
   href: string;

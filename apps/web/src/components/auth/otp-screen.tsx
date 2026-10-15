@@ -2,7 +2,7 @@ import * as React from "react";
 import { ArrowLeftIcon, RotateCcwIcon } from "@/components/icons";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ZilobaseLogo } from "@/components/zilobase-logo";
+import { ZilobaseLogo } from "@/components/branding/zilobase-logo";
 import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
 import {
   InputOTP,

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { GoogleIcon } from "@/components/google-icon";
+import { GoogleIcon } from "@/components/branding/google-icon";
 import {
   Field,
   FieldDescription,

@@ -25,10 +25,8 @@ import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { pageCacheDeploymentKey } from "@/platform/storage/page-cache-database";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
-import {
-  PageCommentsRegistryProvider,
-  PageEditorCommentsProvider,
-} from "@/components/comments/index";
+import { PageCommentsRegistryProvider } from "@/components/comments/context/page-comments-registry";
+import { PageEditorCommentsProvider } from "@/components/comments/page-editor-comments";
 import { PageContent } from "@/components/pages/content/page-content";
 import { PageEditorRegistryProvider, usePageEditorRegistry } from "../runtime/page-editor-registry";
 import { installEditorHostTransport, sendEditorHostMessage } from "./transport";

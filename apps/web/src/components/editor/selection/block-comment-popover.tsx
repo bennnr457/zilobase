@@ -1,9 +1,9 @@
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { ChevronsLeftIcon, MessageSquareIcon, MessageSquarePlusIcon } from "@/components/icons";
 
-import type { PageCommentController } from "@/components/comments/index";
-import { usePageEditorComments } from "@/components/comments/index";
-import { PageCommentThread } from "@/components/comments/index";
+import type { PageCommentController } from "@/components/comments/model/yjs-comments";
+import { usePageEditorComments } from "@/components/comments/page-editor-comments";
+import { PageCommentThread } from "@/components/comments/page-comments";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -12,7 +12,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { usePageCommentsSnapshot } from "@/components/comments/index";
+import { usePageCommentsSnapshot } from "@/components/comments/context/page-comments-registry";
 import { getCommentIdsInRange } from "../extensions/comment-selection";
 
 import type { DragHandleTarget } from "../toolbar/toolbar-contracts";

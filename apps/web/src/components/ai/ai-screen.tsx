@@ -6,7 +6,7 @@ import { DatabaseMainPane } from "@/components/databases/screen/database-screen"
 import { PageContent } from "@/components/pages/content/page-content";
 import { AskAiWorkspace } from "./workspace/ask-ai-workspace";
 
-export default function AiPage() {
+export default function AiScreen() {
   const {
     closeSidePane,
     openSidePaneAsFullPage,

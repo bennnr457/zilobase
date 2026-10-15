@@ -1,4 +1,4 @@
-import { GoogleIcon } from "@/components/google-icon";
+import { GoogleIcon } from "@/components/branding/google-icon";
 import { Button } from "@/components/ui/button";
 import type { useCalendarAccounts } from "./use-calendar-accounts";
 

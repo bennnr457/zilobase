@@ -19,6 +19,10 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   comments Yjs, Ask AI chrome, meeting capture, demo runtime, Electron, and database
   view geometry here.
   Keep form/screen state machines beside their screens.
+  Place brand artwork in `components/branding` and generic widgets in `components/ui`.
+  Keep Notion import hooks at their domain root and conversion in `conversion`.
+  Import implementation owners directly across web; do not add forwarding-only
+  index modules or re-export shared features through web UI modules.
   Database route composition lives in `components/databases/screen`, embedded
   blocks in `blocks`, row-page properties in `page-properties`, and property
   editors/settings in `properties`. Keep shared view UI in `views/shared`, view
