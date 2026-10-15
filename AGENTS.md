@@ -36,6 +36,10 @@ renderers. Reserve the `features` folder name for `packages/features`.
 
 Keep shell layout and header at `app/shell` root, web panel composition in
 `app/shell/panels`, and settings content/dialogs in `components/settings`.
+Reusable item actions and sharing UI, with their local hooks, live in
+`components/pages`; page headers must not import them through the shell sidebar.
+Use Effect for clipboard and duplicate/navigation sequences while Query retains
+mutation ownership and React retains form/screen state.
 Load settings and embedded-page dialogs lazily. Route workspace settings directly
 to its owning component instead of adding a shell forwarding screen.
 

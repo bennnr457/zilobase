@@ -1,11 +1,9 @@
-import { getNavigationItemPath } from "../model/database-view-navigation";
+import { Cause, Effect } from "effect";
+import { getNavigationItemPath } from "@/components/pages/navigation/route-item-id";
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-
 import { toast } from "sonner";
-
 import { useItemActionController } from "@zilobase/features/pages/react";
-import { getNavigationPendingState } from "../model/navigation-item-state";
 import { useLayoutEditor } from "@/components/pages/layout";
 
 export function useNavigationItemActions({
@@ -75,32 +73,44 @@ export function useNavigationItemActions({
       onError: (error) =>
         toast.error(error instanceof Error ? error.message : "Could not update favorite."),
     });
-  const copyLink = async () => {
-    if (!pageId && !databaseId) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(
-      `${window.location.origin}${getNavigationItemPath({ databaseId, pageId })}`,
+  const copyLink = () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        if (!pageId && !databaseId) return;
+        yield* Effect.tryPromise({
+          try: () =>
+            navigator.clipboard.writeText(
+              `${window.location.origin}${getNavigationItemPath({ databaseId, pageId })}`,
+            ),
+          catch: (error) => error,
+        });
+        setIsOpen(false);
+        toast.success(`${databaseId ? "Database" : "Page"} link copied.`);
+      }),
     );
-    setIsOpen(false);
-    toast.success(`${databaseId ? "Database" : "Page"} link copied.`);
-  };
-  const duplicatePage = async () => {
-    try {
-      const duplicate = await actions.duplicatePage();
-      if (!duplicate) return;
-
-      setIsOpen(false);
-      toast.success("Page duplicated.");
-      await navigate({
-        to: "/p/$pageId",
-        params: { pageId: duplicate.id },
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not duplicate page.");
-    }
-  };
+  const duplicatePage = () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const duplicate = yield* Effect.tryPromise({
+          try: () => actions.duplicatePage(),
+          catch: (error) => error,
+        });
+        if (!duplicate) return;
+        setIsOpen(false);
+        toast.success("Page duplicated.");
+        yield* Effect.tryPromise({
+          try: () => navigate({ to: "/p/$pageId", params: { pageId: duplicate.id } }),
+          catch: (error) => error,
+        });
+      }).pipe(
+        Effect.catchCause((cause) =>
+          Effect.sync(() => {
+            const error = Cause.squash(cause);
+            toast.error(error instanceof Error ? error.message : "Could not duplicate page.");
+          }),
+        ),
+      ),
+    );
   const moveToTrash = () =>
     actions.moveToTrash({
       onSuccess: () => {
@@ -194,5 +204,32 @@ export function useNavigationItemActions({
       pending: isDeleting,
       confirm: moveToTrash,
     },
+  };
+}
+
+export function getNavigationPendingState(
+  item: {
+    isDatabase: boolean;
+    hasDatabase: boolean;
+    hasPage: boolean;
+    hasPageId: boolean;
+  },
+  pending: {
+    userSettings: boolean;
+    pageUpdate: boolean;
+    databaseUpdate: boolean;
+    pageDelete: boolean;
+    databaseDelete: boolean;
+    pageFavorite: boolean;
+    databaseFavorite: boolean;
+  },
+) {
+  return {
+    fullWidthUpdatePending: pending.userSettings || pending.pageUpdate,
+    isDeleting: pending.pageDelete || pending.databaseDelete,
+    lockUpdatePending: item.isDatabase ? pending.databaseUpdate : pending.pageUpdate,
+    favoriteDisabled: item.isDatabase
+      ? !item.hasDatabase || pending.databaseFavorite
+      : !item.hasPageId || pending.pageFavorite,
   };
 }

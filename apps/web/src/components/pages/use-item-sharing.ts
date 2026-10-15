@@ -1,10 +1,11 @@
+import { Effect } from "effect";
 import {
   type AccessLevel,
   type AccessTargetType,
   type PageAccessRule,
 } from "@zilobase/features/pages";
 import { useItemSharingController } from "@zilobase/features/pages/react";
-import { getNavigationItemPath } from "../model/database-view-navigation";
+import { getNavigationItemPath } from "@/components/pages/navigation/route-item-id";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -60,10 +61,16 @@ export function useItemSharing({
       onError: (error) => toast.error(error.message || "Could not share."),
     });
 
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(publicUrl || window.location.href);
-    toast.success("Page link copied.");
-  };
+  const copyLink = () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        yield* Effect.tryPromise({
+          try: () => navigator.clipboard.writeText(publicUrl || window.location.href),
+          catch: (error) => error,
+        });
+        toast.success("Page link copied.");
+      }),
+    );
 
   const invitePageGuest = () =>
     sharing.invitePageGuest(guestEmail, guestAccessLevel, {

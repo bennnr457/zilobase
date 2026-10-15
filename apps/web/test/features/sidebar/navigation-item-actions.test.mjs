@@ -33,7 +33,7 @@ export function register({ assert, appPath, test }) {
         contents: `
       import { createElement } from "react";
       import { renderToString } from "react-dom/server";
-      import { useNavigationItemActions } from "./src/app/shell/navigation/commands/use-navigation-item-actions";
+      import { useNavigationItemActions } from "./src/components/pages/use-item-actions";
       import { runtime } from "navigation-test-runtime";
       export function capture(input, dependencies) {
         Object.assign(runtime, dependencies);
@@ -215,5 +215,39 @@ export function register({ assert, appPath, test }) {
       ["success", "Moved to trash."],
       ["navigate", { to: "/" }],
     ]);
+    calls.length = 0;
+    mutations.CreatePage.mutateAsync = async () => ({ id: "copy" });
+    dependencies.navigate = async (input) => {
+      calls.push(["navigate", input]);
+      throw new Error("Navigation failed");
+    };
+    capture().moreMenu.run("Duplicate");
+    await new Promise(setImmediate);
+    assert.deepEqual(calls, [
+      ["success", "Page duplicated."],
+      ["navigate", { to: "/p/$pageId", params: { pageId: "copy" } }],
+      ["error", "Navigation failed"],
+    ]);
+    const savedWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+    const savedNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+    try {
+      globalThis.window = { location: { origin: "https://app.test" } };
+      Object.defineProperty(globalThis, "navigator", {
+        configurable: true,
+        value: {
+          clipboard: { writeText: async (value) => calls.push(["clipboard", value]) },
+        },
+      });
+      calls.length = 0;
+      capture({ databaseId: "db" }, { database }).moreMenu.run("Copy Link");
+      assert.deepEqual(calls, [["clipboard", "https://app.test/d/db"]]);
+      await new Promise(setImmediate);
+      assert.deepEqual(calls.at(-1), ["success", "Database link copied."]);
+    } finally {
+      if (savedWindow) Object.defineProperty(globalThis, "window", savedWindow);
+      else delete globalThis.window;
+      if (savedNavigator) Object.defineProperty(globalThis, "navigator", savedNavigator);
+      else delete globalThis.navigator;
+    }
   });
 }

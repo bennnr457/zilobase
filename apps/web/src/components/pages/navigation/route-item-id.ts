@@ -14,3 +14,14 @@ function getRouteItemId(pathname: string, prefix: "d" | "m" | "p") {
   const match = pathname.match(new RegExp(`^/${prefix}/([^/]+)`));
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
+
+/** Copy/open links use the owning database when present, otherwise the page. */
+export function getNavigationItemPath({
+  databaseId,
+  pageId,
+}: {
+  databaseId?: string | null;
+  pageId?: string | null;
+}) {
+  return databaseId ? `/d/${databaseId}` : `/p/${pageId}`;
+}

@@ -42,7 +42,7 @@ export function register({ assert, appPath, test }) {
         contents: `
       import {createElement} from "react";
       import {renderToString} from "react-dom/server";
-      import {useItemSharing} from "./src/app/shell/navigation/commands/use-item-sharing";
+      import {useItemSharing} from "./src/components/pages/use-item-sharing";
       import {runtime} from "sharing-test-runtime";
       export function capture(input, dependencies, selection) {
         Object.assign(runtime,dependencies);
@@ -221,5 +221,40 @@ export function register({ assert, appPath, test }) {
     calls.length = 0;
     capture().togglePublished(false);
     assert.deepEqual(calls, []);
+    const savedWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+    const savedNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+    try {
+      globalThis.window = { location: { origin: "https://app.test" } };
+      let failure;
+      Object.defineProperty(globalThis, "navigator", {
+        configurable: true,
+        value: {
+          clipboard: {
+            writeText: async (value) => {
+              calls.push(["clipboard", value]);
+              if (failure) throw failure;
+            },
+          },
+        },
+      });
+      calls.length = 0;
+      const sharing = capture(
+        { databaseId: "db" },
+        { database: { database: { accessLevel: "full" } } },
+      );
+      const copied = sharing.copyLink();
+      assert.deepEqual(calls, [["clipboard", "https://app.test/d/db"]]);
+      await copied;
+      assert.deepEqual(calls.at(-1), ["success", "Page link copied."]);
+      calls.length = 0;
+      failure = new Error("Clipboard denied");
+      await assert.rejects(sharing.copyLink(), (error) => error === failure);
+      assert.deepEqual(calls, [["clipboard", "https://app.test/d/db"]]);
+    } finally {
+      if (savedWindow) Object.defineProperty(globalThis, "window", savedWindow);
+      else delete globalThis.window;
+      if (savedNavigator) Object.defineProperty(globalThis, "navigator", savedNavigator);
+      else delete globalThis.navigator;
+    }
   });
 }

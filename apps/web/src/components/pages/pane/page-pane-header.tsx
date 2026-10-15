@@ -19,7 +19,7 @@ import {
 } from "@/components/icons";
 import { toast } from "sonner";
 
-import { NavActions } from "@/app/shell/navigation";
+import { NavActions } from "@/components/pages/item-actions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

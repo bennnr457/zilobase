@@ -1,4 +1,4 @@
-import { getNavigationItemPath } from "../model/database-view-navigation";
+import { getNavigationItemPath } from "@/components/pages/navigation/route-item-id";
 import { useState, type DragEvent } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useDeleteDatabase } from "@zilobase/features/databases/react";

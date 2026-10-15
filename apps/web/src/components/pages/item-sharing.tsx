@@ -2,7 +2,7 @@ import {
   useItemSharing,
   type ItemSharingState,
   type ShareTargetValue,
-} from "../commands/use-item-sharing";
+} from "@/components/pages/use-item-sharing";
 import * as React from "react";
 
 import {

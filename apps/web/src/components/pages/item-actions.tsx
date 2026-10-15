@@ -1,5 +1,5 @@
-import { useNavigationItemActions } from "../commands/use-navigation-item-actions";
-import { ItemShareDropdown } from "./item-share-dropdown";
+import { useNavigationItemActions } from "@/components/pages/use-item-actions";
+import { ItemShareDropdown } from "@/components/pages/item-sharing";
 
 import {
   ChevronsLeftIcon,

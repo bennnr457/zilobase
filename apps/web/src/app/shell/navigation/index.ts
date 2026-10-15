@@ -1,5 +1,4 @@
 export { AppSidebar } from "./app-sidebar";
-export { NavActions } from "./components/nav-actions";
 export { libraryViewIcons } from "./components/sidebar-layout-icons";
 export { libraryViewLabels } from "./model/sidebar-layout-model";
 export {
