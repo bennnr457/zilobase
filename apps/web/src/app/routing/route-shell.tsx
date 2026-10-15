@@ -12,7 +12,7 @@ const DocumentFavicon = lazy(() =>
 );
 
 const AppLayout = lazy(() =>
-  import("@/app/shell/content/app-layout").then((module) => ({
+  import("@/app/shell/app-layout").then((module) => ({
     default: module.AppLayout,
   })),
 );

@@ -411,7 +411,6 @@ async function loadRoutingRuntime(sourcePath) {
     "@zilobase/edition-web": `export const editionWebModule = { routePrefix: "/edition", routes: [] };`,
     "./route-shell": `export const PendingPage = () => null; export const RootRouteShell = () => null; export const EditionRouteHost = () => null;`,
     "./route-error-page": `export default () => null;`,
-    "../shell/content/workspace-settings": `export default () => null;`,
   };
   const result = await build({
     stdin: {

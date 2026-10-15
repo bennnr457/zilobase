@@ -16,7 +16,7 @@ export function register({ assert, readSource, test }) {
       ...Object.keys(React),
       `${workspace.code}; return { CalendarWorkspaceProvider, useCalendarWorkspace };`,
     )(React, ...Object.values(React));
-    const source = await readSource("/src/app/shell/content/app-layout.tsx");
+    const source = await readSource("/src/app/shell/app-layout.tsx");
     // Execute the real shell composition, replacing unrelated services and surfaces.
     const shell = source.slice(
       source.indexOf("export function AppLayout("),

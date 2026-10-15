@@ -209,7 +209,7 @@ const settingsRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/workspace",
-    component: lazyRouteComponent(() => import("../shell/content/workspace-settings")),
+    component: lazyRouteComponent(() => import("@/components/workspaces/workspace-settings")),
   }),
   createRoute({
     getParentRoute: () => appRoute,

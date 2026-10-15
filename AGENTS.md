@@ -34,6 +34,11 @@ creating another `components` directory inside each domain. Retain meaningful
 subsystems such as editor collaboration and database table/kanban/timeline
 renderers. Reserve the `features` folder name for `packages/features`.
 
+Keep shell layout and header at `app/shell` root, web panel composition in
+`app/shell/panels`, and settings content/dialogs in `components/settings`.
+Load settings and embedded-page dialogs lazily. Route workspace settings directly
+to its owning component instead of adding a shell forwarding screen.
+
 Compose app-wide providers in `app/providers/app-providers.tsx`. Keep scoped
 providers beside the UI or runtime they serve. Merge tiny provider wrappers into
 their existing owner when practical; icon defaults live in `components/icons.ts`

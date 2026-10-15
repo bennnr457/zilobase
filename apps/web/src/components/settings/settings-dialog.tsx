@@ -1,17 +1,62 @@
-import type { ReactNode } from "react";
-
-import { SettingsSidebar, type SettingsSection } from "./settings-sidebar";
+import { type SettingsSection } from "@/components/settings/settings-sidebar";
+import { editionWebModule } from "@zilobase/edition-web";
+import {
+  ApiKeysSettingsPage,
+  ConnectedAppsSettingsPage,
+  OAuthAppsSettingsPage,
+  PreferencesSettingsPage,
+  ProfileSettingsPage,
+  SecuritySettingsPage,
+  settingsUi,
+} from "@/components/settings";
+import { TeamspacesSettingsPage } from "@/components/teamspaces";
+import { TeamSettingsPage } from "@/components/workspaces";
+import CalendarSettingsPage from "@/components/settings/calendar";
+import WorkspaceSettingsPage from "@/components/workspaces/workspace-settings";
+import { SettingsSidebar } from "./settings-sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+
+function SettingsSectionContent({ section }: { section: SettingsSection }) {
+  const editionSection = editionWebModule.settingsSections.find(
+    (candidate) => candidate.id === section,
+  );
+  if (editionSection) {
+    const EditionSettings = editionSection.component;
+    return <EditionSettings settingsUi={settingsUi} />;
+  }
+
+  switch (section) {
+    case "preferences":
+      return <PreferencesSettingsPage />;
+    case "workspace":
+      return <WorkspaceSettingsPage />;
+    case "security":
+      return <SecuritySettingsPage />;
+    case "api-keys":
+      return <ApiKeysSettingsPage />;
+    case "connected-apps":
+      return <ConnectedAppsSettingsPage />;
+    case "oauth-apps":
+      return <OAuthAppsSettingsPage />;
+    case "team":
+      return <TeamSettingsPage />;
+    case "teamspaces":
+      return <TeamspacesSettingsPage />;
+    case "calendar":
+      return <CalendarSettingsPage />;
+    case "profile":
+    default:
+      return <ProfileSettingsPage />;
+  }
+}
 
 export function SettingsDialog({
   activeSection,
-  children,
   onOpenChange,
   onSectionChange,
   open,
 }: {
   activeSection: SettingsSection;
-  children: ReactNode;
   onOpenChange: (open: boolean) => void;
   onSectionChange: (section: SettingsSection) => void;
   open: boolean;
@@ -30,7 +75,7 @@ export function SettingsDialog({
         </DialogDescription>
         <SettingsSidebar activeSection={activeSection} onSectionChange={onSectionChange} />
         <div className="flex min-h-0 min-w-0 flex-1 overflow-y-auto bg-surface-canvas">
-          {children}
+          <SettingsSectionContent section={activeSection} />
         </div>
       </DialogContent>
     </Dialog>

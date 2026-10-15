@@ -16,7 +16,7 @@ import {
   PageSidePaneShell,
 } from "@/components/pages/pane/page-side-pane";
 import { DiscussionsSidebarPanel } from "@/components/comments/index";
-import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/side-panel/right-sidebars";
+import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/right-sidebars";
 import {
   APP_SIDEBAR_PANEL_WIDTH,
   getRightSidebarEditorDefaultSize,
@@ -51,16 +51,16 @@ import {
 } from "@/components/pages/layout/page-layout-sidebar";
 import { Button } from "@/components/ui/button";
 import { FloatingWidget } from "@/components/floating-widget";
-import { AppHeader } from "./app-header";
+import { AppHeader } from "@/app/shell/app-header";
 
 const EmbeddedPageDialogHost = lazy(() =>
-  import("./embedded-page-dialog-host").then((module) => ({
+  import("@/app/shell/panels/embedded-page-dialog").then((module) => ({
     default: module.EmbeddedPageDialogHost,
   })),
 );
-const SettingsDialogSurface = lazy(() =>
-  import("./settings-dialog-surface").then((module) => ({
-    default: module.SettingsDialogSurface,
+const SettingsDialog = lazy(() =>
+  import("@/components/settings/settings-dialog").then((module) => ({
+    default: module.SettingsDialog,
   })),
 );
 const ChatSidebarPanel = lazy(() =>
@@ -518,10 +518,11 @@ function AppLayoutContent({
       <PageLayoutOverlayDrawer />
       {settingsDialogOpen ? (
         <Suspense fallback={null}>
-          <SettingsDialogSurface
+          <SettingsDialog
             activeSection={activeSettingsSection}
             onOpenChange={onSettingsOpenChange}
             onSectionChange={setActiveSettingsSection}
+            open
           />
         </Suspense>
       ) : null}

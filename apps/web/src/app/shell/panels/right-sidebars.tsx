@@ -1,14 +1,20 @@
 "use client";
-
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ComponentProps, PointerEvent as ReactPointerEvent, ReactNode } from "react";
-import type { PanelImperativeHandle } from "react-resizable-panels";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
+import { type PanelImperativeHandle } from "react-resizable-panels";
 import { useRouterState } from "@tanstack/react-router";
 import {
   CalendarDockMount,
   useCalendarWorkspace,
 } from "@/components/calendar/workspace/calendar-workspace";
-
 import {
   APP_SIDEBAR_PANEL_WIDTH,
   getRightSidebarDockSizes,
@@ -21,8 +27,11 @@ import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 
 const noOp = () => {};
+
 const hiddenGridTrack = "minmax(0, 0fr)";
+
 const visibleGridTrack = "minmax(0, 1fr)";
+
 function RightSidebarSurface({ className, ...props }: ComponentProps<"aside">) {
   return (
     <aside
@@ -580,4 +589,21 @@ export function RightSidebarMobilePanels({
       </OverlayRightSidebarPanel>
     </div>
   );
+}
+
+/** Visibility is independent of AI's persisted sidebar/floating preference. */
+export function useCalendarChatVisibility() {
+  const { panelOpen, suspendPanel } = useCalendarWorkspace();
+  const [requested, setRequested] = useState(false);
+  useEffect(() => {
+    if (panelOpen) setRequested(false);
+  }, [panelOpen]);
+  const setOpen = useCallback(
+    (open: boolean) => {
+      if (open) suspendPanel();
+      setRequested(open);
+    },
+    [suspendPanel],
+  );
+  return [requested && !panelOpen, setOpen] as const;
 }

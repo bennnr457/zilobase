@@ -226,7 +226,7 @@ async function loadErrorSurface(sourcePath) {
     "@zilobase/edition-web": `import { createElement } from "react"; export const editionWebModule = { routePrefix: "/edition", routes: [{ path: "/billing", component: () => createElement("div", null, "Billing") }] };`,
     "@/components/ui/spinner": `import { createElement } from "react"; export const Spinner = props => createElement("span", props);`,
     "@/app/shell/document-favicon": `export const DocumentFavicon = () => null;`,
-    "@/app/shell/content/app-layout": `import { createElement } from "react"; export const AppLayout = ({ children }) => createElement("div", { "data-app-shell": true }, children);`,
+    "@/app/shell/app-layout": `import { createElement } from "react"; export const AppLayout = ({ children }) => createElement("div", { "data-app-shell": true }, children);`,
     "error-test-ports": `export const controls = { selected: { instanceId: "active" }, reads: 0, diagnostics: [] };`,
     "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; }; export const Outlet = () => null; export const useRouterState = ({ select }) => select({ matches: controls.matches ?? [], location: { pathname: controls.pathname ?? "/" } });`,
     "@/components/desktop/index": `export const isDesktopApp = () => true;`,

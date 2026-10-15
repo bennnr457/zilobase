@@ -14,7 +14,7 @@ export function register({ assert, readSource, test }) {
 
   test("edition settings receive the same host layout components", async () => {
     const [content, contract, layout] = await Promise.all([
-      readSource("/src/app/shell/content/settings-section-content.tsx"),
+      readSource("/src/components/settings/settings-dialog.tsx"),
       readSource("/src/edition/community.ts"),
       readSource("/src/components/settings/settings-layout.tsx"),
     ]);
