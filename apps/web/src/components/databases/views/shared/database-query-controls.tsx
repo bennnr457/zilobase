@@ -42,7 +42,8 @@ export function DatabaseFilterControl() {
     </DropDrawer>
   ) : (
     <Button
-      aria-label={showFilterPill ? "Hide filter pill" : "Show filter pill"}
+      aria-label={showFilterPill ? "Hide filters" : "Show filters"}
+      aria-expanded={showFilterPill}
       className="text-action-primary hover:text-action-primary active:text-action-primary aria-expanded:text-action-primary"
       onClick={toggleFilterPillVisibility}
       size="icon"
@@ -89,7 +90,8 @@ export function DatabaseSortControl() {
     </DropDrawer>
   ) : (
     <Button
-      aria-label={showSortPill ? "Hide sort pill" : "Show sort pill"}
+      aria-label={showSortPill ? "Hide sorts" : "Show sorts"}
+      aria-expanded={showSortPill}
       className="text-action-primary hover:text-action-primary active:text-action-primary aria-expanded:text-action-primary"
       onClick={toggleSortPillVisibility}
       size="icon"

@@ -25,7 +25,7 @@ import { type DatabaseSortDirection } from "@zilobase/features/databases";
 import { DatabaseSearchableMenuItems } from "./database-searchable-menu-items";
 import { type DatabaseSearchableMenuOption } from "../menu-option-contracts";
 
-type DatabaseSortMenuProps = {
+export type DatabaseSortMenuProps = {
   activeDatabaseSorts: DatabaseActiveSort[];
   addableSortFieldOptions: DatabaseSearchableMenuOption[];
   canAddDatabaseSort: boolean;

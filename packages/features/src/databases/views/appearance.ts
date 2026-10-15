@@ -29,3 +29,13 @@ export function getDatabaseCover(database: Pick<DatabaseHostEntity, "config">) {
 
   return typeof cover === "string" && cover.length > 0 ? cover : null;
 }
+
+export function getDatabaseDescription(database: { config?: unknown } | null | undefined) {
+  if (!database?.config || typeof database.config !== "object" || Array.isArray(database.config)) {
+    return "";
+  }
+
+  const description = (database.config as { description?: unknown }).description;
+
+  return typeof description === "string" ? description : "";
+}

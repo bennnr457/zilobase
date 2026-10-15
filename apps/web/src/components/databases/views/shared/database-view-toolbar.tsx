@@ -13,14 +13,12 @@ import {
 } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  ArrowDownUp,
   ArrowUpRightIcon,
   Check,
   Copy,
   CopyPlus,
   Database,
   EyeOff,
-  Filter,
   Loader2,
   MoreHorizontal,
   Paintbrush,
@@ -52,8 +50,8 @@ import { cn } from "@/lib/utils";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 
 import { DatabaseSearchableMenuItems } from "./database-searchable-menu-items";
-import { DatabaseFilterPopover } from "./database-filter-menu";
-import { DatabaseSortPopover } from "./database-sort-menu";
+import { DatabaseFilterBar } from "./database-filter-bar";
+import { DatabaseSortBar } from "./database-sort-bar";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
@@ -461,7 +459,7 @@ export function DatabaseViewToolbar({
           </DropDrawer>
         </div>
       ) : null}
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-start gap-2">
         <div className="min-w-0 flex-1">
           <div
             className="relative flex min-w-0 items-center gap-2 overflow-hidden"
@@ -807,9 +805,9 @@ export function DatabaseViewToolbar({
           </div>
           {(activeDatabaseFilters.length > 0 && showFilterPill) ||
           (activeDatabaseSorts.length > 0 && showSortPill) ? (
-            <div className="mt-2 flex min-w-0 items-center gap-2 overflow-x-auto">
+            <div className="mt-2 flex min-w-0 flex-col items-start gap-2">
               {activeDatabaseFilters.length > 0 && showFilterPill ? (
-                <DatabaseFilterPopover
+                <DatabaseFilterBar
                   activeDatabaseFilters={activeDatabaseFilters}
                   addableFilterFieldOptions={addableFilterFieldOptions}
                   canAddDatabaseFilter={canAddDatabaseFilter}
@@ -820,24 +818,10 @@ export function DatabaseViewToolbar({
                   onRemoveDatabaseFilter={removeDatabaseFilter}
                   onReorderDatabaseFilters={reorderDatabaseFilters}
                   onUpdateDatabaseFilter={updateDatabaseFilter}
-                >
-                  <Button
-                    aria-label="Open filter options"
-                    className="group h-7 shrink-0 rounded-md px-3"
-                    type="button"
-                    variant="selected"
-                  >
-                    <Filter className="size-4 self-center shrink-0" />
-                    <span className="self-center truncate">
-                      {`${activeDatabaseFilters.length} filter${
-                        activeDatabaseFilters.length === 1 ? "" : "s"
-                      }`}
-                    </span>
-                  </Button>
-                </DatabaseFilterPopover>
+                />
               ) : null}
               {activeDatabaseSorts.length > 0 && showSortPill ? (
-                <DatabaseSortPopover
+                <DatabaseSortBar
                   activeDatabaseSorts={activeDatabaseSorts}
                   addableSortFieldOptions={addableSortFieldOptions}
                   canAddDatabaseSort={canAddDatabaseSort}
@@ -846,21 +830,7 @@ export function DatabaseViewToolbar({
                   onRemoveDatabaseSort={removeDatabaseSort}
                   onUpdateDatabaseSort={updateDatabaseSort}
                   sortFieldOptions={sortFieldOptions}
-                >
-                  <Button
-                    aria-label="Open sort options"
-                    className="group h-7 shrink-0 rounded-md px-3"
-                    type="button"
-                    variant="selected"
-                  >
-                    <ArrowDownUp className="size-4 self-center shrink-0" />
-                    <span className="self-center truncate">
-                      {`${activeDatabaseSorts.length} sort${
-                        activeDatabaseSorts.length === 1 ? "" : "s"
-                      }`}
-                    </span>
-                  </Button>
-                </DatabaseSortPopover>
+                />
               ) : null}
             </div>
           ) : null}

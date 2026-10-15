@@ -13,7 +13,12 @@ import {
 } from "@/components/pages/presentation/page-presentation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { getDatabaseCover, getDatabaseEmoji, isDatabaseLocked } from "@zilobase/features/databases";
+import {
+  getDatabaseCover,
+  getDatabaseDescription,
+  getDatabaseEmoji,
+  isDatabaseLocked,
+} from "@zilobase/features/databases";
 import { usePage, usePageAccessLevel } from "@zilobase/features/pages/react";
 import { useUpdateDatabase, useUpdateDataSource } from "@zilobase/features/databases/react";
 import { PageDialog } from "@/components/pages/presentation/page-dialog";
@@ -364,6 +369,24 @@ export function DatabaseMainPane({
     sourceId: headingRecord?.id ?? "no-database-heading",
     sourceTitle: headingTitle,
   });
+  const { setTitle: setDescription, title: description } = usePageTitleDraft({
+    enabled: headingEditable,
+    onSave: async (nextDescription) => {
+      if (!headingRecord) return;
+
+      const input = {
+        databaseId: headingRecord.id,
+        configuration: [
+          { operation: "set" as const, path: ["description"], value: nextDescription },
+        ],
+      };
+
+      if (hasMultipleDataSources) await updateDatabase.mutateAsync(input);
+      else await updateDataSource.mutateAsync(input);
+    },
+    sourceId: headingRecord?.id ?? "no-database-heading",
+    sourceTitle: getDatabaseDescription(headingRecord),
+  });
 
   useEffect(() => {
     if (!headingRecord) {
@@ -423,17 +446,21 @@ export function DatabaseMainPane({
         allowIconPositionChange={false}
         cover={cover}
         databaseId={hasMultipleDataSources ? databaseId : sourceParentDatabaseId}
+        description={description}
+        descriptionInitiallyHidden
         editable={headingEditable}
         enableComments={false}
         icon={emoji}
         iconPosition="inline"
         layoutSection="heading"
         onCoverChange={updateCover}
+        onDescriptionChange={setDescription}
         onIconChange={updateEmoji}
         onOpenPage={onOpenPage}
         onTitleChange={setTitle}
         workspaceId={headingRecord?.workspaceId}
         title={title}
+        titleRowClassName={emoji ? "px-3" : undefined}
         titlePrefix={
           !hasMultipleDataSources &&
           sourceParentDatabaseId &&

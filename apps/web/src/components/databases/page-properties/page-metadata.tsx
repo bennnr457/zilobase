@@ -79,6 +79,7 @@ type PageMetadataProps = {
   workspaceId?: string | null;
   title?: string;
   titlePrefix?: ReactNode;
+  titleRowClassName?: string;
   titlePlaceholder?: string;
   pageId?: string | null;
   ref?: Ref<PageMetadataHandle>;
@@ -168,6 +169,7 @@ export function PageMetadata({
   workspaceId,
   title: titleProp,
   titlePrefix,
+  titleRowClassName,
   titlePlaceholder,
   pageId,
   ref,
@@ -187,7 +189,7 @@ export function PageMetadata({
   >({});
   const titleRowRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState<boolean | null>(null);
   const descriptionRowRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
   const { editorCommentsOpenRequest } = usePageEditorComments();
@@ -262,7 +264,8 @@ export function PageMetadata({
   const title = titleProp ?? localTitle;
   const hasDescription = descriptionProp !== undefined || onDescriptionChange !== undefined;
   const showDescription =
-    hasDescription && (!descriptionInitiallyHidden || !!description || descriptionExpanded);
+    hasDescription && (descriptionExpanded ?? (!descriptionInitiallyHidden || !!description));
+  const canToggleDescription = hasDescription && descriptionInitiallyHidden && editable;
   const metadataSubject = headingLabel ?? "page";
   const metadataSubjectLowercase = metadataSubject.toLowerCase();
   const unresolvedThreads = useMemo(
@@ -399,6 +402,7 @@ export function PageMetadata({
   useEffect(() => {
     setCommentsOpen(false);
     setActivePropertyId(null);
+    setDescriptionExpanded(null);
   }, [pageId]);
 
   useEffect(() => {
@@ -565,6 +569,14 @@ export function PageMetadata({
     [showHeading],
   );
 
+  const iconDisplay = (
+    <PageIconDisplay
+      className={iconPosition === "inline" ? "size-12 text-4xl [&_svg]:size-10" : undefined}
+      size={iconPosition === "top" ? "2xl" : "xl"}
+      value={icon}
+    />
+  );
+
   const iconPicker =
     icon && editable ? (
       <div className="group/icon relative shrink-0">
@@ -572,11 +584,11 @@ export function PageMetadata({
           <PopoverTrigger asChild>
             <button
               aria-label={`Change ${metadataSubjectLowercase} icon`}
-              className={`${iconPosition === "top" ? "size-20 text-6xl" : "size-11 text-3xl"} flex items-center justify-center rounded-md transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none`}
+              className={`${iconPosition === "top" ? "size-20 text-6xl" : "size-12 text-4xl"} flex items-center justify-center rounded-md transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none`}
               disabled={!editable}
               type="button"
             >
-              <PageIconDisplay size={iconPosition === "top" ? "2xl" : "xl"} value={icon} />
+              {iconDisplay}
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -655,9 +667,9 @@ export function PageMetadata({
       iconPicker
     ) : (
       <div
-        className={`${iconPosition === "top" ? "size-20 text-6xl" : "size-11 text-3xl"} flex shrink-0 items-center justify-center rounded-md`}
+        className={`${iconPosition === "top" ? "size-20 text-6xl" : "size-12 text-4xl"} flex shrink-0 items-center justify-center rounded-md`}
       >
-        <PageIconDisplay size={iconPosition === "top" ? "2xl" : "xl"} value={icon} />
+        {iconDisplay}
       </div>
     )
   ) : null;
@@ -688,7 +700,7 @@ export function PageMetadata({
   );
 
   const showMetadataActions =
-    (hasDescription && !showDescription && editable) ||
+    canToggleDescription ||
     (!icon && editable) ||
     (!cover && editable) ||
     (commentsEnabled &&
@@ -712,7 +724,7 @@ export function PageMetadata({
         />
       ))}
       {showHeading && cover ? (
-        <div className="relative h-[200px] w-full overflow-hidden bg-surface-muted">
+        <div className="relative h-[280px] w-full overflow-hidden bg-surface-muted">
           <img alt="Cover" className="size-full object-cover" src={cover} />
           {editable ? (
             <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-opacity group-focus-within/metadata:opacity-100 group-hover/metadata:opacity-100">
@@ -753,7 +765,7 @@ export function PageMetadata({
             compact
               ? "absolute right-4 top-4"
               : cover
-                ? "absolute right-5 top-[calc(12.5rem+1.5rem)] sm:right-8 md:top-[calc(12.5rem+2rem)]"
+                ? "absolute right-5 top-[calc(17.5rem+1.5rem)] sm:right-8 md:top-[calc(17.5rem+2rem)]"
                 : "absolute right-5 top-6 sm:right-8 md:top-8"
           }
           users={collaborationUsers}
@@ -762,13 +774,14 @@ export function PageMetadata({
 
       <div
         data-page-metadata-content
-        className={`${contentClassName ?? ""} relative ${compact ? (compactSpacing === "comfortable" ? "px-8 py-5" : "px-4 py-4") : "px-5 pt-1 pb-0 sm:px-8 md:px-20 lg:px-24"}`}
+        className={`${contentClassName ?? ""} relative ${compact ? (compactSpacing === "comfortable" ? "px-8 py-5" : "px-4 py-4") : `px-5 ${showHeading && !cover ? "pt-8" : "pt-1"} pb-0 sm:px-8 md:px-20 lg:px-24`}`}
       >
+        {/* Cancel the covered icon's 40px visual lift in flow, retaining the usual 4px gap. */}
         {showHeading && iconPosition === "top" && pageIcon ? (
           <div
             className={
               cover
-                ? `${compact && compactSpacing === "comfortable" ? "-mt-5" : "-mt-4"} relative z-10 mb-1 w-fit -translate-y-1/2`
+                ? `${compact && compactSpacing === "comfortable" ? "-mt-5" : "-mt-4"} relative z-10 -mb-9 w-fit -translate-y-1/2`
                 : "mb-1 w-fit"
             }
           >
@@ -776,66 +789,76 @@ export function PageMetadata({
           </div>
         ) : null}
 
-        {showHeading && showMetadataActions ? (
+        {showHeading && (showMetadataActions || iconPosition === "inline") ? (
           <div className="relative mb-1 min-h-8">
-            <div
-              className={`absolute inset-0 flex flex-wrap items-center gap-2 ${metadataActionVisibilityClassName}`}
-            >
-              {!icon ? iconPicker : null}
-              {hasDescription && !showDescription && editable && (
-                <Button
-                  className="text-content-secondary"
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setDescriptionExpanded(true);
-                    requestAnimationFrame(() => descriptionRef.current?.focus());
-                  }}
-                >
-                  <MessageSquare />
-                  Add {metadataSubjectLowercase} description
-                </Button>
-              )}
-              {!cover && editable ? (
-                <Button
-                  className="text-content-secondary"
-                  disabled={!editable}
-                  onClick={() => updateCover(buildRandomCoverGalleryDataUrl())}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <ImagePlus />
-                  {headingLabel ? `Add ${metadataSubjectLowercase} cover` : "Add cover"}
-                </Button>
-              ) : null}
-              {commentsEnabled &&
-              !layoutSection &&
-              !showCommentsSection &&
-              (editable || totalCommentCount > 0) ? (
-                <Button
-                  className="text-content-secondary"
-                  onClick={() => {
-                    setCommentsOpen((open) => !open);
-                    if (totalCommentCount === 0) {
-                      setCommentsOpen(true);
-                    }
-                  }}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <MessageSquare />
-                  {formatCommentButtonLabel(totalCommentCount)}
-                </Button>
-              ) : null}
-            </div>
+            {showMetadataActions ? (
+              <div
+                className={`absolute inset-0 flex flex-wrap items-center gap-2 px-3 ${metadataActionVisibilityClassName}`}
+              >
+                {!icon ? iconPicker : null}
+                {canToggleDescription && (
+                  <Button
+                    aria-expanded={showDescription}
+                    className="text-content-secondary"
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setDescriptionExpanded(!showDescription);
+                      if (!showDescription) {
+                        requestAnimationFrame(() => descriptionRef.current?.focus());
+                      }
+                    }}
+                  >
+                    <MessageSquare />
+                    {headingLabel
+                      ? `${showDescription ? "Hide" : "Add"} ${metadataSubjectLowercase} description`
+                      : `${showDescription ? "Hide" : "Add"} description`}
+                  </Button>
+                )}
+                {!cover && editable ? (
+                  <Button
+                    className="text-content-secondary"
+                    disabled={!editable}
+                    onClick={() => updateCover(buildRandomCoverGalleryDataUrl())}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <ImagePlus />
+                    {headingLabel ? `Add ${metadataSubjectLowercase} cover` : "Add cover"}
+                  </Button>
+                ) : null}
+                {commentsEnabled &&
+                !layoutSection &&
+                !showCommentsSection &&
+                (editable || totalCommentCount > 0) ? (
+                  <Button
+                    className="text-content-secondary"
+                    onClick={() => {
+                      setCommentsOpen((open) => !open);
+                      if (totalCommentCount === 0) {
+                        setCommentsOpen(true);
+                      }
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <MessageSquare />
+                    {formatCommentButtonLabel(totalCommentCount)}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
         {showHeading ? (
-          <div className="flex items-start gap-3" ref={titleRowRef}>
+          <div
+            className={`flex items-start ${iconPosition === "inline" && pageIcon ? "gap-2" : "gap-3"} ${titleRowClassName ?? ""}`}
+            ref={titleRowRef}
+          >
             {iconPosition === "inline" ? pageIcon : null}
             {titlePrefix ? (
               <span className="flex min-h-10 shrink-0 items-center text-content-secondary">
@@ -844,7 +867,7 @@ export function PageMetadata({
             ) : null}
             <textarea
               aria-label={headingLabel ? `${headingLabel} title` : "Page title"}
-              className="min-h-10 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent px-3 py-0 text-4xl font-semibold leading-tight tracking-normal whitespace-pre-wrap text-balance text-content-primary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent"
+              className={`min-h-10 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent ${iconPosition === "inline" && pageIcon ? "pl-0 pr-3" : "px-3"} py-0 text-4xl font-semibold leading-tight tracking-normal whitespace-pre-wrap text-balance text-content-primary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent`}
               onBlur={onTitleBlur}
               onChange={(event) => updateTitle(event.target.value)}
               onKeyDown={(event) => {
@@ -905,7 +928,7 @@ export function PageMetadata({
         ) : null}
 
         {showDiscussions && commentsEnabled && showCommentsSection ? (
-          <div className="mt-6 space-y-0 pb-3">
+          <div className="mt-6 space-y-0 px-3 pb-3">
             {unresolvedThreads.length > 0 ? (
               unresolvedThreads.map((thread, index) => (
                 <div

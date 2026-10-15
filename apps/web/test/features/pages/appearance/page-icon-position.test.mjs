@@ -8,7 +8,7 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.equal(getPageIconPosition({ metadata: { iconPosition: "inline" } }), "inline");
   });
 
-  test("top icons use action-row spacing and database icons stay inline", async () => {
+  test("shared headers preserve page icon spacing and force database icons inline through props", async () => {
     const [metadataSource, databaseSource, pageEditorSource] = await Promise.all([
       readSource("/src/components/databases/page-properties/page-metadata.tsx"),
       readSource("/src/components/databases/screen/database-screen.tsx"),
@@ -16,7 +16,7 @@ export function register({ assert, loadModule, readSource, test }) {
     ]);
 
     assert.match(metadataSource, /: "mb-1 w-fit"/);
-    assert.match(metadataSource, /relative z-10 mb-1 w-fit/);
+    assert.match(metadataSource, /relative z-10 -mb-9 w-fit -translate-y-1\/2/);
     assert.equal(
       metadataSource.match(/allowIconPositionChange \? updateIconPosition : undefined/g)?.length,
       2,
@@ -24,6 +24,10 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.match(databaseSource, /allowIconPositionChange=\{false\}/);
     assert.match(databaseSource, /iconPosition="inline"/);
     assert.doesNotMatch(databaseSource, /onIconPositionChange=/);
+    assert.match(databaseSource, /enableComments=\{false\}/);
+    assert.match(databaseSource, /description=\{description\}/);
+    assert.match(databaseSource, /descriptionInitiallyHidden/);
+    assert.match(databaseSource, /onDescriptionChange=\{setDescription\}/);
     assert.match(pageEditorSource, /const nextIconPosition = nextEmoji \? iconPosition : "top"/);
     assert.match(pageEditorSource, /iconPosition: nextIconPosition/);
   });

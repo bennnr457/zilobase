@@ -390,9 +390,11 @@ function DatabaseRelativeDateConditionEditor({
 function DatabaseDateConditionValueControl({
   condition,
   onUpdate,
+  trigger,
 }: {
   condition: DatabaseCondition;
   onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
+  trigger?: ReactNode;
 }) {
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const updateValues = (values: string[]) => onUpdate({ values });
@@ -411,17 +413,19 @@ function DatabaseDateConditionValueControl({
   return (
     <Popover modal open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
       <PopoverTrigger asChild>
-        <button
-          className="inline-flex h-7 w-full items-center gap-1.5 rounded-lg border border-control-border px-2 text-left text-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral"
-          type="button"
-        >
-          <CalendarIcon className="size-4 shrink-0 text-content-secondary" />
-          <span className="min-w-0 flex-1 truncate">
-            {isBetweenCondition
-              ? getDateBetweenFilterValueLabel(condition.values)
-              : getDateFilterValueLabel(condition.values)}
-          </span>
-        </button>
+        {trigger ?? (
+          <button
+            className="inline-flex h-7 w-full items-center gap-1.5 rounded-lg border border-control-border px-2 text-left text-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral"
+            type="button"
+          >
+            <CalendarIcon className="size-4 shrink-0 text-content-secondary" />
+            <span className="min-w-0 flex-1 truncate">
+              {isBetweenCondition
+                ? getDateBetweenFilterValueLabel(condition.values)
+                : getDateFilterValueLabel(condition.values)}
+            </span>
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 gap-2 p-2">
         {isBetweenCondition ? (
@@ -464,10 +468,12 @@ function DatabaseChoiceConditionValueControl({
   condition,
   onUpdate,
   valueOptions,
+  trigger,
 }: {
   condition: DatabaseCondition;
   onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
   valueOptions: DatabaseSearchableMenuOption[];
+  trigger?: ReactNode;
 }) {
   const selectedValues = new Set(condition.values);
   const unavailableLabel = ["select", "status", "multi_select"].includes(condition.propertyType)
@@ -498,22 +504,24 @@ function DatabaseChoiceConditionValueControl({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          aria-label={`${condition.label} filter options`}
-          className="flex min-h-7 w-full min-w-0 items-center gap-1.5 rounded-lg border border-control-border px-2 py-1 text-left text-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral"
-          type="button"
-        >
-          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-            {selectedOptions.length > 0 ? (
-              selectedOptions.map((option) => (
-                <DatabaseChoiceOptionLabel key={option.value} option={option} />
-              ))
-            ) : (
-              <span className="text-content-secondary">Select options</span>
-            )}
-          </span>
-          <ChevronDownIcon className="size-3.5 shrink-0 text-content-secondary" />
-        </button>
+        {trigger ?? (
+          <button
+            aria-label={`${condition.label} filter options`}
+            className="flex min-h-7 w-full min-w-0 items-center gap-1.5 rounded-lg border border-control-border px-2 py-1 text-left text-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral"
+            type="button"
+          >
+            <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+              {selectedOptions.length > 0 ? (
+                selectedOptions.map((option) => (
+                  <DatabaseChoiceOptionLabel key={option.value} option={option} />
+                ))
+              ) : (
+                <span className="text-content-secondary">Select options</span>
+              )}
+            </span>
+            <ChevronDownIcon className="size-3.5 shrink-0 text-content-secondary" />
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-1">
         <div className="max-h-72 overflow-y-auto overscroll-contain">
@@ -550,10 +558,12 @@ export function DatabaseConditionValueControl({
   condition,
   onUpdate,
   valueOptions,
+  trigger,
 }: {
   condition: DatabaseCondition;
   onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
   valueOptions: DatabaseSearchableMenuOption[];
+  trigger?: ReactNode;
 }) {
   const setValue = (valueIndex: number, value: string) => {
     const nextValues = [...condition.values];
@@ -573,10 +583,37 @@ export function DatabaseConditionValueControl({
   }
 
   if (
+    trigger &&
+    (condition.operator === "is_relative_to_today" ||
+      (!isDateConditionType(condition.propertyType) &&
+        !["multi_select", "person", "select", "status"].includes(condition.propertyType)))
+  ) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <PopoverContent align="start" className="w-72 gap-2 p-2">
+          <span className="px-1 text-xs font-medium">{condition.label}</span>
+          <DatabaseConditionValueControl
+            condition={condition}
+            onUpdate={onUpdate}
+            valueOptions={valueOptions}
+          />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  if (
     condition.operator === "is_relative_to_today" ||
     isDateConditionType(condition.propertyType)
   ) {
-    return <DatabaseDateConditionValueControl condition={condition} onUpdate={onUpdate} />;
+    return (
+      <DatabaseDateConditionValueControl
+        condition={condition}
+        onUpdate={onUpdate}
+        trigger={trigger}
+      />
+    );
   }
 
   if (["multi_select", "person", "select", "status"].includes(condition.propertyType)) {
@@ -585,6 +622,7 @@ export function DatabaseConditionValueControl({
         condition={condition}
         onUpdate={onUpdate}
         valueOptions={valueOptions}
+        trigger={trigger}
       />
     );
   }

@@ -310,6 +310,14 @@
     @apply px-0;
   }
 
+  .database-block-shell-full > .database-toolbar-section {
+    @apply px-3;
+  }
+
+  .database-block-shell-full > .database-toolbar-section .database-toolbar {
+    @apply px-0;
+  }
+
   .database-toolbar {
     @apply flex min-h-12 flex-col gap-3 py-2 pr-3;
   }

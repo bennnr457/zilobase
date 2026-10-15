@@ -19,7 +19,7 @@ import { DatabaseConditionEditor } from "./database-condition-editor";
 import { DatabaseSearchableMenuItems } from "./database-searchable-menu-items";
 import { type DatabaseSearchableMenuOption } from "../menu-option-contracts";
 
-type DatabaseFilterMenuProps = {
+export type DatabaseFilterMenuProps = {
   activeDatabaseFilters: DatabaseActiveFilter[];
   addableFilterFieldOptions: DatabaseSearchableMenuOption[];
   canAddDatabaseFilter: boolean;
