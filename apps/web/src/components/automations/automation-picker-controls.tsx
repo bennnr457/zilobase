@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { getColorTokenBadgeClassName } from "@/lib/color-tokens";
 import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
-import { getDatabasePropertyType } from "../databases/schema/property-catalog";
+import { getDatabasePropertyType } from "../databases/properties/property-catalog";
 
 export function TriggerOptionRow({
   checked,

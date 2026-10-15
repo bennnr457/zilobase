@@ -36,7 +36,7 @@ import {
   EmojiPickerFooter,
   EmojiPickerSearch,
 } from "@/components/ui/emoji-picker";
-import { createDatabaseSetupBlockContent } from "@/components/databases";
+import { createDatabaseSetupBlockContent } from "@/components/databases/blocks/database-block-content";
 import { ExcalidrawIcon, FigmaIcon, MiroIcon, YouTubeIcon } from "./embed-block";
 import { openAskAiPopover } from "./ask-ai-block";
 import { isFeatureEnabled } from "@/platform/environment";

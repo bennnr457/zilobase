@@ -10,7 +10,7 @@ import {
 import {
   getDatabasePageDragPayload as getNativeDatabasePageDragPayload,
   hasDatabasePageDragPayload,
-} from "@/components/databases";
+} from "@/components/databases/interactions/database-page-drop";
 import { getDatabasePageDropPosition, getDropDatabaseElement } from "./database-page-drop-target";
 import type { DatabasePageDropPayload } from "../core/types";
 

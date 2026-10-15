@@ -1,0 +1,806 @@
+import {
+  conditionOperatorNeedsValue,
+  parseRelativeDateFilterValue,
+  createRelativeDateFilterValue,
+  parseDateInput,
+  dateValueToDate,
+  toDateOnlyValue,
+  getNextConditionValuesForOperator,
+  databaseRelativeDateDirections,
+  databaseRelativeDateUnits,
+} from "@zilobase/features/databases";
+import type { DatabaseCondition, DatabaseConditionUpdatePatch } from "@zilobase/features/databases";
+import { CalendarIcon, ChevronDownIcon, GripVertical, X } from "@/components/icons";
+import { Reorder, useDragControls } from "framer-motion";
+import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
+
+import { Button } from "@/components/ui/button";
+import { DateCalendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { getColorTokenBadgeClassName } from "@/lib/color-tokens";
+
+import {
+  getDatabaseFilterOperatorsForType,
+  type DatabasePropertyFilterOperator,
+} from "@zilobase/features/databases";
+import { isDateLikePropertyType } from "../../properties/property-catalog";
+import type { DatabaseSearchableMenuOption } from "../menu-option-contracts";
+
+type DatabaseConditionEditorLayout = "inline" | "stacked";
+
+type DatabaseConditionEditorDrag = {
+  ariaLabel: string;
+  isDragging: boolean;
+  onDragEnd: () => void;
+  onDragStart: () => void;
+  value: string;
+};
+
+const dateFilterCalendarClassNames = {
+  root: "relative w-full",
+  month: "w-full",
+  month_grid: "w-full",
+  months: "w-full",
+};
+
+function isDateConditionType(propertyType: string) {
+  return isDateLikePropertyType(propertyType);
+}
+
+function getConditionInputType(propertyType: string) {
+  if (isDateConditionType(propertyType)) {
+    return "date";
+  }
+
+  return propertyType === "number" ? "number" : "text";
+}
+
+function getCalendarDateFromPointerEvent(event: ReactPointerEvent<HTMLDivElement>) {
+  if (event.button !== 0 || !event.isPrimary || !(event.target instanceof Element)) {
+    return null;
+  }
+
+  const dayButton = event.target.closest<HTMLButtonElement>("[data-calendar-date]");
+
+  if (!dayButton || dayButton.disabled || dayButton.getAttribute("aria-disabled") === "true") {
+    return null;
+  }
+
+  return dateValueToDate(dayButton.dataset.calendarDate);
+}
+
+function getDateFilterValueLabel(values: string[]) {
+  return values[0]?.slice(0, 10) || "Date";
+}
+
+function getDateBetweenFilterValueLabel(values: string[]) {
+  const startValue = values[0]?.slice(0, 10);
+  const endValue = values[1]?.slice(0, 10);
+
+  if (startValue && endValue) {
+    return `${startValue} - ${endValue}`;
+  }
+
+  return startValue || "Date range";
+}
+
+function DateConditionInput({
+  label,
+  value,
+  onChange,
+  onCommit,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  onCommit: (value: string) => void;
+}) {
+  return (
+    <div className="relative min-w-0 overflow-hidden rounded-md border bg-transparent">
+      <CalendarIcon className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-content-secondary" />
+      <Input
+        aria-label={label}
+        className="w-full min-w-0 border-0 bg-transparent pl-7 pr-2 text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0"
+        onBlur={(event) => onCommit(event.target.value)}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onCommit(event.currentTarget.value);
+          }
+        }}
+        placeholder={label}
+        value={value}
+      />
+    </div>
+  );
+}
+
+function DatabaseDateConditionEditor({
+  values,
+  onComplete,
+  onValuesChange,
+}: {
+  values: string[];
+  onComplete: () => void;
+  onValuesChange: (values: string[]) => void;
+}) {
+  const [dateDraft, setDateDraft] = useState<string | null>(null);
+  const pointerSelectedDateRef = useRef<string | null>(null);
+  const dateValue = values[0] ?? "";
+  const selectedDate = dateValue ? (dateValueToDate(dateValue) ?? undefined) : undefined;
+
+  const commitDateInput = (inputValue: string) => {
+    const parsedValue = parseDateInput(inputValue);
+
+    setDateDraft(null);
+
+    if (parsedValue === undefined) {
+      return;
+    }
+
+    onValuesChange(parsedValue === null ? [] : [parsedValue]);
+  };
+
+  const setSelectedDate = (date: Date | undefined, complete = true) => {
+    if (!date) {
+      return;
+    }
+
+    flushSync(() => onValuesChange([toDateOnlyValue(date)]));
+
+    if (complete) {
+      onComplete();
+    }
+  };
+
+  const selectDateFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const date = getCalendarDateFromPointerEvent(event);
+
+    if (!date) {
+      return;
+    }
+
+    pointerSelectedDateRef.current = toDateOnlyValue(date);
+    setSelectedDate(date, false);
+    window.setTimeout(onComplete, 0);
+  };
+
+  const selectDateFromClick = (date: Date) => {
+    const dateValue = toDateOnlyValue(date);
+
+    if (pointerSelectedDateRef.current === dateValue) {
+      pointerSelectedDateRef.current = null;
+      onComplete();
+      return;
+    }
+
+    setSelectedDate(date);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <DateConditionInput
+        label="Date"
+        onChange={setDateDraft}
+        onCommit={commitDateInput}
+        value={dateDraft ?? dateValue}
+      />
+      <div onPointerDownCapture={selectDateFromPointer}>
+        <DateCalendar
+          className="w-full bg-transparent p-1 [--cell-size:2rem]"
+          classNames={dateFilterCalendarClassNames}
+          mode="single"
+          onDayClick={selectDateFromClick}
+          selected={selectedDate}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DatabaseDateBetweenConditionEditor({
+  values,
+  onComplete,
+  onValuesChange,
+}: {
+  values: string[];
+  onComplete: () => void;
+  onValuesChange: (values: string[]) => void;
+}) {
+  const [startDraft, setStartDraft] = useState<string | null>(null);
+  const [endDraft, setEndDraft] = useState<string | null>(null);
+  const startValue = values[0] ?? "";
+  const endValue = values[1] ?? "";
+  const selectedStartDate = startValue ? (dateValueToDate(startValue) ?? undefined) : undefined;
+  const selectedEndDate = endValue ? (dateValueToDate(endValue) ?? undefined) : undefined;
+  const rangeStartPending = Boolean(selectedStartDate && !selectedEndDate);
+  const pointerSelectedDateRef = useRef<string | null>(null);
+  const pointerCompletedRangeRef = useRef(false);
+
+  const commitDateInput = (inputValue: string, field: "end" | "start") => {
+    const parsedValue = parseDateInput(inputValue);
+
+    if (field === "start") {
+      setStartDraft(null);
+    } else {
+      setEndDraft(null);
+    }
+
+    if (parsedValue === undefined) {
+      return;
+    }
+
+    const nextValues = [...values];
+
+    if (field === "start") {
+      nextValues[0] = parsedValue ?? "";
+    } else {
+      nextValues[1] = parsedValue ?? "";
+    }
+
+    onValuesChange(nextValues.filter(Boolean));
+  };
+
+  const setSelectedDateRange = (date: Date, complete = true) => {
+    if (!rangeStartPending || !selectedStartDate) {
+      flushSync(() => onValuesChange([toDateOnlyValue(date)]));
+      return;
+    }
+
+    const range =
+      date < selectedStartDate
+        ? { from: date, to: selectedStartDate }
+        : { from: selectedStartDate, to: date };
+
+    flushSync(() => onValuesChange([toDateOnlyValue(range.from), toDateOnlyValue(range.to)]));
+
+    if (complete) {
+      onComplete();
+    }
+  };
+
+  const selectDateRangeFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const date = getCalendarDateFromPointerEvent(event);
+
+    if (!date) {
+      return;
+    }
+
+    pointerSelectedDateRef.current = toDateOnlyValue(date);
+    pointerCompletedRangeRef.current = rangeStartPending;
+    setSelectedDateRange(date, false);
+
+    if (pointerCompletedRangeRef.current) {
+      window.setTimeout(onComplete, 0);
+    }
+  };
+
+  const selectDateRangeFromClick = (date: Date) => {
+    const dateValue = toDateOnlyValue(date);
+
+    if (pointerSelectedDateRef.current === dateValue) {
+      pointerSelectedDateRef.current = null;
+
+      if (pointerCompletedRangeRef.current) {
+        pointerCompletedRangeRef.current = false;
+        onComplete();
+      }
+
+      return;
+    }
+
+    setSelectedDateRange(date);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="grid gap-1.5">
+        <DateConditionInput
+          label="Start date"
+          onChange={setStartDraft}
+          onCommit={(value) => commitDateInput(value, "start")}
+          value={startDraft ?? startValue}
+        />
+        <DateConditionInput
+          label="End date"
+          onChange={setEndDraft}
+          onCommit={(value) => commitDateInput(value, "end")}
+          value={endDraft ?? endValue}
+        />
+      </div>
+      <div onPointerDownCapture={selectDateRangeFromPointer}>
+        <DateCalendar
+          className="w-full bg-transparent p-1 [--cell-size:2rem]"
+          classNames={dateFilterCalendarClassNames}
+          mode="range"
+          onDayClick={selectDateRangeFromClick}
+          selected={{ from: selectedStartDate, to: selectedEndDate }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DatabaseRelativeDateConditionEditor({
+  value,
+  onValueChange,
+}: {
+  value: string | undefined;
+  onValueChange: (value: string) => void;
+}) {
+  const relativeDateValue = parseRelativeDateFilterValue(value);
+
+  return (
+    <div className="w-full">
+      <div className="grid grid-cols-2 gap-2">
+        <Select
+          onValueChange={(direction) =>
+            onValueChange(createRelativeDateFilterValue(direction, relativeDateValue.unit))
+          }
+          value={relativeDateValue.direction}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="start">
+            {databaseRelativeDateDirections.map((direction) => (
+              <SelectItem key={direction.value} value={direction.value}>
+                {direction.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          onValueChange={(unit) =>
+            onValueChange(createRelativeDateFilterValue(relativeDateValue.direction, unit))
+          }
+          value={relativeDateValue.unit}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="start">
+            {databaseRelativeDateUnits.map((unit) => (
+              <SelectItem key={unit.value} value={unit.value}>
+                {unit.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="mt-2 border-t pt-2 text-xs text-content-secondary">
+        Filter will update with the current date
+      </div>
+    </div>
+  );
+}
+
+function DatabaseDateConditionValueControl({
+  condition,
+  onUpdate,
+}: {
+  condition: DatabaseCondition;
+  onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
+}) {
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const updateValues = (values: string[]) => onUpdate({ values });
+
+  if (condition.operator === "is_relative_to_today") {
+    return (
+      <DatabaseRelativeDateConditionEditor
+        onValueChange={(value) => updateValues([value])}
+        value={condition.values[0]}
+      />
+    );
+  }
+
+  const isBetweenCondition = condition.operator === "is_between";
+
+  return (
+    <Popover modal open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="inline-flex h-7 w-full items-center gap-1.5 rounded-lg border border-control-border px-2 text-left text-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral"
+          type="button"
+        >
+          <CalendarIcon className="size-4 shrink-0 text-content-secondary" />
+          <span className="min-w-0 flex-1 truncate">
+            {isBetweenCondition
+              ? getDateBetweenFilterValueLabel(condition.values)
+              : getDateFilterValueLabel(condition.values)}
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 gap-2 p-2">
+        {isBetweenCondition ? (
+          <DatabaseDateBetweenConditionEditor
+            onComplete={() => setDatePopoverOpen(false)}
+            onValuesChange={updateValues}
+            values={condition.values}
+          />
+        ) : (
+          <DatabaseDateConditionEditor
+            onComplete={() => setDatePopoverOpen(false)}
+            onValuesChange={updateValues}
+            values={condition.values}
+          />
+        )}
+        {condition.values.length > 0 ? (
+          <Button
+            className="w-full justify-start text-xs"
+            onClick={() => updateValues([])}
+            type="button"
+            variant="ghost"
+          >
+            Clear selection
+          </Button>
+        ) : null}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function DatabaseChoiceOptionLabel({ option }: { option: DatabaseSearchableMenuOption }) {
+  return option.color ? (
+    <span className={getColorTokenBadgeClassName(option.color)}>{option.label}</span>
+  ) : (
+    <span className="truncate">{option.label}</span>
+  );
+}
+
+function DatabaseChoiceConditionValueControl({
+  condition,
+  onUpdate,
+  valueOptions,
+}: {
+  condition: DatabaseCondition;
+  onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
+  valueOptions: DatabaseSearchableMenuOption[];
+}) {
+  const selectedValues = new Set(condition.values);
+  const unavailableLabel = ["select", "status", "multi_select"].includes(condition.propertyType)
+    ? "Deleted option"
+    : "Unavailable item";
+  const selectedOptions = condition.values.map(
+    (value) =>
+      valueOptions.find((option) => option.value === value) ?? {
+        label: unavailableLabel,
+        value,
+      },
+  );
+  const menuOptions = [
+    ...valueOptions,
+    ...selectedOptions.filter(
+      (selected) => !valueOptions.some((option) => option.value === selected.value),
+    ),
+  ];
+
+  const toggleOption = (value: string, checked: boolean) => {
+    onUpdate({
+      values: checked
+        ? [...condition.values.filter((item) => item !== value), value]
+        : condition.values.filter((item) => item !== value),
+    });
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          aria-label={`${condition.label} filter options`}
+          className="flex min-h-7 w-full min-w-0 items-center gap-1.5 rounded-lg border border-control-border px-2 py-1 text-left text-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral"
+          type="button"
+        >
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+            {selectedOptions.length > 0 ? (
+              selectedOptions.map((option) => (
+                <DatabaseChoiceOptionLabel key={option.value} option={option} />
+              ))
+            ) : (
+              <span className="text-content-secondary">Select options</span>
+            )}
+          </span>
+          <ChevronDownIcon className="size-3.5 shrink-0 text-content-secondary" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-1">
+        <div className="max-h-72 overflow-y-auto overscroll-contain">
+          {menuOptions.map((option) => {
+            const checkboxId = `${condition.id}-${option.value}`;
+
+            return (
+              <div
+                className="flex min-h-7 items-center gap-2 rounded-md px-2 py-1 hover:bg-action-neutral-hover"
+                key={option.value}
+              >
+                <Checkbox
+                  aria-label={`${option.label} option`}
+                  checked={selectedValues.has(option.value)}
+                  id={checkboxId}
+                  onCheckedChange={(checked) => toggleOption(option.value, checked === true)}
+                />
+                <label
+                  className="flex min-w-0 flex-1 cursor-pointer items-center"
+                  htmlFor={checkboxId}
+                >
+                  <DatabaseChoiceOptionLabel option={option} />
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function DatabaseConditionValueControl({
+  condition,
+  onUpdate,
+  valueOptions,
+}: {
+  condition: DatabaseCondition;
+  onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
+  valueOptions: DatabaseSearchableMenuOption[];
+}) {
+  const setValue = (valueIndex: number, value: string) => {
+    const nextValues = [...condition.values];
+    nextValues[valueIndex] = value;
+
+    onUpdate({
+      values: nextValues.slice(0, condition.operator === "is_between" ? 2 : 1),
+    });
+  };
+
+  if (!conditionOperatorNeedsValue(condition.operator)) {
+    return (
+      <span className="inline-flex h-7 w-full items-center rounded-lg border border-transparent px-2 text-sm text-content-secondary">
+        No value
+      </span>
+    );
+  }
+
+  if (
+    condition.operator === "is_relative_to_today" ||
+    isDateConditionType(condition.propertyType)
+  ) {
+    return <DatabaseDateConditionValueControl condition={condition} onUpdate={onUpdate} />;
+  }
+
+  if (["multi_select", "person", "select", "status"].includes(condition.propertyType)) {
+    return (
+      <DatabaseChoiceConditionValueControl
+        condition={condition}
+        onUpdate={onUpdate}
+        valueOptions={valueOptions}
+      />
+    );
+  }
+
+  if (
+    valueOptions.length > 0 &&
+    condition.operator !== "is_between" &&
+    getConditionInputType(condition.propertyType) === "text"
+  ) {
+    return (
+      <Select
+        onValueChange={(value) => onUpdate({ values: [value] })}
+        value={condition.values[0] ?? ""}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Value" />
+        </SelectTrigger>
+        <SelectContent align="start">
+          {valueOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  return (
+    <div className="flex w-full items-center gap-2">
+      <Input
+        aria-label={`${condition.label} condition value`}
+        className="min-w-0 flex-1"
+        onChange={(event) => setValue(0, event.target.value)}
+        placeholder="Value"
+        type={getConditionInputType(condition.propertyType)}
+        value={condition.values[0] ?? ""}
+      />
+      {condition.operator === "is_between" ? (
+        <Input
+          aria-label={`${condition.label} second condition value`}
+          className="min-w-0 flex-1"
+          onChange={(event) => setValue(1, event.target.value)}
+          placeholder="Value"
+          type={getConditionInputType(condition.propertyType)}
+          value={condition.values[1] ?? ""}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export function DatabaseConditionEditor({
+  condition,
+  drag,
+  fieldOptions,
+  footer,
+  layout = "inline",
+  leadingIcon,
+  removeIcon,
+  removeLabel,
+  valueOptions,
+  onFieldChange,
+  onRemove,
+  onUpdate,
+}: {
+  condition: DatabaseCondition;
+  drag?: DatabaseConditionEditorDrag;
+  fieldOptions: DatabaseSearchableMenuOption[];
+  footer?: ReactNode;
+  layout?: DatabaseConditionEditorLayout;
+  leadingIcon?: ReactNode;
+  removeIcon?: ReactNode;
+  removeLabel?: string;
+  valueOptions: DatabaseSearchableMenuOption[];
+  onFieldChange?: (field: string) => void;
+  onRemove?: () => void;
+  onUpdate: (patch: DatabaseConditionUpdatePatch) => void;
+}) {
+  const dragControls = useDragControls();
+  const operatorOptions = getDatabaseFilterOperatorsForType(condition.propertyType);
+  const isStacked = layout === "stacked";
+
+  const updateField = (field: string) => {
+    if (field === condition.propertyId) {
+      return;
+    }
+
+    if (onFieldChange) {
+      onFieldChange(field);
+      return;
+    }
+
+    onUpdate({ propertyId: field });
+  };
+
+  const updateOperator = (operator: DatabasePropertyFilterOperator) => {
+    onUpdate({
+      operator,
+      values: getNextConditionValuesForOperator(condition, operator),
+    });
+  };
+
+  const conditionControls = (
+    <>
+      <Select onValueChange={updateField} value={condition.propertyId}>
+        <SelectTrigger className={cn("w-full", isStacked && "text-xs")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="start">
+          {fieldOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        onValueChange={(operator) => updateOperator(operator as DatabasePropertyFilterOperator)}
+        value={condition.operator}
+      >
+        <SelectTrigger className={cn("w-full", isStacked && "text-xs")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="start">
+          {operatorOptions.map((operator) => (
+            <SelectItem key={operator.value} value={operator.value}>
+              {operator.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <div className={cn(isStacked && "text-xs")}>
+        <DatabaseConditionValueControl
+          condition={condition}
+          onUpdate={onUpdate}
+          valueOptions={valueOptions}
+        />
+      </div>
+    </>
+  );
+
+  const removeButton = onRemove ? (
+    <button
+      aria-label={removeLabel ?? `Remove ${condition.label} condition`}
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center text-content-secondary transition-colors hover:text-content-primary focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none",
+        isStacked
+          ? "mt-1 size-7 rounded-full hover:bg-surface-canvas"
+          : "size-7 rounded-md hover:bg-action-neutral-hover",
+      )}
+      onClick={onRemove}
+      type="button"
+    >
+      {removeIcon ?? <X className={isStacked ? "size-3.5" : "size-4"} />}
+    </button>
+  ) : null;
+
+  const content = isStacked ? (
+    <>
+      <div className="mb-2 flex items-start gap-1.5">
+        {drag ? (
+          <button
+            aria-label={drag.ariaLabel}
+            className="mt-2 inline-flex size-5 shrink-0 cursor-grab touch-none items-center justify-center text-content-secondary active:cursor-grabbing"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              dragControls.start(event);
+            }}
+            type="button"
+          >
+            <GripVertical className="size-4" />
+          </button>
+        ) : null}
+        {leadingIcon ? (
+          <span className="mt-2 inline-flex size-5 shrink-0 items-center justify-center text-content-secondary [&_svg]:size-4">
+            {leadingIcon}
+          </span>
+        ) : null}
+        <div className="grid min-w-0 flex-1 gap-2">{conditionControls}</div>
+        {removeButton}
+      </div>
+      {footer}
+    </>
+  ) : (
+    <div className="grid max-w-full grid-cols-[1rem_10rem_12rem_16rem_2rem] items-start gap-2">
+      <span className="mt-2 inline-flex size-4 text-content-secondary [&_svg]:size-4">
+        {leadingIcon}
+      </span>
+      {conditionControls}
+      {removeButton}
+      {footer}
+    </div>
+  );
+
+  if (!drag) {
+    return content;
+  }
+
+  return (
+    <Reorder.Item
+      as="div"
+      className={cn(
+        "rounded-md bg-surface-subtle p-2 transition-colors",
+        drag.isDragging &&
+          "relative z-10 bg-surface-overlay shadow-lg ring-1 ring-action-focus-ring",
+      )}
+      dragControls={dragControls}
+      dragListener={false}
+      value={drag.value}
+      whileDrag={{ scale: 0.995 }}
+      onDragEnd={drag.onDragEnd}
+      onDragStart={drag.onDragStart}
+    >
+      {content}
+    </Reorder.Item>
+  );
+}

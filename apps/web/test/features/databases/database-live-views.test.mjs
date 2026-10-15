@@ -1,7 +1,7 @@
 export function register({ assert, readSource, test }) {
   test("database views share the record window boundary", async () => {
     const control = await readSource(
-      "/src/components/databases/views/components/database-record-window-control.tsx",
+      "/src/components/databases/views/shared/database-record-window-control.tsx",
     );
     const list = await readSource("/src/components/databases/views/list/database-list-view.tsx");
     const gallery = await readSource(

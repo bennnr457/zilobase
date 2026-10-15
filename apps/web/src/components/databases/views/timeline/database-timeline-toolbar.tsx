@@ -2,7 +2,12 @@ import { addMonths, format } from "date-fns";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/icons";
 import { useContext, useMemo } from "react";
 
-import { GanttContext, getDateByTimelinePosition, useGanttScrollX, type Range } from "./gantt";
+import {
+  GanttContext,
+  getDateByTimelinePosition,
+  useGanttScrollX,
+  type Range,
+} from "./gantt/gantt-view";
 import { Button } from "@/components/ui/button";
 import {
   Select,

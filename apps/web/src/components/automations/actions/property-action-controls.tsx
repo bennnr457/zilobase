@@ -26,7 +26,7 @@ import { Popover, PopoverContent } from "@/components/ui/popover";
 
 import { getColorTokenBadgeClassName } from "@/lib/color-tokens";
 
-import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
+import { DatabaseConditionValueControl } from "../../databases/views/shared/database-condition-editor";
 import { type DatabaseCondition } from "@zilobase/features/databases";
 
 import {

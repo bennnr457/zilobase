@@ -26,7 +26,7 @@ export function register({ assert, readSource, test }) {
   test("database automation release is server-capability gated and source scoped", async () => {
     const [manager, toolbar] = await Promise.all([
       readAutomationManager(),
-      readSource("/src/components/databases/views/components/database-toolbar-actions.tsx"),
+      readSource("/src/components/databases/views/shared/database-toolbar-actions.tsx"),
     ]);
     assert.match(toolbar, /useDatabaseAutomationCapability/);
     assert.match(toolbar, /const automationUiAvailable = import\.meta\.env\.DEV/);
@@ -182,7 +182,7 @@ export function register({ assert, readSource, test }) {
 
   test("data-source settings launches the shared automation manager", async () => {
     const settings = await readSource(
-      "/src/components/databases/views/view-settings/data-source-settings.tsx",
+      "/src/components/databases/views/settings/data-source-settings.tsx",
     );
     assert.match(settings, /onOpenAutomations/);
     assert.doesNotMatch(settings, /Automation settings/);
@@ -209,7 +209,7 @@ export function register({ assert, readSource, test }) {
 
   test("shared filter and automation calendars keep range selection visible until it is complete", async () => {
     const conditionEditor = await readSource(
-      "/src/components/databases/views/components/database-condition-editor.tsx",
+      "/src/components/databases/views/shared/database-condition-editor.tsx",
     );
 
     assert.match(conditionEditor, /const rangeStartPending = Boolean/);
@@ -229,7 +229,7 @@ export function register({ assert, readSource, test }) {
 
   test("filters and automation triggers share checkbox option selection", async () => {
     const [conditionEditor, manager] = await Promise.all([
-      readSource("/src/components/databases/views/components/database-condition-editor.tsx"),
+      readSource("/src/components/databases/views/shared/database-condition-editor.tsx"),
       readAutomationManager(),
     ]);
 

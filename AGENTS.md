@@ -19,6 +19,11 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   comments Yjs, Ask AI chrome, meeting capture, demo runtime, Electron, and database
   view geometry here.
   Keep form/screen state machines beside their screens.
+  Database route composition lives in `components/databases/screen`, embedded
+  blocks in `blocks`, row-page properties in `page-properties`, and property
+  editors/settings in `properties`. Keep shared view UI in `views/shared`, view
+  settings in `views/settings`, and local view commands in `views/commands`;
+  preserve distinct view renderers, geometry, controllers, and lifecycle owners.
 - A future `apps/mobile` will own native screens, navigation, and native adapters.
   It will import `@zilobase/features`. Do not create the mobile app as a side
   effect of ordinary web changes.

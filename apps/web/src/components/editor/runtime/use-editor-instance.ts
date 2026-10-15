@@ -4,7 +4,7 @@ import type { Content, Editor, Extensions } from "@tiptap/core";
 import { Selection, TextSelection, type EditorState } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { toast } from "sonner";
-import type { DatabaseBlockEditorRuntime } from "@/components/databases";
+import type { DatabaseBlockEditorRuntime } from "@/components/databases/blocks/database-block-contracts";
 import { createEditorDragDrop, type BlockDragPayload } from "../drag-drop/block-drag";
 import {
   getDropDatabaseElement,

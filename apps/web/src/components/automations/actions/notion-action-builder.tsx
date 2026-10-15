@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useSlackAutomationChannels } from "@zilobase/features/automations/react";
-import { DatabaseConditionValueControl } from "../../databases/views/components/database-condition-editor";
+import { DatabaseConditionValueControl } from "../../databases/views/shared/database-condition-editor";
 import { type DatabaseCondition } from "@zilobase/features/databases";
 import type { DatabasePropertyFilterOperator } from "@zilobase/features/databases";
 

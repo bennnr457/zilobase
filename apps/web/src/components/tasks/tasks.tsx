@@ -32,9 +32,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { type DatabaseSetupSelection } from "@/components/databases/setup/components/database-setup-card";
-import { DatabaseViewSkeleton } from "@/components/databases/views/components/database-view-skeleton";
-import { getDatabaseViewModel } from "@/components/databases/views/components/database-view-model";
+import { type DatabaseSetupSelection } from "@/components/databases/setup/database-setup-card";
+import { DatabaseViewSkeleton } from "@/components/databases/views/shared/database-view-skeleton";
+import { getDatabaseViewModel } from "@/components/databases/views/shared/database-view-model";
 import type { DatabaseViewData } from "@zilobase/features/databases";
 import {
   getDatabaseFilterOperatorsForType,
@@ -86,12 +86,12 @@ const DatabaseListView = lazy(() =>
   })),
 );
 const DatabaseSetupCard = lazy(() =>
-  import("@/components/databases/setup/components/database-setup-card").then((module) => ({
+  import("@/components/databases/setup/database-setup-card").then((module) => ({
     default: module.DatabaseSetupCard,
   })),
 );
 const DatabaseViewToolbar = lazy(() =>
-  import("@/components/databases/views/components/database-view-toolbar").then((module) => ({
+  import("@/components/databases/views/shared/database-view-toolbar").then((module) => ({
     default: module.DatabaseViewToolbar,
   })),
 );

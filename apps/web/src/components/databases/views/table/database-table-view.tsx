@@ -32,18 +32,18 @@ import { cn } from "@/lib/utils";
 import { useUndoHistory } from "@/app/shortcuts/undo-history";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 
-import { AddDatabasePropertyMenu } from "../../schema/editors/add-database-property-menu";
-import { DatabaseCellContent } from "../components/database-cell-content";
+import { AddDatabasePropertyMenu } from "../../properties/editors/add-database-property-menu";
+import { DatabaseCellContent } from "../shared/database-cell-content";
 
 import { setDatabasePageDragPayload } from "../../interactions/database-page-drop";
 import { DatabasePageLink } from "../../interactions/database-page-link";
-import { DatabaseFormulaDialog } from "../../schema/formula/view/database-formula-dialog";
+import { DatabaseFormulaDialog } from "../../properties/formula/database-formula-dialog";
 import {
   DatabaseNamePropertyMenu,
   DatabasePropertyMenu,
-} from "../../schema/editors/database-property-menu";
-import { DatabasePropertyValue } from "../../schema/editors/database-property-value";
-import { getDatabasePropertyType } from "../../schema/property-catalog";
+} from "../../properties/editors/database-property-menu";
+import { DatabasePropertyValue } from "../../properties/editors/database-property-value";
+import { getDatabasePropertyType } from "../../properties/property-catalog";
 import { getGroupedRecordMove } from "@zilobase/features/databases";
 import {
   getDatabasePropertyIcon,

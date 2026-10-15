@@ -15,13 +15,13 @@ import {
   DropDrawerSubTrigger,
   DropDrawerTrigger,
 } from "@/components/ui/dropdrawer";
-import { DatabasePropertyDate } from "../../schema/editors/database-property-date";
-import { DatabasePropertySelect } from "../../schema/editors/database-property-select";
+import { DatabasePropertyDate } from "../../properties/editors/database-property-date";
+import { DatabasePropertySelect } from "../../properties/editors/database-property-select";
 import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases";
 import {
   getDatabasePropertyCellKind,
   getDatabasePropertyType,
-} from "../../schema/property-catalog";
+} from "../../properties/property-catalog";
 import type { DatabasePropertyValue as DatabasePropertyValueType } from "@zilobase/features/databases";
 import { getPersonLimit } from "@zilobase/features/databases";
 import type { DatabasePropertyListItem } from "@zilobase/features/databases";

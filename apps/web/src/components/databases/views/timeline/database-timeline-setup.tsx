@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDatabasePropertyType } from "../../schema/property-catalog";
+import { getDatabasePropertyType } from "../../properties/property-catalog";
 import type { DatabasePropertyListItem } from "@zilobase/features/databases";
 
 export function DatabaseTimelineSetup({

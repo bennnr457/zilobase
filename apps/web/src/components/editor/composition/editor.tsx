@@ -2,7 +2,10 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { EditorContent } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
 import { MobileActionBar } from "../toolbar/mobile-action-bar";
-import { PageMetadata, type PageMetadataHandle } from "@/components/databases";
+import {
+  PageMetadata,
+  type PageMetadataHandle,
+} from "@/components/databases/page-properties/page-metadata";
 import { PageLayoutModuleCanvas } from "../layout/page-layout-module-canvas";
 import { PageLayoutTabs } from "../layout/page-layout-tabs";
 import { starterContent } from "../core/constants";
@@ -18,7 +21,7 @@ import { useEditorInstance } from "../runtime/use-editor-instance";
 import { useEditorMenuEffects } from "../runtime/use-editor-menu-effects";
 import { useEditorRuntime } from "../runtime/use-editor-runtime";
 import { useMobileNodeActions } from "../commands/use-mobile-node-actions";
-import { DatabaseView } from "@/components/databases";
+import { DatabaseView } from "@/components/databases/views/shared/database-view";
 import {
   canMoveDatabaseBlockToPage,
   dropCrossEditorBlock,

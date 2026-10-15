@@ -1,5 +1,5 @@
 import { createDatabaseSourceCommands } from "@zilobase/features/databases";
-import { shouldUseDatabaseSetupMode } from "@/components/databases/setup/model/setup-mode";
+import { shouldUseDatabaseSetupMode } from "@/components/databases/setup/setup-mode";
 import { useCallback, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
 
 import { isDatabaseLocked } from "@zilobase/features/databases";
@@ -22,7 +22,7 @@ import {
   useUpdateDatabasePropertyValue,
 } from "@zilobase/features/databases/react";
 import { toast } from "sonner";
-import { createSampleRowContent } from "../../setup/components/database-setup-card";
+import { createSampleRowContent } from "../../setup/database-setup-card";
 import { usePage } from "@zilobase/features/pages/react";
 import {
   getDatabasePageDragPayload,
@@ -30,8 +30,8 @@ import {
   type DatabasePageDragPayload,
 } from "../../interactions/database-page-drop";
 import type { DatabaseViewProviderValue } from "../state/database-view-context";
-import { getDatabaseViewCommands } from "../../records/view-commands";
-import { presentDatabaseViewModel } from "../components/database-view-model";
+import { getDatabaseViewCommands } from "../commands/view-commands";
+import { presentDatabaseViewModel } from "../shared/database-view-model";
 import { useDatabaseController } from "@zilobase/features/databases/react";
 import {
   composeDatabaseViewData,
@@ -40,7 +40,7 @@ import {
   resolveRequestedDatabaseViewId,
 } from "@zilobase/features/databases";
 import { getDatabaseSetupDismissed } from "@zilobase/features/databases";
-import { databaseViewTypeOptions, type DatabaseViewType } from "../view-settings/view-type-options";
+import { databaseViewTypeOptions, type DatabaseViewType } from "../settings/view-type-options";
 
 export type DatabaseViewProps = {
   activeViewId?: string | null;

@@ -29,7 +29,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { getPaletteColor } from "@/lib/color-tokens";
-import { DatabaseRecordWindowControl } from "../components/database-record-window-control";
+import { DatabaseRecordWindowControl } from "../shared/database-record-window-control";
 import { useDatabaseDataContext, useDatabaseUiContext } from "../state/database-view-context";
 import {
   shouldSplitDatabaseChartSeries,

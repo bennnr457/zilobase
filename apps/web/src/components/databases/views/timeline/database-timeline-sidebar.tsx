@@ -6,7 +6,7 @@ import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/co
 import { databaseNameColumnDefaultWidth } from "../model/column-dimensions";
 import { DatabasePageLink } from "../../interactions/database-page-link";
 import type { DatabasePropertyListItem } from "@zilobase/features/databases";
-import { DatabaseCellContent } from "../components/database-cell-content";
+import { DatabaseCellContent } from "../shared/database-cell-content";
 import type { TimelineViewRow } from "./presentation-model";
 
 const timelineTableMinWidth = databaseNameColumnDefaultWidth;

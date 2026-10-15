@@ -2,8 +2,8 @@ export function register({ readSource, assert, test }) {
   const readToolbarSource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/databases/views/components/database-view-toolbar.tsx"),
-        readSource("/src/components/databases/views/components/database-view-toolbar-dialogs.tsx"),
+        readSource("/src/components/databases/views/shared/database-view-toolbar.tsx"),
+        readSource("/src/components/databases/views/shared/database-view-toolbar-dialogs.tsx"),
       ])
     ).join("\n");
   test("inline database and meeting titles use editor heading two typography", async () => {

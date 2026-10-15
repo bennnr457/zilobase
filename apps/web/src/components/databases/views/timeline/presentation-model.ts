@@ -7,7 +7,7 @@ import {
   type DatabaseTableGroupSection,
   type SortableDatabaseItem,
 } from "@zilobase/features/databases";
-import type { GanttFeature, GanttStatus } from "./gantt";
+import type { GanttFeature, GanttStatus } from "./gantt/gantt-view";
 import { getPaletteColor } from "@/lib/color-tokens";
 export const UNSCHEDULED_GROUP_NAME = "Unscheduled";
 

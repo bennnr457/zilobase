@@ -1,5 +1,5 @@
 import { ManualRecordPlacementProvider } from "./manual-record-placement";
-import { DatabaseManualPlacementDialog } from "../components/database-manual-placement-dialog";
+import { DatabaseManualPlacementDialog } from "../shared/database-manual-placement-dialog";
 import {
   createContext,
   useContext,

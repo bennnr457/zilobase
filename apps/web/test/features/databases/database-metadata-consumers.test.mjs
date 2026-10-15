@@ -18,8 +18,8 @@ export function register({ assert, readSource, readWorkspace, test }) {
       "/src/app/shell/app-shell.tsx",
       "/packages/features/src/pages/sharing-hooks.ts",
       "/packages/features/src/pages/item-action-hooks.ts",
-      "/src/components/databases/setup/components/database-setup-card.tsx",
-      "/src/components/databases/views/view-settings/data-source-settings.tsx",
+      "/src/components/databases/setup/database-setup-card.tsx",
+      "/src/components/databases/views/settings/data-source-settings.tsx",
     ];
 
     for (const path of paths) {

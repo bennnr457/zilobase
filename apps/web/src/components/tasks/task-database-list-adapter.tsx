@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 
-import { DatabaseViewProvider, type DatabaseViewProviderValue } from "@/components/databases";
+import {
+  DatabaseViewProvider,
+  type DatabaseViewProviderValue,
+} from "@/components/databases/views/state/database-view-context";
 
 type UnsupportedTaskDatabaseAction =
   | "addChartView"

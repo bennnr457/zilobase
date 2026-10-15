@@ -16,7 +16,7 @@ import {
 } from "@/components/icons";
 import { useState, type ReactNode } from "react";
 
-import { PageMetadata } from "../../access/page-metadata";
+import { PageMetadata } from "../../page-properties/page-metadata";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -46,8 +46,8 @@ import type { DatabaseProperty } from "@zilobase/features/databases";
 import {
   getDatabasePropertyCellKind,
   getDatabasePropertyType,
-} from "../../schema/property-catalog";
-import { DatabasePropertyDate } from "../../schema/editors/database-property-date";
+} from "../../properties/property-catalog";
+import { DatabasePropertyDate } from "../../properties/editors/database-property-date";
 import { formatDatabaseDateValue } from "@zilobase/features/databases";
 import { getColorTokenDotClassName } from "@/lib/color-tokens";
 import { cn } from "@/lib/utils";

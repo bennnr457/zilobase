@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { GanttProvider, type Range } from "./gantt";
+import { GanttProvider, type Range } from "./gantt/gantt-view";
 
 import { getRawDatabaseGroupValue } from "@zilobase/features/databases";
 import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
-import { DatabaseRecordWindowControl } from "../components/database-record-window-control";
+import { DatabaseRecordWindowControl } from "../shared/database-record-window-control";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,

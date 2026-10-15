@@ -12,8 +12,8 @@ export function register({ readSource, assert, loadModule, test }) {
   const readToolbarSource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/databases/views/components/database-view-toolbar.tsx"),
-        readSource("/src/components/databases/views/components/database-view-toolbar-dialogs.tsx"),
+        readSource("/src/components/databases/views/shared/database-view-toolbar.tsx"),
+        readSource("/src/components/databases/views/shared/database-view-toolbar-dialogs.tsx"),
       ])
     ).join("\n");
   test("Library Teamspaces uses the shared hierarchy table", async () => {

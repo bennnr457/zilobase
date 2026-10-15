@@ -23,13 +23,15 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("page and database selectors use the shared picker", async () => {
     const sources = await Promise.all([
-      readSource("/src/components/databases/schema/editors/database-derived-property-value.tsx"),
       readSource(
-        "/src/components/databases/schema/configuration/relation/relation-property-settings.tsx",
+        "/src/components/databases/properties/editors/database-derived-property-value.tsx",
       ),
-      readSource("/src/components/databases/views/view-settings/data-source-settings.tsx"),
-      readSource("/src/components/databases/views/components/linked-data-source-picker.tsx"),
-      readSource("/src/components/databases/setup/components/database-setup-card.tsx"),
+      readSource(
+        "/src/components/databases/properties/configuration/relation-property-settings.tsx",
+      ),
+      readSource("/src/components/databases/views/settings/data-source-settings.tsx"),
+      readSource("/src/components/databases/views/shared/linked-data-source-picker.tsx"),
+      readSource("/src/components/databases/setup/database-setup-card.tsx"),
       readSource("/src/app/shell/sidebar/sidebar-customization.tsx"),
     ]);
 

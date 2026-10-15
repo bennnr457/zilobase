@@ -21,20 +21,20 @@ import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pa
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { PageContent } from "@/components/pages/content/page-content";
+import { DatabaseTableView } from "@/components/databases/views/table/database-table-view";
+import { DatabaseViewProvider } from "@/components/databases/views/state/database-view-context";
+import { DatabaseViewSkeleton } from "@/components/databases/views/shared/database-view-skeleton";
+import { DatabaseViewToolbar } from "@/components/databases/views/shared/database-view-toolbar";
+import { getDatabaseViewModel } from "@/components/databases/views/shared/database-view-model";
 import {
-  DatabaseTableView,
-  DatabaseViewProvider,
-  DatabaseViewSkeleton,
-  DatabaseViewToolbar,
-  getDatabaseViewModel,
   getMergedDatabaseConfig,
   getMergedNameColumnConfig,
   getMergedPropertyConfig,
   type DatabaseNameColumnConfig,
   type DatabasePropertyConfig,
   type DatabaseSortConfig,
-} from "@/components/databases";
-import { DatabaseMainPane } from "@/components/databases/core/index";
+} from "@zilobase/features/databases";
+import { DatabaseMainPane } from "@/components/databases/screen/database-screen";
 
 import {
   DropdownMenu,

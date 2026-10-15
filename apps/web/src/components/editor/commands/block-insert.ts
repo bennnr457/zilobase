@@ -3,7 +3,7 @@ import type { Content } from "@tiptap/core";
 import type { Editor } from "@tiptap/react";
 
 import type { SlashCommandItem } from "../extensions/slash-command";
-import { createDatabaseSetupBlockContent } from "@/components/databases";
+import { createDatabaseSetupBlockContent } from "@/components/databases/blocks/database-block-content";
 
 import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
 import {

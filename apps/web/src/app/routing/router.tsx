@@ -291,7 +291,7 @@ const contentRoutes = [
           Effect.map((publishedShare) => ({ publishedShare })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/databases/core/database-screen")),
+    component: lazyRouteComponent(() => import("@/components/databases/screen/database-screen")),
     pendingComponent: PendingPage,
   }),
 ];

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("setup mode waits for settled data before judging emptiness", async () => {
     const { shouldUseDatabaseSetupMode } = await loadModule(
-      "/src/components/databases/setup/model/setup-mode.ts",
+      "/src/components/databases/setup/setup-mode.ts",
     );
     const emptyEditable = {
       dataSettled: true,
@@ -19,7 +19,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("setup mode still respects editability, dismissal, and content", async () => {
     const { shouldUseDatabaseSetupMode } = await loadModule(
-      "/src/components/databases/setup/model/setup-mode.ts",
+      "/src/components/databases/setup/setup-mode.ts",
     );
     const base = {
       dataSettled: true,
@@ -45,9 +45,7 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("setup prompt autofocus does not move the containing page", async () => {
-    const setupCard = await readSource(
-      "/src/components/databases/setup/components/database-setup-card.tsx",
-    );
+    const setupCard = await readSource("/src/components/databases/setup/database-setup-card.tsx");
     const slashCommand = await readSource("/src/components/editor/extensions/slash-command.tsx");
     const databaseCommand = slashCommand.slice(slashCommand.indexOf('title: "Database"'));
 

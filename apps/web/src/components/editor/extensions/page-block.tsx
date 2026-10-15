@@ -22,7 +22,7 @@ import {
 } from "@zilobase/features/databases";
 import { colorWithAlpha, getPaletteColor } from "@/lib/color-tokens";
 import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
-import { setDatabasePageDragPayload } from "@/components/databases";
+import { setDatabasePageDragPayload } from "@/components/databases/interactions/database-page-drop";
 
 export type CreatedPage = {
   id: string;

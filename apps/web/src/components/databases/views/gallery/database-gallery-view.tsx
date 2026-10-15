@@ -11,9 +11,9 @@ import {
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../state/database-view-context";
-import { DatabaseRecordWindowControl } from "../components/database-record-window-control";
-import { DatabasePropertyValue } from "../../schema/editors/database-property-value";
-import { DatabaseCellContent } from "../components/database-cell-content";
+import { DatabaseRecordWindowControl } from "../shared/database-record-window-control";
+import { DatabasePropertyValue } from "../../properties/editors/database-property-value";
+import { DatabaseCellContent } from "../shared/database-cell-content";
 import { useDatabaseGalleryCardDrag } from "./use-database-gallery-card-drag";
 
 export function DatabaseGalleryView() {

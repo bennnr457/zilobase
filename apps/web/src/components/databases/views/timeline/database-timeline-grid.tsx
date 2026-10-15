@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 
-import { GanttAddFeatureRow, GanttFeatureItem, GanttHeader } from "./gantt";
+import { GanttAddFeatureRow, GanttFeatureItem, GanttHeader } from "./gantt/gantt-view";
 
 import type { DatabasePropertyListItem } from "@zilobase/features/databases";
 import {

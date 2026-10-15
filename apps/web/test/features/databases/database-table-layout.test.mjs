@@ -23,7 +23,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("add-property menu opens below the property insertion point", async () => {
     const menuSource = await readSource(
-      "/src/components/databases/schema/editors/add-database-property-menu.tsx",
+      "/src/components/databases/properties/editors/add-database-property-menu.tsx",
     );
 
     assert.match(menuSource, /<DropDrawerContent\s+align="start"/);

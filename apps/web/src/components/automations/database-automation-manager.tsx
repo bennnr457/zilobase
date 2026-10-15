@@ -29,7 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { DatabaseViewToolbarButton } from "../databases/views/components/database-view-toolbar-button";
+import { DatabaseViewToolbarButton } from "../databases/views/shared/database-view-toolbar-button";
 
 import { AutomationList, ManagerHeader, RunDetail, RunList } from "./database-automation-screens";
 

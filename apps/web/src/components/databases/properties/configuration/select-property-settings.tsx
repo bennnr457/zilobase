@@ -1,0 +1,188 @@
+import type { SelectOptionSortValue } from "@zilobase/features/databases";
+import { getSortedSelectOptions } from "@zilobase/features/databases";
+import { ArrowDownUp, Plus } from "@/components/icons";
+import { Reorder } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+
+import { DropDrawerItem, DropDrawerLabel, DropDrawerSeparator } from "@/components/ui/dropdrawer";
+
+import { getNextDatabaseOptionColor } from "../property-catalog";
+import type { DatabasePropertyConfig, DatabaseSelectOption } from "@zilobase/features/databases";
+import { OptionCreateInput } from "./shared/option-create-input";
+import { OptionEditorSubmenu } from "./shared/option-editor-submenu";
+import { areSameOrderedIds, haveSameIds, reorderOptionsByIds } from "@zilobase/features/databases";
+import { PropertySettingSubmenu } from "./shared/property-setting-submenu";
+
+const selectOptionSortOptions = [
+  { label: "Manual", value: "manual" },
+  { label: "Alphabetical", value: "alphabetical" },
+  { label: "Reverse alphabetical", value: "reverse_alphabetical" },
+] satisfies { label: string; value: SelectOptionSortValue }[];
+
+export function SelectPropertySettings({
+  onUpdateConfig,
+  options,
+  sort,
+}: {
+  onUpdateConfig: (config: DatabasePropertyConfig) => void;
+  options: DatabaseSelectOption[];
+  sort: SelectOptionSortValue;
+}) {
+  const [showCreateInput, setShowCreateInput] = useState(false);
+  const optionIds = options.map((option) => option.id);
+  const [draftOptionIds, setDraftOptionIds] = useState<string[] | null>(null);
+  const draftOptionIdsRef = useRef<string[] | null>(null);
+  const draftOptionFrameRef = useRef<number | null>(null);
+  const renderedOptionIds = draftOptionIds ?? optionIds;
+  const renderedOptions = reorderOptionsByIds(options, renderedOptionIds);
+
+  useEffect(() => {
+    if (
+      draftOptionIds &&
+      (areSameOrderedIds(draftOptionIds, optionIds) || !haveSameIds(draftOptionIds, optionIds))
+    ) {
+      draftOptionIdsRef.current = null;
+      setDraftOptionIds(null);
+    }
+  }, [draftOptionIds, optionIds]);
+
+  const updateOption = (optionId: string, patch: Partial<DatabaseSelectOption>) => {
+    const nextOptions = options.map((option) =>
+      option.id === optionId ? { ...option, ...patch } : option,
+    );
+
+    onUpdateConfig({ options: getSortedSelectOptions(nextOptions, sort) });
+  };
+  const addOption = (name: string) => {
+    const nextOptions = [
+      ...options,
+      {
+        color: getNextDatabaseOptionColor(options.length),
+        id: crypto.randomUUID(),
+        name,
+      },
+    ];
+
+    onUpdateConfig({ options: getSortedSelectOptions(nextOptions, sort) });
+  };
+  const updateSort = (selectOptionSort: SelectOptionSortValue) => {
+    onUpdateConfig({
+      options:
+        selectOptionSort === "manual" ? options : getSortedSelectOptions(options, selectOptionSort),
+      selectOptionSort,
+    });
+  };
+  const queueOptionReorder = (nextOptionIds: string[]) => {
+    draftOptionIdsRef.current = nextOptionIds;
+
+    if (draftOptionFrameRef.current !== null) {
+      return;
+    }
+
+    draftOptionFrameRef.current = requestAnimationFrame(() => {
+      draftOptionFrameRef.current = null;
+      const latestOptionIds = draftOptionIdsRef.current;
+
+      if (!latestOptionIds) {
+        return;
+      }
+
+      setDraftOptionIds((currentOptionIds) =>
+        areSameOrderedIds(currentOptionIds ?? optionIds, latestOptionIds)
+          ? currentOptionIds
+          : latestOptionIds,
+      );
+    });
+  };
+  const commitOptionReorder = () => {
+    const nextOptionIds = draftOptionIdsRef.current;
+
+    if (!nextOptionIds) {
+      return;
+    }
+
+    if (draftOptionFrameRef.current !== null) {
+      cancelAnimationFrame(draftOptionFrameRef.current);
+      draftOptionFrameRef.current = null;
+    }
+
+    draftOptionIdsRef.current = null;
+    setDraftOptionIds(nextOptionIds);
+
+    if (areSameOrderedIds(nextOptionIds, optionIds)) {
+      setDraftOptionIds(null);
+      return;
+    }
+
+    onUpdateConfig({
+      options: reorderOptionsByIds(options, nextOptionIds),
+      selectOptionSort: "manual",
+    });
+  };
+
+  return (
+    <>
+      <PropertySettingSubmenu
+        icon={<ArrowDownUp />}
+        label="Sort"
+        onSelect={updateSort}
+        options={selectOptionSortOptions}
+        selectedValue={sort}
+      />
+      <DropDrawerSeparator />
+      <DropDrawerLabel className="flex items-center justify-between pr-1">
+        <span>Options</span>
+        <button
+          aria-label="Add select option"
+          className="-my-1 flex size-6 items-center justify-center rounded-md text-content-secondary hover:bg-action-neutral-hover hover:text-action-on-neutral"
+          onClick={() => setShowCreateInput(true)}
+          type="button"
+        >
+          <Plus className="size-4" />
+        </button>
+      </DropDrawerLabel>
+      {showCreateInput ? (
+        <OptionCreateInput
+          ariaLabel="New select option name"
+          onCancel={() => setShowCreateInput(false)}
+          onCreate={(name) => {
+            addOption(name);
+            setShowCreateInput(false);
+          }}
+          placeholder="New option"
+        />
+      ) : null}
+      {options.length > 0 ? (
+        <Reorder.Group
+          as="div"
+          axis="y"
+          layoutScroll
+          values={renderedOptionIds}
+          onReorder={queueOptionReorder}
+        >
+          {renderedOptions.map((option) => (
+            <OptionEditorSubmenu
+              draggable
+              key={option.id}
+              onDeleteOption={(optionId) =>
+                onUpdateConfig({
+                  options: options.filter((item) => item.id !== optionId),
+                  selectOptionSort: sort,
+                })
+              }
+              onDragEnd={commitOptionReorder}
+              onUpdateOption={updateOption}
+              option={option}
+            />
+          ))}
+        </Reorder.Group>
+      ) : (
+        <DropDrawerItem disabled>No options yet</DropDrawerItem>
+      )}
+    </>
+  );
+}
+
+export { getSelectOptionSort, getSelectOptions } from "@zilobase/features/databases";
+
+export type { SelectOptionSortValue } from "@zilobase/features/databases";

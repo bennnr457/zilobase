@@ -27,7 +27,7 @@ import {
 import * as React from "react";
 import { type CSSProperties, type ReactNode } from "react";
 import { toast } from "sonner";
-import { DatabaseViewIcon } from "@/components/databases";
+import { DatabaseViewIcon } from "@/components/databases/views/shared/database-view-icon";
 import {
   Sidebar,
   SidebarContent,

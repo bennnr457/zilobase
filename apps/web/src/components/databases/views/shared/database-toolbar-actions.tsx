@@ -1,0 +1,155 @@
+import { getToolbarSourceIdentity, getToolbarSourceTitle } from "@zilobase/features/databases";
+import { DatabaseSettingsControl } from "./database-settings-control";
+import { DatabaseRowCreationControl } from "./database-row-creation-control";
+import { DatabaseSortControl } from "./database-query-controls";
+import { DatabaseFilterControl } from "./database-query-controls";
+import { DatabaseSaveStatus } from "./database-save-status";
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Maximize2 } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+
+import { useDatabaseDataContext, useDatabaseUiContext } from "../state/database-view-context";
+
+import { DatabaseAutomationManager } from "../../../automations/database-automation-manager";
+import { useDatabaseAutomationCapability } from "@zilobase/features/automations/react";
+import { DatabaseTrashRestoreButton } from "../../screen/database-trash-restore-button";
+
+export function DatabaseToolbarActions({
+  canRestoreDeleted,
+  deletedDatabaseId,
+  onPreviewForm,
+  settingsOpen,
+  onSettingsOpenChange,
+}: {
+  canRestoreDeleted: boolean;
+  deletedDatabaseId: string | null;
+  onPreviewForm: () => void;
+  settingsOpen: boolean;
+  onSettingsOpenChange: (open: boolean) => void;
+}) {
+  const {
+    databaseId,
+    databaseWorkspaceId,
+    editable,
+    hostDatabaseId,
+    hostDatabaseName,
+    hostDatabaseWorkspaceId,
+    workspaceId,
+  } = useDatabaseDataContext();
+  const { activeViewTabId, draftDatabaseTitle, showExpandButton, viewTabs } =
+    useDatabaseUiContext();
+
+  const [automationManagerOpen, setAutomationManagerOpen] = useState(false);
+
+  const activeViewTab = viewTabs.find((view) => view.id === activeViewTabId);
+  const {
+    databaseId: automationDatabaseId,
+    workspaceId: automationWorkspaceId = "",
+    expandDatabaseId,
+  } = getToolbarSourceIdentity({
+    hostDatabaseId,
+    databaseId,
+    hostDatabaseWorkspaceId,
+    databaseWorkspaceId,
+    workspaceId,
+  });
+  const automationDataSourceId = activeViewTab?.dataSourceId ?? "";
+  const automationsEnabled = useAutomationsEnabled(automationDatabaseId, automationWorkspaceId);
+  const sourceHost = {
+    hostDatabaseId,
+    databaseId,
+    hostDatabaseName,
+    hostDatabaseWorkspaceId,
+    databaseWorkspaceId,
+    workspaceId,
+  };
+  const hostDisplayTitle = getToolbarSourceTitle(sourceHost, activeViewTab, draftDatabaseTitle);
+
+  return (
+    <div className="ml-auto flex shrink-0 items-center gap-0">
+      {editable ? (
+        <>
+          <DatabaseSaveStatus databaseId={automationDatabaseId} />
+          <DatabaseFilterControl />
+          <DatabaseSortControl />
+          <ToolbarAutomationManager
+            enabled={automationsEnabled}
+            databaseId={automationDatabaseId}
+            dataSourceId={automationDataSourceId}
+            name={activeViewTab?.dataSourceName ?? hostDisplayTitle}
+            open={automationManagerOpen}
+            onOpenChange={setAutomationManagerOpen}
+          />
+          <DatabaseSettingsControl
+            open={settingsOpen}
+            onOpenChange={onSettingsOpenChange}
+            onOpenAutomations={
+              automationsEnabled ? () => setAutomationManagerOpen(true) : undefined
+            }
+          />
+        </>
+      ) : canRestoreDeleted && deletedDatabaseId ? (
+        <DatabaseTrashRestoreButton databaseId={deletedDatabaseId} />
+      ) : null}
+      {showExpandButton && expandDatabaseId ? (
+        <Button
+          aria-label="Expand database"
+          asChild
+          className="database-expand-button text-content-secondary"
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <Link
+            params={{ databaseId: expandDatabaseId }}
+            search={{ view: undefined }}
+            title="Expand database"
+            to="/d/$databaseId"
+          >
+            <Maximize2 />
+          </Link>
+        </Button>
+      ) : null}
+      {editable ? <DatabaseRowCreationControl onPreviewForm={onPreviewForm} /> : null}
+    </div>
+  );
+}
+
+function useAutomationsEnabled(automationDatabaseId: string, automationWorkspaceId: string) {
+  const automationUiAvailable = import.meta.env.DEV;
+  const automationCapability = useDatabaseAutomationCapability(
+    automationUiAvailable ? automationDatabaseId : null,
+    automationUiAvailable ? automationWorkspaceId : null,
+  );
+  const automationsEnabled = automationUiAvailable && automationCapability.data?.enabled === true;
+  return automationsEnabled;
+}
+
+function ToolbarAutomationManager({
+  enabled,
+  databaseId,
+  dataSourceId,
+  name,
+  open,
+  onOpenChange,
+}: {
+  enabled: boolean;
+  databaseId: string;
+  dataSourceId: string;
+  name: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!enabled || !databaseId || !dataSourceId) return null;
+  return (
+    <DatabaseAutomationManager
+      databaseId={databaseId}
+      dataSourceId={dataSourceId}
+      dataSourceName={name}
+      open={open}
+      onOpenChange={onOpenChange}
+      timezone={Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"}
+    />
+  );
+}

@@ -3,7 +3,7 @@ import { Fragment, useRef, useState, type CSSProperties } from "react";
 import { ChevronRight, Globe2Icon, Layers3Icon, LockIcon, UsersIcon } from "@/components/icons";
 import { useResizableTableColumns } from "@/lib/hooks/use-resizable-table-columns";
 
-import { DatabasePageLink } from "@/components/databases";
+import { DatabasePageLink } from "@/components/databases/interactions/database-page-link";
 
 import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 

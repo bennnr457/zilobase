@@ -18,9 +18,7 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("database setup applies templates to the active data source", async () => {
-    const source = await readSource(
-      "/src/components/databases/setup/components/database-setup-card.tsx",
-    );
+    const source = await readSource("/src/components/databases/setup/database-setup-card.tsx");
 
     assert.match(
       source,

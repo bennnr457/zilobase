@@ -20,7 +20,8 @@ import { isDesktopApp } from "@/platform/environment";
 import { useLocation, useNavigate, useRouterState, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAppSearch } from "@/components/search/app-search";
-import { getDatabaseViewModel, DATABASE_PAGE_DRAG_MIME } from "@/components/databases";
+import { getDatabaseViewModel } from "@/components/databases/views/shared/database-view-model";
+import { DATABASE_PAGE_DRAG_MIME } from "@/components/databases/interactions/database-drag-contracts";
 import {
   buildSidebarNavigation,
   type SidebarNavigationIcons,

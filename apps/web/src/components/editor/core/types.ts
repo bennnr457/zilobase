@@ -137,7 +137,7 @@ export type UseEditorExtensionsOptions = {
   collaborationField?: string;
   createEditorDatabase: () => Promise<string | null>;
   createEditorMeeting: () => Promise<string | null>;
-  databaseEditorRuntime: import("@/components/databases").DatabaseBlockEditorRuntime;
+  databaseEditorRuntime: import("@/components/databases/blocks/database-block-contracts").DatabaseBlockEditorRuntime;
   editable: boolean;
   structuralEditingEnabled: boolean;
   isStructuralEditingEnabled?: () => boolean;

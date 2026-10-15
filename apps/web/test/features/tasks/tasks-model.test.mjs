@@ -5,7 +5,7 @@ export function register({ readSource, assert, loadModule, test }) {
     const [source, listView, dataSourceSettings, styles] = await Promise.all([
       readSource("/src/components/tasks/tasks.tsx"),
       readSource("/src/components/databases/views/list/database-list-view.tsx"),
-      readSource("/src/components/databases/views/view-settings/data-source-settings.tsx"),
+      readSource("/src/components/databases/views/settings/data-source-settings.tsx"),
       readSource("/src/components/databases/styles/database.css"),
     ]);
 

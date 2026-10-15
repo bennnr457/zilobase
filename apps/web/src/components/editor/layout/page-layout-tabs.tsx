@@ -12,7 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
-import { LinkedDataSourcePicker } from "@/components/databases";
+import { LinkedDataSourcePicker } from "@/components/databases/views/shared/linked-data-source-picker";
 import type { PageLayoutConfig, PageLayoutLinkedTab } from "@zilobase/features/pages";
 
 type PageLayoutTabsProps = {

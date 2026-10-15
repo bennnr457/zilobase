@@ -81,7 +81,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { getAppTabTriggerClassName } from "@/components/ui/app-tabs";
 import { toast } from "sonner";
-import { DatabaseViewIcon } from "@/components/databases";
+import { DatabaseViewIcon } from "@/components/databases/views/shared/database-view-icon";
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
