@@ -33,7 +33,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
   });
 
   test("sidebar and layout previews use bounded record windows", async () => {
-    const sidebar = await readSource("/src/app/shell/sidebar/sidebar-database-view-section.tsx");
+    const sidebar = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
     const layout = await readSource("/src/components/pages/layout/layout-editor.tsx");
     const pane = await readSource("/src/components/pages/pane/page-pane-header.tsx");
 

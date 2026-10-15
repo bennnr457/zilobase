@@ -1,3 +1,4 @@
+import { PageLayout } from "@/components/pages/pane/page-layout";
 import { PageWorkspaceGate } from "@/components/workspaces";
 import { usePageSidePane } from "@/components/pages/pane/page-side-pane";
 import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
@@ -7,6 +8,8 @@ import { AskAiWorkspace } from "./ask-ai-workspace";
 
 export default function AiPage() {
   const {
+    closeSidePane,
+    openSidePaneAsFullPage,
     renderedSidePaneDatabaseId,
     renderedSidePanePageId,
     sidePaneAnimatedOpen,
@@ -25,23 +28,39 @@ export default function AiPage() {
   const externalSidePane =
     sidePaneContentReady && (renderedSidePanePageId || renderedSidePaneDatabaseId) ? (
       renderedSidePaneDatabaseId ? (
-        <DatabaseMainPane
-          className="min-h-0 flex-1 overflow-y-auto"
+        <PageLayout
+          pageId={null}
           databaseId={renderedSidePaneDatabaseId}
-          embedded
-          key={renderedSidePaneDatabaseId}
-          onOpenPage={openSidePaneChildPage}
-        />
+          placement="pane"
+          onClose={closeSidePane}
+          onOpenFullPage={openSidePaneAsFullPage}
+        >
+          <DatabaseMainPane
+            className="min-h-0 flex-1"
+            databaseId={renderedSidePaneDatabaseId}
+            embedded
+            key={renderedSidePaneDatabaseId}
+            onOpenPage={openSidePaneChildPage}
+          />
+        </PageLayout>
       ) : renderedSidePanePageId ? (
         <PageWorkspaceGate pageId={renderedSidePanePageId}>
-          <PageEditorPane
-            databaseId={sidePaneDatabaseId}
-            enableComments={false}
-            key={renderedSidePanePageId}
-            layoutPanelMode="overlay"
-            onOpenPage={openSidePaneChildPage}
+          <PageLayout
             pageId={renderedSidePanePageId}
-          />
+            placement="pane"
+            rowNavigationDatabaseId={sidePaneDatabaseId}
+            onClose={closeSidePane}
+            onOpenFullPage={openSidePaneAsFullPage}
+          >
+            <PageEditorPane
+              databaseId={sidePaneDatabaseId}
+              enableComments={false}
+              key={renderedSidePanePageId}
+              layoutPanelMode="overlay"
+              onOpenPage={openSidePaneChildPage}
+              pageId={renderedSidePanePageId}
+            />
+          </PageLayout>
         </PageWorkspaceGate>
       ) : null
     ) : null;

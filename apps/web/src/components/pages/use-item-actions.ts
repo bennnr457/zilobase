@@ -1,9 +1,21 @@
-import { Cause, Effect } from "effect";
 import { getNavigationItemPath } from "@/components/pages/navigation/route-item-id";
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useDeleteDatabase } from "@zilobase/features/databases/react";
+import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
+import {
+  useDeletePage,
+  useConvertPageToTeamspace,
+  useMovePageToTeamspace,
+  useItemActionController,
+} from "@zilobase/features/pages/react";
+import { useTeamspaces } from "@zilobase/features/teamspaces/react";
 import { toast } from "sonner";
-import { useItemActionController } from "@zilobase/features/pages/react";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useOpenInNewTab } from "@/components/desktop/ui";
+import { type SidebarNavItem } from "@zilobase/features/pages";
+import { Cause, Effect } from "effect";
 import { useLayoutEditor } from "@/components/pages/layout";
 
 export function useNavigationItemActions({
@@ -232,4 +244,105 @@ export function getNavigationPendingState(
       ? !item.hasDatabase || pending.databaseFavorite
       : !item.hasPageId || pending.pageFavorite,
   };
+}
+
+export function useSidebarItemActions(item: SidebarNavItem<unknown>) {
+  const workspaceId = useActiveWorkspaceId();
+  const { isMobile } = useSidebar();
+  const openInNewTab = useOpenInNewTab();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const deletePage = useDeletePage();
+  const deleteDatabase = useDeleteDatabase();
+  const movePage = useMovePageToTeamspace();
+  const convertPage = useConvertPageToTeamspace();
+  const { data: teamspaces = [] } = useTeamspaces(workspaceId);
+  const activePageId = getSidebarPageId(location.pathname);
+  const activeDatabaseId = getSidebarDatabaseId(location.pathname);
+  const linkPath = getNavigationItemPath({
+    databaseId: item.isDatabase || item.isDatabaseView ? item.databaseId : null,
+    pageId: item.pageId,
+  });
+  const displayName = item.name.trim() || "Untitled";
+  const isDeleting = deletePage.isPending || deleteDatabase.isPending;
+
+  const redirectIfDeleted = (result: {
+    deletedDatabaseIds: string[];
+    deletedPageIds: string[];
+  }) => {
+    const deletedActivePage = activePageId && result.deletedPageIds.includes(activePageId);
+    const deletedActiveDatabase =
+      activeDatabaseId && result.deletedDatabaseIds.includes(activeDatabaseId);
+
+    if (deletedActivePage || deletedActiveDatabase) {
+      void navigate({ to: "/" });
+    }
+  };
+
+  const runDelete = () => {
+    if (item.isDatabase && item.databaseId) {
+      deleteDatabase.mutate(item.databaseId, {
+        onSuccess: (result) => {
+          setConfirmOpen(false);
+          toast.success("Moved to trash.");
+          redirectIfDeleted(result);
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : "Could not delete database.");
+        },
+      });
+      return;
+    }
+
+    if (!item.pageId) {
+      return;
+    }
+
+    deletePage.mutate(item.pageId, {
+      onSuccess: (result) => {
+        setConfirmOpen(false);
+        toast.success("Moved to trash.");
+        redirectIfDeleted(result);
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : "Could not delete page.");
+      },
+    });
+  };
+
+  return {
+    workspaceId,
+    isMobile,
+    openInNewTab,
+    confirmOpen,
+    setConfirmOpen,
+    movePage,
+    convertPage,
+    teamspaces,
+    displayName,
+    isDeleting,
+    linkPath,
+    runDelete,
+  };
+}
+
+function getSidebarPageId(path: string) {
+  const id = path.match(/^\/p\/([^/?#]+)/)?.[1];
+  return id ? decodeURIComponent(id) : null;
+}
+
+function getSidebarDatabaseId(path: string) {
+  const id = path.match(/^\/d\/([^/?#]+)/)?.[1];
+  return id ? decodeURIComponent(id) : null;
+}
+
+export function copySidebarItemLink(path: string) {
+  return Effect.runPromise(
+    Effect.tryPromise({
+      try: () =>
+        navigator.clipboard?.writeText(`${window.location.origin}${path}`) ?? Promise.resolve(),
+      catch: (error) => error,
+    }).pipe(Effect.ignore),
+  );
 }

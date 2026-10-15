@@ -75,7 +75,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("Library lists meetings and its sidebar shortcut opens that tab", async () => {
     const librarySource = await readLibrarySource();
-    const sidebarSource = await readSource("/src/app/shell/sidebar/sidebar-sections.tsx");
+    const sidebarSource = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
     const customizeSource = await readSource("/src/app/shell/sidebar/sidebar-customization.tsx");
     const iconSource = await readSource("/src/components/library/library-icons.tsx");
     const toolbarSource = await readToolbarSource();
@@ -102,7 +102,7 @@ export function register({ readSource, assert, loadModule, test }) {
     );
     assert.match(
       sidebarSource,
-      /target\.route === "meetings"[\s\S]*search: \{ view: "meetings" \}[\s\S]*to: "\/recents"/,
+      /target\.route === "meetings" \|\| target\.route === "trash"[\s\S]*search: \{ view: target\.route \}[\s\S]*to: "\/recents"/,
     );
   });
 }

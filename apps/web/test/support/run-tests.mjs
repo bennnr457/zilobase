@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { stat, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve, sep as pathSeparator } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -52,19 +52,19 @@ try {
   await rm(tempDir, { force: true, recursive: true });
 }
 
-async function loadModule(path) {
+async function loadModule(path, exports) {
   const sourcePath = path.startsWith("/src/")
     ? join(appDir, path.slice(1))
     : path.startsWith("/")
       ? join(workspaceDir, path.slice(1))
       : path;
-  const cacheKey = sourcePath;
+  const cacheKey = sourcePath + JSON.stringify(exports ?? []);
 
   if (loadedModules.has(cacheKey)) {
     return loadedModules.get(cacheKey);
   }
 
-  const hash = createHash("sha1").update(sourcePath).digest("hex").slice(0, 8);
+  const hash = createHash("sha1").update(cacheKey).digest("hex").slice(0, 8);
   const outfile = join(tempDir, `${basename(sourcePath)}-${hash}.mjs`);
 
   await build({
@@ -75,7 +75,15 @@ async function loadModule(path) {
         VITE_API_URL: "https://api.zilobase.test",
       }),
     },
-    entryPoints: [sourcePath],
+    ...(exports
+      ? {
+          stdin: {
+            contents: `export { ${exports.join(", ")} } from ${JSON.stringify(sourcePath)};`,
+            resolveDir: dirname(sourcePath),
+            loader: "ts",
+          },
+        }
+      : { entryPoints: [sourcePath] }),
     external: [],
     format: "esm",
     jsx: "automatic",
@@ -146,10 +154,15 @@ function aliasPlugin() {
 }
 
 async function resolveAliasPath(path) {
-  for (const candidate of [path, `${path}.ts`, `${path}.tsx`]) {
+  for (const candidate of [
+    path,
+    `${path}.ts`,
+    `${path}.tsx`,
+    join(path, "index.ts"),
+    join(path, "index.tsx"),
+  ]) {
     try {
-      await access(candidate);
-      return candidate;
+      if ((await stat(candidate)).isFile()) return candidate;
     } catch {
       // Try the next candidate.
     }

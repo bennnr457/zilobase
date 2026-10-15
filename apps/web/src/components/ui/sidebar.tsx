@@ -13,12 +13,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-const DEFAULT_SIDEBAR_WIDTH = "16rem";
+export const APP_SIDEBAR_PANEL_WIDTH = "288px";
+const DEFAULT_SIDEBAR_WIDTH = APP_SIDEBAR_PANEL_WIDTH;
 const DEFAULT_MOBILE_SIDEBAR_WIDTH = "18rem";
 
 type SidebarOpenSetter = (value: boolean | ((current: boolean) => boolean)) => void;
 
 type SidebarContextValue = {
+  triggerRef: React.RefObject<HTMLElement | null>;
   isMobile: boolean;
   mobileWidth: React.CSSProperties["width"];
   open: boolean;
@@ -29,10 +31,6 @@ type SidebarContextValue = {
 };
 
 const SidebarContext = React.createContext<SidebarContextValue | null>(null);
-
-function resolveSidebarWidth(width: React.CSSProperties["width"]) {
-  return typeof width === "number" ? `${width}px` : width;
-}
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
@@ -48,8 +46,6 @@ function SidebarProvider({
   defaultOpen = true,
   open: controlledOpen,
   onOpenChange,
-  width = DEFAULT_SIDEBAR_WIDTH,
-  mobileWidth = DEFAULT_MOBILE_SIDEBAR_WIDTH,
   className,
   style,
   children,
@@ -58,10 +54,12 @@ function SidebarProvider({
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  width?: React.CSSProperties["width"];
-  mobileWidth?: React.CSSProperties["width"];
 }) {
+  const triggerRef = React.useRef<HTMLElement | null>(null);
   const isMobile = useIsMobile();
+  const mobileWidth =
+    (style as Record<string, string> | undefined)?.["--sidebar-width-mobile"] ??
+    DEFAULT_MOBILE_SIDEBAR_WIDTH;
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
   const [openMobile, setOpenMobile] = React.useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
@@ -89,6 +87,7 @@ function SidebarProvider({
 
   const contextValue = React.useMemo<SidebarContextValue>(
     () => ({
+      triggerRef,
       isMobile,
       mobileWidth,
       open,
@@ -106,12 +105,12 @@ function SidebarProvider({
         data-slot="sidebar-wrapper"
         style={
           {
-            "--sidebar-width": resolveSidebarWidth(width),
-            "--sidebar-width-mobile": resolveSidebarWidth(mobileWidth),
+            "--sidebar-width": DEFAULT_SIDEBAR_WIDTH,
+            "--sidebar-width-mobile": mobileWidth,
             ...style,
           } as React.CSSProperties
         }
-        className={cn("flex min-h-svh w-full", className)}
+        className={cn("group/sidebar-wrapper flex min-h-svh w-full", className)}
         {...props}
       >
         {children}
@@ -120,9 +119,15 @@ function SidebarProvider({
   );
 }
 
-function Sidebar({ className, children, style, ...props }: React.ComponentProps<"div">) {
-  const { isMobile, mobileWidth, open, openMobile, setOpenMobile } = useSidebar();
-
+// Adapted from shadcn sidebar-07: the app uses offcanvas collapse and its own tokens.
+function Sidebar({
+  className,
+  children,
+  style,
+  collapsible = "offcanvas",
+  ...props
+}: React.ComponentProps<"div"> & { collapsible?: "offcanvas" }) {
+  const { isMobile, mobileWidth, open, openMobile, setOpenMobile, triggerRef } = useSidebar();
   if (isMobile) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile}>
@@ -131,16 +136,17 @@ function Sidebar({ className, children, style, ...props }: React.ComponentProps<
           data-sidebar="sidebar"
           data-slot="sidebar"
           className={cn(
-            "w-(--sidebar-width-mobile) bg-surface-navigation p-0 text-content-primary [&>button]:hidden",
+            "data-[side=left]:w-(--sidebar-width) bg-surface-navigation p-0 text-content-primary [&>button]:hidden",
             className,
           )}
+          onCloseAutoFocus={(event) => {
+            if (triggerRef.current?.isConnected) {
+              event.preventDefault();
+              triggerRef.current.focus();
+            }
+          }}
           side="left"
-          style={
-            {
-              "--sidebar-width-mobile": resolveSidebarWidth(mobileWidth),
-              ...style,
-            } as React.CSSProperties
-          }
+          style={{ "--sidebar-width": mobileWidth, ...style } as React.CSSProperties}
           {...props}
         >
           <SheetHeader className="sr-only">
@@ -152,43 +158,44 @@ function Sidebar({ className, children, style, ...props }: React.ComponentProps<
       </Sheet>
     );
   }
-
   return (
-    <>
+    <div
+      className="group peer hidden text-content-primary md:block"
+      data-state={open ? "expanded" : "collapsed"}
+      data-collapsible={open ? "" : collapsible}
+      data-variant="sidebar"
+      data-side="left"
+      data-slot="sidebar"
+    >
       <div
         aria-hidden="true"
         data-slot="sidebar-gap"
-        className={cn(
-          "relative hidden w-(--sidebar-width) shrink-0 bg-transparent transition-[width] duration-200 ease-linear md:block",
-          !open && "w-0",
-        )}
+        className="relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear group-data-[collapsible=offcanvas]:w-0"
       />
       <div
-        data-sidebar="sidebar"
-        data-slot="sidebar"
-        data-state={open ? "expanded" : "collapsed"}
+        data-slot="sidebar-container"
         className={cn(
-          "fixed inset-y-0 left-0 z-10 hidden h-svh w-(--sidebar-width) border-r border-stroke-default bg-surface-navigation text-content-primary transition-transform duration-200 ease-linear md:flex",
-          !open && "-translate-x-full",
+          "fixed inset-y-0 left-0 z-10 hidden h-svh w-(--sidebar-width) border-r border-stroke-default transition-[left] duration-200 ease-linear group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] md:flex",
           className,
         )}
         style={style}
+        inert={!open}
         {...props}
       >
         <div
-          data-sidebar="sidebar-inner"
+          data-sidebar="sidebar"
           data-slot="sidebar-inner"
           className="flex size-full flex-col overflow-hidden bg-surface-navigation"
         >
           {children}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
 function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, triggerRef } = useSidebar();
 
   return (
     <Button
@@ -199,6 +206,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
       className={cn(className)}
       onClick={(event) => {
         onClick?.(event);
+        triggerRef.current = event.currentTarget;
         toggleSidebar();
       }}
       {...props}
@@ -314,7 +322,7 @@ function SidebarGroupAction({
       data-slot="sidebar-group-action"
       data-sidebar="group-action"
       className={cn(
-        "absolute top-1.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-content-primary ring-action-focus-ring outline-hidden transition-transform after:absolute after:-inset-2 hover:bg-action-neutral-hover hover:text-action-on-neutral focus-visible:ring-2 active:bg-action-neutral-pressed active:text-action-on-neutral md:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
+        "absolute top-1/2 right-3 flex aspect-square w-5 -translate-y-1/2 items-center justify-center rounded-md p-0 text-content-primary ring-action-focus-ring outline-hidden transition-transform after:absolute after:-inset-2 hover:bg-action-neutral-hover hover:text-action-on-neutral focus-visible:ring-2 active:bg-action-neutral-pressed active:text-action-on-neutral md:after:hidden [&>svg]:size-4 [&>svg]:shrink-0",
         className,
       )}
       {...props}
@@ -425,3 +433,44 @@ export {
   SidebarTrigger,
   useSidebar,
 };
+
+const SIDEBAR_NAV_ACTION_EDGE_INSET = 6;
+
+export const SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME =
+  "group-hover/nav-row:bg-action-neutral-hover group-hover/nav-row:text-action-on-neutral group-hover/nav-row:data-active:bg-action-neutral-pressed group-hover/nav-row:data-active:text-action-on-neutral group-active/nav-row:bg-action-neutral-pressed group-active/nav-row:text-action-on-neutral group-has-[>[data-nav-menu-action=menu][aria-expanded=true]]/nav-row:bg-action-neutral-hover group-has-[>[data-nav-menu-action=menu][aria-expanded=true]]/nav-row:text-action-on-neutral group-has-[>[data-nav-menu-action=menu][aria-expanded=true]]/nav-row:data-active:bg-action-neutral-pressed group-has-[>[data-nav-menu-action=menu][aria-expanded=true]]/nav-row:data-active:text-action-on-neutral group-has-[>[data-nav-menu-action=menu][data-state=open]]/nav-row:bg-action-neutral-hover group-has-[>[data-nav-menu-action=menu][data-state=open]]/nav-row:text-action-on-neutral group-has-[>[data-nav-menu-action=menu][data-state=open]]/nav-row:data-active:bg-action-neutral-pressed group-has-[>[data-nav-menu-action=menu][data-state=open]]/nav-row:data-active:text-action-on-neutral";
+
+type SidebarNavItemActionProps = React.ComponentProps<typeof SidebarMenuAction> & {
+  depth?: number;
+  position?: "start" | "end";
+  variant: "disclosure" | "menu";
+};
+
+export function SidebarNavItemAction({
+  className,
+  depth = 0,
+  position = "end",
+  style,
+  variant,
+  ...props
+}: SidebarNavItemActionProps) {
+  const edgeOffset = SIDEBAR_NAV_ACTION_EDGE_INSET + (position === "start" ? depth * 16 : 0);
+  const positionStyle: React.CSSProperties =
+    position === "start"
+      ? { left: `${edgeOffset}px`, right: "auto" }
+      : { right: `${edgeOffset}px` };
+
+  return (
+    <SidebarMenuAction
+      className={cn(
+        "rounded-md opacity-0 text-content-secondary! group-hover/nav-row:opacity-100 hover:bg-action-neutral-hover active:bg-action-neutral-pressed! focus-visible:bg-action-neutral-hover focus-visible:opacity-100",
+        variant === "disclosure" && "data-[state=open]:rotate-90 [&>svg]:size-3",
+        variant === "menu" &&
+          "aria-expanded:bg-action-neutral-hover aria-expanded:opacity-100 aria-expanded:text-content-secondary data-[state=open]:bg-action-neutral-hover data-[state=open]:opacity-100 data-[state=open]:text-content-secondary",
+        className,
+      )}
+      data-nav-menu-action={variant}
+      style={{ ...positionStyle, ...style }}
+      {...props}
+    />
+  );
+}

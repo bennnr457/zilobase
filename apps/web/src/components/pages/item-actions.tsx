@@ -1,16 +1,18 @@
-import { useNavigationItemActions } from "@/components/pages/use-item-actions";
-import { ItemShareDropdown } from "@/components/pages/item-sharing";
-
 import {
+  ArrowUpRightIcon,
+  Building2Icon,
+  FolderInputIcon,
+  LinkIcon,
+  MoreHorizontalIcon,
+  Trash2Icon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   LockIcon,
-  MoreHorizontalIcon,
   MessageSquareTextIcon,
   StarIcon,
+  StarOffIcon,
 } from "@/components/icons";
-
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,18 +23,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
 import {
   DropDrawer,
   DropDrawerContent,
   DropDrawerItem,
+  DropDrawerSeparator,
+  DropDrawerSub,
+  DropDrawerSubContent,
+  DropDrawerSubTrigger,
   DropDrawerTrigger,
 } from "@/components/ui/dropdrawer";
-
-import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { SidebarNavItemAction } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { type SidebarNavItem } from "@zilobase/features/pages";
+import { useNavigationItemActions } from "@/components/pages/use-item-actions";
+import { ItemShareDropdown } from "@/components/pages/item-sharing";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { usePageCommentsSnapshot } from "@/components/comments/index";
 import { Switch } from "@/components/ui/switch";
+import { useSidebarItemActions, copySidebarItemLink } from "./use-item-actions";
 
 const moreActions = [
   "Customize layout",
@@ -215,5 +225,192 @@ export function NavActions({
         </>
       ) : null}
     </div>
+  );
+}
+
+export function SidebarItemMenu({
+  item,
+  favoriteOnly = false,
+  onRemoveFavorite,
+  onRemoveDatabaseFavorite,
+}: {
+  item: SidebarNavItem<unknown>;
+  favoriteOnly?: boolean;
+  onRemoveFavorite?: (id: string) => void;
+  onRemoveDatabaseFavorite?: (id: string) => void;
+}) {
+  const {
+    workspaceId,
+    isMobile,
+    openInNewTab,
+    confirmOpen,
+    setConfirmOpen,
+    movePage,
+    convertPage,
+    teamspaces,
+    displayName,
+    isDeleting,
+    linkPath,
+    runDelete,
+  } = useSidebarItemActions(item);
+
+  return (
+    <>
+      <DropDrawer>
+        <DropDrawerTrigger asChild>
+          <SidebarNavItemAction variant="menu">
+            <MoreHorizontalIcon />
+            <span className="sr-only">More</span>
+          </SidebarNavItemAction>
+        </DropDrawerTrigger>
+        <DropDrawerContent
+          align={isMobile ? "end" : "start"}
+          className="w-56 rounded-lg"
+          side={isMobile ? "bottom" : "right"}
+        >
+          {favoriteOnly && item.isFavorite ? (
+            <>
+              <DropDrawerItem
+                onSelect={() => {
+                  if (item.isDatabase && item.databaseId)
+                    onRemoveDatabaseFavorite?.(item.databaseId);
+                  else if (item.pageId) onRemoveFavorite?.(item.pageId);
+                }}
+              >
+                <StarOffIcon className="text-content-secondary" />
+                <span>Remove from Favorites</span>
+              </DropDrawerItem>
+              <DropDrawerSeparator />
+            </>
+          ) : null}
+          <DropDrawerItem
+            onSelect={() => {
+              void copySidebarItemLink(linkPath);
+            }}
+          >
+            <LinkIcon className="text-content-secondary" />
+            <span>Copy Link</span>
+          </DropDrawerItem>
+          <DropDrawerSeparator />
+          <DropDrawerItem
+            onSelect={() => {
+              openInNewTab({ href: linkPath, title: displayName });
+            }}
+          >
+            <ArrowUpRightIcon className="text-content-secondary" />
+            <span>Open in New Tab</span>
+          </DropDrawerItem>
+          {!favoriteOnly && !item.isDatabase && !item.isDatabaseView && item.pageId ? (
+            <DropDrawerSub>
+              <DropDrawerSubTrigger>
+                <FolderInputIcon className="text-content-secondary" />
+                <span>Move to</span>
+              </DropDrawerSubTrigger>
+              <DropDrawerSubContent>
+                <DropDrawerItem
+                  disabled={!item.teamspaceId || movePage.isPending}
+                  onSelect={() => {
+                    if (!workspaceId || !item.pageId) return;
+                    movePage.mutate(
+                      { pageId: item.pageId, teamspaceId: null, workspaceId },
+                      {
+                        onError: (error) =>
+                          toast.error(
+                            error instanceof Error ? error.message : "Could not move page.",
+                          ),
+                        onSuccess: () => toast.success("Moved to Private."),
+                      },
+                    );
+                  }}
+                >
+                  <span>Private</span>
+                </DropDrawerItem>
+                {teamspaces
+                  .filter((teamspace) => teamspace.currentUserRole)
+                  .map((teamspace) => (
+                    <DropDrawerItem
+                      disabled={item.teamspaceId === teamspace.id || movePage.isPending}
+                      key={teamspace.id}
+                      onSelect={() => {
+                        if (!workspaceId || !item.pageId) return;
+                        movePage.mutate(
+                          { pageId: item.pageId, teamspaceId: teamspace.id, workspaceId },
+                          {
+                            onError: (error) =>
+                              toast.error(
+                                error instanceof Error ? error.message : "Could not move page.",
+                              ),
+                            onSuccess: () => toast.success(`Moved to ${teamspace.name}.`),
+                          },
+                        );
+                      }}
+                    >
+                      <span>{teamspace.name}</span>
+                    </DropDrawerItem>
+                  ))}
+                {!item.teamspaceId ? (
+                  <>
+                    <DropDrawerSeparator />
+                    <DropDrawerItem
+                      disabled={convertPage.isPending}
+                      onSelect={() => {
+                        if (!workspaceId || !item.pageId) return;
+                        convertPage.mutate(
+                          { name: displayName, pageId: item.pageId, workspaceId },
+                          {
+                            onError: (error) =>
+                              toast.error(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Could not create teamspace.",
+                              ),
+                            onSuccess: () => toast.success("Page turned into a teamspace."),
+                          },
+                        );
+                      }}
+                    >
+                      <Building2Icon />
+                      <span>Turn into teamspace</span>
+                    </DropDrawerItem>
+                  </>
+                ) : null}
+              </DropDrawerSubContent>
+            </DropDrawerSub>
+          ) : null}
+          {!favoriteOnly ? (
+            <>
+              <DropDrawerSeparator />
+              <DropDrawerItem
+                className="text-action-danger-text focus:text-action-danger-text"
+                onSelect={() => {
+                  setConfirmOpen(true);
+                }}
+              >
+                <Trash2Icon className="text-action-danger-text" />
+                <span>Delete</span>
+              </DropDrawerItem>
+            </>
+          ) : null}
+        </DropDrawerContent>
+      </DropDrawer>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move to trash?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {item.isDatabase
+                ? `${displayName} and its row pages will be moved to trash.`
+                : `${displayName} and its subpages will be moved to trash. Linked pages elsewhere will not be deleted.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={isDeleting} onClick={runDelete} variant="destructive">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

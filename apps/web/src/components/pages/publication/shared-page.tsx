@@ -1,11 +1,16 @@
-import { Link, useParams } from "@tanstack/react-router";
-import { ArrowRight, Maximize2 } from "@/components/icons";
+import { LayoutEditorProvider } from "../layout";
+import { useParams } from "@tanstack/react-router";
 import { PageSidePaneLayout, PageSidePaneProvider, usePageSidePane } from "../pane/page-side-pane";
-import { Button } from "@/components/ui/button";
 import { usePage } from "@zilobase/features/pages/react";
 import { EmbeddedPageDialog } from "../pane/embedded-page-dialog";
 import { useOpenEmbeddedPage } from "../pane/use-open-embedded-page";
-import { GuestPaneTopbar, PublicPaneTopbar } from "./shared-page-header";
+import {
+  GuestPageTitle,
+  GuestPageActions,
+  PublicPageBreadcrumb,
+  PublicLoginButton,
+} from "./shared-page-header";
+import { PageLayout } from "../pane/page-layout";
 import { PageEditorPane } from "../pane/page-editor-pane";
 
 export function PublicPage() {
@@ -13,7 +18,9 @@ export function PublicPage() {
 
   return (
     <PageSidePaneProvider resetKey={pageId}>
-      <PublicPageContent pageId={pageId} />
+      <LayoutEditorProvider>
+        <PublicPageContent pageId={pageId} />
+      </LayoutEditorProvider>
     </PageSidePaneProvider>
   );
 }
@@ -23,7 +30,9 @@ export function GuestPage() {
 
   return (
     <PageSidePaneProvider resetKey={pageId}>
-      <PublicPageContent guest pageId={pageId} />
+      <LayoutEditorProvider>
+        <PublicPageContent guest pageId={pageId} />
+      </LayoutEditorProvider>
     </PageSidePaneProvider>
   );
 }
@@ -32,6 +41,7 @@ function PublicPageContent({ guest = false, pageId }: { guest?: boolean; pageId:
   const { data: page } = usePage(pageId, { refetchOnMount: false });
   const {
     closeSidePane,
+    openSidePaneAsFullPage,
     renderedSidePanePageId,
     sidePaneAnimatedOpen,
     sidePaneContentReady,
@@ -47,43 +57,37 @@ function PublicPageContent({ guest = false, pageId }: { guest?: boolean; pageId:
       <PageSidePaneLayout
         className="bg-surface-canvas"
         standalone
+        mainOwnsLayout
         viewportHeightClass="h-svh"
         main={
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            {guest ? <GuestPaneTopbar pageId={pageId} /> : <PublicPaneTopbar pageId={pageId} />}
-            <PageEditorPane
-              className="min-h-0 min-w-0 flex-1 overflow-y-auto"
-              key={pageId}
-              onOpenPage={openPage}
-              readOnly={!guest}
-              pageId={pageId}
-            />
-          </div>
+          <PageLayout
+            pageId={pageId}
+            placement="main"
+            header={{
+              leadingControl: guest ? (
+                <GuestPageTitle pageId={pageId} />
+              ) : (
+                <PublicPageBreadcrumb pageId={pageId} />
+              ),
+              actions: guest ? <GuestPageActions /> : <PublicLoginButton />,
+              showBreadcrumb: false,
+              className: "border-b",
+            }}
+          >
+            <PageEditorPane key={pageId} onOpenPage={openPage} readOnly={!guest} pageId={pageId} />
+          </PageLayout>
         }
         sidePane={
           renderedSidePanePageId ? (
-            <div className="flex h-full min-h-0 flex-col">
-              <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    aria-label="Close side pane"
-                    onClick={closeSidePane}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ArrowRight />
-                  </Button>
-                  <Button aria-label="Open as main page" asChild size="icon" variant="ghost">
-                    <Link params={{ pageId: renderedSidePanePageId }} to="/p/$pageId">
-                      <Maximize2 />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+            <PageLayout
+              pageId={renderedSidePanePageId}
+              placement="pane"
+              onClose={closeSidePane}
+              onOpenFullPage={openSidePaneAsFullPage}
+              header={{ leadingControl: null, showActions: false }}
+            >
               {sidePaneContentReady ? (
                 <PageEditorPane
-                  className="min-h-0 flex-1"
                   databaseId={sidePaneDatabaseId}
                   enableComments={false}
                   key={renderedSidePanePageId}
@@ -92,13 +96,13 @@ function PublicPageContent({ guest = false, pageId }: { guest?: boolean; pageId:
                   pageId={renderedSidePanePageId}
                 />
               ) : null}
-            </div>
+            </PageLayout>
           ) : null
         }
         sidePaneOpen={sidePaneAnimatedOpen}
         sidePaneVisible={renderedSidePanePageId !== null}
       />
-      <EmbeddedPageDialog onOpenPage={openPage} pageRenderer={PageEditorPane} />
+      <EmbeddedPageDialog onOpenPage={openPage} readOnly={!guest} />
     </>
   );
 }

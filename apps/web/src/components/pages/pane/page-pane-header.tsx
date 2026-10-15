@@ -1,4 +1,7 @@
+import { Effect } from "effect";
 import {
+  createContext,
+  useContext,
   useCallback,
   useEffect,
   useMemo,
@@ -16,6 +19,7 @@ import {
   CalendarIcon,
   Maximize2,
   UsersIcon,
+  XIcon,
 } from "@/components/icons";
 import { toast } from "sonner";
 
@@ -81,66 +85,97 @@ export function useRoutePageId(pathname: string) {
   return routePageId ?? data?.meeting.notesPageId ?? null;
 }
 
-export function PagePaneHeader({
-  actions,
-  className,
-  discussionsOpen = false,
-  leadingControl,
-  onClose,
-  onToggleDiscussions,
-  onTogglePageSidebar,
-  pageSidebarOpen,
-  pathname,
-  rowNavigationDatabaseId,
-  showPaneControls = Boolean(onClose),
-  showActions = true,
-  showBreadcrumb = true,
-}: {
+export type PagePaneHeaderProps = {
   actions?: ReactNode | null;
   className?: string;
   discussionsOpen?: boolean;
   leadingControl?: ReactNode | null;
   onClose?: () => void;
+  onOpenFullPage?: () => void;
   onToggleDiscussions?: () => void;
   onTogglePageSidebar?: () => void;
   pageSidebarOpen?: boolean;
   pathname: string;
+  pageId?: string | null;
+  databaseId?: string | null;
+  placement?: "main" | "pane" | "dialog";
   rowNavigationDatabaseId?: string | null;
-  showPaneControls?: boolean;
   showActions?: boolean;
   showBreadcrumb?: boolean;
-}) {
-  const pageId = useRoutePageId(pathname);
-  const databaseId = getDatabaseId(pathname);
-  const meetingId = getMeetingId(pathname);
-  const leadingControls = showPaneControls ? (
-    <PagePaneControls
-      leadingControl={leadingControl}
-      onClose={onClose}
-      pageId={pageId}
-      pathname={pathname}
-      rowNavigationDatabaseId={rowNavigationDatabaseId}
-    />
-  ) : (
-    leadingControl
-  );
+};
+
+export const PageHeaderControlsContext = createContext<
+  { pageId?: string | null } & Pick<
+    PagePaneHeaderProps,
+    "discussionsOpen" | "onToggleDiscussions" | "onTogglePageSidebar" | "pageSidebarOpen"
+  >
+>({});
+
+export function PagePaneHeader({
+  actions,
+  className,
+  discussionsOpen,
+  leadingControl,
+  onClose,
+  onOpenFullPage,
+  onToggleDiscussions,
+  onTogglePageSidebar,
+  pageSidebarOpen,
+  pathname,
+  pageId: explicitPageId,
+  databaseId: explicitDatabaseId,
+  placement = "main",
+  rowNavigationDatabaseId,
+  showActions = true,
+  showBreadcrumb = true,
+}: PagePaneHeaderProps) {
+  const routePageId = useRoutePageId(explicitPageId === undefined ? pathname : "");
+  const pageId = explicitPageId === undefined ? routePageId : explicitPageId;
+  const databaseId =
+    explicitDatabaseId === undefined ? getDatabaseId(pathname) : explicitDatabaseId;
+  const meetingId = explicitPageId === undefined ? getMeetingId(pathname) : null;
+  const controls = useContext(PageHeaderControlsContext);
+  const main = placement === "main" && (explicitPageId === undefined || controls.pageId === pageId);
+  const leadingControls =
+    placement !== "main" ? (
+      <PagePaneControls
+        leadingControl={leadingControl}
+        onClose={onClose}
+        onOpenFullPage={onOpenFullPage}
+        placement={placement}
+        pathname={pathname}
+        pageId={pageId}
+        rowNavigationDatabaseId={rowNavigationDatabaseId}
+      />
+    ) : (
+      leadingControl
+    );
 
   return (
-    <header className={`flex h-12 shrink-0 items-center gap-2 ${className ?? ""}`}>
-      <div className="flex h-7 min-w-0 flex-1 items-center gap-2 px-3">
+    <header
+      data-page-header
+      className={`flex min-h-12 shrink-0 flex-wrap items-center gap-2 ${className ?? ""}`}
+    >
+      <div
+        className={`flex h-7 flex-1 items-center gap-2 px-3 ${placement === "main" ? "min-w-0" : "min-w-fit"}`}
+      >
         {leadingControls}
         {showBreadcrumb ? <AppBreadcrumbs pathname={pathname} /> : null}
       </div>
       {showActions ? (
-        <div className="ml-auto flex h-7 shrink-0 items-center px-3" data-page-side-pane-avoid>
+        <div className="ml-auto flex h-7 shrink-0 items-center px-3">
           {actions ?? (
             <NavActions
               databaseId={databaseId}
               meetingId={meetingId}
-              discussionsOpen={discussionsOpen}
-              onToggleDiscussions={onToggleDiscussions}
-              onTogglePageSidebar={onTogglePageSidebar}
-              pageSidebarOpen={pageSidebarOpen}
+              discussionsOpen={discussionsOpen ?? (main && controls.discussionsOpen)}
+              onToggleDiscussions={
+                onToggleDiscussions ?? (main ? controls.onToggleDiscussions : undefined)
+              }
+              onTogglePageSidebar={
+                (main ? controls.onTogglePageSidebar : undefined) ?? onTogglePageSidebar
+              }
+              pageSidebarOpen={(main ? controls.pageSidebarOpen : undefined) ?? pageSidebarOpen}
               pageId={pageId}
             />
           )}
@@ -167,14 +202,7 @@ export function PageSidePaneCollapseButton({
   onClick: () => void;
 }) {
   return (
-    <Button
-      aria-label={label}
-      data-page-side-pane-promoted-hide
-      onClick={onClick}
-      size="icon"
-      type="button"
-      variant="ghost"
-    >
+    <Button aria-label={label} onClick={onClick} size="icon" type="button" variant="ghost">
       <ChevronsRight />
     </Button>
   );
@@ -215,14 +243,18 @@ function useRowNavigationPageIds(databaseId: string | null) {
 function PagePaneControls({
   leadingControl,
   onClose,
-  pageId,
+  onOpenFullPage,
+  placement,
   pathname,
+  pageId,
   rowNavigationDatabaseId,
 }: {
   leadingControl?: ReactNode | null;
   onClose?: () => void;
-  pageId: string | null;
+  onOpenFullPage?: () => void;
+  placement: "pane" | "dialog";
   pathname: string;
+  pageId: string | null;
   rowNavigationDatabaseId?: string | null;
 }) {
   const sidePane = useOptionalPageSidePane();
@@ -236,7 +268,7 @@ function PagePaneControls({
     ? publishedEmbeddedItemsOpenAs
     : resolveEmbeddedItemsOpenAs(userSettings.embeddedItemsOpenAs);
   const rowDatabaseId = pageId ? rowNavigationDatabaseId : null;
-  const isDialogPane = !onClose;
+  const isDialogPane = placement === "dialog";
   const rowPageIds = useRowNavigationPageIds(rowDatabaseId ?? null);
   const { nextRowPageId, previousRowPageId } = useMemo(() => {
     const currentRowIndex = pageId ? rowPageIds.indexOf(pageId) : -1;
@@ -255,29 +287,35 @@ function PagePaneControls({
       return;
     }
 
-    if (isPublishedFallback) {
-      writePublishedEmbeddedItemsOpenAs(nextMode);
-      setPublishedEmbeddedItemsOpenAs(nextMode);
-    } else {
-      updateUserSettings.mutate(
-        { embeddedItemsOpenAs: nextMode },
-        {
-          onError: (error) => {
-            toast.error(
-              error instanceof Error ? error.message : "Could not update open pages setting.",
-            );
-          },
-        },
-      );
-    }
+    Effect.runSync(
+      Effect.gen(function* () {
+        if (isPublishedFallback) {
+          yield* Effect.sync(() => writePublishedEmbeddedItemsOpenAs(nextMode));
+          yield* Effect.sync(() => setPublishedEmbeddedItemsOpenAs(nextMode));
+        } else {
+          yield* Effect.sync(() =>
+            updateUserSettings.mutate(
+              { embeddedItemsOpenAs: nextMode },
+              {
+                onError: (error) => {
+                  toast.error(
+                    error instanceof Error ? error.message : "Could not update open pages setting.",
+                  );
+                },
+              },
+            ),
+          );
+        }
 
-    if (nextMode === "dialog" && !isDialogPane) {
-      sidePane?.openEmbeddedPageDialog(pageId, {
-        databaseId: rowDatabaseId,
-      });
-    } else if (nextMode === "sidepanel" && isDialogPane) {
-      sidePane?.openSidePane(pageId, { databaseId: rowDatabaseId });
-    }
+        if (nextMode === "dialog" && !isDialogPane) {
+          yield* Effect.sync(() =>
+            sidePane?.openEmbeddedPageDialog(pageId, { databaseId: rowDatabaseId }),
+          );
+        } else if (nextMode === "sidepanel" && isDialogPane) {
+          yield* Effect.sync(() => sidePane?.openSidePane(pageId, { databaseId: rowDatabaseId }));
+        }
+      }),
+    );
   };
 
   const openRowPage = (targetPageId: string | null) => {
@@ -296,15 +334,34 @@ function PagePaneControls({
 
   return (
     <div className="flex shrink-0 items-center gap-1">
-      {onClose ? <PageSidePaneCollapseButton onClick={onClose} /> : leadingControl}
-      <Button
-        aria-label="Open as full page"
-        asChild
-        data-page-side-pane-promoted-hide
-        size="icon"
-        variant="ghost"
-      >
-        <Link to={pathname}>
+      {onClose ? (
+        isDialogPane ? (
+          <Button aria-label="Close" onClick={onClose} size="icon" variant="ghost">
+            <XIcon />
+          </Button>
+        ) : (
+          <PageSidePaneCollapseButton onClick={onClose} />
+        )
+      ) : (
+        leadingControl
+      )}
+      <Button aria-label="Open as full page" asChild size="icon" variant="ghost">
+        <Link
+          to={pathname}
+          onClick={(event) => {
+            if (
+              !onOpenFullPage ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey ||
+              event.button !== 0
+            )
+              return;
+            event.preventDefault();
+            onOpenFullPage();
+          }}
+        >
           <Maximize2 />
         </Link>
       </Button>
@@ -317,7 +374,7 @@ function PagePaneControls({
         />
       ) : null}
       {rowDatabaseId ? (
-        <div className="contents" data-page-side-pane-promoted-hide>
+        <div className="contents">
           <Separator
             orientation="vertical"
             className="mx-1 self-center! data-[orientation=vertical]:h-4"

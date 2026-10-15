@@ -34,18 +34,30 @@ creating another `components` directory inside each domain. Retain meaningful
 subsystems such as editor collaboration and database table/kanban/timeline
 renderers. Reserve the `features` folder name for `packages/features`.
 
-Keep sidebar renderers, their hooks, and presentation helpers directly under
-`app/shell/sidebar`; group small sections in `sidebar-sections.tsx`, tab/icon UI in
-`sidebar-layout.tsx`, local persistence/state in `sidebar-state.ts`, and geometry
-in `sidebar-sizing.ts`. Keep substantial page-tree and customization renderers
-separate. Import shared configuration commands from features directly and library
-labels/icons from `components/library`; avoid a shell navigation barrel.
-Use Effect for fallible shell storage, native profile workflows, and ordered
-creation/navigation commands. Preserve storage keys, debounce timing, best-effort
-fallbacks, and stale-result checks. Keep layout geometry and React view state plain.
+Keep sidebar composition and private navigation/workspace/section renderers in
+`app/shell/sidebar/app-sidebar.tsx`; controller composition, local state, storage,
+and Effect commands live in `sidebar-controller.ts`. Keep the customization editor
+and its shared tab/icon presentation in `sidebar-customization.tsx` so its preview
+has no import cycle through the app sidebar. Reuse the shadcn sidebar-07 primitive
+structure in `components/ui/sidebar.tsx`, with CSS-variable widths, offcanvas
+collapse, and Zilobase tokens. Keep right-panel sizing in `app/shell/panels/right-sidebars.tsx`.
+Import shared configuration commands from features directly and library labels/icons
+from `components/library`; avoid a shell navigation barrel or forwarding modules.
+Use Effect for fallible shell storage, native profile workflows, clipboard actions,
+and ordered creation/navigation commands. Preserve storage keys, debounce timing,
+best-effort fallbacks, and stale-result checks. Keep layout geometry and React view
+state plain.
 
-Keep shell layout and header at `app/shell` root, web panel composition in
-`app/shell/panels`, and settings content/dialogs in `components/settings`.
+Keep shell layout and fallback screen header at `app/shell` root, tool-panel
+composition in `app/shell/panels`, and settings content/dialogs in
+`components/settings`. Page chrome and body scrolling belong to
+`components/pages/pane/page-layout.tsx`, with one placement-aware header in
+`page-pane-header.tsx`. Main routes, desktop panes, and desktop dialogs compose
+this layout around the existing editor body. Pane/dialog hosts own navigation,
+geometry, focus, and dismissal, not duplicate page headers or scroll viewports.
+Mobile embedded page requests navigate to main routes before consulting desktop
+presentation preferences. Keep the embedded-page dialog lazy and domain-owned;
+do not reintroduce a shell forwarding host or a separate authenticated-page module.
 Reusable item actions and sharing UI, with their local hooks, live in
 `components/pages`; page headers must not import them through the shell sidebar.
 Use Effect for clipboard and duplicate/navigation sequences while Query retains

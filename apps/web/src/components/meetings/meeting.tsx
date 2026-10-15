@@ -1,3 +1,4 @@
+import { PageLayout } from "@/components/pages/pane/page-layout";
 import { useParams } from "@tanstack/react-router";
 
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
@@ -56,8 +57,14 @@ function AuthenticatedMeetingPage() {
   const { data, isLoading } = useMeeting(meetingId);
   const notesPageId = data?.meeting.notesPageId ?? null;
   const { data: notesPage } = usePage(notesPageId);
-  const { renderedSidePanePageId, sidePaneAnimatedOpen, sidePaneContentReady, sidePaneDatabaseId } =
-    usePageSidePane();
+  const {
+    closeSidePane,
+    openSidePaneAsFullPage,
+    renderedSidePanePageId,
+    sidePaneAnimatedOpen,
+    sidePaneContentReady,
+    sidePaneDatabaseId,
+  } = usePageSidePane();
   const { openPage } = useOpenEmbeddedPage({
     contextPageId: notesPageId,
     page: notesPage,
@@ -65,17 +72,31 @@ function AuthenticatedMeetingPage() {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-[calc(100svh-3rem)] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-content-secondary" />
-      </main>
+      <PageSidePaneLayout
+        main={
+          <main className="flex min-h-[calc(100svh-3rem)] items-center justify-center">
+            <LoaderCircle className="size-5 animate-spin text-content-secondary" />
+          </main>
+        }
+        sidePane={null}
+        sidePaneOpen={false}
+        sidePaneVisible={false}
+      />
     );
   }
 
   if (!data?.meeting) {
     return (
-      <main className="flex min-h-[calc(100svh-3rem)] items-center justify-center px-4 text-sm text-content-secondary">
-        Meeting not found.
-      </main>
+      <PageSidePaneLayout
+        main={
+          <main className="flex min-h-[calc(100svh-3rem)] items-center justify-center px-4 text-sm text-content-secondary">
+            Meeting not found.
+          </main>
+        }
+        sidePane={null}
+        sidePaneOpen={false}
+        sidePaneVisible={false}
+      />
     );
   }
 
@@ -87,13 +108,21 @@ function AuthenticatedMeetingPage() {
       }
       sidePane={
         sidePaneContentReady && renderedSidePanePageId ? (
-          <PageEditorPane
-            databaseId={sidePaneDatabaseId}
-            enableComments={false}
-            key={renderedSidePanePageId}
-            onOpenPage={openPage}
+          <PageLayout
             pageId={renderedSidePanePageId}
-          />
+            placement="pane"
+            rowNavigationDatabaseId={sidePaneDatabaseId}
+            onClose={closeSidePane}
+            onOpenFullPage={openSidePaneAsFullPage}
+          >
+            <PageEditorPane
+              databaseId={sidePaneDatabaseId}
+              enableComments={false}
+              key={renderedSidePanePageId}
+              onOpenPage={openPage}
+              pageId={renderedSidePanePageId}
+            />
+          </PageLayout>
         ) : null
       }
       sidePaneOpen={sidePaneAnimatedOpen}

@@ -38,7 +38,7 @@ export function register({ readSource, assert, test }) {
       [
         "components/ui/button.tsx",
         "components/ui/sidebar.tsx",
-        "components/ui/sidebar-nav-item-action.tsx",
+        "components/ui/sidebar.tsx",
         "components/ui/app-tabs.tsx",
       ].map((path) => readSource(`/src/${path}`)),
     );

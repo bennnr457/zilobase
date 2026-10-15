@@ -67,7 +67,7 @@ export function DatabaseToolbarActions({
   const hostDisplayTitle = getToolbarSourceTitle(sourceHost, activeViewTab, draftDatabaseTitle);
 
   return (
-    <div className="ml-auto flex shrink-0 items-center gap-0" data-page-side-pane-avoid>
+    <div className="ml-auto flex shrink-0 items-center gap-0">
       {editable ? (
         <>
           <DatabaseSaveStatus databaseId={automationDatabaseId} />

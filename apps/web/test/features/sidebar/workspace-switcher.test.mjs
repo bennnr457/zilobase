@@ -1,13 +1,16 @@
+import ts from "typescript";
 import { build } from "esbuild";
 import { parseHTML } from "linkedom";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export function register({ readSource, sourcePath, assert, test }) {
   test("desktop workspace switcher groups current and other servers", async () => {
-    const source = await readSource("/src/app/shell/sidebar/workspace-switcher.tsx");
+    const source =
+      (await readSource("/src/app/shell/sidebar/app-sidebar.tsx")) +
+      (await readSource("/src/app/shell/sidebar/sidebar-controller.ts"));
     assert.match(source, /isDesktopApp\(\)/);
     assert.match(source, /Connect another server/);
     assert.match(source, /OtherServerSection/);
@@ -17,7 +20,9 @@ export function register({ readSource, sourcePath, assert, test }) {
   });
 
   test("other-server rows are desktop-gated and web still has workspaces", async () => {
-    const source = await readSource("/src/app/shell/sidebar/workspace-switcher.tsx");
+    const source =
+      (await readSource("/src/app/shell/sidebar/app-sidebar.tsx")) +
+      (await readSource("/src/app/shell/sidebar/sidebar-controller.ts"));
     assert.match(source, /Workspaces/);
     assert.match(source, /Add workspace/);
     assert.match(source, /isDesktop[\s\S]*otherProfiles\.map/);
@@ -182,7 +187,8 @@ async function loadSwitcher(sourcePath) {
   };
   const result = await build({
     stdin: {
-      contents: `export { WorkspaceSwitcher } from "./workspace-switcher"; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "switcher-ports";`,
+      contents: await workspaceFixtureSource(sourcePath),
+      loader: "tsx",
       resolveDir: sourcePath("/src/app/shell/sidebar"),
     },
     bundle: true,
@@ -215,4 +221,98 @@ async function loadSwitcher(sourcePath) {
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+}
+
+// Exercise the real private renderer and controller without exporting test-only
+// production APIs or initializing the rest of the application shell.
+async function workspaceFixtureSource(sourcePath) {
+  const names = new Set([
+    "WorkspaceSwitcher",
+    "SingleWorkspaceLabel",
+    "MultiWorkspaceSwitcher",
+    "OtherServerSection",
+    "WorkspaceSettingsItem",
+    "useSidebarWorkspaceIdentity",
+    "useSidebarWorkspaceSummary",
+    "useSidebarWorkspaceSwitcher",
+    "readTriggerLabel",
+    "serverSectionLabel",
+    "getWorkspaceInitials",
+  ]);
+  const sources = await Promise.all(
+    ["app-sidebar.tsx", "sidebar-controller.ts"].map(async (name) =>
+      ts.createSourceFile(
+        name,
+        await readFile(sourcePath("/src/app/shell/sidebar/" + name), "utf8"),
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TSX,
+      ),
+    ),
+  );
+  const declarations = sources.flatMap((source) =>
+    source.statements
+      .filter((node) => ts.isFunctionDeclaration(node) && names.has(node.name?.text))
+      .map((node) => node.getText(source)),
+  );
+  const used = new Set();
+  const collect = (node) => {
+    if (ts.isIdentifier(node)) used.add(node.text);
+    ts.forEachChild(node, collect);
+  };
+  collect(
+    ts.createSourceFile(
+      "fixture.tsx",
+      declarations.join("\n"),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    ),
+  );
+  const seen = new Set();
+  const printer = ts.createPrinter();
+  const imports = [];
+  for (const source of sources)
+    for (const node of source.statements) {
+      if (!ts.isImportDeclaration(node) || !node.importClause || node.importClause.isTypeOnly)
+        continue;
+      const clause = node.importClause;
+      let bindings = clause.namedBindings;
+      if (bindings && ts.isNamedImports(bindings))
+        bindings = ts.factory.updateNamedImports(
+          bindings,
+          bindings.elements.filter((binding) => {
+            const name = binding.name.text;
+            if (binding.isTypeOnly || !used.has(name) || names.has(name) || seen.has(name))
+              return false;
+            seen.add(name);
+            return true;
+          }),
+        );
+      else if (bindings) {
+        const name = bindings.name.text;
+        if (!used.has(name) || seen.has(name)) bindings = undefined;
+        else seen.add(name);
+      }
+      if (!bindings || (ts.isNamedImports(bindings) && !bindings.elements.length)) continue;
+      imports.push(
+        printer.printNode(
+          ts.EmitHint.Unspecified,
+          ts.factory.updateImportDeclaration(
+            node,
+            node.modifiers,
+            ts.factory.updateImportClause(clause, clause.isTypeOnly, clause.name, bindings),
+            node.moduleSpecifier,
+            node.attributes,
+          ),
+          source,
+        ),
+      );
+    }
+  return (
+    imports.join("\n") +
+    "\n" +
+    declarations.join("\n") +
+    `\nexport {WorkspaceSwitcher}; export { createElement } from "react"; export { createRoot } from "react-dom/client"; export { flushSync } from "react-dom"; export { controls } from "switcher-ports";`
+  );
 }

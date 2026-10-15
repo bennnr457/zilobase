@@ -1,6 +1,8 @@
+import { LayoutEditorProvider } from "@/components/pages/layout";
+import { PageLayout } from "@/components/pages/pane/page-layout";
 import { useEffect, useState } from "react";
-import { Link, useParams, useRouteContext, useSearch } from "@tanstack/react-router";
-import { ArrowRight, ArrowUpRight, Maximize2 } from "@/components/icons";
+import { useParams, useRouteContext, useSearch } from "@tanstack/react-router";
+import { ArrowUpRight } from "@/components/icons";
 
 import { AuthenticatedRouteError } from "@/app/routing/route-shell";
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
@@ -10,7 +12,6 @@ import {
   usePageSidePane,
 } from "@/components/pages/pane/page-side-pane";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getDatabaseCover, getDatabaseEmoji, isDatabaseLocked } from "@zilobase/features/databases";
 import { usePage, usePageAccessLevel } from "@zilobase/features/pages/react";
@@ -60,8 +61,14 @@ function AuthenticatedDatabasePage() {
   const { data: page } = usePage(databasePageId, {
     refetchOnMount: false,
   });
-  const { renderedSidePanePageId, sidePaneAnimatedOpen, sidePaneContentReady, sidePaneDatabaseId } =
-    usePageSidePane();
+  const {
+    closeSidePane,
+    openSidePaneAsFullPage,
+    renderedSidePanePageId,
+    sidePaneAnimatedOpen,
+    sidePaneContentReady,
+    sidePaneDatabaseId,
+  } = usePageSidePane();
   const { openPage } = useOpenEmbeddedPage({
     contextPageId: databasePageId,
     databaseId,
@@ -73,17 +80,31 @@ function AuthenticatedDatabasePage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-[calc(100svh-3rem)] animate-in fade-in duration-200">
-        <DatabasePageSkeleton />
-      </main>
+      <PageSidePaneLayout
+        main={
+          <main className="min-h-[calc(100svh-3rem)] animate-in fade-in duration-200">
+            <DatabasePageSkeleton />
+          </main>
+        }
+        sidePane={null}
+        sidePaneOpen={false}
+        sidePaneVisible={false}
+      />
     );
   }
 
   if (!payload) {
     return (
-      <main className="flex min-h-[calc(100svh-3rem)] items-center justify-center px-4 text-sm text-content-secondary">
-        Database not found.
-      </main>
+      <PageSidePaneLayout
+        main={
+          <main className="flex min-h-[calc(100svh-3rem)] items-center justify-center px-4 text-sm text-content-secondary">
+            Database not found.
+          </main>
+        }
+        sidePane={null}
+        sidePaneOpen={false}
+        sidePaneVisible={false}
+      />
     );
   }
 
@@ -99,13 +120,21 @@ function AuthenticatedDatabasePage() {
       }
       sidePane={
         sidePaneContentReady && renderedSidePanePageId ? (
-          <PageEditorPane
-            databaseId={sidePaneDatabaseId ?? databaseId}
-            enableComments={false}
-            key={renderedSidePanePageId}
-            onOpenPage={openPage}
+          <PageLayout
             pageId={renderedSidePanePageId}
-          />
+            placement="pane"
+            rowNavigationDatabaseId={sidePaneDatabaseId ?? databaseId}
+            onClose={closeSidePane}
+            onOpenFullPage={openSidePaneAsFullPage}
+          >
+            <PageEditorPane
+              databaseId={sidePaneDatabaseId ?? databaseId}
+              enableComments={false}
+              key={renderedSidePanePageId}
+              onOpenPage={openPage}
+              pageId={renderedSidePanePageId}
+            />
+          </PageLayout>
         ) : null
       }
       sidePaneOpen={sidePaneAnimatedOpen}
@@ -119,7 +148,9 @@ function PublicDatabasePage() {
 
   return (
     <PageSidePaneProvider resetKey={databaseId}>
-      <PublicDatabaseContent databaseId={databaseId} />
+      <LayoutEditorProvider>
+        <PublicDatabaseContent databaseId={databaseId} />
+      </LayoutEditorProvider>
     </PageSidePaneProvider>
   );
 }
@@ -135,6 +166,7 @@ function PublicDatabaseContent({ databaseId }: { databaseId: string }) {
   });
   const {
     closeSidePane,
+    openSidePaneAsFullPage,
     renderedSidePanePageId,
     sidePaneAnimatedOpen,
     sidePaneContentReady,
@@ -188,6 +220,7 @@ function PublicDatabaseContent({ databaseId }: { databaseId: string }) {
             <PublicDatabaseSidePane
               databaseId={sidePaneDatabaseId ?? databaseId}
               onClose={closeSidePane}
+              onOpenFullPage={openSidePaneAsFullPage}
               onOpenPage={handleOpenPage}
               pageId={renderedSidePanePageId}
               ready={sidePaneContentReady}
@@ -197,7 +230,7 @@ function PublicDatabaseContent({ databaseId }: { databaseId: string }) {
         sidePaneOpen={sidePaneAnimatedOpen}
         sidePaneVisible={renderedSidePanePageId !== null}
       />
-      <EmbeddedPageDialog onOpenPage={handleOpenPage} pageRenderer={PageEditorPane} />
+      <EmbeddedPageDialog onOpenPage={handleOpenPage} readOnly />
     </>
   );
 }
@@ -205,40 +238,28 @@ function PublicDatabaseContent({ databaseId }: { databaseId: string }) {
 function PublicDatabaseSidePane({
   databaseId,
   onClose,
+  onOpenFullPage,
   onOpenPage,
   pageId,
   ready,
 }: {
   databaseId: string;
   onClose: () => void;
+  onOpenFullPage: () => void;
   onOpenPage: (pageId: string, options?: OpenPageOptions) => void;
   pageId: string;
   ready: boolean;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            aria-label="Close side pane"
-            onClick={onClose}
-            size="icon-sm"
-            type="button"
-            variant="ghost"
-          >
-            <ArrowRight />
-          </Button>
-          <Button aria-label="Open as main page" asChild size="icon-sm" variant="ghost">
-            <Link params={{ pageId }} to="/p/$pageId">
-              <Maximize2 />
-            </Link>
-          </Button>
-        </div>
-        <PublicPageBreadcrumb pageId={pageId} />
-      </div>
+    <PageLayout
+      pageId={pageId}
+      placement="pane"
+      onClose={onClose}
+      onOpenFullPage={onOpenFullPage}
+      header={{ leadingControl: null, actions: <PublicPageBreadcrumb pageId={pageId} /> }}
+    >
       {ready ? (
         <PageEditorPane
-          className="min-h-0 flex-1"
           databaseId={databaseId}
           enableComments={false}
           key={pageId}
@@ -247,7 +268,7 @@ function PublicDatabaseSidePane({
           pageId={pageId}
         />
       ) : null}
-    </div>
+    </PageLayout>
   );
 }
 

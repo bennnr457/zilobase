@@ -1,57 +1,41 @@
 export function register({ readSource, assert, test }) {
-  test("sidebar aligns the workspace switcher and notifications at the top", async () => {
-    const sidebarSource = await readSource("/src/app/shell/sidebar/app-sidebar.tsx");
-    const workspaceSource = await readSource("/src/app/shell/sidebar/workspace-switcher.tsx");
-    const sidebarPrimitiveSource = await readSource("/src/components/ui/sidebar.tsx");
-    const sidebarTabsSource = await readSource("/src/app/shell/sidebar/sidebar-layout.tsx");
-    const sidebarCustomizeSource = await readSource(
-      "/src/app/shell/sidebar/sidebar-customization.tsx",
+  test("sidebar composes tabs, shortcuts, sections and footer around controller props", async () => {
+    const source = await readSource("/src/app/shell/sidebar/app-sidebar.tsx");
+    const controller = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
+    const customization = await readSource("/src/app/shell/sidebar/sidebar-customization.tsx");
+    assert.match(source, /function AppSidebar\(sidebar: AppSidebarProps\)/);
+    assert.doesNotMatch(source, /usePageNavigation\(|useWorkspaceMeetings\(|useDatabaseRecords\(/);
+    assert.match(controller, /usePageNavigation\(workspaceId\)/);
+    assert.match(controller, /useWorkspaceMeetings\(needsMeetings \? workspaceId : null/);
+    assert.match(controller, /open && activeDataSourceId && activeView/);
+    assert.match(controller, /useTaskDatabases\(open \? databaseIds : \[\]/);
+    assert.match(source, /<SidebarLayoutTabs/);
+    assert.match(customization, /horizontalListSortingStrategy/);
+    assert.match(customization, /editing && active && activeTabSettings/);
+    assert.match(source, /items=\{activeTab.sections.map/);
+    assert.match(source, /closest\('\[data-sidebar="group-label"\]'\)/);
+    assert.match(source, /<SidebarCustomizePanel/);
+    assert.ok(source.indexOf("<SidebarShortcutList") < source.indexOf("<SidebarContent"));
+    assert.ok(source.indexOf("<WorkspaceSwitcher") < source.indexOf("<SidebarContent"));
+    assert.ok(source.indexOf("<NotificationCenter") < source.indexOf("<SidebarContent"));
+    assert.ok(source.indexOf("Customize sidebar") < source.indexOf("Open in desktop app"));
+    assert.match(source, /No chats yet/);
+    assert.doesNotMatch(
+      source,
+      /NavFavorites|NavPageSection|NavMeetings|SidebarDatabaseViewSection/,
     );
-    const pageDatabasePickerSource = await readSource(
-      "/src/components/databases/page-database-picker.tsx",
-    );
-    const runtimeSectionDragSource = await readSource("/src/app/shell/sidebar/app-sidebar.tsx");
-    const sidebarShortcutSource = await readSource("/src/app/shell/sidebar/sidebar-sections.tsx");
-    const sidebarDatabaseViewSource = await readSource(
-      "/src/app/shell/sidebar/sidebar-database-view-section.tsx",
-    );
-    const navPagesSource = await readSource("/src/app/shell/sidebar/page-tree.tsx");
-    const navListSource = await readSource("/src/app/shell/sidebar/sidebar-nav-list.tsx");
+  });
+  test("sidebar uses the shared default page and database icon conventions", async () => {
     const defaultIconsSource = await readSource("/src/components/pages/icons/item-icons.ts");
+    const appIconProviderSource = await readSource("/src/components/icons.ts");
     const pageIconSource = await readSource("/src/components/pages/icons/page-icon.tsx");
     const databasePageLinkSource = await readSource(
       "/src/components/databases/interactions/database-page-link.tsx",
     );
-    const appIconProviderSource = await readSource("/src/components/icons.ts");
     const iconPickerSource = await readSource("/src/components/ui/icon-emoji-picker.tsx");
     const phosphorIconPickerSource = await readSource(
       "/src/components/ui/phosphor-icon-picker.tsx",
     );
-
-    assert.doesNotMatch(sidebarSource, /ZilobaseLogo|SidebarThemeSwitcher|SidebarTrigger/);
-    assert.doesNotMatch(sidebarSource, /<NewMenu/);
-    assert.match(sidebarSource, /<span>Customize sidebar<\/span>/);
-    assert.match(
-      sidebarSource,
-      /<SidebarMenuItem>\s*<SidebarMenuButton\s+onClick=\{\(\) => setCustomizing\(true\)\}/,
-    );
-    assert.match(sidebarSource, /onClick=\{\(\) => setCustomizing\(true\)\}/);
-    assert.match(sidebarSource, /gap-2 p-2/);
-    assert.doesNotMatch(navPagesSource, /<span>More<\/span>/);
-    assert.match(
-      sidebarPrimitiveSource,
-      /buttonControlHeightClassName,[\s\S]*?peer\/menu-button group\/menu-button flex w-full items-center/,
-    );
-    assert.match(
-      sidebarPrimitiveSource,
-      /data-sidebar="group-label"[\s\S]*?buttonControlHeightClassName,[\s\S]*?"flex shrink-0 items-center/,
-    );
-    assert.match(
-      sidebarPrimitiveSource,
-      /text-sm font-medium text-content-secondary ring-action-focus-ring/,
-    );
-    assert.doesNotMatch(navListSource, /data-\[active=false\]:opacity-80/);
-    assert.match(navListSource, /flex min-w-0 flex-col gap-px/);
     assert.match(defaultIconsSource, /data-icon-color="gray"/);
     assert.doesNotMatch(defaultIconsSource, /data-icon-color="default"/);
     assert.match(defaultIconsSource, /data-icon-library="phosphor"/);
@@ -67,161 +51,5 @@ export function register({ readSource, assert, test }) {
     assert.match(pageIconSource, /getPageEmoji\(page\) \?\? DEFAULT_PAGE_ITEM_ICON/);
     assert.match(databasePageLinkSource, /<DefaultPageIcon \/>/);
     assert.doesNotMatch(databasePageLinkSource, /<FileText \/>/);
-    assert.match(sidebarTabsSource, /<SearchIcon className="size-4" \/>/);
-    assert.match(sidebarTabsSource, /\{active \? \(?\s*<motion\.span/);
-    assert.match(sidebarTabsSource, /tabLabelVariants/);
-    assert.match(sidebarTabsSource, /editing && active && activeTabSettings/);
-    assert.match(sidebarTabsSource, /useSortable/);
-    assert.match(sidebarTabsSource, /horizontalListSortingStrategy/);
-    assert.match(sidebarTabsSource, /translate3d\(\$\{sortable\.transform\.x\}px, 0, 0\)/);
-    assert.match(sidebarTabsSource, /activationConstraint: \{ distance: 4 \}/);
-    assert.match(sidebarCustomizeSource, /activeTabSettings=/);
-    assert.doesNotMatch(sidebarCustomizeSource, /managed by Zilobase|<StaticTabContents/);
-    assert.match(sidebarCustomizeSource, /isFixedSidebarTabId\(current\.tabs\[from\]!\.id\)/);
-    assert.match(sidebarSource, /<SidebarCustomizePanel\s+activeTabId=\{activeTabId\}/);
-    assert.doesNotMatch(sidebarSource, /<SidebarCustomizePanel\s+activeTabId=\{activeTab\.id\}/);
-    assert.doesNotMatch(sidebarCustomizeSource, /autoFocus=\{newTabId/);
-    assert.match(sidebarCustomizeSource, /<IconEmojiPicker\s+allowUpload=\{false\}/);
-    assert.match(sidebarCustomizeSource, /aria-label="Change shortcut icon"/);
-    assert.match(sidebarCustomizeSource, /<SidebarShortcutIcon shortcut=\{shortcut\}/);
-    assert.doesNotMatch(sidebarCustomizeSource, /editor-icon-button/);
-    assert.match(sidebarCustomizeSource, /group\/editor-row/);
-    assert.match(sidebarCustomizeSource, /data-\[state=open\]:opacity-100/);
-    assert.match(
-      sidebarCustomizeSource,
-      /data-\[state=open\]:bg-action-neutral-hover data-\[state=open\]:text-action-on-neutral/,
-    );
-    assert.match(sidebarCustomizeSource, /data-sidebar-customize-action/);
-    assert.doesNotMatch(sidebarCustomizeSource, />Move left</);
-    assert.doesNotMatch(sidebarCustomizeSource, />Move right</);
-    assert.match(sidebarCustomizeSource, /onReorderTab=\{reorderTabs\}/);
-    assert.match(sidebarCustomizeSource, /<AlertDialog onOpenChange=\{setDeleteTabDialogOpen\}/);
-    assert.match(sidebarCustomizeSource, /<AlertDialogTitle>Delete “\{activeTab\.name/);
-    assert.match(
-      sidebarCustomizeSource,
-      /<AlertDialogAction onClick=\{deleteTab\} variant="destructive">/,
-    );
-    assert.doesNotMatch(sidebarCustomizeSource, /window\.confirm\("Remove this tab/);
-    assert.match(sidebarCustomizeSource, /EditableRowMenuContext/);
-    assert.match(
-      sidebarCustomizeSource,
-      /sortable\.isDragging \|\| sortable\.isOver \|\| menuOpen/,
-    );
-    assert.match(sidebarCustomizeSource, /verticalListSortingStrategy/);
-    assert.match(sidebarCustomizeSource, /group\/editor-row relative cursor-grab/);
-    assert.match(sidebarCustomizeSource, /flex h-7 w-full items-center gap-2 rounded-md px-2 pr-8/);
-    assert.match(sidebarCustomizeSource, /absolute right-1 top-1\.5 inline-flex size-5/);
-    const addShortcutMenu = sidebarCustomizeSource.slice(
-      sidebarCustomizeSource.indexOf("function AddShortcutMenu"),
-      sidebarCustomizeSource.indexOf("function AddSectionMenu"),
-    );
-    assert.match(addShortcutMenu, /return \(\s*<DropDrawer>/);
-    assert.doesNotMatch(addShortcutMenu, /defaultSubDisplayMode="inline"/);
-    assert.match(addShortcutMenu, /<PageShortcutPicker/);
-    assert.match(addShortcutMenu, /<DatabasePicker/);
-    assert.doesNotMatch(addShortcutMenu, /<SearchablePicker/);
-    assert.match(sidebarCustomizeSource, /useAppSearchResults\(/);
-    assert.match(sidebarCustomizeSource, /PageDatabasePicker/);
-    assert.match(pageDatabasePickerSource, /overscroll-contain/);
-    assert.match(sidebarCustomizeSource, /getPageIconNode\(page\)/);
-    assert.match(sidebarCustomizeSource, /getDatabaseIconNode\(database\)/);
-    assert.match(sidebarCustomizeSource, /database\.views\.map\(\(view\) =>/);
-    assert.match(runtimeSectionDragSource, /function RuntimeSectionDragItem/);
-    assert.match(sidebarSource, /<SortableContext\s+items=\{activeTab\.sections/);
-    assert.match(runtimeSectionDragSource, /closest\('\[data-sidebar="group-label"\]'\)/);
-    assert.match(runtimeSectionDragSource, /translate3d\(0, \$\{sortable\.transform\.y\}px, 0\)/);
-    assert.match(sidebarPrimitiveSource, /<SidebarSimpleIcon className="size-4" \/>/);
-    assert.match(sidebarPrimitiveSource, /variant="ghost"[\s\S]*size="icon"/);
-    assert.doesNotMatch(sidebarSource, /<SidebarTrigger[^>]*\[&_svg\]:size-/);
-    assert.doesNotMatch(
-      sidebarSource,
-      /<SidebarTrigger[^>]*(size-7|hover:bg-action-neutral-hover)/,
-    );
-    assert.doesNotMatch(
-      sidebarSource,
-      /group\/workspace-row|hover:bg-action-neutral-hover focus-within:bg-action-neutral-hover/,
-    );
-    assert.match(sidebarPrimitiveSource, /navigation \? <div className="-mx-2">/);
-    const pagePaneHeaderSource = await readSource(
-      "/src/components/pages/pane/page-pane-header.tsx",
-    );
-    const leadingControl = pagePaneHeaderSource.slice(
-      pagePaneHeaderSource.indexOf("export function MainPaneHeaderLeadingControl"),
-      pagePaneHeaderSource.indexOf("export function PageSidePaneCollapseButton"),
-    );
-    assert.match(leadingControl, /<SidebarTrigger/);
-    assert.doesNotMatch(leadingControl, /isCollapsed|return null/);
-    const headerStart = sidebarSource.indexOf("<SidebarHeader");
-    const contentStart = sidebarSource.indexOf("<SidebarContent");
-    const footerStart = sidebarSource.indexOf("<SidebarFooter");
-    assert.ok(
-      sidebarSource.indexOf("<SidebarShortcutList") < contentStart,
-      "Shortcuts must remain outside the scrolling sections",
-    );
-    assert.match(
-      sidebarSource,
-      /<SidebarContent\s+className="block overflow-x-hidden overflow-y-auto overscroll-y-contain"/,
-    );
-    assert.ok(
-      sidebarSource.indexOf("<DndContext", contentStart) < footerStart,
-      "Sidebar sections scroll inside the content region",
-    );
-
-    const notificationPosition = sidebarSource.indexOf("<NotificationCenter", headerStart);
-    const workspaceSwitcherPosition = sidebarSource.indexOf("<WorkspaceSwitcher", headerStart);
-
-    assert.ok(
-      notificationPosition > headerStart && notificationPosition < contentStart,
-      "Notifications must stay beside the workspace switcher",
-    );
-    assert.ok(
-      workspaceSwitcherPosition > headerStart && workspaceSwitcherPosition < contentStart,
-      "Workspace switcher must stay in the sidebar header",
-    );
-    assert.ok(
-      sidebarSource.indexOf("<span>Customize sidebar</span>") <
-        sidebarSource.indexOf("Open in desktop app"),
-      "Customize sidebar must stay above the desktop-app card",
-    );
-    assert.match(sidebarSource, /useWorkspaceMeetings\(needsMeetings \? workspaceId : null/);
-    assert.match(sidebarSource, /usePageNavigation\(workspaceId\)/);
-    assert.doesNotMatch(sidebarSource, /useCreateAiChatThread/);
-    assert.doesNotMatch(sidebarSource, /useAiChatThreadState|setActiveThreadId/);
-    assert.match(sidebarSource, /tabId === "ai"[\s\S]*navigate\(\{ to: "\/ai" \}\)/);
-    assert.match(
-      sidebarSource,
-      /staticTabId\s*=\s*pathname === "\/ai"\s*\?\s*"ai"\s*:\s*pathname === "\/calendar"\s*\?\s*"calendar"\s*:\s*null/,
-    );
-    assert.match(
-      sidebarSource,
-      /!staticTabId && isStaticSidebarTabId\(activeTabId\)[\s\S]*readActiveSidebarTab\(workspaceId\)/,
-    );
-    assert.match(sidebarShortcutSource, /<SidebarMenuButton[\s\S]*isActive=\{isShortcutActive/);
-    assert.match(
-      sidebarDatabaseViewSource,
-      /activeDataSourceId = database\.data\?\.activeDataSource\?\.id \?\? null/,
-    );
-    assert.match(
-      sidebarDatabaseViewSource,
-      /addRow\.mutate\(\s*\{ databaseId: activeDataSourceId, title: "Untitled" \}/,
-    );
-    assert.doesNotMatch(
-      sidebarDatabaseViewSource,
-      /addRow\.mutate\(\s*\{ databaseId: section\.databaseId/,
-    );
-    assert.match(
-      sidebarSource,
-      /<SidebarDatabaseViewSection\s+activePageId=\{getActivePageId\(pathname\)\}/,
-    );
-    assert.match(
-      sidebarDatabaseViewSource,
-      /<SidebarMenuButton asChild isActive=\{row\.pageId === activePageId\}>/,
-    );
-    assert.match(
-      sidebarSource,
-      /<SidebarHeader[\s\S]*navigation=\{\s*!customizing \? \(\s*<SidebarLayoutTabs/,
-    );
-    assert.match(workspaceSource, /<span>Settings<\/span>/);
-    assert.match(workspaceSource, /Add workspace[\s\S]*WorkspaceSettingsItem/);
   });
 }

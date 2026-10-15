@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("sidebar panel sizing resolves percentage and fixed widths", async () => {
     const { resolveSidebarPanelPercentage } = await loadModule(
-      "/src/app/shell/sidebar/sidebar-sizing.ts",
+      "/src/app/shell/panels/right-sidebars.tsx",
     );
 
     assert.equal(resolveSidebarPanelPercentage("28%", 1000), 28);
@@ -15,7 +15,7 @@ export function register({ assert, loadModule, test }) {
       getRightSidebarDockMinSize,
       RIGHT_SIDEBAR_INNER_SPLIT_SIZE,
       RIGHT_SIDEBAR_SPLIT_DEFAULT_SIZE,
-    } = await loadModule("/src/app/shell/sidebar/sidebar-sizing.ts");
+    } = await loadModule("/src/app/shell/panels/right-sidebars.tsx");
 
     assert.equal(getRightSidebarEditorDefaultSize(2), "50%");
     assert.equal(RIGHT_SIDEBAR_INNER_SPLIT_SIZE, 50);
@@ -26,10 +26,13 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("a single view settings sidebar matches the navigation sidebar width", async () => {
-    const { APP_SIDEBAR_PANEL_WIDTH, getRightSidebarDockSizes } = await loadModule(
-      "/src/app/shell/sidebar/sidebar-sizing.ts",
+    const { getRightSidebarDockSizes } = await loadModule(
+      "/src/app/shell/panels/right-sidebars.tsx",
     );
 
+    const { APP_SIDEBAR_PANEL_WIDTH } = await loadModule("/src/components/ui/sidebar.tsx", [
+      "APP_SIDEBAR_PANEL_WIDTH",
+    ]);
     assert.equal(APP_SIDEBAR_PANEL_WIDTH, "288px");
     assert.deepEqual(
       getRightSidebarDockSizes({
@@ -58,7 +61,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("right sidebar resize gestures resolve directional intent", async () => {
-    const { getSidebarResizeIntent } = await loadModule("/src/app/shell/sidebar/sidebar-sizing.ts");
+    const { getSidebarResizeIntent } = await loadModule("/src/app/shell/panels/right-sidebars.tsx");
 
     assert.equal(getSidebarResizeIntent(-10), "increase");
     assert.equal(getSidebarResizeIntent(10), "decrease");

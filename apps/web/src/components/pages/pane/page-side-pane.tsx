@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { usePageEditorRegistry } from "@/components/editor/runtime/page-editor-registry";
 import {
   createContext,
@@ -30,6 +31,7 @@ export type PageSidePaneContextValue = {
   dialogDatabaseId: string | null;
   dialogPageId: string | null;
   embeddedItemsOpenAs: EmbeddedItemsOpenAs;
+  mainHeader?: ReactNode;
   mainPaneNavigationActive: boolean;
   openEmbeddedPageDialog: (pageId: string, options?: OpenPageSidePaneOptions) => void;
   openDatabaseSidePane: (databaseId: string) => void;
@@ -76,6 +78,32 @@ export function clearPromotedFullPagePath() {
   document.querySelectorAll<HTMLElement>("[data-page-side-pane-shell]").forEach((shell) => {
     delete shell.dataset.pageSidePanePromoted;
     shell.style.setProperty("--page-side-pane-width", SIDE_PANE_DEFAULT_WIDTH);
+  });
+}
+
+function promoteMountedSidePane(targetPath: string) {
+  return Effect.gen(function* () {
+    yield* Effect.sync(() => {
+      const panel = document.querySelector<HTMLElement>("[data-page-side-pane-panel]");
+      const shell = panel?.closest<HTMLElement>("[data-page-side-pane-shell]");
+      if (shell) {
+        shell.style.setProperty(
+          "--page-side-pane-width",
+          `${shell.getBoundingClientRect().width}px`,
+        );
+        shell.dataset.pageSidePanePromoted = "true";
+      }
+      setPromotedFullPagePath(targetPath);
+    });
+    // Preserve the live editor: router navigation would replace its route owner.
+    yield* Effect.sync(() =>
+      window.History.prototype.replaceState.call(
+        window.history,
+        window.history.state,
+        "",
+        targetPath,
+      ),
+    );
   });
 }
 
@@ -167,69 +195,29 @@ export function PageSidePaneShell({
   );
 }
 
-export function getPageSidePaneHeaderCellClassName({
-  className,
-  side,
-  splitActive,
-}: {
-  className?: string;
-  side: "main" | "side";
-  splitActive: boolean;
-}) {
-  return cn(
-    "flex h-12 min-h-0 min-w-0 items-center overflow-hidden",
-    side === "main" && "h-full w-full bg-surface-canvas",
-    side === "side" && [
-      "absolute inset-y-0 right-0 z-30 w-[var(--page-side-pane-width)] bg-surface-canvas shadow-none dark:bg-surface-navigation",
-      "transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
-      splitActive
-        ? "border-l border-stroke-default [transform:translate3d(0,0,0)]"
-        : "pointer-events-none [transform:translate3d(100%,0,0)]",
-    ],
-    className,
-  );
-}
-
-export function PageSidePaneHeaderCell({
-  children,
-  className,
-  splitActive = false,
-  side = "main",
-}: {
-  children: ReactNode;
-  className?: string;
-  splitActive?: boolean;
-  side?: "main" | "side";
-}) {
-  return (
-    <div
-      className={getPageSidePaneHeaderCellClassName({
-        className,
-        side,
-        splitActive,
-      })}
-      data-page-side-pane-main-header={side === "main" ? "" : undefined}
-      data-page-side-pane-side-header={side === "side" ? "" : undefined}
-    >
-      {children}
-    </div>
-  );
-}
-
 export function PageSidePaneMainCell({
   children,
   className,
+  header,
+  scroll = true,
 }: {
   children: ReactNode;
   className?: string;
+  header?: ReactNode;
+  scroll?: boolean;
 }) {
   return (
     <div className="h-full min-h-0 w-full min-w-0" data-page-side-pane-main>
-      <PageScrollViewport className="h-full" scrollClassName={className}>
-        <div className="flex min-h-full w-full min-w-0 flex-col" data-page-side-pane-main-content>
-          {children}
-        </div>
-      </PageScrollViewport>
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-col" data-page-side-pane-main-content>
+        {header}
+        {scroll ? (
+          <PageScrollViewport className="min-h-0 flex-1" scrollClassName={className}>
+            {children}
+          </PageScrollViewport>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }
@@ -278,6 +266,7 @@ export function PageSidePaneSideCell({
   open: boolean;
   show?: boolean;
 }) {
+  const isMobile = useIsMobile();
   const panelRef = useRef<HTMLElement | null>(null);
   const pointerCleanupRef = useRef<() => void>(() => {});
   const promotionTimerRef = useRef<number | null>(null);
@@ -294,7 +283,7 @@ export function PageSidePaneSideCell({
     [],
   );
 
-  if (!show) {
+  if (!show || isMobile || isMobileViewport()) {
     return null;
   }
 
@@ -459,12 +448,7 @@ export function PageSidePaneSideCell({
       >
         <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent transition-colors group-focus-visible:bg-action-focus-ring group-hover:bg-stroke-default" />
       </div>
-      <PageScrollViewport
-        className="h-full w-full"
-        edgeFadeClassName="dark:from-surface-navigation"
-      >
-        {children}
-      </PageScrollViewport>
+      {children}
     </aside>
   );
 }
@@ -473,6 +457,7 @@ export function PageSidePaneLayout({
   className,
   main,
   mainScrollClassName,
+  mainOwnsLayout = false,
   sidePane,
   sidePaneClassName,
   sidePaneOpen,
@@ -483,6 +468,7 @@ export function PageSidePaneLayout({
   className?: string;
   main: ReactNode;
   mainScrollClassName?: string;
+  mainOwnsLayout?: boolean;
   sidePane: ReactNode | null;
   sidePaneClassName?: string;
   sidePaneOpen: boolean;
@@ -490,9 +476,14 @@ export function PageSidePaneLayout({
   standalone?: boolean;
   viewportHeightClass?: string;
 }) {
+  const context = useOptionalPageSidePane();
   const split = (
     <>
-      <PageSidePaneMainCell className={cn(!standalone && "min-h-0", mainScrollClassName)}>
+      <PageSidePaneMainCell
+        className={cn(!standalone && "min-h-0", mainScrollClassName)}
+        header={mainOwnsLayout ? undefined : context?.mainHeader}
+        scroll={!mainOwnsLayout}
+      >
         {main}
       </PageSidePaneMainCell>
       <PageSidePaneSideCell
@@ -588,65 +579,99 @@ export function usePageSidePaneState(
   }, []);
   const openSidePane = useCallback(
     (nextPageId: string, options?: OpenPageSidePaneOptions) => {
-      const existing = getEditorHandle(nextPageId);
-      if (existing?.focus) {
-        existing.focus();
-        return;
-      }
-      closeEmbeddedPageDialog();
+      Effect.runSync(
+        Effect.sync(() => {
+          if (isMobile || isMobileViewport()) {
+            closeEmbeddedPageDialog();
+            if (location.pathname !== getFullPagePath(nextPageId))
+              router.history.push(getFullPagePath(nextPageId));
+            return;
+          }
+          const existing = getEditorHandle(nextPageId);
+          if (existing?.focus && sidePanePageId !== nextPageId && dialogPageId !== nextPageId) {
+            existing.focus();
+            return;
+          }
+          closeEmbeddedPageDialog();
 
-      if (isMobile || isMobileViewport()) {
-        router.history.push(getFullPagePath(nextPageId));
-        return;
-      }
-
-      writeSidePaneParams(nextPageId, options?.databaseId);
+          writeSidePaneParams(nextPageId, options?.databaseId);
+        }),
+      );
     },
-    [getEditorHandle, closeEmbeddedPageDialog, isMobile, router.history, writeSidePaneParams],
+    [
+      getEditorHandle,
+      sidePanePageId,
+      dialogPageId,
+      closeEmbeddedPageDialog,
+      isMobile,
+      location.pathname,
+      router.history,
+      writeSidePaneParams,
+    ],
   );
   const openDatabaseSidePane = useCallback(
     (databaseId: string) => {
-      closeEmbeddedPageDialog();
+      Effect.runSync(
+        Effect.sync(() => {
+          closeEmbeddedPageDialog();
 
-      if (isMobile || isMobileViewport()) {
-        router.history.push(getFullDatabasePath(databaseId));
-        return;
-      }
+          if (isMobile || isMobileViewport()) {
+            router.history.push(getFullDatabasePath(databaseId));
+            return;
+          }
 
-      writeSidePaneParams(null, databaseId);
+          writeSidePaneParams(null, databaseId);
+        }),
+      );
     },
     [getEditorHandle, closeEmbeddedPageDialog, isMobile, router.history, writeSidePaneParams],
   );
   const openPageInMainPane = useCallback(
     (nextPageId: string, options?: OpenPageSidePaneOptions) => {
-      const existing = getEditorHandle(nextPageId);
-      if (existing?.focus) {
-        existing.focus();
-        return;
-      }
-      closeEmbeddedPageDialog();
+      Effect.runSync(
+        Effect.sync(() => {
+          if (isMobile || isMobileViewport()) {
+            closeEmbeddedPageDialog();
+            if (location.pathname !== getFullPagePath(nextPageId))
+              router.history.push(getFullPagePath(nextPageId));
+            return;
+          }
+          const existing = getEditorHandle(nextPageId);
+          if (existing?.focus) {
+            existing.focus();
+            return;
+          }
+          closeEmbeddedPageDialog();
 
-      if (isMobile || isMobileViewport()) {
-        router.history.push(getFullPagePath(nextPageId));
-        return;
-      }
-
-      pendingMainPanePathRef.current = getFullPagePath(nextPageId);
-      writeSidePaneParams(nextPageId, options?.databaseId);
+          pendingMainPanePathRef.current = getFullPagePath(nextPageId);
+          writeSidePaneParams(nextPageId, options?.databaseId);
+        }),
+      );
     },
-    [getEditorHandle, closeEmbeddedPageDialog, isMobile, router.history, writeSidePaneParams],
+    [
+      getEditorHandle,
+      closeEmbeddedPageDialog,
+      isMobile,
+      location.pathname,
+      router.history,
+      writeSidePaneParams,
+    ],
   );
   const openDatabaseInMainPane = useCallback(
     (databaseId: string) => {
-      closeEmbeddedPageDialog();
+      Effect.runSync(
+        Effect.sync(() => {
+          closeEmbeddedPageDialog();
 
-      if (isMobile || isMobileViewport()) {
-        router.history.push(getFullDatabasePath(databaseId));
-        return;
-      }
+          if (isMobile || isMobileViewport()) {
+            router.history.push(getFullDatabasePath(databaseId));
+            return;
+          }
 
-      pendingMainPanePathRef.current = getFullDatabasePath(databaseId);
-      writeSidePaneParams(null, databaseId);
+          pendingMainPanePathRef.current = getFullDatabasePath(databaseId);
+          writeSidePaneParams(null, databaseId);
+        }),
+      );
     },
     [getEditorHandle, closeEmbeddedPageDialog, isMobile, router.history, writeSidePaneParams],
   );
@@ -656,53 +681,66 @@ export function usePageSidePaneState(
       : sidePaneDatabaseId
         ? getFullDatabasePath(sidePaneDatabaseId)
         : null;
-    if (!targetPath) return;
-
-    setPromotedFullPagePath(targetPath);
-
-    // TanStack patches the instance history methods and treats direct calls as
-    // router navigations. Use the native method so promotion only replaces the
-    // side-pane URL; the already-mounted pane remains the page.
-    window.History.prototype.replaceState.call(
-      window.history,
-      window.history.state,
-      "",
-      targetPath,
-    );
+    if (targetPath) Effect.runSync(promoteMountedSidePane(targetPath));
   }, [sidePaneDatabaseId, sidePanePageId]);
   const openEmbeddedPageDialog = useCallback(
     (nextPageId: string, options?: OpenPageSidePaneOptions) => {
-      const existing = getEditorHandle(nextPageId);
-      if (existing?.focus) {
-        existing.focus();
-        return;
-      }
-      if (isMobile || isMobileViewport()) {
-        setDialogPageId(null);
-        setDialogDatabaseId(null);
-        router.history.push(getFullPagePath(nextPageId));
-        return;
-      }
+      Effect.runSync(
+        Effect.sync(() => {
+          if (isMobile || isMobileViewport()) {
+            closeEmbeddedPageDialog();
+            if (location.pathname !== getFullPagePath(nextPageId))
+              router.history.push(getFullPagePath(nextPageId));
+            return;
+          }
+          const existing = getEditorHandle(nextPageId);
+          if (existing?.focus && sidePanePageId !== nextPageId && dialogPageId !== nextPageId) {
+            existing.focus();
+            return;
+          }
 
-      closeSidePane();
-      setDialogPageId(nextPageId);
-      setDialogDatabaseId(options?.databaseId ?? null);
+          closeSidePane();
+          setDialogPageId(nextPageId);
+          setDialogDatabaseId(options?.databaseId ?? null);
+        }),
+      );
     },
-    [closeSidePane, isMobile, router.history],
+    [
+      closeSidePane,
+      closeEmbeddedPageDialog,
+      getEditorHandle,
+      sidePanePageId,
+      dialogPageId,
+      isMobile,
+      location.pathname,
+      router.history,
+    ],
   );
 
   useEffect(() => {
-    if (!isMobile) return;
-
-    if (sidePanePageId) {
-      router.history.replace(getFullPagePath(sidePanePageId));
-      return;
-    }
-
-    if (sidePaneDatabaseId) {
-      router.history.replace(getFullDatabasePath(sidePaneDatabaseId));
-    }
-  }, [isMobile, router.history, sidePaneDatabaseId, sidePanePageId]);
+    if (!isMobile && !isMobileViewport()) return;
+    const target = dialogPageId ?? sidePanePageId;
+    const targetPath = target
+      ? getFullPagePath(target)
+      : sidePaneDatabaseId
+        ? getFullDatabasePath(sidePaneDatabaseId)
+        : null;
+    if (!targetPath) return;
+    Effect.runSync(
+      Effect.gen(function* () {
+        yield* Effect.sync(closeEmbeddedPageDialog);
+        yield* Effect.sync(clearPromotedFullPagePath);
+        yield* Effect.sync(() => router.history.replace(targetPath));
+      }),
+    );
+  }, [
+    closeEmbeddedPageDialog,
+    dialogPageId,
+    isMobile,
+    router.history,
+    sidePaneDatabaseId,
+    sidePanePageId,
+  ]);
 
   useEffect(() => {
     const sidePaneTargetKey = sidePanePageId
@@ -775,17 +813,8 @@ export function usePageSidePaneState(
     const shell = panel?.closest<HTMLElement>("[data-page-side-pane-shell]");
     if (!shell) return;
 
-    shell.style.setProperty("--page-side-pane-width", `${shell.getBoundingClientRect().width}px`);
-    shell.dataset.pageSidePanePromoted = "true";
     pendingMainPanePathRef.current = null;
-    setPromotedFullPagePath(targetPath);
-
-    window.History.prototype.replaceState.call(
-      window.history,
-      window.history.state,
-      "",
-      targetPath,
-    );
+    Effect.runSync(promoteMountedSidePane(targetPath));
   }, [renderedSidePaneDatabaseId, renderedSidePanePageId]);
 
   return useMemo<PageSidePaneContextValue>(

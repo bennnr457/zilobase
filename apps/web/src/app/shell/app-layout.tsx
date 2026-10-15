@@ -5,6 +5,7 @@ import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronsRightIcon, SidebarSimpleIcon } from "@/components/icons";
 
+import { useAppSidebar } from "@/app/shell/sidebar/sidebar-controller";
 import { AppSidebar } from "@/app/shell/sidebar/app-sidebar";
 import { AppSearchProvider } from "@/components/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/ui";
@@ -15,16 +16,20 @@ import {
   usePageSidePaneState,
   PageSidePaneContext,
   PageSidePaneShell,
+  usePromotedFullPagePath,
 } from "@/components/pages/pane/page-side-pane";
 import { DiscussionsSidebarPanel } from "@/components/comments/index";
 import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/right-sidebars";
 import {
-  APP_SIDEBAR_PANEL_WIDTH,
   getRightSidebarEditorDefaultSize,
   type SidebarResizeIntent,
-} from "@/app/shell/sidebar/sidebar-sizing";
+} from "@/app/shell/panels/right-sidebars";
 
-import { getDatabaseId, useRoutePageId } from "@/components/pages/pane/page-pane-header";
+import {
+  PageHeaderControlsContext,
+  getDatabaseId,
+  useRoutePageId,
+} from "@/components/pages/pane/page-pane-header";
 import { getSettingsSection, type SettingsSection } from "@/components/settings/settings-sidebar";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import {
@@ -34,7 +39,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { SidebarInset, SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import {
+  APP_SIDEBAR_PANEL_WIDTH,
+  SidebarInset,
+  SidebarProvider,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { isEmbeddedMobileViewer } from "@/components/pages/pane/embedded-view";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
@@ -55,8 +65,8 @@ import { FloatingWidget } from "@/components/floating-widget";
 import { AppHeader } from "@/app/shell/app-header";
 
 const EmbeddedPageDialogHost = lazy(() =>
-  import("@/app/shell/panels/embedded-page-dialog").then((module) => ({
-    default: module.EmbeddedPageDialogHost,
+  import("@/components/pages/pane/embedded-page-dialog").then((module) => ({
+    default: module.EmbeddedPageDialog,
   })),
 );
 const SettingsDialog = lazy(() =>
@@ -92,10 +102,11 @@ export function AppLayout({
   return (
     <SidebarProvider
       className="h-[var(--app-viewport-height,100svh)] min-h-0 overflow-hidden"
-      width={APP_SIDEBAR_PANEL_WIDTH}
       style={
         {
           "--right-sidebar-panel-width": "24rem",
+          "--sidebar-width": APP_SIDEBAR_PANEL_WIDTH,
+          "--sidebar-width-mobile": "18rem",
         } as React.CSSProperties
       }
     >
@@ -126,7 +137,8 @@ function AppLayoutWithRoutePage({
   utilitySidebarOpen: boolean;
 }) {
   const navigate = useNavigate();
-  const routePageId = useRoutePageId(pathname);
+  const promotedPath = usePromotedFullPagePath();
+  const routePageId = useRoutePageId(promotedPath ?? pathname);
   const isSettingsPage = pathname.startsWith("/settings");
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(isSettingsPage);
   const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection>(() =>
@@ -150,15 +162,17 @@ function AppLayoutWithRoutePage({
     [isSettingsPage, navigate],
   );
 
+  const sidebarProps = useAppSidebar({
+    onOpenSettings: () => {
+      setActiveSettingsSection("preferences");
+      setSettingsDialogOpen(true);
+    },
+    settingsOpen: settingsDialogOpen,
+  });
+
   return (
     <>
-      <AppSidebar
-        onOpenSettings={() => {
-          setActiveSettingsSection("preferences");
-          setSettingsDialogOpen(true);
-        }}
-        settingsOpen={settingsDialogOpen}
-      />
+      <AppSidebar {...sidebarProps} />
       <PageLayoutSidebarProvider pageId={routePageId}>
         <LayoutEditorProvider>
           <AppLayoutContent
@@ -210,28 +224,32 @@ function AppLayoutContent({
   const askAiEnabled = isFeatureEnabled("askAi");
   const isAiPage = askAiEnabled && pathname === "/ai";
   const aiWorkspacePanel = isAiPage ? new URLSearchParams(searchStr).get("panel") : null;
+  const aiWorkspaceSidePaneOpen = aiWorkspacePanel === "settings" || aiWorkspacePanel === "history";
   const aiSettingsPageId =
     isAiPage && aiWorkspacePanel === "settings"
       ? new URLSearchParams(searchStr).get("settingsPage")
       : null;
-  const aiWorkspaceSidePaneOpen = aiWorkspacePanel === "settings" || aiWorkspacePanel === "history";
-  const closeAuxiliaryWorkspaceSidePane = useCallback(() => {
-    const search = new URLSearchParams(searchStr);
-    if (search.has("settingsPage")) {
-      search.delete("settingsPage");
-      const query = search.toString();
-      router.history.replace(`${pathname}${query ? `?${query}` : ""}${hash}`);
-      return;
-    }
-    search.delete("panel");
-    search.delete("settingsScope");
-    search.delete("settingsTab");
-    const query = search.toString();
-    router.history.replace(`${pathname}${query ? `?${query}` : ""}${hash}`);
-  }, [hash, pathname, router.history, searchStr]);
+  const closeAuxiliaryWorkspaceSidePane = useCallback(
+    () =>
+      Effect.runSync(
+        Effect.sync(() => {
+          const search = new URLSearchParams(searchStr);
+          if (search.has("settingsPage")) search.delete("settingsPage");
+          else {
+            search.delete("panel");
+            search.delete("settingsScope");
+            search.delete("settingsTab");
+          }
+          const query = search.toString();
+          router.history.replace(`${pathname}${query ? `?${query}` : ""}${hash}`);
+        }),
+      ),
+    [hash, pathname, router.history, searchStr],
+  );
   const isFullPanePage = pathname === "/calendar";
-  const pageId = useRoutePageId(pathname);
-  const databaseId = getDatabaseId(pathname);
+  const promotedPath = usePromotedFullPagePath();
+  const pageId = useRoutePageId(promotedPath ?? pathname);
+  const databaseId = getDatabaseId(promotedPath ?? pathname);
   const activeWorkspaceId = useActiveWorkspaceId();
   const { data: databasePayload } = useDatabaseMetadata(databaseId, {
     includeDeleted: true,
@@ -388,8 +406,34 @@ function AppLayoutContent({
       ...sidePaneState,
       openDatabaseSidePane,
       openSidePane,
+      mainHeader:
+        embeddedMobileViewer || isFullPanePage ? undefined : (
+          <AppHeader
+            pathname={pathname}
+            isSettingsPage={isSettingsPage || isAiPage}
+            auxiliarySidePaneOpen={
+              aiWorkspaceSidePaneOpen && !utilitySidebarOpen && !pageLayoutSidebarOpen
+            }
+            auxiliarySidePanePageId={aiSettingsPageId}
+            onCloseAuxiliarySidePane={closeAuxiliaryWorkspaceSidePane}
+          />
+        ),
     }),
-    [openDatabaseSidePane, openSidePane, sidePaneState],
+    [
+      embeddedMobileViewer,
+      aiWorkspaceSidePaneOpen,
+      aiSettingsPageId,
+      closeAuxiliaryWorkspaceSidePane,
+      utilitySidebarOpen,
+      pageLayoutSidebarOpen,
+      isAiPage,
+      isFullPanePage,
+      isSettingsPage,
+      openDatabaseSidePane,
+      openSidePane,
+      pathname,
+      sidePaneState,
+    ],
   );
 
   useEffect(() => {
@@ -509,144 +553,126 @@ function AppLayoutContent({
   ) : undefined;
 
   return (
-    <PageSidePaneContext.Provider value={sidePaneContext}>
-      {dialogPageId ? (
-        <Suspense fallback={null}>
-          <EmbeddedPageDialogHost
-            contextPageId={hostPageId}
-            databaseId={databaseId}
-            hostPage={hostPage}
-          />
-        </Suspense>
-      ) : null}
-      <PageLayoutOverlayDrawer />
-      {settingsDialogOpen ? (
-        <Suspense fallback={null}>
-          <SettingsDialog
-            activeSection={activeSettingsSection}
-            onOpenChange={onSettingsOpenChange}
-            onSectionChange={setActiveSettingsSection}
-            open
-          />
-        </Suspense>
-      ) : null}
-      <Suspense fallback={null}>
-        <CalendarReminderHost />
-      </Suspense>
-      <ResizablePanelGroup
-        className="relative min-h-0 min-w-0 flex-1 overflow-hidden has-data-[desktop-tabs]:pt-9"
-        orientation="horizontal"
-        style={{ height: "100%" }}
-      >
-        <DesktopTabs icon={desktopTabIcon} title={desktopTabTitle} />
-        {/* The dock owns the width limit; keeping this minimum relaxed avoids
-            clamping the layout before a sidebar transition can run. */}
-        <ResizablePanel
-          className="min-h-0 min-w-0"
-          defaultSize={getRightSidebarEditorDefaultSize(desktopRightPanelCount)}
-          id="app-editor-pane"
-          minSize="0%"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            overflow: "hidden",
-          }}
-        >
-          <SidebarInset className="flex h-full min-h-0 flex-col overflow-hidden">
-            <PageSidePaneShell
-              body={
-                isSettingsPage ? (
-                  <div className="h-full bg-surface-canvas" />
-                ) : (
-                  (children ?? <Outlet />)
-                )
-              }
-              header={
-                embeddedMobileViewer || isFullPanePage ? undefined : (
-                  <AppHeader
-                    auxiliarySidePanePageId={aiSettingsPageId}
-                    auxiliarySidePaneCloseLabel="Close AI settings"
-                    auxiliarySidePaneOpen={showAuxiliaryWorkspaceSidePaneLayout}
-                    discussionsOpen={discussionsSidebarOpen}
-                    isSettingsPage={isSettingsPage || isAiPage}
-                    onToggleDiscussions={discussionsEnabled ? toggleDiscussionsSidebar : undefined}
-                    onTogglePageSidebar={
-                      pageLayoutSidebar?.hasSidebar ? togglePageLayoutSidebar : undefined
-                    }
-                    pageSidebarOpen={pageLayoutSidebarOpen}
-                    onCloseAuxiliarySidePane={
-                      showAuxiliaryWorkspaceSidePaneLayout
-                        ? closeAuxiliaryWorkspaceSidePane
-                        : undefined
-                    }
-                    onCloseSidePane={closeSidePane}
-                    pathname={pathname}
-                    renderedSidePanePageId={
-                      showEmbeddedSidePaneLayout && !showAuxiliaryWorkspaceSidePaneLayout
-                        ? renderedSidePanePageId
-                        : null
-                    }
-                    renderedSidePaneDatabaseId={
-                      showEmbeddedSidePaneLayout && !showAuxiliaryWorkspaceSidePaneLayout
-                        ? renderedSidePaneDatabaseId
-                        : null
-                    }
-                    sidePaneAnimatedOpen={
-                      showAuxiliaryWorkspaceSidePaneLayout ||
-                      (showEmbeddedSidePaneLayout && sidePaneAnimatedOpen)
-                    }
-                    sidePaneDatabaseId={sidePaneDatabaseId}
-                  />
-                )
-              }
-              open={
-                showAuxiliaryWorkspaceSidePaneLayout ||
-                (showEmbeddedSidePaneLayout && sidePaneAnimatedOpen)
-              }
-              visible={showSidePaneLayout}
+    <PageHeaderControlsContext.Provider
+      value={{
+        pageId,
+        discussionsOpen: discussionsSidebarOpen,
+        onToggleDiscussions:
+          discussionsEnabled && commentController ? toggleDiscussionsSidebar : undefined,
+        onTogglePageSidebar: pageLayoutSidebar?.hasSidebar ? togglePageLayoutSidebar : undefined,
+        pageSidebarOpen: pageLayoutSidebarOpen,
+      }}
+    >
+      <PageSidePaneContext.Provider value={sidePaneContext}>
+        {dialogPageId && !isMobile ? (
+          <Suspense fallback={null}>
+            <EmbeddedPageDialogHost
+              contextPageId={hostPageId}
+              databaseId={databaseId}
+              hostPage={hostPage}
             />
-          </SidebarInset>
-        </ResizablePanel>
-        <RightSidebars
-          chatOpen={askAiEnabled && dockedChatOpen}
-          chatPanel={askAiEnabled && dockedChatOpen ? chatPanel : null}
+          </Suspense>
+        ) : null}
+        <PageLayoutOverlayDrawer />
+        {settingsDialogOpen ? (
+          <Suspense fallback={null}>
+            <SettingsDialog
+              activeSection={activeSettingsSection}
+              onOpenChange={onSettingsOpenChange}
+              onSectionChange={setActiveSettingsSection}
+              open
+            />
+          </Suspense>
+        ) : null}
+        <Suspense fallback={null}>
+          <CalendarReminderHost />
+        </Suspense>
+        <ResizablePanelGroup
+          className="relative min-h-0 min-w-0 flex-1 overflow-hidden has-data-[desktop-tabs]:pt-9"
+          orientation="horizontal"
+          style={{ height: "100%" }}
+        >
+          <DesktopTabs icon={desktopTabIcon} title={desktopTabTitle} />
+          {/* The dock owns the width limit; keeping this minimum relaxed avoids
+            clamping the layout before a sidebar transition can run. */}
+          <ResizablePanel
+            className="min-h-0 min-w-0"
+            defaultSize={getRightSidebarEditorDefaultSize(desktopRightPanelCount)}
+            id="app-editor-pane"
+            minSize="0%"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              overflow: "hidden",
+            }}
+          >
+            <SidebarInset className="flex h-full min-h-0 flex-col overflow-hidden">
+              <PageSidePaneShell
+                body={
+                  isSettingsPage ? (
+                    <div className="h-full bg-surface-canvas" />
+                  ) : (
+                    (children ?? <Outlet />)
+                  )
+                }
+                header={
+                  embeddedMobileViewer ||
+                  isFullPanePage ||
+                  /^\/(?:p|d|m)\//.test(pathname) ||
+                  pathname === "/recents" ||
+                  isAiPage
+                    ? undefined
+                    : sidePaneContext.mainHeader
+                }
+                open={
+                  showAuxiliaryWorkspaceSidePaneLayout ||
+                  (showEmbeddedSidePaneLayout && sidePaneAnimatedOpen)
+                }
+                visible={showSidePaneLayout}
+              />
+            </SidebarInset>
+          </ResizablePanel>
+          <RightSidebars
+            chatOpen={askAiEnabled && dockedChatOpen}
+            chatPanel={askAiEnabled && dockedChatOpen ? chatPanel : null}
+            discussionsEnabled={discussionsEnabled}
+            discussionsOpen={discussionsSidebarOpen}
+            discussionsPanel={discussionsPanel}
+            isMobile={isMobile}
+            navigationSidebarOpen={appSidebarOpen}
+            pageSidebarOpen={pageLayoutSidebarOpen}
+            pageSidebarPanel={pageSidebarPanel}
+            onResizeIntent={handleRightSidebarResizeIntent}
+            utilitySidebarOpen={utilitySidebarOpen}
+            utilitySidebarPanel={utilitySidebar}
+          />
+        </ResizablePanelGroup>
+        <RightSidebarMobilePanels
+          chatOpen={askAiEnabled && chatSidebarOpen}
+          chatPanel={askAiEnabled ? chatPanel : null}
           discussionsEnabled={discussionsEnabled}
           discussionsOpen={discussionsSidebarOpen}
           discussionsPanel={discussionsPanel}
           isMobile={isMobile}
-          navigationSidebarOpen={appSidebarOpen}
           pageSidebarOpen={pageLayoutSidebarOpen}
           pageSidebarPanel={pageSidebarPanel}
-          onResizeIntent={handleRightSidebarResizeIntent}
-          utilitySidebarOpen={utilitySidebarOpen}
-          utilitySidebarPanel={utilitySidebar}
         />
-      </ResizablePanelGroup>
-      <RightSidebarMobilePanels
-        chatOpen={askAiEnabled && chatSidebarOpen}
-        chatPanel={askAiEnabled ? chatPanel : null}
-        discussionsEnabled={discussionsEnabled}
-        discussionsOpen={discussionsSidebarOpen}
-        discussionsPanel={discussionsPanel}
-        isMobile={isMobile}
-        pageSidebarOpen={pageLayoutSidebarOpen}
-        pageSidebarPanel={pageSidebarPanel}
-      />
-      {askAiEnabled && chatSidebarOpen && !isMobile && chatPresentationMode === "floating" ? (
-        <FloatingWidget aria-label="Floating Ask AI chat">{chatPanel}</FloatingWidget>
-      ) : null}
-      {!askAiEnabled || chatSidebarOpen || isAiPage || isFullPanePage ? null : (
-        <ChatSidebarTrigger
-          adjacentSidebarOpen={
-            utilitySidebarOpen ||
-            pageLayoutSidebarOpen ||
-            (discussionsEnabled && discussionsSidebarOpen)
-          }
-          onOpen={openChatSidebar}
-        />
-      )}
-    </PageSidePaneContext.Provider>
+        {askAiEnabled && chatSidebarOpen && !isMobile && chatPresentationMode === "floating" ? (
+          <FloatingWidget aria-label="Floating Ask AI chat">{chatPanel}</FloatingWidget>
+        ) : null}
+        {!askAiEnabled || chatSidebarOpen || isAiPage || isFullPanePage ? null : (
+          <ChatSidebarTrigger
+            adjacentSidebarOpen={
+              utilitySidebarOpen ||
+              pageLayoutSidebarOpen ||
+              (discussionsEnabled && discussionsSidebarOpen)
+            }
+            onOpen={openChatSidebar}
+          />
+        )}
+      </PageSidePaneContext.Provider>
+    </PageHeaderControlsContext.Provider>
   );
 }
 

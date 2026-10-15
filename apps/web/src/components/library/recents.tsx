@@ -1,3 +1,4 @@
+import { PageLayout } from "@/components/pages/pane/page-layout";
 import {
   buildHomepageViewData,
   buildHomepageRows,
@@ -83,6 +84,8 @@ export default function RecentsPage() {
     mode === "home" ? workspaceId : null,
   );
   const {
+    closeSidePane,
+    openSidePaneAsFullPage,
     openDatabaseSidePane,
     renderedSidePaneDatabaseId,
     renderedSidePanePageId,
@@ -494,21 +497,37 @@ export default function RecentsPage() {
         sidePane={
           sidePaneContentReady && (renderedSidePanePageId || renderedSidePaneDatabaseId) ? (
             renderedSidePaneDatabaseId ? (
-              <DatabaseMainPane
-                className="min-h-0 flex-1 overflow-y-auto"
+              <PageLayout
+                pageId={null}
                 databaseId={renderedSidePaneDatabaseId}
-                embedded
-                key={renderedSidePaneDatabaseId}
-                onOpenPage={openSidePaneChildPage}
-              />
+                placement="pane"
+                onClose={closeSidePane}
+                onOpenFullPage={openSidePaneAsFullPage}
+              >
+                <DatabaseMainPane
+                  className="min-h-0 flex-1"
+                  databaseId={renderedSidePaneDatabaseId}
+                  embedded
+                  key={renderedSidePaneDatabaseId}
+                  onOpenPage={openSidePaneChildPage}
+                />
+              </PageLayout>
             ) : renderedSidePanePageId ? (
-              <PageEditorPane
-                databaseId={sidePaneDatabaseId}
-                enableComments={false}
-                key={renderedSidePanePageId}
-                onOpenPage={openSidePaneChildPage}
+              <PageLayout
                 pageId={renderedSidePanePageId}
-              />
+                placement="pane"
+                rowNavigationDatabaseId={sidePaneDatabaseId}
+                onClose={closeSidePane}
+                onOpenFullPage={openSidePaneAsFullPage}
+              >
+                <PageEditorPane
+                  databaseId={sidePaneDatabaseId}
+                  enableComments={false}
+                  key={renderedSidePanePageId}
+                  onOpenPage={openSidePaneChildPage}
+                  pageId={renderedSidePanePageId}
+                />
+              </PageLayout>
             ) : null
           ) : null
         }

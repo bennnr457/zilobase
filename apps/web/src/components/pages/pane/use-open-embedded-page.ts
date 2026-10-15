@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+import { isMobileViewport } from "@/lib/hooks/use-mobile";
 import { useCallback } from "react";
 import { markPageNavigationStart } from "../navigation/page-navigation-timing";
 
@@ -22,44 +24,54 @@ export function useOpenEmbeddedPage({
     closeSidePane,
     dialogPageId,
     openEmbeddedPageDialog,
+    openPageInMainPane,
     openSidePane,
     sidePanePageId,
   } = usePageSidePane();
 
   const openPage = useCallback(
-    (pageId: string, options?: OpenPageSidePaneOptions) => {
-      const mode = resolveEmbeddedItemsOpenAsFromCache(
-        queryClient,
-        contextPageId,
-        page,
-        readPublishedEmbeddedItemsOpenAs,
-      );
-      const usesDialog = mode === "dialog";
-      const activePageId = usesDialog ? dialogPageId : sidePanePageId;
-      const isCurrentlyOpen = activePageId === pageId;
+    (pageId: string, options?: OpenPageSidePaneOptions) =>
+      Effect.runSync(
+        Effect.gen(function* () {
+          if (isMobileViewport()) {
+            yield* Effect.sync(() =>
+              openPageInMainPane(pageId, { databaseId: options?.databaseId ?? databaseId }),
+            );
+            return;
+          }
+          const mode = resolveEmbeddedItemsOpenAsFromCache(
+            queryClient,
+            contextPageId,
+            page,
+            readPublishedEmbeddedItemsOpenAs,
+          );
+          const usesDialog = mode === "dialog";
+          const activePageId = usesDialog ? dialogPageId : sidePanePageId;
+          const isCurrentlyOpen = activePageId === pageId;
 
-      if (pageId === contextPageId || isCurrentlyOpen) {
-        if (usesDialog) {
-          closeEmbeddedPageDialog();
-        } else {
-          closeSidePane();
-        }
-        return;
-      }
+          if (pageId === contextPageId || isCurrentlyOpen) {
+            if (usesDialog) {
+              yield* Effect.sync(closeEmbeddedPageDialog);
+            } else {
+              yield* Effect.sync(closeSidePane);
+            }
+            return;
+          }
 
-      markPageNavigationStart(pageId);
+          yield* Effect.sync(() => markPageNavigationStart(pageId));
 
-      if (usesDialog) {
-        openEmbeddedPageDialog(pageId, {
-          databaseId: options?.databaseId ?? databaseId,
-        });
-        return;
-      }
+          if (usesDialog) {
+            yield* Effect.sync(() =>
+              openEmbeddedPageDialog(pageId, { databaseId: options?.databaseId ?? databaseId }),
+            );
+            return;
+          }
 
-      openSidePane(pageId, {
-        databaseId: options?.databaseId ?? databaseId,
-      });
-    },
+          yield* Effect.sync(() =>
+            openSidePane(pageId, { databaseId: options?.databaseId ?? databaseId }),
+          );
+        }),
+      ),
     [
       closeEmbeddedPageDialog,
       closeSidePane,
@@ -67,6 +79,7 @@ export function useOpenEmbeddedPage({
       databaseId,
       dialogPageId,
       openEmbeddedPageDialog,
+      openPageInMainPane,
       openSidePane,
       queryClient,
       sidePanePageId,

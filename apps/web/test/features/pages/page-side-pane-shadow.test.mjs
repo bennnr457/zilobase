@@ -4,7 +4,7 @@ export function register({ readSource, assert, test }) {
 
     assert.match(
       source,
-      /\.light[\s\S]*\[data-page-side-pane-open="true"\][\s\S]*:is\(\[data-page-side-pane-panel\], \[data-page-side-pane-side-header\]\)[\s\S]*box-shadow: -6px 0 16px -12px/,
+      /\.light[\s\S]*\[data-page-side-pane-open="true"\][\s\S]*\[data-page-side-pane-panel\][\s\S]*box-shadow: -6px 0 16px -12px/,
     );
     assert.match(source, /var\(--zb-color-effect-shadow-pane\)/);
   });

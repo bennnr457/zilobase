@@ -6,7 +6,11 @@ import { createRequire } from "node:module";
 export function register({ assert, appPath, readSource, test }) {
   test("navigation item commands preserve page/database mutations, locks and duplicate ordering", async () => {
     const modules = {
-      "@tanstack/react-router": "export const useNavigate = () => runtime.navigate;",
+      "@tanstack/react-router":
+        'export const useNavigate = () => runtime.navigate; export const useLocation = () => ({pathname:"/"});',
+      "@/components/desktop/ui": "export const useOpenInNewTab = () => () => {};",
+      "@/components/ui/sidebar": "export const useSidebar = () => ({isMobile:false});",
+      "@zilobase/features/teamspaces/react": "export const useTeamspaces = () => ({data:[]});",
       sonner:
         'export const toast = { error: value => runtime.calls.push(["error",value]), success: value => runtime.calls.push(["success",value]) };',
       "@/components/pages/layout":
@@ -57,9 +61,14 @@ export function register({ assert, appPath, readSource, test }) {
         {
           name: "controlled-navigation",
           setup(build) {
-            build.onResolve({ filter: /^@zilobase\/features\/pages\/react$/ }, () => ({
-              path: actionHook,
-            }));
+            build.onResolve({ filter: /^\// }, (args) =>
+              args.path === actionHook ? { path: actionHook, namespace: "file" } : undefined,
+            );
+            build.onResolve({ filter: /^@zilobase\/features\/pages\/react$/ }, (args) =>
+              args.importer.endsWith("use-item-actions.ts")
+                ? { path: "combined-pages", namespace: "navigation-test" }
+                : { path: actionHook },
+            );
             const sharedModules = {
               "../workspaces/react": "@zilobase/features/workspaces/react",
               "./content-mutations": "@zilobase/features/pages/react",
@@ -82,9 +91,11 @@ export function register({ assert, appPath, readSource, test }) {
             );
             build.onLoad({ filter: /.*/, namespace: "navigation-test" }, ({ path }) => ({
               contents:
-                path === "navigation-test-runtime"
-                  ? "export const runtime = {};"
-                  : 'import { runtime } from "navigation-test-runtime";' + modules[path],
+                path === "combined-pages"
+                  ? `export {useItemActionController} from ${JSON.stringify(actionHook)}; import {runtime} from 'navigation-test-runtime'; export const useDeletePage=()=>runtime.mutations.DeletePage; export const useConvertPageToTeamspace=()=>({}); export const useMovePageToTeamspace=()=>({});`
+                  : path === "navigation-test-runtime"
+                    ? "export const runtime = {};"
+                    : 'import { runtime } from "navigation-test-runtime";' + modules[path],
               loader: "ts",
             }));
           },
@@ -257,7 +268,7 @@ export function register({ assert, appPath, readSource, test }) {
     // unrelated sidebar renderers or changing production exports for a test.
     const source = ts.createSourceFile(
       "app-sidebar.tsx",
-      await readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
+      await readSource("/src/app/shell/sidebar/sidebar-controller.ts"),
       ts.ScriptTarget.Latest,
       true,
       ts.ScriptKind.TSX,
@@ -276,13 +287,14 @@ export function register({ assert, appPath, readSource, test }) {
     }).outputText;
     const capture = new Function(
       "ports",
-      `const {React, Effect, workspaceId, isCreatingPage, isCreatingDatabase, createPage, createDatabase, navigate} = ports; ${compiled}; return {handleCreatePage, handleCreateDatabase, handleCreateChat};`,
+      `const {React, Effect, workspaceId, isCreatingPage, isCreatingDatabase, createPage, createDatabase, navigate, sidebarScope} = ports; ${compiled}; return {handleCreatePage, handleCreateDatabase, handleCreateChat};`,
     );
     const calls = [];
     let failure;
     const ports = {
       React: { useCallback: (callback) => callback },
       Effect,
+      sidebarScope: { current: "workspace" },
       workspaceId: "workspace",
       isCreatingPage: false,
       isCreatingDatabase: false,
@@ -335,6 +347,21 @@ export function register({ assert, appPath, readSource, test }) {
       }).handleCreatePage(),
       (error) => error === navigationFailure,
     );
+    calls.length = 0;
+    let finish;
+    const scope = { current: "workspace" };
+    const late = capture({
+      ...ports,
+      sidebarScope: scope,
+      createPage: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    }).handleCreatePage();
+    scope.current = "another workspace";
+    finish({ id: "late-page" });
+    await late;
+    assert.deepEqual(calls, [], "a late creation must not navigate the next workspace");
     await capture(ports).handleCreateChat();
     assert.deepEqual(calls.at(-1), ["navigate", { to: "/ai" }]);
   });

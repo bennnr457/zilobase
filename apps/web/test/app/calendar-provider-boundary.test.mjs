@@ -39,6 +39,7 @@ export function register({ assert, readSource, test }) {
       AppSearchProvider: passthrough,
       PageLayoutSidebarProvider: passthrough,
       LayoutEditorProvider: passthrough,
+      useAppSidebar: () => ({}),
       AppSidebar: consumer,
       AppLayoutContent: consumer,
       CalendarWorkspaceProvider,
@@ -46,6 +47,7 @@ export function register({ assert, readSource, test }) {
       useRouterState: () => "/calendar",
       useNavigate: () => () => {},
       useRoutePageId: () => null,
+      usePromotedFullPagePath: () => null,
       getSettingsSection: () => "preferences",
     };
     const AppLayout = new Function(...Object.keys(dependencies), `${code}; return AppLayout;`)(

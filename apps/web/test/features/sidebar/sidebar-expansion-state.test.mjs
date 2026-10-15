@@ -1,7 +1,8 @@
 export function register({ assert, loadModule, test }) {
   test("sidebar expansion is scoped by workspace and section", async () => {
     const { getSidebarExpansionStorageKey } = await loadModule(
-      "/src/app/shell/sidebar/sidebar-state.ts",
+      "/src/app/shell/sidebar/sidebar-controller.ts",
+      ["getSidebarExpansionStorageKey"],
     );
 
     assert.equal(
@@ -20,7 +21,11 @@ export function register({ assert, loadModule, test }) {
 
   test("sidebar expansion safely round trips expanded items", async () => {
     const { readExpandedSidebarItems, setSidebarItemExpanded, writeExpandedSidebarItems } =
-      await loadModule("/src/app/shell/sidebar/sidebar-state.ts");
+      await loadModule("/src/app/shell/sidebar/sidebar-controller.ts", [
+        "readExpandedSidebarItems",
+        "setSidebarItemExpanded",
+        "writeExpandedSidebarItems",
+      ]);
     const values = new Map();
     const storage = {
       getItem: (key) => values.get(key) ?? null,
@@ -38,7 +43,8 @@ export function register({ assert, loadModule, test }) {
 
   test("sidebar expansion ignores invalid or unavailable storage", async () => {
     const { readExpandedSidebarItems } = await loadModule(
-      "/src/app/shell/sidebar/sidebar-state.ts",
+      "/src/app/shell/sidebar/sidebar-controller.ts",
+      ["readExpandedSidebarItems"],
     );
     const blockedStorage = {
       getItem: () => {
@@ -57,7 +63,12 @@ export function register({ assert, loadModule, test }) {
       writeActiveSidebarTab,
       readExpandedSidebarItems,
       writeExpandedSidebarItems,
-    } = await loadModule("/src/app/shell/sidebar/sidebar-state.ts");
+    } = await loadModule("/src/app/shell/sidebar/sidebar-controller.ts", [
+      "readActiveSidebarTab",
+      "writeActiveSidebarTab",
+      "readExpandedSidebarItems",
+      "writeExpandedSidebarItems",
+    ]);
     const saved = Object.getOwnPropertyDescriptor(globalThis, "window");
     const values = new Map();
     const storage = {

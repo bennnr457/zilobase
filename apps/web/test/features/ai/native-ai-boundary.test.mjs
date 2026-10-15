@@ -6,7 +6,7 @@ export function register({ readSource, assert, test }) {
     const sources = await Promise.all([
       readChatbotSource(readSource),
       readSource("/src/components/ai/ask-ai-workspace.tsx"),
-      readSource("/src/app/shell/sidebar/sidebar-sections.tsx"),
+      readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
       readSource("/src/components/ai/elements/prompt-input.tsx"),
       readSource("/src/components/ai/elements/message.tsx"),
     ]);

@@ -1,3 +1,8 @@
+import {
+  ApplicationSidebarFixture,
+  sidebarFixtureApi,
+  sidebarFixtureAuth,
+} from "./app-sidebar.fixture";
 import { ShortcutProvider } from "@/app/shortcuts";
 import { CalendarSettings } from "@/components/calendar/preferences/calendar-settings";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -97,7 +102,7 @@ function FixtureSchedule(props: Parameters<typeof CalendarSchedule>[0]) {
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogTitle>Calendar settings</DialogTitle>
           <CalendarSettings
-            value={settingsPreferences.query.data ?? props.preferences}
+            value={{ ...preferences, ...(settingsPreferences.query.data ?? props.preferences) }}
             pending={settingsPreferences.pending}
             onSave={(data) =>
               settingsPreferences.save.mutate(data, { onSuccess: () => setSettings(false) })
@@ -129,7 +134,12 @@ const root = createRootRoute({
     </main>
   ),
 });
-const app = createRoute({ getParentRoute: () => root, id: "app", component: Outlet });
+const appSidebarMode = new URLSearchParams(window.location.search).has("appSidebar");
+const app = createRoute({
+  getParentRoute: () => root,
+  id: "app",
+  component: () => (appSidebarMode ? <ApplicationSidebarFixture /> : <Outlet />),
+});
 function SidebarFixture() {
   const current = useCalendarPreferences("workspace");
   return (
@@ -139,7 +149,11 @@ function SidebarFixture() {
         <RemovedCalendars workspaceId="workspace" />
       </aside>
       {current.query.data && (
-        <FixtureSchedule connections={connections} userId="user" preferences={current.query.data} />
+        <FixtureSchedule
+          connections={connections}
+          userId="user"
+          preferences={{ ...preferences, ...current.query.data }}
+        />
       )}
     </SidebarProvider>
   );
@@ -157,14 +171,24 @@ const calendar = createRoute({
 });
 const history = createMemoryHistory({
   initialEntries: [
-    sessionStorage.getItem("calendar-fixture-route") ?? "/calendar?date=2026-09-09&view=week",
+    appSidebarMode
+      ? "/recents"
+      : (sessionStorage.getItem("calendar-fixture-route") ?? "/calendar?date=2026-09-09&view=week"),
   ],
 });
 history.subscribe(({ location }) =>
   sessionStorage.setItem("calendar-fixture-route", location.href),
 );
 const router = createRouter({
-  routeTree: root.addChildren([app.addChildren([calendar])]),
+  routeTree: root.addChildren([
+    app.addChildren([
+      calendar,
+      ...["/recents", "/p/$pageId", "/d/$databaseId", "/m/$meetingId", "/ai", "/tasks"].map(
+        (path) =>
+          createRoute({ getParentRoute: () => app, path, component: () => <p>Fixture content</p> }),
+      ),
+    ]),
+  ]),
   history,
 });
 const queryClient = new QueryClient();
@@ -177,8 +201,8 @@ createRoot(document.getElementById("root")!).render(
         cacheStorage: webClientCacheStorage,
         lifecycle: webClientLifecycle,
         queryClient,
-        auth,
-        apiFetch,
+        auth: appSidebarMode ? sidebarFixtureAuth : auth,
+        apiFetch: appSidebarMode ? sidebarFixtureApi : apiFetch,
       }}
     >
       <ShortcutProvider>

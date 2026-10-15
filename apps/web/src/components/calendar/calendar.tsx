@@ -14,7 +14,7 @@ import {
   MainPaneHeaderLeadingControl,
   PagePaneHeader,
 } from "@/components/pages/pane/page-pane-header";
-import { PageSidePaneHeaderCell, PageSidePaneShell } from "@/components/pages/pane/page-side-pane";
+import { PageSidePaneShell } from "@/components/pages/pane/page-side-pane";
 import { useEffect, useState } from "react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,7 @@ function CalendarWorkspace({ workspaceId }: { workspaceId: string }) {
       open={false}
       visible={false}
       header={
-        <PageSidePaneHeaderCell className="z-10" side="main" splitActive={false}>
+        <div className="flex h-12 min-w-0 items-center">
           <PagePaneHeader
             className="min-w-0 flex-1"
             leadingControl={<MainPaneHeaderLeadingControl />}
@@ -101,7 +101,7 @@ function CalendarWorkspace({ workspaceId }: { workspaceId: string }) {
               )
             }
           />
-        </PageSidePaneHeaderCell>
+        </div>
       }
       body={
         <section

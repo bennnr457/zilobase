@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+import { PagePaneHeader } from "../pane/page-pane-header";
 import { Link } from "@tanstack/react-router";
 import { CopyIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -7,41 +9,48 @@ import { toast } from "sonner";
 import { formatPageBreadcrumbLabel } from "../icons/page-icon";
 import { usePage } from "@zilobase/features/pages/react";
 
-export function GuestPaneTopbar({ pageId }: { pageId: string }) {
+export function GuestPageTitle({ pageId }: { pageId: string }) {
   const { data: page } = usePage(pageId);
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    toast.success("Page link copied.");
-  };
-
-  if (isEmbeddedMobileViewer()) return null;
-
   return (
-    <header className="flex h-12 shrink-0 items-center gap-3 border-b px-3">
-      <div className="min-w-0 flex-1 truncate text-sm font-medium">
-        {page ? formatPageBreadcrumbLabel(page) : "Shared page"}
-      </div>
+    <div className="min-w-0 flex-1 truncate text-sm font-medium">
+      {page ? formatPageBreadcrumbLabel(page) : "Shared page"}
+    </div>
+  );
+}
+
+export function GuestPageActions() {
+  const copyLink = () =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        yield* Effect.tryPromise({
+          try: () => navigator.clipboard.writeText(window.location.href),
+          catch: (error) => error,
+        });
+        yield* Effect.sync(() => toast.success("Page link copied."));
+      }),
+    );
+  return (
+    <>
       <Badge variant="outline">Guest</Badge>
       <Button onClick={copyLink} size="sm" type="button" variant="outline">
         <CopyIcon />
         Copy link
       </Button>
-    </header>
+    </>
   );
 }
 
 export function PublicPaneTopbar({ pageId }: { pageId: string | null }) {
-  if (isEmbeddedMobileViewer()) {
-    return null;
-  }
-
+  if (isEmbeddedMobileViewer()) return null;
   return (
-    <header className="flex h-12 shrink-0 items-center gap-3 border-b px-3">
-      <PublicPageBreadcrumb pageId={pageId} />
-      <div data-page-side-pane-avoid>
-        <PublicLoginButton />
-      </div>
-    </header>
+    <PagePaneHeader
+      className="border-b"
+      pathname={pageId ? `/p/${encodeURIComponent(pageId)}` : "/recents"}
+      pageId={pageId}
+      leadingControl={<PublicPageBreadcrumb pageId={pageId} />}
+      showBreadcrumb={false}
+      actions={<PublicLoginButton />}
+    />
   );
 }
 
@@ -84,7 +93,7 @@ function PublicPageBreadcrumbAncestors({ pageId }: { pageId: string }) {
   );
 }
 
-function PublicLoginButton() {
+export function PublicLoginButton() {
   return (
     <Button asChild size="sm" variant="outline">
       <Link to="/login">Login</Link>

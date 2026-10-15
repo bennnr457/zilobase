@@ -1,94 +1,101 @@
-import type { ReactNode } from "react";
-import { XIcon } from "@/components/icons";
-
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { PageScrollViewport, usePageSidePane } from "./page-side-pane";
+import { useRef } from "react";
+import { Effect } from "effect";
+import { useNavigate } from "@tanstack/react-router";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { usePageSidePane, getFullPagePath } from "./page-side-pane";
 import { PageWorkspaceGate } from "@/components/workspaces";
-import { PagePaneHeader } from "./page-pane-header";
 import { useOptionalPageLayoutSidebar } from "../layout/page-layout-sidebar";
-import type { OpenPageOptions } from "@/components/pages";
+import { PageLayout } from "./page-layout";
+import { PageEditorPane } from "./page-editor-pane";
+import { useOpenEmbeddedPage } from "./use-open-embedded-page";
+import { isMobileViewport, useIsMobile } from "@/lib/hooks/use-mobile";
+import type { OpenPageOptions } from "../navigation/open-page-options";
+import type { usePage } from "@zilobase/features/pages/react";
 
 export function EmbeddedPageDialog({
   onOpenPage,
-  pageRenderer: PageRenderer,
+  contextPageId = null,
+  databaseId,
+  hostPage,
+  readOnly = false,
 }: {
-  onOpenPage: (pageId: string, options?: OpenPageOptions) => void;
-  pageRenderer: (props: {
-    databaseId?: string | null;
-    layoutPanelMode?: "auto" | "overlay";
-    onOpenPage: (pageId: string, options?: OpenPageOptions) => void;
-    pageId: string;
-  }) => ReactNode;
+  onOpenPage?: (pageId: string, options?: OpenPageOptions) => void;
+  contextPageId?: string | null;
+  databaseId?: string | null;
+  hostPage?: ReturnType<typeof usePage>["data"];
+  readOnly?: boolean;
 }) {
+  const { openPage } = useOpenEmbeddedPage({ contextPageId, databaseId, page: hostPage });
   const { closeEmbeddedPageDialog, dialogDatabaseId, dialogPageId } = usePageSidePane();
   const pageLayoutSidebar = useOptionalPageLayoutSidebar();
-  const hasLayoutSidebar = pageLayoutSidebar?.hasOverlaySidebar(dialogPageId) ?? false;
-  const closeDialog = () => {
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const closeDialogCommand = Effect.gen(function* () {
     if (pageLayoutSidebar?.overlayPageId === dialogPageId) {
-      pageLayoutSidebar.closeOverlay();
+      yield* Effect.sync(() => pageLayoutSidebar.closeOverlay());
     }
-    closeEmbeddedPageDialog();
-  };
-  const dialogPathname = dialogPageId ? `/p/${encodeURIComponent(dialogPageId)}` : "/recents";
+    yield* Effect.sync(closeEmbeddedPageDialog);
+  });
+  const closeDialog = () => Effect.runSync(closeDialogCommand);
+
+  if (isMobile || isMobileViewport()) return null;
 
   return (
     <Dialog
       onOpenChange={(open) => {
-        if (!open) {
-          closeDialog();
-        }
+        if (!open) closeDialog();
       }}
       open={dialogPageId !== null}
     >
       <DialogContent
         className="flex h-[90dvh] max-h-[90dvh] min-h-0 w-full flex-col gap-0 overflow-hidden p-0 dark:bg-surface-navigation sm:h-[90vh] sm:max-h-[90vh] sm:max-w-4xl"
         data-page-dialog-panel
+        onOpenAutoFocus={() => {
+          returnFocus.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          if (returnFocus.current?.isConnected) {
+            event.preventDefault();
+            returnFocus.current.focus({ preventScroll: true });
+          }
+        }}
         hideMobileDragHandle
         showCloseButton={false}
         unstyledContent
       >
+        <DialogTitle className="sr-only">Page preview</DialogTitle>
         <DialogDescription className="sr-only">Page preview</DialogDescription>
-        <div
-          aria-hidden
-          className="mx-auto mt-3 h-1 w-[100px] shrink-0 rounded-full bg-surface-muted sm:hidden"
-        />
-        <PagePaneHeader
-          leadingControl={
-            <Button
-              aria-label="Close"
-              onClick={closeDialog}
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <XIcon />
-            </Button>
-          }
-          onTogglePageSidebar={
-            dialogPageId && hasLayoutSidebar
-              ? () => pageLayoutSidebar?.toggleOverlay(dialogPageId)
-              : undefined
-          }
-          pageSidebarOpen={pageLayoutSidebar?.overlayPageId === dialogPageId}
-          pathname={dialogPathname}
-          rowNavigationDatabaseId={dialogDatabaseId}
-          showBreadcrumb={false}
-          showPaneControls
-        />
-        <PageScrollViewport className="min-h-0 flex-1" edgeFadeClassName="hidden">
-          {dialogPageId ? (
+        {dialogPageId ? (
+          <PageLayout
+            pageId={dialogPageId}
+            placement="dialog"
+            rowNavigationDatabaseId={dialogDatabaseId}
+            onClose={closeDialog}
+            onOpenFullPage={() =>
+              Effect.runSync(
+                Effect.gen(function* () {
+                  yield* closeDialogCommand;
+                  yield* Effect.sync(() => {
+                    void navigate({ to: getFullPagePath(dialogPageId) });
+                  });
+                }),
+              )
+            }
+          >
             <PageWorkspaceGate pageId={dialogPageId}>
-              <PageRenderer
+              <PageEditorPane
                 databaseId={dialogDatabaseId}
                 key={dialogPageId}
                 layoutPanelMode="overlay"
-                onOpenPage={onOpenPage}
+                onOpenPage={onOpenPage ?? openPage}
                 pageId={dialogPageId}
+                readOnly={readOnly}
               />
             </PageWorkspaceGate>
-          ) : null}
-        </PageScrollViewport>
+          </PageLayout>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
