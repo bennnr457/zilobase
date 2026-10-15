@@ -89,7 +89,7 @@ function ItemShareDropdownContent({
       className="w-[min(36rem,calc(100vw-2rem))] p-4"
       onOpenAutoFocus={(event) => event.preventDefault()}
     >
-      <div className="mb-4 grid gap-1.5">
+      <div className="grid gap-1.5">
         <div className="font-semibold leading-none tracking-tight">
           Share {isDatabase ? "database" : "page"}
         </div>
@@ -98,7 +98,7 @@ function ItemShareDropdownContent({
         </div>
       </div>
 
-      <Tabs defaultValue="share">
+      <Tabs defaultValue="share" gap="comfortable">
         <TabsList>
           <TabsTrigger value="share">Share</TabsTrigger>
           <TabsTrigger value="publish">Publishing</TabsTrigger>
@@ -183,7 +183,7 @@ function ItemPublishingTab({ sharing }: { sharing: ItemSharingState }) {
     togglePublished,
   } = sharing;
   return (
-    <TabsContent className="grid gap-4 pt-2" value="publish">
+    <TabsContent className="grid gap-4" value="publish">
       <div className="flex items-start gap-3 rounded-md border px-3 py-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-muted">
           <Globe2Icon className="size-4" />
@@ -496,7 +496,7 @@ function ItemSharingTargets({
 function ItemSharingTab({ sharing }: { sharing: ItemSharingState }) {
   const { canManage, copyLink, isDatabase, publicUrl } = sharing;
   return (
-    <TabsContent className="grid gap-4 pt-2" value="share">
+    <TabsContent className="grid gap-4" value="share">
       <ItemSharingTargets state={sharing} />
 
       <ItemGuestInvitations state={sharing} />
