@@ -10,7 +10,7 @@
     "reason": "Official Figma, Excalidraw, YouTube, and Miro marks retain fixed brand artwork colors."
   },
   {
-    "path": "apps/web/src/components/pages/images/cover-gallery.ts",
+    "path": "apps/web/src/components/pages/appearance/page-cover-gallery.ts",
     "owner": "Page covers",
     "reason": "Generated SVG cover artwork stores exact user-editable and preset colors independently from the active UI theme."
   },

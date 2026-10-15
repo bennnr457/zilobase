@@ -24,7 +24,7 @@ import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { type PageDatabase } from "@zilobase/features/pages";
 import { usePageNavigation } from "@zilobase/features/pages/react";
 import { DEFAULT_DATABASE_ITEM_ICON } from "@/components/navigation/navigation-icons";
-import { getDatabaseIconNode, PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { getDatabaseIconNode, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 
 import { getDatabasePropertyType } from "../../schema/property-catalog";
 import { hasDatabasePropertyEditSettings } from "../../schema/configuration";

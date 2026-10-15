@@ -51,10 +51,15 @@ state plain.
 Keep shell layout and fallback screen header at `app/shell` root, tool-panel
 composition in `app/shell/panels`, and settings content/dialogs in
 `components/settings`. Page chrome and body scrolling belong to
-`components/pages/pane/page-layout.tsx`, with one placement-aware header in
-`page-pane-header.tsx`. Main routes, desktop panes, and desktop dialogs compose
-this layout around the existing editor body. Pane/dialog hosts own navigation,
-geometry, focus, and dismissal, not duplicate page headers or scroll viewports.
+`components/pages/layout/page-layout.tsx`, with one placement-aware header in
+`components/pages/header/page-header.tsx`. Main routes, desktop panes, and desktop dialogs compose
+this layout around the existing editor body. Page presentation state, opening/closing commands, and promotion live in
+`components/pages/presentation/page-presentation.tsx`; pane rendering owns geometry,
+and dialog rendering owns focus and dismissal. Hosts do not duplicate page headers
+or scroll viewports. Shared viewport rendering lives in `components/ui/scroll-viewport.tsx`.
+Page design customization belongs in `components/pages/design`, separate from the
+page layout frame. Page content owns the editor lifecycle; breadcrumb UI belongs
+in `components/navigation/breadcrumbs.tsx`.
 Mobile embedded page requests navigate to main routes before consulting desktop
 presentation preferences. Keep the embedded-page dialog lazy and domain-owned;
 do not reintroduce a shell forwarding host or a separate authenticated-page module.

@@ -1,9 +1,9 @@
-import { PageLayout } from "@/components/pages/pane/page-layout";
+import { PageLayout } from "@/components/pages/layout/page-layout";
 import { PageWorkspaceGate } from "@/components/workspaces";
-import { usePageSidePane } from "@/components/pages/pane/page-side-pane";
-import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
+import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
+import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { DatabaseMainPane } from "@/components/databases/core/index";
-import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
+import { PageContent } from "@/components/pages/content/page-content";
 import { AskAiWorkspace } from "./ask-ai-workspace";
 
 export default function AiPage() {
@@ -52,7 +52,7 @@ export default function AiPage() {
             onClose={closeSidePane}
             onOpenFullPage={openSidePaneAsFullPage}
           >
-            <PageEditorPane
+            <PageContent
               databaseId={sidePaneDatabaseId}
               enableComments={false}
               key={renderedSidePanePageId}

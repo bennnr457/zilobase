@@ -39,7 +39,7 @@ export function register({ readSource, assert, test }) {
         ["router.tsx", "route-shell.tsx"].map((path) => readSource(`/src/app/routing/${path}`)),
       )
     ).join("\n");
-    const pageSource = await readSource("/src/components/pages/page.tsx");
+    const pageSource = await readSource("/src/components/pages/page-screen.tsx");
     const databaseSource = await readSource("/src/components/databases/core/database-screen.tsx");
     const meetingSource = await readSource("/src/components/meetings/meeting.tsx");
 

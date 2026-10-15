@@ -11,7 +11,7 @@ import { useCalendarChatVisibility } from "@/app/shell/panels/right-sidebars";
 import { useState } from "react";
 import { RightSidebars, RightSidebarMobilePanels } from "@/app/shell/panels/right-sidebars";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
-import { PagePaneHeader } from "@/components/pages/pane/page-pane-header";
+import { PageHeader } from "@/components/pages/header/page-header";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +81,7 @@ function FixtureSchedule(props: Parameters<typeof CalendarSchedule>[0]) {
       <ResizablePanelGroup orientation="horizontal">
         <ResizablePanel id="fixture-main" minSize="25%">
           <div className="flex h-full min-h-0 flex-col">
-            <PagePaneHeader
+            <PageHeader
               pathname="/calendar"
               showBreadcrumb={false}
               leadingControl={<span>Calendar</span>}

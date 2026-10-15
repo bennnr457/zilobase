@@ -15,9 +15,9 @@ import type { ChatPresentationMode } from "@/components/ai/chat-sidebar";
 import {
   usePageSidePaneState,
   PageSidePaneContext,
-  PageSidePaneShell,
   usePromotedFullPagePath,
-} from "@/components/pages/pane/page-side-pane";
+} from "@/components/pages/presentation/page-presentation";
+import { PageSidePaneShell } from "@/components/pages/presentation/page-side-pane";
 import { DiscussionsSidebarPanel } from "@/components/comments/index";
 import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/right-sidebars";
 import {
@@ -29,7 +29,7 @@ import {
   PageHeaderControlsContext,
   getDatabaseId,
   useRoutePageId,
-} from "@/components/pages/pane/page-pane-header";
+} from "@/components/pages/header/page-header";
 import { getSettingsSection, type SettingsSection } from "@/components/settings/settings-sidebar";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import {
@@ -45,7 +45,7 @@ import {
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { isEmbeddedMobileViewer } from "@/components/pages/pane/embedded-view";
+import { isEmbeddedMobileViewer } from "@/components/pages/layout/page-layout";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 import { getPageEmoji } from "@zilobase/features/pages";
@@ -53,20 +53,20 @@ import { usePage, useRecordItemVisit } from "@zilobase/features/pages/react";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import { LayoutEditorProvider } from "@/components/pages/layout";
+import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
 import { usePageEditorComments } from "@/components/comments/index";
 import { usePageCommentController } from "@/components/comments/index";
 import {
-  PageLayoutSidebarProvider,
-  useOptionalPageLayoutSidebar,
-} from "@/components/pages/layout/page-layout-sidebar";
+  PageDesignSidebarProvider,
+  useOptionalPageDesignSidebar,
+} from "@/components/pages/design/page-design-sidebar";
 import { Button } from "@/components/ui/button";
 import { FloatingWidget } from "@/components/floating-widget";
 import { AppHeader } from "@/app/shell/app-header";
 
 const EmbeddedPageDialogHost = lazy(() =>
-  import("@/components/pages/pane/embedded-page-dialog").then((module) => ({
-    default: module.EmbeddedPageDialog,
+  import("@/components/pages/presentation/page-dialog").then((module) => ({
+    default: module.PageDialog,
   })),
 );
 const SettingsDialog = lazy(() =>
@@ -173,8 +173,8 @@ function AppLayoutWithRoutePage({
   return (
     <>
       <AppSidebar {...sidebarProps} />
-      <PageLayoutSidebarProvider pageId={routePageId}>
-        <LayoutEditorProvider>
+      <PageDesignSidebarProvider pageId={routePageId}>
+        <PageDesignEditorProvider>
           <AppLayoutContent
             activeSettingsSection={activeSettingsSection}
             isSettingsPage={isSettingsPage}
@@ -186,8 +186,8 @@ function AppLayoutWithRoutePage({
           >
             {children}
           </AppLayoutContent>
-        </LayoutEditorProvider>
-      </PageLayoutSidebarProvider>
+        </PageDesignEditorProvider>
+      </PageDesignSidebarProvider>
     </>
   );
 }
@@ -287,7 +287,7 @@ function AppLayoutContent({
   const [chatPresentationMode, setChatPresentationMode] =
     useState<ChatPresentationMode>(readChatPresentationMode);
   const [discussionsSidebarOpen, setDiscussionsSidebarOpen] = useState(false);
-  const pageLayoutSidebar = useOptionalPageLayoutSidebar();
+  const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const pageLayoutSidebarOpen = Boolean(pageLayoutSidebar?.hasSidebar && pageLayoutSidebar.open);
   const { editorCommentsOpenRequest } = usePageEditorComments();
   const commentController = usePageCommentController(pageId);
@@ -689,7 +689,7 @@ function readChatPresentationMode(): ChatPresentationMode {
 }
 
 function PageLayoutOverlayDrawer() {
-  const pageLayoutSidebar = useOptionalPageLayoutSidebar();
+  const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const open = Boolean(pageLayoutSidebar?.overlayPageId);
 
   return (

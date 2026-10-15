@@ -14,7 +14,7 @@ import {
   type EmbeddedItemsOpenAs,
 } from "@zilobase/features/pages";
 
-export function EmbeddedItemPresentationDropdown({
+export function PageOpeningModeMenu({
   disabled,
   itemLabel = "items",
   mode,

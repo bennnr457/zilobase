@@ -2,17 +2,20 @@ import { useRef } from "react";
 import { Effect } from "effect";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { usePageSidePane, getFullPagePath } from "./page-side-pane";
-import { PageWorkspaceGate } from "@/components/workspaces";
-import { useOptionalPageLayoutSidebar } from "../layout/page-layout-sidebar";
-import { PageLayout } from "./page-layout";
-import { PageEditorPane } from "./page-editor-pane";
-import { useOpenEmbeddedPage } from "./use-open-embedded-page";
+import {
+  usePageSidePane,
+  getFullPagePath,
+} from "@/components/pages/presentation/page-presentation";
+import { PageWorkspaceGate } from "@/components/workspaces/index";
+import { useOptionalPageDesignSidebar } from "../design/page-design-sidebar";
+import { PageLayout } from "../layout/page-layout";
+import { PageContent } from "../content/page-content";
+import { useOpenEmbeddedPage } from "../navigation/page-navigation";
 import { isMobileViewport, useIsMobile } from "@/lib/hooks/use-mobile";
-import type { OpenPageOptions } from "../navigation/open-page-options";
+import type { OpenPageOptions } from "../navigation/page-navigation";
 import type { usePage } from "@zilobase/features/pages/react";
 
-export function EmbeddedPageDialog({
+export function PageDialog({
   onOpenPage,
   contextPageId = null,
   databaseId,
@@ -27,7 +30,7 @@ export function EmbeddedPageDialog({
 }) {
   const { openPage } = useOpenEmbeddedPage({ contextPageId, databaseId, page: hostPage });
   const { closeEmbeddedPageDialog, dialogDatabaseId, dialogPageId } = usePageSidePane();
-  const pageLayoutSidebar = useOptionalPageLayoutSidebar();
+  const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -85,7 +88,7 @@ export function EmbeddedPageDialog({
             }
           >
             <PageWorkspaceGate pageId={dialogPageId}>
-              <PageEditorPane
+              <PageContent
                 databaseId={dialogDatabaseId}
                 key={dialogPageId}
                 layoutPanelMode="overlay"

@@ -18,7 +18,7 @@ import {
   type CoverGalleryConfig,
   type DitherCoverConfig,
   type GradientCoverConfig,
-} from "./cover-gallery";
+} from "./page-cover-gallery";
 
 type CoverKind = CoverGalleryConfig["kind"];
 
@@ -27,7 +27,7 @@ type CoverGalleryPickerProps = {
   onChange: (url: string) => void;
 };
 
-export function CoverGalleryPicker({ initialCover, onChange }: CoverGalleryPickerProps) {
+export function PageCoverPicker({ initialCover, onChange }: CoverGalleryPickerProps) {
   const [config, setConfig] = useState<CoverGalleryConfig>(
     () => parseCoverGalleryDataUrl(initialCover) ?? defaultCoverGalleryConfig,
   );

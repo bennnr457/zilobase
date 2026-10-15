@@ -8,7 +8,7 @@ import {
   XIcon,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { PageSidePaneLayout } from "@/components/pages/pane/page-side-pane";
+import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
 
 import type { ChatPresentationMode } from "./chat-sidebar";
 

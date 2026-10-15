@@ -23,7 +23,7 @@ import {
   XIcon,
 } from "@/components/icons";
 
-import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { cn } from "@/lib/utils";
 import { isOpenInNewTabShortcut } from "@/app/shortcuts";
 import type { DesktopTab } from "@/app/state/app-store";

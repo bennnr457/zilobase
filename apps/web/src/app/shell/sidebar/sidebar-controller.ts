@@ -33,7 +33,7 @@ import {
 import {
   clearPromotedFullPagePath,
   usePromotedFullPagePath,
-} from "@/components/pages/pane/page-side-pane";
+} from "@/components/pages/presentation/page-presentation";
 import {
   discoverRuntimeDesktopServer,
   getSelectedDesktopServer,

@@ -1,34 +1,34 @@
-import { LayoutEditorProvider } from "@/components/pages/layout";
-import { PageLayout } from "@/components/pages/pane/page-layout";
+import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
+import { PageLayout } from "@/components/pages/layout/page-layout";
 import { useEffect, useState } from "react";
 import { useParams, useRouteContext, useSearch } from "@tanstack/react-router";
 import { ArrowUpRight } from "@/components/icons";
 
 import { AuthenticatedRouteError } from "@/app/routing/route-shell";
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
+import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
 import {
-  PageSidePaneLayout,
   PageSidePaneProvider,
   usePageSidePane,
-} from "@/components/pages/pane/page-side-pane";
+} from "@/components/pages/presentation/page-presentation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { getDatabaseCover, getDatabaseEmoji, isDatabaseLocked } from "@zilobase/features/databases";
 import { usePage, usePageAccessLevel } from "@zilobase/features/pages/react";
 import { useUpdateDatabase, useUpdateDataSource } from "@zilobase/features/databases/react";
-import { EmbeddedPageDialog } from "@/components/pages/pane/embedded-page-dialog";
-import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
+import { PageDialog } from "@/components/pages/presentation/page-dialog";
+import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { PageMetadata as PageMetadataView } from "../access/page-metadata";
 import { DatabaseView } from "../views/components/database-view";
 import {
   PublicPaneTopbar,
   PublicPageBreadcrumb,
-} from "@/components/pages/publication/shared-page-header";
-import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
+} from "@/components/pages/header/public-page-header";
+import { PageContent } from "@/components/pages/content/page-content";
 import { useDatabaseViewNavigation } from "../views/use-database-view-navigation";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
-import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
-import { useTitleDraft } from "@/components/pages/hooks/use-title-draft";
+import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
+import { usePageTitleDraft } from "@/components/pages/content/use-page-title-draft";
 
 export default function DatabasePage() {
   const { databaseId } = useParams({ from: "/d/$databaseId" });
@@ -127,7 +127,7 @@ function AuthenticatedDatabasePage() {
             onClose={closeSidePane}
             onOpenFullPage={openSidePaneAsFullPage}
           >
-            <PageEditorPane
+            <PageContent
               databaseId={sidePaneDatabaseId ?? databaseId}
               enableComments={false}
               key={renderedSidePanePageId}
@@ -148,9 +148,9 @@ function PublicDatabasePage() {
 
   return (
     <PageSidePaneProvider resetKey={databaseId}>
-      <LayoutEditorProvider>
+      <PageDesignEditorProvider>
         <PublicDatabaseContent databaseId={databaseId} />
-      </LayoutEditorProvider>
+      </PageDesignEditorProvider>
     </PageSidePaneProvider>
   );
 }
@@ -230,7 +230,7 @@ function PublicDatabaseContent({ databaseId }: { databaseId: string }) {
         sidePaneOpen={sidePaneAnimatedOpen}
         sidePaneVisible={renderedSidePanePageId !== null}
       />
-      <EmbeddedPageDialog onOpenPage={handleOpenPage} readOnly />
+      <PageDialog onOpenPage={handleOpenPage} readOnly />
     </>
   );
 }
@@ -259,7 +259,7 @@ function PublicDatabaseSidePane({
       header={{ leadingControl: null, actions: <PublicPageBreadcrumb pageId={pageId} /> }}
     >
       {ready ? (
-        <PageEditorPane
+        <PageContent
           databaseId={databaseId}
           enableComments={false}
           key={pageId}
@@ -344,7 +344,7 @@ export function DatabaseMainPane({
   const headingRecord = hasMultipleDataSources ? payload?.database : activeDataSource;
   const headingEditable = hasMultipleDataSources ? editable : sourceEditable;
   const headingTitle = headingRecord?.name ?? "";
-  const { setTitle, title } = useTitleDraft({
+  const { setTitle, title } = usePageTitleDraft({
     enabled: headingEditable,
     onSave: async (nextTitle) => {
       if (!headingRecord) return;

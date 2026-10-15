@@ -43,7 +43,7 @@ function updateRegistrationCount(
   return next;
 }
 
-export function PageLayoutSidebarProvider({
+export function PageDesignSidebarProvider({
   children,
   pageId,
 }: {
@@ -124,6 +124,6 @@ export function PageLayoutSidebarProvider({
   );
 }
 
-export function useOptionalPageLayoutSidebar() {
+export function useOptionalPageDesignSidebar() {
   return useContext(PageLayoutSidebarContext);
 }

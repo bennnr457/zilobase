@@ -130,7 +130,9 @@ const publicRoutes = [
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/accept-page-invitation",
-    component: lazyRouteComponent(() => import("@/components/pages/accept-page-invitation")),
+    component: lazyRouteComponent(
+      () => import("@/components/pages/access/accept-page-invitation-screen"),
+    ),
   }),
   createRoute({
     getParentRoute: () => rootRoute,
@@ -262,7 +264,7 @@ const contentRoutes = [
           Effect.map((publishedShare) => ({ publishedShare })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/pages/page")),
+    component: lazyRouteComponent(() => import("@/components/pages/page-screen")),
     pendingComponent: PendingPage,
   }),
   createRoute({

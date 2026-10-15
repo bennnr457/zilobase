@@ -56,7 +56,7 @@ import {
   getDatabaseIconNode,
   getPageIconNode,
   PageIconDisplay,
-} from "@/components/pages/icons/page-icon";
+} from "@/components/pages/appearance/page-icon";
 import type { useSession } from "@zilobase/features/auth/react";
 import {
   useSetTeamspaceMembership,

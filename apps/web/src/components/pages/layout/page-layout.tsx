@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
-import { useOptionalPageLayoutSidebar } from "../layout/page-layout-sidebar";
-import { isEmbeddedMobileViewer } from "./embedded-view";
+import { useOptionalPageDesignSidebar } from "../design/page-design-sidebar";
+
 import {
   MainPaneHeaderLeadingControl,
-  PagePaneHeader,
-  type PagePaneHeaderProps,
-} from "./page-pane-header";
-import { PageScrollViewport, usePromotedFullPagePath } from "./page-side-pane";
+  PageHeader,
+  type PageHeaderProps,
+} from "../header/page-header";
+import { ScrollViewport } from "@/components/ui/scroll-viewport";
+import { usePromotedFullPagePath } from "@/components/pages/presentation/page-presentation";
 import { cn } from "@/lib/utils";
 
 type PagePlacement =
@@ -25,7 +26,7 @@ export type PageLayoutProps = PagePlacement & {
   className?: string;
   header?: Partial<
     Pick<
-      PagePaneHeaderProps,
+      PageHeaderProps,
       | "actions"
       | "className"
       | "discussionsOpen"
@@ -51,7 +52,7 @@ export function PageLayout({
   placement,
   rowNavigationDatabaseId,
 }: PageLayoutProps) {
-  const sidebar = useOptionalPageLayoutSidebar();
+  const sidebar = useOptionalPageDesignSidebar();
   const promotedPath = usePromotedFullPagePath();
   const pathname = databaseId
     ? `/d/${encodeURIComponent(databaseId)}`
@@ -69,7 +70,7 @@ export function PageLayout({
       data-page-layout={effectivePlacement}
     >
       {isEmbeddedMobileViewer() ? null : (
-        <PagePaneHeader
+        <PageHeader
           databaseId={databaseId}
           leadingControl={
             effectivePlacement === "main" ? <MainPaneHeaderLeadingControl /> : undefined
@@ -93,12 +94,22 @@ export function PageLayout({
           {...header}
         />
       )}
-      <PageScrollViewport
+      <ScrollViewport
         className="min-h-0 flex-1"
         edgeFadeClassName={placement === "dialog" ? "hidden" : undefined}
       >
         {children}
-      </PageScrollViewport>
+      </ScrollViewport>
     </section>
   );
+}
+
+export function isEmbeddedMobileViewer() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const search = new URLSearchParams(window.location.search);
+
+  return search.get("mobileViewer") === "1";
 }

@@ -1,8 +1,8 @@
 export function register({ readSource, assert, loadModule, test }) {
   test("page topbars have no border or fading shadow", async () => {
     const [headerSource, viewportSource] = await Promise.all([
-      readSource("/src/components/pages/pane/page-pane-header.tsx"),
-      readSource("/src/components/pages/pane/page-side-pane.tsx"),
+      readSource("/src/components/pages/header/page-header.tsx"),
+      readSource("/src/components/pages/presentation/page-side-pane.tsx"),
     ]);
 
     assert.doesNotMatch(headerSource, /bordered|border-b/);
@@ -10,9 +10,10 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("breadcrumb links and current pages align icons with labels", async () => {
-    const [primitiveSource, headerSource] = await Promise.all([
+    const [primitiveSource, headerSource, breadcrumbSource] = await Promise.all([
       readSource("/src/components/ui/breadcrumb.tsx"),
-      readSource("/src/components/pages/pane/page-pane-header.tsx"),
+      readSource("/src/components/pages/header/page-header.tsx"),
+      readSource("/src/components/navigation/breadcrumbs.tsx"),
     ]);
 
     assert.match(primitiveSource, /inline-flex items-center transition-colors/);
@@ -24,13 +25,13 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(headerSource, /self-center! data-\[orientation=vertical\]:h-4/);
     assert.doesNotMatch(headerSource, /BreadcrumbPage className="line-clamp-1 gap-1\.5"/);
     assert.match(
-      headerSource,
+      breadcrumbSource,
       /BreadcrumbPage className="gap-1\.5"[\s\S]*span className="line-clamp-1"/,
     );
   });
 
   test("Library breadcrumbs reflect the active view label and icon", async () => {
-    const source = await readSource("/src/components/pages/pane/page-pane-header.tsx");
+    const source = await readSource("/src/components/navigation/breadcrumbs.tsx");
 
     assert.match(source, /libraryViewIds\.includes\(requestedView/);
     assert.match(source, /libraryViewIcons\[libraryView\]/);

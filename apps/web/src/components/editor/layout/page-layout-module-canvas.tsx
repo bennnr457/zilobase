@@ -16,7 +16,7 @@ import { GripVertical, Plus } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useOptionalPageLayoutSidebar } from "@/components/pages/layout/page-layout-sidebar";
+import { useOptionalPageDesignSidebar } from "@/components/pages/design/page-design-sidebar";
 import type { PageLayoutPanelMode } from "../core/types";
 import {
   canMovePageLayoutModuleToRegion,
@@ -251,7 +251,7 @@ export function PageLayoutModuleCanvas({
   renderModule,
 }: PageLayoutModuleCanvasProps) {
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
-  const pageLayoutSidebar = useOptionalPageLayoutSidebar();
+  const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const registeredPageId = pageLayoutSidebar?.pageId;
   const registerOverlaySidebar = pageLayoutSidebar?.registerOverlaySidebar;
   const setHasPageLayoutSidebar = pageLayoutSidebar?.setHasSidebar;

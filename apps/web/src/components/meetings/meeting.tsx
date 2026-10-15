@@ -1,14 +1,15 @@
-import { PageLayout } from "@/components/pages/pane/page-layout";
+import { PageLayout } from "@/components/pages/layout/page-layout";
 import { useParams } from "@tanstack/react-router";
 
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
 import { PageWorkspaceGate } from "@/components/workspaces";
-import { PageSidePaneLayout, usePageSidePane } from "@/components/pages/pane/page-side-pane";
-import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
-import { useTitleDraft } from "@/components/pages/hooks/use-title-draft";
+import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
+import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
+import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
+import { usePageTitleDraft } from "@/components/pages/content/use-page-title-draft";
 import { PageMetadata as PageMetadataHeader } from "@/components/databases";
 import { MeetingView } from "@/components/editor/extensions/meeting";
-import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
+import { PageContent } from "@/components/pages/content/page-content";
 import { useMeeting, useUpdateMeeting } from "@zilobase/features/meetings/react";
 import {
   getPageCover,
@@ -23,7 +24,7 @@ import { usePage, usePageAccessLevel, useUpdatePage } from "@zilobase/features/p
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useSession } from "@zilobase/features/auth/react";
 import { LoaderCircle } from "@/components/icons";
-import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
+import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
 
 export default function MeetingPage() {
   const { meetingId } = useParams({ from: "/m/$meetingId" });
@@ -115,7 +116,7 @@ function AuthenticatedMeetingPage() {
             onClose={closeSidePane}
             onOpenFullPage={openSidePaneAsFullPage}
           >
-            <PageEditorPane
+            <PageContent
               databaseId={sidePaneDatabaseId}
               enableComments={false}
               key={renderedSidePanePageId}
@@ -158,7 +159,7 @@ function MeetingMainPane({
   const cover = metadataPage ? (getPageCover(metadataPage) ?? "") : "";
   const emoji = metadataPage ? (getPageEmoji(metadataPage) ?? "") : "";
   const iconPosition = metadataPage ? getPageIconPosition(metadataPage) : "top";
-  const { setTitle, title } = useTitleDraft({
+  const { setTitle, title } = usePageTitleDraft({
     enabled: editable,
     onSave: async (nextTitle) => {
       if (!meeting) return;

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { uploadPageImage } from "@/platform/network/image-upload";
-import { CoverGalleryPicker } from "./cover-gallery-picker";
+import { PageCoverPicker } from "./page-cover-picker";
 
 type ImageSourcePickerProps = {
   className?: string;
@@ -116,7 +116,7 @@ export function ImageSourcePicker({
 
       {enableCoverGallery ? (
         <TabsContent value="gallery">
-          <CoverGalleryPicker initialCover={initialCover} onChange={onGalleryChange ?? onSelect} />
+          <PageCoverPicker initialCover={initialCover} onChange={onGalleryChange ?? onSelect} />
         </TabsContent>
       ) : null}
 

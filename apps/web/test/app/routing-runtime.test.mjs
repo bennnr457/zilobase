@@ -404,7 +404,7 @@ async function loadRoutingRuntime(sourcePath) {
     "@/platform/network/api": `export { apiFetch, NetworkUnavailableError } from "routing-test-ports";`,
     "@/app/state/app-store": `import { controls } from "routing-test-ports"; export const useAppStore = { getState: () => ({ activeWorkspaceId: controls.preferredWorkspace }) };`,
     "@/platform/network/connectivity": `import { controls } from "routing-test-ports"; export const getConnectivityState = () => controls.offline ? "offline" : "online";`,
-    "@/components/pages/cache/page-read-cache": `import { controls } from "routing-test-ports"; export async function hydratePageReadCache(input) { controls.hydrated.push(input); if (controls.storageError) throw controls.storageError; }`,
+    "@/components/pages/content/page-read-cache": `import { controls } from "routing-test-ports"; export async function hydratePageReadCache(input) { controls.hydrated.push(input); if (controls.storageError) throw controls.storageError; }`,
     "@/platform/environment": `import { controls } from "routing-test-ports"; export const isFeatureEnabled = () => controls.askAi;`,
     "@/components/desktop/index": `import { controls } from "routing-test-ports"; export const isDesktopApp = () => controls.desktop;`,
     "@/app/demo": `import { controls } from "routing-test-ports"; export const isHostedDemoRuntime = () => controls.demo;`,

@@ -1,16 +1,17 @@
-import { PageWorkspaceGate } from "@/components/workspaces";
-import { PageSidePaneLayout, usePageSidePane } from "./pane/page-side-pane";
+import { PageWorkspaceGate } from "@/components/workspaces/index";
+import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
+import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { usePage } from "@zilobase/features/pages/react";
-import { useOpenEmbeddedPage } from "./pane/use-open-embedded-page";
-import { PageEditorPane } from "./pane/page-editor-pane";
+import { useOpenEmbeddedPage } from "./navigation/page-navigation";
+import { PageContent } from "./content/page-content";
 
 import { useParams, useRouteContext, useSearch } from "@tanstack/react-router";
 import { AuthenticatedRouteError } from "@/app/routing/route-shell";
 import { FallbackErrorBoundary } from "@/components/desktop/diagnostics/fallback-error-boundary";
-import { PublicPage, GuestPage } from "./publication/shared-page";
-import { PageLayout } from "./pane/page-layout";
+import { PublicPage, GuestPage } from "./access/public-and-guest-page-screen";
+import { PageLayout } from "./layout/page-layout";
 
-export default function Page() {
+export default function PageScreen() {
   const { pageId } = useParams({ from: "/p/$pageId" });
   const { publishedShare } = useRouteContext({ from: "/p/$pageId" });
 
@@ -56,7 +57,7 @@ function AuthenticatedPage() {
       main={
         <PageLayout pageId={pageId} placement="main">
           <PageWorkspaceGate pageId={pageId}>
-            <PageEditorPane
+            <PageContent
               focusMeetingId={focusMeetingId}
               key={pageId}
               onOpenPage={openPage}
@@ -76,7 +77,7 @@ function AuthenticatedPage() {
             onOpenFullPage={openSidePaneAsFullPage}
           >
             <PageWorkspaceGate pageId={renderedSidePanePageId}>
-              <PageEditorPane
+              <PageContent
                 databaseId={sidePaneDatabaseId}
                 enableComments={false}
                 layoutPanelMode="overlay"

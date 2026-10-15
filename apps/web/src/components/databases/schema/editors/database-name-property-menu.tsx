@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdrawer";
 import { Input } from "@/components/ui/input";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
-import { PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { useUpdateDatabase } from "@zilobase/features/databases/react";

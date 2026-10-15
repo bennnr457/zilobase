@@ -42,7 +42,7 @@ export function reduceTitleDraft(
   return { ...state, value: action.title };
 }
 
-export function useTitleDraft({
+export function usePageTitleDraft({
   enabled,
   onSave,
   saveDelay = 600,

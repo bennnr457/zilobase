@@ -1,9 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
   MainPaneHeaderLeadingControl,
-  PagePaneHeader,
+  PageHeader,
   PageSidePaneCollapseButton,
-} from "@/components/pages/pane/page-pane-header";
+} from "@/components/pages/header/page-header";
 
 /** Fallback chrome for non-page screens, including auxiliary AI workspace panels. */
 export function AppHeader({
@@ -22,7 +22,7 @@ export function AppHeader({
   const navigate = useNavigate();
   return (
     <>
-      <PagePaneHeader
+      <PageHeader
         leadingControl={<MainPaneHeaderLeadingControl />}
         pathname={pathname}
         showActions={!isSettingsPage}
@@ -30,7 +30,7 @@ export function AppHeader({
       {auxiliarySidePaneOpen ? (
         <div className="absolute top-0 right-0 z-30 flex h-12 w-[var(--page-side-pane-width)] items-center border-l bg-surface-canvas dark:bg-surface-navigation">
           {auxiliarySidePanePageId ? (
-            <PagePaneHeader
+            <PageHeader
               className="min-w-0 flex-1"
               pageId={auxiliarySidePanePageId}
               pathname={`/p/${encodeURIComponent(auxiliarySidePanePageId)}`}

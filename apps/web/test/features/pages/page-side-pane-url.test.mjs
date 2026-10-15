@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("side pane omits a database already identified by the route", async () => {
     const { getSidePaneDatabaseParam } = await loadModule(
-      "/src/components/pages/pane/page-side-pane.tsx",
+      "/src/components/pages/presentation/page-presentation.tsx",
     );
 
     assert.equal(getSidePaneDatabaseParam("/d/database-1", "database-1"), null);
@@ -9,7 +9,7 @@ export function register({ assert, loadModule, test }) {
 
   test("side pane retains a different database context", async () => {
     const { getSidePaneDatabaseParam } = await loadModule(
-      "/src/components/pages/pane/page-side-pane.tsx",
+      "/src/components/pages/presentation/page-presentation.tsx",
     );
 
     assert.equal(getSidePaneDatabaseParam("/d/database-1", "database-2"), "database-2");
@@ -18,7 +18,7 @@ export function register({ assert, loadModule, test }) {
 
   test("mobile side pane targets resolve to full-page routes", async () => {
     const { getFullDatabasePath, getFullPagePath } = await loadModule(
-      "/src/components/pages/pane/page-side-pane.tsx",
+      "/src/components/pages/presentation/page-presentation.tsx",
     );
 
     assert.equal(getFullPagePath("page id"), "/p/page%20id");

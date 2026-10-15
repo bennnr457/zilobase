@@ -41,12 +41,12 @@ import { useSession } from "@zilobase/features/auth/react";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { usePageEditorRegistry } from "@/components/editor/runtime/page-editor-registry";
 import { createPageEditorHandle } from "@/components/editor/runtime/page-editor-handle";
-import { Editor } from "@/components/editor";
+import { Editor } from "@/components/editor/index";
 import type {
   PageLayoutPanelMode,
   StructuralBlockDeleteRequest,
 } from "@/components/editor/core/types";
-import type { OpenPageOptions } from "../navigation/open-page-options";
+import type { OpenPageOptions } from "../navigation/page-navigation";
 import { usePageCollaboration } from "@/components/editor/collaboration/use-page-collaboration";
 import { setPageConnectionIndicator } from "@/components/editor/collaboration/page-connection-indicator";
 import {
@@ -55,11 +55,11 @@ import {
   flushCachedPage,
 } from "@/components/editor/collaboration/page-document-cache";
 import { ApiError } from "@/platform/network/api";
-import { isHostedDemoRuntime } from "@/app/demo";
+import { isHostedDemoRuntime } from "@/app/demo/index";
 import { canEditOnlineDatabase } from "@/components/editor/database-editability";
 import { createPageCommentController } from "@/components/comments/index";
 import { usePageCommentsRegistry } from "@/components/comments/index";
-import { useTitleDraft } from "../hooks/use-title-draft";
+import { usePageTitleDraft } from "./use-page-title-draft";
 import { scrollToMeetingBlock } from "@/components/meetings/meeting-navigation";
 import { consumePageNavigationStart } from "../navigation/page-navigation-timing";
 import {
@@ -87,7 +87,7 @@ type PageEditorPaneProps = {
 
 const EMPTY_DATABASE_IDS: string[] = [];
 
-export function PageEditorPane({
+export function PageContent({
   afterMetadata,
   className,
   databaseId,
@@ -367,7 +367,7 @@ export function PageEditorPane({
   ]);
   const onlineActionsReady = demoMode || collaboration.online;
   onlineActionsReadyRef.current = onlineActionsReady;
-  const { setTitle: setName, title: name } = useTitleDraft({
+  const { setTitle: setName, title: name } = usePageTitleDraft({
     enabled: pageEditable && onlineActionsReady,
     onSave: async (nextName) => {
       if (!page || !onlineActionsReadyRef.current) return;

@@ -36,7 +36,7 @@ import { BlockSelection } from "../extensions/block-selection";
 import { ShadcnTaskItem } from "../extensions/shadcn-task-item";
 import { SlashCommand } from "../extensions/slash-command";
 import { VideoBlock } from "../extensions/video-block";
-import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
+import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
 import type { StructuralInsertionPendingChange } from "../commands/structural-insertion";
 
 export type BaseExtensionsOptions = {

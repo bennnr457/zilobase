@@ -3,7 +3,7 @@ import {
   GuestPageActions,
   PublicPageBreadcrumb,
   PublicLoginButton,
-} from "@/components/pages/publication/shared-page-header";
+} from "@/components/pages/header/public-page-header";
 import "@/styles/global.css";
 import "@/styles/app.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -24,18 +24,20 @@ import {
   type ZilobaseAuthClient,
 } from "@zilobase/features";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
-import { PageLayout } from "@/components/pages/pane/page-layout";
+import { PageLayout } from "@/components/pages/layout/page-layout";
 import {
   PageSidePaneContext,
+  usePageSidePaneState,
+} from "@/components/pages/presentation/page-presentation";
+import {
   PageSidePaneLayout,
   PageSidePaneShell,
-  usePageSidePaneState,
-} from "@/components/pages/pane/page-side-pane";
-import { EmbeddedPageDialog } from "@/components/pages/pane/embedded-page-dialog";
-import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
+} from "@/components/pages/presentation/page-side-pane";
+import { PageDialog } from "@/components/pages/presentation/page-dialog";
+import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { PageEditorRegistryProvider } from "@/components/editor/runtime/page-editor-registry";
 import { PageCommentsRegistryProvider, PageEditorCommentsProvider } from "@/components/comments";
-import { LayoutEditorProvider } from "@/components/pages/layout";
+import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShortcutProvider } from "@/app/shortcuts";
 
@@ -245,7 +247,7 @@ function Content({ id }: { id: string }) {
             }
           />
         </div>
-        <EmbeddedPageDialog contextPageId={id} readOnly />
+        <PageDialog contextPageId={id} readOnly />
       </div>
     </PageSidePaneContext.Provider>
   );
@@ -278,7 +280,7 @@ function Commands({ id }: { id: string }) {
     </div>
   );
 }
-import { usePageSidePane as useContextState } from "@/components/pages/pane/page-side-pane";
+import { usePageSidePane as useContextState } from "@/components/pages/presentation/page-presentation";
 function FixtureSidebar({ children }: { children: ReactNode }) {
   return fixtureAudience ? children : <SidebarProvider>{children}</SidebarProvider>;
 }
@@ -306,11 +308,11 @@ createRoot(document.getElementById("root")!).render(
         <PageEditorRegistryProvider>
           <PageCommentsRegistryProvider>
             <PageEditorCommentsProvider>
-              <LayoutEditorProvider>
+              <PageDesignEditorProvider>
                 <FixtureSidebar>
                   <RouterProvider router={router} />
                 </FixtureSidebar>
-              </LayoutEditorProvider>
+              </PageDesignEditorProvider>
             </PageEditorCommentsProvider>
           </PageCommentsRegistryProvider>
         </PageEditorRegistryProvider>

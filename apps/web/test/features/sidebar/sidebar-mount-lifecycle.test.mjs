@@ -3,15 +3,15 @@ export function register({ readSource, assert, test }) {
     const source = await readSource("/src/app/shell/app-layout.tsx");
 
     const sidebarPosition = source.indexOf("<AppSidebar");
-    const pageProviderPosition = source.indexOf("<PageLayoutSidebarProvider");
+    const pageProviderPosition = source.indexOf("<PageDesignSidebarProvider");
 
     assert.notEqual(sidebarPosition, -1);
     assert.notEqual(pageProviderPosition, -1);
     assert.ok(sidebarPosition < pageProviderPosition);
-    assert.doesNotMatch(source, /<PageLayoutSidebarProvider[\s\S]*?<AppSidebar/);
+    assert.doesNotMatch(source, /<PageDesignSidebarProvider[\s\S]*?<AppSidebar/);
     assert.doesNotMatch(
       source,
-      /<PageLayoutSidebarProvider\s+key=/,
+      /<PageDesignSidebarProvider\s+key=/,
       "route changes must not remount the app content or Ask AI sidebar",
     );
     assert.match(

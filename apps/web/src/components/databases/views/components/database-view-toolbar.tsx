@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
-import { PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import {
   DropDrawer,
   DropDrawerContent,

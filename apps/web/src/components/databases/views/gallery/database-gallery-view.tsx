@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Plus } from "@/components/icons";
 import { getPageCover, getPageEmoji, type PageMetadata } from "@zilobase/features/pages";
 
-import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
 import { canCreateRowInGroup } from "@zilobase/features/databases";

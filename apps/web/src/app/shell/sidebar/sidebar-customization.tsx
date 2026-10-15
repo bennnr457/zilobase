@@ -56,7 +56,7 @@ import {
   PageIconDisplay,
   getDatabaseIconNode,
   getPageIconNode,
-} from "@/components/pages/icons/page-icon";
+} from "@/components/pages/appearance/page-icon";
 import { libraryViewIcons } from "@/components/library/library-icons";
 import {
   closestCenter,

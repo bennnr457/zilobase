@@ -1,13 +1,13 @@
 import { Effect } from "effect";
 import { isMobileViewport } from "@/lib/hooks/use-mobile";
 import { useCallback } from "react";
-import { markPageNavigationStart } from "../navigation/page-navigation-timing";
+import { markPageNavigationStart } from "./page-navigation-timing";
 
-import { usePageSidePane } from "./page-side-pane";
-import type { OpenPageSidePaneOptions } from "./page-side-pane";
+import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
+import type { OpenPageSidePaneOptions } from "@/components/pages/presentation/page-presentation";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { resolveEmbeddedItemsOpenAsFromCache, type Page } from "@zilobase/features/pages";
-import { readPublishedEmbeddedItemsOpenAs } from "../publication/published-page-preferences";
+import { readPublishedEmbeddedItemsOpenAs } from "../access/public-page-opening-preferences";
 
 export function useOpenEmbeddedPage({
   contextPageId,
@@ -89,3 +89,7 @@ export function useOpenEmbeddedPage({
 
   return { openPage };
 }
+
+export type OpenPageOptions = {
+  databaseId?: string | null;
+};

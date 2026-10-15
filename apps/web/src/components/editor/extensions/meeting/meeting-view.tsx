@@ -63,10 +63,10 @@ import {
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
-import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
-import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
+import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { cn } from "@/lib/utils";
-import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
+import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
 import { MeetingCollaborativeEditor } from "./meeting-collaborative-editor";
 import {
   combineMeetingTranscriptDrafts,

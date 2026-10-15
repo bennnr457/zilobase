@@ -1,26 +1,30 @@
-import { LayoutEditorProvider } from "../layout";
+import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
 import { useParams } from "@tanstack/react-router";
-import { PageSidePaneLayout, PageSidePaneProvider, usePageSidePane } from "../pane/page-side-pane";
+import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
+import {
+  PageSidePaneProvider,
+  usePageSidePane,
+} from "@/components/pages/presentation/page-presentation";
 import { usePage } from "@zilobase/features/pages/react";
-import { EmbeddedPageDialog } from "../pane/embedded-page-dialog";
-import { useOpenEmbeddedPage } from "../pane/use-open-embedded-page";
+import { PageDialog } from "../presentation/page-dialog";
+import { useOpenEmbeddedPage } from "../navigation/page-navigation";
 import {
   GuestPageTitle,
   GuestPageActions,
   PublicPageBreadcrumb,
   PublicLoginButton,
-} from "./shared-page-header";
-import { PageLayout } from "../pane/page-layout";
-import { PageEditorPane } from "../pane/page-editor-pane";
+} from "../header/public-page-header";
+import { PageLayout } from "../layout/page-layout";
+import { PageContent } from "../content/page-content";
 
 export function PublicPage() {
   const { pageId } = useParams({ from: "/p/$pageId" });
 
   return (
     <PageSidePaneProvider resetKey={pageId}>
-      <LayoutEditorProvider>
+      <PageDesignEditorProvider>
         <PublicPageContent pageId={pageId} />
-      </LayoutEditorProvider>
+      </PageDesignEditorProvider>
     </PageSidePaneProvider>
   );
 }
@@ -30,9 +34,9 @@ export function GuestPage() {
 
   return (
     <PageSidePaneProvider resetKey={pageId}>
-      <LayoutEditorProvider>
+      <PageDesignEditorProvider>
         <PublicPageContent guest pageId={pageId} />
-      </LayoutEditorProvider>
+      </PageDesignEditorProvider>
     </PageSidePaneProvider>
   );
 }
@@ -74,7 +78,7 @@ function PublicPageContent({ guest = false, pageId }: { guest?: boolean; pageId:
               className: "border-b",
             }}
           >
-            <PageEditorPane key={pageId} onOpenPage={openPage} readOnly={!guest} pageId={pageId} />
+            <PageContent key={pageId} onOpenPage={openPage} readOnly={!guest} pageId={pageId} />
           </PageLayout>
         }
         sidePane={
@@ -87,7 +91,7 @@ function PublicPageContent({ guest = false, pageId }: { guest?: boolean; pageId:
               header={{ leadingControl: null, showActions: false }}
             >
               {sidePaneContentReady ? (
-                <PageEditorPane
+                <PageContent
                   databaseId={sidePaneDatabaseId}
                   enableComments={false}
                   key={renderedSidePanePageId}
@@ -102,7 +106,7 @@ function PublicPageContent({ guest = false, pageId }: { guest?: boolean; pageId:
         sidePaneOpen={sidePaneAnimatedOpen}
         sidePaneVisible={renderedSidePanePageId !== null}
       />
-      <EmbeddedPageDialog onOpenPage={openPage} readOnly={!guest} />
+      <PageDialog onOpenPage={openPage} readOnly={!guest} />
     </>
   );
 }

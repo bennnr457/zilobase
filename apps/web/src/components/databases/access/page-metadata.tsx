@@ -13,7 +13,7 @@ import { ImagePlus, MessageSquare, SmilePlus, X } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
-import { PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { usePageEditorComments } from "@/components/comments/index";
@@ -29,8 +29,8 @@ import type {
 } from "@zilobase/features/pages";
 import { formatCommentButtonLabel, PageCommentThread } from "@/components/comments/index";
 
-import { ImageSourcePicker } from "@/components/pages/images/image-source-picker";
-import { buildRandomCoverGalleryDataUrl } from "@/components/pages/images/cover-gallery";
+import { ImageSourcePicker } from "@/components/pages/appearance/image-source-picker";
+import { buildRandomCoverGalleryDataUrl } from "@/components/pages/appearance/page-cover-gallery";
 
 import { getDatabasePropertyType } from "../schema/property-catalog";
 import {

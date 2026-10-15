@@ -29,7 +29,7 @@ import {
   PageCommentsRegistryProvider,
   PageEditorCommentsProvider,
 } from "@/components/comments/index";
-import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
+import { PageContent } from "@/components/pages/content/page-content";
 import { PageEditorRegistryProvider, usePageEditorRegistry } from "../runtime/page-editor-registry";
 import { installEditorHostTransport, sendEditorHostMessage } from "./transport";
 
@@ -295,7 +295,7 @@ function HostedSurface() {
   return (
     <main className="h-svh overflow-auto bg-surface-canvas" data-hosted-editor>
       {pageId ? (
-        <PageEditorPane
+        <PageContent
           key={pageId}
           pageId={pageId}
           hideChrome

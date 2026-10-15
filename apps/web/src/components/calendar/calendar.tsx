@@ -10,11 +10,8 @@ import { CalendarSchedule } from "./views/calendar-schedule";
 import { useSession } from "@zilobase/features/auth/react";
 import { CalendarConnectButton } from "./connections/calendar-connect-button";
 import { GoogleIcon } from "@/components/google-icon";
-import {
-  MainPaneHeaderLeadingControl,
-  PagePaneHeader,
-} from "@/components/pages/pane/page-pane-header";
-import { PageSidePaneShell } from "@/components/pages/pane/page-side-pane";
+import { MainPaneHeaderLeadingControl, PageHeader } from "@/components/pages/header/page-header";
+import { PageSidePaneShell } from "@/components/pages/presentation/page-side-pane";
 import { useEffect, useState } from "react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { Button } from "@/components/ui/button";
@@ -78,7 +75,7 @@ function CalendarWorkspace({ workspaceId }: { workspaceId: string }) {
       visible={false}
       header={
         <div className="flex h-12 min-w-0 items-center">
-          <PagePaneHeader
+          <PageHeader
             className="min-w-0 flex-1"
             leadingControl={<MainPaneHeaderLeadingControl />}
             pathname="/calendar"

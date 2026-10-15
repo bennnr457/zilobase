@@ -1,4 +1,4 @@
-import { PageLayout } from "@/components/pages/pane/page-layout";
+import { PageLayout } from "@/components/pages/layout/page-layout";
 import {
   buildHomepageViewData,
   buildHomepageRows,
@@ -17,9 +17,10 @@ import { Button } from "@/components/ui/button";
 
 import { libraryViewIcons } from "@/components/library/library-icons";
 
-import { PageSidePaneLayout, usePageSidePane } from "@/components/pages/pane/page-side-pane";
-import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";
-import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
+import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
+import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
+import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
+import { PageContent } from "@/components/pages/content/page-content";
 import {
   DatabaseTableView,
   DatabaseViewProvider,
@@ -520,7 +521,7 @@ export default function RecentsPage() {
                 onClose={closeSidePane}
                 onOpenFullPage={openSidePaneAsFullPage}
               >
-                <PageEditorPane
+                <PageContent
                   databaseId={sidePaneDatabaseId}
                   enableComments={false}
                   key={renderedSidePanePageId}

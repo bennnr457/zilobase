@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 
 import { getApiErrorMessage } from "@/platform/network/api";
-import { PageIconDisplay } from "@/components/pages/icons/page-icon";
+import { PageIconDisplay } from "@/components/pages/appearance/page-icon";
 
 import { type Teamspace, type TeamspaceAccessMode } from "@zilobase/features/teamspaces";
 

@@ -12,7 +12,7 @@ export function register({ assert, loadModule, readSource, test }) {
   test("page composition reruns structural recovery when its editor becomes ready", async () => {
     const [editor, pane] = await Promise.all([
       readSource("/src/components/editor/composition/editor.tsx"),
-      readSource("/src/components/pages/pane/page-editor-pane.tsx"),
+      readSource("/src/components/pages/content/page-content.tsx"),
     ]);
 
     assert.match(pane, /onEditorReady: handleEditorReady/);

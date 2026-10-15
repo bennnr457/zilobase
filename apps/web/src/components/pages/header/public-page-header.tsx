@@ -1,12 +1,12 @@
 import { Effect } from "effect";
-import { PagePaneHeader } from "../pane/page-pane-header";
+import { PageHeader } from "./page-header";
 import { Link } from "@tanstack/react-router";
 import { CopyIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { isEmbeddedMobileViewer } from "../pane/embedded-view";
+import { isEmbeddedMobileViewer } from "../layout/page-layout";
 import { toast } from "sonner";
-import { formatPageBreadcrumbLabel } from "../icons/page-icon";
+import { formatPageBreadcrumbLabel } from "../appearance/page-icon";
 import { usePage } from "@zilobase/features/pages/react";
 
 export function GuestPageTitle({ pageId }: { pageId: string }) {
@@ -43,7 +43,7 @@ export function GuestPageActions() {
 export function PublicPaneTopbar({ pageId }: { pageId: string | null }) {
   if (isEmbeddedMobileViewer()) return null;
   return (
-    <PagePaneHeader
+    <PageHeader
       className="border-b"
       pathname={pageId ? `/p/${encodeURIComponent(pageId)}` : "/recents"}
       pageId={pageId}

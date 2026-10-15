@@ -124,7 +124,7 @@ export function register({ assert, loadModule, readSource, test }) {
   test("database deletion registers a captured receipt with resource restoration", async () => {
     const [menu, pane, types] = await Promise.all([
       readSource("/src/components/editor/drag-drop/drag-block-menu.tsx"),
-      readSource("/src/components/pages/pane/page-editor-pane.tsx"),
+      readSource("/src/components/pages/content/page-content.tsx"),
       readSource("/src/components/editor/core/types.ts"),
     ]);
     assert.match(types, /Promise<StructuralBlockDeleteHistory \| void>/);

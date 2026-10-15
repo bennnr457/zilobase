@@ -1,3 +1,4 @@
+import { Check, ChevronDown, SidebarSimpleIcon, X } from "@/components/icons";
 import { resolvePageLayoutDatabaseId } from "@zilobase/features/pages";
 import {
   createContext,
@@ -8,11 +9,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Check, ChevronDown, SidebarSimpleIcon, X } from "@/components/icons";
 import { toast } from "sonner";
 
-import { LayoutEditorSettings } from "./layout-editor-settings";
-import { LayoutApplyDialog } from "@/components/pages/layout/layout-apply-dialog";
+import { PageDesignSettings } from "./page-design-settings";
+
+import { Editor } from "@/components/editor/index";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Editor } from "@/components/editor";
 import {
   useDatabaseBootstrap,
   useDatabaseIdForRowPage,
@@ -37,8 +37,8 @@ import {
 import {
   usePage,
   usePageNavigation,
-  useResolvedPageLayout,
   useResetPageLayout,
+  useResolvedPageLayout,
   useSavePageLayout,
 } from "@zilobase/features/pages/react";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
@@ -65,15 +65,15 @@ function withoutLayoutFullWidth(config: PageLayoutConfig): PageLayoutConfig {
 
 const LayoutEditorContext = createContext<LayoutEditorContextValue | null>(null);
 
-export function useLayoutEditor() {
+export function usePageDesignEditor() {
   const context = useContext(LayoutEditorContext);
   if (!context) {
-    throw new Error("useLayoutEditor must be used inside LayoutEditorProvider");
+    throw new Error("usePageDesignEditor must be used inside PageDesignEditorProvider");
   }
   return context;
 }
 
-export function LayoutEditorProvider({ children }: { children: ReactNode }) {
+export function PageDesignEditorProvider({ children }: { children: ReactNode }) {
   const [target, setTarget] = useState<LayoutEditorTarget | null>(null);
   const openLayoutEditor = useCallback((next: LayoutEditorTarget) => setTarget(next), []);
   const value = useMemo(() => ({ openLayoutEditor }), [openLayoutEditor]);
@@ -325,7 +325,7 @@ function LayoutEditor({ onClose, target }: { onClose: () => void; target: Layout
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <LayoutEditorSettings
+        <PageDesignSettings
           draft={draft}
           fullWidth={fullWidth}
           fullWidthPending={updateUserSettings.isPending}
@@ -362,7 +362,7 @@ function LayoutEditor({ onClose, target }: { onClose: () => void; target: Layout
         </main>
       </div>
 
-      <LayoutApplyDialog
+      <PageDesignApplyDialog
         databaseAvailable={Boolean(databaseId)}
         onApply={(scope) => void save(scope)}
         onOpenChange={setApplyDialogOpen}
@@ -371,5 +371,72 @@ function LayoutEditor({ onClose, target }: { onClose: () => void; target: Layout
         pending={saveLayout.isPending}
       />
     </div>
+  );
+}
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+type ApplyScope = Extract<PageLayoutScope, "database" | "page">;
+
+type LayoutApplyDialogProps = {
+  databaseAvailable: boolean;
+  onApply: (scope: ApplyScope) => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  pageAvailable: boolean;
+  pending?: boolean;
+};
+
+function PageDesignApplyDialog({
+  databaseAvailable,
+  onApply,
+  onOpenChange,
+  open,
+  pageAvailable,
+  pending = false,
+}: LayoutApplyDialogProps) {
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="z-[110]" overlayClassName="z-[109]">
+        <DialogHeader>
+          <DialogTitle>Apply this layout?</DialogTitle>
+          <DialogDescription>
+            Choose which pages should use all of these layout settings.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            disabled={pending}
+            onClick={() => onOpenChange(false)}
+            type="button"
+            variant="outline"
+          >
+            Cancel
+          </Button>
+          {pageAvailable ? (
+            <Button
+              disabled={pending}
+              onClick={() => onApply("page")}
+              type="button"
+              variant={databaseAvailable ? "outline" : "default"}
+            >
+              This page
+            </Button>
+          ) : null}
+          {databaseAvailable ? (
+            <Button disabled={pending} onClick={() => onApply("database")} type="button">
+              All pages in this database
+            </Button>
+          ) : null}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

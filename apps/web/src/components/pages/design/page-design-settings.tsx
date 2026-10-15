@@ -43,7 +43,7 @@ function SettingToggle({
   );
 }
 
-export function LayoutEditorSettings({
+export function PageDesignSettings({
   draft,
   fullWidth,
   fullWidthPending = false,

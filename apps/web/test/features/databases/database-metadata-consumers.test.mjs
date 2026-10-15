@@ -34,8 +34,8 @@ export function register({ assert, readSource, readWorkspace, test }) {
 
   test("sidebar and layout previews use bounded record windows", async () => {
     const sidebar = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
-    const layout = await readSource("/src/components/pages/layout/layout-editor.tsx");
-    const pane = await readSource("/src/components/pages/pane/page-pane-header.tsx");
+    const layout = await readSource("/src/components/pages/design/page-design-editor.tsx");
+    const pane = await readSource("/src/components/navigation/breadcrumbs.tsx");
 
     assert.match(sidebar, /useDatabaseRecords/);
     assert.match(sidebar, /composeDatabaseViewData/);

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { readSingleInvitationId } from "@/components/workspaces";
+import { readSingleInvitationId } from "@/components/workspaces/index";
 import { useSession } from "@zilobase/features/auth/react";
 import {
   useAcceptPageGuestInvitation,

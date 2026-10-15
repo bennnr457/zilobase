@@ -16,7 +16,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useOpenInNewTab } from "@/components/desktop/ui";
 import { type SidebarNavItem } from "@zilobase/features/pages";
 import { Cause, Effect } from "effect";
-import { useLayoutEditor } from "@/components/pages/layout/index";
+import { usePageDesignEditor } from "@/components/pages/design/page-design-editor";
 
 export function useHeaderActions({
   databaseId,
@@ -28,7 +28,7 @@ export function useHeaderActions({
   meetingId?: string | null;
 }) {
   const navigate = useNavigate();
-  const { openLayoutEditor } = useLayoutEditor();
+  const { openLayoutEditor } = usePageDesignEditor();
   const [isOpen, setIsOpen] = React.useState(false);
   const [trashConfirmOpen, setTrashConfirmOpen] = React.useState(false);
   const actions = useItemActionController({ databaseId, pageId, meetingId });

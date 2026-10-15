@@ -1,6 +1,6 @@
 export function register({ readSource, assert, test }) {
   test("embedded page dialogs share the dark side-pane surface", async () => {
-    const dialog = await readSource("/src/components/pages/pane/embedded-page-dialog.tsx");
+    const dialog = await readSource("/src/components/pages/presentation/page-dialog.tsx");
 
     assert.match(dialog, /data-page-dialog-panel/);
     assert.match(dialog, /dark:bg-surface-navigation/);

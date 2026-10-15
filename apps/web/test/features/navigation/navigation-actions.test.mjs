@@ -13,8 +13,8 @@ export function register({ assert, appPath, readSource, test }) {
       "@zilobase/features/teamspaces/react": "export const useTeamspaces = () => ({data:[]});",
       sonner:
         'export const toast = { error: value => runtime.calls.push(["error",value]), success: value => runtime.calls.push(["success",value]) };',
-      "@/components/pages/layout/index":
-        'export const useLayoutEditor = () => ({openLayoutEditor: input => runtime.calls.push(["layout",input])});',
+      "@/components/pages/design/page-design-editor":
+        'export const usePageDesignEditor = () => ({openLayoutEditor: input => runtime.calls.push(["layout",input])});',
       "@/components/databases/access/use-database-metadata":
         "export const useDatabaseMetadata = () => ({data:runtime.database});",
       "@zilobase/features/workspaces/react":
