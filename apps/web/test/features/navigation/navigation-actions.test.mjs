@@ -8,7 +8,7 @@ export function register({ assert, appPath, readSource, test }) {
     const modules = {
       "@tanstack/react-router":
         'export const useNavigate = () => runtime.navigate; export const useLocation = () => ({pathname:"/"});',
-      "@/components/desktop/ui": "export const useOpenInNewTab = () => () => {};",
+      "@/components/desktop/tabs/desktop-tabs": "export const useOpenInNewTab = () => () => {};",
       "@/components/ui/sidebar": "export const useSidebar = () => ({isMobile:false});",
       "@zilobase/features/teamspaces/react": "export const useTeamspaces = () => ({data:[]});",
       sonner:

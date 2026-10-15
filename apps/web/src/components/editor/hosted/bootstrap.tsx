@@ -24,7 +24,7 @@ import { setHostedEditorAuthToken } from "@/platform/auth/hosted-editor-auth";
 import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { pageCacheDeploymentKey } from "@/platform/storage/page-cache-database";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ShortcutProvider } from "@/app/shortcuts";
+import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 import {
   PageCommentsRegistryProvider,
   PageEditorCommentsProvider,

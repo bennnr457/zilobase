@@ -149,8 +149,8 @@ async function loadSwitcher(sourcePath) {
   const mocks = {
     "switcher-ports": `export const controls = { desktop: true, reads: 0, snapshots: [], calls: [], workspaces: [{id:"workspace",name:"Workspace"}] };`,
     "@tanstack/react-router": `import { controls } from "switcher-ports"; export const useNavigate = () => options => { controls.calls.push("navigate:" + options.to); return Promise.resolve(); };`,
-    "@/components/desktop/index": `import { controls } from "switcher-ports"; export const isDesktopApp = () => controls.desktop;`,
-    "@/components/desktop/ui": `export const DesktopConnectServerDialog = () => null;`,
+    "@/platform/environment": `import { controls } from "switcher-ports"; export const isDesktopApp = () => controls.desktop;`,
+    "@/components/desktop/servers/desktop-connect-server-dialog": `export const DesktopConnectServerDialog = () => null;`,
     "@/platform/network/api": `export const getApiErrorMessage = error => error.message;`,
     "@/platform/server/operations/index": `import { controls } from "switcher-ports"; export const getSelectedDesktopServer = () => ({instanceId:"current",displayName:"Current",apiOrigin:"https://current.test"}); export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function updateDesktopServerProfileSnapshot(input) { controls.snapshots.push(input); } export async function executeDesktopServerSwitch() {}`,
     "@zilobase/features/auth/react": `export const useSession = () => ({data:{workspacePinned:false}});`,

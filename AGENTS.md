@@ -40,7 +40,7 @@ and Effect commands live in `sidebar-controller.ts`. Keep the customization edit
 and its shared tab/icon presentation in `sidebar-customization.tsx` so its preview
 has no import cycle through the app sidebar. Reuse the shadcn sidebar-07 primitive
 structure in `components/ui/sidebar.tsx`, with CSS-variable widths, offcanvas
-collapse, and Zilobase tokens. Keep right-panel sizing in `app/shell/panels/right-sidebars.tsx`.
+collapse, and Zilobase tokens. Keep right-panel sizing in `app/shell/panels/tool-panels.tsx`.
 Import shared configuration commands from features directly and library labels/icons
 from `components/library`; avoid a shell navigation barrel or forwarding modules.
 Use Effect for fallible shell storage, native profile workflows, clipboard actions,
@@ -48,7 +48,8 @@ and ordered creation/navigation commands. Preserve storage keys, debounce timing
 best-effort fallbacks, and stale-result checks. Keep layout geometry and React view
 state plain.
 
-Keep shell layout and fallback screen header at `app/shell` root, tool-panel
+Keep shell composition at `app/shell/app-shell.tsx`, the fallback screen header
+in `app/shell/header`, favicon installation/conversion beside the shell, and tool-panel
 composition in `app/shell/panels`, and settings content/dialogs in
 `components/settings`. Page chrome and body scrolling belong to
 `components/pages/layout/page-layout.tsx`, with one placement-aware header in
@@ -103,7 +104,9 @@ Desktop transport, capture, persistence, window, and deep-link adapters live und
 Web startup configuration lives in `apps/web/src/app/startup.ts`; keep request,
 session, and meeting-capture installation together and preserve bootstrap order.
 Desktop session switching and replacement composition live in `app/desktop-session.ts`;
-the replacement dialog controller lives beside desktop UI in `components/desktop`.
+the replacement dialog controller lives in `components/desktop/servers`.
+Group desktop presentation under window, tabs, servers, auth, updates, deep-links,
+and diagnostics. Import their owners directly; platform operations stay in platform.
 Keep native operations in `platform` and avoid recreating an `app/runtime` folder.
 Use Effect for startup installation and desktop session workflows. Run synchronous
 installation and browser callbacks with `Effect.runSync`; keep native/cleanup ports

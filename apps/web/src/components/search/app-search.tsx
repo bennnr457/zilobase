@@ -16,7 +16,7 @@ import {
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useAppSearchResults } from "@zilobase/features/search/react";
 import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
-import { useAppShortcut } from "@/app/shortcuts";
+import { useAppShortcut } from "@/app/shortcuts/shortcut-provider";
 
 type AppSearchContextValue = {
   openSearch: () => void;

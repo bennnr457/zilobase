@@ -27,8 +27,8 @@ import {
   listDesktopServerProfiles,
   prepareDesktopServerCandidate,
   type DesktopServerProfile,
-} from "../../platform/server/desktop-server";
-import { executeDesktopServerSwitch } from "../../platform/server/operations/desktop-server-switch";
+} from "../../../platform/server/desktop-server";
+import { executeDesktopServerSwitch } from "../../../platform/server/operations/desktop-server-switch";
 import { DesktopDevCustomServerSelect } from "./desktop-dev-custom-server-select";
 
 export function DesktopConnectServerDialog({

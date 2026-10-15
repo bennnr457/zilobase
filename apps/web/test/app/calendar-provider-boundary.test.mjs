@@ -16,14 +16,14 @@ export function register({ assert, readSource, test }) {
       ...Object.keys(React),
       `${workspace.code}; return { CalendarWorkspaceProvider, useCalendarWorkspace };`,
     )(React, ...Object.values(React));
-    const source = await readSource("/src/app/shell/app-layout.tsx");
+    const source = await readSource("/src/app/shell/app-shell.tsx");
     // Execute the real shell composition, replacing unrelated services and surfaces.
     const shell = source.slice(
-      source.indexOf("export function AppLayout("),
-      source.indexOf("function AppLayoutContent("),
+      source.indexOf("export function AppShell("),
+      source.indexOf("function AppShellContent("),
     );
     const { code } = await transform(
-      shell.replace("export function AppLayout", "function AppLayout"),
+      shell.replace("export function AppShell", "function AppShell"),
       { loader: "tsx", jsx: "transform" },
     );
     const contexts = [];
@@ -41,7 +41,7 @@ export function register({ assert, readSource, test }) {
       PageDesignEditorProvider: passthrough,
       useAppSidebar: () => ({}),
       AppSidebar: consumer,
-      AppLayoutContent: consumer,
+      AppShellContent: consumer,
       CalendarWorkspaceProvider,
       APP_SIDEBAR_PANEL_WIDTH: 256,
       useRouterState: () => "/calendar",
@@ -50,14 +50,14 @@ export function register({ assert, readSource, test }) {
       usePromotedFullPagePath: () => null,
       getSettingsSection: () => "preferences",
     };
-    const AppLayout = new Function(...Object.keys(dependencies), `${code}; return AppLayout;`)(
+    const AppShell = new Function(...Object.keys(dependencies), `${code}; return AppShell;`)(
       ...Object.values(dependencies),
     );
     const previousDocument = globalThis.document;
     globalThis.document = { createElement: () => ({ className: "" }) };
     try {
       assert.doesNotThrow(
-        () => renderToString(React.createElement(AppLayout)),
+        () => renderToString(React.createElement(AppShell)),
         "Calendar sidebar must be inside its workspace provider",
       );
       assert.equal(contexts.length, 2);

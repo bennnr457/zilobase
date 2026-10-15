@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { editionWebModule } from "@zilobase/edition-web";
 
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { isFeatureEnabled } from "@/platform/environment";
 import {
   applyAppAccess,
@@ -69,7 +69,9 @@ const connectRoute = createRoute({
         isDesktopApp() ? Effect.void : Effect.fail(redirect({ to: "/login" })),
       ),
     ),
-  component: lazyRouteComponent(() => import("@/components/desktop/pages/connect")),
+  component: lazyRouteComponent(
+    () => import("@/components/desktop/servers/desktop-connect-screen"),
+  ),
 });
 
 const signupRoute = createRoute({

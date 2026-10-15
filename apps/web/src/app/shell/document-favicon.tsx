@@ -10,7 +10,7 @@ import {
   getFaviconColor,
   getRouteDocumentTitle,
   getRouteFaviconIcon,
-} from "@/components/pages/icons/favicon";
+} from "@/app/shell/favicon";
 import {
   DEFAULT_DATABASE_ITEM_ICON,
   DEFAULT_MEETING_ITEM_ICON,

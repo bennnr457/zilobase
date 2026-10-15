@@ -20,7 +20,7 @@ import {
 } from "@zilobase/features/workspaces";
 import { isOAuthLoginSearch, pickOAuthSearch } from "@zilobase/features/oauth";
 import { getAuthReturnPath } from "@/components/auth/google-auth";
-import { isHostedDemoRuntime } from "@/app/demo";
+import { isHostedDemoRuntime } from "@/app/demo/runtime";
 import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
 import { useAppStore } from "@/app/state/app-store";

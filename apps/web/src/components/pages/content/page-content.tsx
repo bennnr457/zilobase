@@ -55,7 +55,7 @@ import {
   flushCachedPage,
 } from "@/components/editor/collaboration/page-document-cache";
 import { ApiError } from "@/platform/network/api";
-import { isHostedDemoRuntime } from "@/app/demo/index";
+import { isHostedDemoRuntime } from "@/app/demo/runtime";
 import { canEditOnlineDatabase } from "@/components/editor/database-editability";
 import { createPageCommentController } from "@/components/comments/index";
 import { usePageCommentsRegistry } from "@/components/comments/index";

@@ -6,7 +6,7 @@ import {
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./app";
-import { initializeDesktopAuthToken } from "@/components/desktop/auth/index";
+import { initializeDesktopAuthToken } from "@/platform/auth/desktop-auth-token";
 import {
   applyActiveDesktopProfileWorkspace,
   initializeDesktopServer,

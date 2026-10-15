@@ -130,9 +130,11 @@ export function register({ readSource, assert, loadModule, test }) {
   test("replacement clears every server-scoped store and supports both deep-link launch modes", async () => {
     const replacement = await readSource("/src/app/desktop-session.ts");
     const controller = await readSource(
-      "/src/components/desktop/desktop-server-replacement-controller.tsx",
+      "/src/components/desktop/servers/desktop-server-replacement-controller.tsx",
     );
-    const handler = await readSource("/src/components/desktop/desktop-deep-link-handler.tsx");
+    const handler = await readSource(
+      "/src/components/desktop/deep-links/desktop-deep-link-handler.tsx",
+    );
 
     assert.match(replacement, /queryClient\.clear\(\)/);
     assert.match(replacement, /resetAccountState\(\)/);

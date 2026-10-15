@@ -444,7 +444,7 @@ async function loadStartupRuntime(sourcePath) {
   };
   const result = await build({
     stdin: {
-      contents: `export * from "./startup"; export * from "./desktop-session"; export { DesktopServerReplacementController } from "../components/desktop/desktop-server-replacement-controller"; export { controls } from "startup-test-ports"; export { NetworkUnavailableError } from "@/platform/network/api"; export { createElement, act } from "react"; export { createRoot } from "react-dom/client";`,
+      contents: `export * from "./startup"; export * from "./desktop-session"; export { DesktopServerReplacementController } from "../components/desktop/servers/desktop-server-replacement-controller"; export { controls } from "startup-test-ports"; export { NetworkUnavailableError } from "@/platform/network/api"; export { createElement, act } from "react"; export { createRoot } from "react-dom/client";`,
       resolveDir: sourcePath("/src/app"),
     },
     bundle: true,
@@ -463,9 +463,7 @@ async function loadStartupRuntime(sourcePath) {
             // Load React through Node so async act uses its native task scheduler.
             if (/^react(?:-dom)?(?:\/|$)/.test(path))
               return { path: require.resolve(path), external: true };
-            const normalized = path.startsWith("../../platform/")
-              ? "@/platform/" + path.slice("../../platform/".length)
-              : path;
+            const normalized = path.replace(/^(?:\.\.\/)+platform\//, "@/platform/");
             if (normalized in mocks) return { path: normalized, namespace: "startup-mock" };
             if (path === "@/app/desktop-session")
               return { path: sourcePath("/src/app/desktop-session.ts") };

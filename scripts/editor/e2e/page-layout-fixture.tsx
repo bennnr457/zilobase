@@ -39,7 +39,7 @@ import { PageEditorRegistryProvider } from "@/components/editor/runtime/page-edi
 import { PageCommentsRegistryProvider, PageEditorCommentsProvider } from "@/components/comments";
 import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ShortcutProvider } from "@/app/shortcuts";
+import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 
 const fixtureAudience = new URLSearchParams(window.location.search).get("audience");
 let settings = { ...defaultUserSettings };

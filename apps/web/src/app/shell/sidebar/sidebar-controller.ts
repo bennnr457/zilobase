@@ -16,7 +16,7 @@ import {
 } from "@zilobase/features/user-settings";
 import { libraryViewLabels } from "@/components/library/library-model";
 import { type DragEndEvent } from "@dnd-kit/core";
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { useLocation, useNavigate, useRouterState, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAppSearch } from "@/components/search/app-search";

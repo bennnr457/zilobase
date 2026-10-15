@@ -8,7 +8,7 @@ import {
   type CalendarPreferences,
   type CalendarView,
 } from "@zilobase/features/calendar";
-import { useAppShortcut } from "@/app/shortcuts";
+import { useAppShortcut } from "@/app/shortcuts/shortcut-provider";
 import {
   Command,
   CommandDialog,

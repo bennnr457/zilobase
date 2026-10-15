@@ -29,7 +29,7 @@ import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalPageSidePane } from "@/components/pages/presentation/page-presentation";
 import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { cn } from "@/lib/utils";
-import { useUndoHistory } from "@/app/shortcuts";
+import { useUndoHistory } from "@/app/shortcuts/undo-history";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";
 
 import { AddDatabasePropertyMenu } from "../../schema/editors/add-database-property-menu";

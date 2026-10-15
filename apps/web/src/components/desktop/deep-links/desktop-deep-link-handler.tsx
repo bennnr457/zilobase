@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { desktopBridge, isDesktopApp } from "@/platform/desktop/native";
-import type { DesktopDeepLink } from "../../../../desktop/electron/shared/bridge";
+import type { DesktopDeepLink } from "../../../../../desktop/electron/shared/bridge";
 
-import { resolveDesktopDeepLinkAction } from "../../platform/desktop/deep-links/desktop-deep-link";
-import { recordDesktopDiagnostic } from "../../platform/diagnostics/desktop-diagnostics";
-import { getSelectedDesktopServer } from "../../platform/server/desktop-server";
-import { requestDesktopServerReplacement } from "../../platform/server/operations/desktop-server-replacement";
+import { resolveDesktopDeepLinkAction } from "../../../platform/desktop/deep-links/desktop-deep-link";
+import { recordDesktopDiagnostic } from "../../../platform/diagnostics/desktop-diagnostics";
+import { getSelectedDesktopServer } from "../../../platform/server/desktop-server";
+import { requestDesktopServerReplacement } from "../../../platform/server/operations/desktop-server-replacement";
 
 export function DesktopDeepLinkHandler({ openPath }: { openPath: (path: string) => void }) {
   const openPathRef = useRef(openPath);

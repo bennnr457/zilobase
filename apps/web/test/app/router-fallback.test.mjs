@@ -54,13 +54,13 @@ export function register({ readSource, assert, test }) {
     assert.match(routerSource, /component: RootRouteShell/);
     assert.match(
       routerSource,
-      /<Suspense fallback=\{<PendingPage \/>\}>[\s\S]*<AppLayout>[\s\S]*<Outlet \/>[\s\S]*<\/AppLayout>[\s\S]*<\/Suspense>/,
+      /<Suspense fallback=\{<PendingPage \/>\}>[\s\S]*<AppShell>[\s\S]*<Outlet \/>[\s\S]*<\/AppShell>[\s\S]*<\/Suspense>/,
     );
     assert.match(routerSource, /authenticatedMeeting/);
     assert.match(routerSource, /component: Outlet,\s*pendingComponent: PendingPage/);
     assert.doesNotMatch(routerSource, /staleTime: 0/);
-    assert.doesNotMatch(pageSource, /import \{ AppLayout \}/);
-    assert.doesNotMatch(databaseSource, /import \{ AppLayout \}/);
-    assert.doesNotMatch(meetingSource, /import \{ AppLayout \}/);
+    assert.doesNotMatch(pageSource, /import \{ AppShell \}/);
+    assert.doesNotMatch(databaseSource, /import \{ AppShell \}/);
+    assert.doesNotMatch(meetingSource, /import \{ AppShell \}/);
   });
 }

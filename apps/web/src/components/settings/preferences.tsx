@@ -1,5 +1,5 @@
 import * as React from "react";
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { useTheme } from "next-themes";
 import { BugIcon, CheckIcon, DownloadIcon, FolderOpenIcon, ServerIcon } from "@/components/icons";
 import { toast } from "sonner";
@@ -35,7 +35,7 @@ import {
   openDesktopDiagnosticsFolder,
 } from "@/platform/diagnostics/index";
 import { clearIndexedDataForServer } from "@/platform/storage/indexed-data-cleanup";
-import { DesktopConnectServerDialog } from "@/components/desktop/ui";
+import { DesktopConnectServerDialog } from "@/components/desktop/servers/desktop-connect-server-dialog";
 import { clearDesktopPersistKeys } from "@/platform/storage/desktop/index";
 import {
   getSelectedDesktopServer,

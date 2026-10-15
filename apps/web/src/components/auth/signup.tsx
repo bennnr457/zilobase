@@ -23,9 +23,9 @@ import { getInvitationAuthSearch, signInWithGoogle } from "./google-auth";
 import { cn } from "@/lib/utils";
 import { useAuthFlowStore } from "./auth-flow-store";
 import { useRequestEmailVerificationOtp, useSignUp } from "@zilobase/features/auth/react";
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { AuthScreen } from "./auth-screen";
-import { DesktopBrowserAuthScreen } from "@/components/desktop/auth/index";
+import { DesktopBrowserAuthScreen } from "@/components/desktop/auth/desktop-browser-auth-screen";
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"form">) {
   const navigate = useNavigate();

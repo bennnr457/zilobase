@@ -15,7 +15,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
   test("metadata-only application consumers no longer request database payloads", async () => {
     const paths = [
       "/src/app/shell/document-favicon.tsx",
-      "/src/app/shell/app-layout.tsx",
+      "/src/app/shell/app-shell.tsx",
       "/packages/features/src/pages/sharing-hooks.ts",
       "/packages/features/src/pages/item-action-hooks.ts",
       "/src/components/databases/setup/components/database-setup-card.tsx",

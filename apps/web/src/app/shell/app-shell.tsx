@@ -8,7 +8,7 @@ import { ChevronsRightIcon, SidebarSimpleIcon } from "@/components/icons";
 import { useAppSidebar } from "@/app/shell/sidebar/sidebar-controller";
 import { AppSidebar } from "@/app/shell/sidebar/app-sidebar";
 import { AppSearchProvider } from "@/components/search/app-search";
-import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/ui";
+import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/tabs/desktop-tabs";
 import { ChatSidebarTrigger } from "@/components/ai/chat-sidebar-trigger";
 import { isFeatureEnabled } from "@/platform/environment";
 import type { ChatPresentationMode } from "@/components/ai/chat-sidebar";
@@ -19,11 +19,11 @@ import {
 } from "@/components/pages/presentation/page-presentation";
 import { PageSidePaneShell } from "@/components/pages/presentation/page-side-pane";
 import { DiscussionsSidebarPanel } from "@/components/comments/index";
-import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/right-sidebars";
+import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/tool-panels";
 import {
   getRightSidebarEditorDefaultSize,
   type SidebarResizeIntent,
-} from "@/app/shell/panels/right-sidebars";
+} from "@/app/shell/panels/tool-panels";
 
 import {
   PageHeaderControlsContext,
@@ -62,7 +62,7 @@ import {
 } from "@/components/pages/design/page-design-sidebar";
 import { Button } from "@/components/ui/button";
 import { FloatingWidget } from "@/components/floating-widget";
-import { AppHeader } from "@/app/shell/app-header";
+import { AppHeader } from "@/app/shell/header/app-header";
 
 const EmbeddedPageDialogHost = lazy(() =>
   import("@/components/pages/presentation/page-dialog").then((module) => ({
@@ -86,7 +86,7 @@ const CalendarReminderHost = lazy(
   () => import("@/components/calendar/reminders/calendar-reminder-host"),
 );
 
-export function AppLayout({
+export function AppShell({
   children,
   utilitySidebar,
   utilitySidebarOpen = false,
@@ -175,7 +175,7 @@ function AppLayoutWithRoutePage({
       <AppSidebar {...sidebarProps} />
       <PageDesignSidebarProvider pageId={routePageId}>
         <PageDesignEditorProvider>
-          <AppLayoutContent
+          <AppShellContent
             activeSettingsSection={activeSettingsSection}
             isSettingsPage={isSettingsPage}
             onSettingsOpenChange={handleSettingsOpenChange}
@@ -185,14 +185,14 @@ function AppLayoutWithRoutePage({
             utilitySidebarOpen={utilitySidebarOpen}
           >
             {children}
-          </AppLayoutContent>
+          </AppShellContent>
         </PageDesignEditorProvider>
       </PageDesignSidebarProvider>
     </>
   );
 }
 
-function AppLayoutContent({
+function AppShellContent({
   activeSettingsSection,
   children,
   isSettingsPage,

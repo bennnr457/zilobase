@@ -10,11 +10,11 @@ export function register({ assert, readSource, test }) {
   test("the application shell and expensive optional surfaces are lazy", async () => {
     const [routeShell, appLayout, tasks] = await Promise.all([
       readSource("/src/app/routing/route-shell.tsx"),
-      readSource("/src/app/shell/app-layout.tsx"),
+      readSource("/src/app/shell/app-shell.tsx"),
       readSource("/src/components/tasks/tasks.tsx"),
     ]);
 
-    assert.match(routeShell, /const AppLayout = lazy/);
+    assert.match(routeShell, /const AppShell = lazy/);
     assert.match(routeShell, /fallback=\{<PendingPage \/>\}/);
     assert.match(appLayout, /const ChatSidebarPanel = lazy/);
     assert.match(appLayout, /chatSidebarOpen \? \(/);

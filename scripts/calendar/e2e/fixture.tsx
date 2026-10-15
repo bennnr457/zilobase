@@ -3,13 +3,13 @@ import {
   sidebarFixtureApi,
   sidebarFixtureAuth,
 } from "./app-sidebar.fixture";
-import { ShortcutProvider } from "@/app/shortcuts";
+import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 import { CalendarSettings } from "@/components/calendar/preferences/calendar-settings";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateCalendarSearch } from "@/app/routing/search-validators";
-import { useCalendarChatVisibility } from "@/app/shell/panels/right-sidebars";
+import { useCalendarChatVisibility } from "@/app/shell/panels/tool-panels";
 import { useState } from "react";
-import { RightSidebars, RightSidebarMobilePanels } from "@/app/shell/panels/right-sidebars";
+import { RightSidebars, RightSidebarMobilePanels } from "@/app/shell/panels/tool-panels";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import { PageHeader } from "@/components/pages/header/page-header";
 import { useIsMobile } from "@/lib/hooks/use-mobile";

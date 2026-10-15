@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner";
 import {
   subscribeDesktopServerSwitch,
   type DesktopServerSwitchProgress,
-} from "../../platform/server/operations/desktop-server-switch";
+} from "../../../platform/server/operations/desktop-server-switch";
 
 export function DesktopServerSwitchOverlay() {
   const [progress, setProgress] = React.useState<DesktopServerSwitchProgress | null>(null);

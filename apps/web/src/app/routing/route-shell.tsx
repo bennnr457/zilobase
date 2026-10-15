@@ -11,9 +11,9 @@ const DocumentFavicon = lazy(() =>
   })),
 );
 
-const AppLayout = lazy(() =>
-  import("@/app/shell/app-layout").then((module) => ({
-    default: module.AppLayout,
+const AppShell = lazy(() =>
+  import("@/app/shell/app-shell").then((module) => ({
+    default: module.AppShell,
   })),
 );
 
@@ -50,9 +50,9 @@ export function RootRouteShell() {
       </Suspense>
       {showAppShell ? (
         <Suspense fallback={<PendingPage />}>
-          <AppLayout>
+          <AppShell>
             <Outlet />
-          </AppLayout>
+          </AppShell>
         </Suspense>
       ) : (
         <Outlet />

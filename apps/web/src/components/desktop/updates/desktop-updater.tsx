@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   describeDesktopError,
   recordDesktopDiagnostic,
-} from "../../platform/diagnostics/desktop-diagnostics";
+} from "../../../platform/diagnostics/desktop-diagnostics";
 
 let updateCheckStarted = false;
 

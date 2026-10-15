@@ -20,9 +20,9 @@ import {
 } from "@/platform/server/operations/index";
 import { requestDesktopServerReplacement } from "@/platform/server/operations/index";
 import { executeDesktopServerSwitch } from "@/platform/server/operations/index";
-import { DesktopDevCustomServerSelect } from "@/components/desktop/desktop-dev-custom-server-select";
+import { DesktopDevCustomServerSelect } from "@/components/desktop/servers/desktop-dev-custom-server-select";
 
-export default function ConnectPage() {
+export default function DesktopConnectScreen() {
   const navigate = useNavigate();
   const server = getSelectedDesktopServer();
   const onCloud = isCloudDesktopServer(server);

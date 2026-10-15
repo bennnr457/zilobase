@@ -12,7 +12,7 @@ import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalDatabaseDataContext } from "../views/state/database-view-context";
 import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useOptionalUndoHistory } from "@/app/shortcuts";
+import { useOptionalUndoHistory } from "@/app/shortcuts/undo-history";
 
 type DatabasePageSummary = {
   iconKind?: "database" | "page";

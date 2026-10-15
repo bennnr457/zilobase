@@ -10,7 +10,7 @@ import { apiFetch, clearApiAuthToken } from "@/platform/network/api";
 import { describeDesktopError, recordDesktopDiagnostic } from "@/platform/diagnostics/index";
 import { clientDeployment, queryClient } from "@/app/query-client";
 import { useAppStore } from "@/app/state/app-store";
-import { isHostedDemoRuntime, requestDemoGuard } from "@/app/demo";
+import { isHostedDemoRuntime, requestDemoGuard } from "@/app/demo/runtime";
 import posthog from "@/lib/posthog";
 import { readOAuthQuery } from "@zilobase/features/oauth";
 import { clearPageCacheForUser } from "@/components/editor/collaboration/page-document-cache";

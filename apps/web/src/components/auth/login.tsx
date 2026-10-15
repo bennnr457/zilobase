@@ -18,9 +18,9 @@ import { useRequestSignInOtp, useSignInWithPassword } from "@zilobase/features/a
 import { useAuthFlowStore } from "./auth-flow-store";
 import { editionWebModule } from "@zilobase/edition-web";
 import posthog from "@/lib/posthog";
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { AuthScreen } from "./auth-screen";
-import { DesktopBrowserAuthScreen } from "@/components/desktop/auth/index";
+import { DesktopBrowserAuthScreen } from "@/components/desktop/auth/desktop-browser-auth-screen";
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"form">) {
   const signInWithPassword = useSignInWithPassword();

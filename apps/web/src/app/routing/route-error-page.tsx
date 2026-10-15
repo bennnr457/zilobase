@@ -1,5 +1,5 @@
 import { type ErrorComponentProps, useNavigate } from "@tanstack/react-router";
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { useEffect, useState } from "react";
 import { Effect, Fiber } from "effect";
 

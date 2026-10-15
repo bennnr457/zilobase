@@ -1,6 +1,6 @@
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { isDesktopApp } from "@/components/desktop/index";
+import { isDesktopApp } from "@/platform/environment";
 import { useNavigate, Link } from "@tanstack/react-router";
 import {
   MonitorUpIcon,
@@ -80,7 +80,7 @@ import {
   DropDrawerLabel,
   DropDrawerShortcut,
 } from "@/components/ui/dropdrawer";
-import { DesktopConnectServerDialog } from "@/components/desktop/ui";
+import { DesktopConnectServerDialog } from "@/components/desktop/servers/desktop-connect-server-dialog";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { Button } from "@/components/ui/button";
 import {

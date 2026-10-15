@@ -13,7 +13,7 @@ import {
 import { useTeamspaces } from "@zilobase/features/teamspaces/react";
 import { toast } from "sonner";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useOpenInNewTab } from "@/components/desktop/ui";
+import { useOpenInNewTab } from "@/components/desktop/tabs/desktop-tabs";
 import { type SidebarNavItem } from "@zilobase/features/pages";
 import { Cause, Effect } from "effect";
 import { usePageDesignEditor } from "@/components/pages/design/page-design-editor";

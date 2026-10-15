@@ -17,24 +17,24 @@ import { getApiErrorMessage } from "@/platform/network/api";
 import {
   describeDesktopError,
   recordDesktopDiagnostic,
-} from "../../platform/diagnostics/desktop-diagnostics";
+} from "../../../platform/diagnostics/desktop-diagnostics";
 import {
   discardDesktopServerCandidate,
   desktopServersReferToSameInstance,
   getSelectedDesktopServer,
   prepareDesktopServerCandidate,
   type PreparedDesktopServer,
-} from "../../platform/server/desktop-server";
+} from "../../../platform/server/desktop-server";
 import {
   subscribeDesktopServerReplacement,
   type DesktopServerReplacementRequest,
-} from "../../platform/server/operations/desktop-server-replacement";
+} from "../../../platform/server/operations/desktop-server-replacement";
 import {
   assertPreparedServerMatchesRequest,
   executeDesktopServerReplacement,
-} from "../../platform/server/operations/desktop-server-replacement-core";
-import { executeDesktopServerSwitch } from "../../platform/server/operations/desktop-server-switch";
-import { cancelDesktopBrowserSignIn } from "../../platform/auth/browser-authorization";
+} from "../../../platform/server/operations/desktop-server-replacement-core";
+import { executeDesktopServerSwitch } from "../../../platform/server/operations/desktop-server-switch";
+import { cancelDesktopBrowserSignIn } from "../../../platform/auth/browser-authorization";
 
 type ReplacementContext = {
   prepared: PreparedDesktopServer;

@@ -6,10 +6,10 @@ import { useRouter, useRouterState } from "@tanstack/react-router";
 import { useShallow } from "zustand/react/shallow";
 
 import { cn } from "@/lib/utils";
-import { isOpenInNewTabShortcut } from "@/app/shortcuts";
+import { isOpenInNewTabShortcut } from "@/app/shortcuts/shortcut-definitions";
 import { useAppStore, type DesktopTab } from "@/app/state/app-store";
 import { DesktopTabStrip } from "./desktop-tab-strip";
-import { DesktopWindowTitlebar } from "./desktop-window-titlebar";
+import { DesktopWindowTitlebar } from "../window/desktop-window-titlebar";
 import { useSidebar } from "@/components/ui/sidebar";
 
 export function DesktopTabs({ icon, title }: { icon?: string | null; title: string }) {

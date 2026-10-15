@@ -25,7 +25,7 @@ import {
 
 import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/appearance/page-icon";
 import { cn } from "@/lib/utils";
-import { isOpenInNewTabShortcut } from "@/app/shortcuts";
+import { isOpenInNewTabShortcut } from "@/app/shortcuts/shortcut-definitions";
 import type { DesktopTab } from "@/app/state/app-store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { hasEditorBlockDragData } from "@/components/editor/drag-drop/block-drag-session";

@@ -15,7 +15,7 @@ import {
   PageEditorRegistryProvider,
   useEditorWorkspace,
 } from "@/components/editor/runtime/page-editor-registry";
-import { ShortcutProvider } from "@/app/shortcuts";
+import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 import { createEditorWorkspace } from "@/components/editor/runtime/editor-workspace";
 import { EditorIntegration } from "@/components/editor/runtime/editor-integration";
 import { transferBlocks } from "@/components/editor/operations/block-operations";
