@@ -1,3 +1,4 @@
+import { ChatSidebarPanel } from "@/components/ai/workspace/chat-sidebar";
 import {
   GuestPageTitle,
   GuestPageActions,
@@ -285,6 +286,24 @@ function FixtureSidebar({ children }: { children: ReactNode }) {
   return fixtureAudience ? children : <SidebarProvider>{children}</SidebarProvider>;
 }
 
+function AiPresentationFixture() {
+  const [mode, setMode] = useState<"sidebar" | "floating">("sidebar");
+  const [open, setOpen] = useState(true);
+  return (
+    <div style={{ height: 600, maxWidth: 500 }}>
+      {open ? (
+        <ChatSidebarPanel
+          onClose={() => setOpen(false)}
+          onPresentationModeChange={setMode}
+          presentationMode={mode}
+        />
+      ) : (
+        <button onClick={() => setOpen(true)}>Reopen chat</button>
+      )}
+    </div>
+  );
+}
+
 const root = createRootRoute({ component: () => <Outlet /> });
 const routes = ["main", "child", "other"].map((id) =>
   createRoute({
@@ -310,7 +329,11 @@ createRoot(document.getElementById("root")!).render(
             <PageEditorCommentsProvider>
               <PageDesignEditorProvider>
                 <FixtureSidebar>
-                  <RouterProvider router={router} />
+                  {new URLSearchParams(window.location.search).get("workspace") === "ai" ? (
+                    <AiPresentationFixture />
+                  ) : (
+                    <RouterProvider router={router} />
+                  )}
                 </FixtureSidebar>
               </PageDesignEditorProvider>
             </PageEditorCommentsProvider>

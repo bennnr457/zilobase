@@ -10,7 +10,7 @@ import Collaboration from "@tiptap/extension-collaboration";
 import { prosemirrorJSONToYDoc } from "@tiptap/y-tiptap";
 import * as Y from "yjs";
 import { Plugin } from "@tiptap/pm/state";
-import { Editor } from "@/components/editor";
+import { Editor } from "@/components/editor/composition/editor";
 import {
   PageEditorRegistryProvider,
   useEditorWorkspace,

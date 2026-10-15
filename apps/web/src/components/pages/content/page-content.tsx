@@ -41,7 +41,7 @@ import { useSession } from "@zilobase/features/auth/react";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { usePageEditorRegistry } from "@/components/editor/runtime/page-editor-registry";
 import { createPageEditorHandle } from "@/components/editor/runtime/page-editor-handle";
-import { Editor } from "@/components/editor/index";
+import { Editor } from "@/components/editor/composition/editor";
 import type {
   PageLayoutPanelMode,
   StructuralBlockDeleteRequest,

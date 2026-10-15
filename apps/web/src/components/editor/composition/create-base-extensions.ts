@@ -30,7 +30,7 @@ import { EmojiExtension } from "../extensions/emoji";
 import { FileBlock } from "../extensions/file-block";
 import { ImageBlock } from "../extensions/image-block";
 import { LinkMention } from "../extensions/link-mention";
-import { MeetingBlock } from "../extensions/meeting";
+import { MeetingBlock } from "@/components/editor/extensions/meeting/meeting-extension";
 import { MeetingTranscriptPreview } from "../extensions/meeting-transcript-preview";
 import { PageBlock, type CreatedPage } from "../extensions/page-block";
 import { BlockSelection } from "../extensions/block-selection";

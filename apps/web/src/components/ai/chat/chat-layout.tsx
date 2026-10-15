@@ -1,4 +1,4 @@
-import "./ask-ai.css";
+import "../styles/ask-ai.css";
 import type { ReactNode } from "react";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";

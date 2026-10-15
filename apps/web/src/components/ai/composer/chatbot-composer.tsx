@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, RefObject } from "react";
 
-import { ChatbotScrollButton } from "./chatbot-scroll-control";
+import { ChatbotScrollButton } from "../chat/chatbot-scroll-control";
 import {
   PromptInput,
   PromptInputFooter,

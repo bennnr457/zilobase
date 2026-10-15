@@ -53,7 +53,7 @@ import type {
   ReactNode,
   RefObject,
 } from "react";
-import { captureScreenshot, convertBlobUrlToDataUrl } from "../files/prompt-attachments";
+import { captureScreenshot, convertBlobUrlToDataUrl } from "../attachments/prompt-attachments";
 import {
   Children,
   createContext,

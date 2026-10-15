@@ -27,7 +27,7 @@ import {
   type PageLayoutRegion,
 } from "@zilobase/features/pages";
 
-type PageLayoutModuleCanvasProps = {
+type PageDesignCanvasProps = {
   config: PageLayoutConfig;
   fixedAfterHeading?: ReactNode;
   fullWidth?: boolean;
@@ -240,7 +240,7 @@ function DroppableModuleSequence({
   );
 }
 
-export function PageLayoutModuleCanvas({
+export function PageDesignCanvas({
   config,
   fixedAfterHeading,
   fullWidth = true,
@@ -249,7 +249,7 @@ export function PageLayoutModuleCanvas({
   panelMode = "auto",
   pageId,
   renderModule,
-}: PageLayoutModuleCanvasProps) {
+}: PageDesignCanvasProps) {
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const registeredPageId = pageLayoutSidebar?.pageId;

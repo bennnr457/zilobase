@@ -10,7 +10,7 @@ import { Copy, HelpCircle, Sigma } from "@/components/icons";
 import type { ThemedToken } from "shiki";
 import { toast } from "sonner";
 
-import { highlightCode } from "@/components/ai/elements/index";
+import { highlightCode } from "@/components/ai/chat/code-block";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

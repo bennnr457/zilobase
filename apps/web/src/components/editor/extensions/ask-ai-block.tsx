@@ -10,7 +10,7 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-} from "@/components/ai/elements/index";
+} from "@/components/ai/composer/prompt-input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";

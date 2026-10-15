@@ -1,8 +1,8 @@
 const chatbotFiles = [
-  "/src/components/ai/elements/chatbot.tsx",
-  "/src/components/ai/elements/chatbot-composer.tsx",
-  "/src/components/ai/elements/chatbot-messages.tsx",
-  "/src/components/ai/elements/chatbot-scroll-control.tsx",
+  "/src/components/ai/chat/chatbot.tsx",
+  "/src/components/ai/composer/chatbot-composer.tsx",
+  "/src/components/ai/chat/chatbot-messages.tsx",
+  "/src/components/ai/chat/chatbot-scroll-control.tsx",
 ];
 
 export async function readChatbotSource(readSource) {

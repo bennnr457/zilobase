@@ -4,7 +4,7 @@ import { usePageSidePane } from "@/components/pages/presentation/page-presentati
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { DatabaseMainPane } from "@/components/databases/screen/database-screen";
 import { PageContent } from "@/components/pages/content/page-content";
-import { AskAiWorkspace } from "./ask-ai-workspace";
+import { AskAiWorkspace } from "./workspace/ask-ai-workspace";
 
 export default function AiPage() {
   const {

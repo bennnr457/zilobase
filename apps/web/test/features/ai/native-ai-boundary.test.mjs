@@ -5,10 +5,10 @@ export function register({ readSource, assert, test }) {
   test("Ask AI has UI state without a conversation runtime or client SDK", async () => {
     const sources = await Promise.all([
       readChatbotSource(readSource),
-      readSource("/src/components/ai/ask-ai-workspace.tsx"),
+      readSource("/src/components/ai/workspace/ask-ai-workspace.tsx"),
       readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
-      readSource("/src/components/ai/elements/prompt-input.tsx"),
-      readSource("/src/components/ai/elements/message.tsx"),
+      readSource("/src/components/ai/composer/prompt-input.tsx"),
+      readSource("/src/components/ai/chat/message.tsx"),
     ]);
     assert.doesNotMatch(
       sources.join("\n"),

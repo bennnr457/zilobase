@@ -15,14 +15,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { LinkedDataSourcePicker } from "@/components/databases/views/shared/linked-data-source-picker";
 import type { PageLayoutConfig, PageLayoutLinkedTab } from "@zilobase/features/pages";
 
-type PageLayoutTabsProps = {
+type PageDesignTabsProps = {
   config: PageLayoutConfig;
   onChange?: (config: PageLayoutConfig) => void;
   onValueChange: (tabId: string) => void;
   value: string;
 };
 
-export function PageLayoutTabs({ config, onChange, onValueChange, value }: PageLayoutTabsProps) {
+export function PageDesignTabs({ config, onChange, onValueChange, value }: PageDesignTabsProps) {
   const addLinkedTab = (tab: PageLayoutLinkedTab) => {
     if (onChange && !config.linkedTabs.some((item) => item.id === tab.id)) {
       onChange({ ...config, linkedTabs: [...config.linkedTabs, tab] });

@@ -12,7 +12,7 @@ import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pa
 
 import type { ChatPresentationMode } from "./chat-sidebar";
 
-const Chatbot = lazy(() => import("./elements/chatbot"));
+const Chatbot = lazy(() => import("../chat/chatbot"));
 
 export function AskAiWorkspace({
   externalSidePane = null,

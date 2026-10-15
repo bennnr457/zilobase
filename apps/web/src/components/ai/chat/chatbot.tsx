@@ -1,10 +1,10 @@
-import { ChatLayout } from "../chat-layout";
+import { ChatLayout } from "./chat-layout";
 import { Button } from "@/components/ui/button";
-import { ChatbotComposer } from "./chatbot-composer";
+import { ChatbotComposer } from "../composer/chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";
 import { useCallback, useRef, useState, type ReactNode } from "react";
-import type { PromptInputMessage } from "./prompt-input";
+import type { PromptInputMessage } from "../composer/prompt-input";
 
 export default function Chatbot({
   isSidebar = false,

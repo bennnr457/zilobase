@@ -6,8 +6,8 @@ import {
   PageMetadata,
   type PageMetadataHandle,
 } from "@/components/databases/page-properties/page-metadata";
-import { PageLayoutModuleCanvas } from "../layout/page-layout-module-canvas";
-import { PageLayoutTabs } from "../layout/page-layout-tabs";
+import { PageDesignCanvas } from "../document-design/page-design-canvas";
+import { PageDesignTabs } from "../document-design/page-design-tabs";
 import { starterContent } from "../core/constants";
 import { EditorChrome } from "./editor-chrome";
 import type { EditorProps, PasteChoiceState } from "../core/types";
@@ -451,11 +451,11 @@ export function Editor({
             <EditorContent editor={editor} />
           </div>
         ) : layoutConfig ? (
-          <PageLayoutModuleCanvas
+          <PageDesignCanvas
             config={layoutConfig}
             fixedAfterHeading={
               layoutConfig.structure === "tabbed" ? (
-                <PageLayoutTabs
+                <PageDesignTabs
                   config={layoutConfig}
                   onChange={onLayoutChange}
                   onValueChange={setActiveLayoutTab}

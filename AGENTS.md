@@ -183,6 +183,15 @@ Do not duplicate the web API client, query keys, collections, or mutation logic.
 
 ## Hosted editor and future native integration
 
+The editor remains web code. Document design rendering belongs in
+`components/editor/document-design`, distinct from page frame layout and page
+design customization. Keep editor runtime, collaboration, hosted bootstrap,
+operations, selection, and drag/drop as distinct subsystems.
+
+Ask AI presentation is grouped into chat, composer, attachments, workspace, and
+styles beneath `components/ai`; import owning files directly rather than an
+elements barrel.
+
 The editor remains web code. Native screens will open the hosted editor in a
 WebView through the existing `/editor` route and versioned bridge contracts in
 [editor-bridge.ts](packages/features/src/pages/editor-bridge.ts).

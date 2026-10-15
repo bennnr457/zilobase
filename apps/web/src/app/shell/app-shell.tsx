@@ -9,9 +9,9 @@ import { useAppSidebar } from "@/app/shell/sidebar/sidebar-controller";
 import { AppSidebar } from "@/app/shell/sidebar/app-sidebar";
 import { AppSearchProvider } from "@/components/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/tabs/desktop-tabs";
-import { ChatSidebarTrigger } from "@/components/ai/chat-sidebar-trigger";
+import { ChatSidebarTrigger } from "@/components/ai/workspace/chat-sidebar-trigger";
 import { isFeatureEnabled } from "@/platform/environment";
-import type { ChatPresentationMode } from "@/components/ai/chat-sidebar";
+import type { ChatPresentationMode } from "@/components/ai/workspace/chat-sidebar";
 import {
   usePageSidePaneState,
   PageSidePaneContext,
@@ -78,7 +78,7 @@ const SettingsDialog = lazy(() =>
   })),
 );
 const ChatSidebarPanel = lazy(() =>
-  import("@/components/ai/chat-sidebar").then((module) => ({
+  import("@/components/ai/workspace/chat-sidebar").then((module) => ({
     default: module.ChatSidebarPanel,
   })),
 );
