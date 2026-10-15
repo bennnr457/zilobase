@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
-import { libraryViewIcons } from "@/app/shell/navigation";
+import { libraryViewIcons } from "@/components/library/library-icons";
 
 import { PageSidePaneLayout, usePageSidePane } from "@/components/pages/pane/page-side-pane";
 import { useOpenEmbeddedPage } from "@/components/pages/pane/use-open-embedded-page";

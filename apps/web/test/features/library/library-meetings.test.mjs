@@ -35,7 +35,7 @@ export function register({ readSource, assert, loadModule, test }) {
     const { libraryViewIds, normalizeSidebarConfig } = await loadModule(sidebarConfigPath);
     const librarySource = await readLibrarySource();
     const routes = await readSource("/src/app/routing/router.tsx");
-    const icons = await readSource("/src/app/shell/navigation/components/sidebar-layout-icons.tsx");
+    const icons = await readSource("/src/components/library/library-icons.tsx");
 
     assert.ok(libraryViewIds.includes("trash"));
     assert.match(librarySource, /activeViewId === "trash" \? "trash" : "home"/);
@@ -75,15 +75,9 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("Library lists meetings and its sidebar shortcut opens that tab", async () => {
     const librarySource = await readLibrarySource();
-    const sidebarSource = await readSource(
-      "/src/app/shell/navigation/components/sidebar-shortcut-list.tsx",
-    );
-    const customizeSource = await readSource(
-      "/src/app/shell/navigation/components/sidebar-customize-panel.tsx",
-    );
-    const iconSource = await readSource(
-      "/src/app/shell/navigation/components/sidebar-layout-icons.tsx",
-    );
+    const sidebarSource = await readSource("/src/app/shell/sidebar/sidebar-sections.tsx");
+    const customizeSource = await readSource("/src/app/shell/sidebar/sidebar-customization.tsx");
+    const iconSource = await readSource("/src/components/library/library-icons.tsx");
     const toolbarSource = await readToolbarSource();
 
     assert.match(librarySource, /homepageViews = libraryViews\.map/);

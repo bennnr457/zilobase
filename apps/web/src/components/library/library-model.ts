@@ -10,8 +10,8 @@ import type { DatabaseViewData } from "@zilobase/features/databases";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 import type { Teamspace } from "@zilobase/features/teamspaces";
 import type { PageNavigationPayload } from "@zilobase/features/pages";
-import { libraryViewIds } from "@zilobase/features/user-settings";
-import { libraryViewLabels } from "@/app/shell/navigation/model/sidebar-layout-model";
+import { libraryViewIds, type LibraryView } from "@zilobase/features/user-settings";
+
 export {
   libraryParentPropertyId,
   getHomepageRowType,
@@ -22,6 +22,18 @@ export {
 } from "@zilobase/features/library";
 
 export type { HomepageView, HomepageRow, RecentsMode } from "@zilobase/features/library";
+
+export const libraryViewLabels: Record<LibraryView, string> = {
+  skills: "Skills",
+  instructions: "Instructions",
+  favourites: "Favourites",
+  meetings: "Meetings",
+  private: "Private",
+  recents: "Recents",
+  shared: "Shared",
+  teamspaces: "Teamspaces",
+  trash: "Trash",
+};
 
 export const homepageViews = libraryViewIds.map((id) => ({ id, label: libraryViewLabels[id] }));
 

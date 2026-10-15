@@ -39,23 +39,26 @@ import {
 import * as React from "react";
 import { toast } from "sonner";
 
-import { SidebarLayoutTabs } from "./sidebar-layout-tabs";
+import { SidebarLayoutTabs } from "@/app/shell/sidebar/sidebar-layout";
 import { DatabaseViewIcon } from "@/components/databases";
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
 } from "@/components/databases/page-database-picker";
-import { libraryViewIcons, SidebarShortcutIcon, SidebarTabIcon } from "./sidebar-layout-icons";
+import { libraryViewIcons } from "@/components/library/library-icons";
+import { SidebarShortcutIcon, SidebarTabIcon } from "@/app/shell/sidebar/sidebar-layout";
 import {
   getSectionLabel,
   getShortcutLabel,
+  sidebarSectionLabels,
+} from "@/app/shell/sidebar/sidebar-state";
+import {
   hasShortcutTarget,
-  libraryViewLabels,
   moveArrayItem,
   moveLayoutEntry,
-  sidebarSectionLabels,
   updateSidebarTab,
-} from "../model/sidebar-layout-model";
+} from "@zilobase/features/user-settings";
+import { libraryViewLabels } from "@/components/library/library-model";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,

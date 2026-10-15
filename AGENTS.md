@@ -34,6 +34,16 @@ creating another `components` directory inside each domain. Retain meaningful
 subsystems such as editor collaboration and database table/kanban/timeline
 renderers. Reserve the `features` folder name for `packages/features`.
 
+Keep sidebar renderers, their hooks, and presentation helpers directly under
+`app/shell/sidebar`; group small sections in `sidebar-sections.tsx`, tab/icon UI in
+`sidebar-layout.tsx`, local persistence/state in `sidebar-state.ts`, and geometry
+in `sidebar-sizing.ts`. Keep substantial page-tree and customization renderers
+separate. Import shared configuration commands from features directly and library
+labels/icons from `components/library`; avoid a shell navigation barrel.
+Use Effect for fallible shell storage, native profile workflows, and ordered
+creation/navigation commands. Preserve storage keys, debounce timing, best-effort
+fallbacks, and stale-result checks. Keep layout geometry and React view state plain.
+
 Keep shell layout and header at `app/shell` root, web panel composition in
 `app/shell/panels`, and settings content/dialogs in `components/settings`.
 Reusable item actions and sharing UI, with their local hooks, live in

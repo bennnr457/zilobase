@@ -1,4 +1,30 @@
 import {
+  BotIcon,
+  BriefcaseIcon,
+  CalendarDaysIcon,
+  CircleDashedIcon,
+  DatabaseIcon,
+  FileIcon,
+  FolderIcon,
+  HomeIcon,
+  ListIcon,
+  ListChecksIcon,
+  SettingsIcon,
+  SparklesIcon,
+  StarIcon,
+  Trash2Icon,
+  PlusIcon,
+  SearchIcon,
+} from "@/components/icons";
+import {
+  type SidebarShortcut,
+  type SidebarTabIconId,
+  isFixedSidebarTabId,
+  type SidebarTab,
+} from "@zilobase/features/user-settings";
+import { PageIconDisplay } from "@/components/pages/index";
+import { libraryViewIcons } from "@/components/library/library-icons";
+import {
   closestCenter,
   DndContext,
   KeyboardSensor,
@@ -14,15 +40,59 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
-import { PlusIcon, SearchIcon } from "@/components/icons";
 import type * as React from "react";
-
-import { SidebarTabIcon } from "./sidebar-layout-icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getAppTabTriggerClassName } from "@/components/ui/app-tabs";
-import { isFixedSidebarTabId, type SidebarTab } from "@zilobase/features/user-settings";
+
+const sidebarTabIcons = {
+  briefcase: BriefcaseIcon,
+  calendar: CalendarDaysIcon,
+  circle: CircleDashedIcon,
+  database: DatabaseIcon,
+  folder: FolderIcon,
+  home: HomeIcon,
+  list: ListIcon,
+  sparkles: SparklesIcon,
+  star: StarIcon,
+} satisfies Record<SidebarTabIconId, typeof HomeIcon>;
+
+export function SidebarTabIcon({ value }: { value: string }) {
+  const Icon = sidebarTabIcons[value as SidebarTabIconId];
+  return Icon ? (
+    <Icon aria-hidden="true" className="size-4" />
+  ) : (
+    <PageIconDisplay className="pointer-events-none" size="sm" value={value} />
+  );
+}
+
+export function SidebarShortcutIcon({ shortcut }: { shortcut: SidebarShortcut }) {
+  if (shortcut.icon) return <SidebarTabIcon value={shortcut.icon} />;
+
+  const Icon = getDefaultShortcutIcon(shortcut.target);
+  return <Icon aria-hidden="true" className="size-4" />;
+}
+
+function getDefaultShortcutIcon(target: SidebarShortcut["target"]) {
+  if (target.type === "action") {
+    return target.action === "createPage"
+      ? FileIcon
+      : target.action === "createDatabase"
+        ? DatabaseIcon
+        : BotIcon;
+  }
+  if (target.type === "page") return FileIcon;
+  if (target.type === "database") return DatabaseIcon;
+  if (target.type === "library") return libraryViewIcons[target.view];
+  return {
+    ai: SparklesIcon,
+    meetings: CalendarDaysIcon,
+    settings: SettingsIcon,
+    tasks: ListChecksIcon,
+    trash: Trash2Icon,
+  }[target.route];
+}
 
 export function SidebarLayoutTabs({
   activeTabId,

@@ -1,10 +1,11 @@
+import { Effect } from "effect";
 import { CalendarWorkspaceProvider } from "@/components/calendar/workspace/calendar-workspace";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronsRightIcon, SidebarSimpleIcon } from "@/components/icons";
 
-import { AppSidebar } from "@/app/shell/navigation";
+import { AppSidebar } from "@/app/shell/sidebar/app-sidebar";
 import { AppSearchProvider } from "@/components/search/app-search";
 import { DesktopTabs, getDesktopTabTitle } from "@/components/desktop/ui";
 import { ChatSidebarTrigger } from "@/components/ai/chat-sidebar-trigger";
@@ -21,7 +22,7 @@ import {
   APP_SIDEBAR_PANEL_WIDTH,
   getRightSidebarEditorDefaultSize,
   type SidebarResizeIntent,
-} from "@/app/shell/navigation";
+} from "@/app/shell/sidebar/sidebar-sizing";
 
 import { getDatabaseId, useRoutePageId } from "@/components/pages/pane/page-pane-header";
 import { getSettingsSection, type SettingsSection } from "@/components/settings/settings-sidebar";
@@ -362,11 +363,14 @@ function AppLayoutContent({
   }, [chatSidebarOpen, pathname]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(CHAT_PRESENTATION_MODE_STORAGE_KEY, chatPresentationMode);
-    } catch {
-      // Storage is optional; the in-memory preference remains active.
-    }
+    Effect.runSync(
+      Effect.try({
+        try: () => {
+          window.localStorage.setItem(CHAT_PRESENTATION_MODE_STORAGE_KEY, chatPresentationMode);
+        },
+        catch: (error) => error,
+      }).pipe(Effect.ignore),
+    );
   }, [chatPresentationMode]);
 
   const togglePageLayoutSidebar = useCallback(() => {
@@ -647,13 +651,15 @@ function AppLayoutContent({
 }
 
 function readChatPresentationMode(): ChatPresentationMode {
-  try {
-    return window.localStorage.getItem(CHAT_PRESENTATION_MODE_STORAGE_KEY) === "floating"
-      ? "floating"
-      : "sidebar";
-  } catch {
-    return "sidebar";
-  }
+  return Effect.runSync(
+    Effect.try({
+      try: (): ChatPresentationMode =>
+        window.localStorage.getItem(CHAT_PRESENTATION_MODE_STORAGE_KEY) === "floating"
+          ? "floating"
+          : "sidebar",
+      catch: (error) => error,
+    }).pipe(Effect.orElseSucceed((): ChatPresentationMode => "sidebar")),
+  );
 }
 
 function PageLayoutOverlayDrawer() {

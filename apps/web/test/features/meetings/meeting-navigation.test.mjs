@@ -1,8 +1,8 @@
+import ts from "typescript";
+
 export function register({ readSource, assert, loadModule, test }) {
   test("meeting navigation resolves full-page and inline meeting routes", async () => {
-    const { getActiveMeetingId } = await loadModule(
-      "/src/app/shell/navigation/components/sidebar-nav-list.tsx",
-    );
+    const { getActiveMeetingId } = await loadModule("/src/app/shell/sidebar/sidebar-nav-list.tsx");
 
     assert.equal(getActiveMeetingId("/m/meeting-1"), "meeting-1");
     assert.equal(getActiveMeetingId("/p/page-1", { meeting: "meeting-2" }), "meeting-2");
@@ -30,16 +30,28 @@ export function register({ readSource, assert, loadModule, test }) {
   test("meeting sidebar links target full meeting pages", async () => {
     const [navigationSource, sidebarSource, meetingPageSource, meetingViewSource, routerSource] =
       await Promise.all([
-        readSource("/src/app/shell/navigation/components/nav-meetings.tsx"),
-        readSource("/src/app/shell/navigation/components/sidebar-nav-list.tsx"),
+        readSource("/src/app/shell/sidebar/sidebar-sections.tsx"),
+        readSource("/src/app/shell/sidebar/sidebar-nav-list.tsx"),
         readSource("/src/components/meetings/meeting.tsx"),
         readSource("/src/components/editor/extensions/meeting/meeting-view.tsx"),
         readSource("/src/app/routing/router.tsx"),
       ]);
 
-    assert.match(navigationSource, /to="\/m\/\$meetingId"/);
+    const module = ts.createSourceFile(
+      "sidebar-sections.tsx",
+      navigationSource,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const meetings = module.statements.find(
+      (node) => ts.isFunctionDeclaration(node) && node.name?.text === "NavMeetings",
+    );
+    assert.ok(meetings, "meeting navigation remains a distinct section");
+    const meetingNavigationSource = meetings.getText(module);
+    assert.match(meetingNavigationSource, /to="\/m\/\$meetingId"/);
     assert.match(sidebarSource, /to="\/m\/\$meetingId"/);
-    assert.doesNotMatch(navigationSource, /to="\/p\/\$pageId"/);
+    assert.doesNotMatch(meetingNavigationSource, /to="\/p\/\$pageId"/);
     assert.match(meetingPageSource, /embeddedPage=\{\{/);
     assert.match(meetingViewSource, /PageIconDisplay size="sm"/);
     assert.match(meetingViewSource, /ArrowUpRightIcon className=/);

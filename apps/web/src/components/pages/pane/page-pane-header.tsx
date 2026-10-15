@@ -38,8 +38,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { libraryViewIcons } from "@/app/shell/navigation";
-import { libraryViewLabels } from "@/app/shell/navigation";
+import { libraryViewIcons } from "@/components/library/library-icons";
+import { libraryViewLabels } from "@/components/library/library-model";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useDatabaseBootstrap, useDatabaseRecords } from "@zilobase/features/databases/react";
 import { useMeeting } from "@zilobase/features/meetings/react";

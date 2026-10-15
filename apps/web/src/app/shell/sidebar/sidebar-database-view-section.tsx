@@ -16,7 +16,7 @@ import {
 import { getDatabaseViewModel } from "@/components/databases";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { composeDatabaseViewData } from "@zilobase/features/databases";
-import { useSidebarSectionOpen } from "../model/local-state";
+import { useSidebarSectionOpen } from "@/app/shell/sidebar/sidebar-state";
 import type { SidebarSection } from "@zilobase/features/user-settings";
 import { isDatabaseLocked } from "@zilobase/features/databases";
 import { useAddDatabaseRow, useDatabaseRecords } from "@zilobase/features/databases/react";

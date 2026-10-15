@@ -1,5 +1,4 @@
 "use client";
-
 import {
   closestCenter,
   DndContext,
@@ -8,32 +7,33 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { isDesktopApp } from "@/components/desktop/index";
 import { useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
 import { MonitorUpIcon, SlidersHorizontalIcon } from "@/components/icons";
 import * as React from "react";
+import { Effect } from "effect";
 import { toast } from "sonner";
-
 import { useAppSearch } from "@/components/search/app-search";
 import { DatabaseViewIcon } from "@/components/databases";
-import { AiChatsSection } from "./components/ai-chats-section";
-import { NavFavorites } from "./components/nav-favorites";
-import { NavMeetings } from "./components/nav-meetings";
-import { NavPageSection } from "./components/nav-pages";
-import { RuntimeSectionDragItem } from "./components/runtime-section-drag-item";
-import { SidebarCustomizePanel } from "./components/sidebar-customize-panel";
-import { SidebarDatabaseViewSection } from "./components/sidebar-database-view-section";
-import { SidebarLayoutTabs } from "./components/sidebar-layout-tabs";
-import { SidebarShortcutList } from "./components/sidebar-shortcut-list";
-import { SidebarTasksSection } from "./components/sidebar-tasks-section";
+import {
+  AiChatsSection,
+  NavMeetings,
+  SidebarShortcutList,
+  SidebarTasksSection,
+} from "@/app/shell/sidebar/sidebar-sections";
+import { NavFavorites } from "@/app/shell/sidebar/favorites";
+import { NavPageSection } from "@/app/shell/sidebar/page-tree";
+import { SidebarCustomizePanel } from "@/app/shell/sidebar/sidebar-customization";
+import { SidebarDatabaseViewSection } from "@/app/shell/sidebar/sidebar-database-view-section";
+import { SidebarLayoutTabs } from "@/app/shell/sidebar/sidebar-layout";
 import { buildSidebarNavigation, type SidebarNavigationIcons } from "@zilobase/features/pages";
 import {
   getActiveDatabaseId,
   getActiveDatabaseViewId,
   getActiveMeetingId,
   getActivePageId,
-} from "./components/sidebar-nav-list";
+} from "@/app/shell/sidebar/sidebar-nav-list";
 import {
   Sidebar,
   SidebarContent,
@@ -43,7 +43,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { WorkspaceSwitcher } from "./workspace-switcher";
+import { WorkspaceSwitcher } from "@/app/shell/sidebar/workspace-switcher";
 import {
   clearPromotedFullPagePath,
   usePromotedFullPagePath,
@@ -54,8 +54,13 @@ import {
   getSelectedDesktopServer,
   type DesktopServer,
 } from "@/platform/server/operations/index";
-import { DEFAULT_DATABASE_ITEM_ICON, DEFAULT_MEETING_ITEM_ICON } from "@/components/pages/index";
-import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "@/components/pages/index";
+import {
+  DEFAULT_DATABASE_ITEM_ICON,
+  DEFAULT_MEETING_ITEM_ICON,
+  getDatabaseIconNode,
+  getPageIconNode,
+  PageIconDisplay,
+} from "@/components/pages/index";
 import { useSession } from "@zilobase/features/auth/react";
 import {
   useAddDatabaseRow,
@@ -76,17 +81,16 @@ import {
   resolveSidebarWorkspaceLayout,
   withSidebarWorkspaceLayout,
   type SidebarSection,
+  hideUnconfiguredIntegrationTabs,
+  restoreUnconfiguredIntegrationTabs,
 } from "@zilobase/features/user-settings";
 import { useUpdateUserSettings, useUserSettings } from "@zilobase/features/user-settings/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
-import {
-  hideUnconfiguredIntegrationTabs,
-  restoreUnconfiguredIntegrationTabs,
-} from "./model/sidebar-layout-model";
-import { readActiveSidebarTab, writeActiveSidebarTab } from "./model/local-state";
+import { readActiveSidebarTab, writeActiveSidebarTab } from "@/app/shell/sidebar/sidebar-state";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
 import { isFeatureEnabled } from "@/platform/environment";
 import { NotificationCenter } from "@/components/notifications/notification-center";
+import { cn } from "@/lib/utils";
 
 const sidebarNavigationIcons: SidebarNavigationIcons<React.ReactNode> = {
   getDatabaseIcon: (database: Parameters<typeof getDatabaseIconNode>[0]) =>
@@ -145,11 +149,19 @@ export function AppSidebar({
   React.useEffect(() => {
     if (desktopLinkServer || isDesktopApp()) return;
     let disposed = false;
-    void discoverRuntimeDesktopServer()
-      .then((server) => {
-        if (!disposed) setDesktopLinkServer(server);
-      })
-      .catch(() => undefined);
+    void Effect.runPromise(
+      Effect.tryPromise({
+        try: () => discoverRuntimeDesktopServer(),
+        catch: (error) => error,
+      }).pipe(
+        Effect.tap((server) =>
+          Effect.sync(() => {
+            if (!disposed) setDesktopLinkServer(server);
+          }),
+        ),
+        Effect.ignoreCause,
+      ),
+    );
     return () => {
       disposed = true;
     };
@@ -257,28 +269,51 @@ export function AppSidebar({
   );
 
   const handleCreatePage = React.useCallback(
-    async (teamspaceId?: string) => {
-      if (!workspaceId || isCreatingPage) return;
-      const page = await createPage({ teamspaceId, workspaceId });
-      await navigate({ params: { pageId: page.id }, to: "/p/$pageId" });
-    },
+    (teamspaceId?: string) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          if (!workspaceId || isCreatingPage) return;
+          const page = yield* Effect.tryPromise({
+            try: () => createPage({ teamspaceId, workspaceId }),
+            catch: (error) => error,
+          });
+          yield* Effect.tryPromise({
+            try: () => navigate({ params: { pageId: page.id }, to: "/p/$pageId" }),
+            catch: (error) => error,
+          });
+        }),
+      ),
     [createPage, isCreatingPage, navigate, workspaceId],
   );
   const handleCreateDatabase = React.useCallback(
-    async (teamspaceId?: string) => {
-      if (!workspaceId || isCreatingDatabase) return;
-      const payload = await createDatabase({ standalone: true, teamspaceId, workspaceId });
-      await navigate({
-        params: { databaseId: payload.database.id },
-        search: { view: undefined },
-        to: "/d/$databaseId",
-      });
-    },
+    (teamspaceId?: string) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          if (!workspaceId || isCreatingDatabase) return;
+          const payload = yield* Effect.tryPromise({
+            try: () => createDatabase({ standalone: true, teamspaceId, workspaceId }),
+            catch: (error) => error,
+          });
+          yield* Effect.tryPromise({
+            try: () =>
+              navigate({
+                params: { databaseId: payload.database.id },
+                search: { view: undefined },
+                to: "/d/$databaseId",
+              }),
+            catch: (error) => error,
+          });
+        }),
+      ),
     [createDatabase, isCreatingDatabase, navigate, workspaceId],
   );
-  const handleCreateChat = React.useCallback(async () => {
-    await navigate({ to: "/ai" });
-  }, [navigate]);
+  const handleCreateChat = React.useCallback(
+    () =>
+      Effect.runPromise(
+        Effect.tryPromise({ try: () => navigate({ to: "/ai" }), catch: (error) => error }),
+      ),
+    [navigate],
+  );
   const handleDropPageOnDatabase = React.useCallback(
     (input: {
       databaseId: string;
@@ -624,4 +659,39 @@ export function AppSidebar({
 
 function showMutationError(fallback: string) {
   return (error: unknown) => toast.error(error instanceof Error ? error.message : fallback);
+}
+
+export function RuntimeSectionDragItem({
+  children,
+  id,
+}: {
+  children: React.ReactNode;
+  id: string;
+}) {
+  const sortable = useSortable({
+    animateLayoutChanges: ({ isSorting }) => isSorting,
+    id,
+  });
+
+  return (
+    <div
+      className={cn(
+        (sortable.isDragging || sortable.isOver) && "relative z-20 bg-surface-navigation",
+      )}
+      onPointerDown={(event) => {
+        const target = event.target;
+        if (!(target instanceof Element) || !target.closest('[data-sidebar="group-label"]')) {
+          return;
+        }
+        sortable.listeners?.onPointerDown?.(event);
+      }}
+      ref={sortable.setNodeRef}
+      style={{
+        transform: sortable.transform ? `translate3d(0, ${sortable.transform.y}px, 0)` : undefined,
+        transition: sortable.transition,
+      }}
+    >
+      {children}
+    </div>
+  );
 }

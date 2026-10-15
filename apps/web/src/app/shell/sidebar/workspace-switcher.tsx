@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Effect } from "effect";
 import { isDesktopApp } from "@/components/desktop/index";
 
 import { Button } from "@/components/ui/button";
@@ -150,13 +151,20 @@ function MultiWorkspaceSwitcher({
   React.useEffect(() => {
     if (!isDesktop) return;
     let disposed = false;
-    void listDesktopServerProfiles()
-      .then((result) => {
-        if (!disposed) setProfiles(result.profiles);
-      })
-      .catch(() => {
-        if (!disposed) setProfiles([]);
-      });
+    void Effect.runPromise(
+      Effect.tryPromise({ try: () => listDesktopServerProfiles(), catch: (error) => error }).pipe(
+        Effect.tap((result) =>
+          Effect.sync(() => {
+            if (!disposed) setProfiles(result.profiles);
+          }),
+        ),
+        Effect.catchCause(() =>
+          Effect.sync(() => {
+            if (!disposed) setProfiles([]);
+          }),
+        ),
+      ),
+    );
     return () => {
       disposed = true;
     };
@@ -165,14 +173,14 @@ function MultiWorkspaceSwitcher({
   React.useEffect(() => {
     if (!isDesktop || isError || isLoading) return;
     const handle = window.setTimeout(() => {
-      void updateDesktopServerProfileSnapshot({
+      const update = updateDesktopServerProfileSnapshot({
         lastActiveWorkspaceId: activeWorkspace?.id ?? null,
         lastPath: `${window.location.pathname}${window.location.search}`,
-        workspaces: workspaces.map((workspace) => ({
-          id: workspace.id,
-          name: workspace.name,
-        })),
-      }).catch(() => undefined);
+        workspaces: workspaces.map((workspace) => ({ id: workspace.id, name: workspace.name })),
+      });
+      void Effect.runPromise(
+        Effect.tryPromise({ try: () => update, catch: (error) => error }).pipe(Effect.ignore),
+      );
     }, 400);
     return () => window.clearTimeout(handle);
   }, [activeWorkspace?.id, isDesktop, isError, isLoading, workspaces]);
@@ -184,14 +192,17 @@ function MultiWorkspaceSwitcher({
     const formData = new FormData(form);
     const workspaceName = String(formData.get("workspaceName") ?? "").trim();
 
-    try {
-      await createWorkspace.mutateAsync(workspaceName);
-      form.reset();
-      setIsCreateDialogOpen(false);
-      void navigate({ to: "/recents" });
-    } catch {
-      // React Query owns the visible error state.
-    }
+    return Effect.runPromise(
+      Effect.gen(function* () {
+        yield* Effect.tryPromise({
+          try: () => createWorkspace.mutateAsync(workspaceName),
+          catch: (error) => error,
+        });
+        form.reset();
+        setIsCreateDialogOpen(false);
+        void navigate({ to: "/recents" });
+      }).pipe(Effect.ignoreCause), // React Query owns the visible error state.
+    );
   }
 
   return (

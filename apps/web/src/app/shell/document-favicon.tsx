@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
@@ -64,36 +65,48 @@ export function DocumentFavicon() {
   });
 
   useEffect(() => {
-    document.title = title;
+    Effect.runSync(
+      Effect.sync(() => {
+        document.title = title;
+      }),
+    );
   }, [title]);
 
   useEffect(() => {
-    const links = getManagedFaviconLinks();
+    Effect.runSync(
+      Effect.sync(() => {
+        const links = getManagedFaviconLinks();
 
-    if (!icon) {
-      restoreDefaultFavicons(links);
-      return;
-    }
+        if (!icon) {
+          restoreDefaultFavicons(links);
+          return;
+        }
 
-    const color = getFaviconColor(icon, resolveCssColorToken);
-    const href = createFaviconHref(icon, { color });
+        const color = getFaviconColor(icon, resolveCssColorToken);
+        const href = createFaviconHref(icon, { color });
 
-    if (!href) {
-      restoreDefaultFavicons(links);
-      return;
-    }
+        if (!href) {
+          restoreDefaultFavicons(links);
+          return;
+        }
 
-    for (const link of links) {
-      link.href = href;
-      link.type = "image/svg+xml";
-      link.removeAttribute("media");
-    }
+        for (const link of links) {
+          link.href = href;
+          link.type = "image/svg+xml";
+          link.removeAttribute("media");
+        }
+      }),
+    );
   }, [icon, resolvedTheme]);
 
   useEffect(
     () => () => {
-      restoreDefaultFavicons(getManagedFaviconLinks());
-      document.title = DEFAULT_DOCUMENT_TITLE;
+      Effect.runSync(
+        Effect.sync(() => {
+          restoreDefaultFavicons(getManagedFaviconLinks());
+          document.title = DEFAULT_DOCUMENT_TITLE;
+        }),
+      );
     },
     [],
   );

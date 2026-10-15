@@ -32,13 +32,13 @@ import {
   getActivePageId,
   SidebarNavList,
   type SidebarNavItem,
-} from "./sidebar-nav-list";
+} from "@/app/shell/sidebar/sidebar-nav-list";
 import { SidebarNavItemAction } from "@/components/ui/sidebar-nav-item-action";
 import { useOpenInNewTab } from "@/components/desktop/ui";
-import { getSidebarExpansionStorageKey } from "../model/local-state";
+import { getSidebarExpansionStorageKey } from "@/app/shell/sidebar/sidebar-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";
-import { SidebarLibraryLink } from "./sidebar-library-link";
-import { useSidebarSectionOpen } from "../model/local-state";
+import { SidebarLibraryLink } from "@/app/shell/sidebar/sidebar-sections";
+import { useSidebarSectionOpen } from "@/app/shell/sidebar/sidebar-state";
 import type { SidebarSectionLimit, SidebarSectionSort } from "@zilobase/features/user-settings";
 
 export function NavFavorites({

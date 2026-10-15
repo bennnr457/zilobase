@@ -1,7 +1,9 @@
 import { build } from "esbuild";
+import ts from "typescript";
+import { Effect } from "effect";
 import { createRequire } from "node:module";
 
-export function register({ assert, appPath, test }) {
+export function register({ assert, appPath, readSource, test }) {
   test("navigation item commands preserve page/database mutations, locks and duplicate ordering", async () => {
     const modules = {
       "@tanstack/react-router": "export const useNavigate = () => runtime.navigate;",
@@ -249,5 +251,91 @@ export function register({ assert, appPath, test }) {
       if (savedNavigator) Object.defineProperty(globalThis, "navigator", savedNavigator);
       else delete globalThis.navigator;
     }
+  });
+  test("sidebar creation Effects preserve guards, mutation/navigation order and exact failures", async () => {
+    // Probe the real callbacks with their closed-over ports without mounting the
+    // unrelated sidebar renderers or changing production exports for a test.
+    const source = ts.createSourceFile(
+      "app-sidebar.tsx",
+      await readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const names = new Set(["handleCreatePage", "handleCreateDatabase", "handleCreateChat"]);
+    const declarations = [];
+    const visit = (node) => {
+      if (ts.isVariableDeclaration(node) && names.has(node.name.getText(source)))
+        declarations.push("const " + node.getText(source) + ";");
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    assert.equal(declarations.length, 3);
+    const compiled = ts.transpileModule(declarations.join("\n"), {
+      compilerOptions: { target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const capture = new Function(
+      "ports",
+      `const {React, Effect, workspaceId, isCreatingPage, isCreatingDatabase, createPage, createDatabase, navigate} = ports; ${compiled}; return {handleCreatePage, handleCreateDatabase, handleCreateChat};`,
+    );
+    const calls = [];
+    let failure;
+    const ports = {
+      React: { useCallback: (callback) => callback },
+      Effect,
+      workspaceId: "workspace",
+      isCreatingPage: false,
+      isCreatingDatabase: false,
+      createPage: async (input) => {
+        calls.push(["page", input]);
+        if (failure) throw failure;
+        return { id: "page" };
+      },
+      createDatabase: async (input) => {
+        calls.push(["database", input]);
+        if (failure) throw failure;
+        return { database: { id: "database" } };
+      },
+      navigate: async (input) => calls.push(["navigate", input]),
+    };
+    const pending = capture(ports).handleCreatePage("teamspace");
+    assert.deepEqual(calls, [["page", { workspaceId: "workspace", teamspaceId: "teamspace" }]]);
+    await pending;
+    assert.deepEqual(calls[1], ["navigate", { params: { pageId: "page" }, to: "/p/$pageId" }]);
+    calls.length = 0;
+    await capture(ports).handleCreateDatabase("teamspace");
+    assert.deepEqual(calls, [
+      ["database", { standalone: true, workspaceId: "workspace", teamspaceId: "teamspace" }],
+      [
+        "navigate",
+        { params: { databaseId: "database" }, search: { view: undefined }, to: "/d/$databaseId" },
+      ],
+    ]);
+    for (const [method, flag] of [
+      ["handleCreatePage", "isCreatingPage"],
+      ["handleCreateDatabase", "isCreatingDatabase"],
+    ]) {
+      calls.length = 0;
+      await capture({ ...ports, workspaceId: null })[method]();
+      await capture({ ...ports, [flag]: true })[method]();
+      assert.deepEqual(calls, []);
+      failure = new Error("Mutation failed");
+      await assert.rejects(capture(ports)[method](), (error) => error === failure);
+      assert.equal(calls.length, 1);
+      failure = undefined;
+    }
+    calls.length = 0;
+    const navigationFailure = new Error("Navigation failed");
+    await assert.rejects(
+      capture({
+        ...ports,
+        navigate: async () => {
+          throw navigationFailure;
+        },
+      }).handleCreatePage(),
+      (error) => error === navigationFailure,
+    );
+    await capture(ports).handleCreateChat();
+    assert.deepEqual(calls.at(-1), ["navigate", { to: "/ai" }]);
   });
 }

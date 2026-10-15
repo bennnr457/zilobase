@@ -72,7 +72,7 @@ import {
   getActivePageId,
   SidebarNavList,
   type SidebarNavItem,
-} from "./sidebar-nav-list";
+} from "@/app/shell/sidebar/sidebar-nav-list";
 import {
   SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME,
   SidebarNavItemAction,
@@ -85,16 +85,16 @@ import { PageIconDisplay } from "@/components/pages/index";
 import { prefetchPageForNavigation } from "@/components/editor/collaboration/page-prefetch";
 import { markPageNavigationStart } from "@/components/pages/navigation/page-navigation-timing";
 import { getTeamspaceSidebarPermissions } from "@zilobase/features/teamspaces";
-import { useSidebarSectionOpen } from "../model/local-state";
+import { useSidebarSectionOpen } from "@/app/shell/sidebar/sidebar-state";
 import { getConfiguredSidebarItems } from "@zilobase/features/pages";
-import { SidebarLibraryLink } from "./sidebar-library-link";
+import { SidebarLibraryLink } from "@/app/shell/sidebar/sidebar-sections";
 import type {
   SidebarSectionId,
   SidebarSectionLimit,
   SidebarSectionSort,
 } from "@zilobase/features/user-settings";
 
-export type { SidebarNavItem } from "./sidebar-nav-list";
+export type { SidebarNavItem } from "@/app/shell/sidebar/sidebar-nav-list";
 
 type DatabaseDropInput = {
   databaseId: string;

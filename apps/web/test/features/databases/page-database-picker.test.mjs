@@ -30,7 +30,7 @@ export function register({ assert, loadModule, readSource, test }) {
       readSource("/src/components/databases/views/view-settings/data-source-settings.tsx"),
       readSource("/src/components/databases/views/components/linked-data-source-picker.tsx"),
       readSource("/src/components/databases/setup/components/database-setup-card.tsx"),
-      readSource("/src/app/shell/navigation/components/sidebar-customize-panel.tsx"),
+      readSource("/src/app/shell/sidebar/sidebar-customization.tsx"),
     ]);
 
     for (const source of sources) {

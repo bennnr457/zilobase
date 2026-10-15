@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("sidebar layout entries reorder and move without changing unrelated tabs", async () => {
     const { moveArrayItem, moveLayoutEntry } = await loadModule(
-      "/src/app/shell/navigation/model/sidebar-layout-model.ts",
+      "/packages/features/src/user-settings/index.ts",
     );
     const layout = {
       tabs: [
@@ -36,9 +36,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("exact shortcuts are deduplicated only within the current tab", async () => {
-    const { hasShortcutTarget } = await loadModule(
-      "/src/app/shell/navigation/model/sidebar-layout-model.ts",
-    );
+    const { hasShortcutTarget } = await loadModule("/packages/features/src/user-settings/index.ts");
     const tab = {
       icon: "home",
       id: "home",
@@ -51,9 +49,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("shortcuts are active only for their current route and library view", async () => {
-    const { isShortcutActive } = await loadModule(
-      "/src/app/shell/navigation/model/sidebar-layout-model.ts",
-    );
+    const { isShortcutActive } = await loadModule("/src/app/shell/sidebar/sidebar-state.ts");
     const shortcut = (target) => ({ id: "shortcut", target });
 
     assert.equal(
@@ -91,7 +87,7 @@ export function register({ assert, loadModule, test }) {
 
   test("calendar tab stays hidden until its server environment is configured", async () => {
     const { hideUnconfiguredIntegrationTabs, restoreUnconfiguredIntegrationTabs } =
-      await loadModule("/src/app/shell/navigation/model/sidebar-layout-model.ts");
+      await loadModule("/packages/features/src/user-settings/index.ts");
     const layout = {
       tabs: [
         {
@@ -124,7 +120,7 @@ export function register({ assert, loadModule, test }) {
 
   test("Ask AI tab stays hidden while the feature flag is off and returns on save", async () => {
     const { hideUnconfiguredIntegrationTabs, restoreUnconfiguredIntegrationTabs } =
-      await loadModule("/src/app/shell/navigation/model/sidebar-layout-model.ts");
+      await loadModule("/packages/features/src/user-settings/index.ts");
     const layout = {
       tabs: [
         { icon: "home", id: "home", name: "Home", sections: [], shortcuts: [] },
