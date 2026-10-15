@@ -1,3 +1,12 @@
+import {
+  sharingTarget,
+  sharingLevel,
+  sharingAuth,
+  sharingResponse,
+  sharingWrites,
+} from "./sharing-api-fixture";
+import { SharePopover } from "@/components/sharing/share-popover";
+import { SettingsDialog } from "@/components/settings/shell/settings-dialog";
 import { ChatSidebarPanel } from "@/components/ai/workspace/chat-sidebar";
 import {
   GuestPageTitle,
@@ -65,6 +74,8 @@ const records = ["main", "child", "other"].map((id) => ({
 }));
 const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => {
   requests.push(path);
+  const sharedResponse = sharingResponse(path, options);
+  if (sharedResponse !== undefined) return sharedResponse as T;
   if (path === "/user-settings") {
     if (options?.method === "PATCH") {
       const patch = JSON.parse(String(options.body));
@@ -81,7 +92,7 @@ const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => 
         workspaceId: "workspace",
         pageId: null,
         name: "Rows",
-        accessLevel: "view",
+        accessLevel: sharingTarget ? sharingLevel : "view",
         config: {},
         createdAt: records[0].createdAt,
         updatedAt: records[0].updatedAt,
@@ -152,14 +163,18 @@ const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => 
   if (path.startsWith("/pages/"))
     return {
       page: records.find((item) => item.id === path.split("/")[2]),
-      accessLevel: "view",
+      accessLevel: sharingTarget ? sharingLevel : "view",
       databaseIds: [],
     } as T;
   return {} as T;
 };
 const auth = {
-  getSession: async () => ({ user: null, session: null }),
-  listWorkspaces: async () => [],
+  ...(sharingTarget
+    ? sharingAuth
+    : {
+        getSession: async () => ({ user: null, session: null }),
+        listWorkspaces: async () => [],
+      }),
 } as unknown as ZilobaseAuthClient;
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -194,6 +209,17 @@ function Content({ id }: { id: string }) {
   useEffect(() => {
     Object.assign(window, { pageLayoutCommands: state });
   }, [state]);
+  if (sharingTarget)
+    return (
+      <div className="p-8">
+        <SharePopover
+          databaseId={sharingTarget === "database" ? "database" : undefined}
+          pageId={sharingTarget === "page" ? "main" : undefined}
+        />
+      </div>
+    );
+  if (new URLSearchParams(window.location.search).get("workspace") === "settings")
+    return <SettingsFixture />;
   return (
     <PageSidePaneContext.Provider value={state}>
       <div className="flex min-w-0 w-full flex-col">
@@ -287,6 +313,22 @@ function FixtureSidebar({ children }: { children: ReactNode }) {
   return fixtureAudience ? children : <SidebarProvider>{children}</SidebarProvider>;
 }
 
+function SettingsFixture() {
+  const [section, setSection] = useState("security");
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <SettingsDialog
+        activeSection={section}
+        onOpenChange={setOpen}
+        onSectionChange={setSection}
+        open={open}
+      />
+      {!open ? <button onClick={() => setOpen(true)}>Reopen settings</button> : null}
+    </>
+  );
+}
+
 function AiPresentationFixture() {
   const [mode, setMode] = useState<"sidebar" | "floating">("sidebar");
   const [open, setOpen] = useState(true);
@@ -317,7 +359,15 @@ const initial = new URLSearchParams(window.location.search).get("target") ?? "/p
 const history = createMemoryHistory({ initialEntries: [initial] });
 const router = createRouter({ routeTree: root.addChildren(routes), history });
 Object.assign(window, {
-  pageLayoutFixture: { mounts, requests, writes, router, queryClient, settings: () => settings },
+  pageLayoutFixture: {
+    mounts,
+    requests,
+    writes,
+    sharingWrites,
+    router,
+    queryClient,
+    settings: () => settings,
+  },
 });
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>

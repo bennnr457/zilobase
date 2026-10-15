@@ -58,9 +58,9 @@ best-effort fallbacks, and stale-result checks. Keep layout geometry and React v
 state plain.
 
 Keep shell composition at `app/shell/app-shell.tsx`, the fallback screen header
-in `app/shell/header`, favicon installation/conversion beside the shell, and tool-panel
-composition in `app/shell/panels`, and settings shell/dialogs in `components/settings/shell` with section screens
-in `components/settings/sections`. Workspace settings, members, guests, invitations,
+in `app/shell/header`, favicon installation/conversion beside the shell, and
+tool-panel composition in `app/shell/panels`. Settings shell/dialogs live in
+`components/settings/shell`, with section screens in `components/settings/sections`. Workspace settings, members, guests, invitations,
 and page access gates live under the matching workspace subfolders; keep their
 hooks beside their UI without nested components/commands/model buckets. Teamspace
 UI and local hooks stay together at the teamspace domain root. Route-mounted
@@ -196,8 +196,7 @@ Ask AI presentation is grouped into chat, composer, attachments, workspace, and
 styles beneath `components/ai`; import owning files directly rather than an
 elements barrel.
 
-The editor remains web code. Native screens will open the hosted editor in a
-WebView through the existing `/editor` route and versioned bridge contracts in
+Native screens will open the hosted editor in a WebView through the existing `/editor` route and versioned bridge contracts in
 [editor-bridge.ts](packages/features/src/pages/editor-bridge.ts).
 
 The native app and WebView are independent JavaScript runtimes. They share client
@@ -233,6 +232,14 @@ assets remain deferred.
   terminology changes.
 
 ## Verification
+
+Web architecture checks enforce explicit source entrypoint names, direct imports,
+route screen names, and page subsystem locations. Keep domain tests grouped by
+those owners under `apps/web/test`; browser fixtures remain in their existing
+script harnesses. Existing named editor/block and database-row drag entrypoints
+remain subsystem APIs; do not introduce new forwarding-only files. Preserve the
+independent hosted-editor import graph and lazy screen/dialog loading when moving
+modules. Report renames/moves separately from merges and deletions.
 
 For shared-client changes, run features tests, web tests, workspace typechecks,
 lint, formatting, and architecture checks:

@@ -24,8 +24,6 @@ import {
 } from "../access/public-page-opening-preferences";
 import { PageOpeningModeMenu } from "../presentation/page-opening-mode-menu";
 
-export { getDatabaseId } from "../../navigation/route-identifiers";
-
 export function useRoutePageId(pathname: string) {
   const routePageId = getPageId(pathname);
   const meetingId = getMeetingId(pathname);

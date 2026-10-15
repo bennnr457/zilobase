@@ -1,3 +1,4 @@
+import { checkWebOwnership } from "./check-web-ownership.mjs";
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -54,5 +55,60 @@ test("application source ownership rejects retired folders", async () => {
     );
   } finally {
     await rm(root, { force: true, recursive: true });
+  }
+});
+
+test("web ownership rejects retired imports, forwarding files, misplaced page owners and unclear screens", async () => {
+  const root = await mkdtemp(join(tmpdir(), "web-ownership-"));
+  const files = {
+    "components/pages/pane/legacy.tsx": "export const Legacy = () => null;",
+    "components/pages/item-sharing.tsx": "export const Share = () => null;",
+    "components/pages/header/page-layout.tsx": "export const PageLayout = () => null;",
+    "components/sharing/index.ts": 'export { SharePopover } from "./share-popover";',
+    "components/sharing/share-popover.tsx": "export const SharePopover = () => null;",
+    "components/navigation/forward.ts": 'export { SharePopover } from "../sharing/share-popover";',
+    "components/navigation/breadcrumbs.tsx":
+      'import { Legacy } from "@/components/pages/pane/legacy"; export const Breadcrumbs = Legacy;',
+    "components/pages/page.tsx": "export default function Page() { return null; }",
+    "app/routing/router.tsx":
+      'const route = { component: lazyRouteComponent(() => import("@/components/pages/page")) };',
+  };
+  try {
+    for (const [name, contents] of Object.entries(files)) {
+      const path = join(root, "apps/web/src", name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    const errors = checkWebOwnership(root).join("\n");
+    assert.match(errors, /retired web folder/);
+    assert.match(errors, /retired import/);
+    assert.match(errors, /belongs at components\/pages\/layout\/page-layout/);
+    assert.match(errors, /use an explicit module name/);
+    assert.match(errors, /forwarding-only module/);
+    assert.match(errors, /route component must use a screen module/);
+    assert.match(errors, /route component name must end in Screen/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("web ownership accepts direct owners, named route screens and type imports", async () => {
+  const root = await mkdtemp(join(tmpdir(), "web-ownership-valid-"));
+  const files = {
+    "components/pages/layout/page-layout.tsx": "export const PageLayout = () => null;",
+    "components/pages/page-screen.tsx":
+      'import type { PageLayout } from "./layout/page-layout"; export default function PageScreen() { return null; }',
+    "app/routing/router.tsx":
+      'const route = { component: lazyRouteComponent(() => import("@/components/pages/page-screen")) };',
+  };
+  try {
+    for (const [name, contents] of Object.entries(files)) {
+      const path = join(root, "apps/web/src", name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    assert.deepEqual(checkWebOwnership(root), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });

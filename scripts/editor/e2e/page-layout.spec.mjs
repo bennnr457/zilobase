@@ -1,6 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 const fixture = "/scripts/editor/e2e/page-layout.html";
+
+async function settlePresentation(locator) {
+  await locator.evaluate(async (node) => {
+    node.getBoundingClientRect();
+    await Promise.allSettled(
+      node.getAnimations({ subtree: true }).map((animation) => animation.finished),
+    );
+  });
+}
+
 test("page frames own one header and one body viewport; promotion retains the draft and instance", async ({
   page,
 }) => {
@@ -126,6 +136,7 @@ test("desktop preference opens a dialog and clicking the same target toggles it 
 test("dialog-to-pane presentation switching keeps the page target", async ({ page }) => {
   await page.goto(fixture);
   await page.getByRole("button", { name: "Direct dialog", exact: true }).click();
+  await settlePresentation(page.getByRole("dialog"));
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Open pages as", exact: true })
@@ -233,7 +244,10 @@ for (const audience of ["public", "guest"]) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`${fixture}?audience=${audience}`);
     await page.getByRole("button", { name: "Direct pane", exact: true }).click();
-    const frame = page.locator("[data-page-side-pane-panel] [data-page-layout]");
+    const panel = page.locator("[data-page-side-pane-panel]");
+    await expect(panel).toHaveAttribute("aria-hidden", "false");
+    await settlePresentation(panel);
+    const frame = panel.locator("[data-page-layout]");
     await frame.getByRole("link", { name: "Open as full page", exact: true }).click();
     await expect(frame).toHaveAttribute("data-page-layout", "main");
     await expect(frame.getByLabel("Draft child")).toHaveCount(1);

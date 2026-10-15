@@ -1,3 +1,4 @@
+import { checkWebOwnership } from "./check-web-ownership.mjs";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,7 +58,7 @@ export function checkRuntimeBoundaries(repositoryRoot = root) {
       errors.push(`${retiredRoot}: retired application source folder`);
     }
   }
-  return errors;
+  return [...errors, ...checkWebOwnership(repositoryRoot)];
 }
 
 function sourceFiles(directory) {
@@ -77,6 +78,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
   } else {
-    console.log("Shared client and server runtime-port boundaries are clean");
+    console.log("Shared client, server runtime-port, and web ownership boundaries are clean");
   }
 }

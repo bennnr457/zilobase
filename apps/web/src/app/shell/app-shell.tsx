@@ -25,11 +25,8 @@ import {
   type SidebarResizeIntent,
 } from "@/app/shell/panels/tool-panels";
 
-import {
-  PageHeaderControlsContext,
-  getDatabaseId,
-  useRoutePageId,
-} from "@/components/pages/header/page-header";
+import { PageHeaderControlsContext, useRoutePageId } from "@/components/pages/header/page-header";
+import { getDatabaseId } from "@/components/navigation/route-identifiers";
 import {
   getSettingsSection,
   type SettingsSection,
