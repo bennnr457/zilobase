@@ -27,7 +27,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
       assert.match(source, /useDatabaseMetadata/);
       assert.doesNotMatch(source, /\buseDatabase\(/);
     }
-    const sharing = await readSource("/src/components/pages/use-item-sharing.ts");
+    const sharing = await readSource("/src/components/sharing/use-sharing.ts");
     assert.match(sharing, /useItemSharingController/);
     assert.doesNotMatch(sharing, /\buseDatabase\(/);
   });

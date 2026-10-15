@@ -5,12 +5,12 @@ import {
   type PageAccessRule,
 } from "@zilobase/features/pages";
 import { useItemSharingController } from "@zilobase/features/pages/react";
-import { getNavigationItemPath } from "@/components/pages/navigation/route-item-id";
+import { getNavigationItemPath } from "@/components/navigation/route-identifiers";
 import * as React from "react";
 import { toast } from "sonner";
 
 export type ShareTargetValue = `${AccessTargetType}:${string}`;
-export function useItemSharing({
+export function useSharing({
   databaseId,
   pageId,
 }: {
@@ -142,7 +142,7 @@ export function useItemSharing({
     togglePublished,
   };
 }
-export type ItemSharingState = ReturnType<typeof useItemSharing>;
+export type SharingState = ReturnType<typeof useSharing>;
 
 function getSharingSelection(
   targetValue: string,

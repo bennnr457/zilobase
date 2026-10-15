@@ -58,8 +58,11 @@ geometry, focus, and dismissal, not duplicate page headers or scroll viewports.
 Mobile embedded page requests navigate to main routes before consulting desktop
 presentation preferences. Keep the embedded-page dialog lazy and domain-owned;
 do not reintroduce a shell forwarding host or a separate authenticated-page module.
-Reusable item actions and sharing UI, with their local hooks, live in
-`components/pages`; page headers must not import them through the shell sidebar.
+Shared header/sidebar actions and their hooks live in `components/navigation`;
+page/database sharing UI and its hook live in `components/sharing`. Import these
+owners directly; page headers must not import them through the shell sidebar.
+Shared route identifiers and navigation icons belong in navigation; SVG icon
+helpers belong in `components/ui/icon-svg.ts`. Avoid domain forwarding barrels.
 Use Effect for clipboard and duplicate/navigation sequences while Query retains
 mutation ownership and React retains form/screen state.
 Load settings and embedded-page dialogs lazily. Route workspace settings directly

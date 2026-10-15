@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { buildStoredSvgFromRenderedSvg } from "@/lib/page-icon-utils";
+import { buildStoredSvgFromRenderedSvg } from "@/components/ui/icon-svg";
 
 type PhosphorCatalogEntry = {
   Icon: React.LazyExoticComponent<Icon>;

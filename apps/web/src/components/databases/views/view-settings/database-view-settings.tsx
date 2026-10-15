@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdrawer";
 import { Input } from "@/components/ui/input";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
-import { PageIconDisplay } from "@/components/pages/index";
+import { PageIconDisplay } from "@/components/pages/icons/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { getDatabasePropertyType } from "../../schema/property-catalog";

@@ -4,7 +4,7 @@ import { Upload } from "@/components/icons";
 import { IconColorGrid } from "@/components/ui/icon-color-grid";
 import { IconSvgPreview } from "@/components/ui/icon-svg-preview";
 import { cn } from "@/lib/utils";
-import { buildColoredIconSvg, parseUploadedSvg } from "@/lib/page-icon-utils";
+import { buildColoredIconSvg, parseUploadedSvg } from "@/components/ui/icon-svg";
 
 type IconUploadPickerProps = {
   className?: string;

@@ -10,7 +10,7 @@ import {
   setMeetingTranscriptPreview,
   type MeetingTranscriptPreviewState,
 } from "../meeting-transcript-preview";
-import type { OpenPageOptions } from "@/components/pages";
+import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
 
 export function MeetingCollaborativeEditor({
   document,

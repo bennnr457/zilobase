@@ -8,7 +8,7 @@ import type { HocuspocusProvider } from "@hocuspocus/provider";
 import type { CollaborationUser } from "../collaboration/collaboration-contracts";
 import type { PageLayoutConfig } from "@zilobase/features/pages";
 import type { PageIconPosition } from "@zilobase/features/pages";
-import type { OpenPageOptions } from "@/components/pages";
+import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
 import type { PageCommentController } from "@/components/comments/index";
 import type * as Y from "yjs";
 import type { Awareness } from "y-protocols/awareness";

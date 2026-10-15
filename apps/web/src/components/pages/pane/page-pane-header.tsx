@@ -23,7 +23,7 @@ import {
 } from "@/components/icons";
 import { toast } from "sonner";
 
-import { NavActions } from "@/components/pages/item-actions";
+import { HeaderActions } from "@/components/navigation/navigation-actions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -55,7 +55,10 @@ import {
 } from "@zilobase/features/user-settings";
 import { useUpdateUserSettings, useUserSettings } from "@zilobase/features/user-settings/react";
 import { getDatabaseIconNode, getPageIconNode, PageIconDisplay } from "../icons/page-icon";
-import { DEFAULT_DATABASE_ITEM_ICON, DEFAULT_MEETING_ITEM_ICON } from "../icons/item-icons";
+import {
+  DEFAULT_DATABASE_ITEM_ICON,
+  DEFAULT_MEETING_ITEM_ICON,
+} from "../../navigation/navigation-icons";
 import { resolveEmbeddedItemsOpenAs, type EmbeddedItemsOpenAs } from "@zilobase/features/pages";
 import { usePage, usePageNavigation } from "@zilobase/features/pages/react";
 import { EmbeddedItemPresentationDropdown } from "./embedded-item-presentation-dropdown";
@@ -70,13 +73,13 @@ import {
   readPublishedEmbeddedItemsOpenAs,
   writePublishedEmbeddedItemsOpenAs,
 } from "../publication/published-page-preferences";
-import { getDatabaseId, getMeetingId, getPageId } from "../navigation/route-item-id";
+import { getDatabaseId, getMeetingId, getPageId } from "../../navigation/route-identifiers";
 import {
   getPageConnectionIndicator,
   subscribePageConnectionIndicator,
 } from "@/components/editor/collaboration/page-connection-indicator";
 
-export { getDatabaseId } from "../navigation/route-item-id";
+export { getDatabaseId } from "../../navigation/route-identifiers";
 
 export function useRoutePageId(pathname: string) {
   const routePageId = getPageId(pathname);
@@ -165,7 +168,7 @@ export function PagePaneHeader({
       {showActions ? (
         <div className="ml-auto flex h-7 shrink-0 items-center px-3">
           {actions ?? (
-            <NavActions
+            <HeaderActions
               databaseId={databaseId}
               meetingId={meetingId}
               discussionsOpen={discussionsOpen ?? (main && controls.discussionsOpen)}

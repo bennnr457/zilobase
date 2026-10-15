@@ -52,7 +52,11 @@ import {
   type SidebarSectionKind,
   type SidebarWorkspaceLayout,
 } from "@zilobase/features/user-settings";
-import { PageIconDisplay, getDatabaseIconNode, getPageIconNode } from "@/components/pages/index";
+import {
+  PageIconDisplay,
+  getDatabaseIconNode,
+  getPageIconNode,
+} from "@/components/pages/icons/page-icon";
 import { libraryViewIcons } from "@/components/library/library-icons";
 import {
   closestCenter,

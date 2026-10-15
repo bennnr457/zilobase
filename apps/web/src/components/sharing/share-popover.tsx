@@ -1,8 +1,8 @@
 import {
-  useItemSharing,
-  type ItemSharingState,
+  useSharing,
+  type SharingState,
   type ShareTargetValue,
-} from "@/components/pages/use-item-sharing";
+} from "@/components/sharing/use-sharing";
 import * as React from "react";
 
 import {
@@ -48,7 +48,8 @@ const accessLabels: Record<AccessLevel, string> = {
   view: "View access",
 };
 
-export function ItemShareDropdown({
+/** Sharing controls for a page or database, including access and publishing. */
+export function SharePopover({
   databaseId,
   pageId,
 }: {
@@ -69,19 +70,19 @@ export function ItemShareDropdown({
           Share
         </Button>
       </PopoverTrigger>
-      {open ? <ItemShareDropdownContent databaseId={databaseId} pageId={pageId} /> : null}
+      {open ? <SharePopoverContent databaseId={databaseId} pageId={pageId} /> : null}
     </Popover>
   );
 }
 
-function ItemShareDropdownContent({
+function SharePopoverContent({
   databaseId,
   pageId,
 }: {
   databaseId?: string | null;
   pageId?: string | null;
 }) {
-  const sharing = useItemSharing({ databaseId, pageId });
+  const sharing = useSharing({ databaseId, pageId });
   const { isDatabase } = sharing;
   return (
     <PopoverContent
@@ -171,7 +172,7 @@ function AccessRow({
   );
 }
 
-function ItemPublishingTab({ sharing }: { sharing: ItemSharingState }) {
+function ItemPublishingTab({ sharing }: { sharing: SharingState }) {
   const {
     canManage,
     copyLink,
@@ -223,7 +224,7 @@ function ItemAccessRules({
   state,
 }: {
   state: Pick<
-    ItemSharingState,
+    SharingState,
     "canManage" | "deleteRule" | "effectiveAccessLevel" | "session" | "sharingRules" | "targetByKey"
   >;
 }) {
@@ -255,7 +256,7 @@ function ItemGuestInvitations({
   state,
 }: {
   state: Pick<
-    ItemSharingState,
+    SharingState,
     | "canManage"
     | "cancelGuestInvitation"
     | "cancelInvitation"
@@ -382,7 +383,7 @@ function ItemSharingTargets({
   state,
 }: {
   state: Pick<
-    ItemSharingState,
+    SharingState,
     | "canManage"
     | "isDatabase"
     | "nextAccessLevel"
@@ -493,7 +494,7 @@ function ItemSharingTargets({
   );
 }
 
-function ItemSharingTab({ sharing }: { sharing: ItemSharingState }) {
+function ItemSharingTab({ sharing }: { sharing: SharingState }) {
   const { canManage, copyLink, isDatabase, publicUrl } = sharing;
   return (
     <TabsContent className="grid gap-4" value="share">

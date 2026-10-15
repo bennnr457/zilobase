@@ -27,7 +27,7 @@ import { ChevronDown, ChevronRight, Loader2, Plus } from "@/components/icons";
 import { toast } from "sonner";
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalPageSidePane } from "@/components/pages/pane/page-side-pane";
-import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/index";
+import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/icons/page-icon";
 import { cn } from "@/lib/utils";
 import { useUndoHistory } from "@/app/shortcuts";
 import { getColorTokenBadgeClassName, getColorTokenDotClassName } from "@/lib/color-tokens";

@@ -21,7 +21,7 @@ import {
   databaseRecordWindowResponseSchema,
 } from "@zilobase/features/databases";
 import { colorWithAlpha, getPaletteColor } from "@/lib/color-tokens";
-import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/index";
+import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/icons/page-icon";
 import { setDatabasePageDragPayload } from "@/components/databases";
 
 export type CreatedPage = {

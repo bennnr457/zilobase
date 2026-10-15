@@ -13,7 +13,7 @@ import { ImagePlus, MessageSquare, SmilePlus, X } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
-import { PageIconDisplay } from "@/components/pages/index";
+import { PageIconDisplay } from "@/components/pages/icons/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { usePageEditorComments } from "@/components/comments/index";

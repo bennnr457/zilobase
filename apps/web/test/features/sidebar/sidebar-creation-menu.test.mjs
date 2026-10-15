@@ -26,7 +26,7 @@ export function register({ readSource, assert, test }) {
     );
   });
   test("sidebar uses the shared default page and database icon conventions", async () => {
-    const defaultIconsSource = await readSource("/src/components/pages/icons/item-icons.ts");
+    const defaultIconsSource = await readSource("/src/components/navigation/navigation-icons.ts");
     const appIconProviderSource = await readSource("/src/components/icons.ts");
     const pageIconSource = await readSource("/src/components/pages/icons/page-icon.tsx");
     const databasePageLinkSource = await readSource(

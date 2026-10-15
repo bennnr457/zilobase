@@ -10,7 +10,7 @@ import { getPageEmoji, type PageMetadata } from "@zilobase/features/pages";
 import { useUpdatePage } from "@zilobase/features/pages/react";
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalDatabaseDataContext } from "../views/state/database-view-context";
-import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/index";
+import { DefaultPageIcon, PageIconDisplay } from "@/components/pages/icons/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useOptionalUndoHistory } from "@/app/shortcuts";
 

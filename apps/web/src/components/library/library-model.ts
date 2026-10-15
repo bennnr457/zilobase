@@ -5,7 +5,7 @@ import {
   type RecentsMode,
   getMostRecentItem,
 } from "@zilobase/features/library";
-import { DEFAULT_MEETING_ITEM_ICON } from "@/components/pages/icons/item-icons";
+import { DEFAULT_MEETING_ITEM_ICON } from "@/components/navigation/navigation-icons";
 import type { DatabaseViewData } from "@zilobase/features/databases";
 import type { MeetingListItem } from "@zilobase/features/meetings";
 import type { Teamspace } from "@zilobase/features/teamspaces";

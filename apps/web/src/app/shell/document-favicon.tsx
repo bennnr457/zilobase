@@ -3,11 +3,7 @@ import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 
-import {
-  getDatabaseId,
-  getMeetingId,
-  getPageId,
-} from "@/components/pages/navigation/route-item-id";
+import { getDatabaseId, getMeetingId, getPageId } from "@/components/navigation/route-identifiers";
 import {
   createFaviconHref,
   DEFAULT_DOCUMENT_TITLE,
@@ -19,7 +15,7 @@ import {
   DEFAULT_DATABASE_ITEM_ICON,
   DEFAULT_MEETING_ITEM_ICON,
   DEFAULT_PAGE_ITEM_ICON,
-} from "@/components/pages/icons/item-icons";
+} from "@/components/navigation/navigation-icons";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 import { useMeeting } from "@zilobase/features/meetings/react";

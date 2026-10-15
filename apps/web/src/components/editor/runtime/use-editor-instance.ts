@@ -20,7 +20,7 @@ import {
 import { EditorIntegration } from "./editor-integration";
 import type { EditorWorkspace } from "./editor-workspace";
 import type { BlockDropLine, PasteChoiceState } from "../core/types";
-import type { OpenPageOptions } from "@/components/pages";
+import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
 import { useLatestRef } from "./use-latest-ref";
 
 import {

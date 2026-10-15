@@ -1,5 +1,5 @@
 import { GripVertical } from "@/components/icons";
-import { DefaultPageIcon } from "@/components/pages/index";
+import { DefaultPageIcon } from "@/components/pages/icons/page-icon";
 
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import type { TimelineRowLayout } from "./database-timeline-layout";

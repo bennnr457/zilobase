@@ -13,7 +13,7 @@ export function register({ assert, appPath, readSource, test }) {
       "@zilobase/features/teamspaces/react": "export const useTeamspaces = () => ({data:[]});",
       sonner:
         'export const toast = { error: value => runtime.calls.push(["error",value]), success: value => runtime.calls.push(["success",value]) };',
-      "@/components/pages/layout":
+      "@/components/pages/layout/index":
         'export const useLayoutEditor = () => ({openLayoutEditor: input => runtime.calls.push(["layout",input])});',
       "@/components/databases/access/use-database-metadata":
         "export const useDatabaseMetadata = () => ({data:runtime.database});",
@@ -39,12 +39,12 @@ export function register({ assert, appPath, readSource, test }) {
         contents: `
       import { createElement } from "react";
       import { renderToString } from "react-dom/server";
-      import { useNavigationItemActions } from "./src/components/pages/use-item-actions";
+      import { useHeaderActions } from "./src/components/navigation/use-navigation-actions";
       import { runtime } from "navigation-test-runtime";
       export function capture(input, dependencies) {
         Object.assign(runtime, dependencies);
         let actions;
-        function Probe() { actions = useNavigationItemActions(input); return null; }
+        function Probe() { actions = useHeaderActions(input); return null; }
         renderToString(createElement(Probe));
         return actions;
       }
@@ -65,7 +65,7 @@ export function register({ assert, appPath, readSource, test }) {
               args.path === actionHook ? { path: actionHook, namespace: "file" } : undefined,
             );
             build.onResolve({ filter: /^@zilobase\/features\/pages\/react$/ }, (args) =>
-              args.importer.endsWith("use-item-actions.ts")
+              args.importer.endsWith("use-navigation-actions.ts")
                 ? { path: "combined-pages", namespace: "navigation-test" }
                 : { path: actionHook },
             );

@@ -5,7 +5,7 @@ import { useResizableTableColumns } from "@/lib/hooks/use-resizable-table-column
 
 import { DatabasePageLink } from "@/components/databases";
 
-import { PageIconDisplay } from "@/components/pages/index";
+import { PageIconDisplay } from "@/components/pages/icons/page-icon";
 
 import { type Teamspace, type TeamspaceAccessMode } from "@zilobase/features/teamspaces";
 

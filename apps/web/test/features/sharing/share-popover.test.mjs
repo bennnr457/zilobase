@@ -42,13 +42,13 @@ export function register({ assert, appPath, test }) {
         contents: `
       import {createElement} from "react";
       import {renderToString} from "react-dom/server";
-      import {useItemSharing} from "./src/components/pages/use-item-sharing";
+      import {useSharing} from "./src/components/sharing/use-sharing";
       import {runtime} from "sharing-test-runtime";
       export function capture(input, dependencies, selection) {
         Object.assign(runtime,dependencies);
         let sharing, initialized=false;
         function Probe() {
-          sharing=useItemSharing(input);
+          sharing=useSharing(input);
           if(selection && !initialized) {
             initialized=true;
             sharing.setTargetValue(selection.target);

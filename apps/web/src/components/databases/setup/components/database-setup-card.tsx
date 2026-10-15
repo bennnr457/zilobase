@@ -30,8 +30,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getIconSolidClassName } from "@/lib/color-tokens";
-import { DEFAULT_DATABASE_ITEM_ICON } from "@/components/pages/index";
-import { getDatabaseIconNode, PageIconDisplay } from "@/components/pages/index";
+import { DEFAULT_DATABASE_ITEM_ICON } from "@/components/navigation/navigation-icons";
+import { getDatabaseIconNode, PageIconDisplay } from "@/components/pages/icons/page-icon";
 import { cn } from "@/lib/utils";
 import posthog from "@/lib/posthog";
 import {

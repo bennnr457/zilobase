@@ -36,13 +36,13 @@ import {
 import { SidebarNavItemAction } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { type SidebarNavItem } from "@zilobase/features/pages";
-import { useNavigationItemActions } from "@/components/pages/use-item-actions";
-import { ItemShareDropdown } from "@/components/pages/item-sharing";
+import { useHeaderActions } from "@/components/navigation/use-navigation-actions";
+import { SharePopover } from "@/components/sharing/share-popover";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { usePageCommentsSnapshot } from "@/components/comments/index";
 import { Switch } from "@/components/ui/switch";
-import { useSidebarItemActions, copySidebarItemLink } from "./use-item-actions";
+import { useSidebarEntryActions, copySidebarEntryLink } from "./use-navigation-actions";
 
 const moreActions = [
   "Customize layout",
@@ -52,7 +52,7 @@ const moreActions = [
   "Version History",
 ];
 
-export function NavActions({
+export function HeaderActions({
   databaseId,
   discussionsOpen = false,
   onToggleDiscussions,
@@ -69,7 +69,7 @@ export function NavActions({
   pageId?: string | null;
   meetingId?: string | null;
 }) {
-  const { item, favorite, lock, layout, moreMenu, trash } = useNavigationItemActions({
+  const { item, favorite, lock, layout, moreMenu, trash } = useHeaderActions({
     databaseId,
     pageId,
     meetingId,
@@ -121,10 +121,7 @@ export function NavActions({
             </Button>
           ) : null}
           {item.pageId || databaseId ? (
-            <ItemShareDropdown
-              databaseId={item.pageId ? undefined : databaseId}
-              pageId={item.pageId}
-            />
+            <SharePopover databaseId={item.pageId ? undefined : databaseId} pageId={item.pageId} />
           ) : null}
           <Button
             aria-label={favorite.active ? "Remove from favorites" : "Add to favorites"}
@@ -228,7 +225,7 @@ export function NavActions({
   );
 }
 
-export function SidebarItemMenu({
+export function SidebarEntryMenu({
   item,
   favoriteOnly = false,
   onRemoveFavorite,
@@ -252,7 +249,7 @@ export function SidebarItemMenu({
     isDeleting,
     linkPath,
     runDelete,
-  } = useSidebarItemActions(item);
+  } = useSidebarEntryActions(item);
 
   return (
     <>
@@ -285,7 +282,7 @@ export function SidebarItemMenu({
           ) : null}
           <DropDrawerItem
             onSelect={() => {
-              void copySidebarItemLink(linkPath);
+              void copySidebarEntryLink(linkPath);
             }}
           >
             <LinkIcon className="text-content-secondary" />

@@ -27,7 +27,7 @@ import {
 import { PageEditorPane } from "@/components/pages/pane/page-editor-pane";
 import { useDatabaseViewNavigation } from "../views/use-database-view-navigation";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
-import type { OpenPageOptions } from "@/components/pages";
+import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
 import { useTitleDraft } from "@/components/pages/hooks/use-title-draft";
 
 export default function DatabasePage() {

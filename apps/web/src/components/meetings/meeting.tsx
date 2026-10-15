@@ -23,7 +23,7 @@ import { usePage, usePageAccessLevel, useUpdatePage } from "@zilobase/features/p
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useSession } from "@zilobase/features/auth/react";
 import { LoaderCircle } from "@/components/icons";
-import type { OpenPageOptions } from "@/components/pages";
+import type { OpenPageOptions } from "@/components/pages/navigation/open-page-options";
 
 export default function MeetingPage() {
   const { meetingId } = useParams({ from: "/m/$meetingId" });

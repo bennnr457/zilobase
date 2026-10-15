@@ -1,4 +1,4 @@
-import { getNavigationItemPath } from "@/components/pages/navigation/route-item-id";
+import { getNavigationItemPath } from "@/components/navigation/route-identifiers";
 import * as React from "react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
@@ -16,9 +16,9 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useOpenInNewTab } from "@/components/desktop/ui";
 import { type SidebarNavItem } from "@zilobase/features/pages";
 import { Cause, Effect } from "effect";
-import { useLayoutEditor } from "@/components/pages/layout";
+import { useLayoutEditor } from "@/components/pages/layout/index";
 
-export function useNavigationItemActions({
+export function useHeaderActions({
   databaseId,
   pageId,
   meetingId,
@@ -246,7 +246,7 @@ export function getNavigationPendingState(
   };
 }
 
-export function useSidebarItemActions(item: SidebarNavItem<unknown>) {
+export function useSidebarEntryActions(item: SidebarNavItem<unknown>) {
   const workspaceId = useActiveWorkspaceId();
   const { isMobile } = useSidebar();
   const openInNewTab = useOpenInNewTab();
@@ -337,7 +337,7 @@ function getSidebarDatabaseId(path: string) {
   return id ? decodeURIComponent(id) : null;
 }
 
-export function copySidebarItemLink(path: string) {
+export function copySidebarEntryLink(path: string) {
   return Effect.runPromise(
     Effect.tryPromise({
       try: () =>

@@ -51,10 +51,12 @@ import {
 import {
   DEFAULT_DATABASE_ITEM_ICON,
   DEFAULT_MEETING_ITEM_ICON,
+} from "@/components/navigation/navigation-icons";
+import {
   getDatabaseIconNode,
   getPageIconNode,
   PageIconDisplay,
-} from "@/components/pages/index";
+} from "@/components/pages/icons/page-icon";
 import type { useSession } from "@zilobase/features/auth/react";
 import {
   useSetTeamspaceMembership,
@@ -92,7 +94,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { isDatabaseLocked } from "@zilobase/features/databases";
-import { SidebarItemMenu } from "@/components/pages/item-actions";
+import { SidebarEntryMenu } from "@/components/navigation/navigation-actions";
 import {
   useSidebarTree,
   useSidebarSectionOpen,
@@ -1213,7 +1215,7 @@ function StaticSection({
             }
             renderItemMenu={({ item }) =>
               item.isMeeting || item.isDatabaseView ? null : (
-                <SidebarItemMenu
+                <SidebarEntryMenu
                   item={item}
                   favoriteOnly={model.kind === "favorites"}
                   onRemoveFavorite={sidebar.handleRemoveFavorite}
