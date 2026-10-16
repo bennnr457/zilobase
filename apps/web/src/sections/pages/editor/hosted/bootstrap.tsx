@@ -92,6 +92,16 @@ const bridge = createEditorBridge(
           }),
           createRoute({
             getParentRoute: () => route,
+            path: "/m/$meetingId",
+            beforeLoad: ({ params }) => {
+              bridge.notify({
+                type: "navigation",
+                target: { kind: "meeting", id: params.meetingId },
+              });
+            },
+          }),
+          createRoute({
+            getParentRoute: () => route,
             path: "/d/$databaseId",
             beforeLoad: ({ params }) => {
               bridge.notify({
@@ -192,6 +202,14 @@ function HostedSurface() {
     let unconfirmed = false;
     let lastStatus = "";
     let lastError: string | null = null;
+    const meetingChanges = new Map<object, { content: string; dirty: boolean }>();
+    const nestedSessions = () =>
+      [...registry.workspace.runtimes.values()]
+        .map((runtime) => runtime.getSession())
+        .filter(
+          (session) => session.kind === "meeting" && session.meetingId && session.collaboration,
+        );
+
     const status = (): EditorBridgeStatus => {
       const id = pageRef.current;
       const handle = id ? registry.getEditorHandle(id) : null;
@@ -201,13 +219,44 @@ function HostedSurface() {
           ? "offline"
           : !handle?.getContentJson()
             ? "connecting"
-            : handle.isServerConfirmed?.()
+            : handle.isServerConfirmed?.() &&
+                nestedSessions().every(
+                  (session) =>
+                    session.collaboration!.synced && session.collaboration!.unsyncedChanges === 0,
+                )
               ? "synchronized"
               : "pending",
       };
     };
     const publish = () => {
       const current = status();
+      const documents = new Set<object>();
+      for (const session of nestedSessions()) {
+        const collaboration = session.collaboration!;
+        documents.add(collaboration.document);
+        const content = JSON.stringify(
+          ["notes", "summary", "transcript"].map((field) =>
+            collaboration.document.getXmlFragment(field).toJSON(),
+          ),
+        );
+        const previous = meetingChanges.get(collaboration.document);
+        const dirty = Boolean(previous?.dirty || (previous && previous.content !== content));
+        const confirmed =
+          collaboration.synced &&
+          collaboration.status === "connected" &&
+          collaboration.unsyncedChanges === 0;
+        if (dirty && confirmed)
+          bridge.notify({
+            type: "changed",
+            records: [
+              { kind: "meeting", id: session.meetingId! },
+              ...(session.pageId ? [{ kind: "page" as const, id: session.pageId }] : []),
+            ],
+          });
+        meetingChanges.set(collaboration.document, { content, dirty: dirty && !confirmed });
+      }
+      for (const document of meetingChanges.keys())
+        if (!documents.has(document)) meetingChanges.delete(document);
       const handle = pageRef.current ? registry.getEditorHandle(pageRef.current) : null;
       const content = JSON.stringify(handle?.getContentJson() ?? null);
       if (previousContent !== null && previousContent !== content) unconfirmed = true;
@@ -243,7 +292,27 @@ function HostedSurface() {
       });
     };
     const unsubscribeMutations = runtime!.queryClient.getMutationCache().subscribe((event) => {
-      if (event.type === "updated" && event.action.type === "success") notifyRecords();
+      if (event.type === "updated" && event.action.type === "success") {
+        notifyRecords();
+        const value = event.mutation.state.data;
+        if (value && typeof value === "object" && "meeting" in value) {
+          const meeting = value.meeting as
+            | { id?: unknown; workspaceId?: unknown; pageId?: unknown; notesPageId?: unknown }
+            | undefined;
+          if (
+            meeting &&
+            typeof meeting.id === "string" &&
+            meeting.workspaceId === scope?.workspaceId
+          ) {
+            const records: Array<{ kind: "meeting" | "page"; id: string }> = [
+              { kind: "meeting", id: meeting.id },
+            ];
+            for (const id of [meeting.pageId, meeting.notesPageId])
+              if (typeof id === "string") records.push({ kind: "page", id });
+            bridge.notify({ type: "changed", records });
+          }
+        }
+      }
     });
     let databasePending = false;
     const unsubscribeCommands = controller.commandState.subscribe(() => {
@@ -281,6 +350,14 @@ function HostedSurface() {
         const handle = registry.getEditorHandle(pageRef.current!);
         if (!handle?.flushLocal) throw new Error("Storage unavailable.");
         await handle.flushLocal();
+        const flushed = new Set<object>();
+        for (const session of nestedSessions()) {
+          const collaboration = session.collaboration!;
+          if (flushed.has(collaboration.document)) continue;
+          if (!collaboration.flushLocal) throw new Error("Storage unavailable.");
+          await collaboration.flushLocal();
+          flushed.add(collaboration.document);
+        }
       },
       status,
       dispose: () => registry.documentSessions.dispose(),

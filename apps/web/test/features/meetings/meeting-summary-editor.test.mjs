@@ -30,13 +30,16 @@ export function register({ readSource, assert, test }) {
     assert.match(summaryEditorSource, /onPointerDownCapture=\{focusNestedEditor\}/);
     assert.match(summaryEditorSource, /documentId: document\.guid,\s+pageId/);
     assert.match(meetingViewSource, /const transcriptEditable\s*=\s*editable/);
-    assert.match(meetingViewSource, /editable=\{transcriptEditable\}/);
+    assert.match(
+      meetingViewSource,
+      /editable=\{\s*transcriptEditable\s*&&\s*collaboration\.synced/,
+    );
     assert.match(meetingViewSource, /livePreview=\{transcriptPreview\}/);
     assert.match(meetingViewSource, /useMeetingCollaboration\(meetingId, session\?\.user\)/);
     assert.match(meetingViewSource, /user=\{collaboration\.user\}/);
     assert.match(meetingCollaborationSource, /setAwarenessField\("user", collaborationUser\)/);
     assert.match(meetingCollaborationSource, /autoConnect: false/);
-    assert.match(meetingCollaborationSource, /activeProvider\.connect\(\)/);
+    assert.match(meetingCollaborationSource, /activeProvider\s*\.connect\(\)/);
     assert.match(
       meetingViewSource,
       /collaboration\.document && collaboration\.provider && collaboration\.user/,

@@ -789,7 +789,16 @@ export function MeetingView({
           <>
             <MeetingCollaborativeEditor
               document={collaboration.document}
-              editable={transcriptEditable}
+              meetingId={meetingId}
+              synced={collaboration.synced}
+              unsyncedChanges={collaboration.unsyncedChanges}
+              flushLocal={collaboration.flushLocal}
+              editable={
+                transcriptEditable &&
+                collaboration.synced &&
+                collaboration.status === "connected" &&
+                !collaboration.error
+              }
               field={activeTab}
               livePreview={transcriptPreview}
               onOpenPage={openPage}

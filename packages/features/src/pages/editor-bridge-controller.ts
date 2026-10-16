@@ -23,7 +23,8 @@ export function createEditorBridge(
   send: (message: EditorBridgeMessage) => void,
 ) {
   let binding: { instanceId: string; scope: EditorBridgeScope } | null = null;
-  const requests = new Set<string>();
+  let hostInstance: string | null = null;
+  let lastSequence = 0;
   let tail: Promise<unknown> = Promise.resolve();
   let disposed = false;
   return {
@@ -42,12 +43,18 @@ export function createEditorBridge(
             type: "response",
             result,
           });
-        const key = `${request.instanceId}:${request.requestId}`;
-        if (requests.has(key) || requests.size >= 2048) {
+        if (hostInstance !== null && hostInstance !== request.instanceId) {
+          binding = null;
+          await adapter.close().catch(() => undefined);
+          reply({ ok: false, code: "identity_mismatch" });
+          return false;
+        }
+        if (request.sequence <= lastSequence) {
           reply({ ok: false, code: "duplicate_request" });
           return false;
         }
-        requests.add(key);
+        hostInstance ??= request.instanceId;
+        lastSequence = request.sequence;
         const matches =
           binding &&
           binding.instanceId === request.instanceId &&
@@ -113,7 +120,8 @@ export function createEditorBridge(
       binding = null;
       await tail;
       await adapter.close().catch(() => undefined);
-      requests.clear();
+      hostInstance = null;
+      lastSequence = 0;
     },
   };
 }

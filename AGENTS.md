@@ -339,7 +339,5 @@ complete. When working in these areas, address and test the remaining gaps:
 - Calendar currently requires its storage adapter despite optional persistence.
 - Offline session restoration/logout cleanup and image-upload API/domain work
   still have ownership in web that should be split into shared policy and adapters.
-- The editor bridge has a lifetime request-count limit that can block close, and
-  embedded meeting navigation/detail invalidation is incomplete.
 
 These are migration gaps, not patterns to repeat. Remove entries as they are fixed.

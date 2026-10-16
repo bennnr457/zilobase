@@ -14,6 +14,10 @@ import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-nav
 
 export function MeetingCollaborativeEditor({
   document,
+  meetingId,
+  synced,
+  unsyncedChanges,
+  flushLocal,
   editable,
   field,
   livePreview = null,
@@ -25,6 +29,10 @@ export function MeetingCollaborativeEditor({
   workspaceId,
 }: {
   document: Y.Doc;
+  meetingId: string;
+  synced: boolean;
+  unsyncedChanges: number;
+  flushLocal?: () => Promise<void>;
   editable: boolean;
   field: "notes" | "summary" | "transcript";
   livePreview?: MeetingTranscriptPreviewState[] | null;
@@ -73,6 +81,7 @@ export function MeetingCollaborativeEditor({
       <Editor
         session={{
           kind: "meeting",
+          meetingId,
           documentId: document.guid,
           pageId,
           workspaceId,
@@ -81,7 +90,9 @@ export function MeetingCollaborativeEditor({
             document,
             provider: provider ?? undefined,
             status,
-            unsyncedChanges: 0,
+            unsyncedChanges,
+            synced,
+            flushLocal,
             user,
             users: [],
           },

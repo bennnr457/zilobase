@@ -15,6 +15,7 @@ export default defineConfig({
   optimizeDeps: {
     entries: [
       "scripts/editor/e2e/index.html",
+      "scripts/editor/e2e/meeting-runtime.html",
       "scripts/editor/e2e/page-layout.html",
       "scripts/editor/e2e/hosted.html",
       "scripts/editor/e2e/hosted-editor.html",

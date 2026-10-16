@@ -7,6 +7,7 @@ import { resolvePageDetailReference } from "./cache";
 import { createEditorBridge } from "./editor-bridge-controller";
 import { acceptEditorChangeNotification } from "./editor-host";
 import {
+  EDITOR_BRIDGE_VERSION,
   type EditorBridgeMessage,
   type EditorBridgeScope,
   type EditorBridgeRequest,
@@ -56,7 +57,15 @@ function fixture() {
   const request = (
     command: EditorBridgeRequest["command"],
     patch: Partial<EditorBridgeRequest> = {},
-  ) => ({ version: 1, instanceId: "editor", scope, requestId: `r${++id}`, command, ...patch });
+  ) => ({
+    version: EDITOR_BRIDGE_VERSION,
+    instanceId: "editor",
+    scope,
+    requestId: `r${++id}`,
+    sequence: id,
+    command,
+    ...patch,
+  });
   return {
     bridge,
     messages,
@@ -72,7 +81,7 @@ test("bridge rejects invalid versions, envelopes, unknown commands and credentia
   const f = fixture();
   const initialize = f.request({ type: "initialize", sessionToken: "secret" });
   for (const raw of [
-    { ...initialize, version: 2 },
+    { ...initialize, version: 1 },
     { ...initialize, requestId: "" },
     { ...initialize, scope: { ...scope, sessionId: "" } },
     { ...initialize, credential: "extra" },
@@ -161,7 +170,7 @@ test("independent host/editor Query and DB runtimes reconcile only scoped confir
   assert.equal(get(host), "Before");
   assert.equal(get(editor), "Confirmed");
   const message: EditorBridgeMessage = {
-    version: 1,
+    version: EDITOR_BRIDGE_VERSION,
     instanceId: "editor",
     scope,
     type: "event",
@@ -215,7 +224,7 @@ test("storage failures cannot acknowledge local flush or emit confirmed changes"
     assert.deepEqual(response.result, { ok: false, code: "operation_failed" });
   f.bridge.notify({ type: "navigation", target: { kind: "page", id: "another" } });
   assert.deepEqual(f.messages.at(-1), {
-    version: 1,
+    version: EDITOR_BRIDGE_VERSION,
     type: "event",
     instanceId: "editor",
     scope,
@@ -226,4 +235,57 @@ test("storage failures cannot acknowledge local flush or emit confirmed changes"
     false,
   );
   await f.bridge.dispose();
+});
+
+test("long-lived bridges keep constant replay state and can flush and close after 2048 requests", async () => {
+  const f = fixture();
+  const initialize = f.request({ type: "initialize", sessionToken: "secret" });
+  await f.bridge.receive(initialize);
+  for (let i = 0; i < 2100; i++)
+    assert.equal(await f.bridge.receive(f.request({ type: "status" })), true);
+  assert.equal(await f.bridge.receive(initialize), false);
+  assert.equal(await f.bridge.receive(f.request({ type: "flushLocal" })), true);
+  assert.equal(await f.bridge.receive(f.request({ type: "close" })), true);
+  assert.equal(f.credential(), null);
+  assert.equal(await f.bridge.receive(initialize), false);
+});
+
+test("meeting navigation and invalidation use the versioned bridge contract", async () => {
+  const f = fixture();
+  await f.bridge.receive(f.request({ type: "initialize", sessionToken: "secret" }));
+  f.bridge.notify({ type: "navigation", target: { kind: "meeting", id: "m" } });
+  f.bridge.notify({ type: "changed", records: [{ kind: "meeting", id: "m" }] });
+  assert.equal(f.messages.at(-1)?.version, EDITOR_BRIDGE_VERSION);
+});
+
+test("confirmed meeting notifications invalidate the native meeting detail only in their current scope", async () => {
+  const host = createZilobaseClient({ deployment: "server" });
+  host.queryClient.setQueryData(sessionQueryKey, {
+    user: { id: "a" },
+    session: { id: "s", activeWorkspaceId: "w" },
+  });
+  const key = ["meetings", "detail", "m"];
+  host.queryClient.setQueryData(key, { meeting: { id: "m", title: "Before" } });
+  host.queryClient.setQueryData(["meetings", "detail", "other"], { meeting: { id: "other" } });
+  const notification: EditorBridgeMessage = {
+    version: EDITOR_BRIDGE_VERSION,
+    instanceId: "editor",
+    scope,
+    type: "event",
+    event: { type: "changed", records: [{ kind: "meeting", id: "m" }] },
+  };
+  assert.equal(
+    await acceptEditorChangeNotification(
+      host.queryClient,
+      { instanceId: "editor", scope },
+      notification,
+    ),
+    true,
+  );
+  assert.equal(host.queryClient.getQueryState(key)?.isInvalidated, true);
+  assert.equal(
+    host.queryClient.getQueryState(["meetings", "detail", "other"])?.isInvalidated,
+    false,
+  );
+  host.dispose();
 });

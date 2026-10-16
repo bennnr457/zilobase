@@ -1,6 +1,7 @@
 import { createZilobaseClient } from "@zilobase/features";
 import {
   acceptEditorChangeNotification,
+  EDITOR_BRIDGE_VERSION,
   pageQueryOptions,
   resolvePageDetailReference,
   type EditorBridgeMessage,
@@ -31,7 +32,7 @@ window.addEventListener("message", async (event) => {
     return;
   if (
     event.data.type === "ready" &&
-    event.data.version === 1 &&
+    event.data.version === EDITOR_BRIDGE_VERSION &&
     event.data.deployment === `${location.origin}|${location.origin}`
   ) {
     scope = { deployment: event.data.deployment, accountId: "a", sessionId: "s", workspaceId: "w" };
@@ -55,12 +56,18 @@ Object.assign(window, {
   ) {
     const id = `native-${++requestId}`;
     const result = new Promise<EditorBridgeMessage>((resolve) => pending.set(id, resolve));
-    document
-      .querySelector("iframe")!
-      .contentWindow!.postMessage(
-        { version: 1, instanceId: "native-editor", scope, requestId: id, command, ...patch },
-        location.origin,
-      );
+    document.querySelector("iframe")!.contentWindow!.postMessage(
+      {
+        version: EDITOR_BRIDGE_VERSION,
+        sequence: requestId,
+        instanceId: "native-editor",
+        scope,
+        requestId: id,
+        command,
+        ...patch,
+      },
+      location.origin,
+    );
     const message = await result;
     pending.delete(id);
     return message;

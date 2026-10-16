@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const EDITOR_BRIDGE_VERSION = 1;
+export const EDITOR_BRIDGE_VERSION = 2;
 const identifier = z
   .string()
   .min(1)
@@ -24,6 +24,7 @@ export const editorBridgeRequestSchema = z
   .object({
     ...envelope,
     requestId: identifier,
+    sequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
     command: z.discriminatedUnion("type", [
       z
         .object({ type: z.literal("initialize"), sessionToken: z.string().min(1).max(4096) })
@@ -44,7 +45,7 @@ export const editorBridgeStatusSchema = z
   .strict();
 export type EditorBridgeStatus = z.infer<typeof editorBridgeStatusSchema>;
 const record = z
-  .object({ kind: z.enum(["page", "database", "navigation"]), id: identifier })
+  .object({ kind: z.enum(["page", "database", "meeting", "navigation"]), id: identifier })
   .strict();
 export const editorBridgeMessageSchema = z.discriminatedUnion("type", [
   z
@@ -83,7 +84,9 @@ export const editorBridgeMessageSchema = z.discriminatedUnion("type", [
         z
           .object({
             type: z.literal("navigation"),
-            target: z.object({ kind: z.enum(["page", "database"]), id: identifier }).strict(),
+            target: z
+              .object({ kind: z.enum(["page", "database", "meeting"]), id: identifier })
+              .strict(),
           })
           .strict(),
         z.object({ type: z.literal("changed"), records: z.array(record).min(1).max(256) }).strict(),
