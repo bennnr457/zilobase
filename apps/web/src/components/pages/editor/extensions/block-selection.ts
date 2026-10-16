@@ -12,6 +12,7 @@ import {
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
 
 export const blockSelectionPluginKey = new PluginKey("blockSelection");
+export const blockMenuSelectionPluginKey = new PluginKey<DecorationSet>("blockMenuSelection");
 
 export type BlockRange = { from: number; to: number };
 
@@ -257,6 +258,40 @@ export const BlockSelection = Extension.create({
 
   addProseMirrorPlugins() {
     return [
+      // Menu focus lives outside the editor. Paint its target without moving the
+      // text selection or enabling select-all's keyboard guards.
+      new Plugin<DecorationSet>({
+        key: blockMenuSelectionPluginKey,
+        state: {
+          init: () => DecorationSet.empty,
+          apply(tr, previous) {
+            const target = tr.getMeta(blockMenuSelectionPluginKey) as
+              | { pos: number | null }
+              | undefined;
+
+            if (target) {
+              const { pos } = target;
+              if (pos === null || pos < 0 || pos >= tr.doc.content.size) {
+                return DecorationSet.empty;
+              }
+
+              const node = tr.doc.nodeAt(pos);
+              return node?.isBlock
+                ? DecorationSet.create(tr.doc, [
+                    Decoration.node(pos, pos + node.nodeSize, {
+                      class: "editor-block-selection",
+                    }),
+                  ])
+                : DecorationSet.empty;
+            }
+
+            return previous.map(tr.mapping, tr.doc);
+          },
+        },
+        props: {
+          decorations: (state) => blockMenuSelectionPluginKey.getState(state),
+        },
+      }),
       new Plugin<BlockSelectionPluginState>({
         key: blockSelectionPluginKey,
         state: {

@@ -42,6 +42,7 @@ import type { StructuralInsertionPendingChange } from "../commands/structural-in
 import { toast } from "sonner";
 import { ColorPicker } from "../toolbar/color-menu";
 import { createResourceHistoryAction } from "../operations/resource-history";
+import { blockMenuSelectionPluginKey } from "../extensions/block-selection";
 
 type PendingStructuralBlockDelete = StructuralBlockDeleteRequest & {
   action: StructuralBlockDeleteAction;
@@ -181,6 +182,28 @@ export function DragBlockMenu({
   useEffect(() => {
     onMenuStateChange?.(isOpen || actionsOpen || pendingDelete !== null);
   }, [actionsOpen, isOpen, onMenuStateChange, pendingDelete]);
+
+  const menuTargetPos = target?.pos;
+  useEffect(() => {
+    if (
+      !actionsOpen ||
+      menuTargetPos === undefined ||
+      editor.isDestroyed ||
+      !editor.isInitialized
+    ) {
+      return;
+    }
+
+    editor.view.dispatch(
+      editor.state.tr.setMeta(blockMenuSelectionPluginKey, { pos: menuTargetPos }),
+    );
+
+    return () => {
+      if (!editor.isDestroyed) {
+        editor.view.dispatch(editor.state.tr.setMeta(blockMenuSelectionPluginKey, { pos: null }));
+      }
+    };
+  }, [actionsOpen, editor, menuTargetPos]);
 
   useEffect(() => {
     return () => {

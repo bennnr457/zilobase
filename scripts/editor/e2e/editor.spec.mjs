@@ -296,3 +296,85 @@ test("dialog transfers share chronological history and pane padding consumes int
   await page.getByRole("button", { name: "Toggle dialog" }).click();
   await expect.poll(() => page.evaluate(() => window.readyEditors.dialog)).toBe(undefined);
 });
+
+test("block action menus highlight only their target and clear the highlight on dismissal", async ({
+  page,
+}) => {
+  await expect.poll(() => page.evaluate(() => window.editorReady())).toBe(true);
+  await page.evaluate(() => {
+    window.readyEditors.main.commands.setContent(
+      "<p>Paragraph</p><ul><li><p>First bullet</p></li><li><p>Second bullet</p></li></ul>" +
+        '<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p>Task</p></li></ul>' +
+        "<h2>Heading</h2><p>After</p>",
+    );
+  });
+  const pane = page.getByTestId("main-pane");
+  const editor = pane.locator(".tiptap-editor");
+  const search = page.getByRole("textbox", { name: "Search block actions", exact: true });
+  const originalSelection = await page.evaluate(() =>
+    window.readyEditors.main.state.selection.toJSON(),
+  );
+
+  for (const selector of [
+    ":scope > p:first-child",
+    "ul:not([data-type]) > li:nth-child(2)",
+    ".node-taskItem",
+    ":scope > h2",
+  ]) {
+    const block = editor.locator(selector).first();
+    await block.hover({ position: { x: 25, y: 10 } });
+    await pane.getByRole("button", { name: "Open block actions", exact: true }).click();
+    await expect(search).toBeVisible();
+    await expect(block).toHaveClass(/editor-block-selection/);
+    await expect(editor.locator(".editor-block-selection")).toHaveCount(1);
+    await expect(page.getByTestId("side-pane").locator(".editor-block-selection")).toHaveCount(0);
+    const overlay = await block.evaluate((node) => {
+      const style = getComputedStyle(node, "::after");
+      return { content: style.content, background: style.backgroundColor };
+    });
+    expect(overlay.content).toBe('""');
+    expect(overlay.background).not.toBe("rgba(0, 0, 0, 0)");
+    await search.fill("Heading");
+    await expect(block).toHaveClass(/editor-block-selection/);
+    expect(await page.evaluate(() => window.readyEditors.main.state.selection.toJSON())).toEqual(
+      originalSelection,
+    );
+    await page.keyboard.press("Escape");
+    await expect(search).not.toBeVisible();
+    await expect(editor.locator(".editor-block-selection")).toHaveCount(0);
+  }
+
+  await editor
+    .locator(":scope > p")
+    .first()
+    .hover({ position: { x: 25, y: 10 } });
+  await pane.getByRole("button", { name: "Open block actions", exact: true }).click();
+  await expect(editor.locator(".editor-block-selection")).toHaveCount(1);
+  await page.mouse.click(1390, 850);
+  await expect(search).not.toBeVisible();
+  await expect(editor.locator(".editor-block-selection")).toHaveCount(0);
+
+  await editor
+    .locator(":scope > p")
+    .first()
+    .hover({ position: { x: 25, y: 10 } });
+  await pane.getByRole("button", { name: "Open block actions", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Duplicate" }).click();
+  await expect(editor.locator(":scope > p").filter({ hasText: "Paragraph" })).toHaveCount(2);
+  await expect(editor.locator(".editor-block-selection")).toHaveCount(0);
+
+  await editor.locator(":scope > p").first().click();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.press("ControlOrMeta+a");
+  const selectedCount = await editor.locator(".editor-block-selection").count();
+  expect(selectedCount).toBeGreaterThan(1);
+  await editor
+    .locator(":scope > p")
+    .first()
+    .hover({ position: { x: 25, y: 10 } });
+  await pane.getByRole("button", { name: "Open block actions", exact: true }).click();
+  await expect(search).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(search).not.toBeVisible();
+  await expect(editor.locator(".editor-block-selection")).toHaveCount(selectedCount);
+});
