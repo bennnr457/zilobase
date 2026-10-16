@@ -653,7 +653,7 @@ export function DragBlockMenu({
             align="start"
             className="w-72"
             onCloseAutoFocus={(event) => event.preventDefault()}
-            side="right"
+            side="left"
             sideOffset={8}
           >
             <div className="flex items-center gap-1.5 px-1.5 py-1">
