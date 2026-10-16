@@ -15,7 +15,7 @@ export function register({ readSource, assert, test }) {
       readSource("/src/sections/pages/editor/extensions/meeting/components/meeting-view.tsx"),
       readSource("/src/sections/meetings/meeting-screen.tsx"),
       readSource("/src/sections/meetings/styles/meeting.css"),
-      readSource("/src/sections/pages/editor/runtime/lib/create-base-extensions.ts"),
+      readSource("/src/sections/pages/editor/extensions/lib/create-base-extensions.ts"),
       readSource("/src/sections/pages/editor/runtime/hooks/use-editor-runtime.ts"),
       readSource(
         "/src/sections/pages/editor/extensions/meeting/hooks/use-meeting-collaboration.ts",

@@ -30,7 +30,7 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   Import implementation owners directly across web; do not add forwarding-only
   index modules or re-export shared features through web UI modules.
   Database route composition lives in `sections/databases/database-screen.tsx`, embedded
-  blocks in `blocks`, row-page properties in `page-properties`, and property
+  block contracts and content in `blocks`, row-page properties in `page-properties`, and property
   editors/settings in `properties`. Keep shared view UI in `views/shared`, view
   settings in `views/settings`, and local view commands in `views/commands`;
   preserve distinct view renderers, geometry, controllers, and lifecycle owners.
@@ -235,7 +235,10 @@ operations, selection, and drag/drop as distinct subsystems beneath
 `sections/pages/editor`. Editor and page-content composition live at that folder's root; other local UI,
 hooks, and helpers use the owning subsystem's `components/`, `hooks/`, and `lib/`.
 Editor creation, extension memoization, and editability share `runtime/hooks/use-editor-runtime.ts`.
-Extension assembly lives in `runtime/lib`. Keep comments, their Yjs controller, comment extensions,
+All Tiptap extension definitions and node views live in `editor/extensions`, including
+database blocks, comments, structural commands, pending embeds, and workspace integration.
+Register extensions together in `extensions/lib/create-base-extensions.ts`; the runtime hook
+uses that assembled list. Keep comment state, the Yjs controller,
 and both independently scoped comments providers in `editor/comments`. Shared page
 metadata lives in `sections/pages/components/page-metadata.tsx`; database property rendering
 remains in `sections/databases/page-properties`. Page read-cache hydration lives

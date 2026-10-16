@@ -1,7 +1,7 @@
 import type { EditorView } from "@tiptap/pm/view";
 import { toast } from "sonner";
 import type { BlockDragPayload } from "./block-drag-session";
-import { workspaceForView } from "../../runtime/lib/editor-integration";
+import { workspaceForView } from "../../extensions/lib/editor-integration";
 import { transferBlocks, type OperationResult } from "../../operations/lib/block-operations";
 import { isCopyDrag } from "../../runtime/lib/editor-workspace";
 import { Cause, Effect } from "effect";

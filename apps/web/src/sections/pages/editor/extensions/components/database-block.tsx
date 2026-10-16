@@ -2,9 +2,9 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { useCallback, useSyncExternalStore } from "react";
 
-import { hasDatabasePageDragPayload } from "../../interactions/lib/database-page-drop";
-import { DatabaseView } from "../../views/shared/components/database-view";
-import type { DatabaseBlockOptions } from "../lib/database-block-contracts";
+import { hasDatabasePageDragPayload } from "@/sections/databases/interactions/lib/database-page-drop";
+import { DatabaseView } from "@/sections/databases/views/shared/components/database-view";
+import type { DatabaseBlockOptions } from "@/sections/databases/blocks/lib/database-block-contracts";
 
 const databasePageDragEvents = new Set([
   "dragstart",

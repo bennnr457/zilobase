@@ -14,7 +14,7 @@ import {
 import { getDatabasePageDropPosition, getDropDatabaseElement } from "./database-page-drop-target";
 import type { DatabasePageDropPayload } from "../../lib/editor-types";
 
-import { insertPendingPageEmbed } from "./pending-page-embed";
+import { insertPendingPageEmbed } from "../../extensions/lib/pending-page-embed";
 
 export { getDropDatabaseElement } from "./database-page-drop-target";
 

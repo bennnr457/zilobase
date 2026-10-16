@@ -17,16 +17,16 @@ import {
 } from "@/sections/pages/editor/runtime/components/page-editor-registry";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 import { createEditorWorkspace } from "@/sections/pages/editor/runtime/lib/editor-workspace";
-import { EditorIntegration } from "@/sections/pages/editor/runtime/lib/editor-integration";
+import { EditorIntegration } from "@/sections/pages/editor/extensions/lib/editor-integration";
 import { transferBlocks } from "@/sections/pages/editor/operations/lib/block-operations";
 import { createPositionAnchor } from "@/sections/pages/editor/operations/lib/position-anchor";
-import { StructuralCommands } from "@/sections/pages/editor/operations/lib/structural-commands";
+import { StructuralCommands } from "@/sections/pages/editor/extensions/lib/structural-commands";
 import { ColumnsExtension } from "@/sections/pages/editor/extensions/lib/columns";
 import { insertCreatedBlock } from "@/sections/pages/editor/commands/lib/block-insert";
 import {
   PendingPageEmbeds,
   insertPendingPageEmbed,
-} from "@/sections/pages/editor/drag-drop/lib/pending-page-embed";
+} from "@/sections/pages/editor/extensions/lib/pending-page-embed";
 import { getDraggedEditorBlockPayload } from "@/sections/pages/editor/drag-drop/lib/block-drag-session";
 import { changedPageReferences } from "@/sections/pages/editor/operations/lib/changed-page-references";
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

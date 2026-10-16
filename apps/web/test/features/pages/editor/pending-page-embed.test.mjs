@@ -3,7 +3,7 @@ export function register({ assert, loadModule, test }) {
     const { Schema } = await import("@tiptap/pm/model");
     const { EditorState } = await import("@tiptap/pm/state");
     const module = await loadModule(
-      "/src/sections/pages/editor/drag-drop/lib/pending-page-embed.ts",
+      "/src/sections/pages/editor/extensions/lib/pending-page-embed.ts",
     );
     const schema = new Schema({
       nodes: {

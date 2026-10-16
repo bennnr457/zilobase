@@ -3,7 +3,7 @@ import type { Content, Editor, Range } from "@tiptap/core";
 import { Fragment, type Node as ProseMirrorNode, type Schema } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { getSelectedBlockRangesForTarget } from "../../extensions/lib/block-selection";
-import { workspaceForView } from "../../runtime/lib/editor-integration";
+import { workspaceForView } from "../../extensions/lib/editor-integration";
 import { dispatchVerified } from "../../operations/lib/dispatch-verified";
 import { Effect } from "effect";
 

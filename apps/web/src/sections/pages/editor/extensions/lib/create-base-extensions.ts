@@ -1,5 +1,7 @@
-import { StructuralCommands } from "../../operations/lib/structural-commands";
-import { PendingPageEmbeds } from "../../drag-drop/lib/pending-page-embed";
+import { StructuralCommands } from "./structural-commands";
+import { PendingPageEmbeds } from "./pending-page-embed";
+import { EditorIntegration } from "./editor-integration";
+import type { EditorWorkspace } from "../../runtime/lib/editor-workspace";
 import CharacterCount from "@tiptap/extension-character-count";
 import { Details, DetailsContent, DetailsSummary } from "@tiptap/extension-details";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -18,29 +20,30 @@ import type { Extensions } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import { AskAiBlock } from "../../extensions/components/ask-ai-block";
-import { BookmarkBlock } from "../../extensions/components/bookmark-block";
-import { CodeBlockShiki } from "../../extensions/components/code-block-shiki";
-import { ColumnsExtension } from "../../extensions/lib/columns";
-import { CommentExtension } from "../../comments/lib/comment-extension";
-import { DatabaseBlock } from "@/sections/databases/blocks/components/database-block";
+import { AskAiBlock } from "../components/ask-ai-block";
+import { BookmarkBlock } from "../components/bookmark-block";
+import { CodeBlockShiki } from "../components/code-block-shiki";
+import { ColumnsExtension } from "./columns";
+import { CommentExtension } from "./comment-extension";
+import { DatabaseBlock } from "../components/database-block";
 import { type DatabaseBlockEditorRuntime } from "@/sections/databases/blocks/lib/database-block-contracts";
-import { EmbedBlock } from "../../extensions/components/embed-block";
-import { EmojiExtension } from "../../extensions/components/emoji";
-import { FileBlock } from "../../extensions/components/file-block";
-import { ImageBlock } from "../../extensions/components/image-block";
-import { LinkMention } from "../../extensions/components/link-mention";
-import { MeetingBlock } from "@/sections/pages/editor/extensions/meeting/components/meeting-extension";
-import { MeetingTranscriptPreview } from "../../extensions/lib/meeting-transcript-preview";
-import { PageBlock, type CreatedPage } from "../../extensions/components/page-block";
-import { BlockSelection } from "../../extensions/lib/block-selection";
-import { ShadcnTaskItem } from "../../extensions/components/shadcn-task-item";
-import { SlashCommand } from "../../extensions/components/slash-command";
-import { VideoBlock } from "../../extensions/components/video-block";
+import { EmbedBlock } from "../components/embed-block";
+import { EmojiExtension } from "../components/emoji";
+import { FileBlock } from "../components/file-block";
+import { ImageBlock } from "../components/image-block";
+import { LinkMention } from "../components/link-mention";
+import { MeetingBlock } from "../meeting/components/meeting-extension";
+import { MeetingTranscriptPreview } from "./meeting-transcript-preview";
+import { PageBlock, type CreatedPage } from "../components/page-block";
+import { BlockSelection } from "./block-selection";
+import { ShadcnTaskItem } from "../components/shadcn-task-item";
+import { SlashCommand } from "../components/slash-command";
+import { VideoBlock } from "../components/video-block";
 import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
 import type { StructuralInsertionPendingChange } from "../../commands/lib/block-insert";
 
 export type BaseExtensionsOptions = {
+  workspace: EditorWorkspace;
   collaboration?: import("../../lib/editor-types").EditorCollaboration;
   collaborationField?: string;
   createEditorDatabase: () => Promise<string | null>;
@@ -58,25 +61,8 @@ export type BaseExtensionsOptions = {
   pageId?: string | null;
 };
 
-export function normalizeEditorContent(content: unknown) {
-  if (typeof content === "string") {
-    const trimmed = content.trim();
-
-    if (!trimmed) {
-      return "";
-    }
-
-    try {
-      return JSON.parse(trimmed) as unknown;
-    } catch {
-      return content;
-    }
-  }
-
-  return content ?? "";
-}
-
 export const createBaseExtensions = ({
+  workspace,
   collaboration,
   collaborationField = "default",
   createEditorDatabase,
@@ -203,4 +189,5 @@ export const createBaseExtensions = ({
         }),
       ]
     : []),
+  EditorIntegration.configure({ workspace }),
 ];

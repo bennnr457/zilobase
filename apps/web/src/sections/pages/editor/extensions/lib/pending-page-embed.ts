@@ -1,4 +1,4 @@
-import { workspaceForView } from "../../runtime/lib/editor-integration";
+import { workspaceForView } from "./editor-integration";
 import { dispatchVerified } from "../../operations/lib/dispatch-verified";
 import type { EditorResourceReceipt } from "../../lib/editor-types";
 import { Extension } from "@tiptap/core";

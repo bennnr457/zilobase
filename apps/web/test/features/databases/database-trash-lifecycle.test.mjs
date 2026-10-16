@@ -2,7 +2,7 @@ export function register({ assert, readSource, readWorkspace, test }) {
   test("deleted embedded databases are purged while full-page trash remains restorable", async () => {
     const [block, controller, screen, view, toolbarActions, restoreButton, styles, cache] =
       await Promise.all([
-        readSource("/src/sections/databases/blocks/components/database-block.tsx"),
+        readSource("/src/sections/pages/editor/extensions/components/database-block.tsx"),
         Promise.all([
           readSource(
             "/src/sections/databases/views/controller/hooks/use-database-view-controller.tsx",

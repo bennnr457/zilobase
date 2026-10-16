@@ -1,7 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { Effect } from "effect";
 import { createPositionAnchor } from "../../operations/lib/position-anchor";
-import { workspaceForView } from "../../runtime/lib/editor-integration";
+import { workspaceForView } from "../../extensions/lib/editor-integration";
 import { canEditEditorStructure } from "../../commands/lib/block-insert";
 import {
   fetchBookmarkMetadata,

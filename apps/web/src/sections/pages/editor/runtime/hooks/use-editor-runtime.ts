@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type MutableRefObject, type RefOb
 import { useEditor } from "@tiptap/react";
 import type { Content, Editor, Extensions } from "@tiptap/core";
 import type { TableOfContentDataItem } from "@tiptap/extension-table-of-contents";
-import { createBaseExtensions, normalizeEditorContent } from "../lib/create-base-extensions";
+import { createBaseExtensions } from "../../extensions/lib/create-base-extensions";
 import { Selection, TextSelection, type EditorState } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { toast } from "sonner";
@@ -19,7 +19,6 @@ import {
   handleTypedLinkChoice,
   normalizePastedEditorHTML,
 } from "../../paste/lib/paste";
-import { EditorIntegration } from "../lib/editor-integration";
 import type { EditorWorkspace } from "../lib/editor-workspace";
 import type {
   UseEditorExtensionsOptions,
@@ -156,7 +155,7 @@ const useEditorInstance = ({
 
   const editor = useEditor(
     {
-      extensions: [...editorExtensions, EditorIntegration.configure({ workspace })],
+      extensions: editorExtensions,
       immediatelyRender: false,
       content: initialContent,
       editable,
@@ -318,7 +317,21 @@ const useLatestRef = <T>(value: T) => {
   return ref;
 };
 
+function normalizeEditorContent(content: unknown) {
+  if (typeof content === "string") {
+    const trimmed = content.trim();
+    if (!trimmed) return "";
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      return content;
+    }
+  }
+  return content ?? "";
+}
+
 const useEditorExtensions = ({
+  workspace,
   collaboration,
   collaborationField,
   content,
@@ -333,7 +346,7 @@ const useEditorExtensions = ({
   workspaceId,
   pageId,
   documentKey,
-}: UseEditorExtensionsOptions & { documentKey: string }) => {
+}: UseEditorExtensionsOptions & { documentKey: string; workspace: EditorWorkspace }) => {
   const [tocItems, setTocItems] = useState<TableOfContentDataItem[]>([]);
   const active = useRef(false);
   useEffect(() => {
@@ -366,6 +379,7 @@ const useEditorExtensions = ({
   const editorExtensions = useMemo<Extensions>(
     () =>
       createBaseExtensions({
+        workspace,
         collaboration,
         collaborationField,
         databaseEditorRuntime,
@@ -386,7 +400,15 @@ const useEditorExtensions = ({
         workspaceId,
         pageId,
       }),
-    [document, awareness, collaborationField, databaseEditorRuntime, workspaceId, pageId],
+    [
+      workspace,
+      document,
+      awareness,
+      collaborationField,
+      databaseEditorRuntime,
+      workspaceId,
+      pageId,
+    ],
   );
 
   // Tiptap's Collaboration extension binds to one Y.XmlFragment when the

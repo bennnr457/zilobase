@@ -259,7 +259,7 @@ async function loadWorkflows(sourcePath) {
     "@zilobase/features/auth": `export const sessionQueryKey = ["session"];`,
     "./page-document-cache": `import { controls } from "workflow-test-ports"; export const acquirePageDocument = (user, page) => { controls.acquired.push([user, page]); return controls.acquire(); }; export const releasePageDocument = (entry) => controls.released.push(entry); export const markPageDocumentInitialized = (entry) => { controls.initialized.push(entry); return controls.initialize(); };`,
     "./collaboration-connection": `import { controls } from "workflow-test-ports"; export const applyTicketState = (...args) => controls.apply(...args);`,
-    "../../runtime/lib/editor-integration": `export const workspaceForView = (view) => view.workspace;`,
+    "../../extensions/lib/editor-integration": `export const workspaceForView = (view) => view.workspace;`,
     "../../runtime/lib/editor-workspace": `export const isCopyDrag = () => false;`,
     "../../operations/lib/block-operations": `import { controls } from "workflow-test-ports"; export const transferBlocks = (...args) => controls.transfer(...args);`,
     sonner: `export const toast = { error: () => {} };`,

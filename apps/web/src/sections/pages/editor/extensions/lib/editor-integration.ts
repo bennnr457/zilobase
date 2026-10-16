@@ -1,6 +1,6 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import type { EditorWorkspace } from "./editor-workspace";
+import type { EditorWorkspace } from "../../runtime/lib/editor-workspace";
 const integrationKey = new PluginKey<EditorWorkspace>("editorIntegration");
 export const EditorIntegration = Extension.create<{ workspace: EditorWorkspace }>({
   name: "editorIntegration",
