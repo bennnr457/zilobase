@@ -10,7 +10,7 @@ import {
   type BlockDragPayload,
 } from "../drag-drop/block-drag-session";
 import { setMultiBlockDragImage, setDatabaseBlockDragImage } from "../drag-drop/block-drag-preview";
-import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "../toolbar/toolbar";
 import { writeDragPayload } from "@/lib/drag-drop";
 
 export type DragPhase =

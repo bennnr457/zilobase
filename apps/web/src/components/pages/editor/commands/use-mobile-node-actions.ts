@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/react";
-import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
-import { isMobileViewport } from "../core/dom";
+import type { DragHandleTarget } from "../toolbar/toolbar";
+const isMobileViewport = () => window.matchMedia("(max-width: 767px)").matches;
+
 import type { NodePlacement } from "../editor-types";
 
 const getTargetPlacement = (

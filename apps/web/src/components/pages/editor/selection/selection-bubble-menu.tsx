@@ -8,9 +8,9 @@ import { blockSelectionPluginKey } from "../extensions/block-selection";
 
 import { ColorMenu } from "../toolbar/color-menu";
 import { SelectionAiMenu } from "./selection-ai-menu";
-import { toolbarGroups } from "../toolbar/toolbar-data";
+import { toolbarGroups } from "../toolbar/toolbar";
 import { ToolbarButton } from "../toolbar/toolbar-button";
-import type { EditorControlProps, RunToolbarCommand } from "../toolbar/toolbar-contracts";
+import type { EditorControlProps, RunToolbarCommand } from "../toolbar/toolbar";
 import { isFeatureEnabled } from "@/platform/environment";
 
 const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";

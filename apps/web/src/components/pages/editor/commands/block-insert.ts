@@ -5,7 +5,7 @@ import type { Editor } from "@tiptap/react";
 import type { SlashCommandItem } from "../extensions/slash-command";
 import { createDatabaseSetupBlockContent } from "@/components/databases/blocks/database-block-content";
 
-import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "../toolbar/toolbar";
 import {
   runStructuralInsertion,
   type StructuralInsertionPendingChange,

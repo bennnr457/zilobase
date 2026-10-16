@@ -32,7 +32,7 @@ import { SlashCommandMenu } from "../extensions/slash-command-menu";
 import { blockContentForConversion, insertBlockFromPlus } from "../commands/block-insert";
 import { useEditorWorkspace } from "../runtime/page-editor-registry";
 import { colorWithAlpha, getPaletteColor } from "@/lib/color-tokens";
-import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "../toolbar/toolbar";
 import type {
   StructuralBlockDeleteAction,
   StructuralBlockDeleteHistory,

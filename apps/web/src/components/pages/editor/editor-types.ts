@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/core";
 import type { MutableRefObject, ReactNode } from "react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { EmbedProvider } from "./extensions/embed-block";
-import type { DragHandleTarget } from "./toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "./toolbar/toolbar";
 import type { CreatedPage } from "./extensions/page-block";
 import type { HocuspocusProvider } from "@hocuspocus/provider";
 import type { CollaborationUser } from "./collaboration/collaboration-contracts";

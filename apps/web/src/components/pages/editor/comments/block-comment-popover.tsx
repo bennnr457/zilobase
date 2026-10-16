@@ -2,7 +2,10 @@ import type { Editor as TiptapEditor } from "@tiptap/react";
 import { ChevronsLeftIcon, MessageSquareIcon, MessageSquarePlusIcon } from "@/components/icons";
 
 import type { PageCommentController } from "@/components/pages/editor/comments/yjs-comments";
-import { usePageEditorComments } from "@/components/pages/editor/comments/page-editor-comments";
+import {
+  usePageEditorComments,
+  usePageCommentsSnapshot,
+} from "@/components/pages/editor/comments/comments-context";
 import { PageCommentThread } from "@/components/pages/editor/comments/page-comments";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +15,10 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { usePageCommentsSnapshot } from "@/components/pages/editor/comments/page-comments-registry";
+
 import { getCommentIdsInRange } from "./comment-selection";
 
-import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "../toolbar/toolbar";
 
 function getBlockCommentRange(target: DragHandleTarget) {
   if (target.node.isLeaf || target.node.isAtom) return null;

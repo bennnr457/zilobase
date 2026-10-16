@@ -2,7 +2,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
 
 import type { BlockDropLine } from "../editor-types";
-import type { DragHandleTarget } from "../toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "../toolbar/toolbar";
 
 type BlockDropTarget = {
   line: BlockDropLine;

@@ -58,7 +58,7 @@ import { ApiError } from "@/platform/network/api";
 import { isHostedDemoRuntime } from "@/app/demo/runtime";
 import { canEditOnlineDatabase } from "@/components/pages/editor/database-editability";
 import { createPageCommentController } from "@/components/pages/editor/comments/yjs-comments";
-import { usePageCommentsRegistry } from "@/components/pages/editor/comments/page-comments-registry";
+import { usePageCommentsRegistry } from "@/components/pages/editor/comments/comments-context";
 import { usePageTitleDraft } from "./use-page-title-draft";
 import { scrollToMeetingBlock } from "@/components/meetings/meeting-navigation";
 import { consumePageNavigationStart } from "../navigation/page-navigation-timing";

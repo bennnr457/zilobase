@@ -62,10 +62,14 @@ import {
   tokenizeCommentMentions,
   type CommentMentionMember,
 } from "@zilobase/features/comments";
-import { useOptionalPageEditorComments } from "./page-editor-comments";
+import {
+  useOptionalPageEditorComments,
+  usePageCommentController,
+  usePageCommentsSnapshot,
+} from "./comments-context";
 import { useSession } from "@zilobase/features/auth/react";
 import { usePagePersonAccessTargets } from "@zilobase/features/pages/react";
-import { usePageCommentController, usePageCommentsSnapshot } from "./page-comments-registry";
+
 import type { CommentAuthorSnapshot, CommentMessageSnapshot } from "./yjs-comments";
 import { toast } from "sonner";
 

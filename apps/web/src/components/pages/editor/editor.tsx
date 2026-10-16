@@ -5,11 +5,9 @@ import { MobileActionBar } from "./toolbar/mobile-action-bar";
 import { PageMetadata, type PageMetadataHandle } from "@/components/pages/page-metadata";
 import { PageDesignCanvas } from "./document-design/page-design-canvas";
 import { PageDesignTabs } from "./document-design/page-design-tabs";
-import { starterContent } from "./core/constants";
 import { EditorChrome } from "./editor-chrome";
 import type { EditorProps, PasteChoiceState } from "./editor-types";
-import { useEditorDatabaseActions } from "./commands/use-editor-database-actions";
-import { useEditorMeetingActions } from "./commands/use-editor-meeting-actions";
+import { useEditorResourceActions } from "./commands/use-editor-resource-actions";
 import { resolveBlockDragTargetFromPoint } from "./drag-drop/block-drag-geometry";
 import { useEditorWorkspace } from "./runtime/page-editor-registry";
 import { createPositionAnchor } from "./operations/position-anchor";
@@ -31,6 +29,19 @@ import {
   type PendingDatabaseBlockDrop,
 } from "./drag-drop/database-block-drop-dialog";
 import { hasPendingCollaborationChanges } from "./collaboration/collaboration-readiness";
+
+const starterContent = `
+  <h1>Draft your next page doc</h1>
+  <p>
+    Type <code>/</code> on a new line to open the block menu. Use Markdown-style
+    shortcuts, checklists, quotes, code blocks, and rich inline formatting.
+  </p>
+  <ul data-type="taskList">
+    <li data-type="taskItem" data-checked="false">Capture the idea</li>
+    <li data-type="taskItem" data-checked="true">Shape it into a clean doc</li>
+  </ul>
+  <blockquote>Fast notes, structured blocks, zero ceremony.</blockquote>
+`;
 
 export function Editor({
   session = {},
@@ -144,11 +155,8 @@ export function Editor({
   }, [collaborationHasPendingChanges]);
 
   const { databaseEditorRuntime } = useEditorRuntime(databaseEditable);
-  const { createEditorDatabase, handleDatabasePageDrop } = useEditorDatabaseActions(
-    workspaceId,
-    pageId,
-  );
-  const { createEditorMeeting } = useEditorMeetingActions(workspaceId, pageId);
+  const { createEditorDatabase, createEditorMeeting, handleDatabasePageDrop } =
+    useEditorResourceActions(workspaceId, pageId);
 
   const { editorExtensions, editorLifecycleKey, initialContent, tocItems } = useEditorExtensions({
     collaboration,

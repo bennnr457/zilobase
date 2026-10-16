@@ -1,7 +1,7 @@
 import { useEditorState } from "@tiptap/react";
 import { Button } from "@/components/ui/button";
 
-import type { RunToolbarCommand, ToolbarItem } from "./toolbar-contracts";
+import type { RunToolbarCommand, ToolbarItem } from "./toolbar";
 
 export function ToolbarButton({
   editor,

@@ -54,8 +54,11 @@ import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
-import { usePageEditorComments } from "@/components/pages/editor/comments/page-editor-comments";
-import { usePageCommentController } from "@/components/pages/editor/comments/page-comments-registry";
+import {
+  usePageEditorComments,
+  usePageCommentController,
+} from "@/components/pages/editor/comments/comments-context";
+
 import {
   PageDesignSidebarProvider,
   useOptionalPageDesignSidebar,

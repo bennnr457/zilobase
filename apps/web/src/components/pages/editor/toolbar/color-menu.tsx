@@ -9,7 +9,7 @@ import {
   getPaletteColor,
   isPaletteColorActive,
 } from "@/lib/color-tokens";
-import type { ColorToken, EditorControlProps } from "./toolbar-contracts";
+import type { ColorToken, EditorControlProps } from "./toolbar";
 
 function ColorSwatch({ token, variant }: { token: ColorToken; variant: "text" | "background" }) {
   const textClass = token.textClass;

@@ -21,7 +21,6 @@ import { EditorIntegration } from "./editor-integration";
 import type { EditorWorkspace } from "./editor-workspace";
 import type { BlockDropLine, PasteChoiceState } from "../editor-types";
 import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
-import { useLatestRef } from "./use-latest-ref";
 
 import {
   handleProtectedStructuralBlockClipboardMutation,
@@ -287,4 +286,14 @@ export const useEditorInstance = ({
   }, [workspace, editor, editorId, documentKey, runtime]);
 
   return { blockDropLine, editor, surfaceDragHandlers: dragDrop.surfaceProps };
+};
+
+const useLatestRef = <T>(value: T) => {
+  const ref = useRef(value);
+
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+
+  return ref;
 };

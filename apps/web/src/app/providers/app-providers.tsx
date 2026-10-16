@@ -3,9 +3,12 @@ import { Effect } from "effect";
 import { ThemeProvider, useTheme } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { PageEditorCommentsProvider } from "@/components/pages/editor/comments/page-editor-comments";
+import {
+  PageEditorCommentsProvider,
+  PageCommentsRegistryProvider,
+} from "@/components/pages/editor/comments/comments-context";
 import { PageEditorRegistryProvider } from "@/components/pages/editor/runtime/page-editor-registry";
-import { PageCommentsRegistryProvider } from "@/components/pages/editor/comments/page-comments-registry";
+
 import { DesktopUpdater } from "@/components/desktop/updates/desktop-updater";
 import { WebFeaturesProvider } from "@/app/providers/features-provider";
 import { queryClient } from "@/app/query-client";

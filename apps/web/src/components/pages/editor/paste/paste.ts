@@ -1,6 +1,37 @@
 import type { EditorView } from "@tiptap/pm/view";
 import { normalizeEmbedUrl, type EmbedProvider } from "../extensions/embed-block";
-import { pastedBlockElementSelector } from "../core/constants";
+const pastedBlockElementSelector = [
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "details",
+  "div",
+  "dl",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hr",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "table",
+  "ul",
+].join(",");
+
 import type { EditorTableType, PasteChoiceState } from "../editor-types";
 
 const getEmbedProvider = (embedAttrs: Record<string, unknown> | undefined): EmbedProvider | null =>

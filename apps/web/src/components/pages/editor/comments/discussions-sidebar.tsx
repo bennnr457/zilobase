@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsBadge, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
-import { usePageCommentController, usePageCommentsSnapshot } from "./page-comments-registry";
+import { usePageCommentController, usePageCommentsSnapshot } from "./comments-context";
 import type { CommentThreadSnapshot } from "./yjs-comments";
 
 type DiscussionFilter = "all" | "block" | "page";

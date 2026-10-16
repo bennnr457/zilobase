@@ -1,7 +1,7 @@
 import type { NestedOptions, RuleContext } from "@tiptap/extension-drag-handle";
 import DragHandle from "@tiptap/extension-drag-handle-react";
 import { useEditorWorkspace } from "./runtime/page-editor-registry";
-import type { DragHandleTarget } from "./toolbar/toolbar-contracts";
+import type { DragHandleTarget } from "./toolbar/toolbar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import type { TableOfContentDataItem } from "@tiptap/extension-table-of-contents";
@@ -14,7 +14,7 @@ import { SelectionBubbleMenu } from "./selection/selection-bubble-menu";
 import { TableControls } from "./toolbar/table-controls";
 import { EditorTableOfContents } from "./toolbar/editor-table-of-contents";
 import { PasteChoiceMenu } from "./paste/paste-choice-menu";
-import { runToolbarCommand } from "./commands/run-toolbar-command";
+import { runToolbarCommand } from "./toolbar/toolbar";
 import type {
   BlockDropLine,
   PasteChoiceState,
