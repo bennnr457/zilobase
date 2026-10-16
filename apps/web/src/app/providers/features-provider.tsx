@@ -16,7 +16,7 @@ import { useAppStore } from "@/app/state/app-store";
 import { isHostedDemoRuntime, requestDemoGuard } from "@/app/demo/runtime";
 import posthog from "@/lib/posthog";
 import { readOAuthQuery } from "@zilobase/features/oauth";
-import { clearPageCacheForUser } from "@/components/editor/collaboration/page-document-cache";
+import { clearPageCacheForUser } from "@/components/pages/editor/collaboration/page-document-cache";
 import {
   clearCachedSession,
   readCachedSession,

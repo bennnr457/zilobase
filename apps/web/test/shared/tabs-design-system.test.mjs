@@ -33,7 +33,7 @@ export function register({ readSource, assert, test }) {
   test("tab layout choices are shared props and discussions use the default surface", async () => {
     const [tabsSource, discussionsSource] = await Promise.all([
       readSource("/src/components/ui/app-tabs.tsx"),
-      readSource("/src/components/comments/discussions-sidebar.tsx"),
+      readSource("/src/components/pages/editor/comments/discussions-sidebar.tsx"),
     ]);
 
     assert.match(tabsSource, /const tabsVariants = cva/);

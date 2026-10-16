@@ -29,11 +29,11 @@ import {
   PublicPaneTopbar,
   PublicPageBreadcrumb,
 } from "@/components/pages/header/public-page-header";
-import { PageContent } from "@/components/pages/content/page-content";
+import { PageContent } from "@/components/pages/editor/page-content";
 import { useDatabaseViewNavigation } from "../views/use-database-view-navigation";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import type { OpenPageOptions } from "@/components/pages/navigation/page-navigation";
-import { usePageTitleDraft } from "@/components/pages/content/use-page-title-draft";
+import { usePageTitleDraft } from "@/components/pages/editor/use-page-title-draft";
 
 export default function DatabaseScreen() {
   const { databaseId } = useParams({ from: "/d/$databaseId" });

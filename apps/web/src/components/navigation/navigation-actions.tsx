@@ -40,7 +40,7 @@ import { useHeaderActions } from "@/components/navigation/use-navigation-actions
 import { SharePopover } from "@/components/sharing/share-popover";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
-import { usePageCommentsSnapshot } from "@/components/comments/context/page-comments-registry";
+import { usePageCommentsSnapshot } from "@/components/pages/editor/comments/page-comments-registry";
 import { Switch } from "@/components/ui/switch";
 import { useSidebarEntryActions, copySidebarEntryLink } from "./use-navigation-actions";
 

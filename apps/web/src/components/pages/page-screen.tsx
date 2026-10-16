@@ -3,7 +3,7 @@ import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pa
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { usePage } from "@zilobase/features/pages/react";
 import { useOpenEmbeddedPage } from "./navigation/page-navigation";
-import { PageContent } from "./content/page-content";
+import { PageContent } from "./editor/page-content";
 
 import { useParams, useRouteContext, useSearch } from "@tanstack/react-router";
 import { AuthenticatedRouteError } from "@/app/routing/route-shell";

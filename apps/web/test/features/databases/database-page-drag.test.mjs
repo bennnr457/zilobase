@@ -39,7 +39,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database page drops target row midpoints", async () => {
     const { getDatabasePageDropPosition } = await loadModule(
-      "/src/components/editor/drag-drop/database-page-drop-target.ts",
+      "/src/components/pages/editor/drag-drop/database-page-drop-target.ts",
     );
     const rows = [
       {
@@ -60,7 +60,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database page drops target the start of an empty table", async () => {
     const { getDatabasePageDropPosition } = await loadModule(
-      "/src/components/editor/drag-drop/database-page-drop-target.ts",
+      "/src/components/pages/editor/drag-drop/database-page-drop-target.ts",
     );
     const databaseElement = { querySelectorAll: () => [] };
 

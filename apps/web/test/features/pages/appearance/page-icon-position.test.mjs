@@ -12,7 +12,7 @@ export function register({ assert, loadModule, readSource, test }) {
     const [metadataSource, databaseSource, pageEditorSource] = await Promise.all([
       readSource("/src/components/pages/page-metadata.tsx"),
       readSource("/src/components/databases/screen/database-screen.tsx"),
-      readSource("/src/components/pages/content/page-content.tsx"),
+      readSource("/src/components/pages/editor/page-content.tsx"),
     ]);
 
     assert.match(metadataSource, /: "mb-1 w-fit"/);

@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { isOpenInNewTabShortcut } from "@/app/shortcuts/shortcut-definitions";
 import type { DesktopTab } from "@/app/state/app-store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { hasEditorBlockDragData } from "@/components/editor/drag-drop/block-drag-session";
+import { hasEditorBlockDragData } from "@/components/pages/editor/drag-drop/block-drag-session";
 
 type DesktopTabStripProps = {
   activeTabId: string | null;

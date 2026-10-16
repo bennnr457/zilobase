@@ -17,7 +17,10 @@ const retiredFolders = [
   "components/databases/setup/model",
   "components/databases/views/components",
   "components/databases/views/view-settings",
-  "components/editor/layout",
+  "components/editor",
+  "components/comments",
+  "components/pages/content",
+  "components/pages/editor/composition",
   "components/ai/elements",
   "components/ai/files",
   "components/workspaces/members/components",
@@ -58,17 +61,17 @@ const isRetired = (name) =>
 // The migration removes index/UI forwarding shims without flattening these APIs.
 const subsystemEntrypoints = new Set([
   "components/databases/interactions/database-row-drag.ts",
-  "components/editor/drag-drop/block-drag.ts",
+  "components/pages/editor/drag-drop/block-drag.ts",
 ]);
 
 const pageOwners = new Map([
   ["page-layout.tsx", "layout"],
   ["page-header.tsx", "header"],
   ["public-page-header.tsx", "header"],
-  ["page-content.tsx", "content"],
-  ["page-content-recovery.ts", "content"],
-  ["page-read-cache.ts", "content"],
-  ["use-page-title-draft.ts", "content"],
+  ["page-content.tsx", "editor"],
+  ["page-content-recovery.ts", "editor/operations"],
+  ["page-read-cache.ts", ""],
+  ["use-page-title-draft.ts", "editor"],
   ["page-presentation.tsx", "presentation"],
   ["page-side-pane.tsx", "presentation"],
   ["page-dialog.tsx", "presentation"],
@@ -102,7 +105,9 @@ export function checkWebOwnership(repositoryRoot) {
     )
       errors.push(`${label}: forwarding-only module`);
     if (name.startsWith("components/pages/") && pageOwners.has(basename(file))) {
-      const expected = `components/pages/${pageOwners.get(basename(file))}/${basename(file)}`;
+      const expected = ["components/pages", pageOwners.get(basename(file)), basename(file)]
+        .filter(Boolean)
+        .join("/");
       if (name !== expected) errors.push(`${label}: belongs at ${expected}`);
     }
     const imports = [];

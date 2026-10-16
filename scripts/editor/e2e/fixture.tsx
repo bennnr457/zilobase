@@ -10,25 +10,25 @@ import Collaboration from "@tiptap/extension-collaboration";
 import { prosemirrorJSONToYDoc } from "@tiptap/y-tiptap";
 import * as Y from "yjs";
 import { Plugin } from "@tiptap/pm/state";
-import { Editor } from "@/components/editor/composition/editor";
+import { Editor } from "@/components/pages/editor/editor";
 import {
   PageEditorRegistryProvider,
   useEditorWorkspace,
-} from "@/components/editor/runtime/page-editor-registry";
+} from "@/components/pages/editor/runtime/page-editor-registry";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
-import { createEditorWorkspace } from "@/components/editor/runtime/editor-workspace";
-import { EditorIntegration } from "@/components/editor/runtime/editor-integration";
-import { transferBlocks } from "@/components/editor/operations/block-operations";
-import { createPositionAnchor } from "@/components/editor/operations/position-anchor";
-import { StructuralCommands } from "@/components/editor/operations/structural-commands";
-import { ColumnsExtension } from "@/components/editor/extensions/columns";
-import { insertCreatedBlock } from "@/components/editor/commands/structural-insertion";
+import { createEditorWorkspace } from "@/components/pages/editor/runtime/editor-workspace";
+import { EditorIntegration } from "@/components/pages/editor/runtime/editor-integration";
+import { transferBlocks } from "@/components/pages/editor/operations/block-operations";
+import { createPositionAnchor } from "@/components/pages/editor/operations/position-anchor";
+import { StructuralCommands } from "@/components/pages/editor/operations/structural-commands";
+import { ColumnsExtension } from "@/components/pages/editor/extensions/columns";
+import { insertCreatedBlock } from "@/components/pages/editor/commands/structural-insertion";
 import {
   PendingPageEmbeds,
   insertPendingPageEmbed,
-} from "@/components/editor/drag-drop/pending-page-embed";
-import { getDraggedEditorBlockPayload } from "@/components/editor/drag-drop/block-drag-session";
-import { changedPageReferences } from "@/components/editor/operations/changed-page-references";
+} from "@/components/pages/editor/drag-drop/pending-page-embed";
+import { getDraggedEditorBlockPayload } from "@/components/pages/editor/drag-drop/block-drag-session";
+import { changedPageReferences } from "@/components/pages/editor/operations/changed-page-references";
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const features = {
   deployment: "editor-test",

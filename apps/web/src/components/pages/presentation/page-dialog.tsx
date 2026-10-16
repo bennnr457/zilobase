@@ -9,7 +9,7 @@ import {
 import { PageWorkspaceGate } from "@/components/workspaces/access/page-workspace-gate";
 import { useOptionalPageDesignSidebar } from "../design/page-design-sidebar";
 import { PageLayout } from "../layout/page-layout";
-import { PageContent } from "../content/page-content";
+import { PageContent } from "../editor/page-content";
 import { useOpenEmbeddedPage } from "../navigation/page-navigation";
 import { isMobileViewport, useIsMobile } from "@/lib/hooks/use-mobile";
 import type { OpenPageOptions } from "../navigation/page-navigation";

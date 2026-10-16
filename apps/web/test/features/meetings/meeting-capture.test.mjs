@@ -418,7 +418,7 @@ export function register({ assert, loadModule, test }) {
   test("meeting transcript text export strips Yjs XML markup", async () => {
     const Y = await import("yjs");
     const { meetingTranscriptPlainText } = await loadModule(
-      "/src/components/editor/extensions/meeting/meeting-transcript-text.ts",
+      "/src/components/pages/editor/extensions/meeting/meeting-transcript-text.ts",
     );
     const document = new Y.Doc();
     const firstParagraph = new Y.XmlElement("paragraph");

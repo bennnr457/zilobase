@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 import { PageDesignSettings } from "./page-design-settings";
 
-import { Editor } from "@/components/editor/composition/editor";
+import { Editor } from "@/components/pages/editor/editor";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

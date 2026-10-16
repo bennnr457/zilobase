@@ -20,7 +20,7 @@ import { libraryViewIcons } from "@/components/library/library-icons";
 import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
-import { PageContent } from "@/components/pages/content/page-content";
+import { PageContent } from "@/components/pages/editor/page-content";
 import { DatabaseTableView } from "@/components/databases/views/table/database-table-view";
 import { DatabaseViewProvider } from "@/components/databases/views/state/database-view-context";
 import { DatabaseViewSkeleton } from "@/components/databases/views/shared/database-view-skeleton";

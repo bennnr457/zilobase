@@ -71,7 +71,7 @@ import { composeDatabaseViewData } from "@zilobase/features/databases";
 import { useTaskDatabases } from "@zilobase/features/tasks/react";
 import { buildTaskRows, filterMyTaskRows, getTaskDatabaseSchema } from "@zilobase/features/tasks";
 import { type Teamspace } from "@zilobase/features/teamspaces";
-import { prefetchPageForNavigation } from "@/components/editor/collaboration/page-prefetch";
+import { prefetchPageForNavigation } from "@/components/pages/editor/collaboration/page-prefetch";
 import { markPageNavigationStart } from "@/components/pages/navigation/page-navigation-timing";
 
 export function getSidebarDatabaseViewSearchId({

@@ -27,7 +27,7 @@ import { useAppStore } from "@/app/state/app-store";
 import { NetworkUnavailableError, apiFetch } from "@/platform/network/api";
 import { getMostRecentItemPath } from "@/components/library/library-model";
 import { getConnectivityState } from "@/platform/network/connectivity";
-import { hydratePageReadCache } from "@/components/pages/content/page-read-cache";
+import { hydratePageReadCache } from "@/components/pages/page-read-cache";
 
 import type {
   validateLoginSearch,

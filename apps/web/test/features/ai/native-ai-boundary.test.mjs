@@ -15,8 +15,8 @@ export function register({ readSource, assert, test }) {
       /@zilobase\/features\/ai-chat|useAiChatThreadState|useChatbotConversation|apiFetch|authFetch|useMutation|from ["'](?:ai|@ai-sdk\/[^"']+|agents)["']/,
     );
     const editorSources = await Promise.all([
-      readSource("/src/components/editor/composition/editor.tsx"),
-      readSource("/src/components/editor/runtime/page-editor-registry.tsx"),
+      readSource("/src/components/pages/editor/editor.tsx"),
+      readSource("/src/components/pages/editor/runtime/page-editor-registry.tsx"),
     ]);
     assert.doesNotMatch(
       editorSources.join("\n"),

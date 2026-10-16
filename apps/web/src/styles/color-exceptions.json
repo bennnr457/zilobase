@@ -5,7 +5,7 @@
     "reason": "Official Google logo artwork must retain its published brand colors."
   },
   {
-    "path": "apps/web/src/components/editor/extensions/embed-block.tsx",
+    "path": "apps/web/src/components/pages/editor/extensions/embed-block.tsx",
     "owner": "Editor integrations",
     "reason": "Official Figma, Excalidraw, YouTube, and Miro marks retain fixed brand artwork colors."
   },

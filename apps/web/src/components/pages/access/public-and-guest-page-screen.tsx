@@ -15,7 +15,7 @@ import {
   PublicLoginButton,
 } from "../header/public-page-header";
 import { PageLayout } from "../layout/page-layout";
-import { PageContent } from "../content/page-content";
+import { PageContent } from "../editor/page-content";
 
 export function PublicPage() {
   const { pageId } = useParams({ from: "/p/$pageId" });

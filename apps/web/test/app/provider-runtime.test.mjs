@@ -437,9 +437,9 @@ async function loadProviderRuntime(sourcePath) {
     "next-themes": `import { controls } from "provider-test-ports"; export { PassThrough as ThemeProvider } from "app-provider-pass-through"; export const useTheme = () => ({ resolvedTheme: controls.resolvedTheme });`,
     "@/components/ui/sonner": `export { Empty as Toaster } from "app-provider-pass-through";`,
     "@/components/ui/tooltip": `export { PassThrough as TooltipProvider } from "app-provider-pass-through";`,
-    "@/components/comments/page-editor-comments": `export { PassThrough as PageEditorCommentsProvider } from "app-provider-pass-through";`,
-    "@/components/comments/context/page-comments-registry": `export { PassThrough as PageCommentsRegistryProvider } from "app-provider-pass-through";`,
-    "@/components/editor/runtime/page-editor-registry": `export { PassThrough as PageEditorRegistryProvider } from "app-provider-pass-through";`,
+    "@/components/pages/editor/comments/page-editor-comments": `export { PassThrough as PageEditorCommentsProvider } from "app-provider-pass-through";`,
+    "@/components/pages/editor/comments/page-comments-registry": `export { PassThrough as PageCommentsRegistryProvider } from "app-provider-pass-through";`,
+    "@/components/pages/editor/runtime/page-editor-registry": `export { PassThrough as PageEditorRegistryProvider } from "app-provider-pass-through";`,
     "@/components/desktop/updates/desktop-updater": `export { Empty as DesktopUpdater } from "app-provider-pass-through";`,
     "@/app/providers/features-provider": `export { PassThrough as WebFeaturesProvider } from "app-provider-pass-through";`,
     "@/app/providers/theme-family-provider": `import { controls } from "provider-test-ports"; export { PassThrough as ThemeFamilyProvider } from "app-provider-pass-through"; export const useThemeFamily = () => ({ themeFamily: controls.themeFamily });`,
@@ -457,7 +457,7 @@ async function loadProviderRuntime(sourcePath) {
     "@/app/state/app-store": `import { controls } from "provider-test-ports"; export function useAppStore(select) { return select({}); } useAppStore.getState = () => ({ resetAccountState() { controls.step("account.reset"); } });`,
     "@/app/demo/runtime": `import { controls } from "provider-test-ports"; export { PassThrough as DemoExperience } from "app-provider-pass-through"; export function installDemoCache(value) { controls.demoCache = value; controls.demoInstalls = (controls.demoInstalls ?? 0) + 1; } export const isHostedDemoRuntime = () => controls.demo; export function requestDemoGuard() { controls.step("demo.guard"); return controls.demoError; }`,
     "@/lib/posthog": `import { controls } from "provider-test-ports"; const posthog = { reset() { controls.step("posthog.reset"); controls.distinctId = "anonymous"; }, get_distinct_id: () => controls.distinctId, identify(id) { controls.step("posthog.identify:" + id); controls.distinctId = id; }, group(kind, id) { controls.step("posthog.group:" + kind + ":" + id); }, resetGroups() { controls.step("posthog.groups.reset"); } }; let client = posthog; controls.enablePosthog = enabled => { client = enabled ? posthog : null; }; export { client as default };`,
-    "@/components/editor/collaboration/page-document-cache": `import { controls } from "provider-test-ports"; export async function clearPageCacheForUser(id) { controls.step("page.clear:" + id); }`,
+    "@/components/pages/editor/collaboration/page-document-cache": `import { controls } from "provider-test-ports"; export async function clearPageCacheForUser(id) { controls.step("page.clear:" + id); }`,
   };
   const result = await build({
     stdin: {

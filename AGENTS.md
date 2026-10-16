@@ -188,7 +188,7 @@ Do not duplicate the web API client, query keys, collections, or mutation logic.
 ## Hosted editor and future native integration
 
 The editor remains web code. Document design rendering belongs in
-`components/editor/document-design`, distinct from page frame layout and page
+`components/pages/editor/document-design`, distinct from page frame layout and page
 design customization. Keep editor runtime, collaboration, hosted bootstrap,
 operations, selection, and drag/drop as distinct subsystems.
 

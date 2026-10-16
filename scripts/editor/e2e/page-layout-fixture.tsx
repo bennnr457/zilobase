@@ -45,9 +45,9 @@ import {
 } from "@/components/pages/presentation/page-side-pane";
 import { PageDialog } from "@/components/pages/presentation/page-dialog";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
-import { PageEditorRegistryProvider } from "@/components/editor/runtime/page-editor-registry";
-import { PageCommentsRegistryProvider } from "@/components/comments/context/page-comments-registry";
-import { PageEditorCommentsProvider } from "@/components/comments/page-editor-comments";
+import { PageEditorRegistryProvider } from "@/components/pages/editor/runtime/page-editor-registry";
+import { PageCommentsRegistryProvider } from "@/components/pages/editor/comments/page-comments-registry";
+import { PageEditorCommentsProvider } from "@/components/pages/editor/comments/page-editor-comments";
 import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";

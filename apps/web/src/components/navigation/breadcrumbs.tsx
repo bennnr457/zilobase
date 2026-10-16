@@ -5,7 +5,7 @@ import { useCallback, useSyncExternalStore, type ReactNode } from "react";
 import {
   getPageConnectionIndicator,
   subscribePageConnectionIndicator,
-} from "@/components/editor/collaboration/page-connection-indicator";
+} from "@/components/pages/editor/collaboration/page-connection-indicator";
 import { libraryViewIcons } from "@/components/library/library-icons";
 import { libraryViewLabels } from "@/components/library/library-model";
 import {

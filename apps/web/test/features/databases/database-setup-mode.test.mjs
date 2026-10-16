@@ -46,13 +46,17 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("setup prompt autofocus does not move the containing page", async () => {
     const setupCard = await readSource("/src/components/databases/setup/database-setup-card.tsx");
-    const slashCommand = await readSource("/src/components/editor/extensions/slash-command.tsx");
+    const slashCommand = await readSource(
+      "/src/components/pages/editor/extensions/slash-command.tsx",
+    );
     const databaseCommand = slashCommand.slice(slashCommand.indexOf('title: "Database"'));
 
     assert.doesNotMatch(setupCard, /<PromptInputTextarea\s+autoFocus/);
     assert.match(setupCard, /promptInputRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
     assert.match(databaseCommand, /insertCreatedBlock/);
-    const insertion = await readSource("/src/components/editor/commands/structural-insertion.ts");
+    const insertion = await readSource(
+      "/src/components/pages/editor/commands/structural-insertion.ts",
+    );
     assert.match(insertion, /\.focus\(undefined, \{ scrollIntoView: false \}\)/);
   });
 }

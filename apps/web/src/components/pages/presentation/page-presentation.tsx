@@ -1,4 +1,4 @@
-import { usePageEditorRegistry } from "@/components/editor/runtime/page-editor-registry";
+import { usePageEditorRegistry } from "@/components/pages/editor/runtime/page-editor-registry";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import { Effect } from "effect";
 import {

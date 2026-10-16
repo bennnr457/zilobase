@@ -6,10 +6,10 @@ import { PageWorkspaceGate } from "@/components/workspaces/access/page-workspace
 import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pane";
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
-import { usePageTitleDraft } from "@/components/pages/content/use-page-title-draft";
+import { usePageTitleDraft } from "@/components/pages/editor/use-page-title-draft";
 import { PageMetadata as PageMetadataHeader } from "@/components/pages/page-metadata";
-import { MeetingView } from "@/components/editor/extensions/meeting/meeting-view";
-import { PageContent } from "@/components/pages/content/page-content";
+import { MeetingView } from "@/components/pages/editor/extensions/meeting/meeting-view";
+import { PageContent } from "@/components/pages/editor/page-content";
 import { useMeeting, useUpdateMeeting } from "@zilobase/features/meetings/react";
 import {
   getPageCover,
