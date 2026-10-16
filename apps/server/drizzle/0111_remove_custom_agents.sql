@@ -75,6 +75,10 @@ WHERE "agent_run_id" IS NOT NULL
    OR "thread_id" IS NULL
    OR "mcp_scope_type" = 'agent';
 --> statement-breakpoint
+-- 0096_personal_chat_threads is absent from the active migration journal.
+-- Support databases both with and without that earlier cleanup applied.
+ALTER TABLE "ai_chat_thread" DROP COLUMN IF EXISTS "agent_profile_id";
+--> statement-breakpoint
 ALTER TABLE "ai_agent_turn" DROP COLUMN "agent_profile_id";
 --> statement-breakpoint
 DROP INDEX "ai_agent_tool_execution_run_call_unique";

@@ -20,6 +20,10 @@ DROP TABLE IF EXISTS "ai_mcp_client_registration";
 --> statement-breakpoint
 DROP TABLE IF EXISTS "ai_mcp_credential";
 --> statement-breakpoint
+DROP TABLE IF EXISTS "ai_agent_tool_execution";
+--> statement-breakpoint
+DROP TABLE IF EXISTS "ai_agent_pending_action";
+--> statement-breakpoint
 DROP TABLE IF EXISTS "ai_mcp_connection";
 --> statement-breakpoint
 DROP TABLE IF EXISTS "ai_mcp_approved_server";
@@ -31,10 +35,6 @@ DROP TABLE IF EXISTS "ai_chat_artifact";
 DROP TABLE IF EXISTS "ai_chat_upload";
 --> statement-breakpoint
 DROP TABLE IF EXISTS "ai_agent_action_receipt";
---> statement-breakpoint
-DROP TABLE IF EXISTS "ai_agent_tool_execution";
---> statement-breakpoint
-DROP TABLE IF EXISTS "ai_agent_pending_action";
 --> statement-breakpoint
 DROP TABLE IF EXISTS "ai_agent_turn";
 --> statement-breakpoint
