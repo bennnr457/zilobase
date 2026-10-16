@@ -112,3 +112,59 @@ test("web ownership accepts direct owners, named route screens and type imports"
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("page editor ownership rejects scattered implementations and accepts nested subsystem APIs", async () => {
+  const root = await mkdtemp(join(tmpdir(), "page-editor-ownership-"));
+  const source = join(root, "apps/web/src");
+  try {
+    const files = {
+      "components/editor/editor.tsx": "export const Editor = () => null;",
+      "components/comments/page-comments.tsx": "export const Comments = () => null;",
+      "components/pages/content/page-content.tsx": "export const PageContent = () => null;",
+      "components/pages/editor/composition/old.ts": "export const value = 1;",
+      "components/pages/editor/core/old.ts": "export const value = 1;",
+      "components/pages/editor/runtime/comment-selection.ts": "export const selection = 1;",
+      "components/pages/editor/toolbar/toolbar-data.ts": "export const groups = [];",
+      "components/databases/page-properties/page-metadata.tsx":
+        "export const PageMetadata = () => null;",
+      "components/pages/page-screen.tsx":
+        'import { PageContent } from "./content/page-content"; export default function PageScreen() { return null; }',
+    };
+    for (const [name, contents] of Object.entries(files)) {
+      const path = join(source, name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    const errors = checkWebOwnership(root).join("\n");
+    for (const name of Object.keys(files).filter((name) => !name.endsWith("page-screen.tsx")))
+      assert.ok(errors.includes(name), name);
+    assert.match(errors, /retired import/);
+    assert.match(errors, /belongs at components\/pages\/editor\/comments\/comment-selection.ts/);
+    await rm(source, { recursive: true, force: true });
+    const owners = {
+      "components/pages/editor/page-content.tsx": "export const PageContent = () => null;",
+      "components/pages/editor/operations/page-content-recovery.ts":
+        "export const recover = () => null;",
+      "components/pages/editor/use-page-title-draft.ts":
+        "export const usePageTitleDraft = () => null;",
+      "components/pages/editor/comments/comments-context.tsx":
+        "export const Comments = () => null;",
+      "components/pages/page-metadata.tsx": "export const PageMetadata = () => null;",
+      "components/pages/page-read-cache.ts": "export const hydrate = () => null;",
+      "components/pages/editor/drag-drop/block-drag.ts":
+        'export { dropEditorBlock } from "./block-drop";',
+      "components/pages/editor/drag-drop/block-drop.ts":
+        "export const dropEditorBlock = () => null;",
+      "components/pages/editor/hosted/bootstrap.tsx":
+        'import { PageContent } from "../page-content"; export const bootstrap = PageContent;',
+    };
+    for (const [name, contents] of Object.entries(owners)) {
+      const path = join(source, name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    assert.deepEqual(checkWebOwnership(root), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

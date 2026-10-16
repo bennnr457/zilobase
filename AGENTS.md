@@ -72,7 +72,7 @@ this layout around the existing editor body. Page presentation state, opening/cl
 and dialog rendering owns focus and dismissal. Hosts do not duplicate page headers
 or scroll viewports. Shared viewport rendering lives in `components/ui/scroll-viewport.tsx`.
 Page design customization belongs in `components/pages/design`, separate from the
-page layout frame. Page content owns the editor lifecycle; breadcrumb UI belongs
+page layout frame. Page content in `components/pages/editor/page-content.tsx` owns the editor lifecycle; breadcrumb UI belongs
 in `components/navigation/breadcrumbs.tsx`.
 Mobile embedded page requests navigate to main routes before consulting desktop
 presentation preferences. Keep the embedded-page dialog lazy and domain-owned;
@@ -190,7 +190,18 @@ Do not duplicate the web API client, query keys, collections, or mutation logic.
 The editor remains web code. Document design rendering belongs in
 `components/pages/editor/document-design`, distinct from page frame layout and page
 design customization. Keep editor runtime, collaboration, hosted bootstrap,
-operations, selection, and drag/drop as distinct subsystems.
+operations, selection, and drag/drop as distinct subsystems beneath
+`components/pages/editor`. Editor composition lives at that folder's root; extension
+assembly lives in runtime. Keep comments, their Yjs controller, comment extensions,
+and both independently scoped comments providers in `editor/comments`. Shared page
+metadata lives in `components/pages/page-metadata.tsx`; database property rendering
+remains in `components/databases/page-properties`. Page read-cache hydration lives
+at the pages root. Do not recreate top-level editor/comments folders, editor
+composition/core buckets, or page content forwarding modules.
+Use Effect for structural insertion, document prefetch, and database drop resource
+workflows. Keep Promise adapters, synchronous pending flags, anchor cleanup,
+compensation, prefetch limits, and local flush versus server synchronization intact.
+Keep types, toolbar configuration, and presentation code plain.
 
 Ask AI presentation is grouped into chat, composer, attachments, workspace, and
 styles beneath `components/ai`; import owning files directly rather than an

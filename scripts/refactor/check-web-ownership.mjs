@@ -21,6 +21,7 @@ const retiredFolders = [
   "components/comments",
   "components/pages/content",
   "components/pages/editor/composition",
+  "components/pages/editor/core",
   "components/ai/elements",
   "components/ai/files",
   "components/workspaces/members/components",
@@ -35,6 +36,15 @@ const retiredFolders = [
   "components/desktop/pages",
 ];
 const retiredModules = new Set([
+  "components/databases/page-properties/page-metadata",
+  "components/pages/editor/commands/use-editor-database-actions",
+  "components/pages/editor/commands/use-editor-meeting-actions",
+  "components/pages/editor/commands/run-toolbar-command",
+  "components/pages/editor/toolbar/toolbar-contracts",
+  "components/pages/editor/toolbar/toolbar-data",
+  "components/pages/editor/comments/page-comments-registry",
+  "components/pages/editor/comments/page-editor-comments",
+  "components/pages/editor/runtime/use-latest-ref",
   "components/pages/item-sharing",
   "components/pages/use-item-sharing",
   "components/pages/item-actions",
@@ -65,6 +75,18 @@ const subsystemEntrypoints = new Set([
 ]);
 
 const pageOwners = new Map([
+  ["editor.tsx", "editor"],
+  ["editor-chrome.tsx", "editor"],
+  ["editor-types.ts", "editor"],
+  ["create-base-extensions.ts", "editor/runtime"],
+  ["use-editor-extensions.ts", "editor/runtime"],
+  ["editor-table-of-contents.tsx", "editor/toolbar"],
+  ["database-block-drop-dialog.tsx", "editor/drag-drop"],
+  ["comments-context.tsx", "editor/comments"],
+  ["comment-extension.ts", "editor/comments"],
+  ["comment-selection.ts", "editor/comments"],
+  ["block-comment-popover.tsx", "editor/comments"],
+  ["page-metadata.tsx", ""],
   ["page-layout.tsx", "layout"],
   ["page-header.tsx", "header"],
   ["public-page-header.tsx", "header"],
