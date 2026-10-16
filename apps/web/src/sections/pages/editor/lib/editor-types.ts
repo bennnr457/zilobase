@@ -20,6 +20,8 @@ export type EditorCollaboration = {
   provider?: HocuspocusProvider;
   status: "local" | "connected" | "connecting" | "disconnected" | "blocked";
   unsyncedChanges: number;
+  synced?: boolean;
+  flushLocal?: () => Promise<void>;
   user?: { avatar?: string | null; color: string; id: string; name: string };
   users: CollaborationUser[];
 };
@@ -27,9 +29,10 @@ export type EditorCollaboration = {
 export type PasteChoiceState = {
   anchor: { getBoundingClientRect: () => DOMRect };
   embedAttrs?: Record<string, unknown>;
-  from: number;
+  dispose: () => void;
+  retain: () => () => void;
+  resolve: () => { from: number; to: number } | null;
   provider?: EmbedProvider | null;
-  to: number;
   url: string;
 };
 
@@ -63,6 +66,7 @@ export type DocumentSession = {
   collaboration?: EditorCollaboration;
   collaborationField?: string;
   content?: unknown;
+  meetingId?: string;
   databaseId?: string | null;
   databaseIds?: string[];
 };

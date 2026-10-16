@@ -1,7 +1,14 @@
-import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
+import { Effect } from "effect";
+import { toast } from "sonner";
+import {
+  NodeViewContent,
+  NodeViewWrapper,
+  ReactNodeViewRenderer,
+  useEditorState,
+} from "@tiptap/react";
 import type { ReactNodeViewProps } from "@tiptap/react";
 import { Check, ChevronsUpDown, Copy } from "@/components/icons";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import CodeBlockShikiBase from "tiptap-extension-code-block-shiki";
 
 import { Button } from "@/components/ui/button";
@@ -133,20 +140,33 @@ const codeBlockLanguages = [
   { label: "Zig", value: "zig" },
 ];
 
-function CodeBlockShikiView({ node, updateAttributes }: ReactNodeViewProps) {
+function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewProps) {
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
   const language = node.attrs.language ?? "auto";
   const codeLanguage = language === "auto" ? "" : language;
   const activeLanguage =
     codeBlockLanguages.find((option) => option.value === language) ?? codeBlockLanguages[0];
 
-  const copyCode = async () => {
-    await navigator.clipboard.writeText(node.textContent);
-    setCopied(true);
-    window.setTimeout(() => {
-      setCopied(false);
-    }, 1200);
-  };
+  const copyCode = () =>
+    Effect.runPromise(
+      Effect.tryPromise({
+        try: () => navigator.clipboard.writeText(node.textContent),
+        catch: (error) => error,
+      }).pipe(
+        Effect.tap(() =>
+          Effect.sync(() => {
+            if (editor.isDestroyed) return;
+            setCopied(true);
+            clearTimeout(timer.current);
+            timer.current = setTimeout(() => setCopied(false), 1200);
+          }),
+        ),
+        Effect.catch(() => Effect.sync(() => toast.error("Could not copy code."))),
+      ),
+    );
 
   return (
     <NodeViewWrapper as="pre" className="code-block-shiki">
@@ -177,6 +197,7 @@ function CodeBlockShikiView({ node, updateAttributes }: ReactNodeViewProps) {
           <DropDrawerTrigger asChild>
             <Button
               aria-label="Code block language"
+              disabled={!isEditable}
               role="combobox"
               size="sm"
               type="button"
@@ -201,6 +222,7 @@ function CodeBlockShikiView({ node, updateAttributes }: ReactNodeViewProps) {
                 icon={option.value === language ? <Check /> : undefined}
                 key={option.value}
                 onSelect={() => {
+                  if (!editor.isEditable || editor.isDestroyed) return;
                   updateAttributes({
                     language: option.value === "auto" ? null : option.value,
                   });
@@ -222,6 +244,9 @@ function CodeBlockShikiView({ node, updateAttributes }: ReactNodeViewProps) {
 }
 
 export const CodeBlockShiki = CodeBlockShikiBase.extend({
+  addProseMirrorPlugins() {
+    return (this.parent?.() ?? []).filter((plugin) => !plugin.props.handlePaste);
+  },
   addNodeView() {
     return ReactNodeViewRenderer(CodeBlockShikiView);
   },

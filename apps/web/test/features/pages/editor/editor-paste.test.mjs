@@ -13,14 +13,14 @@ function installDomParser() {
 }
 
 export function register({ assert, loadModule, test }) {
-  test("normalizePastedEditorHTML converts single-row tables into column blocks", async () => {
+  test("normalizePastedEditorHTML converts explicit layout tables into column blocks", async () => {
     installDomParser();
     const { normalizePastedEditorHTML } = await loadModule(
       "/src/sections/pages/editor/paste/lib/paste.ts",
     );
 
     const html = `
-      <table>
+      <table data-layout="columns">
         <tbody>
           <tr>
             <td><p>Left</p></td>

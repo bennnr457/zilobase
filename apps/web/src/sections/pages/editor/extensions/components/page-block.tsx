@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { LinkIcon, Loader2, Plus } from "@/components/icons";
@@ -92,7 +94,8 @@ function useCachedDatabaseRowPage(pageId: string | null) {
   return useSyncExternalStore(subscribe, getSnapshot, () => null);
 }
 
-function PageBlockView({ extension, node, updateAttributes }: ReactNodeViewProps) {
+function PageBlockView({ editor, extension, getPos, node, updateAttributes }: ReactNodeViewProps) {
+  useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const [isCreating, setIsCreating] = useState(false);
   const pageId = node.attrs.pageId as string | null;
   const shouldOpenPicker = Boolean(node.attrs.openPicker);
@@ -124,7 +127,8 @@ function PageBlockView({ extension, node, updateAttributes }: ReactNodeViewProps
       return;
     }
 
-    setIsOpen(true);
+    if (editor.isEditable) setIsOpen(true);
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({
       openPicker: false,
     });
@@ -147,32 +151,56 @@ function PageBlockView({ extension, node, updateAttributes }: ReactNodeViewProps
   }, [isOpen, selectedIndex]);
 
   const createPage = async () => {
-    if (!options.onCreatePage || isCreating) {
+    if (!editor.isEditable || !options.onCreatePage || isCreating) {
       return;
     }
 
     setIsCreating(true);
 
     try {
+      const expected = node;
       const page = await options.onCreatePage();
+      const pos = getPos();
+      if (
+        editor.isDestroyed ||
+        !editor.isEditable ||
+        typeof pos !== "number" ||
+        !editor.state.doc.nodeAt(pos)?.eq(expected)
+      )
+        return;
 
+      if (!editor.isEditable || editor.isDestroyed) return;
       updateAttributes({
         pageId: page.id,
       });
       setIsOpen(false);
       options.onOpenPage?.(page.id);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create page.");
     } finally {
       setIsCreating(false);
     }
   };
 
   const linkPage = async (nextPageId: string) => {
-    if (nextPageId === options.currentPageId) {
+    if (!editor.isEditable || nextPageId === options.currentPageId) {
       return;
     }
 
     try {
-      await options.onEmbedPage?.(nextPageId);
+      const expected = node;
+      const receipt = await options.onEmbedPage?.(nextPageId);
+      const pos = getPos();
+      if (
+        editor.isDestroyed ||
+        !editor.isEditable ||
+        typeof pos !== "number" ||
+        !editor.state.doc.nodeAt(pos)?.eq(expected)
+      ) {
+        await receipt?.undo();
+        return;
+      }
+      if (!editor.isEditable || editor.isDestroyed) return;
       updateAttributes({
         pageId: nextPageId,
       });

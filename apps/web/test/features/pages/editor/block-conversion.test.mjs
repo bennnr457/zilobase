@@ -1,63 +1,88 @@
-import { build } from "esbuild";
-import { createRequire } from "node:module";
-export function register({ assert, appPath, loadModule, test }) {
-  test("block conversion retains text only for paragraphs and headings", async () => {
-    const result = await build({
-      entryPoints: [appPath("/src/sections/pages/editor/commands/lib/block-insert.ts")],
-      bundle: true,
-      write: false,
-      platform: "node",
-      format: "cjs",
-      logLevel: "silent",
-      plugins: [
-        {
-          name: "controlled-database-setup",
-          setup(build) {
-            build.onResolve({ filter: /^@\/components\/databases$/ }, () => ({
-              path: "database",
-              namespace: "conversion-test",
-            }));
-            build.onLoad({ filter: /.*/, namespace: "conversion-test" }, () => ({
-              contents:
-                "export const createDatabaseSetupBlockContent=()=>({type:'databaseSetupBlock'});",
-            }));
-          },
-        },
-      ],
-    });
-    const module = { exports: {} };
-    new Function("require", "module", "exports", result.outputFiles[0].text)(
-      createRequire(import.meta.url),
-      module,
-      module.exports,
+export function register({ assert, loadModule, test }) {
+  test("conversion preserves whitespace and formatting and strips only code-incompatible marks", async () => {
+    const { blockContentForConversion: convert } = await loadModule(
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
-    const { blockContentForConversion: convert } = module.exports;
-    const text = { isTextblock: true, textContent: " Keep spaces " };
-    assert.deepEqual(convert({ title: "Text" }, text), {
-      type: "paragraph",
-      content: [{ type: "text", text: " Keep spaces " }],
+    const { Schema } = await import("@tiptap/pm/model");
+    const schema = new Schema({
+      nodes: {
+        doc: { content: "block+" },
+        text: { group: "inline" },
+        paragraph: { group: "block", content: "inline*" },
+        heading: { group: "block", content: "inline*", attrs: { level: { default: 1 } } },
+        codeBlock: { group: "block", content: "text*", marks: "", code: true },
+        hardBreak: { group: "inline", inline: true },
+        blockquote: { group: "block", content: "block+" },
+        bulletList: { group: "block", content: "listItem+" },
+        listItem: { content: "paragraph block*" },
+        orderedList: { group: "block", content: "listItem+" },
+        taskList: { group: "block", content: "taskItem+" },
+        taskItem: { content: "paragraph block*", attrs: { checked: { default: false } } },
+        details: { group: "block", content: "detailsSummary detailsContent" },
+        detailsSummary: { content: "inline*" },
+        detailsContent: { content: "block+" },
+        databaseBlock: { group: "block", atom: true },
+      },
+      marks: { bold: {}, link: { attrs: { href: {} } } },
     });
-    for (const level of [1, 2, 3])
-      assert.deepEqual(convert({ title: `Heading ${level}` }, text), {
-        type: "heading",
-        attrs: { level },
-        content: [{ type: "text", text: " Keep spaces " }],
-      });
-    assert.deepEqual(convert({ title: "Text" }, { ...text, textContent: "  " }), {
-      type: "paragraph",
-      content: undefined,
-    });
-    assert.deepEqual(convert({ title: "Text" }, { ...text, isTextblock: false }), {
-      type: "paragraph",
-      content: undefined,
-    });
-    assert.deepEqual(convert({ title: "Quote" }, text), {
-      type: "blockquote",
-      content: [{ type: "paragraph" }],
-    });
-    assert.deepEqual(convert({ title: "Unsupported" }, text), {
-      type: "paragraph",
-    });
+    const paragraph = schema.node("paragraph", null, [
+      schema.text(" Keep ", [schema.mark("bold")]),
+      schema.node("hardBreak"),
+      schema.text("spaces "),
+    ]);
+    for (const id of [
+      "paragraph",
+      "heading1",
+      "heading2",
+      "heading3",
+      "blockquote",
+      "bulletList",
+      "orderedList",
+      "taskList",
+      "details",
+    ]) {
+      const result = convert(id, [paragraph], schema);
+      assert.ok(result, id);
+      assert.equal(result.map((n) => n.textContent).join(""), " Keep spaces ");
+      let bold = false;
+      result.forEach((n) =>
+        n.descendants((child) => {
+          bold ||= child.marks.some((m) => m.type.name === "bold");
+        }),
+      );
+      assert.equal(bold, true, id);
+      result.forEach((n) => n.check());
+      for (const destination of [
+        "paragraph",
+        "heading1",
+        "heading2",
+        "heading3",
+        "blockquote",
+        "bulletList",
+        "orderedList",
+        "taskList",
+        "details",
+      ]) {
+        const converted = convert(destination, result, schema);
+        assert.ok(converted, `${id} to ${destination}`);
+        converted.forEach((node) => node.check());
+        assert.equal(
+          converted.map((node) => node.textContent).join(""),
+          " Keep spaces ",
+          `${id} to ${destination}`,
+        );
+      }
+    }
+    assert.equal(
+      convert(
+        "codeBlock",
+        [paragraph, schema.node("paragraph", null, schema.text("  "))],
+        schema,
+      )[0].textContent,
+      " Keep \nspaces \n  ",
+    );
+    assert.equal(convert("codeBlock", [schema.node("databaseBlock")], schema), null);
+    assert.equal(convert("imageBlock", [paragraph], schema), null);
   });
 
   async function plusFixture({ text = "draft", insertError, cleanupError } = {}) {
@@ -121,7 +146,18 @@ export function register({ assert, appPath, loadModule, test }) {
       listeners,
       paragraph,
       schema,
-      insert: (title, options) => insertBlockFromPlus(editor, { node, pos: 0 }, { title }, options),
+      insert: (title, options) =>
+        insertBlockFromPlus(
+          editor,
+          { node, pos: 0 },
+          {
+            id: { Text: "paragraph", Database: "databaseBlock", "Meeting notes": "meetingBlock" }[
+              title
+            ],
+            title,
+          },
+          options,
+        ),
       transaction: (transaction) => {
         for (const listener of listeners) listener({ transaction });
       },

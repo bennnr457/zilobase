@@ -25,7 +25,7 @@ export function ToolbarButton({
   return (
     <Button
       aria-label={label}
-      disabled={!editor}
+      disabled={!editor || !editor.isEditable}
       onClick={useMouseDown ? undefined : handlePress}
       onMouseDown={
         useMouseDown

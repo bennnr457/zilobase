@@ -1,3 +1,4 @@
+import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { CodeXml, FileWarning, Link, RefreshCw } from "@/components/icons";
@@ -353,6 +354,7 @@ export function normalizeEmbedUrl(value: string, options: { provider?: EmbedProv
 }
 
 function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) {
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const resizeStateRef = useRef<{
     startX: number;
     startWidth: number;
@@ -408,6 +410,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
       return;
     }
 
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({
       ...nextEmbed,
       provider:
@@ -427,6 +430,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
   };
 
   const startResize = (event: PointerEvent<HTMLSpanElement>, side: "left" | "right") => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     const preview = event.currentTarget.closest("[data-embed-block-preview]");
 
     if (!(preview instanceof HTMLElement)) {
@@ -444,6 +448,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
   };
 
   const updateResize = (event: PointerEvent<HTMLSpanElement>) => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     const resizeState = resizeStateRef.current;
 
     if (!resizeState) {
@@ -459,6 +464,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
       Math.min(editorWidth, Math.max(minEmbedWidth, resizeState.startWidth + delta)),
     );
 
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({ width: nextWidth });
   };
 
@@ -478,6 +484,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
             <button
               className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
               contentEditable={false}
+              disabled={!isEditable}
               type="button"
             >
               {isFigma ? (

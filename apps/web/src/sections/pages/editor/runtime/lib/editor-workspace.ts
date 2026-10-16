@@ -193,6 +193,9 @@ export function createEditorWorkspace() {
       if (currentId && currentId !== viewId) {
         views.get(currentId)?.commands.focus();
         editor.setEditable(false, false);
+        editor.view.dispatch(
+          editor.state.tr.setMeta("editorCapabilities", true).setMeta("addToHistory", false),
+        );
         return () => {};
       }
       if (runtime) runtimes.set(editor, runtime);

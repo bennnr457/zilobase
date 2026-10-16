@@ -1,3 +1,4 @@
+import { canEditEditorStructure } from "../../commands/lib/block-insert";
 import { Extension, type Content } from "@tiptap/core";
 /** Structural entrypoints share Tiptap's transaction and remain safe under .can(). */
 declare module "@tiptap/core" {
@@ -16,15 +17,15 @@ export const StructuralCommands = Extension.create({
       insertBlocksAt:
         (pos, content) =>
         ({ editor, commands }) =>
-          editor.isEditable && commands.insertContentAt(pos, content),
+          canEditEditorStructure(editor) && commands.insertContentAt(pos, content),
       replaceBlocksRange:
         (range, content) =>
         ({ editor, commands }) =>
-          editor.isEditable && commands.insertContentAt(range, content),
+          canEditEditorStructure(editor) && commands.insertContentAt(range, content),
       removeBlocksRange:
         (range) =>
         ({ editor, commands }) =>
-          editor.isEditable && commands.deleteRange(range),
+          canEditEditorStructure(editor) && commands.deleteRange(range),
     };
   },
 });

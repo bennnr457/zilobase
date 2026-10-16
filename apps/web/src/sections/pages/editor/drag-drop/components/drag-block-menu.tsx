@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { closeEditorHistory } from "@/sections/pages/editor/runtime/lib/editor-history-coordinator";
 import type { Editor } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -35,7 +36,10 @@ import {
 import { SlashCommandMenu } from "../../extensions/components/slash-command-menu";
 
 import {
-  blockContentForConversion,
+  convertBlocks,
+  canConvertBlocks,
+  convertibleBlockIds,
+  canEditEditorStructure,
   insertBlockFromPlus,
   type StructuralInsertionPendingChange,
 } from "../../commands/lib/block-insert";
@@ -81,20 +85,7 @@ function findStructuralBlock(editor: Editor, target: PendingStructuralBlockDelet
 
 const blockCommandItems = slashCommandItems.filter((item) => item.title !== "Emoji");
 
-const turnIntoItems = blockCommandItems.filter((item) =>
-  [
-    "Text",
-    "Heading 1",
-    "Heading 2",
-    "Heading 3",
-    "Bullet List",
-    "Numbered List",
-    "Task List",
-    "Quote",
-    "Code Block",
-    "Toggle",
-  ].includes(item.title),
-);
+const turnIntoItems = blockCommandItems.filter((item) => convertibleBlockIds.has(item.id));
 
 export function DragBlockMenu({
   editor,
@@ -343,7 +334,11 @@ export function DragBlockMenu({
   };
 
   const runTargetCommand = (command: () => void) => {
-    if (!target) {
+    if (
+      !target ||
+      !canEditEditorStructure(editor) ||
+      !editor.state.doc.nodeAt(target.pos)?.eq(target.node)
+    ) {
       return;
     }
 
@@ -367,20 +362,7 @@ export function DragBlockMenu({
         return;
       }
 
-      const content = blockContentForConversion(item, target.node);
-
-      if (!content) {
-        return;
-      }
-      editor
-        .chain()
-        .focus()
-        .removeBlocksRange({
-          from: target.pos,
-          to: target.pos + target.node.nodeSize,
-        })
-        .insertBlocksAt(target.pos, content)
-        .run();
+      convertBlocks(editor, target, item.id);
     });
   };
 
@@ -445,7 +427,11 @@ export function DragBlockMenu({
         return;
       }
 
-      document.execCommand("copy");
+      Effect.runSync(
+        Effect.try({ try: () => document.execCommand("copy"), catch: (error) => error }).pipe(
+          Effect.catch(() => Effect.sync(() => toast.error("Could not copy block."))),
+        ),
+      );
     });
   };
 
@@ -497,7 +483,7 @@ export function DragBlockMenu({
   };
 
   const confirmStructuralBlockDelete = async () => {
-    if (!pendingDelete || deletePending) {
+    if (!canEditEditorStructure(editor) || !pendingDelete || deletePending) {
       return;
     }
 
@@ -513,6 +499,10 @@ export function DragBlockMenu({
         type: pendingDelete.type,
       });
 
+      if (!canEditEditorStructure(editor)) {
+        await resourceHistory?.undo();
+        return;
+      }
       const match = findStructuralBlock(editor, pendingDelete);
 
       if (match?.node) {
@@ -612,7 +602,9 @@ export function DragBlockMenu({
                 onCreateDatabase,
                 onCreateMeeting,
                 onStructuralInsertionPendingChange,
-              });
+              }).catch((error) =>
+                toast.error(error instanceof Error ? error.message : "Could not insert block."),
+              );
               onOpenChange(false);
             }}
           />
@@ -709,7 +701,11 @@ export function DragBlockMenu({
                     const Icon = item.icon;
 
                     return (
-                      <DropDrawerItem key={item.title} onSelect={() => turnTargetInto(item)}>
+                      <DropDrawerItem
+                        disabled={!target || !canConvertBlocks(editor, target, item.id)}
+                        key={item.id}
+                        onSelect={() => turnTargetInto(item)}
+                      >
                         <Icon />
                         <span>{item.title}</span>
                       </DropDrawerItem>

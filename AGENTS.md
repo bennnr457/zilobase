@@ -234,6 +234,7 @@ design customization. Keep editor runtime, collaboration, hosted bootstrap,
 operations, selection, and drag/drop as distinct subsystems beneath
 `sections/pages/editor`. Editor and page-content composition live at that folder's root; other local UI,
 hooks, and helpers use the owning subsystem's `components/`, `hooks/`, and `lib/`.
+Editor creation, extension memoization, and editability share `runtime/hooks/use-editor-runtime.ts`.
 Extension assembly lives in `runtime/lib`. Keep comments, their Yjs controller, comment extensions,
 and both independently scoped comments providers in `editor/comments`. Shared page
 metadata lives in `sections/pages/components/page-metadata.tsx`; database property rendering

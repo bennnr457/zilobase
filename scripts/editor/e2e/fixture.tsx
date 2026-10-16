@@ -45,6 +45,7 @@ function Panes() {
   mountedWorkspace = workspace;
   const [promoted, setPromoted] = useState(false);
   const [dialog, setDialog] = useState(false);
+  const [localDocumentVersion, setLocalDocumentVersion] = useState(0);
   const [mainDocument, setMainDocument] = useState<Y.Doc | null>(null);
   const onMainReady = useCallback((editor: TiptapEditor | null) => {
     if (editor) ready.main = editor;
@@ -62,6 +63,14 @@ function Panes() {
   return (
     <>
       <button onClick={() => setPromoted(true)}>Promote side pane</button>
+      <button
+        onClick={() => {
+          setMainDocument(null);
+          setLocalDocumentVersion((version) => version + 1);
+        }}
+      >
+        Replace local document
+      </button>
       <button onClick={() => setDialog((open) => !open)}>Toggle dialog</button>
       <button
         onClick={() => {
@@ -116,8 +125,10 @@ function Panes() {
           <Editor
             session={{
               kind: "local",
-              documentId: "main",
-              content: "<p>Main one</p><p>Main two</p>",
+              documentId: localDocumentVersion ? `main-local-${localDocumentVersion}` : "main",
+              content: localDocumentVersion
+                ? `<p>Local replacement ${localDocumentVersion}</p>`
+                : "<p>Main one</p><p>Main two</p>",
               collaboration: mainDocument ? { document: mainDocument } : undefined,
             }}
             presentation={{ hideMetadata: true, enableComments: false }}

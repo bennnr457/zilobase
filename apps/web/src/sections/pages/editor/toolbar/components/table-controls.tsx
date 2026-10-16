@@ -1,3 +1,4 @@
+import { canEditEditorStructure } from "../../commands/lib/block-insert";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { Editor } from "@tiptap/react";
@@ -358,6 +359,8 @@ export function TableControls({ editor }: { editor: Editor | null }) {
   }
 
   const appendRow = () => {
+    if (!canEditEditorStructure(editor) || !editor.state.doc.nodeAt(rect.tablePos)?.eq(rect.table))
+      return;
     const tr = addRow(editor.state.tr, rect, rect.map.height);
 
     editor.view.dispatch(tr.scrollIntoView());
@@ -367,6 +370,8 @@ export function TableControls({ editor }: { editor: Editor | null }) {
   };
 
   const appendColumn = () => {
+    if (!canEditEditorStructure(editor) || !editor.state.doc.nodeAt(rect.tablePos)?.eq(rect.table))
+      return;
     const tr = addColumn(editor.state.tr, rect, rect.map.width);
 
     editor.view.dispatch(tr.scrollIntoView());
@@ -376,6 +381,8 @@ export function TableControls({ editor }: { editor: Editor | null }) {
   };
 
   const finishDrag = () => {
+    if (!canEditEditorStructure(editor) || !editor.state.doc.nodeAt(rect.tablePos)?.eq(rect.table))
+      return;
     const currentDrag = dragState.current;
 
     setDrag(null);

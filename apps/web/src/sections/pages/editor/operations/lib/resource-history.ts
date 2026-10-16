@@ -1,3 +1,4 @@
+import { Cause, Effect } from "effect";
 import type { EditorResourceReceipt } from "../../lib/editor-types";
 
 type ResourceEditorHistory = {
@@ -20,21 +21,34 @@ export function createResourceHistoryAction({
 }) {
   let queue: Promise<unknown> = Promise.resolve();
   const run = (direction: "undo" | "redo") => {
-    const operation = queue.then(async () => {
+    const operation = queue.then(() => {
       const allowed = direction === "undo" ? editor.canUndo : editor.canRedo;
       if (!allowed()) return false;
-      try {
-        await resource[direction]();
-        // Typing, remote changes or pane closure may have invalidated the receipt while waiting.
-        if (!allowed() || !editor[direction]()) {
-          await resource[direction === "undo" ? "redo" : "undo"]();
-          return false;
-        }
-        return true;
-      } catch (error) {
-        onError(error);
-        return false;
-      }
+      return Effect.runPromise(
+        Effect.gen(function* () {
+          yield* Effect.tryPromise({ try: () => resource[direction](), catch: (error) => error });
+          const applied = yield* Effect.try({
+            try: () => allowed() && editor[direction](),
+            catch: (error) => error,
+          });
+          if (!applied) {
+            yield* Effect.tryPromise({
+              try: () => resource[direction === "undo" ? "redo" : "undo"](),
+              catch: (error) => error,
+            });
+            return false;
+          }
+          return true;
+        }).pipe(
+          Effect.catchCause((cause) => {
+            if (Cause.hasInterrupts(cause)) return Effect.failCause(cause);
+            return Effect.sync(() => {
+              onError(Cause.squash(cause));
+              return false;
+            });
+          }),
+        ),
+      );
     });
     queue = operation;
     return operation;

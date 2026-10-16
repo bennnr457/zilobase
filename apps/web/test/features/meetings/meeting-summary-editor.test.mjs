@@ -16,7 +16,7 @@ export function register({ readSource, assert, test }) {
       readSource("/src/sections/meetings/meeting-screen.tsx"),
       readSource("/src/sections/meetings/styles/meeting.css"),
       readSource("/src/sections/pages/editor/runtime/lib/create-base-extensions.ts"),
-      readSource("/src/sections/pages/editor/runtime/hooks/use-editor-extensions.ts"),
+      readSource("/src/sections/pages/editor/runtime/hooks/use-editor-runtime.ts"),
       readSource(
         "/src/sections/pages/editor/extensions/meeting/hooks/use-meeting-collaboration.ts",
       ),
@@ -58,7 +58,7 @@ export function register({ readSource, assert, test }) {
       extensionSource,
       /MeetingBlock\.configure\(\{[\s\S]*?editorRuntime: databaseEditorRuntime/,
     );
-    assert.match(editorExtensionHookSource, /collaborationField \?\? "default"/);
+    assert.match(editorExtensionHookSource, /collaborationField,\s+documentKey/);
     assert.match(
       editorExtensionHookSource,
       /collaboration\?\.awareness \|\| collaboration\?\.provider\?\.awareness/,

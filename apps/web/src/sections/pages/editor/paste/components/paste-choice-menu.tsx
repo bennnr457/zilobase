@@ -1,10 +1,8 @@
+import { toast } from "sonner";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import type { Content } from "@tiptap/core";
-import { useCallback } from "react";
-import {
-  fetchBookmarkMetadata,
-  getFallbackBookmarkMetadata,
-} from "../../extensions/components/bookmark-block";
+import { useCallback, useState } from "react";
+import { pasteBookmark } from "../lib/paste";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,49 +19,44 @@ type PasteChoiceMenuProps = {
 };
 
 export function PasteChoiceMenu({ editor, pasteChoice, onClose }: PasteChoiceMenuProps) {
+  const [pending, setPending] = useState(false);
   const replacePastedUrl = useCallback(
     (content: Content) => {
-      if (!editor) return;
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from: pasteChoice.from, to: pasteChoice.to })
-        .insertContentAt(pasteChoice.from, content)
-        .run();
+      const range = pasteChoice.resolve();
+      if (!editor || !range) return onClose();
+      editor.chain().focus().insertContentAt(range, content).run();
       onClose();
     },
-    [editor, onClose, pasteChoice.from, pasteChoice.to],
+    [editor, onClose, pasteChoice],
   );
 
   const pasteAsBookmarkOrMention = useCallback(
     async (type: "bookmarkBlock" | "linkMention") => {
-      const fallback = getFallbackBookmarkMetadata(pasteChoice.url);
-      let metadata = fallback;
+      if (pending) return;
+      setPending(true);
       try {
-        metadata = { ...fallback, ...(await fetchBookmarkMetadata(pasteChoice.url)) };
+        await pasteBookmark(pasteChoice, replacePastedUrl, type);
       } catch {
-        // Keep fallback metadata when bookmark fetch fails.
+        toast.error("Could not insert bookmark.");
+      } finally {
+        onClose();
       }
-      const block = {
-        attrs: { ...metadata, href: pasteChoice.url },
-        type,
-      };
-      replacePastedUrl(type === "linkMention" ? [block, { text: " ", type: "text" }] : block);
     },
-    [pasteChoice.url, replacePastedUrl],
+    [pasteChoice, replacePastedUrl, onClose, pending],
   );
 
   const pasteAsUrl = useCallback(() => {
-    if (!editor) return;
+    const range = pasteChoice.resolve();
+    if (!editor || !range) return onClose();
     editor
       .chain()
       .focus()
-      .setTextSelection({ from: pasteChoice.from, to: pasteChoice.to })
+      .setTextSelection(range)
       .setLink({ href: pasteChoice.url })
-      .setTextSelection(pasteChoice.to)
+      .setTextSelection(range.to)
       .run();
     onClose();
-  }, [editor, onClose, pasteChoice.from, pasteChoice.to, pasteChoice.url]);
+  }, [editor, onClose, pasteChoice]);
 
   const pasteChoiceRect = pasteChoice.anchor.getBoundingClientRect();
 
@@ -85,20 +78,35 @@ export function PasteChoiceMenu({ editor, pasteChoice, onClose }: PasteChoiceMen
         sideOffset={8}
       >
         <DropdownMenuLabel>Paste as</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => pasteAsBookmarkOrMention("linkMention")}>
+        <DropdownMenuItem
+          disabled={pending}
+          onSelect={(event) => {
+            event.preventDefault();
+            void pasteAsBookmarkOrMention("linkMention");
+          }}
+        >
           Mention
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => pasteAsBookmarkOrMention("bookmarkBlock")}>
+        <DropdownMenuItem
+          disabled={pending}
+          onSelect={(event) => {
+            event.preventDefault();
+            void pasteAsBookmarkOrMention("bookmarkBlock");
+          }}
+        >
           Bookmark
         </DropdownMenuItem>
         {pasteChoice.embedAttrs ? (
           <DropdownMenuItem
+            disabled={pending}
             onClick={() => replacePastedUrl({ attrs: pasteChoice.embedAttrs, type: "embedBlock" })}
           >
             Embed
           </DropdownMenuItem>
         ) : null}
-        <DropdownMenuItem onClick={pasteAsUrl}>URL</DropdownMenuItem>
+        <DropdownMenuItem disabled={pending} onClick={pasteAsUrl}>
+          URL
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

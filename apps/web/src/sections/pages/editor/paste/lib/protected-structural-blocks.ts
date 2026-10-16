@@ -26,6 +26,7 @@ function targetForNode(node: ProseMirrorNode, pos: number) {
 
 export function getProtectedStructuralBlockForDelete(
   state: EditorState,
+  direction: "backward" | "forward" = "backward",
 ): ProtectedStructuralBlockTarget | null {
   const { selection } = state;
   const selectedNode = (selection as { node?: ProseMirrorNode }).node;
@@ -34,28 +35,34 @@ export function getProtectedStructuralBlockForDelete(
     return targetForNode(selectedNode, selection.from);
   }
 
-  if (selection.empty && selection.$from.nodeBefore) {
-    const nodeBefore = selection.$from.nodeBefore;
-    const target = targetForNode(nodeBefore, selection.from - nodeBefore.nodeSize);
-
-    if (target) {
-      return target;
+  if (selection.empty) {
+    const adjacent =
+      direction === "forward" ? selection.$from.nodeAfter : selection.$from.nodeBefore;
+    if (adjacent) {
+      const target = targetForNode(
+        adjacent,
+        direction === "forward" ? selection.from : selection.from - adjacent.nodeSize,
+      );
+      if (target) return target;
     }
-  }
-
-  if (
-    selection.empty &&
-    selection.$from.parent.isTextblock &&
-    selection.$from.parentOffset === 0 &&
-    selection.$from.depth > 0
-  ) {
-    const parentDepth = selection.$from.depth - 1;
-    const siblingIndex = selection.$from.index(parentDepth);
-
-    if (siblingIndex > 0) {
-      const previousNode = selection.$from.node(parentDepth).child(siblingIndex - 1);
-      const currentNodePos = selection.$from.before(selection.$from.depth);
-      return targetForNode(previousNode, currentNodePos - previousNode.nodeSize);
+    const { $from } = selection;
+    const atBoundary =
+      direction === "forward"
+        ? $from.parentOffset === $from.parent.content.size
+        : $from.parentOffset === 0;
+    if ($from.parent.isTextblock && atBoundary && $from.depth > 0) {
+      const depth = $from.depth - 1;
+      const index = $from.index(depth) + (direction === "forward" ? 1 : -1);
+      const parent = $from.node(depth);
+      if (index >= 0 && index < parent.childCount) {
+        const sibling = parent.child(index);
+        return targetForNode(
+          sibling,
+          direction === "forward"
+            ? $from.after($from.depth)
+            : $from.before($from.depth) - sibling.nodeSize,
+        );
+      }
     }
   }
 
@@ -91,6 +98,10 @@ export function focusProtectedStructuralBlockTitle(
   }
 
   window.setTimeout(() => {
+    if (view.isDestroyed) return;
+    const current = view.state.doc.nodeAt(target.pos);
+    const id = target.type === "databaseBlock" ? "databaseId" : "meetingId";
+    if (current?.type !== target.node.type || current.attrs[id] !== target.node.attrs[id]) return;
     const nodeDom = view.nodeDOM(target.pos);
     const root = nodeDom instanceof HTMLElement ? nodeDom : (nodeDom?.parentElement ?? null);
     const input = root?.querySelector<HTMLInputElement>("[data-structural-block-title]");
@@ -112,7 +123,10 @@ export function handleProtectedStructuralBlockDeleteKey(view: EditorView, event:
     return false;
   }
 
-  const target = getProtectedStructuralBlockForDelete(view.state);
+  const target = getProtectedStructuralBlockForDelete(
+    view.state,
+    event.key === "Delete" ? "forward" : "backward",
+  );
 
   if (!target) {
     return false;
@@ -137,6 +151,18 @@ export function handleProtectedStructuralBlockClipboardMutation(
     return false;
   }
 
+  event.preventDefault();
+  focusProtectedStructuralBlockTitle(view, target);
+  return true;
+}
+
+export function handleProtectedStructuralBlockBeforeInput(view: EditorView, event: InputEvent) {
+  if (view.state.selection.empty && !event.inputType.startsWith("delete")) return false;
+  const target = getProtectedStructuralBlockForDelete(
+    view.state,
+    event.inputType.includes("Forward") ? "forward" : "backward",
+  );
+  if (!target) return false;
   event.preventDefault();
   focusProtectedStructuralBlockTitle(view, target);
   return true;

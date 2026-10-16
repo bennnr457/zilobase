@@ -1,3 +1,4 @@
+import { getProtectedStructuralBlockForDelete } from "../../paste/lib/protected-structural-blocks";
 import { getSelectionRanges, NodeRangeSelection } from "@tiptap/extension-node-range";
 import { Extension } from "@tiptap/core";
 import type { Node as ProseMirrorNode, ResolvedPos } from "@tiptap/pm/model";
@@ -51,7 +52,9 @@ export const isBlockSelectionActive = (state: EditorState) =>
 
 export const shouldBlockBlockSelectionKeydown = (
   event: Pick<KeyboardEvent, "altKey" | "ctrlKey" | "key" | "metaKey">,
+  protectedSelection = false,
 ) => {
+  if (!protectedSelection) return false;
   const primaryModifier = event.metaKey || event.ctrlKey;
   const key = event.key.toLowerCase();
 
@@ -71,7 +74,13 @@ export const shouldBlockBlockSelectionKeydown = (
 };
 
 export const handleBlockSelectionKeyDown = (view: EditorView, event: KeyboardEvent) => {
-  if (!isBlockSelectionActive(view.state) || !shouldBlockBlockSelectionKeydown(event)) {
+  if (
+    !isBlockSelectionActive(view.state) ||
+    !shouldBlockBlockSelectionKeydown(
+      event,
+      Boolean(getProtectedStructuralBlockForDelete(view.state)),
+    )
+  ) {
     return false;
   }
 
@@ -80,7 +89,11 @@ export const handleBlockSelectionKeyDown = (view: EditorView, event: KeyboardEve
 };
 
 export const handleBlockSelectionBeforeInput = (view: EditorView, event: InputEvent) => {
-  if (!isBlockSelectionActive(view.state) || dragInputTypes.has(event.inputType)) {
+  if (
+    !isBlockSelectionActive(view.state) ||
+    !getProtectedStructuralBlockForDelete(view.state) ||
+    dragInputTypes.has(event.inputType)
+  ) {
     return false;
   }
 
@@ -89,7 +102,7 @@ export const handleBlockSelectionBeforeInput = (view: EditorView, event: InputEv
 };
 
 export const handleBlockSelectionClipboardMutation = (view: EditorView, event: ClipboardEvent) => {
-  if (!isBlockSelectionActive(view.state)) {
+  if (!isBlockSelectionActive(view.state) || !getProtectedStructuralBlockForDelete(view.state)) {
     return false;
   }
 

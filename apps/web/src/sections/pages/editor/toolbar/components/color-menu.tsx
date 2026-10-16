@@ -1,3 +1,4 @@
+import { useEditorState } from "@tiptap/react";
 import { Palette } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
@@ -98,11 +99,17 @@ export function ColorPicker({
 }
 
 export function ColorMenu({ editor }: EditorControlProps) {
-  const textColor = editor?.getAttributes("textStyle").color ?? null;
-  const backgroundColor = editor?.getAttributes("textStyle").backgroundColor ?? null;
+  const state = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      textColor: editor?.getAttributes("textStyle").color ?? null,
+      backgroundColor: editor?.getAttributes("textStyle").backgroundColor ?? null,
+    }),
+  });
+  const { textColor, backgroundColor } = state ?? { textColor: null, backgroundColor: null };
 
   const applyTextColor = (color: string | null) => {
-    if (!editor) {
+    if (!editor || editor.isDestroyed || !editor.isEditable) {
       return;
     }
 
@@ -115,7 +122,7 @@ export function ColorMenu({ editor }: EditorControlProps) {
   };
 
   const applyBackgroundColor = (color: string | null) => {
-    if (!editor) {
+    if (!editor || editor.isDestroyed || !editor.isEditable) {
       return;
     }
 
@@ -132,7 +139,7 @@ export function ColorMenu({ editor }: EditorControlProps) {
       <PopoverTrigger asChild>
         <Button
           aria-label="Text and background color"
-          disabled={!editor}
+          disabled={!editor || !editor.isEditable}
           size="icon"
           title="Text and background color"
           type="button"

@@ -51,11 +51,10 @@ export function register({ assert, loadModule, readSource, test }) {
     const slashCommand = await readSource(
       "/src/sections/pages/editor/extensions/components/slash-command.tsx",
     );
-    const databaseCommand = slashCommand.slice(slashCommand.indexOf('title: "Database"'));
 
     assert.doesNotMatch(setupCard, /<PromptInputTextarea\s+autoFocus/);
     assert.match(setupCard, /promptInputRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
-    assert.match(databaseCommand, /insertCreatedBlock/);
+    assert.match(slashCommand, /runBlockCommand/);
     const insertion = await readSource("/src/sections/pages/editor/commands/lib/block-insert.ts");
     assert.match(insertion, /\.focus\(undefined, \{ scrollIntoView: false \}\)/);
   });

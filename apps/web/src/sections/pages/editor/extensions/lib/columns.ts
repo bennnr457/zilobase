@@ -22,7 +22,7 @@ const normalizeColumnWidths = (value: unknown, count: number) => {
   if (
     Array.isArray(value) &&
     value.length === count &&
-    value.every((item) => typeof item === "number" && Number.isFinite(item))
+    value.every((item) => typeof item === "number" && Number.isFinite(item) && item > 0)
   ) {
     return value as number[];
   }
@@ -54,7 +54,7 @@ const buildColumnBlock = ({ content }: Pick<JSONContent, "content">) =>
 const buildNColumns = (count: number) => {
   const content = [buildParagraph({})];
 
-  return times(Math.max(2, count), () => buildColumn({ content }));
+  return times(Math.max(0, count), () => buildColumn({ content }));
 };
 
 const findParentNodeClosestToPos = (
@@ -206,6 +206,11 @@ const ColumnBlock = Node.create({
             ? buildColumnBlock({ content: [buildColumn({ content }), ...buildNColumns(count - 1)] })
             : buildColumnBlock({ content: buildNColumns(count) });
           const node = tr.doc.type.schema.nodeFromJSON(block);
+          try {
+            node.check();
+          } catch {
+            return false;
+          }
           if (!range.parent.canReplaceWith(range.startIndex, range.endIndex, this.type))
             return false;
           if (dispatch) tr.replaceWith(range.start, range.end, node);

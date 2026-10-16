@@ -1,3 +1,4 @@
+import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { File as FileIcon, Link } from "@/components/icons";
@@ -8,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 
-function FileBlockView({ node, updateAttributes }: ReactNodeViewProps) {
+function FileBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) {
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [open, setOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState(node.attrs.href ?? "");
@@ -17,6 +19,7 @@ function FileBlockView({ node, updateAttributes }: ReactNodeViewProps) {
   const size = node.attrs.size as string | null;
 
   const setFileHref = (nextHref: string, nextTitle = nextHref, nextSize: string | null = null) => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({
       href: nextHref,
       size: nextSize,
@@ -57,7 +60,7 @@ function FileBlockView({ node, updateAttributes }: ReactNodeViewProps) {
           <button
             className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
-            disabled={Boolean(href)}
+            disabled={!isEditable || Boolean(href)}
             type="button"
           >
             <FileIcon />

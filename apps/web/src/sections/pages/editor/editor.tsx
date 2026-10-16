@@ -16,8 +16,6 @@ import {
 import { resolveBlockDragTargetFromPoint } from "./drag-drop/lib/block-drag-geometry";
 import { useEditorWorkspace } from "./runtime/components/page-editor-registry";
 import { createPositionAnchor } from "./operations/lib/position-anchor";
-import { useEditorExtensions } from "./runtime/hooks/use-editor-extensions";
-import { useEditorInstance } from "./runtime/hooks/use-editor-instance";
 import { useEditorMenuEffects } from "./runtime/hooks/use-editor-menu-effects";
 import { useEditorRuntime } from "./runtime/hooks/use-editor-runtime";
 import { DatabaseView } from "@/sections/databases/views/shared/components/database-view";
@@ -154,41 +152,29 @@ export function Editor({
     return () => window.removeEventListener("beforeunload", preventUnsyncedReload);
   }, [collaborationHasPendingChanges]);
 
-  const { databaseEditorRuntime } = useEditorRuntime(databaseEditable);
   const { createEditorDatabase, createEditorMeeting, handleDatabasePageDrop } =
     useEditorResourceActions(workspaceId, pageId);
 
-  const { editorExtensions, editorLifecycleKey, initialContent, tocItems } = useEditorExtensions({
+  const { blockDropLine, editor, surfaceDragHandlers, tocItems } = useEditorRuntime({
     collaboration,
     collaborationField,
     content,
     createEditorDatabase,
     createEditorMeeting,
-    databaseEditorRuntime,
-    editable: contentEditable,
     structuralEditingEnabled,
     onCreatePage,
-    onEmbedPage,
-    onOpenPage,
     onStructuralInsertionPendingChange,
     workspaceId,
-    pageId,
-  });
-
-  const { blockDropLine, editor, surfaceDragHandlers } = useEditorInstance({
+    databaseEditable,
     workspace,
     runtime,
     documentKey: `${session.kind ?? "page"}:${session.documentId ?? pageId ?? editorId}:${collaborationField ?? "default"}:${layoutPreview ? editorId : ""}`,
-    databaseEditorRuntime,
     dropPageOnDatabase: handleDatabasePageDrop,
     editable: contentEditable,
     editorContentRef,
     editorSurfaceRef,
-    editorExtensions,
     editorId,
-    editorLifecycleKey,
     editorTabIndex,
-    initialContent,
     onContentChange,
     onCrossEditorDatabaseDrop: ({ payload, pos }) => {
       const sourceDatabaseId = getBlockDragDatabaseId(payload);
@@ -272,6 +258,10 @@ export function Editor({
   const { mobileNodeTarget, canMoveMobileTarget, moveMobileTarget, handleMobileNodeClick } =
     useMobileNodeActions(editor, resolveDragTargetFromPoint);
 
+  useEffect(() => pasteChoice?.retain(), [pasteChoice]);
+  useEffect(() => {
+    setPasteChoice(null);
+  }, [editor]);
   const handleClosePasteChoice = useCallback(() => setPasteChoice(null), []);
 
   const focusPageBodyFromTitle = useCallback(() => {

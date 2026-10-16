@@ -1,7 +1,9 @@
+import { Effect } from "effect";
+import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { Bookmark, CircleX, Globe2, Loader2 } from "@/components/icons";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +14,8 @@ import type { BookmarkMetadata } from "@zilobase/features/pages";
 import { bookmarkMetadata } from "@zilobase/features/pages";
 export type { BookmarkMetadata } from "@zilobase/features/pages";
 
-function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
+function BookmarkBlockView({ editor, getPos, node, updateAttributes }: ReactNodeViewProps) {
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const [faviconFailed, setFaviconFailed] = useState(false);
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +27,16 @@ function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
   const host = href ? getUrlHost(href) : null;
   const image = node.attrs.image as string | null;
 
+  const request = useRef(0);
+  useEffect(
+    () => () => {
+      request.current++;
+    },
+    [],
+  );
   const createBookmark = async () => {
+    if (!editor.isEditable || editor.isDestroyed) return;
+    const revision = ++request.current;
     const nextUrl = normalizeUrl(url);
 
     if (!nextUrl) {
@@ -33,6 +45,7 @@ function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
 
     const fallbackMetadata = getFallbackBookmarkMetadata(nextUrl);
 
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({
       ...fallbackMetadata,
       href: nextUrl,
@@ -40,10 +53,23 @@ function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
     setFaviconFailed(false);
     setUrl(nextUrl);
     setIsLoading(true);
+    const sourcePos = getPos();
+    const expected = typeof sourcePos === "number" ? editor.state.doc.nodeAt(sourcePos) : null;
 
     try {
-      const metadata = await fetchBookmarkMetadata(nextUrl);
+      const metadata = await Effect.runPromise(
+        Effect.tryPromise({ try: () => fetchBookmarkMetadata(nextUrl), catch: (error) => error }),
+      );
+      const pos = getPos();
+      if (
+        typeof pos !== "number" ||
+        editor.isDestroyed ||
+        !expected ||
+        !editor.state.doc.nodeAt(pos)?.eq(expected)
+      )
+        return;
 
+      if (request.current !== revision || !editor.isEditable || editor.isDestroyed) return;
       updateAttributes({
         ...fallbackMetadata,
         ...metadata,
@@ -52,9 +78,9 @@ function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
       setFaviconFailed(false);
       setOpen(false);
     } catch {
-      setOpen(false);
+      if (request.current === revision) setOpen(false);
     } finally {
-      setIsLoading(false);
+      if (request.current === revision) setIsLoading(false);
     }
   };
 
@@ -65,7 +91,7 @@ function BookmarkBlockView({ node, updateAttributes }: ReactNodeViewProps) {
           <button
             className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
-            disabled={Boolean(href)}
+            disabled={!isEditable || Boolean(href)}
             type="button"
           >
             <Bookmark />

@@ -94,10 +94,12 @@ export function openAskAiPopover({
   document.body.appendChild(host);
   const root: Root = createRoot(host);
   const cleanup = () => {
+    editor.off("destroy", cleanup);
     root.unmount();
     host.remove();
   };
 
+  editor.on("destroy", cleanup);
   editor.chain().focus().deleteRange(range).setTextSelection(insertPos).run();
 
   root.render(

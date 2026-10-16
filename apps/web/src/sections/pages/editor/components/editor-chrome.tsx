@@ -14,7 +14,7 @@ import { SelectionBubbleMenu } from "../selection/components/selection-bubble-me
 import { TableControls } from "../toolbar/components/table-controls";
 import { EditorTableOfContents } from "../toolbar/components/editor-table-of-contents";
 import { PasteChoiceMenu } from "../paste/components/paste-choice-menu";
-import { runToolbarCommand } from "../toolbar/lib/toolbar";
+import { runToolbarCommand } from "../commands/lib/block-insert";
 import type {
   BlockDropLine,
   PasteChoiceState,

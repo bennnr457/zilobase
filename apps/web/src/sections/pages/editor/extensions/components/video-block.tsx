@@ -1,3 +1,4 @@
+import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { Link, PlaySquare } from "@/components/icons";
@@ -8,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 
-function VideoBlockView({ node, updateAttributes }: ReactNodeViewProps) {
+function VideoBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) {
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [open, setOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState(node.attrs.src ?? "");
@@ -16,6 +18,7 @@ function VideoBlockView({ node, updateAttributes }: ReactNodeViewProps) {
   const title = (node.attrs.title as string | null) ?? "Video";
 
   const setVideoSrc = (nextSrc: string, nextTitle = "Linked video") => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({
       src: nextSrc,
       title: nextTitle,
@@ -55,7 +58,7 @@ function VideoBlockView({ node, updateAttributes }: ReactNodeViewProps) {
           <button
             className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
-            disabled={Boolean(src)}
+            disabled={!isEditable || Boolean(src)}
             type="button"
           >
             <PlaySquare />

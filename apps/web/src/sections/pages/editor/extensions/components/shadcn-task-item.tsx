@@ -1,3 +1,4 @@
+import { useEditorState } from "@tiptap/react";
 import TaskItem from "@tiptap/extension-task-item";
 import {
   NodeViewContent,
@@ -16,7 +17,7 @@ type ShadcnTaskItemOptions = {
 
 function ShadcnTaskItemView({ editor, getPos, node, updateAttributes }: NodeViewProps) {
   const checked = Boolean(node.attrs.checked);
-  const isEditable = editor.isEditable;
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
 
   return (
     <NodeViewWrapper as="li" data-checked={checked} data-type="taskItem" className="task-item">

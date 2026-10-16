@@ -160,6 +160,22 @@ export function createEditorDragDrop(
     )
       return false;
     clearDropLine();
+    const current = bridge.workspace.getEditor(view);
+    const structural =
+      current && bridge.workspace.runtimes.get(current)?.getCapabilities().structural !== false;
+    if (!view.editable || !structural) {
+      if (
+        bridge.isDraggingPage(event) ||
+        bridge.workspace.drag.read(event.dataTransfer) ||
+        hasEditorBlockDragData(event.dataTransfer)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        bridge.workspace.drag.reset();
+        return true;
+      }
+      return false;
+    }
     if (bridge.dropPageOnDatabase(event)) return true;
 
     const payload = bridge.workspace.drag.read(event.dataTransfer);

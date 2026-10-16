@@ -1,8 +1,9 @@
 export function register({ assert, loadModule, test }) {
-  test("block selection allows only non-mutating keyboard actions", async () => {
+  test("ordinary block selections allow editing while resource selections remain guarded", async () => {
     const { shouldBlockBlockSelectionKeydown } = await loadModule(
       "/src/sections/pages/editor/extensions/lib/block-selection.ts",
     );
+    assert.equal(shouldBlockBlockSelectionKeydown({ key: "Backspace" }), false);
     const keyEvent = (key, overrides = {}) => ({
       altKey: false,
       ctrlKey: false,
@@ -11,16 +12,16 @@ export function register({ assert, loadModule, test }) {
       ...overrides,
     });
 
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("c", { metaKey: true })), false);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("a", { metaKey: true })), false);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("Escape")), false);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("ArrowLeft")), false);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("a")), true);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("Enter")), true);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("Backspace")), true);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("v", { metaKey: true })), true);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("x", { metaKey: true })), true);
-    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("b", { metaKey: true })), true);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("c", { metaKey: true }), true), false);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("a", { metaKey: true }), true), false);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("Escape"), true), false);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("ArrowLeft"), true), false);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("a"), true), true);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("Enter"), true), true);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("Backspace"), true), true);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("v", { metaKey: true }), true), true);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("x", { metaKey: true }), true), true);
+    assert.equal(shouldBlockBlockSelectionKeydown(keyEvent("b", { metaKey: true }), true), true);
   });
 
   test("block selection includes a leading atom database block", async () => {

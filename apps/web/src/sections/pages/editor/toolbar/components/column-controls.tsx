@@ -1,3 +1,4 @@
+import { canEditEditorStructure } from "../../commands/lib/block-insert";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent } from "react";
 import type { Editor } from "@tiptap/react";
@@ -89,6 +90,7 @@ function findColumnBlockByDOM(editor: Editor, dom: HTMLElement) {
 }
 
 function findColumnBlockByPos(editor: Editor, pos: number) {
+  if (editor.isDestroyed) return null;
   const node = editor.state.doc.nodeAt(pos);
   const dom = editor.view.nodeDOM(pos);
 
@@ -203,6 +205,7 @@ function updateColumnBlock(
   children: ProseMirrorNode[],
   widths: number[],
 ) {
+  if (!canEditEditorStructure(editor) || !editor.state.doc.nodeAt(rect.pos)?.eq(rect.node)) return;
   const nextNode = rect.node.type.create(
     {
       ...rect.node.attrs,
@@ -223,6 +226,7 @@ function replaceColumnBlockWithContent(
   rect: ColumnBlockRect,
   content: ProseMirrorNode[],
 ) {
+  if (!canEditEditorStructure(editor) || !editor.state.doc.nodeAt(rect.pos)?.eq(rect.node)) return;
   editor.view.dispatch(
     editor.state.tr
       .replaceWith(rect.pos, rect.pos + rect.node.nodeSize, Fragment.fromArray(content))
@@ -237,6 +241,7 @@ function moveColumnToMainContent(
   from: number,
   dropPosition: "before" | "after",
 ) {
+  if (!canEditEditorStructure(editor) || !editor.state.doc.nodeAt(rect.pos)?.eq(rect.node)) return;
   const children = getChildNodes(rect.node);
   const sourceColumn = children[from];
 
@@ -558,6 +563,7 @@ export function ColumnControls({ editor }: { editor: Editor | null }) {
   };
 
   const runColumnCommand = (command: () => void) => {
+    if (!canEditEditorStructure(editor)) return;
     command();
     setMenu(null);
     requestAnimationFrame(updateRect);

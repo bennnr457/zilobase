@@ -1,3 +1,4 @@
+import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { Image as ImageIcon } from "@/components/icons";
@@ -9,6 +10,7 @@ import { ImageSourcePicker } from "@/sections/pages/appearance/components/image-
 const minImageWidth = 160;
 
 function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNodeViewProps) {
+  const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
   const options = extension.options as ImageBlockOptions;
   const resizeStateRef = useRef<{
     startX: number;
@@ -21,6 +23,7 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
   const width = node.attrs.width as number | null;
 
   const setImageSrc = (nextSrc: string) => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({
       src: nextSrc,
       alt: alt === "Image" ? "Uploaded image" : alt,
@@ -29,6 +32,7 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
   };
 
   const startResize = (event: React.PointerEvent<HTMLSpanElement>, side: "left" | "right") => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     const preview = event.currentTarget.closest("[data-image-block-preview]");
 
     if (!(preview instanceof HTMLElement)) {
@@ -46,6 +50,7 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
   };
 
   const updateResize = (event: React.PointerEvent<HTMLSpanElement>) => {
+    if (!editor.isEditable || editor.isDestroyed) return;
     const resizeState = resizeStateRef.current;
 
     if (!resizeState) {
@@ -61,6 +66,7 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
       Math.min(editorWidth, Math.max(minImageWidth, resizeState.startWidth + delta)),
     );
 
+    if (!editor.isEditable || editor.isDestroyed) return;
     updateAttributes({ width: nextWidth });
   };
 
@@ -79,7 +85,7 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
           <button
             className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
-            disabled={Boolean(src)}
+            disabled={!isEditable || Boolean(src)}
             type="button"
           >
             <ImageIcon />
@@ -143,6 +149,15 @@ type ImageBlockOptions = {
 
 export const ImageBlock = Node.create<ImageBlockOptions>({
   name: "imageBlock",
+  markdownTokenName: "image",
+  parseMarkdown: (token, helpers) =>
+    helpers.createNode("imageBlock", {
+      src: token.href,
+      alt: token.text || "",
+      title: token.title || null,
+    }),
+  renderMarkdown: (node) =>
+    `![${String(node.attrs?.alt ?? "").replace(/[\\[\]]/g, "\\$&")}](${String(node.attrs?.src ?? "").replace(/ /g, "%20")}${node.attrs?.title ? ` ${JSON.stringify(String(node.attrs.title))}` : ""})`,
 
   group: "block",
 

@@ -1,3 +1,4 @@
+import { canEditEditorStructure } from "../lib/block-insert";
 import { useCreateMeeting } from "@zilobase/features/meetings/react";
 import { useEditorWorkspace } from "../../runtime/components/page-editor-registry";
 import { useCallback, useState, type MouseEvent as ReactMouseEvent } from "react";
@@ -55,7 +56,7 @@ const getTargetPlacement = (
 ): NodePlacement | null => {
   let placement: NodePlacement | null = null;
   editor.state.doc.descendants((node, pos, parent, index) => {
-    if (pos !== target.pos || node.type !== target.node.type) return;
+    if (pos !== target.pos || !node.eq(target.node)) return;
     placement = { index, parent, pos };
     return false;
   });
@@ -70,7 +71,7 @@ export const useMobileNodeActions = (
 
   const canMoveMobileTarget = useCallback(
     (direction: "up" | "down") => {
-      if (!editor || !mobileNodeTarget) return false;
+      if (!editor || !canEditEditorStructure(editor) || !mobileNodeTarget) return false;
       const placement = getTargetPlacement(editor, mobileNodeTarget);
       if (!placement?.parent) return false;
       if (direction === "up") return placement.index > 0;
@@ -81,7 +82,7 @@ export const useMobileNodeActions = (
 
   const moveMobileTarget = useCallback(
     (direction: "up" | "down") => {
-      if (!editor || !mobileNodeTarget) return;
+      if (!editor || !canEditEditorStructure(editor) || !mobileNodeTarget) return;
       const placement = getTargetPlacement(editor, mobileNodeTarget);
       if (!placement?.parent) return;
 

@@ -56,7 +56,6 @@ import {
 } from "@/sections/pages/editor/collaboration/lib/page-document-cache";
 import { ApiError } from "@/platform/network/api";
 import { isHostedDemoRuntime } from "@/app/demo/runtime";
-import { canEditOnlineDatabase } from "@/sections/pages/editor/lib/database-editability";
 import { createPageCommentController } from "@/sections/pages/editor/comments/lib/yjs-comments";
 import { usePageCommentsRegistry } from "@/sections/pages/editor/comments/components/comments-context";
 import { usePageTitleDraft } from "./hooks/use-page-title-draft";
@@ -408,12 +407,12 @@ export function PageContent({
     if (!session?.user || (!accessDenied && collaboration.status !== "blocked")) return;
     void blockCachedPage(session.user.id, pageId);
   }, [accessDenied, collaboration.status, pageId, session?.user]);
-  const commentController = useMemo(() => {
+  const commentOptions = useMemo(() => {
     if (!enableComments || !collaboration.document || !session?.user) {
       return null;
     }
 
-    return createPageCommentController({
+    return {
       canEdit: commentsEditable && collaboration.canEdit,
       canModerate: pageEditable && accessLevel === "full" && collaboration.canEdit,
       document: collaboration.document,
@@ -423,7 +422,7 @@ export function PageContent({
         image: session.user.image ?? null,
         name: session.user.name ?? null,
       },
-    });
+    };
   }, [
     accessLevel,
     collaboration.document,
@@ -434,14 +433,22 @@ export function PageContent({
     session?.user,
   ]);
 
+  const [commentState, setCommentState] = useState<{
+    options: typeof commentOptions;
+    controller: ReturnType<typeof createPageCommentController>;
+  } | null>(null);
+  const commentController =
+    commentState?.options === commentOptions ? (commentState?.controller ?? null) : null;
   useEffect(() => {
-    if (!commentController) return;
-    const unregister = commentsRegistry.register(pageId, commentController);
+    if (!commentOptions) return;
+    const controller = createPageCommentController(commentOptions);
+    setCommentState({ options: commentOptions, controller });
+    const unregister = commentsRegistry.register(pageId, controller);
     return () => {
       unregister();
-      commentController.destroy();
+      controller.destroy();
     };
-  }, [commentController, commentsRegistry, pageId]);
+  }, [commentOptions, commentsRegistry, pageId]);
   const liveEditingReady = demoMode || !pageEditable || collaboration.canEdit;
   useEffect(() => {
     const timing = navigationTimingRef.current;
@@ -488,9 +495,7 @@ export function PageContent({
       observer.disconnect();
     };
   }, [focusMeetingId, isLoading, page?.id]);
-  const databaseEditingReady = canEditOnlineDatabase({
-    pageEditable: pageEditable && onlineActionsReady,
-  });
+  const databaseEditingReady = pageEditable && onlineActionsReady;
 
   const restoreTrashedPage = () => {
     if (!page || restorePage.isPending) {

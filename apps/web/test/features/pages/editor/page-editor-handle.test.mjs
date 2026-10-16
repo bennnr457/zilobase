@@ -4,12 +4,38 @@ export function register({ assert, loadModule, test }) {
   test("editor handle gates writes and reports actual applied content", async () => {
     const { createPageEditorHandle } = await load();
     const changes = [];
-    let content = { type: "doc", content: [] };
+    const { Schema } = await import("@tiptap/pm/model");
+    const { EditorState } = await import("@tiptap/pm/state");
+    const schema = new Schema({
+      nodes: {
+        doc: { content: "block+" },
+        text: {},
+        paragraph: { group: "block", content: "text*" },
+        meetingBlock: { group: "block", atom: true, attrs: { meetingId: { default: null } } },
+      },
+    });
+    let state = EditorState.create({ schema });
+    const listeners = new Map();
     const editor = {
-      getJSON: () => content,
-      commands: {
-        setContent: (next) => {
-          content = next;
+      schema,
+      isEditable: true,
+      get state() {
+        return state;
+      },
+      getJSON: () => JSON.parse(JSON.stringify(state.doc.toJSON())),
+      on: (event, listener) => {
+        const set = listeners.get(event) ?? new Set();
+        set.add(listener);
+        listeners.set(event, set);
+      },
+      off: (event, listener) => listeners.get(event)?.delete(listener),
+      view: {
+        dispatch: (transaction) => {
+          const nextState = state.apply(transaction);
+          for (const listener of listeners.get("beforeTransaction") ?? [])
+            listener({ transaction, nextState });
+          state = nextState;
+          for (const listener of listeners.get("transaction") ?? []) listener({ transaction });
         },
       },
     };
