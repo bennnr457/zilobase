@@ -7,7 +7,7 @@ import { PageSidePaneLayout } from "@/components/pages/presentation/page-side-pa
 import { usePageSidePane } from "@/components/pages/presentation/page-presentation";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
 import { usePageTitleDraft } from "@/components/pages/content/use-page-title-draft";
-import { PageMetadata as PageMetadataHeader } from "@/components/databases/page-properties/page-metadata";
+import { PageMetadata as PageMetadataHeader } from "@/components/pages/page-metadata";
 import { MeetingView } from "@/components/editor/extensions/meeting/meeting-view";
 import { PageContent } from "@/components/pages/content/page-content";
 import { useMeeting, useUpdateMeeting } from "@zilobase/features/meetings/react";

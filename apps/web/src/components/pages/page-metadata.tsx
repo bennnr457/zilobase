@@ -32,7 +32,7 @@ import { formatCommentButtonLabel, PageCommentThread } from "@/components/commen
 import { ImageSourcePicker } from "@/components/pages/appearance/image-source-picker";
 import { buildRandomCoverGalleryDataUrl } from "@/components/pages/appearance/page-cover-gallery";
 
-import { getDatabasePropertyType } from "../properties/property-catalog";
+import { getDatabasePropertyType } from "../databases/properties/property-catalog";
 import {
   type DatabasePropertyValue,
   parsePropertyValue,
@@ -40,7 +40,7 @@ import {
 } from "@zilobase/features/databases";
 import { CollaborationPresence } from "@/components/editor/collaboration/collaboration-presence";
 import type { CollaborationPresenceUser } from "@/components/editor/collaboration/collaboration-presence";
-import { PageMetadataProperties } from "./page-metadata-properties";
+import { PageMetadataProperties } from "../databases/page-properties/page-metadata-properties";
 
 export type PageMetadataHandle = {
   focusTitleEnd: () => boolean;

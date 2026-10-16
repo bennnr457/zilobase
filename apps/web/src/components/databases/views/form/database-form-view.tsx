@@ -16,7 +16,7 @@ import {
 } from "@/components/icons";
 import { useState, type ReactNode } from "react";
 
-import { PageMetadata } from "../../page-properties/page-metadata";
+import { PageMetadata } from "../../../pages/page-metadata";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

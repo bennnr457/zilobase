@@ -51,7 +51,7 @@ export function register({ assert, loadModule, readSource, test }) {
     const [gallery, picker, metadata] = await Promise.all([
       readSource("/src/components/pages/appearance/page-cover-picker.tsx"),
       readSource("/src/components/pages/appearance/image-source-picker.tsx"),
-      readSource("/src/components/databases/page-properties/page-metadata.tsx"),
+      readSource("/src/components/pages/page-metadata.tsx"),
     ]);
 
     assert.match(picker, /<TabsTrigger value="gallery">/);

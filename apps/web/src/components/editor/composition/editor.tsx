@@ -2,10 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { EditorContent } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
 import { MobileActionBar } from "../toolbar/mobile-action-bar";
-import {
-  PageMetadata,
-  type PageMetadataHandle,
-} from "@/components/databases/page-properties/page-metadata";
+import { PageMetadata, type PageMetadataHandle } from "@/components/pages/page-metadata";
 import { PageDesignCanvas } from "../document-design/page-design-canvas";
 import { PageDesignTabs } from "../document-design/page-design-tabs";
 import { starterContent } from "../core/constants";

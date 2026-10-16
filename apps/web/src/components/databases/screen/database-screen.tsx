@@ -23,7 +23,7 @@ import { usePage, usePageAccessLevel } from "@zilobase/features/pages/react";
 import { useUpdateDatabase, useUpdateDataSource } from "@zilobase/features/databases/react";
 import { PageDialog } from "@/components/pages/presentation/page-dialog";
 import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
-import { PageMetadata as PageMetadataView } from "../page-properties/page-metadata";
+import { PageMetadata as PageMetadataView } from "../../pages/page-metadata";
 import { DatabaseView } from "../views/shared/database-view";
 import {
   PublicPaneTopbar,

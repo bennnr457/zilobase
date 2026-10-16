@@ -10,7 +10,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("shared headers preserve page icon spacing and force database icons inline through props", async () => {
     const [metadataSource, databaseSource, pageEditorSource] = await Promise.all([
-      readSource("/src/components/databases/page-properties/page-metadata.tsx"),
+      readSource("/src/components/pages/page-metadata.tsx"),
       readSource("/src/components/databases/screen/database-screen.tsx"),
       readSource("/src/components/pages/content/page-content.tsx"),
     ]);
