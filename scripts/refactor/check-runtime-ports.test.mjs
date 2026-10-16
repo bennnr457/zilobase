@@ -169,6 +169,51 @@ test("page editor ownership rejects scattered implementations and accepts nested
   }
 });
 
+test("Tiptap definitions share one extension owner while document controllers remain separate", async () => {
+  const root = await mkdtemp(join(tmpdir(), "extension-ownership-"));
+  const source = join(root, "apps/web/src");
+  const scattered = {
+    "sections/pages/editor/runtime/lib/integration.ts":
+      'import { Extension } from "@tiptap/core"; export const Integration = Extension.create({ name: "integration" });',
+    "sections/databases/blocks/components/database-block.tsx":
+      'import { Node as TiptapNode } from "@tiptap/core"; export const DatabaseBlock = TiptapNode.create({ name: "databaseBlock" });',
+    "sections/pages/editor/comments/lib/comment-extension.ts":
+      'import { Mark } from "@tiptap/core"; export const Comment = Mark.create({ name: "comment" });',
+    "sections/pages/editor/runtime/lib/tasks.ts":
+      'import TaskItem from "@tiptap/extension-task-item"; export const Task = TaskItem.extend({});',
+  };
+  const owned = {
+    "sections/pages/editor/extensions/lib/integration.ts": scattered[Object.keys(scattered)[0]],
+    "sections/pages/editor/extensions/components/database-block.tsx":
+      scattered[Object.keys(scattered)[1]],
+    "sections/pages/editor/extensions/lib/comment-extension.ts":
+      scattered[Object.keys(scattered)[2]],
+    "sections/pages/editor/extensions/lib/tasks.ts": scattered[Object.keys(scattered)[3]],
+    "sections/pages/editor/comments/lib/controller.ts":
+      'export const updateComment = (mark) => mark.create({ commentId: "thread" });',
+  };
+  try {
+    for (const [name, contents] of Object.entries({ ...scattered, ...owned })) {
+      const path = join(source, name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    const errors = checkWebOwnership(root).filter((error) =>
+      error.includes("Tiptap extensions belong"),
+    );
+    assert.equal(errors.length, Object.keys(scattered).length);
+    for (const name of Object.keys(scattered))
+      assert.ok(
+        errors.some((error) => error.startsWith(`apps/web/src/${name}:`)),
+        name,
+      );
+    for (const name of Object.keys(scattered)) await rm(join(source, name));
+    assert.deepEqual(checkWebOwnership(root), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("UI sections keep local components, hooks and helpers while root components stay shared", async () => {
   const root = await mkdtemp(join(tmpdir(), "section-ownership-"));
   const source = join(root, "apps/web/src");

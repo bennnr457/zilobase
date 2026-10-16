@@ -175,6 +175,49 @@ const pageOwners = new Map([
   ["page-design-sidebar.tsx", "design/components"],
 ]);
 
+function declaresTiptapExtension(source) {
+  const constructors = new Set();
+  const extensions = new Set();
+  for (const statement of source.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
+      continue;
+    const specifier = statement.moduleSpecifier.text;
+    const clause = statement.importClause;
+    if (
+      specifier === "@tiptap/core" &&
+      clause?.namedBindings &&
+      ts.isNamedImports(clause.namedBindings)
+    ) {
+      for (const binding of clause.namedBindings.elements) {
+        if (["Extension", "Node", "Mark"].includes((binding.propertyName ?? binding.name).text)) {
+          constructors.add(binding.name.text);
+          extensions.add(binding.name.text);
+        }
+      }
+    } else if (
+      specifier.startsWith("@tiptap/extension-") ||
+      specifier.startsWith("tiptap-extension-")
+    ) {
+      if (clause?.name) extensions.add(clause.name.text);
+      if (clause?.namedBindings && ts.isNamedImports(clause.namedBindings))
+        for (const binding of clause.namedBindings.elements) extensions.add(binding.name.text);
+    }
+  }
+  let found = false;
+  function visit(node) {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const { expression, name } = node.expression;
+      if (ts.isIdentifier(expression))
+        found ||=
+          (name.text === "create" && constructors.has(expression.text)) ||
+          (name.text === "extend" && extensions.has(expression.text));
+    }
+    if (!found) ts.forEachChild(node, visit);
+  }
+  visit(source);
+  return found;
+}
+
 export function checkWebOwnership(repositoryRoot) {
   const src = join(repositoryRoot, "apps/web/src");
   const errors = [];
@@ -188,6 +231,8 @@ export function checkWebOwnership(repositoryRoot) {
       true,
     );
     if (isRetired(name)) errors.push(`${label}: retired web folder`);
+    if (!name.startsWith("sections/pages/editor/extensions/") && declaresTiptapExtension(source))
+      errors.push(`${label}: Tiptap extensions belong in sections/pages/editor/extensions/`);
     const expectedOwner = moduleOwners.get(basename(file));
     if (expectedOwner && name !== expectedOwner)
       errors.push(`${label}: belongs at ${expectedOwner}`);
