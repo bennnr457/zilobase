@@ -1,7 +1,5 @@
 import { libraryViewIds } from "@zilobase/features/user-settings";
 
-import { normalizeTeamSettingsTab } from "@/components/workspaces/members/member-settings-tabs";
-
 export function validateLoginSearch(search: Record<string, unknown>) {
   return {
     ...(typeof search.error === "string" && search.error.length <= 500
@@ -134,4 +132,20 @@ export function validateCalendarSearch(search: Record<string, unknown>): {
     calendar: calendarSearchString(search.calendar),
     event: calendarSearchString(search.event),
   };
+}
+
+export const teamSettingsTabValues = ["team", "guests"] as const;
+
+export type TeamSettingsTab = (typeof teamSettingsTabValues)[number];
+
+export function normalizeTeamSettingsTab(value: unknown): TeamSettingsTab {
+  return value === "guests" ? "guests" : "team";
+}
+
+export type TeamspaceSettingsTab = "general" | "members" | "permissions" | "security";
+
+export function isTeamspaceSettingsTab(value: unknown): value is TeamspaceSettingsTab {
+  return (
+    value === "general" || value === "members" || value === "permissions" || value === "security"
+  );
 }

@@ -14,7 +14,7 @@ import {
   type DesktopServerProfile,
 } from "@/platform/server/desktop-server";
 import { Button } from "@/components/ui/button";
-import { captureProductException } from "@/lib/posthog";
+import { captureProductException } from "@/platform/analytics/posthog";
 
 export default function RouteErrorPage({ error }: ErrorComponentProps) {
   const navigate = useNavigate();

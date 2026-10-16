@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, test }) {
-  const load = () => loadModule("/src/components/library/library-model.ts");
+  const load = () => loadModule("/src/sections/library/lib/library-model.ts");
   test("Skills and Instructions tabs remain UI placeholders", async () => {
     const { buildHomepageRows, applyHomepageView, buildHomepageViewData } = await load();
     const page = {

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("toolbar overflow reserves add/overflow controls and pins the active view", async () => {
     const { getVisibleToolbarViewCount, partitionToolbarViews } = await loadModule(
-      "/src/components/databases/views/model/toolbar-view-overflow.ts",
+      "/src/sections/databases/views/lib/toolbar-view-overflow.ts",
     );
     const input = {
       viewCount: 4,

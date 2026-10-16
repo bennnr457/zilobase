@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   test("page navigation timing starts before the pane and is consumed once", async () => {
-    const timing = await loadModule("/src/components/pages/navigation/page-navigation-timing.ts");
+    const timing = await loadModule("/src/sections/pages/navigation/lib/page-navigation-timing.ts");
     const before = performance.now();
     timing.markPageNavigationStart("page-timing-1");
     const startedAt = timing.consumePageNavigationStart("page-timing-1");

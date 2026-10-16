@@ -1,24 +1,31 @@
 import { createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { DatabaseVirtualizedTable } from "../../../src/components/databases/views/table/database-table-shell";
+import { DatabaseVirtualizedTable } from "../../../src/sections/databases/views/table/components/database-table-shell";
 import {
   DatabaseCellStateProvider,
   useSetActiveDatabaseCell,
-} from "../../../src/components/databases/views/state/database-cell-state";
-import type { TableRow } from "../../../src/components/databases/views/table/database-table-model";
+} from "../../../src/sections/databases/views/state/components/database-cell-state";
+import type { TableRow } from "../../../src/sections/databases/views/table/lib/database-table-model";
 
-export function mountScrollTable(container: HTMLElement, count: number) {
+export function mountScrollTable(
+  container: HTMLElement,
+  count: number,
+  options: { virtualizationEnabled?: boolean } = {},
+) {
+  let virtualizationEnabled = options.virtualizationEnabled ?? true;
   const renders = new Map<number, number>();
   let keyReads = 0;
   let renderedRangeNotifications = 0;
-  let rows = Array.from({ length: count }, (_, index) => ({
-    get id() {
-      keyReads++;
-      return `row-${index}`;
-    },
-    pageId: `page-${index}`,
-  })) as TableRow[];
+  const createRows = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      get id() {
+        keyReads++;
+        return `row-${index}`;
+      },
+      pageId: `page-${index}`,
+    })) as TableRow[];
+  let rows = createRows(count);
   let setActive: (key: string | null) => void;
   function ActiveCellController() {
     setActive = useSetActiveDatabaseCell();
@@ -37,7 +44,7 @@ export function mountScrollTable(container: HTMLElement, count: number) {
             columnWidths: { name: 250 },
             measurementKey: "test",
             tableMinWidth: 250,
-            virtualizationEnabled: true,
+            virtualizationEnabled,
             onRowsRendered: () => {
               renderedRangeNotifications += 1;
             },
@@ -46,7 +53,8 @@ export function mountScrollTable(container: HTMLElement, count: number) {
               renders.set(index, (renders.get(index) ?? 0) + 1);
               return createElement(
                 "tr",
-                { key: row.id, "data-index": index, ref: measureElement },
+                // Match the estimate so scroll tests exclude variable-height anchoring.
+                { key: row.id, "data-index": index, ref: measureElement, style: { height: 32 } },
                 createElement("td", null, `${label} ${row.pageId}`),
               );
             },
@@ -65,6 +73,14 @@ export function mountScrollTable(container: HTMLElement, count: number) {
     getKeyReads: () => keyReads,
     getRenderedRangeNotifications: () => renderedRangeNotifications,
     update: () => render("Updated"),
+    setRowCount: (count: number) => {
+      rows = createRows(count);
+      render("Row");
+    },
+    setVirtualizationEnabled: (enabled: boolean) => {
+      virtualizationEnabled = enabled;
+      render("Row");
+    },
     reverse: () => {
       rows = [...rows].reverse();
       render("Reversed");

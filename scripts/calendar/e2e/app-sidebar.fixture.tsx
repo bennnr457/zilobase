@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Outlet, useRouterState } from "@tanstack/react-router";
-import { AppSidebar } from "@/app/shell/sidebar/app-sidebar";
-import { useAppSidebar } from "@/app/shell/sidebar/sidebar-controller";
-import { AppSearchProvider } from "@/components/search/app-search";
+import { AppSidebar } from "@/app/shell/sidebar/components/app-sidebar";
+import { useAppSidebar } from "@/app/shell/sidebar/hooks/sidebar-controller";
+import { AppSearchProvider } from "@/app/shell/search/components/app-search";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { defaultUserSettings, normalizeSidebarConfig } from "@zilobase/features/user-settings";
 import type { ApiFetcher, ZilobaseAuthClient } from "@zilobase/features";

@@ -259,15 +259,15 @@ async function loadWorkflows(sourcePath) {
     "@zilobase/features/auth": `export const sessionQueryKey = ["session"];`,
     "./page-document-cache": `import { controls } from "workflow-test-ports"; export const acquirePageDocument = (user, page) => { controls.acquired.push([user, page]); return controls.acquire(); }; export const releasePageDocument = (entry) => controls.released.push(entry); export const markPageDocumentInitialized = (entry) => { controls.initialized.push(entry); return controls.initialize(); };`,
     "./collaboration-connection": `import { controls } from "workflow-test-ports"; export const applyTicketState = (...args) => controls.apply(...args);`,
-    "../runtime/editor-integration": `export const workspaceForView = (view) => view.workspace;`,
-    "../runtime/editor-workspace": `export const isCopyDrag = () => false;`,
-    "../operations/block-operations": `import { controls } from "workflow-test-ports"; export const transferBlocks = (...args) => controls.transfer(...args);`,
+    "../../runtime/lib/editor-integration": `export const workspaceForView = (view) => view.workspace;`,
+    "../../runtime/lib/editor-workspace": `export const isCopyDrag = () => false;`,
+    "../../operations/lib/block-operations": `import { controls } from "workflow-test-ports"; export const transferBlocks = (...args) => controls.transfer(...args);`,
     sonner: `export const toast = { error: () => {} };`,
   };
   const result = await build({
     stdin: {
-      contents: `export { prefetchPageForNavigation } from "./collaboration/page-prefetch"; export { commitDatabaseBlockDrop } from "./drag-drop/block-drop"; export { Effect } from "effect"; export { controls } from "workflow-test-ports";`,
-      resolveDir: sourcePath("/src/components/pages/editor"),
+      contents: `export { prefetchPageForNavigation } from "./collaboration/lib/page-prefetch"; export { commitDatabaseBlockDrop } from "./drag-drop/lib/block-drop"; export { Effect } from "effect"; export { controls } from "workflow-test-ports";`,
+      resolveDir: sourcePath("/src/sections/pages/editor"),
     },
     bundle: true,
     write: false,

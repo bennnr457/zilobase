@@ -4,29 +4,29 @@ import {
   sidebarFixtureAuth,
 } from "./app-sidebar.fixture";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
-import { CalendarSettings } from "@/components/calendar/preferences/calendar-settings";
+import { CalendarSettings } from "@/sections/calendar/preferences/components/calendar-settings";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { validateCalendarSearch } from "@/app/routing/search-validators";
-import { useCalendarChatVisibility } from "@/app/shell/panels/tool-panels";
+import { useCalendarChatVisibility } from "@/app/shell/panels/components/tool-panels";
 import { useState } from "react";
-import { RightSidebars, RightSidebarMobilePanels } from "@/app/shell/panels/tool-panels";
+import { RightSidebars, RightSidebarMobilePanels } from "@/app/shell/panels/components/tool-panels";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
-import { PageHeader } from "@/components/pages/header/page-header";
-import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { PageHeader } from "@/sections/pages/header/components/page-header";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {
   CalendarWorkspaceProvider,
   CalendarDockMount,
   useCalendarWorkspace,
-} from "@/components/calendar/workspace/calendar-workspace";
-import { CalendarToolbar } from "@/components/calendar/workspace/calendar-toolbar";
+} from "@/sections/calendar/workspace/components/calendar-workspace";
+import { CalendarToolbar } from "@/sections/calendar/workspace/components/calendar-toolbar";
 import { webClientLifecycle } from "@/platform/network/connectivity";
 import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
 import { apiFetch } from "@/platform/network/api";
-import { CalendarAccountsSidebar } from "@/components/calendar/connections/calendar-accounts-sidebar";
-import { RemovedCalendars } from "@/components/calendar/preferences/removed-calendars";
-import { useCalendarPreferences } from "@/components/calendar/preferences/use-calendar-preferences";
+import { CalendarAccountsSidebar } from "@/sections/calendar/connections/components/calendar-accounts-sidebar";
+import { RemovedCalendars } from "@/sections/calendar/preferences/components/removed-calendars";
+import { useCalendarPreferences } from "@/sections/calendar/preferences/hooks/use-calendar-preferences";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createRoot } from "react-dom/client";
 import {
@@ -38,7 +38,7 @@ import {
   createMemoryHistory,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
-import { CalendarSchedule } from "@/components/calendar/views/calendar-schedule";
+import { CalendarSchedule } from "@/sections/calendar/views/components/calendar-schedule";
 import { defaultCalendarPreferences } from "@zilobase/features/calendar";
 import "@/styles/global.css";
 import "@/styles/app.css";

@@ -10,9 +10,9 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("shared headers preserve page icon spacing and force database icons inline through props", async () => {
     const [metadataSource, databaseSource, pageEditorSource] = await Promise.all([
-      readSource("/src/components/pages/page-metadata.tsx"),
-      readSource("/src/components/databases/screen/database-screen.tsx"),
-      readSource("/src/components/pages/editor/page-content.tsx"),
+      readSource("/src/sections/pages/components/page-metadata.tsx"),
+      readSource("/src/sections/databases/database-screen.tsx"),
+      readSource("/src/sections/pages/editor/page-content.tsx"),
     ]);
 
     assert.match(metadataSource, /: "mb-1 w-fit"/);

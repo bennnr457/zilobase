@@ -2,7 +2,7 @@ import * as React from "react";
 import { Slot } from "radix-ui";
 
 import { SidebarSimpleIcon } from "@/components/icons";
-import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button, buttonControlHeightClassName } from "@/components/ui/button";
 import {

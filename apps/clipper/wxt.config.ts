@@ -9,6 +9,7 @@ export default defineConfig({
   imports: false,
   alias: {
     "@/components": path.resolve(__dirname, "../web/src/components"),
+    "@/hooks": path.resolve(__dirname, "../web/src/hooks"),
     "@/lib": path.resolve(__dirname, "../web/src/lib"),
   },
   // Keep WXT's HMR server off the Node API (3000), health (3001), and Worker API (3010).

@@ -1,9 +1,11 @@
 export function register({ assert, readSource, test }) {
   test("database view consumers subscribe to narrow stable contexts", async () => {
     const [context, chart, propertySettings] = await Promise.all([
-      readSource("/src/components/databases/views/state/database-view-context.tsx"),
-      readSource("/src/components/databases/views/chart/database-chart-view.tsx"),
-      readSource("/src/components/databases/properties/configuration/property-settings-menu.tsx"),
+      readSource("/src/sections/databases/views/state/components/database-view-context.tsx"),
+      readSource("/src/sections/databases/views/chart/components/database-chart-view.tsx"),
+      readSource(
+        "/src/sections/databases/properties/configuration/components/property-settings-menu.tsx",
+      ),
     ]);
 
     assert.match(context, /const DatabaseDataContext = createContext/);

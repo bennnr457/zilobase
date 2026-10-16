@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("an editable page keeps its database editable", async () => {
     const { canEditOnlineDatabase } = await loadModule(
-      "/src/components/pages/editor/database-editability.ts",
+      "/src/sections/pages/editor/lib/database-editability.ts",
     );
 
     assert.equal(
@@ -14,7 +14,7 @@ export function register({ assert, loadModule, test }) {
 
   test("a locked page makes its embedded database runtime read-only", async () => {
     const { canEditOnlineDatabase } = await loadModule(
-      "/src/components/pages/editor/database-editability.ts",
+      "/src/sections/pages/editor/lib/database-editability.ts",
     );
 
     assert.equal(

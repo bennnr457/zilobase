@@ -1,16 +1,20 @@
 export function register({ assert, readSource, test }) {
   test("database views share the record window boundary", async () => {
     const control = await readSource(
-      "/src/components/databases/views/shared/database-record-window-control.tsx",
+      "/src/sections/databases/views/shared/components/database-record-window-control.tsx",
     );
-    const list = await readSource("/src/components/databases/views/list/database-list-view.tsx");
+    const list = await readSource(
+      "/src/sections/databases/views/list/components/database-list-view.tsx",
+    );
     const gallery = await readSource(
-      "/src/components/databases/views/gallery/database-gallery-view.tsx",
+      "/src/sections/databases/views/gallery/components/database-gallery-view.tsx",
     );
     const timeline = await readSource(
-      "/src/components/databases/views/timeline/database-timeline-view.tsx",
+      "/src/sections/databases/views/timeline/components/database-timeline-view.tsx",
     );
-    const chart = await readSource("/src/components/databases/views/chart/database-chart-view.tsx");
+    const chart = await readSource(
+      "/src/sections/databases/views/chart/components/database-chart-view.tsx",
+    );
 
     assert.match(control, /useDatabaseRowsScroll/);
     assert.match(control, /Load more rows/);
@@ -22,11 +26,11 @@ export function register({ assert, readSource, test }) {
 
   test("remaining views consume collection-composed context without mutation locks", async () => {
     const paths = [
-      "/src/components/databases/views/list/database-list-view.tsx",
-      "/src/components/databases/views/gallery/database-gallery-view.tsx",
-      "/src/components/databases/views/timeline/database-timeline-view.tsx",
-      "/src/components/databases/views/chart/database-chart-view.tsx",
-      "/src/components/databases/views/form/database-form-view.tsx",
+      "/src/sections/databases/views/list/components/database-list-view.tsx",
+      "/src/sections/databases/views/gallery/components/database-gallery-view.tsx",
+      "/src/sections/databases/views/timeline/components/database-timeline-view.tsx",
+      "/src/sections/databases/views/chart/components/database-chart-view.tsx",
+      "/src/sections/databases/views/form/components/database-form-view.tsx",
     ];
 
     for (const path of paths) {

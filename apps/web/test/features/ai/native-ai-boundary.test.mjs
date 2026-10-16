@@ -5,18 +5,18 @@ export function register({ readSource, assert, test }) {
   test("Ask AI has UI state without a conversation runtime or client SDK", async () => {
     const sources = await Promise.all([
       readChatbotSource(readSource),
-      readSource("/src/components/ai/workspace/ask-ai-workspace.tsx"),
-      readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
-      readSource("/src/components/ai/composer/prompt-input.tsx"),
-      readSource("/src/components/ai/chat/message.tsx"),
+      readSource("/src/sections/ai/workspace/components/ask-ai-workspace.tsx"),
+      readSource("/src/app/shell/sidebar/components/app-sidebar.tsx"),
+      readSource("/src/sections/ai/composer/components/prompt-input.tsx"),
+      readSource("/src/sections/ai/chat/components/message.tsx"),
     ]);
     assert.doesNotMatch(
       sources.join("\n"),
       /@zilobase\/features\/ai-chat|useAiChatThreadState|useChatbotConversation|apiFetch|authFetch|useMutation|from ["'](?:ai|@ai-sdk\/[^"']+|agents)["']/,
     );
     const editorSources = await Promise.all([
-      readSource("/src/components/pages/editor/editor.tsx"),
-      readSource("/src/components/pages/editor/runtime/page-editor-registry.tsx"),
+      readSource("/src/sections/pages/editor/editor.tsx"),
+      readSource("/src/sections/pages/editor/runtime/components/page-editor-registry.tsx"),
     ]);
     assert.doesNotMatch(
       editorSources.join("\n"),

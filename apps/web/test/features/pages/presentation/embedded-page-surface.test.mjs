@@ -1,13 +1,13 @@
 export function register({ readSource, assert, test }) {
   test("embedded page dialogs share the dark side-pane surface", async () => {
-    const dialog = await readSource("/src/components/pages/presentation/page-dialog.tsx");
+    const dialog = await readSource("/src/sections/pages/presentation/components/page-dialog.tsx");
 
     assert.match(dialog, /data-page-dialog-panel/);
     assert.match(dialog, /dark:bg-surface-navigation/);
   });
 
   test("embedded database headers share their containing pane surface", async () => {
-    const styles = await readSource("/src/components/databases/styles/database.css");
+    const styles = await readSource("/src/sections/databases/styles/database.css");
 
     assert.match(
       styles,

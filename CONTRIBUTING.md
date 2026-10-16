@@ -57,11 +57,20 @@ npm run test:selfhost
 ## Project Structure
 
 - `apps/web/src/app`: web composition, routing, providers, shell, and global setup.
-- `apps/web/src/features`: web domain behavior and presentation.
-- `apps/web/src/shared`: domain-neutral design-system UI, components, hooks,
-  styles, types, and utilities.
+- `apps/web/src/sections`: UI sections such as calendar, pages, databases, AI,
+  tasks, and settings. Keep each section's screen entrypoints at its root, local
+  UI in `components/`, presentation hooks in `hooks/`, and helpers in `lib/`.
+  Subsections follow the same convention when needed; do not create empty folders.
+- `apps/web/src/components`: UI shared across sections, including `ui`, `branding`,
+  `navigation`, and `sharing`.
+- `apps/web/src/hooks` and `apps/web/src/lib`: shared UI hooks and presentation helpers.
+- `apps/web/src/platform`: physical browser and desktop adapters, including
+  capture, storage, notifications, authentication, analytics, and diagnostics.
+  These adapters do not import app composition or UI section modules.
+- `apps/web/src/styles`: global styles and design tokens.
 - `apps/server/src/app`: API and Node runtime composition.
-- `apps/server/src/services`: server routes, services, and models by domain.
+- `apps/server/src/routes`: HTTP handlers and route-specific support by domain.
+- `apps/server/src/services`: backend operations and domain rules.
 - `apps/server/src/infrastructure`: database, storage, email, realtime, and
   runtime mechanisms.
 - `apps/server/src/public`: compatibility entrypoints published by

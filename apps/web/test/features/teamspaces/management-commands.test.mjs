@@ -8,8 +8,8 @@ export function register({ assert, appPath, test }) {
         contents: `
       import {createElement} from "react";
       import {renderToString} from "react-dom/server";
-      import {useTeamspaceManagement} from "./src/components/teamspaces/use-teamspace-management";
-      import {useTeamspaceDirectory} from "./src/components/teamspaces/use-teamspace-directory";
+      import {useTeamspaceManagement} from "./src/sections/teamspaces/hooks/use-teamspace-management";
+      import {useTeamspaceDirectory} from "./src/sections/teamspaces/hooks/use-teamspace-directory";
       import {runtime} from "teamspace-test-runtime";
       export function capture(kind,input,dependencies,draft) {
         Object.assign(runtime,dependencies);let controls,seeded=false;

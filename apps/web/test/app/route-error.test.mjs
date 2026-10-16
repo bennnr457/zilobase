@@ -225,14 +225,14 @@ async function loadErrorSurface(sourcePath) {
   const mocks = {
     "@zilobase/edition-web": `import { createElement } from "react"; export const editionWebModule = { routePrefix: "/edition", routes: [{ path: "/billing", component: () => createElement("div", null, "Billing") }] };`,
     "@/components/ui/spinner": `import { createElement } from "react"; export const Spinner = props => createElement("span", props);`,
-    "@/app/shell/document-favicon": `export const DocumentFavicon = () => null;`,
+    "@/app/shell/components/document-favicon": `export const DocumentFavicon = () => null;`,
     "@/app/shell/app-shell": `import { createElement } from "react"; export const AppShell = ({ children }) => createElement("div", { "data-app-shell": true }, children);`,
     "error-test-ports": `export const controls = { selected: { instanceId: "active" }, reads: 0, diagnostics: [] };`,
     "@tanstack/react-router": `import { controls } from "error-test-ports"; export const useNavigate = () => options => { controls.navigation = options; }; export const Outlet = () => null; export const useRouterState = ({ select }) => select({ matches: controls.matches ?? [], location: { pathname: controls.pathname ?? "/" } });`,
     "@/platform/environment": `export const isDesktopApp = () => true;`,
     "@/platform/diagnostics/desktop-diagnostics": `import { controls } from "error-test-ports"; export const describeDesktopError = () => ({}); export const recordDesktopDiagnostic = (name, data) => { controls.diagnostics.push([name, data]); };`,
     "@/platform/server/desktop-server": `import { controls } from "error-test-ports"; export const getSelectedDesktopServer = () => controls.selected; export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function executeDesktopServerSwitch(options) { controls.switched = options; }`,
-    "@/lib/posthog": `export const captureProductException = () => {};`,
+    "@/platform/analytics/posthog": `export const captureProductException = () => {};`,
     "@/components/ui/button": `import { createElement } from "react"; export function Button({ variant, ...props }) { return createElement("button", props); }`,
   };
   mocks["@/platform/server/operations/desktop-server-switch"] =

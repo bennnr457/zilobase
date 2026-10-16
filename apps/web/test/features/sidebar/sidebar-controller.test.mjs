@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { Effect } from "effect";
-const controllerPath = "/src/app/shell/sidebar/sidebar-controller.ts";
+const controllerPath = "/src/app/shell/sidebar/hooks/sidebar-controller.ts";
 
 export function register({ assert, loadModule, readSource, test }) {
   test("sidebar section models preserve placement identity, scopes and teamspace sorting", async () => {
@@ -63,10 +63,11 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("database view selection distinguishes owner, explicit view and inline meeting routes", async () => {
-    const { getDefaultViewIds, isActiveItem, getActiveMeetingId } = await loadModule(
-      controllerPath,
-      ["getDefaultViewIds", "isActiveItem", "getActiveMeetingId"],
-    );
+    const { getDefaultViewIds, isActiveItem } = await loadModule(controllerPath, [
+      "getDefaultViewIds",
+      "isActiveItem",
+    ]);
+    const { getActiveMeetingId } = await loadModule("/src/app/routing/route-identifiers.ts");
     const node = {
       id: "db",
       databaseId: "owner",

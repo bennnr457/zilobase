@@ -1,7 +1,7 @@
 export function register({ readSource, assert, test }) {
   test("selection toolbar follows the editor while its pane settles", async () => {
     const source = await readSource(
-      "/src/components/pages/editor/selection/selection-bubble-menu.tsx",
+      "/src/sections/pages/editor/selection/components/selection-bubble-menu.tsx",
     );
 
     assert.match(source, /editor\.on\("selectionUpdate", updatePosition\)/);
@@ -13,7 +13,7 @@ export function register({ readSource, assert, test }) {
 
   test("selection toolbar stays hidden while blocks are dragged", async () => {
     const source = await readSource(
-      "/src/components/pages/editor/selection/selection-bubble-menu.tsx",
+      "/src/sections/pages/editor/selection/components/selection-bubble-menu.tsx",
     );
 
     assert.match(source, /classList\.contains\("dragging"\)/);

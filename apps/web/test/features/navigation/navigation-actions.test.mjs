@@ -8,12 +8,13 @@ export function register({ assert, appPath, readSource, test }) {
     const modules = {
       "@tanstack/react-router":
         'export const useNavigate = () => runtime.navigate; export const useLocation = () => ({pathname:"/"});',
-      "@/components/desktop/tabs/desktop-tabs": "export const useOpenInNewTab = () => () => {};",
+      "@/sections/desktop/tabs/components/desktop-tabs":
+        "export const useOpenInNewTab = () => () => {};",
       "@/components/ui/sidebar": "export const useSidebar = () => ({isMobile:false});",
       "@zilobase/features/teamspaces/react": "export const useTeamspaces = () => ({data:[]});",
       sonner:
         'export const toast = { error: value => runtime.calls.push(["error",value]), success: value => runtime.calls.push(["success",value]) };',
-      "@/components/pages/design/page-design-editor":
+      "@/sections/pages/design/components/page-design-editor":
         'export const usePageDesignEditor = () => ({openLayoutEditor: input => runtime.calls.push(["layout",input])});',
       "@/components/databases/access/use-database-metadata":
         "export const useDatabaseMetadata = () => ({data:runtime.database});",
@@ -39,7 +40,7 @@ export function register({ assert, appPath, readSource, test }) {
         contents: `
       import { createElement } from "react";
       import { renderToString } from "react-dom/server";
-      import { useHeaderActions } from "./src/components/navigation/use-navigation-actions";
+      import { useHeaderActions } from "./src/components/navigation/hooks/use-navigation-actions";
       import { runtime } from "navigation-test-runtime";
       export function capture(input, dependencies) {
         Object.assign(runtime, dependencies);
@@ -268,7 +269,7 @@ export function register({ assert, appPath, readSource, test }) {
     // unrelated sidebar renderers or changing production exports for a test.
     const source = ts.createSourceFile(
       "app-sidebar.tsx",
-      await readSource("/src/app/shell/sidebar/sidebar-controller.ts"),
+      await readSource("/src/app/shell/sidebar/hooks/sidebar-controller.ts"),
       ts.ScriptTarget.Latest,
       true,
       ts.ScriptKind.TSX,

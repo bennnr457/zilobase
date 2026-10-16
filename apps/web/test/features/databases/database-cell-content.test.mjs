@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("database cell content owns the wrap state", async () => {
     const { DatabaseCellContent } = await loadModule(
-      "/src/components/databases/views/shared/database-cell-content.tsx",
+      "/src/sections/databases/views/shared/components/database-cell-content.tsx",
     );
 
     const wrappedCell = DatabaseCellContent({

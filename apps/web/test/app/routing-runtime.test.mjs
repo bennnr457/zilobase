@@ -404,7 +404,7 @@ async function loadRoutingRuntime(sourcePath) {
     "@/platform/network/api": `export { apiFetch, NetworkUnavailableError } from "routing-test-ports";`,
     "@/app/state/app-store": `import { controls } from "routing-test-ports"; export const useAppStore = { getState: () => ({ activeWorkspaceId: controls.preferredWorkspace }) };`,
     "@/platform/network/connectivity": `import { controls } from "routing-test-ports"; export const getConnectivityState = () => controls.offline ? "offline" : "online";`,
-    "@/components/pages/page-read-cache": `import { controls } from "routing-test-ports"; export async function hydratePageReadCache(input) { controls.hydrated.push(input); if (controls.storageError) throw controls.storageError; }`,
+    "@/sections/pages/lib/page-read-cache": `import { controls } from "routing-test-ports"; export async function hydratePageReadCache(input) { controls.hydrated.push(input); if (controls.storageError) throw controls.storageError; }`,
     "@/platform/environment": `import { controls } from "routing-test-ports"; export const isFeatureEnabled = () => controls.askAi; export const isDesktopApp = () => controls.desktop;`,
     "@/app/demo/runtime": `import { controls } from "routing-test-ports"; export const isHostedDemoRuntime = () => controls.demo;`,
     "@zilobase/edition-web": `export const editionWebModule = { routePrefix: "/edition", routes: [] };`,
@@ -431,7 +431,7 @@ async function loadRoutingRuntime(sourcePath) {
         setup(builder) {
           builder.onResolve({ filter: /./ }, ({ path, kind }) => {
             if (path in mocks) return { path, namespace: "routing-mock" };
-            if (path.startsWith("@/components/") && kind === "dynamic-import")
+            if (path.startsWith("@/sections/") && kind === "dynamic-import")
               return { path: "screen", namespace: "routing-mock" };
             if (path.startsWith("@/")) return { path: sourcePath(`/src/${path.slice(2)}.ts`) };
           });

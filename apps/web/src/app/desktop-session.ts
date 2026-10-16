@@ -20,7 +20,7 @@ import {
 import type { DesktopServerSwitchRequest } from "@/platform/server/operations/desktop-server-switch";
 import type { DesktopServerReplacementDependencies } from "@/platform/server/operations/desktop-server-replacement-core";
 import { useAppStore } from "@/app/state/app-store";
-import { useAuthFlowStore } from "@/components/auth/auth-flow-store";
+import { useAuthFlowStore } from "@/sections/auth/hooks/auth-flow-store";
 import { clearPageSnapshotsForDeployment } from "@/platform/storage/client-cache-storage";
 import { sessionQueryKey, type SessionResponse } from "@zilobase/features/auth";
 

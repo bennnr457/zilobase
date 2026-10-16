@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import {
   createContext,
   useCallback,
@@ -8,15 +9,13 @@ import {
   type ReactNode,
 } from "react";
 
-import { useAppShortcut } from "./shortcut-provider";
+import { isEditableShortcutTarget, useAppShortcut } from "./shortcut-provider";
 
 type UndoAction = {
   label: string;
   redo: () => boolean | void;
   undo: () => boolean | void;
 };
-
-type UndoHistoryEntry = UndoAction;
 
 type UndoHistoryContextValue = {
   pushAction: (action: UndoAction) => void;
@@ -28,14 +27,6 @@ const UNDO_HISTORY_LIMIT = 100;
 const UndoHistoryContext = createContext<UndoHistoryContextValue | null>(null);
 let activeUndoHistoryScope: symbol | null = null;
 
-function shouldUseNativeEditableHistory(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false;
-  }
-
-  return target.isContentEditable || target.matches("input, textarea, select, [role='textbox']");
-}
-
 export function UndoHistoryScope({
   children,
   resetKey,
@@ -44,8 +35,8 @@ export function UndoHistoryScope({
   resetKey: unknown;
 }) {
   const scopeIdRef = useRef(Symbol("undo-history-scope"));
-  const redoActionsRef = useRef<UndoHistoryEntry[]>([]);
-  const undoActionsRef = useRef<UndoHistoryEntry[]>([]);
+  const redoActionsRef = useRef<UndoAction[]>([]);
+  const undoActionsRef = useRef<UndoAction[]>([]);
   const recordingSuppressionDepthRef = useRef(0);
   const activate = useCallback(() => {
     activeUndoHistoryScope = scopeIdRef.current;
@@ -66,11 +57,15 @@ export function UndoHistoryScope({
   const runWithoutRecording = useCallback(<T,>(callback: () => T) => {
     recordingSuppressionDepthRef.current += 1;
 
-    try {
-      return callback();
-    } finally {
-      recordingSuppressionDepthRef.current -= 1;
-    }
+    return Effect.runSync(
+      Effect.sync(callback).pipe(
+        Effect.ensuring(
+          Effect.sync(() => {
+            recordingSuppressionDepthRef.current -= 1;
+          }),
+        ),
+      ),
+    );
   }, []);
   const shouldRecord = useCallback(() => recordingSuppressionDepthRef.current === 0, []);
   const contextValue = useMemo(
@@ -78,53 +73,31 @@ export function UndoHistoryScope({
     [pushAction, runWithoutRecording, shouldRecord],
   );
 
-  useAppShortcut(
-    "undo",
-    (event) => {
-      if (
-        activeUndoHistoryScope !== scopeIdRef.current ||
-        shouldUseNativeEditableHistory(event.target)
-      ) {
-        return false;
-      }
-
-      while (undoActionsRef.current.length > 0) {
-        const action = undoActionsRef.current.pop();
-
-        if (action && runWithoutRecording(() => action.undo()) !== false) {
-          redoActionsRef.current.push(action);
-          return true;
-        }
-      }
-
+  const runHistory = (direction: "undo" | "redo", event: KeyboardEvent) => {
+    if (activeUndoHistoryScope !== scopeIdRef.current || isEditableShortcutTarget(event.target)) {
       return false;
-    },
-    { allowInEditable: true, priority: 100 },
-  );
+    }
 
-  useAppShortcut(
-    "redo",
-    (event) => {
-      if (
-        activeUndoHistoryScope !== scopeIdRef.current ||
-        shouldUseNativeEditableHistory(event.target)
-      ) {
-        return false;
+    const source = direction === "undo" ? undoActionsRef : redoActionsRef;
+    const destination = direction === "undo" ? redoActionsRef : undoActionsRef;
+    while (source.current.length > 0) {
+      const action = source.current.pop();
+      if (action && runWithoutRecording(() => action[direction]()) !== false) {
+        destination.current.push(action);
+        return true;
       }
+    }
+    return false;
+  };
 
-      while (redoActionsRef.current.length > 0) {
-        const action = redoActionsRef.current.pop();
-
-        if (action && runWithoutRecording(() => action.redo()) !== false) {
-          undoActionsRef.current.push(action);
-          return true;
-        }
-      }
-
-      return false;
-    },
-    { allowInEditable: true, priority: 100 },
-  );
+  useAppShortcut("undo", (event) => runHistory("undo", event), {
+    allowInEditable: true,
+    priority: 100,
+  });
+  useAppShortcut("redo", (event) => runHistory("redo", event), {
+    allowInEditable: true,
+    priority: 100,
+  });
 
   useEffect(() => {
     redoActionsRef.current = [];

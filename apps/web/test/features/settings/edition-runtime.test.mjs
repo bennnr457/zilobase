@@ -12,7 +12,7 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("additional login methods receive the shared email below its field", async () => {
-    const source = await readSource("/src/components/auth/login-screen.tsx");
+    const source = await readSource("/src/sections/auth/login-screen.tsx");
     const emailField = source.indexOf('htmlFor="email"');
     const additionalMethods = source.indexOf("editionWebModule.additionalLoginMethods.map");
     const passwordField = source.indexOf('htmlFor="password"');

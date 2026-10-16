@@ -2,7 +2,7 @@ import * as Y from "yjs";
 export function register({ assert, loadModule, test }) {
   test("document leases share transport and stale release cannot dispose a replacement", async () => {
     const { createDocumentSessionRegistry } = await loadModule(
-      "/src/components/pages/editor/collaboration/document-session-registry.ts",
+      "/src/sections/pages/editor/collaboration/lib/page-document-session.ts",
     );
     const registry = createDocumentSessionRegistry();
     let disposed = 0;
@@ -28,7 +28,7 @@ export function register({ assert, loadModule, test }) {
   });
   async function fixture({ persisted = true, denied = false } = {}) {
     const { createPageDocumentSession } = await loadModule(
-      "/src/components/pages/editor/collaboration/page-document-session.ts",
+      "/src/sections/pages/editor/collaboration/lib/page-document-session.ts",
     );
     const document = new Y.Doc();
     const events = [];

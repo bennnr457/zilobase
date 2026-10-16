@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("table row measurement preserves relative centers, heights and terminal drop position", async () => {
     const { measureTableRowLayout, areRowLayoutsEqual } = await loadModule(
-      "/src/components/databases/views/table/row-layout.ts",
+      "/src/sections/databases/views/table/hooks/row-layout.ts",
     );
     const layout = { getBoundingClientRect: () => ({ top: 50 }), querySelector: () => null };
     const row = (id, top, height) => ({
@@ -35,7 +35,7 @@ export function register({ assert, loadModule, test }) {
 
   test("column keys preserve pending insertion side and structural editing gate", async () => {
     const { getTableColumnKeys } = await loadModule(
-      "/src/components/databases/views/table/database-table-model.ts",
+      "/src/sections/databases/views/table/lib/database-table-model.ts",
     );
     assert.deepEqual(
       getTableColumnKeys({
@@ -68,7 +68,7 @@ export function register({ assert, loadModule, test }) {
 
   test("nested table visibility memoizes ancestor walks and preserves row order", async () => {
     const { getVisibleNestedTableRows } = await loadModule(
-      "/src/components/databases/views/table/database-table-model.ts",
+      "/src/sections/databases/views/table/lib/database-table-model.ts",
     );
     const rows = Array.from({ length: 10000 }, (_, index) => ({ id: `row-${index}` }));
     const parents = Object.fromEntries(

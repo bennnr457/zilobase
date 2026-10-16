@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("content recovery restores meaningful saved blocks but preserves live editor content", async () => {
     const { recoverPageEditorContent } = await loadModule(
-      "/src/components/pages/editor/operations/page-content-recovery.ts",
+      "/src/sections/pages/editor/operations/lib/page-content-recovery.ts",
     );
     const saved = {
       type: "doc",
@@ -24,7 +24,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("content recovery stops on a refused write and uses saved content when readback is unavailable", async () => {
     const { recoverPageEditorContent } = await loadModule(
-      "/src/components/pages/editor/operations/page-content-recovery.ts",
+      "/src/sections/pages/editor/operations/lib/page-content-recovery.ts",
     );
     const saved = { type: "meetingBlock" };
     assert.equal(
@@ -38,7 +38,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("placement recovery defers to an in-flight local structural insertion", async () => {
     const { recoverMissingPlacedDatabaseBlocks } = await loadModule(
-      "/src/components/pages/editor/operations/page-content-recovery.ts",
+      "/src/sections/pages/editor/operations/lib/page-content-recovery.ts",
     );
     const databaseId = "11111111-1111-4111-8111-111111111111";
     let content = {

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("cover gallery data URLs round-trip editable settings", async () => {
     const { buildCoverGalleryDataUrl, buildRandomCoverGalleryDataUrl, parseCoverGalleryDataUrl } =
-      await loadModule("/src/components/pages/appearance/page-cover-gallery.ts");
+      await loadModule("/src/sections/pages/appearance/lib/page-cover-gallery.ts");
     const configs = [
       { color: "#1D4ED8", kind: "solid" },
       {
@@ -49,9 +49,9 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("cover picker provides editable gallery controls without AI creation", async () => {
     const [gallery, picker, metadata] = await Promise.all([
-      readSource("/src/components/pages/appearance/page-cover-picker.tsx"),
-      readSource("/src/components/pages/appearance/image-source-picker.tsx"),
-      readSource("/src/components/pages/page-metadata.tsx"),
+      readSource("/src/sections/pages/appearance/components/page-cover-picker.tsx"),
+      readSource("/src/sections/pages/appearance/components/image-source-picker.tsx"),
+      readSource("/src/sections/pages/components/page-metadata.tsx"),
     ]);
 
     assert.match(picker, /<TabsTrigger value="gallery">/);

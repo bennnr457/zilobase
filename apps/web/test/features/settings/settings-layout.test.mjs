@@ -1,8 +1,8 @@
 export function register({ assert, readSource, test }) {
   test("Calendar settings use the canonical settings layout", async () => {
     const [calendarPage, calendarPreferences] = await Promise.all([
-      readSource("/src/components/settings/sections/calendar-settings-screen.tsx"),
-      readSource("/src/components/calendar/preferences/calendar-settings.tsx"),
+      readSource("/src/sections/settings/calendar/calendar-settings-screen.tsx"),
+      readSource("/src/sections/calendar/preferences/components/calendar-settings.tsx"),
     ]);
 
     assert.match(calendarPage, /<SettingsPage/);
@@ -14,9 +14,9 @@ export function register({ assert, readSource, test }) {
 
   test("edition settings receive the same host layout components", async () => {
     const [content, contract, layout] = await Promise.all([
-      readSource("/src/components/settings/shell/settings-dialog.tsx"),
+      readSource("/src/sections/settings/shell/components/settings-dialog.tsx"),
       readSource("/src/edition/community.ts"),
-      readSource("/src/components/settings/shell/settings-layout.tsx"),
+      readSource("/src/sections/settings/shell/components/settings-layout.tsx"),
     ]);
 
     assert.match(content, /<EditionSettings settingsUi=\{settingsUi\} \/>/);

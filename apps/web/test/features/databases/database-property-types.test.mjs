@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("database property type metadata covers defaults and fallbacks", async () => {
     const propertyTypes = await loadModule(
-      "/src/components/databases/properties/property-catalog.ts",
+      "/src/sections/databases/properties/lib/property-catalog.ts",
     );
 
     assert.equal(propertyTypes.getDatabasePropertyType("number").label, "Number");
@@ -31,7 +31,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database property type UI metadata covers the shared canonical contract", async () => {
     const propertyTypes = await loadModule(
-      "/src/components/databases/properties/property-catalog.ts",
+      "/src/sections/databases/properties/lib/property-catalog.ts",
     );
     const sharedPropertyTypes = await loadModule(
       "/packages/features/src/databases/schema/property-types.ts",
@@ -45,7 +45,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database option colors use one canonical cycling strategy", async () => {
     const { getNextDatabaseOptionColor } = await loadModule(
-      "/src/components/databases/properties/property-catalog.ts",
+      "/src/sections/databases/properties/lib/property-catalog.ts",
     );
 
     assert.equal(getNextDatabaseOptionColor(0), getNextDatabaseOptionColor(0));

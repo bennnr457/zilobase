@@ -20,7 +20,7 @@ function withWindow(value, run) {
 export function register({ assert, loadModule, test }) {
   test("published page mode defaults safely when storage is blocked", async () => {
     const { readPublishedEmbeddedItemsOpenAs, writePublishedEmbeddedItemsOpenAs } =
-      await loadModule("/src/components/pages/access/public-page-opening-preferences.ts");
+      await loadModule("/src/sections/pages/access/lib/public-page-opening-preferences.ts");
     const blockedStorage = {
       getItem() {
         throw new Error("blocked");
@@ -38,7 +38,7 @@ export function register({ assert, loadModule, test }) {
 
   test("published page mode restores a stored dialog preference", async () => {
     const { readPublishedEmbeddedItemsOpenAs } = await loadModule(
-      "/src/components/pages/access/public-page-opening-preferences.ts",
+      "/src/sections/pages/access/lib/public-page-opening-preferences.ts",
     );
 
     withWindow(

@@ -57,7 +57,7 @@ const loginRoute = createRoute({
   path: "/login",
   validateSearch: validateLoginSearch,
   beforeLoad: ({ search }) => Effect.runPromise(applyLoginAccess(search)),
-  component: lazyRouteComponent(() => import("@/components/auth/login-screen")),
+  component: lazyRouteComponent(() => import("@/sections/auth/login-screen")),
 });
 
 const connectRoute = createRoute({
@@ -69,9 +69,7 @@ const connectRoute = createRoute({
         isDesktopApp() ? Effect.void : Effect.fail(redirect({ to: "/login" })),
       ),
     ),
-  component: lazyRouteComponent(
-    () => import("@/components/desktop/servers/desktop-connect-screen"),
-  ),
+  component: lazyRouteComponent(() => import("@/sections/desktop/servers/desktop-connect-screen")),
 });
 
 const signupRoute = createRoute({
@@ -79,14 +77,14 @@ const signupRoute = createRoute({
   path: "/signup",
   validateSearch: validateSignupSearch,
   beforeLoad: ({ search }) => Effect.runPromise(applySignupAccess(search)),
-  component: lazyRouteComponent(() => import("@/components/auth/signup-screen")),
+  component: lazyRouteComponent(() => import("@/sections/auth/signup-screen")),
 });
 
 const onboardingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/onboarding",
   beforeLoad: () => Effect.runPromise(applyOnboardingAccess()),
-  component: lazyRouteComponent(() => import("@/components/auth/onboarding-screen")),
+  component: lazyRouteComponent(() => import("@/sections/auth/onboarding-screen")),
 });
 
 const otpRoute = createRoute({
@@ -98,7 +96,7 @@ const otpRoute = createRoute({
         isDesktopApp() ? Effect.fail(redirect({ to: "/login" })) : Effect.void,
       ),
     ),
-  component: lazyRouteComponent(() => import("@/components/auth/otp-screen")),
+  component: lazyRouteComponent(() => import("@/sections/auth/otp-screen")),
 });
 
 const oauthConsentRoute = createRoute({
@@ -106,13 +104,13 @@ const oauthConsentRoute = createRoute({
   path: "/oauth/consent",
   validateSearch: validateOAuthConsentSearch,
   beforeLoad: ({ search }) => Effect.runPromise(applyOAuthConsentAccess(search)),
-  component: lazyRouteComponent(() => import("@/components/oauth/consent-screen")),
+  component: lazyRouteComponent(() => import("@/sections/oauth/consent-screen")),
 });
 
 const oauthCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/oauth/callback",
-  component: lazyRouteComponent(() => import("@/components/oauth/callback-screen")),
+  component: lazyRouteComponent(() => import("@/sections/oauth/callback-screen")),
 });
 
 const publicRoutes = [
@@ -128,20 +126,20 @@ const publicRoutes = [
     getParentRoute: () => rootRoute,
     path: "/accept-invitation",
     component: lazyRouteComponent(
-      () => import("@/components/workspaces/invitations/accept-workspace-invitation-screen"),
+      () => import("@/sections/workspaces/invitations/accept-workspace-invitation-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/accept-page-invitation",
     component: lazyRouteComponent(
-      () => import("@/components/pages/access/accept-page-invitation-screen"),
+      () => import("@/sections/pages/access/accept-page-invitation-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/setup",
-    component: lazyRouteComponent(() => import("@/components/auth/setup-screen")),
+    component: lazyRouteComponent(() => import("@/sections/auth/setup-screen")),
   }),
 ];
 
@@ -151,7 +149,7 @@ const appRoutes = [
     getParentRoute: () => appRoute,
     path: "/calendar",
     validateSearch: validateCalendarSearch,
-    component: lazyRouteComponent(() => import("@/components/calendar/calendar-screen")),
+    component: lazyRouteComponent(() => import("@/sections/calendar/calendar-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -164,23 +162,23 @@ const appRoutes = [
             : Effect.fail(redirect({ to: "/recents", search: { view: "recents" } })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/ai/ai-screen")),
+    component: lazyRouteComponent(() => import("@/sections/ai/ai-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/canvas",
-    component: lazyRouteComponent(() => import("@/components/canvas/canvas-screen")),
+    component: lazyRouteComponent(() => import("@/sections/canvas/canvas-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/recents",
     validateSearch: validateLibrarySearch,
-    component: lazyRouteComponent(() => import("@/components/library/recents-screen")),
+    component: lazyRouteComponent(() => import("@/sections/library/recents-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/tasks",
-    component: lazyRouteComponent(() => import("@/components/tasks/tasks-screen")),
+    component: lazyRouteComponent(() => import("@/sections/tasks/tasks-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -201,49 +199,49 @@ const settingsRoutes = [
     getParentRoute: () => appRoute,
     path: "/settings/preferences",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/preferences-settings-screen"),
+      () => import("@/sections/settings/preferences/preferences-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/profile",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/profile-settings-screen"),
+      () => import("@/sections/settings/profile/profile-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/security",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/security-settings-screen"),
+      () => import("@/sections/settings/security/security-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/workspace",
     component: lazyRouteComponent(
-      () => import("@/components/workspaces/settings/workspace-settings-screen"),
+      () => import("@/sections/workspaces/settings/workspace-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/api-keys",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/api-keys-settings-screen"),
+      () => import("@/sections/settings/api-keys/api-keys-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/connected-apps",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/connected-apps-settings-screen"),
+      () => import("@/sections/settings/connected-apps/connected-apps-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/oauth-apps",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/oauth-apps-settings-screen"),
+      () => import("@/sections/settings/oauth-apps/oauth-apps-settings-screen"),
     ),
   }),
   createRoute({
@@ -251,23 +249,21 @@ const settingsRoutes = [
     path: "/settings/team",
     validateSearch: validateTeamSettingsSearch,
     component: lazyRouteComponent(
-      () => import("@/components/workspaces/members/workspace-members-settings-screen"),
+      () => import("@/sections/workspaces/members/workspace-members-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/calendar",
     component: lazyRouteComponent(
-      () => import("@/components/settings/sections/calendar-settings-screen"),
+      () => import("@/sections/settings/calendar/calendar-settings-screen"),
     ),
   }),
   createRoute({
     getParentRoute: () => appRoute,
     path: "/settings/teamspaces",
     validateSearch: validateTeamspaceSettingsSearch,
-    component: lazyRouteComponent(
-      () => import("@/components/teamspaces/teamspaces-settings-screen"),
-    ),
+    component: lazyRouteComponent(() => import("@/sections/teamspaces/teamspaces-settings-screen")),
   }),
   createRoute({
     getParentRoute: () => appRoute,
@@ -288,7 +284,7 @@ const contentRoutes = [
           Effect.map((publishedShare) => ({ publishedShare })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/pages/page-screen")),
+    component: lazyRouteComponent(() => import("@/sections/pages/page-screen")),
     pendingComponent: PendingPage,
   }),
   createRoute({
@@ -300,7 +296,7 @@ const contentRoutes = [
           Effect.map((session) => ({ authenticatedMeeting: Boolean(session.user) })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/meetings/meeting-screen")),
+    component: lazyRouteComponent(() => import("@/sections/meetings/meeting-screen")),
     pendingComponent: PendingPage,
   }),
   createRoute({
@@ -313,7 +309,7 @@ const contentRoutes = [
           Effect.map((publishedShare) => ({ publishedShare })),
         ),
       ),
-    component: lazyRouteComponent(() => import("@/components/databases/screen/database-screen")),
+    component: lazyRouteComponent(() => import("@/sections/databases/database-screen")),
     pendingComponent: PendingPage,
   }),
 ];

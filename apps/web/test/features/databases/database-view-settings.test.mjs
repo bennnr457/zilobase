@@ -4,16 +4,18 @@ export function register({ readSource, assert, loadModule, test }) {
   const readToolbarSource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/databases/views/shared/database-view-toolbar.tsx"),
-        readSource("/src/components/databases/views/shared/database-view-toolbar-dialogs.tsx"),
-        readSource("/src/components/databases/views/shared/database-toolbar-actions.tsx"),
-        readSource("/src/components/databases/views/shared/database-settings-control.tsx"),
+        readSource("/src/sections/databases/views/shared/components/database-view-toolbar.tsx"),
+        readSource(
+          "/src/sections/databases/views/shared/components/database-view-toolbar-dialogs.tsx",
+        ),
+        readSource("/src/sections/databases/views/shared/components/database-toolbar-actions.tsx"),
+        readSource("/src/sections/databases/views/shared/components/database-settings-control.tsx"),
         readSource("/packages/features/src/databases/views/toolbar-source.ts"),
       ])
     ).join("\n");
   test("link existing data source owns its nested picker state", async () => {
     const settings = await readSource(
-      "/src/components/databases/views/settings/data-source-settings.tsx",
+      "/src/sections/databases/views/settings/components/data-source-settings.tsx",
     );
 
     assert.match(settings, /function LinkExistingDataSourcePicker/);
@@ -73,12 +75,14 @@ export function register({ readSource, assert, loadModule, test }) {
   test("adding a data source opens the shared database setup chooser", async () => {
     const [controller, controllerModel, databaseView, setupCard] = await Promise.all([
       Promise.all([
-        readSource("/src/components/databases/views/controller/use-database-view-controller.tsx"),
+        readSource(
+          "/src/sections/databases/views/controller/hooks/use-database-view-controller.tsx",
+        ),
         readSource("/packages/features/src/databases/records/source-commands.ts"),
       ]).then((parts) => parts.join("\n")),
       readSource("/packages/features/src/databases/views/source-state.ts"),
-      readSource("/src/components/databases/views/shared/database-view.tsx"),
-      readSource("/src/components/databases/setup/database-setup-card.tsx"),
+      readSource("/src/sections/databases/views/shared/components/database-view.tsx"),
+      readSource("/src/sections/databases/setup/components/database-setup-card.tsx"),
     ]);
 
     assert.match(controller, /addDataSource: \(\) => setDataSourceSetupOpen\(true\)/);
@@ -116,10 +120,12 @@ export function register({ readSource, assert, loadModule, test }) {
   test("deleting a final source view keeps it recoverable", async () => {
     const [controller, sourceItems] = await Promise.all([
       Promise.all([
-        readSource("/src/components/databases/views/controller/use-database-view-controller.tsx"),
+        readSource(
+          "/src/sections/databases/views/controller/hooks/use-database-view-controller.tsx",
+        ),
         readSource("/packages/features/src/databases/records/source-commands.ts"),
       ]).then((parts) => parts.join("\n")),
-      readSource("/src/components/databases/views/settings/data-source-items.tsx"),
+      readSource("/src/sections/databases/views/settings/components/data-source-items.tsx"),
     ]);
 
     assert.match(
@@ -145,7 +151,9 @@ export function register({ readSource, assert, loadModule, test }) {
   test("deleting a view never deletes its linked data source", async () => {
     const [controller, toolbar] = await Promise.all([
       Promise.all([
-        readSource("/src/components/databases/views/controller/use-database-view-controller.tsx"),
+        readSource(
+          "/src/sections/databases/views/controller/hooks/use-database-view-controller.tsx",
+        ),
         readSource("/packages/features/src/databases/records/source-commands.ts"),
       ]).then((parts) => parts.join("\n")),
       readToolbarSource(),
@@ -175,9 +183,9 @@ export function register({ readSource, assert, loadModule, test }) {
     const [dropdrawer, dropdrawerContent, menu, settings, subItems, toolbar] = await Promise.all([
       readSource("/src/components/ui/dropdown-menu.tsx"),
       readSource("/src/components/ui/dropdrawer.tsx"),
-      readSource("/src/components/databases/views/settings/database-view-settings.tsx"),
-      readSource("/src/components/databases/views/settings/data-source-settings.tsx"),
-      readSource("/src/components/databases/views/settings/sub-items-settings.tsx"),
+      readSource("/src/sections/databases/views/settings/components/database-view-settings.tsx"),
+      readSource("/src/sections/databases/views/settings/components/data-source-settings.tsx"),
+      readSource("/src/sections/databases/views/settings/components/sub-items-settings.tsx"),
       readToolbarSource(),
     ]);
 
@@ -238,7 +246,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database view settings expose one canonical layout catalog", async () => {
     const { databaseViewTypeOptions, getDatabaseViewTypePresentation } = await loadModule(
-      "/src/components/databases/views/settings/view-type-options.ts",
+      "/src/sections/databases/views/settings/lib/view-type-options.ts",
     );
 
     assert.deepEqual(

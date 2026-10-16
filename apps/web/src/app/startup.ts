@@ -6,9 +6,9 @@ import { installDesktopServerSwitch } from "@/platform/server/operations/desktop
 import { switchDesktopServerSession } from "./desktop-session";
 import { isDesktopApp } from "@/platform/desktop/native";
 import { createNativeMeetingCaptureRuntime } from "@/platform/desktop/meetings/native-capture-runtime";
-import { BrowserMeetingCapture } from "@/components/meetings/capture/browser-meeting-capture";
-import { createBrowserMeetingCaptureRuntime } from "@/components/meetings/capture/browser-capture-runtime";
-import { installMeetingCaptureRuntime } from "@/components/meetings/capture/capture-runtime";
+import { BrowserMeetingCapture } from "@/platform/browser/meetings/browser-meeting-capture";
+import { createBrowserMeetingCaptureRuntime } from "@/platform/browser/meetings/browser-capture-runtime";
+import { installMeetingCaptureRuntime } from "@/platform/meetings/capture-runtime";
 
 export function configureApplicationSessions() {
   Effect.runSync(Effect.sync(() => installDesktopServerSwitch(switchDesktopServerSession)));

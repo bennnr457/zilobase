@@ -13,7 +13,7 @@ import {
   listDesktopServerProfiles,
 } from "@/platform/server/desktop-server";
 import { useAppStore } from "@/app/state/app-store";
-import { useAuthFlowStore } from "@/components/auth/auth-flow-store";
+import { useAuthFlowStore } from "@/sections/auth/hooks/auth-flow-store";
 import {
   installDesktopDiagnostics,
   markDesktopAppReady,
@@ -22,7 +22,7 @@ import {
 } from "@/platform/diagnostics/desktop-diagnostics";
 import { AppProviders } from "@/app/providers/app-providers";
 import { initializeDesktopTranslucency } from "@/platform/desktop/window/desktop-translucency";
-import { captureProductException } from "@/lib/posthog";
+import { captureProductException } from "@/platform/analytics/posthog";
 
 configureApplicationSessions();
 configureApplicationRequests();

@@ -14,12 +14,12 @@ export function register({ assert, readSource, readWorkspace, test }) {
 
   test("metadata-only application consumers no longer request database payloads", async () => {
     const paths = [
-      "/src/app/shell/document-favicon.tsx",
+      "/src/app/shell/components/document-favicon.tsx",
       "/src/app/shell/app-shell.tsx",
       "/packages/features/src/pages/sharing-hooks.ts",
       "/packages/features/src/pages/item-action-hooks.ts",
-      "/src/components/databases/setup/database-setup-card.tsx",
-      "/src/components/databases/views/settings/data-source-settings.tsx",
+      "/src/sections/databases/setup/components/database-setup-card.tsx",
+      "/src/sections/databases/views/settings/components/data-source-settings.tsx",
     ];
 
     for (const path of paths) {
@@ -27,15 +27,15 @@ export function register({ assert, readSource, readWorkspace, test }) {
       assert.match(source, /useDatabaseMetadata/);
       assert.doesNotMatch(source, /\buseDatabase\(/);
     }
-    const sharing = await readSource("/src/components/sharing/use-sharing.ts");
+    const sharing = await readSource("/src/components/sharing/hooks/use-sharing.ts");
     assert.match(sharing, /useItemSharingController/);
     assert.doesNotMatch(sharing, /\buseDatabase\(/);
   });
 
   test("sidebar and layout previews use bounded record windows", async () => {
-    const sidebar = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
-    const layout = await readSource("/src/components/pages/design/page-design-editor.tsx");
-    const pane = await readSource("/src/components/navigation/breadcrumbs.tsx");
+    const sidebar = await readSource("/src/app/shell/sidebar/hooks/sidebar-controller.ts");
+    const layout = await readSource("/src/sections/pages/design/components/page-design-editor.tsx");
+    const pane = await readSource("/src/components/navigation/components/breadcrumbs.tsx");
 
     assert.match(sidebar, /useDatabaseRecords/);
     assert.match(sidebar, /composeDatabaseViewData/);

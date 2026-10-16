@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("structural insertion stays pending until the created block is inserted", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     const events = [];
 
@@ -20,7 +20,7 @@ export function register({ assert, loadModule, test }) {
 
   test("failed structural creation always releases the recovery guard", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     const pendingChanges = [];
 
@@ -38,7 +38,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("structural creation and pending flags start before returning the Promise", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     const events = [];
     let finish;
@@ -60,7 +60,7 @@ export function register({ assert, loadModule, test }) {
 
   test("structural workflows preserve exact sync, async and insertion errors", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     for (const step of ["sync-create", "async-create", "insert"]) {
       const failure = new Error(step);
@@ -82,7 +82,7 @@ export function register({ assert, loadModule, test }) {
 
   test("missing or cancelled creation and a failing pending callback preserve cleanup boundaries", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     const pending = [];
     const input = {
@@ -111,7 +111,7 @@ export function register({ assert, loadModule, test }) {
 
   test("created-block anchors release after failures and late editor destruction", async () => {
     const { insertCreatedBlock } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     const { Schema } = await import("@tiptap/pm/model");
     const schema = new Schema({
@@ -166,7 +166,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("structural pending cleanup errors retain finally precedence over creation errors", async () => {
     const { runStructuralInsertion } = await loadModule(
-      "/src/components/pages/editor/commands/structural-insertion.ts",
+      "/src/sections/pages/editor/commands/lib/block-insert.ts",
     );
     const body = new Error("creation"),
       cleanup = new Error("cleanup");

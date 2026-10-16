@@ -1,7 +1,11 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("calendar renderers use translated wheel buffers without native pane snapping", async () => {
-    const timed = await readSource("/src/components/calendar/primitives/calendar-timeline.tsx");
-    const month = await readSource("/src/components/calendar/primitives/calendar-month-view.tsx");
+    const timed = await readSource(
+      "/src/sections/calendar/primitives/components/calendar-timeline.tsx",
+    );
+    const month = await readSource(
+      "/src/sections/calendar/primitives/components/calendar-month-view.tsx",
+    );
     assert.doesNotMatch(timed + month, /lastSafe|snap-mandatory|preparedPeriod|restoringTop/);
     assert.match(timed, /useCalendarWheelScroll/);
     assert.match(timed, /overflow-y-auto overflow-x-hidden overscroll-none/);
@@ -10,14 +14,16 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.match(month, /useCalendarWheelScroll/);
     assert.match(month, /translateY/);
     const wheel = await readSource(
-      "/src/components/calendar/primitives/use-calendar-wheel-scroll.ts",
+      "/src/sections/calendar/primitives/hooks/use-calendar-wheel-scroll.ts",
     );
     assert.match(wheel, /SCROLL_END_DEBOUNCE_MS = 150/);
     assert.match(wheel, /CALENDAR_SNAP_ANIMATION_MS = 200/);
     assert.match(wheel, /event\.preventDefault\(\)/);
-    const schedule = await readSource("/src/components/calendar/views/calendar-schedule.tsx");
+    const schedule = await readSource(
+      "/src/sections/calendar/views/components/calendar-schedule.tsx",
+    );
     const navigation = await readSource(
-      "/src/components/calendar/workspace/calendar-navigation.ts",
+      "/src/sections/calendar/workspace/hooks/calendar-navigation.ts",
     );
     assert.match(schedule, /bookmarkVisibleDate/);
     assert.match(schedule, /date: anchorDate/);
@@ -26,7 +32,7 @@ export function register({ assert, loadModule, readSource, test }) {
   });
   test("drag hit testing includes scroll displacement and hidden weekends", async () => {
     const { calendarDragDisplacement } = await loadModule(
-      "/src/components/calendar/primitives/event-geometry.ts",
+      "/src/sections/calendar/primitives/lib/event-geometry.ts",
     );
     const forward = calendarDragDisplacement("2026-09-11", 120.5, 120.5, 24, false, false, 48);
     assert.deepEqual(forward, { target: "2026-09-14", days: 3, minutes: 30 });
@@ -35,7 +41,7 @@ export function register({ assert, loadModule, readSource, test }) {
   });
   test("Calendar drag preserves all-day boundaries and rejects DST gaps and inverted resizing", async () => {
     const { shiftEventGeometry } = await loadModule(
-      "/src/components/calendar/primitives/event-geometry.ts",
+      "/src/sections/calendar/primitives/lib/event-geometry.ts",
     );
     const allDay = { start: { date: "2026-09-09" }, end: { date: "2026-09-11" } };
     const moved = shiftEventGeometry(allDay, "Asia/Kolkata", 2, 0);

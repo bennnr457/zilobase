@@ -1,6 +1,6 @@
 export async function register({ assert, loadModule, test }) {
   const { timelineGeometry, timelineRetargets, snapTimelineOffset } = await loadModule(
-    "/src/components/calendar/primitives/timeline-geometry.ts",
+    "/src/sections/calendar/primitives/lib/timeline-geometry.ts",
   );
   test("fractional anchor survives prepend and resize", () => {
     const before = timelineGeometry("2026-09-01", 143.25);

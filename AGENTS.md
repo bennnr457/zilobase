@@ -10,9 +10,14 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   query keys/options, query and mutation hooks, canonical entity collections,
   invalidation, optimistic updates, reconciliation, domain controllers, and pure
   domain models.
-- `apps/web/src/components/<domain>` owns domain screens, widgets, local hooks,
-  and presentation state. `components/ui` contains generic UI primitives; shared
-  calendar renderers live in `components/calendar/primitives`. `app` owns startup,
+- `apps/web/src/sections/<section>` owns screens, widgets, local hooks,
+  and presentation state, grouped by the visible UI section. Each section and
+  substantial subsection uses `components/` for local UI, `hooks/` for local
+  presentation hooks, and `lib/` for local helpers. Create only folders with code.
+  Keep route `*-screen.tsx` entrypoints at their section/subsection root.
+  Root `components/` contains only UI shared across sections; root `hooks/` and
+  `lib/` contain shared UI hooks and presentation helpers. `components/ui` contains generic UI primitives; shared
+  calendar renderers live in `sections/calendar/primitives`. `app` owns startup,
   providers, routing, shortcuts, and the shell. `platform` owns
   physical web/desktop adapters; `lib` contains web presentation helpers and
   `styles` contains global styles. Keep editor, canvas, Tiptap, Yjs collaboration,
@@ -20,10 +25,11 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   view geometry here.
   Keep form/screen state machines beside their screens.
   Place brand artwork in `components/branding` and generic widgets in `components/ui`.
-  Keep Notion import hooks at their domain root and conversion in `conversion`.
+  Keep Notion import hooks in `sections/notion-import/hooks` and conversion
+  helpers in `sections/notion-import/conversion/lib`.
   Import implementation owners directly across web; do not add forwarding-only
   index modules or re-export shared features through web UI modules.
-  Database route composition lives in `components/databases/screen`, embedded
+  Database route composition lives in `sections/databases/database-screen.tsx`, embedded
   blocks in `blocks`, row-page properties in `page-properties`, and property
   editors/settings in `properties`. Keep shared view UI in `views/shared`, view
   settings in `views/settings`, and local view commands in `views/commands`;
@@ -38,50 +44,68 @@ TanStack Query behavior, TanStack DB collections, and mutation/cache rules.
   in `apps/server/src/app`. Route modules call services without changing public
   HTTP paths or authorization behavior.
 
-Keep screens and their local hooks together under their domain rather than
-creating another `components` directory inside each domain. Retain meaningful
+Keep each section's components, hooks, and helpers within its owning section.
+Code shared by subsections belongs at their nearest common owner; promote code to
+root `components/`, `hooks/`, or `lib/` when independent sections reuse it.
+Keep API/query/mutation hooks and cache/domain rules in `packages/features`;
+section hooks own UI behavior. Retain meaningful
 subsystems such as editor collaboration and database table/kanban/timeline
 renderers. Reserve the `features` folder name for `packages/features`.
 
 Keep sidebar composition and private navigation/workspace/section renderers in
-`app/shell/sidebar/app-sidebar.tsx`; controller composition, local state, storage,
-and Effect commands live in `sidebar-controller.ts`. Keep the customization editor
+`app/shell/sidebar/components/app-sidebar.tsx`; controller composition, local state, storage,
+and Effect commands live in `app/shell/sidebar/hooks/sidebar-controller.ts`. Keep the customization editor
 and its shared tab/icon presentation in `sidebar-customization.tsx` so its preview
 has no import cycle through the app sidebar. Reuse the shadcn sidebar-07 primitive
 structure in `components/ui/sidebar.tsx`, with CSS-variable widths, offcanvas
-collapse, and Zilobase tokens. Keep right-panel sizing in `app/shell/panels/tool-panels.tsx`.
-Import shared configuration commands from features directly and library labels/icons
-from `components/library`; avoid a shell navigation barrel or forwarding modules.
+collapse, and Zilobase tokens. Keep right-panel sizing in `app/shell/panels/components/tool-panels.tsx`.
+Import shared configuration commands from features directly. Shared library view
+labels/icons belong in `components/navigation/lib/library-views.ts`; keep library
+row rendering and presentation models in `sections/library`. Avoid a shell
+navigation barrel or forwarding modules.
 Use Effect for fallible shell storage, native profile workflows, clipboard actions,
 and ordered creation/navigation commands. Preserve storage keys, debounce timing,
 best-effort fallbacks, and stale-result checks. Keep layout geometry and React view
 state plain.
 
 Keep shell composition at `app/shell/app-shell.tsx`, the fallback screen header
-in `app/shell/header`, favicon installation/conversion beside the shell, and
-tool-panel composition in `app/shell/panels`. Settings shell/dialogs live in
-`components/settings/shell`, with section screens in `components/settings/sections`. Workspace settings, members, guests, invitations,
+in `app/shell/header/components`, favicon UI in `app/shell/components` and
+conversion in `app/shell/lib`, and
+tool-panel composition in `app/shell/panels`. Global search and its provider live
+in `app/shell/search/components`; the app notification center lives in
+`app/shell/notifications/components`. The shared route render error boundary lives
+in `app/routing/components/fallback-error-boundary.tsx`, independent of the lazy
+route error screen. Settings shell/dialogs live in
+`sections/settings/shell`, with section screens in `sections/settings/<section>`. Workspace settings, members, guests, invitations,
 and page access gates live under the matching workspace subfolders; keep their
-hooks beside their UI without nested components/commands/model buckets. Teamspace
-UI and local hooks stay together at the teamspace domain root. Route-mounted
+UI in `components/`, local hooks in `hooks/`, and presentation helpers in `lib/`.
+Teamspace UI and local hooks follow the same convention under `sections/teamspaces`. Route-mounted
 screens use explicit `*-screen.tsx` names; route settings use `*-settings-screen.tsx`. Page chrome and body scrolling belong to
-`components/pages/layout/page-layout.tsx`, with one placement-aware header in
-`components/pages/header/page-header.tsx`. Main routes, desktop panes, and desktop dialogs compose
+`sections/pages/layout/components/page-layout.tsx`, with one placement-aware header in
+`sections/pages/header/components/page-header.tsx`. Main routes, desktop panes, and desktop dialogs compose
 this layout around the existing editor body. Page presentation state, opening/closing commands, and promotion live in
-`components/pages/presentation/page-presentation.tsx`; pane rendering owns geometry,
+`sections/pages/presentation/components/page-presentation.tsx`; pane rendering owns geometry,
 and dialog rendering owns focus and dismissal. Hosts do not duplicate page headers
 or scroll viewports. Shared viewport rendering lives in `components/ui/scroll-viewport.tsx`.
-Page design customization belongs in `components/pages/design`, separate from the
-page layout frame. Page content in `components/pages/editor/page-content.tsx` owns the editor lifecycle; breadcrumb UI belongs
-in `components/navigation/breadcrumbs.tsx`.
+Page design customization belongs in `sections/pages/design`, separate from the
+page layout frame. Page content in `sections/pages/editor/page-content.tsx` owns the editor lifecycle; breadcrumb UI belongs
+in `components/navigation/components/breadcrumbs.tsx`.
 Mobile embedded page requests navigate to main routes before consulting desktop
 presentation preferences. Keep the embedded-page dialog lazy and domain-owned;
 do not reintroduce a shell forwarding host or a separate authenticated-page module.
 Shared header/sidebar actions and their hooks live in `components/navigation`;
 page/database sharing UI and its hook live in `components/sharing`. Import these
 owners directly; page headers must not import them through the shell sidebar.
-Shared route identifiers and navigation icons belong in navigation; SVG icon
-helpers belong in `components/ui/icon-svg.ts`. Avoid domain forwarding barrels.
+Route ID parsing and URL builders belong in `app/routing/route-identifiers.ts`;
+keep this helper independent of router initialization so components can import it
+without loading the router. Active route/query ID parsing belongs there too;
+sidebar controllers and navigation hooks import it directly. Search result
+destinations belong in `app/routing/search-result-destination.ts`, and the
+most-recent-item startup URL belongs in `app/routing/start-destination.ts`.
+Settings URL tab definitions and validation belong in `app/routing/search-validators.ts`;
+keep presentation-only tab counts beside the members screen.
+Navigation icons belong in `components/navigation/lib`;
+SVG icon helpers belong in `components/ui/icon-svg.ts`. Avoid domain forwarding barrels.
 Use Effect for clipboard and duplicate/navigation sequences while Query retains
 mutation ownership and React retains form/screen state.
 Load settings and embedded-page dialogs lazily. Route workspace settings directly
@@ -94,6 +118,14 @@ so independent editor roots can use them without importing application startup.
 Provider adapter workflows use Effect for session recovery, ordered cleanup, and
 fallible storage. Keep their auth ports Promise-based and React lifecycle/context
 composition unchanged; avoid adding another runtime or service layer.
+
+Keep shortcut definitions, modifier matching, registration, and dispatch together
+in `app/shortcuts/shortcut-provider.tsx`. Scoped action history remains in
+`undo-history.tsx`; editor-native and Yjs history helpers belong to
+`editor/runtime/lib/editor-history-coordinator.ts`. Use synchronous Effect dispatch
+and finalizers for recording suppression, preserving priority, editable-target
+behavior, and synchronous errors. Independent editor roots import the shortcut
+provider directly without importing application startup.
 
 Keep web route declarations and root routes together in `app/routing/router.tsx`,
 with screens loaded lazily. Keep route guards and URL validation separate. Group
@@ -117,9 +149,18 @@ Desktop transport, capture, persistence, window, and deep-link adapters live und
 Web startup configuration lives in `apps/web/src/app/startup.ts`; keep request,
 session, and meeting-capture installation together and preserve bootstrap order.
 Desktop session switching and replacement composition live in `app/desktop-session.ts`;
-the replacement dialog controller lives in `components/desktop/servers`.
+the replacement dialog controller lives in `sections/desktop/servers`.
 Group desktop presentation under window, tabs, servers, auth, updates, deep-links,
 and diagnostics. Import their owners directly; platform operations stay in platform.
+Browser audio capture, transport, and recovery implementations live in
+`platform/browser/meetings`; capture contracts and the installed runtime live in
+`platform/meetings`. Keep the React capture hook in `sections/meetings/capture/hooks`.
+Calendar IndexedDB storage and atomic reminder claims live in `platform/storage`,
+system notification delivery in `platform/notifications`, and metric dispatch in
+`platform/diagnostics`. Browser sign-in/redirect adapters live in `platform/auth`;
+PostHog initialization lives in `platform/analytics`. Platform modules must not
+import app composition or section/shared UI modules. Keep the demo experience
+wrapper with its application runtime in `app/demo/components`.
 Keep native operations in `platform` and avoid recreating an `app/runtime` folder.
 Use Effect for startup installation and desktop session workflows. Run synchronous
 installation and browser callbacks with `Effect.runSync`; keep native/cleanup ports
@@ -188,23 +229,39 @@ Do not duplicate the web API client, query keys, collections, or mutation logic.
 ## Hosted editor and future native integration
 
 The editor remains web code. Document design rendering belongs in
-`components/pages/editor/document-design`, distinct from page frame layout and page
+`sections/pages/editor/document-design`, distinct from page frame layout and page
 design customization. Keep editor runtime, collaboration, hosted bootstrap,
 operations, selection, and drag/drop as distinct subsystems beneath
-`components/pages/editor`. Editor composition lives at that folder's root; extension
-assembly lives in runtime. Keep comments, their Yjs controller, comment extensions,
+`sections/pages/editor`. Editor and page-content composition live at that folder's root; other local UI,
+hooks, and helpers use the owning subsystem's `components/`, `hooks/`, and `lib/`.
+Extension assembly lives in `runtime/lib`. Keep comments, their Yjs controller, comment extensions,
 and both independently scoped comments providers in `editor/comments`. Shared page
-metadata lives in `components/pages/page-metadata.tsx`; database property rendering
-remains in `components/databases/page-properties`. Page read-cache hydration lives
-at the pages root. Do not recreate top-level editor/comments folders, editor
+metadata lives in `sections/pages/components/page-metadata.tsx`; database property rendering
+remains in `sections/databases/page-properties`. Page read-cache hydration lives
+in `sections/pages/lib/page-read-cache.ts`. Do not recreate top-level editor/comments folders, editor
 composition/core buckets, or page content forwarding modules.
 Use Effect for structural insertion, document prefetch, and database drop resource
 workflows. Keep Promise adapters, synchronous pending flags, anchor cleanup,
 compensation, prefetch limits, and local flush versus server synchronization intact.
+Keep block construction, conversion, plus-menu insertion, and slash-command resource
+insertion together in `editor/commands/lib/block-insert.ts`. Compose creation and
+anchor cleanup as Effects and run them at the existing Promise boundaries.
+Group editor resource callbacks and mobile block action state in
+`editor/commands/hooks/use-editor-actions.ts`; shared mutation hooks retain backend/cache
+ownership, and mobile selection and movement remain plain React/editor code.
+Keep collaboration transport, connection startup, awareness users, and colors in
+`editor/collaboration/lib/collaboration-connection.ts`; document sessions own leases,
+readiness, and page connection indicators in `page-document-session.ts`. Keep
+persistence, navigation prefetch, the React hook, and presence UI separate. Use
+Effect for ordered connection startup while preserving deferred attachment,
+synchronous ticket-port errors, and explicit provider teardown.
+Meeting block DOM lookup/scrolling belongs beside its editor extension in
+`sections/pages/editor/extensions/meeting/lib/meeting-block-navigation.ts`; it is
+editor presentation behavior, separate from application URL routing.
 Keep types, toolbar configuration, and presentation code plain.
 
 Ask AI presentation is grouped into chat, composer, attachments, workspace, and
-styles beneath `components/ai`; import owning files directly rather than an
+styles beneath `sections/ai`; import owning files directly rather than an
 elements barrel.
 
 Native screens will open the hosted editor in a WebView through the existing `/editor` route and versioned bridge contracts in

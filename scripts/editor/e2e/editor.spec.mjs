@@ -36,10 +36,11 @@ test("handle aligns on first hover in each positioned pane and follows its scrol
     await expect(handle).toBeVisible();
     await expect
       .poll(async () => {
-        const blockRect = await block.boundingBox();
+        const editor = pane.locator(".tiptap-editor");
+        const editorRect = await editor.boundingBox();
         const handleRect = await handle.boundingBox();
-        const padding = await block.evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft));
-        return Math.abs(handleRect.x + handleRect.width - blockRect.x - padding);
+        const padding = await editor.evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft));
+        return Math.abs(handleRect.x + handleRect.width - editorRect.x - padding);
       })
       .toBeLessThan(2);
     await expect
@@ -297,6 +298,54 @@ test("dialog transfers share chronological history and pane padding consumes int
   await expect.poll(() => page.evaluate(() => window.readyEditors.dialog)).toBe(undefined);
 });
 
+test("shared block controls show hover backgrounds and the insert popover dismisses without moving editor selection", async ({
+  page,
+}) => {
+  await expect.poll(() => page.evaluate(() => window.editorReady())).toBe(true);
+  const pane = page.getByTestId("main-pane");
+  const plus = pane.getByRole("button", { name: "Add block below", exact: true });
+  const grip = pane.getByRole("button", { name: "Open block actions", exact: true });
+  const popup = page.getByRole("dialog", { name: "Insert block", exact: true });
+  const selection = await page.evaluate(() => window.readyEditors.main.state.selection.toJSON());
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate((theme) => {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+    }, theme);
+    for (const control of [plus, grip]) {
+      await pane
+        .locator(".tiptap-editor p")
+        .first()
+        .hover({ position: { x: 25, y: 10 } });
+      const idle = await control.evaluate((node) => getComputedStyle(node).backgroundColor);
+      await control.hover();
+      await expect(control).toHaveAttribute("data-variant", "ghost");
+      await expect
+        .poll(() => control.evaluate((node) => getComputedStyle(node).backgroundColor))
+        .not.toBe(idle);
+    }
+  }
+  await plus.click();
+  await expect(popup).toBeVisible();
+  expect(await page.evaluate(() => window.readyEditors.main.state.selection.toJSON())).toEqual(
+    selection,
+  );
+  await page.keyboard.press("Escape");
+  await expect(popup).not.toBeVisible();
+  await plus.click();
+  await expect(popup).toBeVisible();
+  await page.mouse.click(1390, 850);
+  await expect(popup).not.toBeVisible();
+  await pane
+    .locator(".tiptap-editor p")
+    .first()
+    .hover({ position: { x: 25, y: 10 } });
+  await plus.click();
+  await expect(popup).toBeVisible();
+  await grip.click();
+  await expect(popup).not.toBeVisible();
+  await expect(page.getByPlaceholder("Search actions...")).toBeVisible();
+});
+
 test("block action menus highlight only their target and clear the highlight on dismissal", async ({
   page,
 }) => {
@@ -377,4 +426,207 @@ test("block action menus highlight only their target and clear the highlight on 
   await page.keyboard.press("Escape");
   await expect(search).not.toBeVisible();
   await expect(editor.locator(".editor-block-selection")).toHaveCount(selectedCount);
+});
+
+test("insert popovers work in main, side and dialog editors and leave focus on the inserted block", async ({
+  page,
+}) => {
+  await expect.poll(() => page.evaluate(() => window.editorReady())).toBe(true);
+  await page.getByRole("button", { name: "Toggle dialog", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(window.readyEditors.dialog))).toBe(true);
+  for (const name of ["main", "side", "dialog"]) {
+    const pane = page.getByTestId(`${name}-pane`);
+    const headingCount = await pane.locator(".tiptap-editor h2").count();
+    await pane
+      .locator(".tiptap-editor p")
+      .first()
+      .hover({ position: { x: 25, y: 10 } });
+    await pane.getByRole("button", { name: "Add block below", exact: true }).click();
+    const popup = page.getByRole("dialog", { name: "Insert block", exact: true });
+    await expect(popup).toBeVisible();
+    await popup.getByRole("option", { name: /^Heading 2/ }).click();
+    await expect(popup).not.toBeVisible();
+    await expect(pane.locator(".tiptap-editor h2")).toHaveCount(headingCount + 1);
+    await expect
+      .poll(() => page.evaluate((name) => window.readyEditors[name].isFocused, name))
+      .toBe(true);
+  }
+});
+
+test("block handles keep one document gutter across headings, lists and indented content in every editor", async ({
+  page,
+}) => {
+  await expect.poll(() => page.evaluate(() => window.editorReady())).toBe(true);
+  await page.getByRole("button", { name: "Toggle dialog", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(window.readyEditors.dialog))).toBe(true);
+  const content = [
+    "<h2>Heading</h2>",
+    "<p>Paragraph</p>",
+    "<ul><li><p>Bullet</p><ul><li><p>Nested bullet</p></li></ul></li></ul>",
+    "<ol><li><p>Numbered</p></li></ol>",
+    '<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><p>Task</p></li></ul>',
+    "<blockquote><p>Quote</p></blockquote>",
+  ].join("");
+  for (const name of ["main", "side", "dialog"]) {
+    await page.evaluate(
+      ({ name, content }) => window.readyEditors[name].commands.setContent(content),
+      { name, content },
+    );
+    const pane = page.getByTestId(`${name}-pane`);
+    const editor = pane.locator(".tiptap-editor");
+    const plus = pane.getByRole("button", { name: "Add block below", exact: true });
+    const grip = pane.getByRole("button", { name: "Open block actions", exact: true });
+    let baseline;
+    for (const selector of [
+      ":scope > h2",
+      ":scope > p",
+      ":scope > ul:not([data-type]) > li > p",
+      "li li > p",
+      ":scope > ol li > p",
+      '[data-type="taskList"] p',
+      "blockquote > p",
+    ]) {
+      const block = editor.locator(selector).first();
+      await block.hover({ position: { x: 25, y: 10 } });
+      await expect(grip).toBeVisible();
+      await expect
+        .poll(async () => {
+          const editorRect = await editor.boundingBox();
+          const handleRect = await pane.locator(".drag-handle").boundingBox();
+          const padding = await editor.evaluate((node) =>
+            parseFloat(getComputedStyle(node).paddingLeft),
+          );
+          return Math.abs(handleRect.x + handleRect.width - editorRect.x - padding);
+        })
+        .toBeLessThan(2);
+      const positions = { plus: (await plus.boundingBox()).x, grip: (await grip.boundingBox()).x };
+      baseline ??= positions;
+      expect(Math.abs(positions.plus - baseline.plus)).toBeLessThan(2);
+      expect(Math.abs(positions.grip - baseline.grip)).toBeLessThan(2);
+      await expect
+        .poll(async () => {
+          const blockRect = await block.boundingBox();
+          const handleRect = await pane.locator(".drag-handle").boundingBox();
+          const inset = await block.evaluate(
+            (node) =>
+              parseFloat(getComputedStyle(node).paddingTop) +
+              (parseFloat(getComputedStyle(node).lineHeight) - 28) / 2,
+          );
+          return Math.abs(handleRect.y - blockRect.y - inset);
+        })
+        .toBeLessThan(2);
+    }
+  }
+});
+
+async function createDatabaseScrollProbe(page) {
+  await expect.poll(() => page.evaluate(() => window.editorReady())).toBe(true);
+  await page.evaluate(async () => {
+    const { mountScrollTable } =
+      await import("/apps/web/test/support/fixtures/database-table-scroll.tsx");
+    const host = document.createElement("section");
+    host.dataset.testid = "database-scroll-probe";
+    Object.assign(host.style, {
+      position: "fixed",
+      top: "20px",
+      right: "20px",
+      width: "800px",
+      height: "420px",
+      overflowY: "auto",
+      background: "white",
+      zIndex: "100",
+    });
+    const before = document.createElement("div");
+    before.style.height = "700px";
+    const slot = document.createElement("div");
+    const after = document.createElement("div");
+    after.style.height = "2000px";
+    host.append(before, slot, after);
+    document.body.append(host);
+    const writes = [];
+    const scrollTo = host.scrollTo.bind(host);
+    host.scrollTo = (...args) => {
+      writes.push(typeof args[0] === "object" ? args[0].top : args[1]);
+      scrollTo(...args);
+    };
+    const editor = window.readyEditors.main;
+    const tables = [];
+    let table;
+    window.databaseScrollProbe = {
+      host,
+      writes,
+      mount: (rows, enabled = true) => {
+        const root = document.createElement("div");
+        slot.append(root);
+        table = mountScrollTable(root, rows, { virtualizationEnabled: enabled });
+        tables.push(table);
+      },
+      unmount: () => {
+        for (const mounted of tables.splice(0)) mounted.unmount();
+        slot.replaceChildren();
+      },
+      addTable: (rows) => {
+        const root = document.createElement("div");
+        slot.append(root);
+        tables.push(mountScrollTable(root, rows));
+      },
+      setRowCount: (rows) => table.setRowCount(rows),
+      setEnabled: (enabled) => table.setVirtualizationEnabled(enabled),
+      editorIsUnchanged: () => window.readyEditors.main === editor && !editor.isDestroyed,
+    };
+    host.scrollTop = 600;
+  });
+}
+
+async function expectDatabaseScrollStable(page, expected) {
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  const result = await page.evaluate(() => ({
+    scrollTop: window.databaseScrollProbe.host.scrollTop,
+    writes: window.databaseScrollProbe.writes,
+    editorIsUnchanged: window.databaseScrollProbe.editorIsUnchanged(),
+  }));
+  expect(result.scrollTop).toBe(expected);
+  expect(result.writes).not.toContain(0);
+  expect(result.editorIsUnchanged).toBe(true);
+}
+
+test("table mounts preserve page scroll for empty databases, delayed view returns and additional tables", async ({
+  page,
+}) => {
+  await createDatabaseScrollProbe(page);
+  for (const rows of [0, 20]) {
+    await page.evaluate((rows) => window.databaseScrollProbe.mount(rows), rows);
+    await expectDatabaseScrollStable(page, 600);
+    await page.evaluate(() => window.databaseScrollProbe.unmount());
+    // A view may finish loading after the old two-frame restoration window.
+    await expectDatabaseScrollStable(page, 600);
+    await expectDatabaseScrollStable(page, 600);
+    await page.evaluate((rows) => window.databaseScrollProbe.mount(rows), rows);
+    await expectDatabaseScrollStable(page, 600);
+    await page.evaluate(() => window.databaseScrollProbe.addTable(20));
+    await expectDatabaseScrollStable(page, 600);
+    await page.evaluate(() => window.databaseScrollProbe.unmount());
+  }
+});
+
+test("table virtualization respects live scroll when rows arrive or virtualization resumes", async ({
+  page,
+}) => {
+  await createDatabaseScrollProbe(page);
+  await page.evaluate(() => window.databaseScrollProbe.mount(0));
+  await expectDatabaseScrollStable(page, 600);
+  await page.evaluate(() => {
+    window.databaseScrollProbe.host.scrollTop = 800;
+    window.databaseScrollProbe.setRowCount(100);
+  });
+  await expectDatabaseScrollStable(page, 800);
+  await page.evaluate(() => window.databaseScrollProbe.setEnabled(false));
+  await expectDatabaseScrollStable(page, 800);
+  await page.evaluate(() => {
+    window.databaseScrollProbe.host.scrollTop = 1000;
+    window.databaseScrollProbe.setEnabled(true);
+  });
+  await expectDatabaseScrollStable(page, 1000);
 });

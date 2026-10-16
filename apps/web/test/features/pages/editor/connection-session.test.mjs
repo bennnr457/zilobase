@@ -1,6 +1,14 @@
 export function register({ assert, loadModule, test }) {
-  const load = () => loadModule("/src/components/pages/editor/collaboration/connection-session.ts");
-  function fixture(startPageConnection, { preparedTicket = null } = {}) {
+  const load = () =>
+    loadModule("/src/sections/pages/editor/collaboration/lib/collaboration-connection.ts");
+  function fixture(
+    startPageConnection,
+    { preparedTicket = null, failAt, failure = new Error("adapter failed") } = {},
+  ) {
+    const fail = (step) => {
+      if (failAt === step) throw failure;
+    };
+    const failures = [];
     let start, input, resolve, reject, signal;
     const ticket = { documentName: "page:p1", token: "test" };
     const promise = new Promise((yes, no) => {
@@ -13,8 +21,12 @@ export function register({ assert, loadModule, test }) {
     const provider = {
       synced: false,
       hasUnsyncedChanges: true,
-      setAwarenessField: (key, value) => events.push(["awareness", key, value]),
+      setAwarenessField: (key, value) => {
+        fail("awareness");
+        events.push(["awareness", key, value]);
+      },
       on: (key, handler) => {
+        fail("subscribe");
         handlers[key] = handler;
       },
       destroy: () => events.push("destroy"),
@@ -23,6 +35,7 @@ export function register({ assert, loadModule, test }) {
       ["provider", "status", "error", "synced", "unsyncedChanges", "users"].map((key) => [
         key,
         (value) => {
+          if (key === "provider" && value) fail("publish");
           snapshots[key] = value;
           events.push([key, value]);
         },
@@ -35,8 +48,12 @@ export function register({ assert, loadModule, test }) {
       user: { id: "u1", name: "User", color: "blue" },
       state,
       services: {
-        applyTicket: () => events.push("apply"),
+        applyTicket: () => {
+          fail("apply");
+          events.push("apply");
+        },
         connect: (options) => {
+          fail("connect");
           input = options;
           events.push("create");
           return provider;
@@ -44,9 +61,13 @@ export function register({ assert, loadModule, test }) {
         getTicket: (_id, abortSignal) => {
           signal = abortSignal;
           events.push("ticket");
+          fail("ticket");
           return promise;
         },
-        isAccessDenied: (reason) => [403, 404].includes(reason.status),
+        isAccessDenied: (reason) => {
+          failures.push(reason);
+          return [403, 404].includes(reason.status);
+        },
         schedule: (callback) => {
           start = callback;
           return () => events.push("cancel");
@@ -59,6 +80,7 @@ export function register({ assert, loadModule, test }) {
       input: () => input,
       signal: () => signal,
       events,
+      failures,
       snapshots,
       provider,
       handlers,
@@ -139,5 +161,59 @@ export function register({ assert, loadModule, test }) {
     assert.equal(f.snapshots.status, "blocked");
     assert.equal(f.snapshots.error, "revoked");
     f.stop();
+  });
+
+  test("connection startup publishes immediately, requests on schedule and attaches asynchronously", async () => {
+    const { startPageConnection } = await load();
+    for (const preparedTicket of [null, { token: "prepared" }]) {
+      const f = fixture(startPageConnection, { preparedTicket });
+      try {
+        assert.deepEqual(f.events, [
+          ["status", "connecting"],
+          ["error", null],
+        ]);
+        f.start();
+        assert.equal(f.events.includes("ticket"), !preparedTicket);
+        assert.equal(f.events.includes("apply"), false);
+        if (!preparedTicket) f.resolve();
+        await settle();
+        assert.ok(f.events.indexOf("apply") < f.events.indexOf("create"));
+        assert.equal(f.snapshots.provider, f.provider);
+      } finally {
+        f.stop();
+      }
+    }
+  });
+
+  test("connection adapter failures retain their identity and release any created provider", async () => {
+    const { startPageConnection } = await load();
+    for (const failAt of ["apply", "connect", "awareness", "subscribe", "publish"]) {
+      const failure = Object.assign(new Error(failAt), { status: 403 });
+      const f = fixture(startPageConnection, { preparedTicket: {}, failAt, failure });
+      f.start();
+      await settle();
+      assert.equal(f.failures[0], failure);
+      assert.equal(f.snapshots.status, "blocked");
+      assert.equal(f.snapshots.error, failAt);
+      if (failAt === "apply") assert.equal(f.events.includes("create"), false);
+      f.stop();
+      assert.equal(
+        f.events.includes("destroy"),
+        ["awareness", "subscribe", "publish"].includes(failAt),
+      );
+    }
+  });
+
+  test("a synchronous ticket adapter throw stays synchronous at the scheduled boundary", async () => {
+    const { startPageConnection } = await load();
+    const failure = new Error("ticket adapter");
+    const f = fixture(startPageConnection, { failAt: "ticket", failure });
+    try {
+      assert.throws(f.start, (error) => error === failure);
+      assert.deepEqual(f.failures, []);
+      assert.equal(f.snapshots.status, "connecting");
+    } finally {
+      f.stop();
+    }
   });
 }

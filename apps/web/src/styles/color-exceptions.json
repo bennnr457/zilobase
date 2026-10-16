@@ -5,12 +5,12 @@
     "reason": "Official Google logo artwork must retain its published brand colors."
   },
   {
-    "path": "apps/web/src/components/pages/editor/extensions/embed-block.tsx",
+    "path": "apps/web/src/sections/pages/editor/extensions/components/embed-block.tsx",
     "owner": "Editor integrations",
     "reason": "Official Figma, Excalidraw, YouTube, and Miro marks retain fixed brand artwork colors."
   },
   {
-    "path": "apps/web/src/components/pages/appearance/page-cover-gallery.ts",
+    "path": "apps/web/src/sections/pages/appearance/lib/page-cover-gallery.ts",
     "owner": "Page covers",
     "reason": "Generated SVG cover artwork stores exact user-editable and preset colors independently from the active UI theme."
   },

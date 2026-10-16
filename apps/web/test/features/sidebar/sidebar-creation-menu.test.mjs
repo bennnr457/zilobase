@@ -1,8 +1,10 @@
 export function register({ readSource, assert, test }) {
   test("sidebar composes tabs, shortcuts, sections and footer around controller props", async () => {
-    const source = await readSource("/src/app/shell/sidebar/app-sidebar.tsx");
-    const controller = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
-    const customization = await readSource("/src/app/shell/sidebar/sidebar-customization.tsx");
+    const source = await readSource("/src/app/shell/sidebar/components/app-sidebar.tsx");
+    const controller = await readSource("/src/app/shell/sidebar/hooks/sidebar-controller.ts");
+    const customization = await readSource(
+      "/src/app/shell/sidebar/components/sidebar-customization.tsx",
+    );
     assert.match(source, /function AppSidebar\(sidebar: AppSidebarProps\)/);
     assert.doesNotMatch(source, /usePageNavigation\(|useWorkspaceMeetings\(|useDatabaseRecords\(/);
     assert.match(controller, /usePageNavigation\(workspaceId\)/);
@@ -26,11 +28,15 @@ export function register({ readSource, assert, test }) {
     );
   });
   test("sidebar uses the shared default page and database icon conventions", async () => {
-    const defaultIconsSource = await readSource("/src/components/navigation/navigation-icons.ts");
+    const defaultIconsSource = await readSource(
+      "/src/components/navigation/lib/navigation-icons.ts",
+    );
     const appIconProviderSource = await readSource("/src/components/icons.ts");
-    const pageIconSource = await readSource("/src/components/pages/appearance/page-icon.tsx");
+    const pageIconSource = await readSource(
+      "/src/sections/pages/appearance/components/page-icon.tsx",
+    );
     const databasePageLinkSource = await readSource(
-      "/src/components/databases/interactions/database-page-link.tsx",
+      "/src/sections/databases/interactions/components/database-page-link.tsx",
     );
     const iconPickerSource = await readSource("/src/components/ui/icon-emoji-picker.tsx");
     const phosphorIconPickerSource = await readSource(

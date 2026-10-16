@@ -63,11 +63,11 @@ test("web ownership rejects retired imports, forwarding files, misplaced page ow
   const files = {
     "components/pages/pane/legacy.tsx": "export const Legacy = () => null;",
     "components/pages/item-sharing.tsx": "export const Share = () => null;",
-    "components/pages/header/page-layout.tsx": "export const PageLayout = () => null;",
+    "sections/pages/header/components/page-layout.tsx": "export const PageLayout = () => null;",
     "components/sharing/index.ts": 'export { SharePopover } from "./share-popover";',
-    "components/sharing/share-popover.tsx": "export const SharePopover = () => null;",
+    "components/sharing/components/share-popover.tsx": "export const SharePopover = () => null;",
     "components/navigation/forward.ts": 'export { SharePopover } from "../sharing/share-popover";',
-    "components/navigation/breadcrumbs.tsx":
+    "components/navigation/components/breadcrumbs.tsx":
       'import { Legacy } from "@/components/pages/pane/legacy"; export const Breadcrumbs = Legacy;',
     "components/pages/page.tsx": "export default function Page() { return null; }",
     "app/routing/router.tsx":
@@ -82,7 +82,7 @@ test("web ownership rejects retired imports, forwarding files, misplaced page ow
     const errors = checkWebOwnership(root).join("\n");
     assert.match(errors, /retired web folder/);
     assert.match(errors, /retired import/);
-    assert.match(errors, /belongs at components\/pages\/layout\/page-layout/);
+    assert.match(errors, /belongs at sections\/pages\/layout\/components\/page-layout/);
     assert.match(errors, /use an explicit module name/);
     assert.match(errors, /forwarding-only module/);
     assert.match(errors, /route component must use a screen module/);
@@ -95,11 +95,11 @@ test("web ownership rejects retired imports, forwarding files, misplaced page ow
 test("web ownership accepts direct owners, named route screens and type imports", async () => {
   const root = await mkdtemp(join(tmpdir(), "web-ownership-valid-"));
   const files = {
-    "components/pages/layout/page-layout.tsx": "export const PageLayout = () => null;",
-    "components/pages/page-screen.tsx":
-      'import type { PageLayout } from "./layout/page-layout"; export default function PageScreen() { return null; }',
+    "sections/pages/layout/components/page-layout.tsx": "export const PageLayout = () => null;",
+    "sections/pages/page-screen.tsx":
+      'import type { PageLayout } from "./layout/components/page-layout"; export default function PageScreen() { return null; }',
     "app/routing/router.tsx":
-      'const route = { component: lazyRouteComponent(() => import("@/components/pages/page-screen")) };',
+      'const route = { component: lazyRouteComponent(() => import("@/sections/pages/page-screen")) };',
   };
   try {
     for (const [name, contents] of Object.entries(files)) {
@@ -123,11 +123,11 @@ test("page editor ownership rejects scattered implementations and accepts nested
       "components/pages/content/page-content.tsx": "export const PageContent = () => null;",
       "components/pages/editor/composition/old.ts": "export const value = 1;",
       "components/pages/editor/core/old.ts": "export const value = 1;",
-      "components/pages/editor/runtime/comment-selection.ts": "export const selection = 1;",
-      "components/pages/editor/toolbar/toolbar-data.ts": "export const groups = [];",
+      "sections/pages/editor/runtime/lib/comment-selection.ts": "export const selection = 1;",
+      "sections/pages/editor/toolbar/lib/toolbar-data.ts": "export const groups = [];",
       "components/databases/page-properties/page-metadata.tsx":
         "export const PageMetadata = () => null;",
-      "components/pages/page-screen.tsx":
+      "sections/pages/page-screen.tsx":
         'import { PageContent } from "./content/page-content"; export default function PageScreen() { return null; }',
     };
     for (const [name, contents] of Object.entries(files)) {
@@ -139,23 +139,23 @@ test("page editor ownership rejects scattered implementations and accepts nested
     for (const name of Object.keys(files).filter((name) => !name.endsWith("page-screen.tsx")))
       assert.ok(errors.includes(name), name);
     assert.match(errors, /retired import/);
-    assert.match(errors, /belongs at components\/pages\/editor\/comments\/comment-selection.ts/);
+    assert.match(errors, /belongs at sections\/pages\/editor\/comments\/lib\/comment-selection.ts/);
     await rm(source, { recursive: true, force: true });
     const owners = {
-      "components/pages/editor/page-content.tsx": "export const PageContent = () => null;",
-      "components/pages/editor/operations/page-content-recovery.ts":
+      "sections/pages/editor/page-content.tsx": "export const PageContent = () => null;",
+      "sections/pages/editor/operations/lib/page-content-recovery.ts":
         "export const recover = () => null;",
-      "components/pages/editor/use-page-title-draft.ts":
+      "sections/pages/editor/hooks/use-page-title-draft.ts":
         "export const usePageTitleDraft = () => null;",
-      "components/pages/editor/comments/comments-context.tsx":
+      "sections/pages/editor/comments/components/comments-context.tsx":
         "export const Comments = () => null;",
-      "components/pages/page-metadata.tsx": "export const PageMetadata = () => null;",
-      "components/pages/page-read-cache.ts": "export const hydrate = () => null;",
-      "components/pages/editor/drag-drop/block-drag.ts":
+      "sections/pages/components/page-metadata.tsx": "export const PageMetadata = () => null;",
+      "sections/pages/lib/page-read-cache.ts": "export const hydrate = () => null;",
+      "sections/pages/editor/drag-drop/lib/block-drag.ts":
         'export { dropEditorBlock } from "./block-drop";',
-      "components/pages/editor/drag-drop/block-drop.ts":
+      "sections/pages/editor/drag-drop/lib/block-drop.ts":
         "export const dropEditorBlock = () => null;",
-      "components/pages/editor/hosted/bootstrap.tsx":
+      "sections/pages/editor/hosted/bootstrap.tsx":
         'import { PageContent } from "../page-content"; export const bootstrap = PageContent;',
     };
     for (const [name, contents] of Object.entries(owners)) {
@@ -164,6 +164,118 @@ test("page editor ownership rejects scattered implementations and accepts nested
       await writeFile(path, contents);
     }
     assert.deepEqual(checkWebOwnership(root), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("UI sections keep local components, hooks and helpers while root components stay shared", async () => {
+  const root = await mkdtemp(join(tmpdir(), "section-ownership-"));
+  const source = join(root, "apps/web/src");
+  const valid = {
+    "sections/calendar/calendar-screen.tsx":
+      'import { EventEditor } from "./events/components/event-editor"; export default function CalendarScreen() { return EventEditor(); }',
+    "sections/calendar/events/components/event-editor.tsx":
+      'import { useEventDraft } from "../hooks/use-event-draft"; export const EventEditor = () => useEventDraft();',
+    "sections/calendar/events/hooks/use-event-draft.ts":
+      'import { formatEvent } from "../lib/format-event"; export const useEventDraft = () => formatEvent();',
+    "sections/calendar/events/lib/format-event.ts": "export const formatEvent = () => null;",
+    "components/ui/button.tsx": "export const Button = () => null;",
+    "components/sharing/hooks/use-sharing.ts": "export const useSharing = () => null;",
+    "hooks/use-mobile.ts": "export const useMobile = () => false;",
+    "lib/utils.ts": "export const cn = () => null;",
+    "app/routing/router.tsx":
+      'const route = { component: lazyRouteComponent(() => import("@/sections/calendar/calendar-screen")) };',
+  };
+  try {
+    for (const [name, contents] of Object.entries(valid)) {
+      const path = join(source, name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    assert.deepEqual(checkWebOwnership(root), []);
+    const invalid = {
+      "components/calendar/event.tsx": "export const Event = () => null;",
+      "sections/calendar/event.tsx": "export const Event = () => null;",
+      "sections/calendar/use-event.ts": "export const useEvent = () => null;",
+      "sections/calendar/format-event.ts": "export const formatEvent = () => null;",
+      "lib/hooks/use-legacy.ts": "export const useLegacy = () => null;",
+      "sections/pages/editor/comments/components/page-comments-registry.tsx":
+        "export const LegacyRegistry = () => null;",
+    };
+    for (const [name, contents] of Object.entries(invalid)) {
+      const path = join(source, name);
+      await mkdir(join(path, ".."), { recursive: true });
+      await writeFile(path, contents);
+    }
+    const errors = checkWebOwnership(root);
+    for (const name of Object.keys(invalid))
+      assert.ok(
+        errors.some((error) => error.startsWith(`apps/web/src/${name}:`)),
+        name,
+      );
+    assert.ok(errors.some((error) => error.includes("local UI belongs in components/")));
+    assert.ok(errors.some((error) => error.includes("local hooks belong in hooks/")));
+    assert.ok(errors.some((error) => error.includes("local helpers belong in lib/")));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("platform implementations and route helpers stay with their owners", async () => {
+  const root = await mkdtemp(join(tmpdir(), "platform-ui-ownership-"));
+  const source = join(root, "apps/web/src");
+  const valid = {
+    "platform/storage/calendar-database.ts": "export const openCalendarDatabase = () => null;",
+    "platform/meetings/capture-runtime.ts": "export const getMeetingCaptureRuntime = () => null;",
+    "platform/browser/meetings/browser-capture-runtime.ts":
+      'import { getMeetingCaptureRuntime } from "../../meetings/capture-runtime"; export const capture = getMeetingCaptureRuntime;',
+    "sections/meetings/capture/hooks/use-meeting-capture.ts":
+      'import { getMeetingCaptureRuntime } from "@/platform/meetings/capture-runtime"; export const useMeetingCapture = () => getMeetingCaptureRuntime();',
+    "sections/calendar/calendar-screen.tsx":
+      "export default function CalendarScreen() { return null; }",
+    "components/navigation/lib/library-views.ts": "export const libraryViewLabels = {};",
+    "app/routing/route-identifiers.ts": "export const getActiveMeetingId = () => null;",
+    "app/demo/components/demo-experience.tsx": "export const DemoExperience = () => null;",
+  };
+  try {
+    for (const [name, contents] of Object.entries(valid)) {
+      const file = join(source, name);
+      await mkdir(join(file, ".."), { recursive: true });
+      await writeFile(file, contents);
+    }
+    assert.deepEqual(checkWebOwnership(root), []);
+    const invalid = {
+      "platform/storage/wrong-owner.ts":
+        'import CalendarScreen from "@/sections/calendar/calendar-screen"; export const screen = CalendarScreen;',
+      "platform/network/wrong-owner.ts":
+        'import { libraryViewLabels } from "../../components/navigation/lib/library-views"; export const labels = libraryViewLabels;',
+      "lib/posthog.ts": "export const captureProductException = () => null;",
+      "app/shell/sidebar/hooks/misplaced-parser.ts":
+        "export function getActiveMeetingId() { return null; }",
+      "sections/library/components/library-icons.tsx": "export const libraryViewIcons = {};",
+    };
+    for (const [name, contents] of Object.entries(invalid)) {
+      const file = join(source, name);
+      await mkdir(join(file, ".."), { recursive: true });
+      await writeFile(file, contents);
+    }
+    const errors = checkWebOwnership(root);
+    for (const name of Object.keys(invalid))
+      assert.ok(
+        errors.some((error) => error.startsWith(`apps/web/src/${name}:`)),
+        name,
+      );
+    assert.equal(
+      errors.filter((error) => error.includes("platform adapters must not import")).length,
+      2,
+    );
+    assert.ok(errors.some((error) => error.includes("belongs at platform/analytics/posthog.ts")));
+    assert.ok(
+      errors.some((error) =>
+        error.includes("getActiveMeetingId belongs at app/routing/route-identifiers.ts"),
+      ),
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

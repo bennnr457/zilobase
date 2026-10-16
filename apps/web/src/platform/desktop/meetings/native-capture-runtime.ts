@@ -1,6 +1,6 @@
 import { desktopBridge } from "@/platform/desktop/native";
 import type { ZilobaseDesktopBridge } from "../../../../../desktop/electron/shared/bridge";
-import type { MeetingCaptureRuntime } from "@/components/meetings/capture/capture-runtime";
+import type { MeetingCaptureRuntime } from "@/platform/meetings/capture-runtime";
 
 export function createNativeMeetingCaptureRuntime(
   capture: ZilobaseDesktopBridge["capture"] = desktopBridge().capture,

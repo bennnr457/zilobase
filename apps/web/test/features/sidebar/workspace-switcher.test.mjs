@@ -9,8 +9,8 @@ import { pathToFileURL } from "node:url";
 export function register({ readSource, sourcePath, assert, test }) {
   test("desktop workspace switcher groups current and other servers", async () => {
     const source =
-      (await readSource("/src/app/shell/sidebar/app-sidebar.tsx")) +
-      (await readSource("/src/app/shell/sidebar/sidebar-controller.ts"));
+      (await readSource("/src/app/shell/sidebar/components/app-sidebar.tsx")) +
+      (await readSource("/src/app/shell/sidebar/hooks/sidebar-controller.ts"));
     assert.match(source, /isDesktopApp\(\)/);
     assert.match(source, /Connect another server/);
     assert.match(source, /OtherServerSection/);
@@ -21,8 +21,8 @@ export function register({ readSource, sourcePath, assert, test }) {
 
   test("other-server rows are desktop-gated and web still has workspaces", async () => {
     const source =
-      (await readSource("/src/app/shell/sidebar/app-sidebar.tsx")) +
-      (await readSource("/src/app/shell/sidebar/sidebar-controller.ts"));
+      (await readSource("/src/app/shell/sidebar/components/app-sidebar.tsx")) +
+      (await readSource("/src/app/shell/sidebar/hooks/sidebar-controller.ts"));
     assert.match(source, /Workspaces/);
     assert.match(source, /Add workspace/);
     assert.match(source, /isDesktop[\s\S]*otherProfiles\.map/);
@@ -150,7 +150,7 @@ async function loadSwitcher(sourcePath) {
     "switcher-ports": `export const controls = { desktop: true, reads: 0, snapshots: [], calls: [], workspaces: [{id:"workspace",name:"Workspace"}] };`,
     "@tanstack/react-router": `import { controls } from "switcher-ports"; export const useNavigate = () => options => { controls.calls.push("navigate:" + options.to); return Promise.resolve(); };`,
     "@/platform/environment": `import { controls } from "switcher-ports"; export const isDesktopApp = () => controls.desktop;`,
-    "@/components/desktop/servers/desktop-connect-server-dialog": `export const DesktopConnectServerDialog = () => null;`,
+    "@/sections/desktop/servers/components/desktop-connect-server-dialog": `export const DesktopConnectServerDialog = () => null;`,
     "@/platform/network/api": `export const getApiErrorMessage = error => error.message;`,
     "@/platform/server/desktop-server": `import { controls } from "switcher-ports"; export const getSelectedDesktopServer = () => ({instanceId:"current",displayName:"Current",apiOrigin:"https://current.test"}); export async function listDesktopServerProfiles() { controls.reads++; return await controls.profiles; } export async function updateDesktopServerProfileSnapshot(input) { controls.snapshots.push(input); } export async function executeDesktopServerSwitch() {}`,
     "@zilobase/features/auth/react": `export const useSession = () => ({data:{workspacePinned:false}});`,
@@ -242,7 +242,7 @@ async function workspaceFixtureSource(sourcePath) {
     "getWorkspaceInitials",
   ]);
   const sources = await Promise.all(
-    ["app-sidebar.tsx", "sidebar-controller.ts"].map(async (name) =>
+    ["components/app-sidebar.tsx", "hooks/sidebar-controller.ts"].map(async (name) =>
       ts.createSourceFile(
         name,
         await readFile(sourcePath("/src/app/shell/sidebar/" + name), "utf8"),

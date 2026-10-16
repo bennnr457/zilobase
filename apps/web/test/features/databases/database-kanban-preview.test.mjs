@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   const model = () =>
-    loadModule("/src/components/databases/views/kanban/database-kanban-card-drag.ts");
+    loadModule("/src/sections/databases/views/kanban/lib/database-kanban-card-drag.ts");
   test("kanban preview reorders variable-height cards without changing drop indices", async () => {
     const { getKanbanCardPreview: preview } = await model();
     const input = { heights: [40, 80, 60], gap: 8, draggedHeight: 40, sourceIndex: 0 };

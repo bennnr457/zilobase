@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { recordDesktopDiagnostic } from "@/platform/diagnostics/desktop-diagnostics";
 import { Spinner } from "@/components/ui/spinner";
 const DocumentFavicon = lazy(() =>
-  import("@/app/shell/document-favicon").then((module) => ({
+  import("@/app/shell/components/document-favicon").then((module) => ({
     default: module.DocumentFavicon,
   })),
 );

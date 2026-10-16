@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, test }) {
-  const extensionPath = "/src/components/pages/editor/comments/comment-selection.ts";
+  const extensionPath = "/src/sections/pages/editor/comments/lib/comment-selection.ts";
 
   test("comment selection lookup returns existing thread ids", async () => {
     const { Schema } = await import("@tiptap/pm/model");

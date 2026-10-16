@@ -2,15 +2,17 @@ export function register({ readSource, assert, test }) {
   const readToolbarSource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/databases/views/shared/database-view-toolbar.tsx"),
-        readSource("/src/components/databases/views/shared/database-view-toolbar-dialogs.tsx"),
+        readSource("/src/sections/databases/views/shared/components/database-view-toolbar.tsx"),
+        readSource(
+          "/src/sections/databases/views/shared/components/database-view-toolbar-dialogs.tsx",
+        ),
       ])
     ).join("\n");
   test("inline database and meeting titles use editor heading two typography", async () => {
     const appStyles = await readSource("/src/styles/global.css");
     const databaseToolbarSource = await readToolbarSource();
     const meetingSource = await readSource(
-      "/src/components/pages/editor/extensions/meeting/meeting-view.tsx",
+      "/src/sections/pages/editor/extensions/meeting/components/meeting-view.tsx",
     );
 
     for (const source of [databaseToolbarSource, meetingSource]) {

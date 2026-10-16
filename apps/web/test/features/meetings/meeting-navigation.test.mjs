@@ -1,9 +1,8 @@
 export function register({ readSource, assert, loadModule, test }) {
   test("meeting navigation resolves full-page and inline meeting routes", async () => {
-    const { getActiveMeetingId } = await loadModule(
-      "/src/app/shell/sidebar/sidebar-controller.ts",
-      ["getActiveMeetingId"],
-    );
+    const { getActiveMeetingId } = await loadModule("/src/app/routing/route-identifiers.ts", [
+      "getActiveMeetingId",
+    ]);
 
     assert.equal(getActiveMeetingId("/m/meeting-1"), "meeting-1");
     assert.equal(getActiveMeetingId("/p/page-1", { meeting: "meeting-2" }), "meeting-2");
@@ -12,7 +11,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("meeting block lookup matches the exact rendered meeting", async () => {
     const { findMeetingBlock, scrollToMeetingBlock } = await loadModule(
-      "/src/components/meetings/meeting-navigation.ts",
+      "/src/sections/pages/editor/extensions/meeting/lib/meeting-block-navigation.ts",
     );
     const first = { dataset: { meetingId: "meeting-1" } };
     const calls = [];
@@ -30,9 +29,9 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("meeting sidebar links target full meeting pages", async () => {
     const [sidebarSource, meetingPageSource, meetingViewSource, routerSource] = await Promise.all([
-      readSource("/src/app/shell/sidebar/app-sidebar.tsx"),
-      readSource("/src/components/meetings/meeting-screen.tsx"),
-      readSource("/src/components/pages/editor/extensions/meeting/meeting-view.tsx"),
+      readSource("/src/app/shell/sidebar/components/app-sidebar.tsx"),
+      readSource("/src/sections/meetings/meeting-screen.tsx"),
+      readSource("/src/sections/pages/editor/extensions/meeting/components/meeting-view.tsx"),
       readSource("/src/app/routing/router.tsx"),
     ]);
 

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("calendar settings stay hidden without their server environment", async () => {
     const { isSettingsSectionAvailable } = await loadModule(
-      "/src/components/settings/shell/settings-section-availability.ts",
+      "/src/sections/settings/shell/lib/settings-section-availability.ts",
     );
     const unavailable = { calendar: false };
 

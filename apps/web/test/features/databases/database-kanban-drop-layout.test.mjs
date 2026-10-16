@@ -31,7 +31,7 @@ export function register({ assert, loadModule, test }) {
   test("Kanban preview geometry matches the shared post-drop projection at every insertion point", async () => {
     const { getGroupedRecordMove } = await model();
     const { getKanbanCardPreview } = await loadModule(
-      "/src/components/databases/views/kanban/database-kanban-card-drag.ts",
+      "/src/sections/databases/views/kanban/lib/database-kanban-card-drag.ts",
     );
     const heights = [40, 80, 60];
     for (const sourceIndex of [0, 1, 2])

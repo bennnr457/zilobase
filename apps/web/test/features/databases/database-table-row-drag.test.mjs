@@ -8,7 +8,7 @@ export function register({ assert, loadModule, test }) {
       claimDatabaseRowDropOwner,
       releaseDatabaseRowDropOwner,
       subscribeDatabaseRowDropOwner,
-    } = await loadModule("/src/components/databases/interactions/database-row-drag.ts");
+    } = await loadModule("/src/sections/databases/interactions/lib/database-row-drag.ts");
     const firstTable = {};
     const secondTable = {};
     const owners = [];
@@ -27,7 +27,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag reorders a visible subset before the next visible anchor", async () => {
     const { getFilteredReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.deepEqual(
@@ -43,7 +43,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag reorders a visible subset after the previous visible anchor", async () => {
     const { getFilteredReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.deepEqual(
@@ -59,7 +59,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag keeps hidden rows in place when moving within a filtered gap", async () => {
     const { getFilteredReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.deepEqual(
@@ -75,7 +75,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag does not reorder hidden rows when the visible order is unchanged", async () => {
     const { getFilteredReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.equal(
@@ -91,7 +91,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag reorders inside the dragged group", async () => {
     const { getGroupedReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.deepEqual(
@@ -108,7 +108,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag rejects cross-group drops", async () => {
     const { getGroupedReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.equal(
@@ -125,7 +125,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table row drag anchors cross-group moves into the target group", async () => {
     const { getAnchoredReorderedRowIds } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
 
     assert.deepEqual(
@@ -141,7 +141,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database row imports resolve a visible drop point to its absolute position", async () => {
     const { getAnchoredRowInsertPosition } = await loadModule(
-      "/src/components/databases/interactions/database-row-drag.ts",
+      "/src/sections/databases/interactions/lib/database-row-drag.ts",
     );
     const allRows = rows(["A", "B", "C", "D", "E", "F"]);
     const visibleRows = rows(["A", "D", "F"]);

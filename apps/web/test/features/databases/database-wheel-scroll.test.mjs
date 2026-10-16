@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("database horizontal scroll clamps elastic overscroll at both edges", async () => {
     const { getClampedDatabaseScrollLeft } = await loadModule(
-      "/src/components/databases/interactions/database-wheel-scroll.ts",
+      "/src/sections/databases/interactions/lib/database-wheel-scroll.ts",
     );
     const metrics = {
       clientWidth: 600,
@@ -17,7 +17,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database horizontal rubber-band offset mirrors onto the synchronized section", async () => {
     const { getDatabaseHorizontalScrollSync } = await loadModule(
-      "/src/components/databases/interactions/database-wheel-scroll.ts",
+      "/src/sections/databases/interactions/lib/database-wheel-scroll.ts",
     );
     const baseMetrics = { clientWidth: 600, scrollWidth: 1000 };
 
@@ -40,7 +40,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database horizontal wheel gestures preserve rubber-band behavior at scroll edges", async () => {
     const { getDatabaseHorizontalWheelScrollLeft } = await loadModule(
-      "/src/components/databases/interactions/database-wheel-scroll.ts",
+      "/src/sections/databases/interactions/lib/database-wheel-scroll.ts",
     );
     const baseEvent = { deltaY: 0, shiftKey: false };
     const baseMetrics = { clientWidth: 600, scrollWidth: 1000 };
@@ -77,7 +77,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database wheel scroll ignores trackpad drift during vertical scroll", async () => {
     const { getDatabaseHorizontalWheelDelta } = await loadModule(
-      "/src/components/databases/interactions/database-wheel-scroll.ts",
+      "/src/sections/databases/interactions/lib/database-wheel-scroll.ts",
     );
 
     assert.equal(
@@ -92,7 +92,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database wheel scroll keeps deliberate horizontal gestures", async () => {
     const { getDatabaseHorizontalWheelDelta } = await loadModule(
-      "/src/components/databases/interactions/database-wheel-scroll.ts",
+      "/src/sections/databases/interactions/lib/database-wheel-scroll.ts",
     );
 
     assert.equal(
@@ -107,7 +107,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database wheel scroll supports shift wheel horizontal scrolling", async () => {
     const { getDatabaseHorizontalWheelDelta } = await loadModule(
-      "/src/components/databases/interactions/database-wheel-scroll.ts",
+      "/src/sections/databases/interactions/lib/database-wheel-scroll.ts",
     );
 
     assert.equal(

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { CalendarItem, CalendarSurfaceProps } from "@/components/calendar/primitives/types";
+import type { CalendarItem, CalendarSurfaceProps } from "@/sections/calendar/primitives/lib/types";
 import type { CalendarView } from "@zilobase/features/calendar";
 import { eventClock } from "@zilobase/features/calendar";
 import "@/styles/global.css";
@@ -11,7 +11,7 @@ const { CalendarSurface } = params.has("baseline")
   ? ((await import(/* @vite-ignore */ baselinePath)) as {
       CalendarSurface: React.ComponentType<CalendarSurfaceProps>;
     })
-  : await import("@/components/calendar/primitives/calendar-surface");
+  : await import("@/sections/calendar/primitives/components/calendar-surface");
 const count = Number(params.get("count") ?? 10000);
 const items: CalendarItem[] = Array.from({ length: count }, (_, index) => ({
   id: `item-${index}`,

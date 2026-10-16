@@ -3,7 +3,7 @@ import { parseHTML } from "linkedom";
 export function register({ assert, loadModule, test }) {
   test("live transcript preview uses the persisted [m:ss] text format", async () => {
     const { createMeetingTranscriptPreviewElement, formatMeetingTranscriptPreviewText } =
-      await loadModule("/src/components/pages/editor/extensions/meeting-transcript-preview.ts");
+      await loadModule("/src/sections/pages/editor/extensions/lib/meeting-transcript-preview.ts");
 
     assert.equal(formatMeetingTranscriptPreviewText(5_999, "Hello team"), "[0:05] Hello team");
     assert.equal(formatMeetingTranscriptPreviewText(3_661_000, "Next item"), "[61:01] Next item");
@@ -38,7 +38,7 @@ export function register({ assert, loadModule, test }) {
 
   test("microphone and system drafts render as one speaker-labeled timeline", async () => {
     const { combineMeetingTranscriptDrafts } = await loadModule(
-      "/src/components/pages/editor/extensions/meeting-transcript-preview.ts",
+      "/src/sections/pages/editor/extensions/lib/meeting-transcript-preview.ts",
     );
 
     assert.deepEqual(
@@ -90,7 +90,7 @@ export function register({ assert, loadModule, test }) {
 
   test("summary-ready meetings do not keep a finishing transcript footer", async () => {
     const { resolveMeetingTranscriptPreview } = await loadModule(
-      "/src/components/pages/editor/extensions/meeting-transcript-preview.ts",
+      "/src/sections/pages/editor/extensions/lib/meeting-transcript-preview.ts",
     );
 
     assert.equal(
@@ -141,7 +141,7 @@ export function register({ assert, loadModule, test }) {
 
     try {
       const { isNearScrollEnd } = await loadModule(
-        "/src/components/pages/editor/extensions/meeting-transcript-scroll.ts",
+        "/src/sections/pages/editor/extensions/lib/meeting-transcript-scroll.ts",
       );
 
       assert.equal(isNearScrollEnd(editor), true);

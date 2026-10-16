@@ -14,19 +14,19 @@ export function register({ assert, readSource, test }) {
       readSource("/src/app/main.tsx"),
       readSource("/src/styles/global.css"),
       readSource("/src/styles/app.css"),
-      readSource("/src/components/pages/editor/styles/editor.css"),
-      readSource("/src/components/databases/styles/database.css"),
-      readSource("/src/components/databases/styles/database-table.css"),
-      readSource("/src/components/pages/editor/styles/editor-chrome.css"),
-      readSource("/src/components/meetings/styles/meeting.css"),
-      readSource("/src/components/pages/editor/styles/editor-comments.css"),
+      readSource("/src/sections/pages/editor/styles/editor.css"),
+      readSource("/src/sections/databases/styles/database.css"),
+      readSource("/src/sections/databases/styles/database-table.css"),
+      readSource("/src/sections/pages/editor/styles/editor-chrome.css"),
+      readSource("/src/sections/meetings/styles/meeting.css"),
+      readSource("/src/sections/pages/editor/styles/editor-comments.css"),
     ]);
 
     assert.match(globalStyles, /@import "\.\/design-tokens\.css";/);
     assert.ok(main.indexOf("../styles/global.css") < main.indexOf("../styles/app.css"));
     assert.match(
       featureEntry,
-      /@import "\.\.\/components\/pages\/editor\/styles\/editor\.css";\s*@import "\.\.\/components\/databases\/styles\/database\.css";\s*@import "\.\.\/components\/databases\/styles\/database-table\.css";\s*@import "\.\.\/components\/pages\/editor\/styles\/editor-chrome\.css";\s*@import "\.\.\/components\/meetings\/styles\/meeting\.css";\s*@import "\.\.\/components\/pages\/editor\/styles\/editor-comments\.css";/,
+      /@import "\.\.\/sections\/pages\/editor\/styles\/editor\.css";\s*@import "\.\.\/sections\/databases\/styles\/database\.css";\s*@import "\.\.\/sections\/databases\/styles\/database-table\.css";\s*@import "\.\.\/sections\/pages\/editor\/styles\/editor-chrome\.css";\s*@import "\.\.\/sections\/meetings\/styles\/meeting\.css";\s*@import "\.\.\/sections\/pages\/editor\/styles\/editor-comments\.css";/,
     );
 
     for (const styles of [

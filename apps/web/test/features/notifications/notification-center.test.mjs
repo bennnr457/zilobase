@@ -1,6 +1,8 @@
 export function register({ assert, readSource, test }) {
   test("notification center polls and supports unread/read recovery", async () => {
-    const center = await readSource("/src/components/notifications/notification-center.tsx");
+    const center = await readSource(
+      "/src/app/shell/notifications/components/notification-center.tsx",
+    );
     assert.match(center, /Mark all read/);
     assert.match(center, /notification\.readAt/);
     assert.match(center, /notification\.pageId/);

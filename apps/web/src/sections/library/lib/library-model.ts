@@ -1,0 +1,62 @@
+import { libraryViewLabels } from "@/components/navigation/lib/library-views";
+import {
+  buildHomepageViewData as deriveHomepageViewData,
+  buildHomepageRows as deriveHomepageRows,
+  libraryParentPropertyId,
+  type RecentsMode,
+} from "@zilobase/features/library";
+import { DEFAULT_MEETING_ITEM_ICON } from "@/components/navigation/lib/navigation-icons";
+import type { DatabaseViewData } from "@zilobase/features/databases";
+import type { MeetingListItem } from "@zilobase/features/meetings";
+import type { Teamspace } from "@zilobase/features/teamspaces";
+import type { PageNavigationPayload } from "@zilobase/features/pages";
+import { libraryViewIds } from "@zilobase/features/user-settings";
+
+export {
+  libraryParentPropertyId,
+  getHomepageRowType,
+  buildTeamspaceLibraryRows,
+  isHomepageView,
+  applyHomepageView,
+  includeHomepageDescendants,
+} from "@zilobase/features/library";
+
+export type { HomepageView, HomepageRow, RecentsMode } from "@zilobase/features/library";
+
+export const homepageViews = libraryViewIds.map((id) => ({ id, label: libraryViewLabels[id] }));
+
+export function buildHomepageRows(
+  navigation: PageNavigationPayload,
+  meetings: MeetingListItem[],
+  mode: RecentsMode,
+  teamspaces: Teamspace[] = [],
+) {
+  return deriveHomepageRows(navigation, meetings, mode, teamspaces, DEFAULT_MEETING_ITEM_ICON);
+}
+
+const homepagePropertyWidths: Record<string, number> = {
+  source: 220,
+  createdBy: 190,
+  lastVisitedAt: 210,
+  updatedAt: 210,
+  createdAt: 210,
+  [libraryParentPropertyId]: 220,
+  deletedAt: 210,
+  deletedBy: 190,
+};
+
+export function buildHomepageViewData(
+  input: Omit<Parameters<typeof deriveHomepageViewData>[0], "views">,
+): DatabaseViewData {
+  const data = deriveHomepageViewData({ ...input, views: homepageViews });
+  return {
+    ...data,
+    bootstrap: {
+      ...data.bootstrap,
+      properties: data.bootstrap.properties.map((property) => ({
+        ...property,
+        width: homepagePropertyWidths[property.id],
+      })),
+    },
+  };
+}

@@ -1,6 +1,8 @@
 export function register({ assert, loadModule, test }) {
   test("editor history records new undo groups", async () => {
-    const { getEditorHistoryTransition } = await loadModule("/src/app/shortcuts/editor-history.ts");
+    const { getEditorHistoryTransition } = await loadModule(
+      "/src/sections/pages/editor/runtime/lib/editor-history-coordinator.ts",
+    );
 
     assert.deepEqual(
       getEditorHistoryTransition({ redo: 0, undo: 2 }, { redo: 0, undo: 3 }, false),
@@ -13,7 +15,9 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("editor history recognizes undo and redo transitions", async () => {
-    const { getEditorHistoryTransition } = await loadModule("/src/app/shortcuts/editor-history.ts");
+    const { getEditorHistoryTransition } = await loadModule(
+      "/src/sections/pages/editor/runtime/lib/editor-history-coordinator.ts",
+    );
 
     assert.deepEqual(getEditorHistoryTransition({ redo: 0, undo: 3 }, { redo: 1, undo: 2 }, true), {
       count: 1,
@@ -26,7 +30,9 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("a new edit after undo is not mistaken for redo", async () => {
-    const { getEditorHistoryTransition } = await loadModule("/src/app/shortcuts/editor-history.ts");
+    const { getEditorHistoryTransition } = await loadModule(
+      "/src/sections/pages/editor/runtime/lib/editor-history-coordinator.ts",
+    );
 
     assert.deepEqual(
       getEditorHistoryTransition({ redo: 2, undo: 1 }, { redo: 0, undo: 2 }, false),

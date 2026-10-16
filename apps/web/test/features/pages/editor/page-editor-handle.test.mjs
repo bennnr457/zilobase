@@ -1,5 +1,5 @@
 export function register({ assert, loadModule, test }) {
-  const load = () => loadModule("/src/components/pages/editor/runtime/page-editor-handle.ts");
+  const load = () => loadModule("/src/sections/pages/editor/runtime/lib/page-editor-handle.ts");
 
   test("editor handle gates writes and reports actual applied content", async () => {
     const { createPageEditorHandle } = await load();

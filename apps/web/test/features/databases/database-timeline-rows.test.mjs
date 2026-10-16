@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, readSource, test }) {
   test("timeline name cells stay single-line by default", async () => {
     const sidebar = await readSource(
-      "/src/components/databases/views/timeline/database-timeline-sidebar.tsx",
+      "/src/sections/databases/views/timeline/components/database-timeline-sidebar.tsx",
     );
 
     assert.match(sidebar, /<DatabaseCellContent wrapContent=\{false\}>/);
@@ -10,7 +10,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("timeline view rows keep New page aligned with its grid row", async () => {
     const { buildTimelineViewRows, getTimelineContentRows, getTimelineViewRowHeight } =
-      await loadModule("/src/components/databases/views/timeline/presentation-model.ts");
+      await loadModule("/src/sections/databases/views/timeline/lib/presentation-model.ts");
     const statusProperty = createProperty("status", "status");
     const firstItem = createItem("row-1");
     const secondItem = createItem("row-2");
@@ -51,7 +51,7 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("timeline view rows omit New page for collapsed groups", async () => {
     const { buildTimelineViewRows } = await loadModule(
-      "/src/components/databases/views/timeline/presentation-model.ts",
+      "/src/sections/databases/views/timeline/lib/presentation-model.ts",
     );
     const statusProperty = createProperty("status", "status");
     const item = createItem("row-1");

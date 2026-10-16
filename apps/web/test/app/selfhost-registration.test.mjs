@@ -1,9 +1,9 @@
 export function register({ readSource, readWorkspace, assert, test }) {
   test("invitation signup survives account creation and email verification", async () => {
     const [signup, otp, invitationPage, provider] = await Promise.all([
-      readSource("/src/components/auth/signup-screen.tsx"),
-      readSource("/src/components/auth/otp-screen.tsx"),
-      readSource("/src/components/workspaces/invitations/accept-workspace-invitation-screen.tsx"),
+      readSource("/src/sections/auth/signup-screen.tsx"),
+      readSource("/src/sections/auth/otp-screen.tsx"),
+      readSource("/src/sections/workspaces/invitations/accept-workspace-invitation-screen.tsx"),
       readSource("/src/app/providers/features-provider.tsx"),
     ]);
 
@@ -19,8 +19,8 @@ export function register({ readSource, readWorkspace, assert, test }) {
   test("self-hosted registration settings are owner-facing", async () => {
     const teamSettings = (
       await Promise.all([
-        readSource("/src/components/workspaces/members/workspace-members-settings-screen.tsx"),
-        readSource("/src/components/workspaces/settings/registration-settings.tsx"),
+        readSource("/src/sections/workspaces/members/workspace-members-settings-screen.tsx"),
+        readSource("/src/sections/workspaces/settings/components/registration-settings.tsx"),
         readWorkspace("packages/features/src/instance/queries.ts"),
       ])
     ).join("\n");

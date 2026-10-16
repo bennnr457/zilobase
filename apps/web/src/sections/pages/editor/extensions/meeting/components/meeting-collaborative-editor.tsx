@@ -1,0 +1,102 @@
+import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import type { HocuspocusProvider } from "@hocuspocus/provider";
+import type { Editor as TiptapEditor } from "@tiptap/core";
+import type * as Y from "yjs";
+
+// Meeting fields intentionally reuse the complete editor inside the meeting
+// node view. The import cycle is bounded to this nested composition seam.
+import { Editor } from "../../../editor";
+import {
+  setMeetingTranscriptPreview,
+  type MeetingTranscriptPreviewState,
+} from "../../lib/meeting-transcript-preview";
+import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
+
+export function MeetingCollaborativeEditor({
+  document,
+  editable,
+  field,
+  livePreview = null,
+  onOpenPage,
+  pageId,
+  provider,
+  status,
+  user,
+  workspaceId,
+}: {
+  document: Y.Doc;
+  editable: boolean;
+  field: "notes" | "summary" | "transcript";
+  livePreview?: MeetingTranscriptPreviewState[] | null;
+  onOpenPage: (pageId: string, options?: OpenPageOptions) => void;
+  pageId: string;
+  provider: HocuspocusProvider | null;
+  status: "connecting" | "connected" | "disconnected" | "blocked";
+  user?: { avatar?: string | null; color: string; id: string; name: string };
+  workspaceId: string;
+}) {
+  const editorRef = useRef<TiptapEditor | null>(null);
+  const livePreviewRef = useRef(livePreview);
+  livePreviewRef.current = livePreview;
+  const onEditorReady = useCallback((editor: TiptapEditor | null) => {
+    editorRef.current = editor;
+    if (editor) setMeetingTranscriptPreview(editor, livePreviewRef.current);
+  }, []);
+  const focusNestedEditor = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const editor = editorRef.current;
+    const target = event.target;
+    if (
+      !editor ||
+      editor.isDestroyed ||
+      !editor.isEditable ||
+      !(target instanceof Node) ||
+      !editor.view.dom.contains(target) ||
+      editor.view.hasFocus()
+    ) {
+      return;
+    }
+
+    editor.view.dom.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (editor) setMeetingTranscriptPreview(editor, livePreview);
+  }, [livePreview]);
+
+  return (
+    <div
+      className="meeting-collaborative-editor"
+      data-meeting-field={field}
+      onPointerDownCapture={focusNestedEditor}
+    >
+      <Editor
+        session={{
+          kind: "meeting",
+          documentId: document.guid,
+          pageId,
+          workspaceId,
+          collaborationField: field,
+          collaboration: {
+            document,
+            provider: provider ?? undefined,
+            status,
+            unsyncedChanges: 0,
+            user,
+            users: [],
+          },
+        }}
+        capabilities={{
+          content: editable,
+          metadata: false,
+          structural: editable,
+          comments: false,
+          database: editable,
+        }}
+        presentation={{ enableComments: false, fullWidth: true, hideMetadata: true }}
+        actions={{ onOpenPage }}
+        view={{ editorTabIndex: 0, onEditorReady }}
+      />
+    </div>
+  );
+}

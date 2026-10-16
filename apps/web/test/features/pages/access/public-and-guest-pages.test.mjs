@@ -14,18 +14,18 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("page guest UI keeps invitation, management, and shell concerns separate", async () => {
     const [acceptance, shareMenu, teamSettings, pageShell, sharedHeader] = await Promise.all([
-      readSource("/src/components/pages/access/accept-page-invitation-screen.tsx"),
+      readSource("/src/sections/pages/access/accept-page-invitation-screen.tsx"),
       Promise.all([
-        readSource("/src/components/sharing/share-popover.tsx"),
-        readSource("/src/components/sharing/use-sharing.ts"),
+        readSource("/src/components/sharing/components/share-popover.tsx"),
+        readSource("/src/components/sharing/hooks/use-sharing.ts"),
         readSource("/packages/features/src/pages/sharing-hooks.ts"),
       ]).then((parts) => parts.join("\n")),
       Promise.all([
-        readSource("/src/components/workspaces/members/workspace-members-settings-screen.tsx"),
-        readSource("/src/components/workspaces/guests/workspace-guests.tsx"),
+        readSource("/src/sections/workspaces/members/workspace-members-settings-screen.tsx"),
+        readSource("/src/sections/workspaces/guests/components/workspace-guests.tsx"),
       ]).then((parts) => parts.join("\n")),
-      readSource("/src/components/pages/page-screen.tsx"),
-      readSource("/src/components/pages/header/public-page-header.tsx"),
+      readSource("/src/sections/pages/page-screen.tsx"),
+      readSource("/src/sections/pages/header/components/public-page-header.tsx"),
     ]);
 
     assert.match(acceptance, /useAcceptPageGuestInvitation/);

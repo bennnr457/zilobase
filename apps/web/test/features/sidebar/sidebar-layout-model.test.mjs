@@ -49,9 +49,10 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("shortcuts are active only for their current route and library view", async () => {
-    const { isShortcutActive } = await loadModule("/src/app/shell/sidebar/sidebar-controller.ts", [
-      "isShortcutActive",
-    ]);
+    const { isShortcutActive } = await loadModule(
+      "/src/app/shell/sidebar/hooks/sidebar-controller.ts",
+      ["isShortcutActive"],
+    );
     const shortcut = (target) => ({ id: "shortcut", target });
 
     assert.equal(

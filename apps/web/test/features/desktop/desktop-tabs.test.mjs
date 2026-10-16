@@ -61,12 +61,14 @@ export function register({ readSource, assert, loadModule, test }) {
   });
 
   test("desktop tabs keep the trailing action stable through drag settling", async () => {
-    const tabsSource = await readSource("/src/components/desktop/tabs/desktop-tabs.tsx");
-    const tabStripSource = await readSource("/src/components/desktop/tabs/desktop-tab-strip.tsx");
-    const titlebarSource = await readSource(
-      "/src/components/desktop/window/desktop-window-titlebar.tsx",
+    const tabsSource = await readSource("/src/sections/desktop/tabs/components/desktop-tabs.tsx");
+    const tabStripSource = await readSource(
+      "/src/sections/desktop/tabs/components/desktop-tab-strip.tsx",
     );
-    const sidebarSource = await readSource("/src/app/shell/sidebar/app-sidebar.tsx");
+    const titlebarSource = await readSource(
+      "/src/sections/desktop/window/components/desktop-window-titlebar.tsx",
+    );
+    const sidebarSource = await readSource("/src/app/shell/sidebar/components/app-sidebar.tsx");
     const appSource = await readSource("/src/app/app.tsx");
     const stylesSource = await readSource("/src/styles/global.css");
 

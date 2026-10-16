@@ -5,15 +5,15 @@ import {
   sharingResponse,
   sharingWrites,
 } from "./sharing-api-fixture";
-import { SharePopover } from "@/components/sharing/share-popover";
-import { SettingsDialog } from "@/components/settings/shell/settings-dialog";
-import { ChatSidebarPanel } from "@/components/ai/workspace/chat-sidebar";
+import { SharePopover } from "@/components/sharing/components/share-popover";
+import { SettingsDialog } from "@/sections/settings/shell/components/settings-dialog";
+import { ChatSidebarPanel } from "@/sections/ai/workspace/components/chat-sidebar";
 import {
   GuestPageTitle,
   GuestPageActions,
   PublicPageBreadcrumb,
   PublicLoginButton,
-} from "@/components/pages/header/public-page-header";
+} from "@/sections/pages/header/components/public-page-header";
 import "@/styles/global.css";
 import "@/styles/app.css";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -34,24 +34,24 @@ import {
   type ZilobaseAuthClient,
 } from "@zilobase/features";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
-import { PageLayout } from "@/components/pages/layout/page-layout";
+import { PageLayout } from "@/sections/pages/layout/components/page-layout";
 import {
   PageSidePaneContext,
   usePageSidePaneState,
-} from "@/components/pages/presentation/page-presentation";
+} from "@/sections/pages/presentation/components/page-presentation";
 import {
   PageSidePaneLayout,
   PageSidePaneShell,
-} from "@/components/pages/presentation/page-side-pane";
-import { PageDialog } from "@/components/pages/presentation/page-dialog";
-import { useOpenEmbeddedPage } from "@/components/pages/navigation/page-navigation";
-import { PageEditorRegistryProvider } from "@/components/pages/editor/runtime/page-editor-registry";
+} from "@/sections/pages/presentation/components/page-side-pane";
+import { PageDialog } from "@/sections/pages/presentation/components/page-dialog";
+import { useOpenEmbeddedPage } from "@/sections/pages/navigation/hooks/page-navigation";
+import { PageEditorRegistryProvider } from "@/sections/pages/editor/runtime/components/page-editor-registry";
 import {
   PageCommentsRegistryProvider,
   PageEditorCommentsProvider,
-} from "@/components/pages/editor/comments/comments-context";
+} from "@/sections/pages/editor/comments/components/comments-context";
 
-import { PageDesignEditorProvider } from "@/components/pages/design/page-design-editor";
+import { PageDesignEditorProvider } from "@/sections/pages/design/components/page-design-editor";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 
@@ -311,7 +311,7 @@ function Commands({ id }: { id: string }) {
     </div>
   );
 }
-import { usePageSidePane as useContextState } from "@/components/pages/presentation/page-presentation";
+import { usePageSidePane as useContextState } from "@/sections/pages/presentation/components/page-presentation";
 function FixtureSidebar({ children }: { children: ReactNode }) {
   return fixtureAudience ? children : <SidebarProvider>{children}</SidebarProvider>;
 }

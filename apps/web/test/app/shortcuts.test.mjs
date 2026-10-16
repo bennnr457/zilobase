@@ -1,13 +1,11 @@
 export function register({ assert, loadModule, test }) {
   test("shortcuts ignore synthetic key events without a key", async () => {
-    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-definitions.ts");
+    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-provider.tsx");
     assert.equal(matchesAppShortcut({ ctrlKey: true }, "undo"), false);
     assert.equal(matchesAppShortcut({ key: null, metaKey: true }, "redo"), false);
   });
   test("open-in-new-tab accepts an unmodified primary click", async () => {
-    const { isOpenInNewTabShortcut } = await loadModule(
-      "/src/app/shortcuts/shortcut-definitions.ts",
-    );
+    const { isOpenInNewTabShortcut } = await loadModule("/src/app/shortcuts/shortcut-provider.tsx");
     const event = (overrides = {}) => ({
       altKey: false,
       button: 0,
@@ -24,7 +22,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("app shortcuts match Command or Control primary modifiers", async () => {
-    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-definitions.ts");
+    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-provider.tsx");
     const event = (overrides = {}) => ({
       altKey: false,
       ctrlKey: false,
@@ -40,7 +38,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("redo matches Command or Control Shift Z", async () => {
-    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-definitions.ts");
+    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-provider.tsx");
     const baseEvent = {
       altKey: false,
       ctrlKey: true,
@@ -59,7 +57,7 @@ export function register({ assert, loadModule, test }) {
   });
 
   test("shortcuts reject alternate modifier chords", async () => {
-    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-definitions.ts");
+    const { matchesAppShortcut } = await loadModule("/src/app/shortcuts/shortcut-provider.tsx");
     const baseEvent = {
       altKey: false,
       ctrlKey: true,

@@ -4,7 +4,7 @@ export function register({ assert, loadModule, test }) {
       getPageConnectionIndicator,
       setPageConnectionIndicator,
       subscribePageConnectionIndicator,
-    } = await loadModule("/src/components/pages/editor/collaboration/page-connection-indicator.ts");
+    } = await loadModule("/src/sections/pages/editor/collaboration/lib/page-document-session.ts");
     const changes = [];
     const unsubscribeFirst = subscribePageConnectionIndicator("first", () => changes.push("first"));
     const unsubscribeSecond = subscribePageConnectionIndicator("second", () =>

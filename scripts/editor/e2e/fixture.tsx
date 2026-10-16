@@ -10,25 +10,25 @@ import Collaboration from "@tiptap/extension-collaboration";
 import { prosemirrorJSONToYDoc } from "@tiptap/y-tiptap";
 import * as Y from "yjs";
 import { Plugin } from "@tiptap/pm/state";
-import { Editor } from "@/components/pages/editor/editor";
+import { Editor } from "@/sections/pages/editor/editor";
 import {
   PageEditorRegistryProvider,
   useEditorWorkspace,
-} from "@/components/pages/editor/runtime/page-editor-registry";
+} from "@/sections/pages/editor/runtime/components/page-editor-registry";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
-import { createEditorWorkspace } from "@/components/pages/editor/runtime/editor-workspace";
-import { EditorIntegration } from "@/components/pages/editor/runtime/editor-integration";
-import { transferBlocks } from "@/components/pages/editor/operations/block-operations";
-import { createPositionAnchor } from "@/components/pages/editor/operations/position-anchor";
-import { StructuralCommands } from "@/components/pages/editor/operations/structural-commands";
-import { ColumnsExtension } from "@/components/pages/editor/extensions/columns";
-import { insertCreatedBlock } from "@/components/pages/editor/commands/structural-insertion";
+import { createEditorWorkspace } from "@/sections/pages/editor/runtime/lib/editor-workspace";
+import { EditorIntegration } from "@/sections/pages/editor/runtime/lib/editor-integration";
+import { transferBlocks } from "@/sections/pages/editor/operations/lib/block-operations";
+import { createPositionAnchor } from "@/sections/pages/editor/operations/lib/position-anchor";
+import { StructuralCommands } from "@/sections/pages/editor/operations/lib/structural-commands";
+import { ColumnsExtension } from "@/sections/pages/editor/extensions/lib/columns";
+import { insertCreatedBlock } from "@/sections/pages/editor/commands/lib/block-insert";
 import {
   PendingPageEmbeds,
   insertPendingPageEmbed,
-} from "@/components/pages/editor/drag-drop/pending-page-embed";
-import { getDraggedEditorBlockPayload } from "@/components/pages/editor/drag-drop/block-drag-session";
-import { changedPageReferences } from "@/components/pages/editor/operations/changed-page-references";
+} from "@/sections/pages/editor/drag-drop/lib/pending-page-embed";
+import { getDraggedEditorBlockPayload } from "@/sections/pages/editor/drag-drop/lib/block-drag-session";
+import { changedPageReferences } from "@/sections/pages/editor/operations/lib/changed-page-references";
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const features = {
   deployment: "editor-test",
@@ -89,7 +89,8 @@ function Panes() {
             height: 400,
             overflow: "auto",
             background: "white",
-            zIndex: 100,
+            // Match the shared DialogContent layer so portaled menus stack above it.
+            zIndex: 50,
           }}
         >
           <Editor

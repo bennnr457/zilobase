@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("auth return paths reject external redirects", async () => {
     const { getAuthReturnPath, getInvitationAuthSearch } = await loadModule(
-      "/src/components/auth/google-auth.ts",
+      "/src/platform/auth/google-auth.ts",
     );
 
     assert.equal(

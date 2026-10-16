@@ -5,15 +5,17 @@ export function register({ readSource, assert, loadModule, test }) {
   const readLibrarySource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/library/recents-screen.tsx"),
-        readSource("/src/components/teamspaces/create-teamspace-dialog.tsx"),
+        readSource("/src/sections/library/recents-screen.tsx"),
+        readSource("/src/sections/teamspaces/components/create-teamspace-dialog.tsx"),
       ])
     ).join("\n");
   const readToolbarSource = async () =>
     (
       await Promise.all([
-        readSource("/src/components/databases/views/shared/database-view-toolbar.tsx"),
-        readSource("/src/components/databases/views/shared/database-view-toolbar-dialogs.tsx"),
+        readSource("/src/sections/databases/views/shared/components/database-view-toolbar.tsx"),
+        readSource(
+          "/src/sections/databases/views/shared/components/database-view-toolbar-dialogs.tsx",
+        ),
       ])
     ).join("\n");
   test("Library Teamspaces uses the shared hierarchy table", async () => {
@@ -35,7 +37,7 @@ export function register({ readSource, assert, loadModule, test }) {
     const { libraryViewIds, normalizeSidebarConfig } = await loadModule(sidebarConfigPath);
     const librarySource = await readLibrarySource();
     const routes = await readSource("/src/app/routing/router.tsx");
-    const icons = await readSource("/src/components/library/library-icons.tsx");
+    const icons = await readSource("/src/components/navigation/lib/library-views.ts");
 
     assert.ok(libraryViewIds.includes("trash"));
     assert.match(librarySource, /activeViewId === "trash" \? "trash" : "home"/);
@@ -75,9 +77,11 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("Library lists meetings and its sidebar shortcut opens that tab", async () => {
     const librarySource = await readLibrarySource();
-    const sidebarSource = await readSource("/src/app/shell/sidebar/sidebar-controller.ts");
-    const customizeSource = await readSource("/src/app/shell/sidebar/sidebar-customization.tsx");
-    const iconSource = await readSource("/src/components/library/library-icons.tsx");
+    const sidebarSource = await readSource("/src/app/shell/sidebar/hooks/sidebar-controller.ts");
+    const customizeSource = await readSource(
+      "/src/app/shell/sidebar/components/sidebar-customization.tsx",
+    );
+    const iconSource = await readSource("/src/components/navigation/lib/library-views.ts");
     const toolbarSource = await readToolbarSource();
 
     assert.match(librarySource, /homepageViews = libraryViews\.map/);

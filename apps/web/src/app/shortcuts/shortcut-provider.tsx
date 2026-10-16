@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import {
   createContext,
   useCallback,
@@ -8,7 +9,60 @@ import {
   type ReactNode,
 } from "react";
 
-import { matchesAppShortcut, type AppShortcutId } from "./shortcut-definitions";
+export const appShortcutDefinitions = {
+  calendarTravel: { key: "z", primaryModifier: false, shiftKey: false },
+  calendarHelp: { key: "?", primaryModifier: false, shiftKey: null },
+  calendarToday: { key: "t", primaryModifier: false, shiftKey: false },
+  calendarPrevious: { key: "arrowleft", primaryModifier: false, shiftKey: false },
+  calendarNext: { key: "arrowright", primaryModifier: false, shiftKey: false },
+  calendarCreate: { key: "c", primaryModifier: false, shiftKey: false },
+  calendarNextEvent: { key: "j", primaryModifier: false, shiftKey: false },
+  calendarPreviousEvent: { key: "k", primaryModifier: false, shiftKey: false },
+  openSearch: {
+    key: "k",
+    primaryModifier: true,
+    shiftKey: false,
+  },
+  redo: {
+    key: "z",
+    primaryModifier: true,
+    shiftKey: true,
+  },
+  undo: {
+    key: "z",
+    primaryModifier: true,
+    shiftKey: false,
+  },
+} as const;
+
+export type AppShortcutId = keyof typeof appShortcutDefinitions;
+
+type ShortcutKeyboardEvent = Pick<
+  KeyboardEvent,
+  "altKey" | "ctrlKey" | "key" | "metaKey" | "shiftKey"
+>;
+
+type ShortcutPointerEvent = Pick<
+  MouseEvent,
+  "altKey" | "button" | "ctrlKey" | "metaKey" | "shiftKey"
+>;
+
+export function isOpenInNewTabShortcut(event: ShortcutPointerEvent) {
+  return event.button === 0 && (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey;
+}
+
+export function matchesAppShortcut(event: ShortcutKeyboardEvent, shortcutId: AppShortcutId) {
+  if (typeof event.key !== "string") return false;
+  const shortcut = appShortcutDefinitions[shortcutId];
+  const hasPrimaryModifier = event.metaKey || event.ctrlKey;
+
+  return (
+    event.key.toLowerCase() === shortcut.key &&
+    (shortcut.primaryModifier ? hasPrimaryModifier : !hasPrimaryModifier) &&
+    !event.altKey &&
+    (shortcut.shiftKey === null || event.shiftKey === shortcut.shiftKey)
+  );
+}
 
 type ShortcutRegistration = {
   allowInEditable: boolean;
@@ -24,7 +78,7 @@ type ShortcutContextValue = {
 
 const ShortcutContext = createContext<ShortcutContextValue | null>(null);
 
-function isEditableShortcutTarget(target: EventTarget | null) {
+export function isEditableShortcutTarget(target: EventTarget | null) {
   return (
     target instanceof HTMLElement &&
     (target.isContentEditable || target.matches("input, textarea, select, [role='textbox']"))
@@ -48,32 +102,35 @@ export function ShortcutProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(() => ({ register }), [register]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) {
-        return;
-      }
+    const handleKeyDown = (event: KeyboardEvent) =>
+      Effect.runSync(
+        Effect.gen(function* () {
+          if (event.defaultPrevented) {
+            return;
+          }
 
-      const registrations = [...registrationsRef.current.values()].sort(
-        (left, right) => right.priority - left.priority || right.order - left.order,
+          const registrations = [...registrationsRef.current.values()].sort(
+            (left, right) => right.priority - left.priority || right.order - left.order,
+          );
+
+          for (const registration of registrations) {
+            if (
+              !matchesAppShortcut(event, registration.shortcutId) ||
+              (!registration.allowInEditable && isEditableShortcutTarget(event.target))
+            ) {
+              continue;
+            }
+
+            if (!(yield* Effect.sync(() => registration.handler(event)))) {
+              continue;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+          }
+        }),
       );
-
-      for (const registration of registrations) {
-        if (
-          !matchesAppShortcut(event, registration.shortcutId) ||
-          (!registration.allowInEditable && isEditableShortcutTarget(event.target))
-        ) {
-          continue;
-        }
-
-        if (!registration.handler(event)) {
-          continue;
-        }
-
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        return;
-      }
-    };
 
     window.addEventListener("keydown", handleKeyDown, true);
 

@@ -6,7 +6,7 @@ export function register({ assert, appPath, test }) {
     const result = await build({
       stdin: {
         contents: `
-   export {bootstrapInstance} from "./src/components/auth/setup/bootstrap-instance";
+   export {bootstrapInstance} from "./src/sections/auth/setup/lib/bootstrap-instance";
    export {runtime} from "bootstrap-test-runtime";
   `,
         resolveDir: appPath("/"),

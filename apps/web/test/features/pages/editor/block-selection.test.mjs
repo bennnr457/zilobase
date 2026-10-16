@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("block selection allows only non-mutating keyboard actions", async () => {
     const { shouldBlockBlockSelectionKeydown } = await loadModule(
-      "/src/components/pages/editor/extensions/block-selection.ts",
+      "/src/sections/pages/editor/extensions/lib/block-selection.ts",
     );
     const keyEvent = (key, overrides = {}) => ({
       altKey: false,
@@ -26,7 +26,7 @@ export function register({ assert, loadModule, test }) {
   test("block selection includes a leading atom database block", async () => {
     const { Schema } = await import("@tiptap/pm/model");
     const { getBlockSelectionRanges } = await loadModule(
-      "/src/components/pages/editor/extensions/block-selection.ts",
+      "/src/sections/pages/editor/extensions/lib/block-selection.ts",
     );
     const schema = new Schema({
       nodes: {
@@ -60,7 +60,7 @@ export function register({ assert, loadModule, test }) {
   test("block selection treats an inline meeting as one atom", async () => {
     const { Schema } = await import("@tiptap/pm/model");
     const { getBlockSelectionRanges } = await loadModule(
-      "/src/components/pages/editor/extensions/block-selection.ts",
+      "/src/sections/pages/editor/extensions/lib/block-selection.ts",
     );
     const schema = new Schema({
       nodes: {
@@ -98,7 +98,7 @@ export function register({ assert, loadModule, test }) {
       buildAllBlockDecorations,
       getSelectedBlockRangesForTarget,
       getSelectedTaskItemPositions,
-    } = await loadModule("/src/components/pages/editor/extensions/block-selection.ts");
+    } = await loadModule("/src/sections/pages/editor/extensions/lib/block-selection.ts");
     const schema = new Schema({
       nodes: {
         doc: { content: "block+" },

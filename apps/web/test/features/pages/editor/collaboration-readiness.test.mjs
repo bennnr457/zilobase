@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, readSource, test }) {
   const load = () =>
-    loadModule("/src/components/pages/editor/collaboration/collaboration-readiness.ts");
+    loadModule("/src/sections/pages/editor/collaboration/lib/page-document-session.ts");
 
   test("reload protection follows unacknowledged collaboration changes", async () => {
     const { hasPendingCollaborationChanges } = await load();
@@ -12,8 +12,8 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("page composition reruns structural recovery when its editor becomes ready", async () => {
     const [editor, pane] = await Promise.all([
-      readSource("/src/components/pages/editor/editor.tsx"),
-      readSource("/src/components/pages/editor/page-content.tsx"),
+      readSource("/src/sections/pages/editor/editor.tsx"),
+      readSource("/src/sections/pages/editor/page-content.tsx"),
     ]);
 
     assert.match(pane, /onEditorReady: handleEditorReady/);

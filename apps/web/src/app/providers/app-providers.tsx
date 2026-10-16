@@ -6,25 +6,25 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   PageEditorCommentsProvider,
   PageCommentsRegistryProvider,
-} from "@/components/pages/editor/comments/comments-context";
-import { PageEditorRegistryProvider } from "@/components/pages/editor/runtime/page-editor-registry";
+} from "@/sections/pages/editor/comments/components/comments-context";
+import { PageEditorRegistryProvider } from "@/sections/pages/editor/runtime/components/page-editor-registry";
 
-import { DesktopUpdater } from "@/components/desktop/updates/desktop-updater";
+import { DesktopUpdater } from "@/sections/desktop/updates/components/desktop-updater";
 import { WebFeaturesProvider } from "@/app/providers/features-provider";
 import { queryClient } from "@/app/query-client";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 import { getThemeColorScheme, selectableThemeIds } from "@/lib/themes";
 import { ThemeFamilyProvider, useThemeFamily } from "@/app/providers/theme-family-provider";
 import { AppIconProvider } from "@/components/icons";
-import { DemoExperience } from "@/components/demo/demo-experience";
+import { DemoExperience } from "@/app/demo/components/demo-experience";
 import { installDemoCache } from "@/app/demo/runtime";
 import { resolvePageDetailReference, type PageDetailReference } from "@zilobase/features/pages";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { useSession } from "@zilobase/features/auth/react";
 import { useDatabaseController } from "@zilobase/features/databases/react";
-import { guardPendingDatabaseWrites } from "@/components/databases/lifecycle/beforeunload";
+import { guardPendingDatabaseWrites } from "@/platform/browser/database-write-guard";
 
-import posthog from "@/lib/posthog";
+import posthog from "@/platform/analytics/posthog";
 
 Effect.runSync(
   Effect.sync(() =>

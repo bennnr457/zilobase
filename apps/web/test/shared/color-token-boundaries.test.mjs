@@ -18,8 +18,8 @@ const opacityColorUtility = new RegExp(
 const systemColor = /\[(?:Canvas|CanvasText|Highlight|HighlightText)\]/g;
 const literalExceptions = new Set([
   "src/components/branding/google-icon.tsx",
-  "src/components/pages/editor/extensions/embed-block.tsx",
-  "src/components/pages/appearance/page-cover-gallery.ts",
+  "src/sections/pages/editor/extensions/components/embed-block.tsx",
+  "src/sections/pages/appearance/lib/page-cover-gallery.ts",
   "src/styles/typeset.css",
 ]);
 const legacyVariables = [

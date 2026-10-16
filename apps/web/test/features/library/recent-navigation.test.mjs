@@ -1,6 +1,6 @@
 export function register({ assert, loadModule, test }) {
   test("startup opens the most recently visited active item", async () => {
-    const { getMostRecentItemPath } = await loadModule("/src/components/library/library-model.ts");
+    const { getMostRecentItemPath } = await loadModule("/src/app/routing/start-destination.ts");
     const navigation = {
       pages: [
         createItem("older-page", "2026-08-12T08:00:00.000Z"),

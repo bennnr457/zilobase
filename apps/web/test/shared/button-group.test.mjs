@@ -24,9 +24,11 @@ export function register({ assert, loadModule, readSource, test }) {
 
   test("editor and database toolbars select shared button group variants", async () => {
     const [selectionBubbleMenu, databaseSelectionToolbar, editorStyles] = await Promise.all([
-      readSource("/src/components/pages/editor/selection/selection-bubble-menu.tsx"),
-      readSource("/src/components/databases/views/table/database-table-selection-toolbar.tsx"),
-      readSource("/src/components/pages/editor/styles/editor-chrome.css"),
+      readSource("/src/sections/pages/editor/selection/components/selection-bubble-menu.tsx"),
+      readSource(
+        "/src/sections/databases/views/table/components/database-table-selection-toolbar.tsx",
+      ),
+      readSource("/src/sections/pages/editor/styles/editor-chrome.css"),
     ]);
 
     assert.match(selectionBubbleMenu, /variant="floating"/);

@@ -19,15 +19,15 @@ import {
   type Workspace,
 } from "@zilobase/features/workspaces";
 import { isOAuthLoginSearch, pickOAuthSearch } from "@zilobase/features/oauth";
-import { getAuthReturnPath } from "@/components/auth/google-auth";
+import { getAuthReturnPath } from "@/platform/auth/google-auth";
 import { isHostedDemoRuntime } from "@/app/demo/runtime";
 import { queryClient } from "@/app/query-client";
 import { webAuthClient } from "@/app/providers/features-provider";
 import { useAppStore } from "@/app/state/app-store";
 import { NetworkUnavailableError, apiFetch } from "@/platform/network/api";
-import { getMostRecentItemPath } from "@/components/library/library-model";
+import { getMostRecentItemPath } from "./start-destination";
 import { getConnectivityState } from "@/platform/network/connectivity";
-import { hydratePageReadCache } from "@/components/pages/page-read-cache";
+import { hydratePageReadCache } from "@/sections/pages/lib/page-read-cache";
 
 import type {
   validateLoginSearch,

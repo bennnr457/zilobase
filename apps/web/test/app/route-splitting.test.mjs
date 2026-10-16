@@ -3,15 +3,15 @@ export function register({ assert, readSource, test }) {
     const source = await readSource("/src/app/routing/router.tsx");
 
     assert.match(source, /lazyRouteComponent/);
-    assert.match(source, /\(\) => import\("@\/components\//);
-    assert.doesNotMatch(source, /import [^\n]+ from "@\/components\/[^\n]+\/pages\//);
+    assert.match(source, /\(\) => import\("@\/sections\//);
+    assert.doesNotMatch(source, /import [^\n]+ from "@\/sections\/[^\n]+\/pages\//);
   });
 
   test("the application shell and expensive optional surfaces are lazy", async () => {
     const [routeShell, appLayout, tasks] = await Promise.all([
       readSource("/src/app/routing/route-shell.tsx"),
       readSource("/src/app/shell/app-shell.tsx"),
-      readSource("/src/components/tasks/tasks-screen.tsx"),
+      readSource("/src/sections/tasks/tasks-screen.tsx"),
     ]);
 
     assert.match(routeShell, /const AppShell = lazy/);

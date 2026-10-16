@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("timeline add rows span every rendered date column", async () => {
     const { getTimelineColumnCount } = await loadModule(
-      "/src/components/databases/views/timeline/gantt/gantt-view.tsx",
+      "/src/sections/databases/views/timeline/gantt/components/gantt-view.tsx",
     );
     const timelineData = [
       {

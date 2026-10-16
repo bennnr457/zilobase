@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("table drag targets retain identity only when placement and parent are unchanged", async () => {
     const { retainTableRowDropTarget, retainGroupRowDropTarget } = await loadModule(
-      "/src/components/databases/views/table/database-table-model.ts",
+      "/src/sections/databases/views/table/lib/database-table-model.ts",
     );
     for (const [retain, current, changes] of [
       [
@@ -32,7 +32,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("property insertion keeps pending positions authoritative on both sides", async () => {
     const { propertyInsertPositions } = await loadModule(
-      "/src/components/databases/views/table/database-table-model.ts",
+      "/src/sections/databases/views/table/lib/database-table-model.ts",
     );
     assert.deepEqual(propertyInsertPositions(undefined, undefined), {
       left: 0,

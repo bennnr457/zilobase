@@ -4,12 +4,12 @@ export function register({ readSource, assert, loadModule, test }) {
       databaseAddPropertyColumnDefaultWidth,
       databaseColumnDefaultWidth,
       databaseNameColumnDefaultWidth,
-    } = await loadModule("/src/components/databases/views/model/column-dimensions.ts");
+    } = await loadModule("/src/sections/databases/views/lib/column-dimensions.ts");
     const tableSource = await readSource(
-      "/src/components/databases/views/table/database-table-shell.tsx",
+      "/src/sections/databases/views/table/components/database-table-shell.tsx",
     );
     const tableViewSource = await readSource(
-      "/src/components/databases/views/table/database-table-view.tsx",
+      "/src/sections/databases/views/table/components/database-table-view.tsx",
     );
 
     assert.equal(databaseColumnDefaultWidth, 200);
@@ -23,7 +23,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("add-property menu opens below the property insertion point", async () => {
     const menuSource = await readSource(
-      "/src/components/databases/properties/editors/add-database-property-menu.tsx",
+      "/src/sections/databases/properties/editors/components/add-database-property-menu.tsx",
     );
 
     assert.match(menuSource, /<DropDrawerContent\s+align="start"/);
@@ -31,7 +31,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database table drop targeting uses row midpoints", async () => {
     const { getDatabaseRowDropTargetIndex } = await loadModule(
-      "/src/components/databases/interactions/database-table-layout.ts",
+      "/src/sections/databases/interactions/lib/database-table-layout.ts",
     );
     const dropTops = [0, 40, 100, 130];
 
@@ -46,7 +46,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database table drop targeting handles an empty layout", async () => {
     const { getDatabaseRowDropTargetIndex } = await loadModule(
-      "/src/components/databases/interactions/database-table-layout.ts",
+      "/src/sections/databases/interactions/lib/database-table-layout.ts",
     );
 
     assert.equal(getDatabaseRowDropTargetIndex([], 10), 0);
@@ -55,7 +55,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database table final-row drops use the line above the New page footer", async () => {
     const { getDatabaseRowDropTarget } = await loadModule(
-      "/src/components/databases/interactions/database-table-layout.ts",
+      "/src/sections/databases/interactions/lib/database-table-layout.ts",
     );
     const dropTops = [0, 40, 100, 130];
 
@@ -67,7 +67,7 @@ export function register({ readSource, assert, loadModule, test }) {
 
   test("database table empty-state drops use the measured New page top", async () => {
     const { getDatabaseRowDropTarget } = await loadModule(
-      "/src/components/databases/interactions/database-table-layout.ts",
+      "/src/sections/databases/interactions/lib/database-table-layout.ts",
     );
 
     assert.deepEqual(getDatabaseRowDropTarget([32], 80), {

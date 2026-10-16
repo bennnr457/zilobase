@@ -134,7 +134,7 @@ export function register({ assert, loadModule, test }) {
 
   test("browser capture filters snapshots and stops observing without closing the recorder", async () => {
     const { createBrowserMeetingCaptureRuntime } = await loadModule(
-      "/src/components/meetings/capture/browser-capture-runtime.ts",
+      "/src/platform/browser/meetings/browser-capture-runtime.ts",
     );
     let notify,
       unlistened = false,

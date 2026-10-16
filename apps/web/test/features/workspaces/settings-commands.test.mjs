@@ -8,7 +8,7 @@ export function register({ assert, appPath, test }) {
         contents: `
       import {createElement} from "react";
       import {renderToString} from "react-dom/server";
-      import {useWorkspaceDetails} from "./src/components/workspaces/settings/workspace-details-state";
+      import {useWorkspaceDetails} from "./src/sections/workspaces/settings/hooks/workspace-details-state";
       import {runtime} from "settings-test-runtime";
       export function capture(input,dependencies,draft) {
         Object.assign(runtime,dependencies);

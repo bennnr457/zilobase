@@ -4,13 +4,13 @@ export function register({ assert, loadModule, test }) {
     globalThis.indexedDB = fake.indexedDB;
     globalThis.IDBKeyRange = fake.IDBKeyRange;
     const { openCalendarDatabase, applyCalendarRange, destroyCalendarDatabase } = await loadModule(
-      "/src/components/calendar/storage/calendar-database.ts",
+      "/src/platform/storage/calendar-database.ts",
     );
     const { dueCalendarReminders } = await loadModule(
       "/packages/features/src/calendar/reminders.ts",
     );
     const { claimCalendarReminder } = await loadModule(
-      "/src/components/calendar/reminders/scheduler.ts",
+      "/src/platform/storage/calendar-reminders.ts",
     );
     const event = {
       workspaceId: "w",

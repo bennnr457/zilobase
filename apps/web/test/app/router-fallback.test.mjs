@@ -39,9 +39,9 @@ export function register({ readSource, assert, test }) {
         ["router.tsx", "route-shell.tsx"].map((path) => readSource(`/src/app/routing/${path}`)),
       )
     ).join("\n");
-    const pageSource = await readSource("/src/components/pages/page-screen.tsx");
-    const databaseSource = await readSource("/src/components/databases/screen/database-screen.tsx");
-    const meetingSource = await readSource("/src/components/meetings/meeting-screen.tsx");
+    const pageSource = await readSource("/src/sections/pages/page-screen.tsx");
+    const databaseSource = await readSource("/src/sections/databases/database-screen.tsx");
+    const meetingSource = await readSource("/src/sections/meetings/meeting-screen.tsx");
 
     for (const source of [pageSource, databaseSource]) {
       assert.match(source, /if \(publishedShare === "public"\)/);
