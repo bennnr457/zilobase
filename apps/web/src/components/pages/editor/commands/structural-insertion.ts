@@ -1,33 +1,40 @@
 import type { Editor } from "@tiptap/core";
+import { Effect } from "effect";
 import { createPositionAnchor } from "../operations/position-anchor";
 export type StructuralInsertionPendingChange = (pending: boolean) => void;
 
-export async function runStructuralInsertion<T>({
-  create,
-  insert,
-  onPendingChange,
-}: {
+type StructuralInsertionOptions<T> = {
   create: (() => Promise<T | null>) | undefined;
   insert: (created: T) => void;
   onPendingChange?: StructuralInsertionPendingChange;
-}) {
-  if (!create) {
-    return null;
-  }
+};
 
-  onPendingChange?.(true);
+function structuralInsertion<T>({
+  create,
+  insert,
+  onPendingChange,
+}: StructuralInsertionOptions<T>) {
+  return Effect.gen(function* () {
+    if (!create) return null;
+    // This callback stays outside the cleanup region, as in the Promise workflow.
+    yield* Effect.try({ try: () => onPendingChange?.(true), catch: (error) => error });
+    return yield* Effect.gen(function* () {
+      const created = yield* Effect.tryPromise({ try: create, catch: (error) => error });
+      if (created !== null) {
+        yield* Effect.try({ try: () => insert(created), catch: (error) => error });
+      }
+      return created;
+    }).pipe(
+      // Capture the body failure so a throwing finalizer retains JavaScript finally precedence.
+      Effect.exit,
+      Effect.ensuring(Effect.sync(() => onPendingChange?.(false))),
+      Effect.flatMap((exit) => exit),
+    );
+  });
+}
 
-  try {
-    const created = await create();
-
-    if (created !== null) {
-      insert(created);
-    }
-
-    return created;
-  } finally {
-    onPendingChange?.(false);
-  }
+export async function runStructuralInsertion<T>(input: StructuralInsertionOptions<T>) {
+  return Effect.runPromise(structuralInsertion(input));
 }
 
 export async function insertCreatedBlock<T>({
@@ -46,8 +53,8 @@ export async function insertCreatedBlock<T>({
   const from = createPositionAnchor(editor, range.from),
     to = createPositionAnchor(editor, range.to);
   const expected = editor.state.doc.slice(range.from, range.to);
-  try {
-    return await runStructuralInsertion({
+  return Effect.runPromise(
+    structuralInsertion({
       create,
       onPendingChange,
       insert: (created) => {
@@ -68,9 +75,15 @@ export async function insertCreatedBlock<T>({
           .replaceBlocksRange({ from: start, to: end }, content(created))
           .run();
       },
-    });
-  } finally {
-    from.dispose();
-    to.dispose();
-  }
+    }).pipe(
+      Effect.exit,
+      Effect.ensuring(
+        Effect.sync(() => {
+          from.dispose();
+          to.dispose();
+        }),
+      ),
+      Effect.flatMap((exit) => exit),
+    ),
+  );
 }

@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+import { commitDatabaseBlockDrop } from "./drag-drop/block-drop";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { EditorContent } from "@tiptap/react";
 import { TextSelection } from "@tiptap/pm/state";
@@ -17,11 +19,7 @@ import { useEditorMenuEffects } from "./runtime/use-editor-menu-effects";
 import { useEditorRuntime } from "./runtime/use-editor-runtime";
 import { useMobileNodeActions } from "./commands/use-mobile-node-actions";
 import { DatabaseView } from "@/components/databases/views/shared/database-view";
-import {
-  canMoveDatabaseBlockToPage,
-  dropCrossEditorBlock,
-  getBlockDragDatabaseId,
-} from "./drag-drop/block-drag";
+import { canMoveDatabaseBlockToPage, getBlockDragDatabaseId } from "./drag-drop/block-drag";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -224,56 +222,24 @@ export function Editor({
       editor,
       ...(workspace.drag.active ? [workspace.drag.active.editor] : []),
     ]);
-    try {
-      const pendingDrop = pendingDatabaseBlockDrop;
-      if (
-        editor.isDestroyed ||
-        !editor.isEditable ||
-        pendingDrop.anchor.resolve() === null ||
-        !workspace.drag.source(pendingDrop.payload)
-      )
-        return;
-      let resource: import("./editor-types").EditorResourceReceipt | void = undefined;
-      if (mode === "copy") {
-        if (!onEmbedDatabase) throw new Error("Database linking is unavailable.");
-        resource = await onEmbedDatabase(pendingDrop.databaseId);
-      } else {
-        const sourcePageId = workspace.runtimes
-          .get(workspace.drag.active!.editor)
-          ?.getSession().pageId;
-        if (!sourcePageId || !actions.onMoveDatabase)
-          throw new Error("Database movement is unavailable.");
-        resource = await actions.onMoveDatabase(pendingDrop.databaseId, sourcePageId);
-      }
-      const pos = pendingDrop.anchor.resolve();
-      const completed =
-        !editor.isDestroyed &&
-        pos !== null &&
-        dropCrossEditorBlock(editor.view, pendingDrop.payload, pos, mode);
-      if (!completed) {
-        await resource?.undo();
-        toast.error(
-          mode === "move"
-            ? "Could not move the database."
-            : "Could not create the linked database view.",
-        );
-        return;
-      }
-      if (resource)
-        workspace.history.attachResource(pendingDrop.payload.operationId, resource, (error) =>
-          toast.error(error instanceof Error ? error.message : "Could not update database link."),
-        );
-
-      setPendingDatabaseBlockDrop(null);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not update the database.");
-    } finally {
-      pendingDatabaseCommitRef.current = false;
-      pendingDatabaseBlockDrop.anchor.dispose();
-      workspace.drag.reset();
-      setPendingDatabaseBlockDrop(null);
-      releasePending();
-    }
+    return Effect.runPromise(
+      commitDatabaseBlockDrop({
+        editor,
+        workspace,
+        pendingDrop: pendingDatabaseBlockDrop,
+        mode,
+        actions: { onEmbedDatabase, onMoveDatabase: actions.onMoveDatabase },
+        onComplete: () => setPendingDatabaseBlockDrop(null),
+        onError: (message) => toast.error(message),
+        onSettled: () => {
+          pendingDatabaseCommitRef.current = false;
+          pendingDatabaseBlockDrop.anchor.dispose();
+          workspace.drag.reset();
+          setPendingDatabaseBlockDrop(null);
+          releasePending();
+        },
+      }),
+    );
   };
 
   useEffect(() => {

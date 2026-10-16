@@ -4,6 +4,95 @@ import type { BlockDragPayload } from "./block-drag-session";
 import { workspaceForView } from "../runtime/editor-integration";
 import { transferBlocks, type OperationResult } from "../operations/block-operations";
 import { isCopyDrag } from "../runtime/editor-workspace";
+import { Cause, Effect } from "effect";
+import type { Editor } from "@tiptap/core";
+import type { EditorWorkspace } from "../runtime/editor-workspace";
+import type { EditorResourceActions, EditorResourceReceipt } from "../editor-types";
+import type { PendingDatabaseBlockDrop } from "./database-block-drop-dialog";
+
+export function commitDatabaseBlockDrop({
+  editor,
+  workspace,
+  pendingDrop,
+  mode,
+  actions,
+  onComplete,
+  onError,
+  onSettled,
+}: {
+  editor: Editor;
+  workspace: EditorWorkspace;
+  pendingDrop: PendingDatabaseBlockDrop;
+  mode: "copy" | "move";
+  actions: Pick<EditorResourceActions, "onEmbedDatabase" | "onMoveDatabase">;
+  onComplete: () => void;
+  onError: (message: string) => void;
+  onSettled: () => void;
+}) {
+  return Effect.gen(function* () {
+    if (
+      editor.isDestroyed ||
+      !editor.isEditable ||
+      pendingDrop.anchor.resolve() === null ||
+      !workspace.drag.source(pendingDrop.payload)
+    )
+      return;
+    let resource: EditorResourceReceipt | void;
+    if (mode === "copy") {
+      const embed = actions.onEmbedDatabase;
+      if (!embed) return yield* Effect.fail(new Error("Database linking is unavailable."));
+      resource = yield* Effect.tryPromise({
+        try: () => Promise.resolve(embed(pendingDrop.databaseId)),
+        catch: (error) => error,
+      });
+    } else {
+      const sourcePageId = workspace.runtimes
+        .get(workspace.drag.active!.editor)
+        ?.getSession().pageId;
+      const move = actions.onMoveDatabase;
+      if (!sourcePageId || !move)
+        return yield* Effect.fail(new Error("Database movement is unavailable."));
+      resource = yield* Effect.tryPromise({
+        try: () => move(pendingDrop.databaseId, sourcePageId),
+        catch: (error) => error,
+      });
+    }
+    const pos = pendingDrop.anchor.resolve();
+    const completed =
+      !editor.isDestroyed &&
+      pos !== null &&
+      dropCrossEditorBlock(editor.view, pendingDrop.payload, pos, mode);
+    if (!completed) {
+      yield* Effect.tryPromise({
+        try: () => Promise.resolve(resource?.undo()),
+        catch: (error) => error,
+      });
+      onError(
+        mode === "move"
+          ? "Could not move the database."
+          : "Could not create the linked database view.",
+      );
+      return;
+    }
+    if (resource)
+      workspace.history.attachResource(pendingDrop.payload.operationId, resource, (error) =>
+        onError(error instanceof Error ? error.message : "Could not update database link."),
+      );
+    onComplete();
+  }).pipe(
+    Effect.catchCause((cause) => {
+      if (Cause.hasInterrupts(cause)) return Effect.failCause(cause);
+      const error = Cause.squash(cause);
+      return Effect.sync(() =>
+        onError(error instanceof Error ? error.message : "Could not update the database."),
+      );
+    }),
+    Effect.exit,
+    Effect.ensuring(Effect.sync(onSettled)),
+    Effect.flatMap((exit) => exit),
+  );
+}
+
 function reportFailure(result: OperationResult) {
   if (result.ok) return;
   toast.error(
