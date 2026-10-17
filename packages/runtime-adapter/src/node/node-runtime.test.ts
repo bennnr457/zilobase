@@ -101,13 +101,13 @@ import { createNodeRuntime } from "./node-runtime";
 const originalEnvironment = { ...process.env };
 const temporaryDirectories: string[] = [];
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks();
   process.env = { ...originalEnvironment };
   process.env.ZILOBASE_PROCESS_ROLE = "api";
   process.env.REALTIME_REDIS_URL = "redis://127.0.0.1:6379";
   process.env.QUEUE_REDIS_URL = "redis://127.0.0.1:6380";
-  process.env.BACKGROUND_HEALTH_PORT = "0";
+  process.env.BACKGROUND_HEALTH_PORT = String(await freePort());
   delete process.env.PORT;
 
   mocks.coordinator.readiness.mockReturnValue({
