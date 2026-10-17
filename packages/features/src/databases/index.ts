@@ -380,6 +380,13 @@ export {
 export type { DatabaseCellFillHistoryChange } from "./records/cell-fill";
 export { createCellEditHistoryAction } from "./records/cell-edit-history";
 export {
+  isDatabaseSpreadsheetWritable,
+  parseDatabaseSpreadsheetValue,
+  formatDatabaseSpreadsheetValue,
+  createDatabaseSpreadsheetHistoryAction,
+} from "./records/spreadsheet";
+export type { DatabaseSpreadsheetChange } from "./records/spreadsheet";
+export {
   getNewRowGroupSetup,
   getDraggedRowGroupSetup,
   getTimelineGroupPropertyId,
