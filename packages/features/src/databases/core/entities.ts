@@ -438,6 +438,21 @@ const rowStateCommandSchema = z.discriminatedUnion("type", [
   z.object({ rowId: entityIdSchema, type: z.literal("row.restore") }).strict(),
 ]);
 
+const rowDuplicateCommandSchema = z
+  .object({
+    type: z.literal("row.duplicate"),
+    rowId: entityIdSchema,
+    parentRowId: nullableEntityIdSchema.optional(),
+  })
+  .strict();
+const rowMoveToPageCommandSchema = z
+  .object({
+    type: z.literal("row.moveToPage"),
+    rowId: entityIdSchema,
+    pageId: entityIdSchema,
+  })
+  .strict();
+
 export const dataSourceCommandSchema = z.discriminatedUnion("type", [
   dataSourceUpdateCommandSchema,
   propertyCreateCommandSchema,
@@ -449,6 +464,8 @@ export const dataSourceCommandSchema = z.discriminatedUnion("type", [
   templateApplyCommandSchema,
   rowPlaceCommandSchema,
   changeRowCommandSchema,
+  rowDuplicateCommandSchema,
+  rowMoveToPageCommandSchema,
   ...rowStateCommandSchema.options,
 ]);
 export type DataSourceCommand = z.infer<typeof dataSourceCommandSchema>;

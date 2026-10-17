@@ -39,4 +39,6 @@ export const databaseCommandPolicies = {
   "row.place": { scope: "source", preview: "record" },
   "row.archive": { scope: "source", preview: "record" },
   "row.restore": { scope: "source", preview: "record" },
+  "row.duplicate": { scope: "source", preview: "confirmed" },
+  "row.moveToPage": { scope: "source", preview: "record" },
 } as const satisfies Record<DatabaseCommand["type"], CommandPolicy>;

@@ -384,6 +384,43 @@ test("identical retries replay the stored acknowledgement without side effects",
   assert.equal(harness.inserts.size, 0);
 });
 
+for (const command of [
+  { type: "row.duplicate", rowId: "row-1" },
+  { type: "row.moveToPage", rowId: "row-1", pageId: "destination" },
+] as const) {
+  test(`${command.type} receipt replay does not repeat a page action`, async () => {
+    const scope = { databaseId: "database-1", dataSourceId: "source-1" };
+    const actionRequest: DatabaseCommandRequest = {
+      protocolVersion: 2,
+      commandId: "record-action",
+      command,
+    };
+    const requestHash = await hashDatabaseCommandRequest(scope, actionRequest);
+    const ack = { ...replayAck, commandId: actionRequest.commandId };
+    const harness = transactionHarness({
+      receipt: {
+        acknowledgement: ack,
+        actorId: "user-1",
+        ...scope,
+        requestHash,
+      },
+    });
+    const dispatch = vi.fn();
+    assert.deepEqual(
+      await executeDatabaseCommand(
+        { actorId: "user-1", request: actionRequest, scope },
+        {
+          database: harness.database as never,
+          dispatch: dispatch as unknown as DatabaseCommandDispatcher,
+        },
+      ),
+      ack,
+    );
+    assert.equal(dispatch.mock.calls.length, 0);
+    assert.equal(harness.inserts.size, 0);
+  });
+}
+
 test("reusing a command ID with another body is rejected", async () => {
   const harness = transactionHarness({
     receipt: {

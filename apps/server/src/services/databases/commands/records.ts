@@ -219,7 +219,7 @@ async function writeValues(
     });
 }
 
-async function createRow(
+export async function createRow(
   context: DatabaseCommandContext,
   command: Extract<DataSourceCommand, { type: "row.place" }>,
 ): Promise<DatabaseCommandDispatchResult<DatabaseRecordEntity>> {
@@ -513,7 +513,7 @@ async function changeRow(
   };
 }
 
-async function setRowArchived(
+export async function setRowArchived(
   context: DatabaseCommandContext,
   command: Extract<DataSourceCommand, { type: "row.archive" | "row.restore" }>,
 ): Promise<DatabaseCommandDispatchResult<DatabaseRecordEntity>> {

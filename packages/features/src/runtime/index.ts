@@ -17,7 +17,12 @@ export type { CalendarOperation } from "../calendar/capabilities";
 export { dayInstant } from "../calendar-layout/time";
 export { defaultCalendarPreferences } from "../calendar/model";
 export { calendarConnectionReturnPath } from "../calendar/onboarding";
-export { isPageBodyEmpty, hasPageBodyContent } from "../pages/models";
+export {
+  isPageBodyEmpty,
+  hasPageBodyContent,
+  clonePageContent,
+  getDuplicatePageName,
+} from "../pages/models";
 export type {
   DatabaseAutomationMutationFact,
   DatabaseMutationOrigin,

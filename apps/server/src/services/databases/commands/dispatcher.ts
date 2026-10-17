@@ -4,11 +4,14 @@ import { dispatchRecordCommand } from "./records";
 import { dispatchStructuralCommand } from "./structural/dispatch";
 import { dispatchLifecycleCommand } from "./lifecycle";
 import { clearViewSort } from "./structural/views";
+import { dispatchRecordActionCommand } from "./record-actions";
 
 /** The sole host/source command dispatch boundary. */
 export const dispatchDatabaseCommand = (async (context, command) => {
   const lifecycle = await dispatchLifecycleCommand(context, command);
   if (lifecycle) return lifecycle;
+  const action = context.dataSourceId ? await dispatchRecordActionCommand(context, command) : null;
+  if (action) return action;
   const rowResult = context.dataSourceId
     ? await dispatchRecordCommand(context, command as never)
     : null;

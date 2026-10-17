@@ -1,3 +1,4 @@
+import { authorizeRecordAction } from "../../services/databases/commands/record-actions";
 import {
   databaseCommandRequestSchema,
   databaseCreationCommandSchema,
@@ -52,6 +53,12 @@ async function commandResponse(c: Context<AppBindings>, dataSourceId: string | n
     await requireDatabaseEditAccess(databaseId, authenticated.user.id);
     if (dataSourceId) {
       const target = await requireDataSourceEditAccess(dataSourceId, authenticated.user.id);
+      await authorizeRecordAction(
+        request.command,
+        dataSourceId,
+        target.workspaceId,
+        authenticated.user.id,
+      );
       if (request.command.type === "row.place") {
         const { source, pageId } = request.command;
         if (source) {
