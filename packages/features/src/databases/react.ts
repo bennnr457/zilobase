@@ -43,6 +43,9 @@ export {
 } from "./mutations/rows";
 export { useDatabaseEntityCommandState } from "./interactions/react";
 export { useDatabaseSessionId } from "./queries/session";
+export { useDatabaseRecordActions, useDatabaseRecordActionAccess } from "./records/row-actions";
+export type { DatabaseRowAction, DatabaseRowActionResult } from "./records/row-actions";
+export { useDatabaseRowMoveDestinations } from "./records/row-action-destinations";
 export { useDatabaseBootstrap } from "./queries/bootstrap";
 export { useDatabaseRecords } from "./queries/records";
 export { useDatabaseAccess } from "./access/react";
