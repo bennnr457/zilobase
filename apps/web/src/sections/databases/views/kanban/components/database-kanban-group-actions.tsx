@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/components/ui/button-group";
 import { diffConfiguration } from "@zilobase/features/databases";
 import { useEffect, useState } from "react";
 import { useUpdateDatabaseView } from "@zilobase/features/databases/react";
@@ -149,7 +150,7 @@ export function DatabaseKanbanGroupActions({
 }) {
   if (!actions.editable) return null;
   return (
-    <div className="ml-auto flex shrink-0 items-center gap-0.5">
+    <ButtonGroup variant="plain" className="ml-auto flex shrink-0 items-center gap-0.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button aria-label={`${option.name} group actions`} variant="ghost" size="icon-sm">
@@ -198,7 +199,7 @@ export function DatabaseKanbanGroupActions({
           <Plus />
         </Button>
       ) : null}
-    </div>
+    </ButtonGroup>
   );
 }
 

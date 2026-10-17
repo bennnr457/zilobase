@@ -87,6 +87,10 @@ test("Agenda navigation advances thirty days and source loading covers all rende
 }) => {
   const state = await setupCalendar(page);
   await request(page, "2026-09-09", "agenda");
+  await expect(page.locator('[data-slot="event-calendar-content"]')).toHaveAttribute(
+    "data-view",
+    "agenda",
+  );
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect.poll(() => date(page)).toBe("2026-10-09");
   await request(page, "2026-09-09", "month");

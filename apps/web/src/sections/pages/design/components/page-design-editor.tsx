@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Check, ChevronDown, SidebarSimpleIcon, X } from "@/components/icons";
 import { resolvePageLayoutDatabaseId } from "@zilobase/features/pages";
 import {
@@ -282,19 +283,15 @@ function LayoutEditor({ onClose, target }: { onClose: () => void; target: Layout
         <Button onClick={close} variant="ghost">
           <X /> Cancel
         </Button>
-        <div className="ml-2 flex">
-          <Button
-            className="rounded-r-none"
-            disabled={layoutMutationPending}
-            onClick={() => setApplyDialogOpen(true)}
-          >
+        <ButtonGroup className="ml-2" variant="connected" aria-label="Apply layout">
+          <Button disabled={layoutMutationPending} onClick={() => setApplyDialogOpen(true)}>
             <Check /> Apply
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 aria-label="Choose apply scope"
-                className="rounded-l-none border-l border-action-on-selected px-2"
+                className="px-2"
                 disabled={layoutMutationPending}
               >
                 <ChevronDown />
@@ -321,7 +318,7 @@ function LayoutEditor({ onClose, target }: { onClose: () => void; target: Layout
               ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </ButtonGroup>
       </header>
 
       <div className="flex min-h-0 flex-1">

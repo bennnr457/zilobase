@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   conditionOperatorNeedsValue,
   getDatabaseFilterOperatorsForType,
@@ -64,11 +65,7 @@ function DatabaseFilterChip({
       : null;
 
   return (
-    <div
-      aria-label={`${filter.label} filter`}
-      className="inline-flex max-w-full shrink-0 items-center divide-x divide-stroke-default overflow-hidden rounded-md border border-control-border bg-action-neutral-hover text-xs text-action-on-neutral"
-      role="group"
-    >
+    <ButtonGroup aria-label={`${filter.label} filter`} variant="segmented" role="group">
       <Select onValueChange={(propertyId) => onUpdate({ propertyId })} value={filter.propertyId}>
         <SelectTrigger
           aria-label={`${filter.label} filter property`}
@@ -163,7 +160,7 @@ function DatabaseFilterChip({
       >
         <X className="size-3.5" />
       </button>
-    </div>
+    </ButtonGroup>
   );
 }
 

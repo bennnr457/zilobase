@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/components/ui/button-group";
 import { getToolbarSourceIdentity, getToolbarSourceTitle } from "@zilobase/features/databases";
 import { DatabaseSettingsControl } from "./database-settings-control";
 import { DatabaseRowCreationControl } from "./database-row-creation-control";
@@ -70,7 +71,7 @@ export function DatabaseToolbarActions({
   const hostDisplayTitle = getToolbarSourceTitle(sourceHost, activeViewTab, draftDatabaseTitle);
 
   return (
-    <div className="ml-auto flex shrink-0 items-center gap-0">
+    <ButtonGroup variant="plain" className="ml-auto flex shrink-0 items-center gap-0">
       {editable ? (
         <>
           <DatabaseSaveStatus databaseId={automationDatabaseId} />
@@ -115,7 +116,7 @@ export function DatabaseToolbarActions({
         </Button>
       ) : null}
       {editable ? <DatabaseRowCreationControl onPreviewForm={onPreviewForm} /> : null}
-    </div>
+    </ButtonGroup>
   );
 }
 

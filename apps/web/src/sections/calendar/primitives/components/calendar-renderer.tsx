@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/components/ui/button-group";
 import type { ReactNode } from "react";
 import {
   EventCalendar,
@@ -65,9 +66,11 @@ export function CalendarRenderer<TData = unknown>({
         <EventCalendarNav className="min-h-10 flex-none flex-wrap gap-1 border-0 px-0 py-0">
           {leading}
           <EventCalendarTitle className="min-w-0 flex-1 truncate" />
-          <EventCalendarNavToday />
-          <EventCalendarNavPrev />
-          <EventCalendarNavNext />
+          <ButtonGroup variant="plain" aria-label="Calendar period navigation">
+            <EventCalendarNavToday />
+            <EventCalendarNavPrev />
+            <EventCalendarNavNext />
+          </ButtonGroup>
           <EventCalendarViewSwitcher />
           {actions}
         </EventCalendarNav>

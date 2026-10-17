@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/components/ui/button-group";
 import type { DatabaseSortDirection } from "@zilobase/features/databases";
 import { ArrowDownUp, Plus, X } from "@/components/icons";
 import { useState } from "react";
@@ -44,9 +45,9 @@ export function DatabaseSortBar({
         );
 
         return (
-          <div
+          <ButtonGroup
             aria-label={`${sort.label} sort`}
-            className="inline-flex max-w-full shrink-0 items-center divide-x divide-stroke-default overflow-hidden rounded-md border border-control-border bg-action-neutral-hover text-xs text-action-on-neutral"
+            variant="segmented"
             key={sort.column}
             role="group"
           >
@@ -94,7 +95,7 @@ export function DatabaseSortBar({
             >
               <X className="size-3.5" />
             </button>
-          </div>
+          </ButtonGroup>
         );
       })}
       {canAddDatabaseSort ? (
