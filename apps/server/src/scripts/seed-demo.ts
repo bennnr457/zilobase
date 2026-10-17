@@ -7,7 +7,8 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required");
 }
 
-const databaseClient = createDbClientForUrl(databaseUrl);
+// Production maintenance can include a cold remote TLS handshake.
+const databaseClient = createDbClientForUrl(databaseUrl, { connectionTimeoutMillis: 15_000 });
 
 main().catch((error) => {
   console.error("Zilobase hosted demo seed failed", error);

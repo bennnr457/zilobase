@@ -80,11 +80,11 @@ export function getCurrentExtensionTransactionDatabase(): Database {
 
 export function createDbClientForUrl(
   connectionString: string,
-  options: { queryTimeoutMillis?: number } = {},
+  options: { connectionTimeoutMillis?: number; queryTimeoutMillis?: number } = {},
 ) {
   const client = new Client({
     connectionString,
-    connectionTimeoutMillis: 3000,
+    connectionTimeoutMillis: options.connectionTimeoutMillis ?? 3000,
     ...(options.queryTimeoutMillis ? { query_timeout: options.queryTimeoutMillis } : {}),
     ...(usesLocalSslProxy(connectionString) ? { ssl: { rejectUnauthorized: false } } : {}),
   });
