@@ -1,4 +1,6 @@
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
+import { useTable } from "@tanstack/react-table";
+import { DataGrid, dataGridFeatures } from "../../../src/components/ui/data-grid/data-grid";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { DatabaseVirtualizedTable } from "../../../src/sections/databases/views/table/components/database-table-shell";
@@ -7,6 +9,17 @@ import {
   useSetActiveDatabaseCell,
 } from "../../../src/sections/databases/views/state/components/database-cell-state";
 import type { TableRow } from "../../../src/sections/databases/views/table/lib/database-table-model";
+
+const columns = [{ id: "name", size: 250 }];
+function GridFixture({ rows, children }: { rows: TableRow[]; children: ReactNode }) {
+  const table = useTable({
+    features: dataGridFeatures,
+    columns,
+    data: rows,
+    getRowId: (row) => row.id,
+  });
+  return createElement(DataGrid, { table, recordCount: rows.length }, children);
+}
 
 export function mountScrollTable(
   container: HTMLElement,
@@ -39,26 +52,30 @@ export function mountScrollTable(
           DatabaseCellStateProvider,
           null,
           createElement(ActiveCellController),
-          createElement(DatabaseVirtualizedTable, {
-            columnKeys: ["name"],
-            columnWidths: { name: 250 },
-            measurementKey: "test",
-            tableMinWidth: 250,
-            virtualizationEnabled,
-            onRowsRendered: () => {
-              renderedRangeNotifications += 1;
-            },
-            rows,
-            renderRow: (row, index, measureElement) => {
-              renders.set(index, (renders.get(index) ?? 0) + 1);
-              return createElement(
-                "tr",
-                // Match the estimate so scroll tests exclude variable-height anchoring.
-                { key: row.id, "data-index": index, ref: measureElement, style: { height: 32 } },
-                createElement("td", null, `${label} ${row.pageId}`),
-              );
-            },
-          }),
+          createElement(
+            GridFixture,
+            { rows },
+            createElement(DatabaseVirtualizedTable, {
+              columnKeys: ["name"],
+              columnWidths: { name: 250 },
+              measurementKey: "test",
+              tableMinWidth: 250,
+              virtualizationEnabled,
+              onRowsRendered: () => {
+                renderedRangeNotifications += 1;
+              },
+              rows,
+              renderRow: (row, index, measureElement) => {
+                renders.set(index, (renders.get(index) ?? 0) + 1);
+                return createElement(
+                  "tr",
+                  // Match the estimate so scroll tests exclude variable-height anchoring.
+                  { key: row.id, "data-index": index, ref: measureElement, style: { height: 32 } },
+                  createElement("td", null, `${label} ${row.pageId}`),
+                );
+              },
+            }),
+          ),
         ),
       ),
     );

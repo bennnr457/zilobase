@@ -18,7 +18,9 @@ import {
   shouldRenderVirtualizedDatabaseRows,
 } from "../../controller/lib/database-view-scroll";
 import { useActiveDatabaseCellKey } from "../../state/components/database-cell-state";
-import { getColumnWidth, type TableRow } from "../lib/database-table-model";
+import { type TableRow } from "../lib/database-table-model";
+import { DataGridTableBase, DataGridTableBody } from "@/components/ui/data-grid/data-grid-table";
+import { useDatabaseGridScroll } from "../hooks/use-database-grid";
 
 export function getConditionalColorClassName(color?: string) {
   return color ? getColorToken(color).backgroundClass : undefined;
@@ -32,8 +34,6 @@ export function getTableMinWidthStyle(tableMinWidth: number) {
 
 export function DatabaseTable({
   children,
-  columnKeys,
-  columnWidths,
   tableMinWidth,
 }: {
   children: ReactNode;
@@ -42,28 +42,22 @@ export function DatabaseTable({
   tableMinWidth: number;
 }) {
   return (
-    <table className="database-table" style={getTableMinWidthStyle(tableMinWidth)}>
-      <DatabaseTableColumns columnKeys={columnKeys} columnWidths={columnWidths} />
+    <DataGridTableBase
+      tableProps={{
+        className: "database-table border-collapse",
+        role: "presentation",
+        style: {
+          ...getTableMinWidthStyle(tableMinWidth),
+          width: tableMinWidth,
+          minWidth: tableMinWidth,
+          borderCollapse: "collapse",
+        },
+      }}
+    >
       {children}
-    </table>
+    </DataGridTableBase>
   );
 }
-
-const DatabaseTableColumns = memo(function DatabaseTableColumns({
-  columnKeys,
-  columnWidths,
-}: {
-  columnKeys: string[];
-  columnWidths: Record<string, number>;
-}) {
-  return (
-    <colgroup>
-      {columnKeys.map((key) => (
-        <col data-column-id={key} key={key} style={{ width: getColumnWidth(columnWidths, key) }} />
-      ))}
-    </colgroup>
-  );
-});
 
 export function DatabaseVirtualizedTable({
   columnKeys,
@@ -93,6 +87,7 @@ export function DatabaseVirtualizedTable({
   virtualizationEnabled: boolean;
 }) {
   const tableRef = useRef<HTMLDivElement | null>(null);
+  const grid = useDatabaseGridScroll();
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
   const getItemKey = useCallback((index: number) => rows[index]?.id ?? index, [rows]);
@@ -103,17 +98,21 @@ export function DatabaseVirtualizedTable({
   );
   const activePageId = activeCellPageId(activeCellKey);
   const activeRowIndex = activePageId ? (rowIndexByPageId.get(activePageId) ?? -1) : -1;
+  const focusedRowIndex = grid?.focusedRowId
+    ? rows.findIndex((row) => row.id === grid.focusedRowId)
+    : -1;
   const rangeExtractor = useCallback(
     (range: Range) => {
       const indexes = defaultRangeExtractor(range);
 
-      if (activeRowIndex < 0 || indexes.includes(activeRowIndex)) {
-        return indexes;
-      }
-
-      return [...indexes, activeRowIndex].sort((left, right) => left - right);
+      return [
+        ...new Set([
+          ...indexes,
+          ...[activeRowIndex, focusedRowIndex].filter((index) => index >= 0),
+        ]),
+      ].sort((left, right) => left - right);
     },
-    [activeRowIndex],
+    [activeRowIndex, focusedRowIndex],
   );
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -132,6 +131,24 @@ export function DatabaseVirtualizedTable({
   useLayoutEffect(() => {
     virtualizer.measure();
   }, [measurementKey, virtualizer]);
+
+  useLayoutEffect(
+    () =>
+      grid?.registerRows(
+        rows.map((row) => row.id),
+        (id) => {
+          const index = rows.findIndex((row) => row.id === id);
+          if (index < 0) return;
+          if (virtualizationEnabled && scrollElement)
+            virtualizer.scrollToIndex(index, { align: "auto" });
+          else
+            tableRef.current
+              ?.querySelector(`[data-database-row-id="${CSS.escape(id)}"]`)
+              ?.scrollIntoView?.({ block: "nearest", inline: "nearest", behavior: "instant" });
+        },
+      ),
+    [grid?.registerRows, rows, scrollElement, virtualizationEnabled, virtualizer],
+  );
 
   useLayoutEffect(() => {
     const element = tableRef.current;
@@ -213,7 +230,7 @@ export function DatabaseVirtualizedTable({
         tableMinWidth={tableMinWidth}
       >
         {header}
-        <tbody>
+        <DataGridTableBody>
           {renderVirtualRows
             ? virtualRows.map((virtualRow, virtualIndex) => {
                 const previousEnd =
@@ -251,7 +268,7 @@ export function DatabaseVirtualizedTable({
             </tr>
           ) : null}
           {footerRow}
-        </tbody>
+        </DataGridTableBody>
       </DatabaseTable>
     </div>
   );

@@ -1,5 +1,10 @@
 import { Toaster } from "sonner";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { useTable } from "@tanstack/react-table";
+import {
+  DataGrid,
+  dataGridFeatures,
+} from "../../../apps/web/src/components/ui/data-grid/data-grid";
 import { createRoot } from "react-dom/client";
 import { QueryClient } from "@tanstack/react-query";
 import { ZilobaseFeaturesProvider, type ZilobaseFeaturesConfig } from "@zilobase/features";
@@ -73,6 +78,20 @@ const statusProperty = {
 };
 const today = startOfDay(new Date());
 const stored = (offset: number) => format(addDays(today, offset), "yyyy-MM-dd");
+const comparisonData: object[] = [];
+const comparisonColumns = [{ id: "name", size: 250 }];
+function TableComparison({ children }: { children: ReactNode }) {
+  const table = useTable({
+    features: dataGridFeatures,
+    columns: comparisonColumns,
+    data: comparisonData,
+  });
+  return (
+    <DataGrid table={table} recordCount={0}>
+      {children}
+    </DataGrid>
+  );
+}
 function makeRow(index: number): SortableDatabaseItem {
   return {
     id: `row-${index}`,
@@ -297,31 +316,37 @@ function Proof() {
                 className="database-table-wrap database-block-shell"
                 style={{ position: "relative", marginBottom: 24, width: 250 }}
               >
-                <DatabaseTable
-                  columnKeys={["name"]}
-                  columnWidths={{ name: 250 }}
-                  tableMinWidth={250}
-                >
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr data-proof="table-row">
-                      <td className="database-page-cell">
-                        <DatabaseCellContent>
-                          <DatabasePageLink
-                            editable={false}
-                            pageId="page-0"
-                            pageSummary={makeRow(0).page}
-                          />
-                        </DatabaseCellContent>
-                      </td>
-                    </tr>
-                    <CreateDatabaseRowButton columnCount={1} disabled={false} onClick={() => {}} />
-                  </tbody>
-                </DatabaseTable>
+                <TableComparison>
+                  <DatabaseTable
+                    columnKeys={["name"]}
+                    columnWidths={{ name: 250 }}
+                    tableMinWidth={250}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr data-proof="table-row">
+                        <td className="database-page-cell">
+                          <DatabaseCellContent>
+                            <DatabasePageLink
+                              editable={false}
+                              pageId="page-0"
+                              pageSummary={makeRow(0).page}
+                            />
+                          </DatabaseCellContent>
+                        </td>
+                      </tr>
+                      <CreateDatabaseRowButton
+                        columnCount={1}
+                        disabled={false}
+                        onClick={() => {}}
+                      />
+                    </tbody>
+                  </DatabaseTable>
+                </TableComparison>
                 <DatabaseRowDragControls
                   canReorderRows
                   editable

@@ -15,9 +15,13 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.equal(databaseColumnDefaultWidth, 200);
     assert.equal(databaseNameColumnDefaultWidth, databaseColumnDefaultWidth * 1.25);
     assert.equal(databaseAddPropertyColumnDefaultWidth, databaseColumnDefaultWidth);
-    assert.match(tableSource, /style=\{\{ width: getColumnWidth\(columnWidths, key\) \}\}/);
+    const gridSource = await readSource(
+      "/src/sections/databases/views/table/hooks/use-database-grid.ts",
+    );
+    assert.match(tableSource, /<DataGridTableBase/);
+    assert.match(gridSource, /size: getColumnWidth\(columnWidths, id\)/);
     assert.doesNotMatch(tableSource, /key === ADD_PROPERTY_COLUMN_ID\s*\? undefined/);
-    assert.match(tableSource, /\{header\}\s*<tbody>/);
+    assert.match(tableSource, /\{header\}\s*<DataGridTableBody>/);
     assert.match(tableViewSource, /header=\{renderTableHeader\("table"\)\}/);
   });
 

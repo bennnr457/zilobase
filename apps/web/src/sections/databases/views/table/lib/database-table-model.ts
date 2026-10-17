@@ -46,14 +46,6 @@ export type GroupRowDropTarget = {
   top: number;
 };
 
-export type CellFillDrag = {
-  propertyId: string;
-  propertyType: string;
-  sourceRowId: string;
-  sourceValue: string | string[];
-  targetRowId: string;
-};
-
 export const DATABASE_NAME_COLUMN_ID = "name";
 export const ADD_PROPERTY_COLUMN_ID = "add-property";
 const INSERT_PROPERTY_COLUMN_PREFIX = "insert-property";

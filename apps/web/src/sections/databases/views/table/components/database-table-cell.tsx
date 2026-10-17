@@ -1,4 +1,8 @@
-import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
+import { useDataGrid } from "@/components/ui/data-grid/data-grid";
+import { DataGridTableBodyRowCell } from "@/components/ui/data-grid/data-grid-table";
+import type { DatabaseGridRow } from "../hooks/use-database-grid";
+import { cn } from "@/lib/utils";
 import { Plus } from "@/components/icons";
 import {
   useDatabaseCellIsActive,
@@ -10,52 +14,35 @@ export function DatabaseActiveTableCell({
   cellKey,
   children,
   className,
-  isFillTarget,
-  isSelected,
-  onFillStart,
-  onSelect,
+  rowId,
+  columnId,
   presenceKey,
-  selectOnPointerDown,
   wrapContent,
 }: {
   cellKey: string;
   children: (setActive: (active: boolean) => void) => ReactNode;
   className?: string;
-  isFillTarget?: boolean;
-  isSelected: boolean;
-  onFillStart?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
-  onSelect: () => void;
+  rowId: string;
+  columnId: string;
   presenceKey: string;
-  selectOnPointerDown?: boolean;
   wrapContent?: boolean;
 }) {
   const isActive = useDatabaseCellIsActive(cellKey);
+  const { table } = useDataGrid<DatabaseGridRow>();
+  const cell = table.getRow(rowId).getAllCellsByColumnId()[columnId];
   const setActiveCell = useSetActiveDatabaseCell();
   const { cellPresenceByKey } = useDatabaseRealtimeState();
   const presence = cellPresenceByKey[presenceKey] ?? [];
 
   return (
-    <td
-      className={className}
-      data-active={isActive ? "true" : undefined}
-      data-fill-target={isFillTarget ? "true" : undefined}
-      data-presence={presence.length > 0 ? "true" : undefined}
-      data-selected={isSelected ? "true" : undefined}
-      data-wrap-content={wrapContent ? "true" : undefined}
-      onClick={onSelect}
-      onPointerDownCapture={
-        selectOnPointerDown
-          ? (event) => {
-              if (
-                (event.target as Element).closest(".database-page-open, .database-sub-item-toggle")
-              ) {
-                return;
-              }
-
-              onSelect();
-            }
-          : undefined
-      }
+    <DataGridTableBodyRowCell
+      cell={cell}
+      cellProps={{
+        className: cn("p-0", className),
+        "data-active": isActive ? "true" : undefined,
+        "data-presence": presence.length > 0 ? "true" : undefined,
+        "data-wrap-content": wrapContent ? "true" : undefined,
+      }}
     >
       {presence.length > 0 ? (
         <div
@@ -87,17 +74,7 @@ export function DatabaseActiveTableCell({
         </div>
       ) : null}
       {children((active) => setActiveCell(active ? cellKey : null))}
-      {isSelected && onFillStart ? (
-        <button
-          aria-label="Drag vertically to fill value"
-          className="database-cell-fill-handle"
-          onClick={(event) => event.stopPropagation()}
-          onPointerDown={onFillStart}
-          title="Drag vertically to fill value"
-          type="button"
-        />
-      ) : null}
-    </td>
+    </DataGridTableBodyRowCell>
   );
 }
 

@@ -79,37 +79,6 @@
     @apply z-20;
   }
 
-  .tiptap-editor
-    .database-table
-    tbody
-    td:is(.database-page-cell, .database-value-cell)[data-selected="true"] {
-    @apply z-30;
-    box-shadow: inset 0 0 0 2px
-      var(--database-selection-color, var(--zb-color-action-border-selected));
-  }
-
-  .tiptap-editor .database-table tbody td.database-value-cell[data-fill-target="true"] {
-    @apply bg-selection-row;
-    box-shadow:
-      inset 2px 0 var(--database-selection-color, var(--zb-color-action-border-selected)),
-      inset -2px 0 var(--database-selection-color, var(--zb-color-action-border-selected));
-  }
-
-  .database-cell-fill-handle {
-    @apply absolute -bottom-1.5 -right-1.5 z-40 size-3 cursor-crosshair rounded-full border-2 border-surface-canvas outline-none;
-    background: var(--database-selection-color, var(--zb-color-action-border-selected));
-    touch-action: none;
-  }
-
-  .database-cell-fill-handle::after {
-    @apply absolute content-[''];
-    inset: -0.375rem;
-  }
-
-  .database-cell-fill-handle:focus-visible {
-    @apply ring-2 ring-action-focus-ring ring-offset-1;
-  }
-
   .database-cell-presence {
     @apply pointer-events-none absolute inset-0 z-10;
   }
@@ -170,6 +139,23 @@
   .database-table tbody td .database-cell-content[data-wrap-content="false"] > * {
     height: calc(2rem - 1px);
     min-height: calc(2rem - 1px);
+  }
+
+  .database-table tbody td .database-cell-content[data-wrap-content="true"],
+  .database-table tbody td .database-cell-content[data-wrap-content="true"] > * {
+    min-height: calc(2rem - 1px);
+  }
+
+  .database-table
+    tbody
+    td
+    .database-cell-content[data-wrap-content="true"]
+    > :is(
+      .database-date-cell-trigger,
+      .database-input-cell-trigger,
+      .database-select-cell-trigger
+    ) {
+    padding-block: calc(0.25rem - 0.5px);
   }
 
   .database-cell-content[data-wrap-content="true"] {
@@ -657,12 +643,6 @@
   .database-row-dragging,
   .database-row-dragging * {
     cursor: grabbing !important;
-    user-select: none !important;
-  }
-
-  .database-cell-fill-cursor,
-  .database-cell-fill-cursor * {
-    cursor: crosshair !important;
     user-select: none !important;
   }
 }

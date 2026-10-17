@@ -32,6 +32,7 @@ export function DatabaseHeaderReorderItem({
   return (
     <Reorder.Item
       as="th"
+      role="columnheader"
       className={cn("database-reorderable-header", className)}
       data-column-dragging={isDragging ? "true" : undefined}
       data-column-reorderable={canReorder ? "true" : undefined}
