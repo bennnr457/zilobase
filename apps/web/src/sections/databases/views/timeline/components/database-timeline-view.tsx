@@ -1,3 +1,4 @@
+import { DatabaseRowActionsProvider } from "../../shared/components/database-row-actions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUndoHistory } from "@/app/shortcuts/undo-history";
 import { useDatabaseSelection } from "../../shared/hooks/selection";
@@ -38,7 +39,6 @@ export function DatabaseTimelineView() {
     setViewDateProperty,
     setupTimelineDateProperty,
     addTimelineRow,
-    updateDatabasePropertyConfig,
   } = useDatabaseActionsContext();
   const {
     activeDatabaseFilters,
@@ -310,16 +310,10 @@ export function DatabaseTimelineView() {
   }
 
   return (
-    <>
+    <DatabaseRowActionsProvider selection={selection}>
       {editable && selection.selectedRows.length > 0 ? (
         <DatabaseSelectionToolbar
           clearSelection={() => selection.setSelectedRowIds(new Set())}
-          copyLinks={selection.copySelectedRowLinks}
-          getSelectionValue={selection.getSelectionValue}
-          onApply={selection.saveSelectedPropertyValue}
-          onUpdateConfig={updateDatabasePropertyConfig}
-          personOptions={personOptions}
-          properties={properties}
           selectedCount={selection.selectedRows.length}
         />
       ) : null}
@@ -364,6 +358,6 @@ export function DatabaseTimelineView() {
         />
       </div>
       <DatabaseRecordWindowControl />
-    </>
+    </DatabaseRowActionsProvider>
   );
 }

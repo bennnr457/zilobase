@@ -1,4 +1,5 @@
-import type { CSSProperties, DragEvent as ReactDragEvent } from "react";
+import { useRef, type CSSProperties, type DragEvent as ReactDragEvent } from "react";
+import { useDatabaseRowActions } from "../../views/shared/components/database-row-actions";
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import { GripVertical } from "@/components/icons";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +32,8 @@ export function DatabaseRowDragControls({
   rowsById: ReadonlyMap<string, SortableDatabaseItem>;
   selectedRowIds: Set<string>;
 }) {
+  const actions = useDatabaseRowActions();
+  const gesture = useRef({ x: 0, y: 0, moved: false, dragging: false });
   if (!editable) return null;
 
   return (
@@ -66,11 +69,41 @@ export function DatabaseRowDragControls({
               className="database-row-drag-handle"
               data-database-row-drag-handle
               data-dragging={draggedRowId === row.id ? "true" : undefined}
-              disabled={!canReorderRows}
               draggable={canReorderRows}
-              onClick={(event) => event.preventDefault()}
+              aria-haspopup="menu"
+              onPointerDown={(event) => {
+                gesture.current = {
+                  x: event.clientX,
+                  y: event.clientY,
+                  moved: false,
+                  dragging: false,
+                };
+              }}
+              onPointerMove={(event) => {
+                if (
+                  event.buttons &&
+                  Math.hypot(event.clientX - gesture.current.x, event.clientY - gesture.current.y) >
+                    4
+                )
+                  gesture.current.moved = true;
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  gesture.current.moved = false;
+                  gesture.current.dragging = false;
+                }
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!gesture.current.moved && !gesture.current.dragging)
+                  actions?.open(event.currentTarget, row.id);
+              }}
               onDragEnd={onDragEnd}
-              onDragStart={(event) => onDragStart(row, event)}
+              onDragStart={(event) => {
+                gesture.current.dragging = true;
+                onDragStart(row, event);
+              }}
               title={rowDragTitle}
               type="button"
             >

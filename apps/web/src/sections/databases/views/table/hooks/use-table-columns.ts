@@ -76,15 +76,6 @@ export function useTableColumns({
       pendingColumnOrder ? getMergedColumnIds(baseColumnIds, pendingColumnOrder) : savedColumnIds,
     [baseColumnIds, pendingColumnOrder, savedColumnIds],
   );
-  const selectionProperties = useMemo(
-    () =>
-      renderedColumnIds.flatMap((columnId) => {
-        const property = propertiesById.get(columnId);
-
-        return property ? [property] : [];
-      }),
-    [propertiesById, renderedColumnIds],
-  );
   const headerColumnIds = useMemo(
     () =>
       dragColumnOrder ? getMergedColumnIds(renderedColumnIds, dragColumnOrder) : renderedColumnIds,
@@ -289,7 +280,6 @@ export function useTableColumns({
     editingPropertyKey,
     propertiesById,
     renderedColumnIds,
-    selectionProperties,
     headerColumnIds,
     canReorderColumns,
     pendingInsertPropertyKey,

@@ -52,6 +52,22 @@ const features = {
   deployment: "timeline-proof",
   auth: { getSession: async () => session },
   apiFetch: async (_path: string, init?: RequestInit) => {
+    const pageMatch = _path.match(/^\/pages\/(page-\d+)$/);
+    if (pageMatch && (!init?.method || init.method === "GET")) {
+      const index = Number(pageMatch[1].slice(5));
+      return {
+        accessLevel: "full",
+        databaseIds: ["host"],
+        page: {
+          ...makeRow(index).page,
+          workspaceId: "workspace",
+          type: "pageblock",
+          url: "#",
+          createdAt: "2026-10-17T00:00:00.000Z",
+          updatedAt: "2026-10-17T00:00:00.000Z",
+        },
+      };
+    }
     const payload = JSON.parse(String(init?.body ?? "{}"));
     commands.push(payload);
     return { commandId: payload.commandId, result: {}, sourceVersions: { source: 2 } };

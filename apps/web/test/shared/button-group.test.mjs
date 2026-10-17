@@ -13,9 +13,9 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.match(floating, /shadow-lg/);
     assert.match(floating, /gap-1/);
 
-    const selection = buttonGroupVariants({ variant: "selection" });
-    assert.match(selection, /button-group-item/);
-    assert.match(selection, /border-r-stroke-default/);
+    const selection = buttonGroupVariants({ variant: "segmented" });
+    assert.match(selection, /h-7/);
+    assert.match(selection, /border-stroke-default/);
     assert.doesNotMatch(selection, /h-9|text-sm|px-3/);
     assert.match(buttonGroupItemVariants({ layout: "icon" }), /size-7/);
 
@@ -30,7 +30,7 @@ export function register({ assert, loadModule, readSource, test }) {
     ]);
 
     assert.match(selectionBubbleMenu, /variant="floating"/);
-    assert.match(databaseSelectionToolbar, /variant="selection"/);
+    assert.match(databaseSelectionToolbar, /variant="segmented"/);
     assert.match(databaseSelectionToolbar, /ButtonGroupItem/);
     assert.doesNotMatch(editorStyles, /\.selection-toolbar\s*\{/);
   });

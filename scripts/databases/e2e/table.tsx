@@ -34,22 +34,61 @@ client.setQueryData(["session"], session);
 const writes: unknown[] = [],
   opened: string[] = [],
   actions: unknown[] = [];
-let applyCommand = (_body: any) => {};
+let applyCommand: (body: any) => unknown = () => {};
+const pageMetadata = new Map<string, Record<string, unknown>>();
+const favorites = new Set<string>();
+const rejectedPageActions = new Set<string>();
+const openedOptions: unknown[] = [];
+let pageAccess: "full" | "edit" | "view" = "full";
+const testPage = (id: string) => ({
+  id,
+  workspaceId: "workspace",
+  type: "pageblock",
+  url: "#",
+  name: proof.rows().find((row) => row.pageId === id)?.page.name ?? "Destination",
+  metadata: pageMetadata.get(id) ?? {},
+  isFavorite: favorites.has(id),
+  createdAt: "2026-10-17T00:00:00.000Z",
+  updatedAt: new Date().toISOString(),
+});
 let failTitle = false;
 const features = {
   queryClient: client,
   deployment: "table-proof",
   auth: { getSession: async () => activeSession },
   apiFetch: async (path: string, init?: RequestInit) => {
+    const pageMatch = path.match(/^\/pages\/(page-\d+)(\/favorite)?$/);
+    if (pageMatch) {
+      const id = pageMatch[1];
+      if (init?.method && init.method !== "GET" && rejectedPageActions.has(id))
+        throw new Error("Record action rejected");
+      if (pageMatch[2]) {
+        if (init?.method === "PUT") favorites.add(id);
+        else favorites.delete(id);
+      }
+      if (init?.method === "PATCH") {
+        const patch = JSON.parse(String(init.body));
+        if (patch.metadata) pageMetadata.set(id, { ...pageMetadata.get(id), ...patch.metadata });
+      }
+      if (init?.method === "DELETE") {
+        proof.trash(id);
+        return { page: testPage(id), deletedDatabaseIds: [], deletedPageIds: [id] };
+      }
+      return { page: testPage(id), accessLevel: pageAccess, databaseIds: ["host"] };
+    }
+    if (path.startsWith("/pages?"))
+      return { pages: [testPage("destination-page")], databases: [], placements: [] };
+    if (path === "/pages/destination-page")
+      return { page: testPage("destination-page"), accessLevel: "full", databaseIds: [] };
     if (!init?.body) return {};
     const body = JSON.parse(String(init.body));
     if (path.includes("command")) {
       if (failTitle && body.command?.title !== undefined) throw new Error("Title save rejected");
       writes.push(body);
-      applyCommand(body);
+      const result = applyCommand(body);
       return {
         commandId: body.commandId,
-        result: {},
+        result: result ?? {},
         sourceVersions: { source: 2 },
         event: {
           actorId: "user",
@@ -107,6 +146,11 @@ const row = (index: number): SortableDatabaseItem => ({
 });
 const proof = {
   writes,
+  openedOptions,
+  trash: (_id: string) => {},
+  pageMetadata,
+  rejectedPageActions,
+  favorites,
   opened,
   actions,
   identity: (account: string) => {
@@ -142,6 +186,7 @@ function Proof() {
     sorted: false,
     failSave: false,
     failTitle: false,
+    pageAccess: "full" as "full" | "edit" | "view",
     scope: "one",
     columns: ["text", "number", "status"],
   });
@@ -149,6 +194,7 @@ function Proof() {
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [positions, setPositions] = useState<Record<string, number>>({});
+  const [trashed, setTrashed] = useState<string[]>([]);
   const [extra, setExtra] = useState<SortableDatabaseItem[]>([]);
   const [values, setValues] = useState<Record<string, DatabasePropertyValue>>(() =>
     Object.fromEntries(
@@ -169,6 +215,7 @@ function Proof() {
     page: { ...r.page, name: names[r.id] ?? r.page.name },
   }));
   const visible = rows
+    .filter((row) => !trashed.includes(row.pageId))
     .filter((_, i) => !options.filtered || i % 2 === 0)
     .sort((a, b) =>
       options.sorted
@@ -184,9 +231,37 @@ function Proof() {
   }));
   const status = configured.find((p) => p.property.id === "status")!;
   failTitle = options.failTitle;
+  pageAccess = options.pageAccess;
+  proof.trash = (id) => setTrashed((current) => [...current, id]);
   applyCommand = (body) => {
     const command = body.command;
     if (!command) return;
+    if (command.type === "row.duplicate") {
+      const source = rows.find((row) => row.id === command.rowId)!;
+      const created = row(10000 + extra.length);
+      created.page.name = `${source.page.name} (copy)`;
+      setExtra((current) => [...current, created]);
+      setValues((current) => ({
+        ...current,
+        ...Object.fromEntries(
+          Object.entries(current)
+            .filter(([key]) => key.startsWith(`${source.pageId}:`))
+            .map(([key, value]) => [key.replace(source.pageId, created.pageId), value]),
+        ),
+      }));
+      return {
+        ...created,
+        dataSourceId: "source",
+        parentRowId: null,
+        orderKey: "10000",
+        valuesByPropertyId: {},
+      };
+    }
+    if (command.type === "row.moveToPage") {
+      const source = rows.find((row) => row.id === command.rowId);
+      if (source) proof.trash(source.pageId);
+      return {};
+    }
     if (command.title !== undefined)
       setNames((current) => ({ ...current, [command.rowId]: command.title }));
     if (command.valuesByPropertyId)
@@ -241,7 +316,7 @@ function Proof() {
     properties: configured,
     visibleProperties: configured.filter((p) => options.columns.includes(p.property.id)),
     propertyValuesByKey: values,
-    items: rows,
+    items: rows.filter((row) => !trashed.includes(row.pageId)),
     sortedItems: visible,
     groupProperty: options.grouped ? status : null,
     personOptions: [
@@ -276,7 +351,8 @@ function Proof() {
       const page = rows.find((r) => r.id === id)?.pageId;
       if (page) setValues((current) => ({ ...current, [`${page}:${propertyId}`]: next }));
     },
-    onOpenPage: (id: string) => {
+    onOpenPage: (id: string, options: unknown) => {
+      openedOptions.push(options);
       opened.push(id);
     },
     addDatabaseRow: (group?: string, _property?: unknown, parent?: string) => {

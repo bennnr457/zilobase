@@ -1,3 +1,4 @@
+import { DatabaseRowActionsProvider } from "../../shared/components/database-row-actions";
 import { DataGrid } from "@/components/ui/data-grid/data-grid";
 import { DataGridCellSelection } from "@/components/ui/data-grid/data-grid-cell-selection";
 import { DataGridTableBodyRow } from "@/components/ui/data-grid/data-grid-table";
@@ -182,7 +183,6 @@ export function DatabaseTableView() {
     setSelectedRowIds,
     selectedRows,
     getSelectionValue,
-    copySelectedRowLinks,
     saveSelectedPropertyValue,
     toggleSelectedRow,
   } = useDatabaseSelection({
@@ -232,7 +232,6 @@ export function DatabaseTableView() {
     editingPropertyKey,
     propertiesById,
     renderedColumnIds,
-    selectionProperties,
     headerColumnIds,
     canReorderColumns,
     pendingInsertPropertyKey,
@@ -1346,357 +1345,363 @@ export function DatabaseTableView() {
   );
 
   return (
-    <DataGrid
-      table={grid.table}
-      recordCount={visibleRows.length}
-      onCellsChange={grid.onCellsChange}
-      onCellSelectionChange={grid.onCellSelectionChange}
-      tableLayout={{
-        dense: true,
-        cellSelection: true,
-        cellEditMode: "click",
-        cellFillHandle: editable,
-        cellFillHandleVariant: "ring",
+    <DatabaseRowActionsProvider
+      selection={{
+        selectedRows,
+        selectedRowIds,
+        setSelectedRowIds,
+        getSelectionValue,
+        saveSelectedPropertyValue,
       }}
     >
-      <DatabaseGridScrollContext.Provider value={grid.scrollContext}>
-        {selectedRows.length > 0 ? (
-          <DatabaseSelectionToolbar
-            clearSelection={() => setSelectedRowIds(new Set())}
-            copyLinks={copySelectedRowLinks}
-            getSelectionValue={getSelectionValue}
-            onApply={saveSelectedPropertyValue}
-            onUpdateConfig={updateDatabasePropertyConfig}
-            personOptions={personOptions}
-            properties={selectionProperties}
-            selectedCount={selectedRows.length}
-          />
-        ) : null}
-        <div
-          className="database-table-wrap database-inline-scroll-wrap"
-          data-slot="data-grid"
-          data-inline-scroll={isInlineTableScrollEnabled ? "true" : undefined}
-          data-vertical-lines={layoutSettings.showVerticalLines ? "true" : "false"}
-          ref={tableWrapRef}
-          style={tableWrapStyle}
-          onMouseLeave={() => {
-            if (!draggedRowId) {
-              setHoveredRowId(null);
-            }
-          }}
-          onDragLeave={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as globalThis.Node | null)) {
-              releaseDatabaseRowDropOwner(rowDropOwner);
-              updateRowDropTarget(null);
-              updateGroupRowDropTarget(null);
-              isExternalRowDragActiveRef.current = false;
-              setIsExternalRowDragActive(false);
-            }
-          }}
-          onDragOver={(event: ReactDragEvent<HTMLDivElement>) => {
-            const hasDragPayload = editable && hasDatabasePageDragPayload(event.dataTransfer);
+      <DataGrid
+        table={grid.table}
+        recordCount={visibleRows.length}
+        onCellsChange={grid.onCellsChange}
+        onCellSelectionChange={grid.onCellSelectionChange}
+        tableLayout={{
+          dense: true,
+          cellSelection: true,
+          cellEditMode: "click",
+          cellFillHandle: editable,
+          cellFillHandleVariant: "ring",
+        }}
+      >
+        <DatabaseGridScrollContext.Provider value={grid.scrollContext}>
+          {selectedRows.length > 0 ? (
+            <DatabaseSelectionToolbar
+              clearSelection={() => setSelectedRowIds(new Set())}
+              selectedCount={selectedRows.length}
+            />
+          ) : null}
+          <div
+            className="database-table-wrap database-inline-scroll-wrap"
+            data-slot="data-grid"
+            data-inline-scroll={isInlineTableScrollEnabled ? "true" : undefined}
+            data-vertical-lines={layoutSettings.showVerticalLines ? "true" : "false"}
+            ref={tableWrapRef}
+            style={tableWrapStyle}
+            onMouseLeave={() => {
+              if (!draggedRowId) {
+                setHoveredRowId(null);
+              }
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as globalThis.Node | null)) {
+                releaseDatabaseRowDropOwner(rowDropOwner);
+                updateRowDropTarget(null);
+                updateGroupRowDropTarget(null);
+                isExternalRowDragActiveRef.current = false;
+                setIsExternalRowDragActive(false);
+              }
+            }}
+            onDragOver={(event: ReactDragEvent<HTMLDivElement>) => {
+              const hasDragPayload = editable && hasDatabasePageDragPayload(event.dataTransfer);
 
-            if (!draggedRowId && !hasDragPayload) {
-              return;
-            }
+              if (!draggedRowId && !hasDragPayload) {
+                return;
+              }
 
-            if (!draggedRowId && hasDragPayload && !isExternalRowDragActiveRef.current) {
-              isExternalRowDragActiveRef.current = true;
-              setIsExternalRowDragActive(true);
-              measureRows();
-            }
+              if (!draggedRowId && hasDragPayload && !isExternalRowDragActiveRef.current) {
+                isExternalRowDragActiveRef.current = true;
+                setIsExternalRowDragActive(true);
+                measureRows();
+              }
 
-            event.preventDefault();
-            claimDatabaseRowDropOwner(rowDropOwner);
-            // Keep propagating so the editor clears its previous block drop line
-            // and the source table can release its local drop indicator.
-            event.dataTransfer.dropEffect = "move";
-            if (isTableGrouped) {
-              updateGroupRowDropTarget(getGroupRowDropTarget(event.clientY));
-            } else {
-              updateRowDropTarget(resolveRowDropTarget(event.clientY, event.clientX));
-            }
-          }}
-          onDrop={(event) => {
-            const dragPayload = getDatabasePageDragPayload(event.dataTransfer);
-            const resolvedRowTarget = isTableGrouped
-              ? null
-              : resolveRowDropTarget(event.clientY, event.clientX);
-
-            if (isTableGrouped) {
-              updateGroupRowDropTarget(getGroupRowDropTarget(event.clientY));
-            } else {
-              updateRowDropTarget(resolvedRowTarget);
-            }
-
-            const hasDropTarget = isTableGrouped
-              ? groupRowDropTargetRef.current !== null
-              : resolvedRowTarget !== null;
-
-            if ((!draggedRowId && !dragPayload) || !hasDropTarget) {
-              return;
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-            function moveInternalRow() {
-              const nextMove = getDraggedRowMove();
-
-              if (nextMove)
-                manualPlacement.request((clearSortViewId) =>
-                  applyRowMove(nextMove, clearSortViewId),
-                );
-            }
-            function insertExternalRow(
-              dragPayload: NonNullable<ReturnType<typeof getDatabasePageDragPayload>>,
-              clearSortViewId?: string,
-            ) {
+              event.preventDefault();
+              claimDatabaseRowDropOwner(rowDropOwner);
+              // Keep propagating so the editor clears its previous block drop line
+              // and the source table can release its local drop indicator.
+              event.dataTransfer.dropEffect = "move";
               if (isTableGrouped) {
-                const target = groupRowDropTargetRef.current;
-                const section = groupedSections.find(
-                  (candidate) => candidate.id === target?.sectionId,
-                );
+                updateGroupRowDropTarget(getGroupRowDropTarget(event.clientY));
+              } else {
+                updateRowDropTarget(resolveRowDropTarget(event.clientY, event.clientX));
+              }
+            }}
+            onDrop={(event) => {
+              const dragPayload = getDatabasePageDragPayload(event.dataTransfer);
+              const resolvedRowTarget = isTableGrouped
+                ? null
+                : resolveRowDropTarget(event.clientY, event.clientX);
 
-                if (target && section) {
+              if (isTableGrouped) {
+                updateGroupRowDropTarget(getGroupRowDropTarget(event.clientY));
+              } else {
+                updateRowDropTarget(resolvedRowTarget);
+              }
+
+              const hasDropTarget = isTableGrouped
+                ? groupRowDropTargetRef.current !== null
+                : resolvedRowTarget !== null;
+
+              if ((!draggedRowId && !dragPayload) || !hasDropTarget) {
+                return;
+              }
+
+              event.preventDefault();
+              event.stopPropagation();
+              function moveInternalRow() {
+                const nextMove = getDraggedRowMove();
+
+                if (nextMove)
+                  manualPlacement.request((clearSortViewId) =>
+                    applyRowMove(nextMove, clearSortViewId),
+                  );
+              }
+              function insertExternalRow(
+                dragPayload: NonNullable<ReturnType<typeof getDatabasePageDragPayload>>,
+                clearSortViewId?: string,
+              ) {
+                if (isTableGrouped) {
+                  const target = groupRowDropTargetRef.current;
+                  const section = groupedSections.find(
+                    (candidate) => candidate.id === target?.sectionId,
+                  );
+
+                  if (target && section) {
+                    addDraggedPageRow(
+                      dragPayload,
+                      getAnchoredRowInsertPosition(rows, section.rows, target.localTargetIndex),
+                      section.groupValue,
+                      groupProperty,
+                      clearSortViewId,
+                    );
+                  }
+                } else {
                   addDraggedPageRow(
                     dragPayload,
-                    getAnchoredRowInsertPosition(rows, section.rows, target.localTargetIndex),
-                    section.groupValue,
-                    groupProperty,
+                    getAnchoredRowInsertPosition(rows, visibleRows, resolvedRowTarget?.index ?? 0),
+                    undefined,
+                    undefined,
                     clearSortViewId,
                   );
                 }
-              } else {
-                addDraggedPageRow(
-                  dragPayload,
-                  getAnchoredRowInsertPosition(rows, visibleRows, resolvedRowTarget?.index ?? 0),
-                  undefined,
-                  undefined,
-                  clearSortViewId,
+              }
+              if (draggedRowId) {
+                moveInternalRow();
+              } else if (dragPayload) {
+                manualPlacement.request((clearSortViewId) =>
+                  insertExternalRow(dragPayload, clearSortViewId),
                 );
               }
-            }
-            if (draggedRowId) {
-              moveInternalRow();
-            } else if (dragPayload) {
-              manualPlacement.request((clearSortViewId) =>
-                insertExternalRow(dragPayload, clearSortViewId),
-              );
-            }
-            clearRowDrag();
-          }}
-        >
-          {!isInlineTableScrollEnabled ? (
-            <DatabaseRowDragControls
-              canReorderRows={canReorderRows}
-              draggedRowId={draggedRowId}
-              editable={editable}
-              hoveredRowId={hoveredRowId}
-              onDragEnd={clearRowDrag}
-              onDragStart={startRowDrag}
-              onHoveredRowChange={setHoveredRowId}
-              onSelectedRowChange={toggleSelectedRow}
-              rowDragTitle={rowDragTitle}
-              rowLayout={rowLayout}
-              rowsById={rowsById}
-              selectedRowIds={selectedRowIds}
-            />
-          ) : null}
-          {!isInlineTableScrollEnabled ? (
-            <DatabaseRowDropLine depth={rowDropLineDepth} top={rowDropLineTop} />
-          ) : null}
-          {isTableGrouped ? (
+              clearRowDrag();
+            }}
+          >
+            {!isInlineTableScrollEnabled ? (
+              <DatabaseRowDragControls
+                canReorderRows={canReorderRows}
+                draggedRowId={draggedRowId}
+                editable={editable}
+                hoveredRowId={hoveredRowId}
+                onDragEnd={clearRowDrag}
+                onDragStart={startRowDrag}
+                onHoveredRowChange={setHoveredRowId}
+                onSelectedRowChange={toggleSelectedRow}
+                rowDragTitle={rowDragTitle}
+                rowLayout={rowLayout}
+                rowsById={rowsById}
+                selectedRowIds={selectedRowIds}
+              />
+            ) : null}
+            {!isInlineTableScrollEnabled ? (
+              <DatabaseRowDropLine depth={rowDropLineDepth} top={rowDropLineTop} />
+            ) : null}
+            {isTableGrouped ? (
+              <div
+                className="database-table-sticky-header database-inline-scroll"
+                ref={stickyHeaderScrollRef}
+              >
+                <div className="database-table-scroll-content database-inline-scroll-content">
+                  <DatabaseTable
+                    columnKeys={columnKeys}
+                    columnWidths={columnWidths}
+                    tableMinWidth={tableMinWidth}
+                  >
+                    {renderTableHeader("sticky")}
+                  </DatabaseTable>
+                </div>
+              </div>
+            ) : null}
             <div
-              className="database-table-sticky-header database-inline-scroll"
-              ref={stickyHeaderScrollRef}
+              className="database-table-scroll database-inline-scroll relative"
+              ref={tableScrollRef}
+              data-slot="data-grid-table-viewport"
+              role="grid"
+              aria-label={databaseName || "Database table"}
+              aria-rowcount={visibleRows.length + 1}
+              aria-colcount={columnKeys.length}
+              aria-multiselectable="true"
             >
               <div className="database-table-scroll-content database-inline-scroll-content">
-                <DatabaseTable
-                  columnKeys={columnKeys}
-                  columnWidths={columnWidths}
-                  tableMinWidth={tableMinWidth}
-                >
-                  {renderTableHeader("sticky")}
-                </DatabaseTable>
+                {isInlineTableScrollEnabled ? (
+                  <DatabaseRowDragControls
+                    canReorderRows={canReorderRows}
+                    draggedRowId={draggedRowId}
+                    editable={editable}
+                    hoveredRowId={hoveredRowId}
+                    onDragEnd={clearRowDrag}
+                    onDragStart={startRowDrag}
+                    onHoveredRowChange={setHoveredRowId}
+                    onSelectedRowChange={toggleSelectedRow}
+                    rowDragTitle={rowDragTitle}
+                    rowLayout={rowLayout}
+                    rowsById={rowsById}
+                    selectedRowIds={selectedRowIds}
+                  />
+                ) : null}
+                {isInlineTableScrollEnabled ? (
+                  <DatabaseRowDropLine depth={rowDropLineDepth} top={rowDropLineTop} />
+                ) : null}
+                {isTableGrouped ? (
+                  <div className="database-table-groups gap-0">
+                    {groupedSections.map((section) => {
+                      const isCollapsed = collapsedGroups[section.id] === true;
+
+                      function renderGroupRows() {
+                        return (
+                          <DatabaseVirtualizedTable
+                            columnKeys={columnKeys}
+                            columnWidths={columnWidths}
+                            footerRow={
+                              editable &&
+                              !section.isEmpty &&
+                              groupProperty &&
+                              canCreateRowInGroup(groupProperty) ? (
+                                <CreateDatabaseRowButton
+                                  columnCount={columnKeys.length}
+                                  disabled={!databaseId}
+                                  onClick={() => addDatabaseRow(section.groupValue, groupProperty)}
+                                />
+                              ) : undefined
+                            }
+                            measurementKey={tableMeasurementKey}
+                            onRowsRendered={scheduleMeasureRows}
+                            renderRow={renderTableRow}
+                            rows={section.rows}
+                            tableMinWidth={tableMinWidth}
+                            virtualizationEnabled={!draggedRowId && !isExternalRowDragActive}
+                          />
+                        );
+                      }
+
+                      return (
+                        <section
+                          className="database-table-group"
+                          data-database-group-id={section.id}
+                          data-drag-over={
+                            groupRowDropTarget?.sectionId === section.id ? "true" : undefined
+                          }
+                          key={section.id}
+                        >
+                          <button
+                            aria-expanded={!isCollapsed}
+                            className="database-table-group-toggle"
+                            onClick={() => toggleGroupCollapsed(section.id)}
+                            type="button"
+                          >
+                            {isCollapsed ? (
+                              <ChevronRight className="size-4 shrink-0" />
+                            ) : (
+                              <ChevronDown className="size-4 shrink-0" />
+                            )}
+                            <span className={getColorTokenBadgeClassName(section.color)}>
+                              <span
+                                aria-hidden="true"
+                                className={getColorTokenDotClassName(section.color)}
+                              />
+                              {section.name}
+                            </span>
+                            <span className="database-table-group-count">
+                              {section.rows.length}
+                            </span>
+                          </button>
+                          {!isCollapsed ? <>{renderGroupRows()}</> : null}
+                        </section>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <DatabaseVirtualizedTable
+                    columnKeys={columnKeys}
+                    columnWidths={columnWidths}
+                    footerRow={
+                      editable ? (
+                        <CreateDatabaseRowButton
+                          columnCount={columnKeys.length}
+                          disabled={!databaseId}
+                          onClick={() => addDatabaseRow()}
+                        />
+                      ) : undefined
+                    }
+                    header={renderTableHeader("table")}
+                    measurementKey={tableMeasurementKey}
+                    onRowsRendered={scheduleMeasureRows}
+                    renderRow={renderTableRow}
+                    rows={visibleRows}
+                    tableMinWidth={tableMinWidth}
+                    virtualizationEnabled={
+                      !draggedRowId && !isExternalRowDragActive && !isSubItemsNested
+                    }
+                  />
+                )}
+                {hasNextPage || isFetchingNextPage ? (
+                  <div
+                    aria-hidden={!isFetchingNextPage}
+                    className="database-rows-pagination-status flex items-center justify-center gap-2 px-4 py-3 text-sm text-content-secondary"
+                    ref={rowsScrollSentinelRef}
+                    style={getTableMinWidthStyle(tableMinWidth)}
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        <span>Loading more rows...</span>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
-          ) : null}
-          <div
-            className="database-table-scroll database-inline-scroll relative"
-            ref={tableScrollRef}
-            data-slot="data-grid-table-viewport"
-            role="grid"
-            aria-label={databaseName || "Database table"}
-            aria-rowcount={visibleRows.length + 1}
-            aria-colcount={columnKeys.length}
-            aria-multiselectable="true"
-          >
-            <div className="database-table-scroll-content database-inline-scroll-content">
-              {isInlineTableScrollEnabled ? (
-                <DatabaseRowDragControls
-                  canReorderRows={canReorderRows}
-                  draggedRowId={draggedRowId}
-                  editable={editable}
-                  hoveredRowId={hoveredRowId}
-                  onDragEnd={clearRowDrag}
-                  onDragStart={startRowDrag}
-                  onHoveredRowChange={setHoveredRowId}
-                  onSelectedRowChange={toggleSelectedRow}
-                  rowDragTitle={rowDragTitle}
-                  rowLayout={rowLayout}
-                  rowsById={rowsById}
-                  selectedRowIds={selectedRowIds}
-                />
-              ) : null}
-              {isInlineTableScrollEnabled ? (
-                <DatabaseRowDropLine depth={rowDropLineDepth} top={rowDropLineTop} />
-              ) : null}
-              {isTableGrouped ? (
-                <div className="database-table-groups gap-0">
-                  {groupedSections.map((section) => {
-                    const isCollapsed = collapsedGroups[section.id] === true;
-
-                    function renderGroupRows() {
-                      return (
-                        <DatabaseVirtualizedTable
-                          columnKeys={columnKeys}
-                          columnWidths={columnWidths}
-                          footerRow={
-                            editable &&
-                            !section.isEmpty &&
-                            groupProperty &&
-                            canCreateRowInGroup(groupProperty) ? (
-                              <CreateDatabaseRowButton
-                                columnCount={columnKeys.length}
-                                disabled={!databaseId}
-                                onClick={() => addDatabaseRow(section.groupValue, groupProperty)}
-                              />
-                            ) : undefined
-                          }
-                          measurementKey={tableMeasurementKey}
-                          onRowsRendered={scheduleMeasureRows}
-                          renderRow={renderTableRow}
-                          rows={section.rows}
-                          tableMinWidth={tableMinWidth}
-                          virtualizationEnabled={!draggedRowId && !isExternalRowDragActive}
-                        />
-                      );
-                    }
-
-                    return (
-                      <section
-                        className="database-table-group"
-                        data-database-group-id={section.id}
-                        data-drag-over={
-                          groupRowDropTarget?.sectionId === section.id ? "true" : undefined
-                        }
-                        key={section.id}
-                      >
-                        <button
-                          aria-expanded={!isCollapsed}
-                          className="database-table-group-toggle"
-                          onClick={() => toggleGroupCollapsed(section.id)}
-                          type="button"
-                        >
-                          {isCollapsed ? (
-                            <ChevronRight className="size-4 shrink-0" />
-                          ) : (
-                            <ChevronDown className="size-4 shrink-0" />
-                          )}
-                          <span className={getColorTokenBadgeClassName(section.color)}>
-                            <span
-                              aria-hidden="true"
-                              className={getColorTokenDotClassName(section.color)}
-                            />
-                            {section.name}
-                          </span>
-                          <span className="database-table-group-count">{section.rows.length}</span>
-                        </button>
-                        {!isCollapsed ? <>{renderGroupRows()}</> : null}
-                      </section>
-                    );
-                  })}
-                </div>
-              ) : (
-                <DatabaseVirtualizedTable
-                  columnKeys={columnKeys}
-                  columnWidths={columnWidths}
-                  footerRow={
-                    editable ? (
-                      <CreateDatabaseRowButton
-                        columnCount={columnKeys.length}
-                        disabled={!databaseId}
-                        onClick={() => addDatabaseRow()}
-                      />
-                    ) : undefined
-                  }
-                  header={renderTableHeader("table")}
-                  measurementKey={tableMeasurementKey}
-                  onRowsRendered={scheduleMeasureRows}
-                  renderRow={renderTableRow}
-                  rows={visibleRows}
-                  tableMinWidth={tableMinWidth}
-                  virtualizationEnabled={
-                    !draggedRowId && !isExternalRowDragActive && !isSubItemsNested
-                  }
-                />
-              )}
-              {hasNextPage || isFetchingNextPage ? (
-                <div
-                  aria-hidden={!isFetchingNextPage}
-                  className="database-rows-pagination-status flex items-center justify-center gap-2 px-4 py-3 text-sm text-content-secondary"
-                  ref={rowsScrollSentinelRef}
-                  style={getTableMinWidthStyle(tableMinWidth)}
-                >
-                  {isFetchingNextPage ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      <span>Loading more rows...</span>
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+            <DataGridCellSelection
+              key={grid.controllerScope}
+              viewportRef={tableScrollRef}
+              focusTargetRef={tableScrollRef}
+              onScrollToCell={grid.onScrollToCell}
+            />
           </div>
-          <DataGridCellSelection
-            key={grid.controllerScope}
-            viewportRef={tableScrollRef}
-            focusTargetRef={tableScrollRef}
-            onScrollToCell={grid.onScrollToCell}
+          {rowDragOverlay.overlay
+            ? createPortal(
+                <div
+                  aria-hidden="true"
+                  className="database-row-drag-overlay"
+                  ref={rowDragOverlay.elementRef}
+                  style={{
+                    height: rowDragOverlay.overlay.height,
+                    left: 0,
+                    top: 0,
+                    transform: `translate3d(${rowDragOverlay.positionRef.current.left}px, ${rowDragOverlay.positionRef.current.top}px, 0)`,
+                    width: rowDragOverlay.overlay.width,
+                  }}
+                >
+                  <span className="database-row-drag-overlay-cell">
+                    <DefaultPageIcon />
+                    <span>{rowDragOverlay.overlay.title}</span>
+                  </span>
+                </div>,
+                document.body,
+              )
+            : null}
+          <DatabaseFormulaDialog
+            databasePropertyId={formulaSetupPropertyId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setFormulaSetupPropertyId(null);
+              }
+            }}
+            open={formulaSetupPropertyId !== null}
           />
-        </div>
-        {rowDragOverlay.overlay
-          ? createPortal(
-              <div
-                aria-hidden="true"
-                className="database-row-drag-overlay"
-                ref={rowDragOverlay.elementRef}
-                style={{
-                  height: rowDragOverlay.overlay.height,
-                  left: 0,
-                  top: 0,
-                  transform: `translate3d(${rowDragOverlay.positionRef.current.left}px, ${rowDragOverlay.positionRef.current.top}px, 0)`,
-                  width: rowDragOverlay.overlay.width,
-                }}
-              >
-                <span className="database-row-drag-overlay-cell">
-                  <DefaultPageIcon />
-                  <span>{rowDragOverlay.overlay.title}</span>
-                </span>
-              </div>,
-              document.body,
-            )
-          : null}
-        <DatabaseFormulaDialog
-          databasePropertyId={formulaSetupPropertyId}
-          onOpenChange={(open) => {
-            if (!open) {
-              setFormulaSetupPropertyId(null);
-            }
-          }}
-          open={formulaSetupPropertyId !== null}
-        />
-      </DatabaseGridScrollContext.Provider>
-    </DataGrid>
+        </DatabaseGridScrollContext.Provider>
+      </DataGrid>
+    </DatabaseRowActionsProvider>
   );
 }

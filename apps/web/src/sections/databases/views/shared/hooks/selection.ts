@@ -7,24 +7,9 @@ import {
   type DatabasePropertyListItem,
 } from "@zilobase/features/databases";
 import { useCallback, useMemo, useState, type MutableRefObject } from "react";
-import { toast } from "sonner";
 import type { useUndoHistory } from "@/app/shortcuts/undo-history";
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
-export const DATABASE_SELECTION_PRIMARY_PROPERTY_LIMIT = 5;
-
-export function splitDatabaseSelectionProperties<T>(
-  properties: T[],
-  limit = DATABASE_SELECTION_PRIMARY_PROPERTY_LIMIT,
-) {
-  const primaryCount = Math.max(0, limit);
-
-  return {
-    overflow: properties.slice(primaryCount),
-    primary: properties.slice(0, primaryCount),
-  };
-}
-
 export { getSharedDatabaseSelectionValue } from "@zilobase/features/databases";
 
 export function useDatabaseSelection({
@@ -58,18 +43,6 @@ export function useDatabaseSelection({
     },
     [propertyValuesByKey, selectedRows],
   );
-  const copySelectedRowLinks = useCallback(() => {
-    const links = selectedRows.map((row) => `${window.location.origin}/p/${row.pageId}`);
-
-    void navigator.clipboard
-      .writeText(links.join("\n"))
-      .then(() =>
-        toast.success(
-          `Copied ${links.length} selected page ${links.length === 1 ? "link" : "links"}`,
-        ),
-      )
-      .catch(() => toast.error("Couldn't copy selected page links"));
-  }, [selectedRows]);
   const saveSelectedPropertyValue = useCallback(
     (property: DatabasePropertyListItem, nextValue: DatabasePropertyValueType) => {
       const pageProperty = property.property;
@@ -133,7 +106,6 @@ export function useDatabaseSelection({
     setSelectedRowIds,
     selectedRows,
     getSelectionValue,
-    copySelectedRowLinks,
     saveSelectedPropertyValue,
     toggleSelectedRow,
   };

@@ -182,7 +182,9 @@ test("checkboxes share bulk property editing, grouped undo and clear-selection a
     "2 selected",
   );
   await expect(page.locator(`${track("row-0")}[data-selected=true]`)).toHaveCount(1);
-  await page.getByRole("button", { name: "Edit Status for selected rows", exact: true }).click();
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit property", exact: true }).hover();
+  await page.getByRole("menuitem", { name: "Status", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Done", exact: true }).click();
   await expect
     .poll(() =>

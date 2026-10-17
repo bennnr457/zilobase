@@ -370,6 +370,199 @@ test("row selection and property menus remain functional without extra utility c
   await expect(page.getByRole("menuitem", { name: /Wrap content/ })).toBeVisible();
 });
 
+async function rowMenu(page, index) {
+  await cell(page, index, "name").hover();
+  await page.getByRole("button", { name: `Drag Record ${index}`, exact: true }).click();
+  await expect(page.getByRole("textbox", { name: "Search selected row actions" })).toBeFocused();
+  await expect(page.getByRole("menuitem", { name: "Duplicate", exact: true })).toBeEnabled();
+}
+
+test("handle and More share one menu and preserve or replace checkbox selection appropriately", async ({
+  page,
+}) => {
+  await page
+    .getByRole("checkbox", { name: "Select Record 0", exact: true, includeHidden: true })
+    .check();
+  await page.getByRole("checkbox", { name: "Select Record 1", exact: true }).check();
+  await rowMenu(page, 0);
+  await expect(
+    page.getByRole("button", { name: "Clear selection of 2 rows", includeHidden: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Open in", exact: true })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  const labels = await page.locator('[role="menu"] > [role="menuitem"]').allTextContents();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  expect(await page.locator('[role="menu"] > [role="menuitem"]').allTextContents()).toEqual(labels);
+  await expect(
+    page.locator('[role="toolbar"][aria-label="Selected row actions"] button'),
+  ).toHaveCount(3);
+  await page.keyboard.press("Escape");
+  await rowMenu(page, 2);
+  await expect(
+    page.getByRole("button", { name: "Clear selection of 1 rows", includeHidden: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: "Select Record 0", exact: true, includeHidden: true }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: "Select Record 2", exact: true, includeHidden: true }),
+  ).toBeChecked();
+  await page.evaluate(() => window.tableProof.options({ scope: "another-view" }));
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(page.getByRole("toolbar", { name: "Selected row actions" })).toHaveCount(0);
+});
+
+test("action search and bulk property editing retain one undo across the selected records", async ({
+  page,
+}) => {
+  await page
+    .getByRole("checkbox", { name: "Select Record 0", exact: true, includeHidden: true })
+    .check();
+  await page.getByRole("checkbox", { name: "Select Record 1", exact: true }).check();
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  const search = page.getByRole("textbox", { name: "Search selected row actions" });
+  await search.fill("no matching action");
+  await expect(page.getByText("No actions found.")).toBeVisible();
+  await search.fill("Text");
+  await page.getByRole("menuitem", { name: "Edit property", exact: true }).hover();
+  await page.getByRole("menuitem", { name: "Text", exact: true }).click();
+  const editor = page.getByRole("textbox", { name: "Text value for selected rows" });
+  await expect(editor).toHaveAttribute("placeholder", "Replace mixed values");
+  await editor.fill("Bulk value");
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(cell(page, 0, "text")).toContainText("Bulk value");
+  await expect(cell(page, 1, "text")).toContainText("Bulk value");
+  await grid(page).focus();
+  await page.keyboard.press("Control+z");
+  await expect(cell(page, 0, "text")).toContainText("Text 0");
+  await expect(cell(page, 1, "text")).toContainText("Text 1");
+});
+
+test("row actions favorite, duplicate, and trash through the shared operations", async ({
+  page,
+}) => {
+  await rowMenu(page, 0);
+  await page.getByRole("menuitem", { name: "Add to Favorites", exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.tableProof.favorites.has("page-0")))
+    .toBe(true);
+  await rowMenu(page, 0);
+  await expect(
+    page.getByRole("menuitem", { name: "Remove from Favorites", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("menuitem", { name: "Duplicate", exact: true }).click();
+  await expect(page.locator('[data-database-row-id="row-10000"]')).toContainText("Record 0 (copy)");
+  await expect(
+    page.getByRole("checkbox", { name: "Select Record 0 (copy)", exact: true }),
+  ).toBeChecked();
+  await expect(
+    page.locator('[data-database-row-id="row-10000"] td[data-col-id="text-list"]'),
+  ).toContainText("Text 0");
+  await page
+    .getByRole("button", { name: "Move selected rows to Trash", includeHidden: true })
+    .click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(page.locator('[data-database-row-id="row-10000"]')).toBeVisible();
+  await page
+    .getByRole("button", { name: "Move selected rows to Trash", includeHidden: true })
+    .click();
+  await page.getByRole("button", { name: "Move to Trash", exact: true }).click();
+  await expect(page.locator('[data-database-row-id="row-10000"]')).toHaveCount(0);
+  await expect(cell(page, 0, "name")).toContainText("Record 0");
+});
+
+test("bulk icon changes preserve metadata and keep failed records selected for retry", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.tableProof.pageMetadata.set("page-0", { emoji: "📌", cover: "cover-zero" });
+    window.tableProof.pageMetadata.set("page-1", { emoji: "🚀", cover: "cover-one" });
+    window.tableProof.rejectedPageActions.add("page-1");
+  });
+  await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Select Record 1", exact: true }).check();
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit icon", exact: true }).click();
+  await page.getByRole("button", { name: "Remove icon", exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.tableProof.pageMetadata.get("page-0")))
+    .toEqual({ emoji: null, cover: "cover-zero" });
+  await expect(page.getByRole("button", { name: "Clear selection of 1 rows" })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Select Record 1", exact: true })).toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: "Select Record 0", exact: true }),
+  ).not.toBeChecked();
+  await page.evaluate(() => window.tableProof.rejectedPageActions.clear());
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit icon", exact: true }).click();
+  await page.getByRole("button", { name: "Remove icon", exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.tableProof.pageMetadata.get("page-1")))
+    .toEqual({ emoji: null, cover: "cover-one" });
+});
+
+test("row action modes are per-call and menu closes on account changes", async ({ page }) => {
+  await rowMenu(page, 0);
+  await page.getByRole("menuitem", { name: "Open in", exact: true }).hover();
+  await page.getByRole("menuitem", { name: "Dialog", exact: true }).click();
+  expect(await page.evaluate(() => window.tableProof.openedOptions.at(-1))).toMatchObject({
+    presentation: "dialog",
+    databaseId: "source",
+  });
+  await rowMenu(page, 0);
+  await page.getByRole("menuitem", { name: "Comment", exact: true }).click();
+  expect(await page.evaluate(() => window.tableProof.openedOptions.at(-1))).toMatchObject({
+    focusComment: true,
+  });
+  await rowMenu(page, 0);
+  await page.evaluate(() => window.tableProof.identity("different-account"));
+  await expect(page.getByRole("menu")).toHaveCount(0);
+});
+
+test("readonly page permissions disable writes while retaining record opening", async ({
+  page,
+}) => {
+  await options(page, { pageAccess: "view" });
+  await cell(page, 0, "name").hover();
+  await page.getByRole("button", { name: "Drag Record 0", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Duplicate", exact: true })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await expect(page.getByRole("menuitem", { name: "Edit icon", exact: true })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await expect(page.getByRole("menuitem", { name: "Open in", exact: true })).not.toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await expect(
+    page.getByRole("button", { name: "Move selected rows to Trash", includeHidden: true }),
+  ).toBeDisabled();
+});
+
+test("keyboard handle activation and moving records to a page preserve existing drag behavior", async ({
+  page,
+}) => {
+  const handle = page.getByRole("button", { name: "Drag Record 0", exact: true });
+  await handle.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("textbox", { name: "Search selected row actions" })).toBeFocused();
+  await expect(page.getByRole("menuitem", { name: "Move to", exact: true })).toBeEnabled();
+  await page.getByRole("menuitem", { name: "Move to", exact: true }).click();
+  await page.getByRole("button", { name: "Destination", exact: true }).click();
+  await expect(cell(page, 0, "name")).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      window.tableProof.writes.some((write) => write.command?.type === "row.moveToPage"),
+    ),
+  ).toBe(true);
+});
+
 for (const destination of ["Open", "Waiting"]) {
   test(`row rail dragging supports appending above New page in ${destination}`, async ({
     page,

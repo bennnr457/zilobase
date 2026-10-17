@@ -352,10 +352,7 @@
   }
 
   .database-selection-toolbar {
-    @apply absolute;
-    left: 0;
-    top: 0;
-    transform: translateY(calc(-100% - 0.5rem));
+    @apply relative mb-2;
     width: fit-content;
     max-width: 100%;
     z-index: 60;

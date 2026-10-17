@@ -14,12 +14,12 @@ const buttonGroupVariants = cva(
         vertical: "flex-col",
       },
       variant: {
+        segmented:
+          "inline-flex max-w-full shrink-0 items-center overflow-hidden rounded-md border border-control-border bg-action-neutral-hover text-xs text-action-on-neutral [&>button]:rounded-none [&>button:not(:first-of-type)]:border-l [&>button:not(:first-of-type)]:border-stroke-default [&_button]:h-7 [&_button]:rounded-none [&_button]:border-0 [&_button]:bg-transparent [&_button]:text-xs [&_button]:shadow-none [&_button:hover]:bg-action-neutral-pressed [&_button:focus-visible]:ring-inset",
         connected: "",
         floating:
           "gap-1 rounded-md border border-stroke-default bg-surface-overlay p-1 text-content-primary shadow-lg",
         plain: "gap-1",
-        selection:
-          "min-w-0 max-w-full overflow-x-auto rounded-md border border-stroke-default bg-surface-overlay text-content-primary shadow-lg [&_[data-slot=button-group-item]]:rounded-none [&_[data-slot=button-group-item]]:border-0 [&_[data-slot=button-group-item]:not(:last-child)]:border-r [&_[data-slot=button-group-item]:not(:last-child)]:border-r-stroke-default",
       },
       density: {
         default: "",
