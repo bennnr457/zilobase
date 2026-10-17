@@ -6,7 +6,6 @@ import { Clipboard, Copy, GripVertical, Palette, Plus, Trash2, Type } from "@/co
 
 import {
   DropDrawer,
-  DropDrawerContent,
   DropDrawerItem,
   DropDrawerLabel,
   DropDrawerSeparator,
@@ -16,7 +15,7 @@ import {
   DropDrawerSubTrigger,
   DropDrawerTrigger,
 } from "@/components/ui/dropdrawer";
-import { Input } from "@/components/ui/input";
+import { SearchableActionMenuContent } from "@/components/ui/searchable-action-menu";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -669,25 +668,14 @@ export function DragBlockMenu({
             </span>
           </Button>
         </div>
-        <DropDrawerContent
-          align="start"
-          className="w-72"
+        <SearchableActionMenuContent
+          search={search}
+          onSearchChange={setSearch}
+          searchLabel="Search block actions"
           onCloseAutoFocus={(event) => event.preventDefault()}
           side="left"
           sideOffset={8}
         >
-          <div className="flex items-center gap-1.5 px-1.5 py-1">
-            <Input
-              aria-label="Search block actions"
-              autoComplete="off"
-              className="h-auto rounded-none border-0 bg-transparent px-0 py-0 text-sm font-medium shadow-none focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent"
-              onChange={(event) => setSearch(event.target.value)}
-              onKeyDown={(event) => event.stopPropagation()}
-              placeholder="Search actions..."
-              value={search}
-            />
-          </div>
-          <DropDrawerSeparator />
           <DropDrawerLabel>{isPageBlock ? "Page" : "Block"}</DropDrawerLabel>
           {!isPageBlock ? (
             <DropDrawerSub>
@@ -747,7 +735,7 @@ export function DragBlockMenu({
             <Trash2 />
             <span>Delete</span>
           </DropDrawerItem>
-        </DropDrawerContent>
+        </SearchableActionMenuContent>
       </DropDrawer>
 
       <AlertDialog
