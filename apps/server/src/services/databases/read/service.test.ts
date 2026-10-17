@@ -577,3 +577,41 @@ test("complete exports resolve host and values inside the same existing read sna
   );
   assert.equal(inSnapshot, false);
 });
+
+test("individual page trash and restoration reconcile row appearances without deleting membership", async () => {
+  const base = readModel({ rows: 2 });
+  const deleted = {
+    ...base.records[0]!,
+    page: { ...base.records[0]!.page, deletedAt: instant.toISOString() as string | null },
+  };
+  const model = { ...base, records: [deleted, base.records[1]!] };
+  const input = {
+    databaseId: "database-1",
+    dataSourceId: "source-1",
+    existingRecord: databaseRecord(),
+  };
+  const dependencies = {
+    loadReadModel: async () => model,
+    requireAccess: vi.fn(),
+    getPayload: vi.fn(),
+  };
+  const active = await getDatabaseRecordWindowService(input, dependencies as never);
+  assert.deepEqual(
+    active.records.map((record) => record.id),
+    ["row-2"],
+  );
+  const trash = await getDatabaseRecordWindowService(
+    { ...input, includeDeleted: true },
+    dependencies as never,
+  );
+  assert.deepEqual(
+    trash.records.map((record) => record.id),
+    ["row-1", "row-2"],
+  );
+  model.records[0]!.page.deletedAt = null;
+  const restored = await getDatabaseRecordWindowService(input, dependencies as never);
+  assert.deepEqual(
+    restored.records.map((record) => record.id),
+    ["row-1", "row-2"],
+  );
+});

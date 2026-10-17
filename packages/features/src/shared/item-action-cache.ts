@@ -65,28 +65,30 @@ export async function invalidateDeletedItems({
   workspaceId,
   queryClient,
   result,
+  isCurrent = () => true,
 }: {
   workspaceId: string | null | undefined;
   queryClient: QueryClient;
   result: DeletedItemIds;
+  isCurrent?: () => boolean;
 }) {
-  if (!workspaceId) {
+  if (!workspaceId || !isCurrent()) {
     return;
   }
 
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: pagesNavRootQueryKey(workspaceId),
-    }),
-  ]);
+  await queryClient.invalidateQueries({
+    queryKey: pagesNavRootQueryKey(workspaceId),
+  });
 
   for (const databaseId of result.deletedDatabaseIds) {
+    if (!isCurrent()) return;
     await queryClient.invalidateQueries({
       predicate: (query) =>
         query.queryKey[0] === "db" &&
         query.queryKey.includes(databaseId) &&
         query.queryKey[query.queryKey.length - 1] === true,
     });
+    if (!isCurrent()) return;
     queryClient.removeQueries({
       predicate: (query) =>
         query.queryKey[0] === "db" &&
@@ -99,19 +101,24 @@ export async function invalidateDeletedItems({
   }
 
   for (const pageId of result.deletedPageIds) {
+    if (!isCurrent()) return;
     queryClient.removeQueries({ queryKey: pageQueryKey(pageId) });
   }
+  await invalidatePageMemberships(queryClient, result.deletedPageIds, isCurrent);
 }
 
 export async function invalidateRestoredItems({
   workspaceId,
   queryClient,
   result,
+  isCurrent = () => true,
 }: {
   workspaceId: string;
   queryClient: QueryClient;
   result: RestoredItemIds;
+  isCurrent?: () => boolean;
 }) {
+  if (!isCurrent()) return;
   await Promise.all([
     queryClient.invalidateQueries({
       queryKey: pagesNavRootQueryKey(workspaceId),
@@ -130,6 +137,37 @@ export async function invalidateRestoredItems({
       queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
     ),
   ]);
+  await invalidatePageMemberships(queryClient, result.restoredPageIds, isCurrent, workspaceId);
+}
+
+async function invalidatePageMemberships(
+  queryClient: QueryClient,
+  pageIds: string[],
+  isCurrent: () => boolean,
+  restoredWorkspaceId?: string,
+) {
+  if (!isCurrent() || !pageIds.length) return;
+  // A restored page may have no remaining cached membership after trash or reload.
+  const client = sharedClient(queryClient);
+  const owners = client.all();
+  const sources = new Set(owners.flatMap((owner) => owner.databases.sourcesForPages(pageIds)));
+  const missingRestoredMembership =
+    restoredWorkspaceId &&
+    pageIds.some(
+      (pageId) => !owners.some((owner) => owner.databases.sourcesForPages([pageId]).length),
+    );
+  await queryClient.invalidateQueries({
+    queryKey: ["db"],
+    predicate: (query) => {
+      if (!isCurrent() || query.queryKey[3] !== "window") return false;
+      if (sources.has(String(query.queryKey[4]))) return true;
+      return Boolean(
+        missingRestoredMembership &&
+        client.database(String(query.queryKey[2]), String(query.queryKey[1]))?.session.scope
+          .workspaceId === restoredWorkspaceId,
+      );
+    },
+  });
 }
 
 export function setPageDetailCache(

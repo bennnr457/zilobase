@@ -187,16 +187,21 @@ export function useDeletePage() {
   const { apiFetch, queryClient } = useZilobaseFeatures();
 
   return useMutation({
-    mutationFn: async (pageId: string) =>
-      apiFetch<DeletePageResult>(`/pages/${pageId}`, {
+    mutationFn: async (pageId: string) => {
+      const client = sharedClient(queryClient);
+      const read = await client.captureRead();
+      const result = await apiFetch<DeletePageResult>(`/pages/${pageId}`, {
         method: "DELETE",
-      }),
-    onSuccess: async (result) =>
-      invalidateDeletedItems({
+      });
+      if (!client.isCurrent(read)) throw new Error("Page deletion belongs to an expired scope");
+      await invalidateDeletedItems({
         workspaceId: result.page?.workspaceId,
         queryClient,
         result,
-      }),
+        isCurrent: () => client.isCurrent(read),
+      });
+      return result;
+    },
   });
 }
 
@@ -204,17 +209,21 @@ export function useRestorePage() {
   const { apiFetch, queryClient } = useZilobaseFeatures();
 
   return useMutation({
-    mutationFn: async (pageId: string) =>
-      apiFetch<RestorePageResult>(`/pages/${pageId}/restore`, {
+    mutationFn: async (pageId: string) => {
+      const client = sharedClient(queryClient);
+      const read = await client.captureRead();
+      const result = await apiFetch<RestorePageResult>(`/pages/${pageId}/restore`, {
         method: "POST",
-      }),
-    onSuccess: async (result) => {
+      });
+      if (!client.isCurrent(read)) throw new Error("Page restoration belongs to an expired scope");
       await invalidateRestoredItems({
         workspaceId: result.page.workspaceId,
         queryClient,
         result,
+        isCurrent: () => client.isCurrent(read),
       });
-      setPageDetailCache(queryClient, result.page);
+      setPageDetailCache(queryClient, result.page, read);
+      return result;
     },
   });
 }

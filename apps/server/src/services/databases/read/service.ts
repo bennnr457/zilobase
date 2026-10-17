@@ -531,10 +531,12 @@ export async function getDatabaseRecordWindowService(
       throw new DatabaseWindowStaleError(snapshot);
     }
 
-    const records = model.records.sort((left, right) => {
-      const order = parseDatabaseOrderKey(left.orderKey) - parseDatabaseOrderKey(right.orderKey);
-      return order < 0n ? -1 : order > 0n ? 1 : left.id.localeCompare(right.id);
-    });
+    const records = model.records
+      .filter((record) => input.includeDeleted || !record.page.deletedAt)
+      .sort((left, right) => {
+        const order = parseDatabaseOrderKey(left.orderKey) - parseDatabaseOrderKey(right.orderKey);
+        return order < 0n ? -1 : order > 0n ? 1 : left.id.localeCompare(right.id);
+      });
     const evaluated = evaluateDatabaseRecordsForView({
       config: view?.config ?? record.config,
       now: input.now,
