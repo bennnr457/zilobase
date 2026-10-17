@@ -166,12 +166,17 @@ export class DatabaseController {
     );
   }
 
-  records(dataSourceId: string) {
+  records(dataSourceId: string, { includeDeleted = false }: { includeDeleted?: boolean } = {}) {
     const windows = this.queryClient
       .getQueriesData<{ pages: DatabaseWindowReference[] }>({
         queryKey: ["db", this.sessionId],
       })
-      .filter(([key]) => key[3] === "window" && key[4] === dataSourceId)
+      // Trash windows retain archived records for restore previews, but their
+      // membership must never supply anchors or parents for active-row commands.
+      .filter(
+        ([key]) =>
+          key[3] === "window" && key[4] === dataSourceId && (includeDeleted || key[6] !== true),
+      )
       .map(([, data]) => resolveRecordWindow(this.queryClient, data?.pages.at(-1)))
       .filter((window) => !!window)
       .sort((a, b) => a.dataSourceVersion - b.dataSourceVersion);

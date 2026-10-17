@@ -5,6 +5,8 @@ import { createMutationTestRuntime } from "../../shared/mutation-runtime.test";
 import type { DatabaseCommandRequest, DatabaseRecordEntity } from "../core/entities";
 import { useAddDatabaseRow } from "../react";
 import { getDatabaseRowMoveAnchors } from "../records/row-reorder";
+import { normalizeRecordWindow } from "../cache-references";
+import { databaseWindowQueryKey } from "../queries/keys";
 import { createTestDatabasePayload, setTestDatabaseClientState } from "./test-helpers";
 
 const record: DatabaseRecordEntity = {
@@ -92,4 +94,70 @@ test("row move anchors contain only immediate neighbors", () => {
     () => getDatabaseRowMoveAnchors(["row-1"], "missing"),
     /missing from the requested order/,
   );
+});
+
+test("adding a sub-item ignores cached archived rows when choosing placement anchors", async () => {
+  const sent: DatabaseCommandRequest[] = [];
+  const { mutation, queryClient } = createMutationTestRuntime(
+    useAddDatabaseRow,
+    commandApi((request) => sent.push(request)),
+  );
+  setTestDatabaseClientState(queryClient, createTestDatabasePayload());
+  queryClient.setQueryData(
+    databaseWindowQueryKey("test-session", {
+      databaseId: "database-1",
+      dataSourceId: "data-source-1",
+      queryHash: "trash-query",
+      includeDeleted: true,
+    }),
+    {
+      pageParams: [{}],
+      pages: [
+        normalizeRecordWindow(queryClient, "database-1", "data-source-1", "trash-query", {
+          queryHash: "trash-query",
+          databaseVersion: 0,
+          dataSourceVersion: 0,
+          hasMore: false,
+          offset: 0,
+          records: [
+            {
+              ...record,
+              id: "archived-row",
+              pageId: "archived-page",
+              page: { ...record.page, id: "archived-page" },
+            },
+          ],
+          snapshot: "trash-snapshot",
+          totalCount: 1,
+        }),
+      ],
+    },
+  );
+  try {
+    await mutation.mutateAsync({
+      databaseId: "data-source-1",
+      title: "Untitled",
+      hierarchy: {
+        parentRowId: "row-1",
+        parentPropertyId: "parent-property",
+        subItemPropertyId: "sub-item-property",
+      },
+      initialValues: [{ propertyId: "parent-property", value: "page-1" }],
+    });
+    assert.deepEqual(sent[0]?.command, {
+      type: "row.place",
+      afterRowId: "row-2",
+      beforeRowId: null,
+      parentRowId: "row-1",
+      title: "Untitled",
+      hierarchy: {
+        parentRowId: "row-1",
+        parentPropertyId: "parent-property",
+        subItemPropertyId: "sub-item-property",
+      },
+      valuesByPropertyId: { "parent-property": "page-1" },
+    });
+  } finally {
+    queryClient.clear();
+  }
 });

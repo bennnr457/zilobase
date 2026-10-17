@@ -226,7 +226,9 @@ function useDatabaseRowStateMutation(type: "row.archive" | "row.restore") {
         input.databaseId,
         input.hostDatabaseId,
       );
-      const record = store.records(scope.dataSourceId).find(({ id }) => id === input.rowId);
+      const record = store
+        .records(scope.dataSourceId, { includeDeleted: type === "row.restore" })
+        .find(({ id }) => id === input.rowId);
       const ack = await store.submit(
         {
           databaseId: scope.hostDatabaseId,
