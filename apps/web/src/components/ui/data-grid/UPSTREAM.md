@@ -9,3 +9,5 @@ Vendored core table, cell-selection controller, and labels from the Radix varian
 The selection controller navigates the complete loaded display order, including unmounted virtual rows, through a consumer scroll callback. Editors track their own cell across virtual-window updates. Delayed cut completion is guarded by controller lifetime and selection identity. Zilobase keeps single-click property popovers while keyboard text editing uses ReUI overlays.
 
 Editable-target guards respect native `isContentEditable` boundaries so database nodes marked `contentEditable={false}` retain grid keyboard and clipboard behavior when embedded in the page editor.
+
+Fixed layouts also honor `meta.fillWidth`, allowing the database Add property column to absorb remaining space while other columns retain their configured widths.

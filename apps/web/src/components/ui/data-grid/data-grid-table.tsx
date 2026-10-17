@@ -1027,7 +1027,7 @@ function DataGridTableBase({
             style={
               props.tableLayout?.columnsResizable
                 ? { width: `calc(var(--col-${column.id}-size) * 1px)` }
-                : props.tableLayout?.width === "fixed"
+                : props.tableLayout?.width === "fixed" && !column.columnDef.meta?.fillWidth
                   ? { width: column.getSize() }
                   : undefined
             }
@@ -1040,7 +1040,7 @@ function DataGridTableBase({
             style={
               props.tableLayout?.columnsResizable
                 ? { width: `calc(var(--col-${column.id}-size) * 1px)` }
-                : props.tableLayout?.width === "fixed"
+                : props.tableLayout?.width === "fixed" && !column.columnDef.meta?.fillWidth
                   ? { width: column.getSize() }
                   : undefined
             }

@@ -33,7 +33,7 @@ import {
   type DataGridCellsChangeDetails,
 } from "@/components/ui/data-grid/data-grid";
 import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
-import { getColumnWidth, type TableRow } from "../lib/database-table-model";
+import { ADD_PROPERTY_COLUMN_ID, getColumnWidth, type TableRow } from "../lib/database-table-model";
 
 export type DatabaseGridRow = TableRow & { cellValues: Record<string, DatabasePropertyValue> };
 const unobservedSelection: CellSelectionState = [];
@@ -132,6 +132,7 @@ export function useDatabaseGrid({
           size: getColumnWidth(columnWidths, id),
           enableCellSelection: title || Boolean(property),
           meta: {
+            fillWidth: id === ADD_PROPERTY_COLUMN_ID,
             headerTitle: title ? nameLabel : (property?.property.name ?? ""),
             cellEdit: {
               editable: writable,

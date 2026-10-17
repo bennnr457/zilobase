@@ -18,7 +18,7 @@ import {
   shouldRenderVirtualizedDatabaseRows,
 } from "../../controller/lib/database-view-scroll";
 import { useActiveDatabaseCellKey } from "../../state/components/database-cell-state";
-import { type TableRow } from "../lib/database-table-model";
+import { ADD_PROPERTY_COLUMN_ID, type TableRow } from "../lib/database-table-model";
 import { DataGridTableBase, DataGridTableBody } from "@/components/ui/data-grid/data-grid-table";
 import { useDatabaseGridScroll } from "../hooks/use-database-grid";
 
@@ -34,6 +34,7 @@ export function getTableMinWidthStyle(tableMinWidth: number) {
 
 export function DatabaseTable({
   children,
+  columnKeys,
   tableMinWidth,
 }: {
   children: ReactNode;
@@ -48,7 +49,7 @@ export function DatabaseTable({
         role: "presentation",
         style: {
           ...getTableMinWidthStyle(tableMinWidth),
-          width: tableMinWidth,
+          width: columnKeys.includes(ADD_PROPERTY_COLUMN_ID) ? "100%" : tableMinWidth,
           minWidth: tableMinWidth,
           borderCollapse: "collapse",
         },

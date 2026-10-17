@@ -53,6 +53,49 @@ test("ReUI renders the actual table at 32px and keeps single-click editors and p
   expect(await page.evaluate(() => window.tableProof.opened)).toEqual(["page-0"]);
 });
 
+test("Add property fills the available width while record columns keep their sizes", async ({
+  page,
+}) => {
+  await options(page, { columns: [] });
+  const geometry = () =>
+    page.evaluate(() => {
+      const viewport = document.querySelector('.database-table-scroll[role="grid"]');
+      const tables = [...document.querySelectorAll(".database-table")];
+      return {
+        viewport: viewport.getBoundingClientRect().width,
+        tables: tables.map((table) => ({
+          width: table.getBoundingClientRect().width,
+          columns: [...table.querySelectorAll("col")].map(
+            (col) => col.getBoundingClientRect().width,
+          ),
+        })),
+      };
+    });
+  await expect
+    .poll(async () => (await geometry()).tables[0].width)
+    .toBeCloseTo((await geometry()).viewport, 0);
+  let measured = await geometry();
+  expect(measured.tables[0].columns[0]).toBe(250);
+  expect(measured.tables[0].columns[1]).toBeCloseTo(measured.viewport - 250, 0);
+  await options(page, { embedded: true, grouped: true });
+  await expect(page.locator(".database-table-group")).toHaveCount(3);
+  measured = await geometry();
+  for (const table of measured.tables) {
+    expect(table.width).toBeCloseTo(measured.viewport, 0);
+    expect(table.columns[0]).toBe(250);
+    expect(table.columns[1]).toBeCloseTo(measured.viewport - 250, 0);
+  }
+  await options(page, { grouped: false, count: 0 });
+  await expect(page.getByRole("button", { name: "New page", exact: true })).toBeVisible();
+  measured = await geometry();
+  expect(measured.tables[0].width).toBeCloseTo(measured.viewport, 0);
+  await page.setViewportSize({ width: 500, height: 800 });
+  await expect.poll(async () => (await geometry()).tables[0].width).toBe(450);
+  measured = await geometry();
+  expect(measured.tables[0].columns[0]).toBe(250);
+  expect(measured.tables[0].columns[1]).toBe(200);
+});
+
 test("keyboard edits and multi-cell paste use existing saves and one undo", async ({ page }) => {
   await select(page, 0, "text");
   await page.keyboard.press("F2");
