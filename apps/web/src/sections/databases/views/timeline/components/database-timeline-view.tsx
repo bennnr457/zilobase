@@ -26,7 +26,7 @@ import { DatabaseTimelineGrid } from "./database-timeline-grid";
 import { DatabaseTimelineSetup } from "./database-timeline-setup";
 import { TimelineRowDragLayer } from "./database-timeline-row-drag-layer";
 import { useTimelineRowDrag } from "./database-timeline-row-drag";
-import { useTimelineBreakout } from "../hooks/use-timeline-breakout";
+import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
 import { useTimelineRowLayout } from "../hooks/use-timeline-row-layout";
 
 export function DatabaseTimelineView() {
@@ -60,7 +60,7 @@ export function DatabaseTimelineView() {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const timelineRef = useRef<HTMLDivElement | null>(null);
-  const timelineBreakoutStyle = useTimelineBreakout(
+  const timelineBreakoutStyle = useDatabaseViewBreakout(
     timelineRef,
     !sidebarCollapsed,
     timelineDateProperty?.id,

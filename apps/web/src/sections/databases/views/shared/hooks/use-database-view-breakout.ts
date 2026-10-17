@@ -33,7 +33,7 @@ function getTimelineLayoutAnchor(timeline: HTMLElement) {
  * narrow page stays centered. This intentionally changes layout width instead
  * of introducing the inline horizontal-scroll treatment used by wide tables.
  */
-export function useTimelineBreakout(
+export function useDatabaseViewBreakout(
   ref: RefObject<HTMLElement | null>,
   enabled: boolean,
   measureKey?: unknown,
