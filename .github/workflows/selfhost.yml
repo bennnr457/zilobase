@@ -38,6 +38,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Chromium for RustFS browser verification
+        run: npm exec -- playwright install --with-deps chromium
+
+      - name: Verify RustFS storage and browser uploads
+        run: npm run test:rustfs
+
       - name: Build production image
         run: docker build --tag "$CURRENT_IMAGE" .
 
@@ -82,7 +88,7 @@ jobs:
       ZILOBASE_SELFHOST_PROJECT_NAME: zilobase-desktop-${{ github.run_id }}-${{ github.run_attempt }}
       ZILOBASE_SELFHOST_PULL_POLICY: never
       ZILOBASE_DEV_HTTP_PORT: 18787
-      MINIO_DEV_API_PORT: 19000
+      RUSTFS_DEV_API_PORT: 19000
       MAILPIT_DEV_UI_PORT: 18025
       XDG_CONFIG_HOME: /tmp/zilobase-desktop-${{ github.run_id }}-${{ github.run_attempt }}/config
       XDG_DATA_HOME: /tmp/zilobase-desktop-${{ github.run_id }}-${{ github.run_attempt }}/data

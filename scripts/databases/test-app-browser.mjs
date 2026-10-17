@@ -69,9 +69,16 @@ try {
     ["valkey-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"],
   );
   const storage = await container(
-    "rustfs/rustfs:1.0.0",
+    "rustfs/rustfs:1.0.2",
     9000,
-    ["-e", "RUSTFS_ACCESS_KEY=browser-test", "-e", "RUSTFS_SECRET_KEY=browser-test-only-secret"],
+    [
+      "-e",
+      "RUSTFS_ACCESS_KEY=browser-test",
+      "-e",
+      "RUSTFS_SECRET_KEY=browser-test-only-secret",
+      "-e",
+      `RUSTFS_CORS_ALLOWED_ORIGINS=${webOrigin},zilo-desktop://app`,
+    ],
     ["/data"],
   );
   const storageRequire = createRequire(`${root}packages/runtime-adapter/package.json`);

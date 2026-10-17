@@ -23,7 +23,7 @@ const envFile = path.resolve(
   process.env.ZILOBASE_SELFHOST_ENV_FILE || path.join(temporaryDirectory, "selfhost.env"),
 );
 const httpPort = await freePort();
-const minioPort = await freePort();
+const rustfsPort = await freePort();
 const mailpitPort = await freePort();
 const origin = `http://127.0.0.1:${httpPort}`;
 const email = `upgrade-${Date.now()}@zilobase.local`;
@@ -139,19 +139,19 @@ async function writeEnvironment() {
       "ZILOBASE_SITE_ADDRESS=http://127.0.0.1",
       "ZILOBASE_STORAGE_SITE_ADDRESS=http://127.0.0.1",
       `ZILOBASE_DEV_HTTP_PORT=${httpPort}`,
-      `MINIO_DEV_API_PORT=${minioPort}`,
+      `RUSTFS_DEV_API_PORT=${rustfsPort}`,
       `MAILPIT_DEV_UI_PORT=${mailpitPort}`,
       `CLIENT_URL=${origin}`,
       `BETTER_AUTH_URL=${origin}`,
-      `S3_PUBLIC_ENDPOINT=http://127.0.0.1:${minioPort}`,
+      `S3_PUBLIC_ENDPOINT=http://127.0.0.1:${rustfsPort}`,
       `BETTER_AUTH_SECRET=${secret(48)}`,
       `ZILOBASE_BOOTSTRAP_TOKEN=${bootstrapToken}`,
       "POSTGRES_DB=zilobase",
       "POSTGRES_USER=zilobase",
       `POSTGRES_PASSWORD=${secret(32)}`,
-      "MINIO_BUCKET=zilobase",
-      "MINIO_ROOT_USER=zilobase",
-      `MINIO_ROOT_PASSWORD=${secret(32)}`,
+      "RUSTFS_BUCKET=zilobase",
+      "RUSTFS_ACCESS_KEY=zilobase",
+      `RUSTFS_SECRET_KEY=${secret(32)}`,
       "EMAIL_FROM=Zilobase <hello@zilobase.local>",
       "SMTP_HOST=mailpit",
       "SMTP_PORT=1025",

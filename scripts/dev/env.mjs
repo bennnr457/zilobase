@@ -33,22 +33,38 @@ export async function ensureDevelopmentEnvironment(options = {}) {
     }
   }
 
-  const dependencies = await ensureGeneratedFile(generatedEnvironmentFiles.dependencies, () => ({
-    POSTGRES_USER: "zilobase_dev",
-    POSTGRES_PASSWORD: secret(32),
-    POSTGRES_HOST_PORT: "15432",
-    MINIO_ROOT_USER: "zilobase_dev",
-    MINIO_ROOT_PASSWORD: secret(32),
-    MINIO_API_PORT: "19100",
-    MINIO_CONSOLE_PORT: "19101",
-    MAILPIT_SMTP_PORT: "11025",
-    MAILPIT_UI_PORT: "18025",
-    VALKEY_HOST_PORT: "16379",
-    QUEUE_VALKEY_HOST_PORT: "16380",
-  }));
+  const dependencies = await ensureGeneratedFile(
+    generatedEnvironmentFiles.dependencies,
+    () => ({
+      POSTGRES_USER: "zilobase_dev",
+      POSTGRES_PASSWORD: secret(32),
+      POSTGRES_HOST_PORT: "15432",
+      RUSTFS_ACCESS_KEY: "zilobase_dev",
+      RUSTFS_SECRET_KEY: secret(32),
+      RUSTFS_API_PORT: "19100",
+      RUSTFS_CONSOLE_PORT: "19101",
+      RUSTFS_CORS_ALLOWED_ORIGINS:
+        "http://localhost:1420,http://127.0.0.1:1420,http://localhost:1424,http://127.0.0.1:1424,zilo-desktop://app",
+      MAILPIT_SMTP_PORT: "11025",
+      MAILPIT_UI_PORT: "18025",
+      VALKEY_HOST_PORT: "16379",
+      QUEUE_VALKEY_HOST_PORT: "16380",
+    }),
+    {
+      requiredKeys: [
+        "RUSTFS_ACCESS_KEY",
+        "RUSTFS_SECRET_KEY",
+        "RUSTFS_API_PORT",
+        "RUSTFS_CONSOLE_PORT",
+      ],
+    },
+  );
 
-  const nodeEnvironment = await ensureGeneratedFile(generatedEnvironmentFiles.node, () =>
-    profileEnvironment(localProfiles.node, dependencies),
+  const nodeDefaults = profileEnvironment(localProfiles.node, dependencies);
+  const nodeEnvironment = await ensureGeneratedFile(
+    generatedEnvironmentFiles.node,
+    () => nodeDefaults,
+    { expectedStorage: nodeDefaults },
   );
   await ensureGeneratedFile(
     generatedEnvironmentFiles.kubernetes,
@@ -56,9 +72,9 @@ export async function ensureDevelopmentEnvironment(options = {}) {
       COMMUNITY_BETTER_AUTH_SECRET: secret(48),
       COMMUNITY_BOOTSTRAP_TOKEN: secret(48),
       COMMUNITY_POSTGRES_PASSWORD: secret(32),
-      COMMUNITY_MINIO_PASSWORD: secret(32),
+      COMMUNITY_RUSTFS_SECRET_KEY: secret(32),
     }),
-    { prune: true },
+    { prune: true, requiredKeys: ["COMMUNITY_RUSTFS_SECRET_KEY"] },
   );
   if (options.reportEnvironmentConflicts && !environmentConflictsReported) {
     await reportEnvironmentConflicts("node", nodeEnvironment);
@@ -163,11 +179,11 @@ export function profileEnvironment(profile, dependencies) {
     PORT: String(profile.apiPort),
     BACKGROUND_HEALTH_PORT: "3001",
     IMAGE_STORAGE_MODE: "s3",
-    S3_ENDPOINT: `http://127.0.0.1:${dependencies.MINIO_API_PORT}`,
-    S3_PUBLIC_ENDPOINT: `http://127.0.0.1:${dependencies.MINIO_API_PORT}`,
+    S3_ENDPOINT: `http://127.0.0.1:${dependencies.RUSTFS_API_PORT}`,
+    S3_PUBLIC_ENDPOINT: `http://127.0.0.1:${dependencies.RUSTFS_API_PORT}`,
     S3_BUCKET_NAME: profile.bucket,
-    S3_ACCESS_KEY_ID: dependencies.MINIO_ROOT_USER,
-    S3_SECRET_ACCESS_KEY: dependencies.MINIO_ROOT_PASSWORD,
+    S3_ACCESS_KEY_ID: dependencies.RUSTFS_ACCESS_KEY,
+    S3_SECRET_ACCESS_KEY: dependencies.RUSTFS_SECRET_KEY,
     SMTP_HOST: "127.0.0.1",
     SMTP_PORT: dependencies.MAILPIT_SMTP_PORT,
     SMTP_SECURE: "false",
@@ -180,6 +196,24 @@ async function ensureGeneratedFile(filename, values, options = {}) {
   const resolved = values();
   if (await exists(filename)) {
     const current = await readSimpleEnv(filename);
+    const missingRequired = (options.requiredKeys ?? []).filter((key) => !current[key]?.trim());
+    const storageChanged =
+      options.expectedStorage &&
+      [
+        "S3_ACCESS_KEY_ID",
+        "S3_SECRET_ACCESS_KEY",
+        "S3_ENDPOINT",
+        "S3_PUBLIC_ENDPOINT",
+        "S3_BUCKET_NAME",
+      ].some((key) => current[key] !== options.expectedStorage[key]);
+    if (missingRequired.length || storageChanged) {
+      throw new Error(
+        `Generated environment ${filename} does not match the RustFS configuration. ` +
+          "Choose a fresh ZILOBASE_DEV_STATE_DIR and rerun npm run dev:setup; " +
+          "use fresh PostgreSQL and RustFS resources for the new instance. " +
+          "Existing storage and credentials were not modified.",
+      );
+    }
     const missing = Object.fromEntries(
       Object.entries(resolved).filter(([key]) => current[key] === undefined),
     );

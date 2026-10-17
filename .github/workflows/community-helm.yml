@@ -60,7 +60,7 @@ jobs:
           helm template development deploy/helm/zilobase \
             --set development.enabled=true \
             --set config.externalUrl=http://community.localhost:3200 \
-            --set config.s3Endpoint=http://minio:9000 \
+            --set config.s3Endpoint=http://rustfs:9000 \
             --set config.s3PublicEndpoint=http://127.0.0.1:3210 >/dev/null
       - name: Build and load immutable Community image
         shell: bash
@@ -75,12 +75,12 @@ jobs:
               ghcr.io/zilobase/zilobase:community-helm-ci \
               "ghcr.io/zilobase/zilobase@$digest"
           done
-      - name: Start external PostgreSQL, TLS MinIO, and Valkey
+      - name: Start external PostgreSQL, TLS RustFS, and Valkey
         shell: bash
         run: |
           set -euo pipefail
           postgres_password=$(openssl rand -hex 24)
-          minio_password=$(openssl rand -hex 32)
+          rustfs_password=$(openssl rand -hex 32)
           docker run -d --name community-helm-valkey --network kind \
             valkey/valkey:8-alpine valkey-server --save "" --appendonly no
           until docker exec community-helm-valkey valkey-cli ping 2>/dev/null | grep -q PONG; do sleep 1; done
@@ -91,40 +91,47 @@ jobs:
             postgres:17.10-alpine
           until docker exec community-helm-postgres pg_isready -U zilobase -d zilobase >/dev/null 2>&1; do sleep 1; done
 
-          mkdir -p "$RUNNER_TEMP/community-minio-tls"
-          chmod 755 "$RUNNER_TEMP/community-minio-tls"
+          mkdir -p "$RUNNER_TEMP/community-rustfs-tls"
+          chmod 755 "$RUNNER_TEMP/community-rustfs-tls"
           openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes \
-            -keyout "$RUNNER_TEMP/community-minio-tls/rustfs_key.pem" \
-            -out "$RUNNER_TEMP/community-minio-tls/rustfs_cert.pem" \
-            -days 2 -subj "/CN=minio.external.svc.cluster.local" \
-            -addext "subjectAltName=DNS:minio,DNS:minio.external,DNS:minio.external.svc,DNS:minio.external.svc.cluster.local"
-          chmod 644 "$RUNNER_TEMP/community-minio-tls/rustfs_cert.pem" "$RUNNER_TEMP/community-minio-tls/rustfs_key.pem"
-          docker run -d --name community-helm-minio --network kind \
-            -e MINIO_ROOT_USER=zilobase \
-            -e MINIO_ROOT_PASSWORD="$minio_password" \
+            -keyout "$RUNNER_TEMP/community-rustfs-tls/rustfs_key.pem" \
+            -out "$RUNNER_TEMP/community-rustfs-tls/rustfs_cert.pem" \
+            -days 2 -subj "/CN=rustfs.external.svc.cluster.local" \
+            -addext "subjectAltName=DNS:rustfs,DNS:rustfs.external,DNS:rustfs.external.svc,DNS:rustfs.external.svc.cluster.local"
+          chmod 644 "$RUNNER_TEMP/community-rustfs-tls/rustfs_cert.pem" "$RUNNER_TEMP/community-rustfs-tls/rustfs_key.pem"
+          docker run -d --name community-helm-rustfs --network kind \
             -e RUSTFS_ACCESS_KEY=zilobase \
-            -e RUSTFS_SECRET_KEY="$minio_password" \
+            -e RUSTFS_SECRET_KEY="$rustfs_password" \
+            -e RUSTFS_CORS_ALLOWED_ORIGINS=https://community.ga.invalid,zilo-desktop://app \
             -e RUSTFS_ADDRESS=:443 \
             -e RUSTFS_TLS_PATH=/certs \
-            -v "$RUNNER_TEMP/community-minio-tls:/certs:ro" \
-            rustfs/rustfs:1.0.0
+            -v "$RUNNER_TEMP/community-rustfs-tls:/certs:ro" \
+            rustfs/rustfs:1.0.2
+          attempts=0
           until docker run --rm --network kind \
-            -e MINIO_ROOT_USER=zilobase \
-            -e MINIO_ROOT_PASSWORD="$minio_password" \
+            -e RUSTFS_ACCESS_KEY=zilobase \
+            -e RUSTFS_SECRET_KEY="$rustfs_password" \
             --entrypoint /bin/sh rustfs/rc:v0.1.36 -c \
-            'rc alias set --insecure ga https://community-helm-minio "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null'; do sleep 1; done
+            'rc alias set --insecure -- ga https://community-helm-rustfs "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY" >/dev/null'; do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge 20 ]; then
+              echo "RustFS did not accept authenticated requests after 20 attempts" >&2
+              exit 1
+            fi
+            sleep 2
+          done
           docker run --rm --network kind \
-            -e MINIO_ROOT_USER=zilobase \
-            -e MINIO_ROOT_PASSWORD="$minio_password" \
+            -e RUSTFS_ACCESS_KEY=zilobase \
+            -e RUSTFS_SECRET_KEY="$rustfs_password" \
             --entrypoint /bin/sh rustfs/rc:v0.1.36 -c \
-            'rc alias set --insecure ga https://community-helm-minio "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null && rc mb --ignore-existing ga/zilobase >/dev/null && rc version enable ga/zilobase >/dev/null'
+            'rc alias set --insecure -- ga https://community-helm-rustfs "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY" >/dev/null && rc bucket create --ignore-existing ga/zilobase >/dev/null && rc bucket version enable ga/zilobase >/dev/null'
 
           postgres_ip=$(docker inspect community-helm-postgres --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
-          minio_ip=$(docker inspect community-helm-minio --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+          rustfs_ip=$(docker inspect community-helm-rustfs --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
           valkey_ip=$(docker inspect community-helm-valkey --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
           node_ip=$(docker inspect community-helm-control-plane --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
           echo "POSTGRES_IP=$postgres_ip" >> "$GITHUB_ENV"
-          echo "MINIO_IP=$minio_ip" >> "$GITHUB_ENV"
+          echo "RUSTFS_IP=$rustfs_ip" >> "$GITHUB_ENV"
           echo "VALKEY_IP=$valkey_ip" >> "$GITHUB_ENV"
           echo "NODE_IP=$node_ip" >> "$GITHUB_ENV"
 
@@ -139,7 +146,7 @@ jobs:
           printf '%s\n' \
             'apiVersion: v1' \
             'kind: Service' \
-            'metadata: { name: minio, namespace: external }' \
+            'metadata: { name: rustfs, namespace: external }' \
             'spec:' \
             '  ports: [{ name: https, protocol: TCP, port: 443, targetPort: 443 }]' | kubectl apply -f -
           printf '%s\n' \
@@ -162,11 +169,11 @@ jobs:
             'apiVersion: discovery.k8s.io/v1' \
             'kind: EndpointSlice' \
             'metadata:' \
-            '  name: minio-external' \
+            '  name: rustfs-external' \
             '  namespace: external' \
-            '  labels: { kubernetes.io/service-name: minio }' \
+            '  labels: { kubernetes.io/service-name: rustfs }' \
             'addressType: IPv4' \
-            "endpoints: [{ addresses: [\"$minio_ip\"] }]" \
+            "endpoints: [{ addresses: [\"$rustfs_ip\"] }]" \
             'ports: [{ name: https, protocol: TCP, port: 443 }]' | kubectl apply -f -
           printf '%s\n' \
             'apiVersion: discovery.k8s.io/v1' \
@@ -184,11 +191,11 @@ jobs:
             --from-literal="BETTER_AUTH_SECRET=$(openssl rand -hex 32)" \
             --from-literal="ZILOBASE_BOOTSTRAP_TOKEN=$(openssl rand -hex 32)" \
             --from-literal="S3_ACCESS_KEY_ID=zilobase" \
-            --from-literal="S3_SECRET_ACCESS_KEY=$minio_password"
+            --from-literal="S3_SECRET_ACCESS_KEY=$rustfs_password"
           kubectl -n community create secret generic community-realtime \
             --from-literal="REALTIME_REDIS_URL=redis://valkey.external.svc.cluster.local:6379"
           kubectl -n community create configmap zilobase-test-ca \
-            --from-file=ca.crt="$RUNNER_TEMP/community-minio-tls/rustfs_cert.pem"
+            --from-file=ca.crt="$RUNNER_TEMP/community-rustfs-tls/rustfs_cert.pem"
       - name: Install and smoke Community chart
         shell: bash
         run: |
@@ -197,13 +204,13 @@ jobs:
             --set "image.digest=$COMMUNITY_DIGEST" \
             --set image.pullPolicy=Never \
             --set config.externalUrl=https://community.ga.invalid \
-            --set config.s3Endpoint=https://minio.external.svc.cluster.local \
-            --set config.s3PublicEndpoint=https://minio.external.svc.cluster.local \
+            --set config.s3Endpoint=https://rustfs.external.svc.cluster.local \
+            --set config.s3PublicEndpoint=https://rustfs.external.svc.cluster.local \
             --set config.s3Bucket=zilobase \
             --set config.smtpHost=smtp.ga.invalid \
             --set "networkPolicy.healthProbeCIDRs[0]=$NODE_IP/32" \
             --set "networkPolicy.postgresCIDR=$POSTGRES_IP/32" \
-            --set "networkPolicy.s3CIDR=$MINIO_IP/32" \
+            --set "networkPolicy.s3CIDR=$RUSTFS_IP/32" \
             --set networkPolicy.smtpCIDR=192.0.2.10/32 \
             --set "realtime.existingSecret=community-realtime" \
             --set realtime.secretKey=REALTIME_REDIS_URL \
@@ -225,17 +232,17 @@ jobs:
           kubectl -n community scale deployment community-zilobase --replicas=0
           kubectl -n community wait --for=delete pod -l app.kubernetes.io/instance=community --timeout=120s
           docker exec community-helm-postgres pg_dump -U zilobase -d zilobase --format=custom > "$RUNNER_TEMP/community.dump"
-          docker stop community-helm-minio >/dev/null
+          docker stop community-helm-rustfs >/dev/null
           docker volume create community-helm-object-backup >/dev/null
-          docker run --rm --volumes-from community-helm-minio:ro \
+          docker run --rm --volumes-from community-helm-rustfs:ro \
             -v community-helm-object-backup:/backup alpine:3.22 sh -c 'cp -a /data/. /backup/'
 
           postgres_password=$(docker inspect community-helm-postgres --format '{{range .Config.Env}}{{println .}}{{end}}' | awk -F= '$1=="POSTGRES_PASSWORD"{sub(/^[^=]*=/,"");print}')
-          minio_password=$(docker inspect community-helm-minio --format '{{range .Config.Env}}{{println .}}{{end}}' | awk -F= '$1=="MINIO_ROOT_PASSWORD"{sub(/^[^=]*=/,"");print}')
+          rustfs_password=$(docker inspect community-helm-rustfs --format '{{range .Config.Env}}{{println .}}{{end}}' | awk -F= '$1=="RUSTFS_SECRET_KEY"{sub(/^[^=]*=/,"");print}')
           old_postgres_volume=$(docker inspect community-helm-postgres | jq -r '.[0].Mounts[] | select(.Destination == "/var/lib/postgresql/data") | .Name')
-          old_minio_volume=$(docker inspect community-helm-minio | jq -r '.[0].Mounts[] | select(.Destination == "/data") | .Name')
-          docker rm -f community-helm-postgres community-helm-minio
-          docker volume rm "$old_postgres_volume" "$old_minio_volume"
+          old_rustfs_volume=$(docker inspect community-helm-rustfs | jq -r '.[0].Mounts[] | select(.Destination == "/data") | .Name')
+          docker rm -f community-helm-postgres community-helm-rustfs
+          docker volume rm "$old_postgres_volume" "$old_rustfs_volume"
 
           docker volume create community-helm-postgres-restored >/dev/null
           docker run -d --name community-helm-postgres --network kind \
@@ -245,29 +252,37 @@ jobs:
           docker exec -i community-helm-postgres pg_restore -U zilobase -d zilobase --no-owner --no-privileges < "$RUNNER_TEMP/community.dump"
           restored_postgres_ip=$(docker inspect community-helm-postgres --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 
-          docker volume create community-helm-minio-restored >/dev/null
+          docker volume create community-helm-rustfs-restored >/dev/null
           docker run --rm -v community-helm-object-backup:/backup:ro \
-            -v community-helm-minio-restored:/data alpine:3.22 sh -c 'cp -a /backup/. /data/ && chown -R 10001:10001 /data'
-          docker run -d --name community-helm-minio --network kind \
-            -e MINIO_ROOT_USER=zilobase -e MINIO_ROOT_PASSWORD="$minio_password" \
-            -e RUSTFS_ACCESS_KEY=zilobase -e RUSTFS_SECRET_KEY="$minio_password" \
+            -v community-helm-rustfs-restored:/data alpine:3.22 sh -c 'cp -a /backup/. /data/ && chown -R 10001:10001 /data'
+          docker run -d --name community-helm-rustfs --network kind \
+            -e RUSTFS_ACCESS_KEY=zilobase -e RUSTFS_SECRET_KEY="$rustfs_password" \
+            -e RUSTFS_CORS_ALLOWED_ORIGINS=https://community.ga.invalid,zilo-desktop://app \
             -e RUSTFS_ADDRESS=:443 -e RUSTFS_TLS_PATH=/certs \
-            -v community-helm-minio-restored:/data \
-            -v "$RUNNER_TEMP/community-minio-tls:/certs:ro" \
-            rustfs/rustfs:1.0.0
+            -v community-helm-rustfs-restored:/data \
+            -v "$RUNNER_TEMP/community-rustfs-tls:/certs:ro" \
+            rustfs/rustfs:1.0.2
+          attempts=0
           until docker run --rm --network kind \
-            -e MINIO_ROOT_USER=zilobase -e MINIO_ROOT_PASSWORD="$minio_password" \
+            -e RUSTFS_ACCESS_KEY=zilobase -e RUSTFS_SECRET_KEY="$rustfs_password" \
             --entrypoint /bin/sh rustfs/rc:v0.1.36 -c \
-            'rc alias set --insecure ga https://community-helm-minio "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null'; do sleep 1; done
-          restored_minio_ip=$(docker inspect community-helm-minio --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+            'rc alias set --insecure -- ga https://community-helm-rustfs "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY" >/dev/null'; do
+            attempts=$((attempts + 1))
+            if [ "$attempts" -ge 20 ]; then
+              echo "RustFS did not accept authenticated requests after 20 attempts" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          restored_rustfs_ip=$(docker inspect community-helm-rustfs --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
 
           kubectl -n external patch endpointslice postgres-external --type merge \
             -p "{\"endpoints\":[{\"addresses\":[\"$restored_postgres_ip\"]}]}"
-          kubectl -n external patch endpointslice minio-external --type merge \
-            -p "{\"endpoints\":[{\"addresses\":[\"$restored_minio_ip\"]}]}"
+          kubectl -n external patch endpointslice rustfs-external --type merge \
+            -p "{\"endpoints\":[{\"addresses\":[\"$restored_rustfs_ip\"]}]}"
           helm upgrade community deploy/helm/zilobase -n community --reuse-values \
             --set "networkPolicy.postgresCIDR=$restored_postgres_ip/32" \
-            --set "networkPolicy.s3CIDR=$restored_minio_ip/32" \
+            --set "networkPolicy.s3CIDR=$restored_rustfs_ip/32" \
             --timeout 5m --wait
           pod=$(kubectl -n community get pod -l app.kubernetes.io/instance=community -o jsonpath='{.items[0].metadata.name}')
           for module in test-community-helm.mjs api-conformance.mjs cookie-jar.mjs; do

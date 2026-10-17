@@ -22,7 +22,7 @@ services:
     environment:
       BETTER_AUTH_URL: http://127.0.0.1:${ZILOBASE_DEV_HTTP_PORT:-8787}
       CLIENT_URL: http://127.0.0.1:${ZILOBASE_DEV_HTTP_PORT:-8787}
-      S3_PUBLIC_ENDPOINT: http://127.0.0.1:${MINIO_DEV_API_PORT:-9000}
+      S3_PUBLIC_ENDPOINT: http://127.0.0.1:${RUSTFS_DEV_API_PORT:-9000}
       EMAIL_FROM: Zilobase <hello@zilobase.local>
       SMTP_HOST: mailpit
       SMTP_PASSWORD: ""
@@ -30,9 +30,11 @@ services:
       SMTP_SECURE: "false"
       SMTP_USER: ""
 
-  minio:
+  rustfs:
+    environment:
+      RUSTFS_CORS_ALLOWED_ORIGINS: http://127.0.0.1:${ZILOBASE_DEV_HTTP_PORT:-8787},zilo-desktop://app
     ports:
-      - "127.0.0.1:${MINIO_DEV_API_PORT:-9000}:9000"
+      - "127.0.0.1:${RUSTFS_DEV_API_PORT:-9000}:9000"
 
   mailpit:
     image: axllent/mailpit:v1.27.8

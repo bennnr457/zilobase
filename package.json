@@ -70,6 +70,7 @@
     "selfhost:logs": "node scripts/selfhost/manage.mjs logs",
     "selfhost:down": "node scripts/selfhost/manage.mjs down",
     "selfhost:reset": "node scripts/selfhost/manage.mjs reset",
+    "test:rustfs": "node --import tsx scripts/selfhost/test-rustfs.mjs",
     "test:selfhost": "node scripts/selfhost/manage.mjs test",
     "test:selfhost:upgrade": "node --import tsx scripts/selfhost/test-upgrade.mjs",
     "test:dev-workflow": "node --test scripts/dev/dev-workflow.test.mjs",

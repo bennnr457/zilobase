@@ -87,13 +87,13 @@ async function startRuntime({ spawnWeb: spawnWebFn, printSummary, processLabel }
     "up",
     "-d",
     "postgres",
-    "minio",
+    "rustfs",
     "mailpit",
     "valkey",
     "queue-valkey",
     "--wait",
   ]);
-  await dependencies(["run", "--rm", "-T", "minio-init"]);
+  await dependencies(["run", "--rm", "-T", "rustfs-init"]);
 
   const logDir = path.join(stateDir, "logs");
   await mkdir(logDir, { recursive: true });
@@ -411,13 +411,13 @@ export async function resetLocal(target, confirmed) {
       "up",
       "-d",
       "postgres",
-      "minio",
+      "rustfs",
       "mailpit",
       "valkey",
       "queue-valkey",
       "--wait",
     ]);
-    await dependencies(["run", "--rm", "-T", "minio-init"]);
+    await dependencies(["run", "--rm", "-T", "rustfs-init"]);
     await recreateDatabase(localProfiles[target].database);
     if (target === "node") await resetNodeBucket();
     console.info(`Reset isolated ${target} development data.`);
@@ -541,9 +541,9 @@ async function resetNodeBucket() {
     "--rm",
     "-T",
     "--no-deps",
-    "minio-init",
-    'rc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" && ' +
-      "rc rb --force local/zilobase-node || true; rc mb local/zilobase-node; rc anonymous set private local/zilobase-node",
+    "rustfs-init",
+    'rc alias set -- local http://rustfs:9000 "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY" && ' +
+      "rc rb --force local/zilobase-node || true; rc bucket create local/zilobase-node; rc bucket anonymous set private local/zilobase-node",
   ]);
 }
 

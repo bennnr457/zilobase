@@ -7,7 +7,7 @@ services:
     depends_on:
       zilobase:
         condition: service_healthy
-      minio:
+      rustfs:
         condition: service_healthy
     environment:
       ZILOBASE_SITE_ADDRESS: ${ZILOBASE_SITE_ADDRESS:?Set ZILOBASE_SITE_ADDRESS to the application domain}
@@ -31,9 +31,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      rustfs:
         condition: service_healthy
-      minio-init:
+      rustfs-init:
         condition: service_completed_successfully
       valkey:
         condition: service_healthy
@@ -69,11 +69,11 @@ services:
       SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET:-}
       COLLABORATION_SECRET: ${COLLABORATION_SECRET:-${BETTER_AUTH_SECRET}}
       IMAGE_STORAGE_MODE: s3
-      S3_ENDPOINT: http://minio:9000
+      S3_ENDPOINT: http://rustfs:9000
       S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:?Set S3_PUBLIC_ENDPOINT to the public object-storage origin}
-      S3_BUCKET_NAME: ${MINIO_BUCKET:?Set MINIO_BUCKET}
-      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
-      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+      S3_BUCKET_NAME: ${RUSTFS_BUCKET:?Set RUSTFS_BUCKET}
+      S3_ACCESS_KEY_ID: ${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY}
+      S3_SECRET_ACCESS_KEY: ${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:?Set EMAIL_FROM to the production sender identity}
       SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST to the production mail server}
@@ -109,37 +109,38 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    image: rustfs/rustfs:1.0.0
+  rustfs:
+    image: rustfs/rustfs:1.0.2
     restart: unless-stopped
     environment:
-      RUSTFS_ACCESS_KEY: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
-      RUSTFS_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY}
       RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${CLIENT_URL:?Set CLIENT_URL to the public application origin},zilo-desktop://app
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/health/ready"]
       interval: 10s
       timeout: 5s
       retries: 10
 
-  minio-init:
+  rustfs-init:
     image: rustfs/rc:v0.1.36
     depends_on:
-      minio:
+      rustfs:
         condition: service_healthy
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET:?Set MINIO_BUCKET}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY}
+      RUSTFS_BUCKET: ${RUSTFS_BUCKET:?Set RUSTFS_BUCKET}
     entrypoint:
       - /bin/sh
       - -c
       - |
         set -eu
         attempts=0
-        until rc alias set zilobase http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+        until rc alias set -- zilobase http://rustfs:9000 "$$RUSTFS_ACCESS_KEY" "$$RUSTFS_SECRET_KEY"; do
           attempts=$$((attempts + 1))
           if [ "$$attempts" -ge 20 ]; then
             echo "Object storage did not accept authenticated requests after 20 attempts" >&2
@@ -147,8 +148,8 @@ services:
           fi
           sleep 2
         done
-        rc mb --ignore-existing "zilobase/$$MINIO_BUCKET"
-        rc anonymous set private "zilobase/$$MINIO_BUCKET"
+        rc bucket create --ignore-existing "zilobase/$$RUSTFS_BUCKET"
+        rc bucket anonymous set private "zilobase/$$RUSTFS_BUCKET"
 
   valkey:
     image: valkey/valkey:8-alpine
@@ -185,5 +186,5 @@ volumes:
   caddy_data:
   caddy_config:
   postgres_data:
-  minio_data:
+  rustfs_data:
   queue_valkey_data:

@@ -30,7 +30,7 @@ const password = `Test-${secret(18)}`;
 const ownerEmail = `owner-${Date.now()}@zilobase.local`;
 const inviteEmail = `invite-${Date.now()}@zilobase.local`;
 const httpPort = Number(process.env.ZILOBASE_DEV_HTTP_PORT || (await getFreePort()));
-const minioPort = Number(process.env.MINIO_DEV_API_PORT || (await getFreePort()));
+const rustfsPort = Number(process.env.RUSTFS_DEV_API_PORT || (await getFreePort()));
 const mailpitPort = Number(process.env.MAILPIT_DEV_UI_PORT || (await getFreePort()));
 const serverOrigin = `http://127.0.0.1:${httpPort}`;
 const mailpitOrigin = `http://127.0.0.1:${mailpitPort}`;
@@ -116,7 +116,7 @@ try {
   });
   assert.equal(
     new URL(uploadUrl).origin,
-    `http://127.0.0.1:${minioPort}`,
+    `http://127.0.0.1:${rustfsPort}`,
     "the upload URL did not point at the bundled object store",
   );
   api.assertProbeImage(await api.readProfileImage({ cookie: jar.header(), imagePath }));
@@ -131,6 +131,14 @@ try {
   ]);
   assert.equal(uid.code, 0);
   assert.notEqual(uid.stdout.trim(), "0", "application container is running as root");
+
+  console.info("Checking readiness fails while RustFS is unavailable...");
+  const stoppedStorage = await captureCompose(["stop", "rustfs"]);
+  assert.equal(stoppedStorage.code, 0, stoppedStorage.stderr);
+  assert.equal((await fetch(`${serverOrigin}/ready`)).status, 503);
+  const restartedStorage = await captureCompose(["up", "-d", "--wait", "rustfs"]);
+  assert.equal(restartedStorage.code, 0, restartedStorage.stderr);
+  assert.equal((await fetch(`${serverOrigin}/ready`)).status, 200);
 
   console.info("Restarting through selfhost:down/up to verify volume persistence...");
   await selfhost("down");
@@ -243,7 +251,7 @@ async function selfhost(...args) {
       ZILOBASE_SELFHOST_ENV_FILE: envFile,
       ZILOBASE_SELFHOST_PROJECT_NAME: projectName,
       ZILOBASE_DEV_HTTP_PORT: String(httpPort),
-      MINIO_DEV_API_PORT: String(minioPort),
+      RUSTFS_DEV_API_PORT: String(rustfsPort),
       MAILPIT_DEV_UI_PORT: String(mailpitPort),
       ZILOBASE_SELFHOST_IMAGE: process.env.ZILOBASE_SELFHOST_IMAGE || "",
       ZILOBASE_SELFHOST_PULL_POLICY: process.env.ZILOBASE_SELFHOST_PULL_POLICY || "never",
@@ -306,8 +314,8 @@ async function mirrorObjectStorage(direction, localDirectory) {
   const normalizeBackupOwnership = backupOwner ? ' && chown -R "$BACKUP_OWNER" /backup' : "";
   const script =
     direction === "backup"
-      ? `rc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null && rc mirror --overwrite "local/$MINIO_BUCKET" /backup${normalizeBackupOwnership}`
-      : 'rc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null && rc mirror --overwrite /backup "local/$MINIO_BUCKET"';
+      ? `rc alias set -- local http://rustfs:9000 "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY" >/dev/null && rc mirror --overwrite "local/$RUSTFS_BUCKET" /backup${normalizeBackupOwnership}`
+      : 'rc alias set -- local http://rustfs:9000 "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY" >/dev/null && rc mirror --overwrite /backup "local/$RUSTFS_BUCKET"';
   const result = await capture("docker", [
     "run",
     "--rm",
@@ -419,9 +427,9 @@ function scrubSelfhostEnvironment(environment) {
     "BETTER_AUTH_URL",
     "CLIENT_URL",
     "EMAIL_FROM",
-    "MINIO_BUCKET",
-    "MINIO_ROOT_PASSWORD",
-    "MINIO_ROOT_USER",
+    "RUSTFS_BUCKET",
+    "RUSTFS_SECRET_KEY",
+    "RUSTFS_ACCESS_KEY",
     "POSTGRES_DB",
     "POSTGRES_PASSWORD",
     "POSTGRES_USER",

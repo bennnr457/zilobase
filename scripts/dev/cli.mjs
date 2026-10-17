@@ -120,7 +120,7 @@ async function ensureDependencies() {
         composeFile,
         "pull",
         "postgres",
-        "minio",
+        "rustfs",
         "mailpit",
         "valkey",
         "queue-valkey",

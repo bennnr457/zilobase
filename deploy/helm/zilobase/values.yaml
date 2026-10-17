@@ -41,7 +41,8 @@ secretKeys:
 
 config:
   externalUrl: https://zilobase.example.invalid
-  s3Endpoint: https://s3.example.invalid
+  # Operator-provided RustFS; the chart does not provision object storage.
+  s3Endpoint: https://rustfs.example.invalid
   s3PublicEndpoint: https://objects.example.invalid
   s3Bucket: zilobase
   emailFrom: Zilobase <zilobase@example.invalid>

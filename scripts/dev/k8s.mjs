@@ -26,7 +26,7 @@ const dependencyManifest = path.join(coreDir, "scripts", "dev", "k8s-dependencie
 const k8sStateFile = path.join(stateDir, "k8s-runtime.json");
 const dependencyImages = [
   "postgres:17.10-alpine",
-  "rustfs/rustfs:1.0.0",
+  "rustfs/rustfs:1.0.2",
   "rustfs/rc:v0.1.36",
   "axllent/mailpit:v1.27.8",
   "valkey/valkey:8-alpine",
@@ -122,15 +122,16 @@ async function deployKubernetesProfile(options = {}) {
   const secrets = await loadGeneratedEnvironment(generatedEnvironmentFiles.kubernetes);
   await ensureNamespace(profile.namespace);
   await applySecret(profile.namespace, "zilobase-dev-infra", {
+    RUSTFS_CORS_ALLOWED_ORIGINS: `http://${profile.appHost}:${profile.appPort},http://127.0.0.1:${profile.appPort},http://localhost:${profile.appPort},zilo-desktop://app`,
     POSTGRES_PASSWORD: secrets.COMMUNITY_POSTGRES_PASSWORD,
-    MINIO_ROOT_PASSWORD: secrets.COMMUNITY_MINIO_PASSWORD,
+    RUSTFS_SECRET_KEY: secrets.COMMUNITY_RUSTFS_SECRET_KEY,
   });
   await run("kubectl", [
     "-n",
     profile.namespace,
     "delete",
     "job",
-    "minio-init",
+    "rustfs-init",
     "--ignore-not-found=true",
   ]);
   await applyManifest(dependencyManifest, profile.namespace);
@@ -143,7 +144,7 @@ async function deployKubernetesProfile(options = {}) {
     BETTER_AUTH_SECRET: secrets.COMMUNITY_BETTER_AUTH_SECRET,
     ZILOBASE_BOOTSTRAP_TOKEN: secrets.COMMUNITY_BOOTSTRAP_TOKEN,
     S3_ACCESS_KEY_ID: "zilobase",
-    S3_SECRET_ACCESS_KEY: secrets.COMMUNITY_MINIO_PASSWORD,
+    S3_SECRET_ACCESS_KEY: secrets.COMMUNITY_RUSTFS_SECRET_KEY,
     SMTP_PASSWORD: "",
     REALTIME_REDIS_URL: `redis://valkey.${profile.namespace}.svc.cluster.local:6379`,
   });
@@ -186,7 +187,7 @@ async function helmDeploy(image) {
       "--set",
       `config.externalUrl=http://${profile.appHost}:${profile.appPort}`,
       "--set",
-      `config.s3Endpoint=http://minio.${profile.namespace}.svc.cluster.local:9000`,
+      `config.s3Endpoint=http://rustfs.${profile.namespace}.svc.cluster.local:9000`,
       "--set",
       "config.s3PublicEndpoint=http://127.0.0.1:3210",
       "--set",
@@ -214,7 +215,7 @@ async function startPortForwards() {
   const children = [
     portForward("community-app", `service/${serviceName()}`, `${profile.appPort}:80`, 0),
     portForward("community-debug", deploymentName(), `${profile.inspectorPort}:9229`, 1),
-    portForward("community-minio", "service/minio", "3210:9000", 2),
+    portForward("community-rustfs", "service/rustfs", "3210:9000", 2),
     portForward("community-mailpit", "service/mailpit", `${profile.mailpitPort}:8025`, 3),
   ];
   const firstExit = Promise.race(children.map(watchChildExit));
@@ -245,7 +246,7 @@ async function startPortForwards() {
   await Promise.race([
     Promise.all([
       waitForUrl(`http://127.0.0.1:${profile.appPort}/ready`),
-      waitForUrl("http://127.0.0.1:3210/minio/health/live"),
+      waitForUrl("http://127.0.0.1:3210/health/ready"),
       waitForUrl(`http://127.0.0.1:${profile.mailpitPort}/api/v1/info`),
     ]),
     firstExit.then((result) => {
@@ -375,7 +376,7 @@ async function applySecret(namespace, name, values) {
 }
 
 async function waitForDependencies(namespace) {
-  for (const deployment of ["postgres", "minio", "mailpit", "valkey", "queue-valkey"]) {
+  for (const deployment of ["postgres", "rustfs", "mailpit", "valkey", "queue-valkey"]) {
     await run("kubectl", [
       "-n",
       namespace,
@@ -390,7 +391,7 @@ async function waitForDependencies(namespace) {
     namespace,
     "wait",
     "--for=condition=complete",
-    "job/minio-init",
+    "job/rustfs-init",
     "--timeout=5m",
   ]);
 }

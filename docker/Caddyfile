@@ -4,5 +4,5 @@
 }
 
 {$ZILOBASE_STORAGE_SITE_ADDRESS} {
-	reverse_proxy minio:9000
+	reverse_proxy rustfs:9000
 }

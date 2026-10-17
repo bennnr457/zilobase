@@ -119,8 +119,8 @@ export async function startDevelopmentWorkspace() {
             fields: [
               ["Postgres user", dependencies.POSTGRES_USER],
               ["Postgres password", dependencies.POSTGRES_PASSWORD],
-              ["Object storage user", dependencies.MINIO_ROOT_USER],
-              ["Object storage password", dependencies.MINIO_ROOT_PASSWORD],
+              ["Object storage user", dependencies.RUSTFS_ACCESS_KEY],
+              ["Object storage password", dependencies.RUSTFS_SECRET_KEY],
             ],
             name: "Infrastructure",
           },
@@ -136,7 +136,7 @@ export async function startDevelopmentWorkspace() {
           {
             detail: "RustFS object storage console",
             name: "Object storage",
-            url: `http://127.0.0.1:${dependencies.MINIO_CONSOLE_PORT}`,
+            url: `http://127.0.0.1:${dependencies.RUSTFS_CONSOLE_PORT}`,
           },
         ],
       }),

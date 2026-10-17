@@ -55,10 +55,22 @@ await compose(["down", "--volumes", "--remove-orphans"]);
 console.info("Self-hosted containers and named data volumes were removed.");
 
 async function ensureDevelopmentEnvironment() {
-  if (await exists(envFile)) return;
+  if (await exists(envFile)) {
+    const values = parseEnv(await readFile(envFile, "utf8"));
+    const missing = ["RUSTFS_ACCESS_KEY", "RUSTFS_SECRET_KEY", "RUSTFS_BUCKET"].filter(
+      (key) => !values[key]?.trim(),
+    );
+    if (missing.length)
+      fail(
+        `Missing ${missing.join(", ")} in ${envFile}. ` +
+          "Use a fresh project and environment file to reprovision a complete RustFS instance; " +
+          "use fresh PostgreSQL and RustFS resources. Existing data was not modified.",
+      );
+    return;
+  }
 
   const httpPort = process.env.ZILOBASE_DEV_HTTP_PORT || "8787";
-  const minioPort = process.env.MINIO_DEV_API_PORT || "9000";
+  const rustfsPort = process.env.RUSTFS_DEV_API_PORT || "9000";
   const mailpitPort = process.env.MAILPIT_DEV_UI_PORT || "8025";
   const serverOrigin = `http://127.0.0.1:${httpPort}`;
 
@@ -70,20 +82,20 @@ async function ensureDevelopmentEnvironment() {
     "ZILOBASE_SITE_ADDRESS=http://127.0.0.1",
     "ZILOBASE_STORAGE_SITE_ADDRESS=http://127.0.0.1",
     `ZILOBASE_DEV_HTTP_PORT=${httpPort}`,
-    `MINIO_DEV_API_PORT=${minioPort}`,
+    `RUSTFS_DEV_API_PORT=${rustfsPort}`,
     `MAILPIT_DEV_UI_PORT=${mailpitPort}`,
     `CLIENT_URL=${serverOrigin}`,
     `BETTER_AUTH_URL=${serverOrigin}`,
-    `S3_PUBLIC_ENDPOINT=http://127.0.0.1:${minioPort}`,
+    `S3_PUBLIC_ENDPOINT=http://127.0.0.1:${rustfsPort}`,
     `BETTER_AUTH_SECRET=${secret(48)}`,
     `ZILOBASE_BOOTSTRAP_TOKEN=${secret(48)}`,
     "COLLABORATION_SECRET=",
     "POSTGRES_DB=zilobase",
     "POSTGRES_USER=zilobase",
     `POSTGRES_PASSWORD=${secret(32)}`,
-    "MINIO_BUCKET=zilobase",
-    "MINIO_ROOT_USER=zilobase",
-    `MINIO_ROOT_PASSWORD=${secret(32)}`,
+    "RUSTFS_BUCKET=zilobase",
+    "RUSTFS_ACCESS_KEY=zilobase",
+    `RUSTFS_SECRET_KEY=${secret(32)}`,
     "EMAIL_FROM=Zilobase <hello@zilobase.local>",
     "SMTP_HOST=mailpit",
     "SMTP_PORT=1025",

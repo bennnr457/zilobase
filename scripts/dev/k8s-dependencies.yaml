@@ -42,70 +42,87 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: minio, namespace: __NAMESPACE__ }
+metadata: { name: rustfs, namespace: __NAMESPACE__ }
 spec:
   replicas: 1
-  selector: { matchLabels: { app: minio } }
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: rustfs } }
   template:
-    metadata: { labels: { app: minio } }
+    metadata: { labels: { app: rustfs } }
     spec:
       securityContext: { fsGroup: 10001 }
       containers:
-        - name: minio
-          image: rustfs/rustfs:1.0.0
+        - name: rustfs
+          image: rustfs/rustfs:1.0.2
           env:
             - { name: RUSTFS_ACCESS_KEY, value: zilobase }
             - name: RUSTFS_SECRET_KEY
-              valueFrom: { secretKeyRef: { name: zilobase-dev-infra, key: MINIO_ROOT_PASSWORD } }
+              valueFrom: { secretKeyRef: { name: zilobase-dev-infra, key: RUSTFS_SECRET_KEY } }
             - { name: RUSTFS_ADDRESS, value: ":9000" }
+            - name: RUSTFS_CORS_ALLOWED_ORIGINS
+              valueFrom:
+                { secretKeyRef: { name: zilobase-dev-infra, key: RUSTFS_CORS_ALLOWED_ORIGINS } }
           ports:
             - { name: api, containerPort: 9000 }
             - { name: console, containerPort: 9001 }
+          livenessProbe:
+            httpGet: { path: /health/live, port: api }
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
-            httpGet: { path: /minio/health/live, port: api }
+            httpGet: { path: /health/ready, port: api }
             periodSeconds: 3
           volumeMounts: [{ name: data, mountPath: /data }]
       volumes:
         - name: data
-          persistentVolumeClaim: { claimName: minio-data }
+          persistentVolumeClaim: { claimName: rustfs-data }
 ---
 apiVersion: v1
 kind: Service
-metadata: { name: minio, namespace: __NAMESPACE__ }
+metadata: { name: rustfs, namespace: __NAMESPACE__ }
 spec:
-  selector: { app: minio }
+  selector: { app: rustfs }
   ports:
     - { name: api, port: 9000, targetPort: api }
     - { name: console, port: 9001, targetPort: console }
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
-metadata: { name: minio-data, namespace: __NAMESPACE__ }
+metadata: { name: rustfs-data, namespace: __NAMESPACE__ }
 spec:
   accessModes: [ReadWriteOnce]
   resources: { requests: { storage: 1Gi } }
 ---
 apiVersion: batch/v1
 kind: Job
-metadata: { name: minio-init, namespace: __NAMESPACE__ }
+metadata: { name: rustfs-init, namespace: __NAMESPACE__ }
 spec:
   backoffLimit: 10
   template:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: minio-init
+        - name: rustfs-init
           image: rustfs/rc:v0.1.36
           env:
-            - { name: MINIO_ROOT_USER, value: zilobase }
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom: { secretKeyRef: { name: zilobase-dev-infra, key: MINIO_ROOT_PASSWORD } }
+            - { name: RUSTFS_ACCESS_KEY, value: zilobase }
+            - name: RUSTFS_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: zilobase-dev-infra, key: RUSTFS_SECRET_KEY } }
           command: ["/bin/sh", "-c"]
           args:
-            - >-
-              until rc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"; do sleep 2; done;
-              rc mb --ignore-existing local/zilobase;
-              rc anonymous set private local/zilobase
+            - |
+              set -eu
+              attempts=0
+              until rc alias set -- local http://rustfs:9000 "$RUSTFS_ACCESS_KEY" "$RUSTFS_SECRET_KEY"; do
+                attempts=$((attempts + 1))
+                if [ "$attempts" -ge 20 ]; then
+                  echo "RustFS did not accept authenticated requests after 20 attempts" >&2
+                  exit 1
+                fi
+                sleep 2
+              done
+              rc bucket create --ignore-existing local/zilobase
+              rc bucket anonymous set private local/zilobase
 ---
 apiVersion: apps/v1
 kind: Deployment

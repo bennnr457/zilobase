@@ -1,7 +1,7 @@
 import { applyPublicDevelopmentOrigin } from "./public-origin.mjs";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createServer } from "node:net";
 import os from "node:os";
@@ -50,9 +50,9 @@ test("the Node profile uses stable local ports and identity", () => {
 test("the Node profile disables demo seeding", () => {
   const dependencies = {
     MAILPIT_SMTP_PORT: "11025",
-    MINIO_API_PORT: "19100",
-    MINIO_ROOT_PASSWORD: "minio-password",
-    MINIO_ROOT_USER: "minio-user",
+    RUSTFS_API_PORT: "19100",
+    RUSTFS_SECRET_KEY: "rustfs-password",
+    RUSTFS_ACCESS_KEY: "rustfs-user",
     POSTGRES_HOST_PORT: "15432",
     POSTGRES_PASSWORD: "postgres-password",
     POSTGRES_USER: "postgres-user",
@@ -402,5 +402,59 @@ test("readiness uses launcher origins rather than obsolete generated hostnames",
       runtimeEnvironment(profile, env).BETTER_AUTH_URL,
       `http://${profile.apiHost}:${profile.apiPort}`,
     );
+  }
+});
+
+test("RustFS setup preserves current generated credentials and rejects stale storage state", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "zilobase-rustfs-env-"));
+  const setup = () =>
+    spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        'const { ensureDevelopmentEnvironment } = await import("./scripts/dev/env.mjs"); await ensureDevelopmentEnvironment();',
+      ],
+      {
+        cwd: coreDir,
+        env: { ...process.env, ZILOBASE_DEV_STATE_DIR: directory },
+        encoding: "utf8",
+      },
+    );
+  try {
+    assert.equal(setup().status, 0);
+    const dependenciesFile = path.join(directory, "env/dependencies.env");
+    const nodeFile = path.join(directory, "env/node.env");
+    const original = await readFile(dependenciesFile, "utf8");
+    const originalNode = await readFile(nodeFile, "utf8");
+    assert.equal(setup().status, 0);
+    assert.equal(await readFile(dependenciesFile, "utf8"), original);
+    assert.equal(await readFile(nodeFile, "utf8"), originalNode);
+    const stale = original.replace(/^RUSTFS_SECRET_KEY=.*$/mu, "MINIO_ROOT_PASSWORD=legacy-secret");
+    await writeFile(dependenciesFile, stale);
+    const rejected = setup();
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /fresh ZILOBASE_DEV_STATE_DIR/u);
+    assert.equal(await readFile(dependenciesFile, "utf8"), stale);
+    assert.equal(await readFile(nodeFile, "utf8"), originalNode);
+    await writeFile(dependenciesFile, original);
+    const staleNode = originalNode.replace(
+      /^S3_SECRET_ACCESS_KEY=.*$/mu,
+      "S3_SECRET_ACCESS_KEY=stale-secret",
+    );
+    await writeFile(nodeFile, staleNode);
+    assert.notEqual(setup().status, 0);
+    assert.equal(await readFile(nodeFile, "utf8"), staleNode);
+    await writeFile(nodeFile, originalNode);
+    const kubernetesFile = path.join(directory, "env/kubernetes.env");
+    const staleKubernetes = (await readFile(kubernetesFile, "utf8")).replace(
+      /^COMMUNITY_RUSTFS_SECRET_KEY=.*$/mu,
+      "COMMUNITY_MINIO_PASSWORD=legacy-secret",
+    );
+    await writeFile(kubernetesFile, staleKubernetes);
+    assert.notEqual(setup().status, 0);
+    assert.equal(await readFile(kubernetesFile, "utf8"), staleKubernetes);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });

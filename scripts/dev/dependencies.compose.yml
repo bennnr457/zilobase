@@ -19,38 +19,48 @@ services:
       timeout: 3s
       retries: 30
 
-  minio:
-    image: rustfs/rustfs:1.0.0
+  rustfs:
+    image: rustfs/rustfs:1.0.2
     restart: unless-stopped
     environment:
-      RUSTFS_ACCESS_KEY: ${MINIO_ROOT_USER}
-      RUSTFS_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY}
       RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${RUSTFS_CORS_ALLOWED_ORIGINS:-http://localhost:1420,http://127.0.0.1:1420,http://localhost:1424,http://127.0.0.1:1424,zilo-desktop://app}
     ports:
-      - "127.0.0.1:${MINIO_API_PORT:-19100}:9000"
-      - "127.0.0.1:${MINIO_CONSOLE_PORT:-19101}:9001"
+      - "127.0.0.1:${RUSTFS_API_PORT:-19100}:9000"
+      - "127.0.0.1:${RUSTFS_CONSOLE_PORT:-19101}:9001"
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/health/ready"]
       interval: 3s
       timeout: 3s
       retries: 30
 
-  minio-init:
+  rustfs-init:
     image: rustfs/rc:v0.1.36
     depends_on:
-      minio:
+      rustfs:
         condition: service_healthy
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY}
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - >-
-        rc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}" &&
-        rc mb --ignore-existing local/zilobase-node &&
-        rc anonymous set private local/zilobase-node
+      - |
+        set -eu
+        attempts=0
+        until rc alias set -- local http://rustfs:9000 "$${RUSTFS_ACCESS_KEY}" "$${RUSTFS_SECRET_KEY}"; do
+          attempts=$$((attempts + 1))
+          if [ "$$attempts" -ge 20 ]; then
+            echo "RustFS did not accept authenticated requests after 20 attempts" >&2
+            exit 1
+          fi
+          sleep 2
+        done
+        rc bucket create --ignore-existing local/zilobase-node
+        rc bucket anonymous set private local/zilobase-node
 
   mailpit:
     image: axllent/mailpit:v1.27.8
@@ -105,5 +115,5 @@ services:
 
 volumes:
   postgres_data:
-  minio_data:
+  rustfs_data:
   queue_valkey_data:
