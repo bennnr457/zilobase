@@ -34,12 +34,7 @@ export type RowMove = RecordDrop & {
 export type TableRow = SortableDatabaseItem;
 export type GroupSection = DatabaseTableGroupSection<TableRow>;
 
-export type RowLayout = {
-  centers: Record<string, number>;
-  dropTops: number[];
-  heights: Record<string, number>;
-  rowIds: string[];
-};
+export type RowLayout = import("../../../interactions/lib/database-table-layout").DatabaseRowLayout;
 
 export type TableRowDropTarget = DatabaseRowDropTarget & {
   subItemParentRowId?: string | null;

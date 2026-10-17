@@ -1,4 +1,4 @@
-import { GripVertical } from "@/components/icons";
+import { DatabaseRowDragControls } from "../../../interactions/components/database-row-controls";
 import { DefaultPageIcon } from "@/sections/pages/appearance/components/page-icon";
 
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
@@ -10,11 +10,17 @@ export function TimelineRowDragLayer({
   editable,
   layout,
   sidebarCollapsed,
+  selectedRowIds,
+  onSelectedRowChange,
+  rowsById,
 }: {
   controller: TimelineRowDragController;
   editable: boolean;
   layout: TimelineRowLayout;
   sidebarCollapsed: boolean;
+  selectedRowIds: Set<string>;
+  onSelectedRowChange: (rowId: string, selected: boolean) => void;
+  rowsById: ReadonlyMap<string, SortableDatabaseItem>;
 }) {
   return (
     <>
@@ -28,6 +34,7 @@ export function TimelineRowDragLayer({
             left: controller.overlay.left,
             top: controller.overlay.top,
             width: controller.overlay.width,
+            zIndex: 80,
           }}
         >
           <span className="database-row-drag-overlay-cell">
@@ -38,7 +45,26 @@ export function TimelineRowDragLayer({
       ) : null}
 
       {editable && !sidebarCollapsed ? (
-        <TimelineRowDragRail controller={controller} layout={layout} />
+        <div className="database-timeline-row-drag-rail">
+          <DatabaseRowDragControls
+            canReorderRows={editable}
+            editable={editable}
+            draggedRowId={controller.draggedRowId}
+            hoveredRowId={controller.hoveredRowId}
+            onDragEnd={controller.clearDrag}
+            onDragStart={controller.startDrag}
+            onHoveredRowChange={controller.setHoveredRowId}
+            onSelectedRowChange={onSelectedRowChange}
+            rowDragTitle="Drag page"
+            rowsById={rowsById}
+            selectedRowIds={selectedRowIds}
+            rowLayout={{
+              ...layout,
+              heights: layout.heights ?? {},
+              rowIds: layout.rowIds ?? Object.keys(layout.centers),
+            }}
+          />
+        </div>
       ) : null}
 
       {controller.dropLineTop !== null ? (
@@ -46,70 +72,9 @@ export function TimelineRowDragLayer({
           aria-hidden="true"
           className="drag-drop-line database-row-drop-line database-timeline-row-drop-line"
           data-orientation="horizontal"
-          style={{ top: controller.dropLineTop }}
+          style={{ top: controller.dropLineTop, zIndex: 65 }}
         />
       ) : null}
     </>
   );
-}
-
-function TimelineRowDragRail({
-  controller,
-  layout,
-}: {
-  controller: TimelineRowDragController;
-  layout: TimelineRowLayout;
-}) {
-  return (
-    <div className="database-row-drag-rail database-timeline-row-drag-rail">
-      {controller.controlRows.map((row) => {
-        const rowCenter = layout.centers[row.id];
-        if (rowCenter === undefined) return null;
-
-        return (
-          <div
-            className="database-row-controls"
-            data-visible="true"
-            key={row.id}
-            onMouseEnter={() => controller.setHoveredRowId(row.id)}
-            onMouseLeave={() => {
-              if (!controller.draggedRowId) controller.setHoveredRowId(null);
-            }}
-            style={{ top: rowCenter }}
-          >
-            <TimelineRowDragButton controller={controller} row={row} />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function TimelineRowDragButton({
-  controller,
-  row,
-}: {
-  controller: TimelineRowDragController;
-  row: SortableDatabaseItem;
-}) {
-  return (
-    <button
-      aria-label={`Drag ${getTimelineRowTitle(row)}`}
-      className="database-row-drag-handle"
-      data-database-row-drag-handle
-      data-dragging={controller.draggedRowId === row.id ? "true" : undefined}
-      draggable
-      onClick={(event) => event.preventDefault()}
-      onDragEnd={controller.clearDrag}
-      onDragStart={(event) => controller.startDrag(row, event)}
-      title="Drag page"
-      type="button"
-    >
-      <GripVertical />
-    </button>
-  );
-}
-
-function getTimelineRowTitle(row: SortableDatabaseItem) {
-  return row.page.name.trim() || "Untitled";
 }

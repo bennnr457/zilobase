@@ -1,7 +1,45 @@
 export type TimelineRowLayout = {
   centers: Record<string, number>;
   dropTops: number[];
+  heights?: Record<string, number>;
+  rowIds?: string[];
 };
+
+export type TimelineGroupDropTarget = {
+  sectionId: string;
+  localTargetIndex: number;
+  top: number;
+};
+
+export type TimelineGroupDropGeometry = {
+  sectionId: string;
+  top: number;
+  bottom: number;
+  footerTop: number;
+  rows: { top: number; bottom: number }[];
+};
+
+/** A group's final boundary belongs above its creation row, even when empty. */
+export function getTimelineGroupDropTarget(
+  groups: TimelineGroupDropGeometry[],
+  pointerTop: number,
+): TimelineGroupDropTarget | null {
+  const distance = (group: TimelineGroupDropGeometry) =>
+    Math.max(group.top - pointerTop, pointerTop - group.bottom, 0);
+  const group = groups.reduce<TimelineGroupDropGeometry | null>(
+    (closest, candidate) =>
+      !closest || distance(candidate) < distance(closest) ? candidate : closest,
+    null,
+  );
+  if (!group) return null;
+  const before = group.rows.findIndex((row) => pointerTop < (row.top + row.bottom) / 2);
+  const localTargetIndex = before === -1 ? group.rows.length : before;
+  return {
+    sectionId: group.sectionId,
+    localTargetIndex,
+    top: group.rows[localTargetIndex]?.top ?? group.footerTop,
+  };
+}
 
 export const emptyTimelineRowLayout: TimelineRowLayout = {
   centers: {},
@@ -17,7 +55,8 @@ export function timelineRowLayoutsMatch(current: TimelineRowLayout, next: Timeli
 
   if (
     currentRowIds.length !== nextRowIds.length ||
-    current.dropTops.length !== next.dropTops.length
+    current.dropTops.length !== next.dropTops.length ||
+    (current.rowIds ?? []).join("|") !== (next.rowIds ?? []).join("|")
   ) {
     return false;
   }

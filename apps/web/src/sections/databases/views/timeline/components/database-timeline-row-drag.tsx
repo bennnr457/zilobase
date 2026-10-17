@@ -25,8 +25,12 @@ import {
 } from "../../../interactions/lib/database-row-drag";
 import type { DatabasePropertyListItem } from "@zilobase/features/databases";
 import type { TimelineGroupSection } from "../lib/presentation-model";
-import type { TimelineRowLayout } from "../lib/database-timeline-layout";
-import { getTimelineRowMove, indexTimelineGroupSections } from "@zilobase/features/databases";
+import type { TimelineRowLayout, TimelineGroupDropTarget } from "../lib/database-timeline-layout";
+import {
+  getGroupedRecordMove,
+  getTimelineRowMove,
+  indexTimelineGroupSections,
+} from "@zilobase/features/databases";
 
 type TimelineRowDragInput = {
   addDraggedPageRow: (
@@ -40,6 +44,7 @@ type TimelineRowDragInput = {
   hostDatabaseId: string | null | undefined;
   editable: boolean;
   getDropTargetIndex: (clientY: number) => number;
+  getGroupDropTarget: (clientY: number) => TimelineGroupDropTarget | null;
   groupProperty: DatabasePropertyListItem | null;
   groupedSections: TimelineGroupSection[];
   isFiltered: boolean;
@@ -61,6 +66,7 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
   const [draggedRowId, setDraggedRowId] = useState<string | null>(null);
   const [isExternalDragActive, setIsExternalDragActive] = useState(false);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [groupDropTarget, setGroupDropTarget] = useState<TimelineGroupDropTarget | null>(null);
   const [overlay, setOverlay] = useState<DatabaseRowDragOverlay | null>(null);
   const manualPlacement = useManualRecordPlacement();
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -70,16 +76,36 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
     () => indexTimelineGroupSections(input.groupedSections),
     [input.groupedSections],
   );
-  const rowMove = useMemo(
-    () =>
-      getTimelineRowMove({
+  const getRowMove = useCallback(
+    (groupTarget: TimelineGroupDropTarget | null) => {
+      if (input.isGrouped) {
+        const source = draggedRowId ? groupSectionByRowId.get(draggedRowId) : null;
+        const target = input.groupedSections.find(
+          (section) => section.id === groupTarget?.sectionId,
+        );
+        if (!draggedRowId || !source || !target || !groupTarget || !input.groupProperty)
+          return null;
+        return getGroupedRecordMove({
+          rows: input.items,
+          targetRows: target.rows,
+          rowId: draggedRowId,
+          targetIndex: groupTarget.localTargetIndex,
+          sourceGroupValue: source.groupValue,
+          targetGroupValue: target.groupValue,
+          property: input.groupProperty,
+          propertyValuesByKey: input.propertyValuesByKey,
+        });
+      }
+      return getTimelineRowMove({
         ...input,
         draggedRowId,
         dropTargetIndex,
         groupSectionByRowId,
-      }),
+      });
+    },
     [draggedRowId, dropTargetIndex, groupSectionByRowId, input],
   );
+  const rowMove = useMemo(() => getRowMove(groupDropTarget), [getRowMove, groupDropTarget]);
 
   const clearDrag = useCallback(() => {
     finishDatabaseRowDrag();
@@ -87,6 +113,7 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
     setIsExternalDragActive(false);
     setHoveredRowId(null);
     setDropTargetIndex(null);
+    setGroupDropTarget(null);
     setOverlay(null);
   }, []);
 
@@ -116,6 +143,7 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
       hideNativeDatabaseRowDragPreview(event.dataTransfer);
       setDraggedRowId(row.id);
       setDropTargetIndex(input.visibleRowIndexById.get(row.id) ?? 0);
+      if (input.isGrouped) setGroupDropTarget(input.getGroupDropTarget(event.clientY));
       setDatabasePageDragPayload(event.dataTransfer, {
         databaseId: input.databaseId,
         hostDatabaseId: input.hostDatabaseId ?? undefined,
@@ -130,6 +158,7 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
   const handleDragLeave = useCallback((event: ReactDragEvent<HTMLDivElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget as globalThis.Node | null)) {
       setDropTargetIndex(null);
+      setGroupDropTarget(null);
       setIsExternalDragActive(false);
     }
   }, []);
@@ -144,35 +173,60 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
       event.stopPropagation();
       event.dataTransfer.dropEffect = "move";
       setIsExternalDragActive(hasExternalPayload);
-      const nextTargetIndex = input.getDropTargetIndex(event.clientY);
-      setDropTargetIndex((current) => (current === nextTargetIndex ? current : nextTargetIndex));
+      if (input.isGrouped) {
+        const next = input.getGroupDropTarget(event.clientY);
+        setGroupDropTarget((current) =>
+          current?.sectionId === next?.sectionId &&
+          current?.localTargetIndex === next?.localTargetIndex &&
+          current?.top === next?.top
+            ? current
+            : next,
+        );
+      } else {
+        const nextTargetIndex = input.getDropTargetIndex(event.clientY);
+        setDropTargetIndex((current) => (current === nextTargetIndex ? current : nextTargetIndex));
+      }
 
       if (overlay && overlayRef.current) {
         overlayRef.current.style.left = `${event.clientX - overlay.offsetX}px`;
         overlayRef.current.style.top = `${event.clientY - overlay.offsetY}px`;
       }
     },
-    [draggedRowId, input.editable, input.getDropTargetIndex, overlay],
+    [
+      draggedRowId,
+      input.editable,
+      input.getDropTargetIndex,
+      input.getGroupDropTarget,
+      input.isGrouped,
+      overlay,
+    ],
   );
 
   const handleDrop = useCallback(
     (event: ReactDragEvent<HTMLDivElement>) => {
+      if (!input.editable) return;
       const externalPayload = !draggedRowId ? getDatabasePageDragPayload(event.dataTransfer) : null;
+      const groupTarget = input.isGrouped ? input.getGroupDropTarget(event.clientY) : null;
+      if (input.isGrouped && !groupTarget) return;
 
-      if (input.databaseId && externalPayload && dropTargetIndex !== null) {
+      if (input.databaseId && externalPayload && (groupTarget || dropTargetIndex !== null)) {
         event.preventDefault();
         event.stopPropagation();
         const targetRow =
-          input.visibleRows[Math.min(dropTargetIndex, input.visibleRows.length - 1)];
-        const targetSection = targetRow
-          ? groupSectionByRowId.get(targetRow.id)
-          : input.groupedSections.at(-1);
+          input.visibleRows[Math.min(dropTargetIndex ?? 0, input.visibleRows.length - 1)];
+        const targetSection = groupTarget
+          ? input.groupedSections.find((section) => section.id === groupTarget.sectionId)
+          : targetRow
+            ? groupSectionByRowId.get(targetRow.id)
+            : input.groupedSections.at(-1);
         const anchorRows = targetSection?.rows ?? input.visibleRows;
-        const localTargetIndex = targetSection
-          ? input.visibleRows
-              .slice(0, dropTargetIndex)
-              .filter((row) => groupSectionByRowId.get(row.id)?.id === targetSection.id).length
-          : dropTargetIndex;
+        const localTargetIndex = groupTarget
+          ? groupTarget.localTargetIndex
+          : targetSection
+            ? input.visibleRows
+                .slice(0, dropTargetIndex ?? 0)
+                .filter((row) => groupSectionByRowId.get(row.id)?.id === targetSection.id).length
+            : (dropTargetIndex ?? 0);
 
         manualPlacement.request((clearSortViewId) =>
           input.addDraggedPageRow(
@@ -187,12 +241,13 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
         return;
       }
 
-      if (!draggedRowId || dropTargetIndex === null) return;
+      if (!draggedRowId || (!groupTarget && dropTargetIndex === null)) return;
 
       event.preventDefault();
       event.stopPropagation();
-      if (rowMove) {
-        manualPlacement.request((clearSortViewId) => applyMove(rowMove, clearSortViewId));
+      const move = groupTarget ? getRowMove(groupTarget) : rowMove;
+      if (move) {
+        manualPlacement.request((clearSortViewId) => applyMove(move, clearSortViewId));
       }
       clearDrag();
     },
@@ -203,6 +258,7 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
       dropTargetIndex,
       groupSectionByRowId,
       input,
+      getRowMove,
       rowMove,
       manualPlacement,
     ],
@@ -221,8 +277,11 @@ export function useTimelineRowDrag(input: TimelineRowDragInput) {
     return rows;
   }, [draggedRowId, hoveredRowId, input.rowsById, input.visibleRowIndexById]);
 
-  const dropLineTop =
-    dropTargetIndex === null || (!rowMove && !isExternalDragActive)
+  const dropLineTop = input.isGrouped
+    ? draggedRowId || isExternalDragActive
+      ? (groupDropTarget?.top ?? null)
+      : null
+    : dropTargetIndex === null || (!rowMove && !isExternalDragActive)
       ? null
       : (input.layout.dropTops[dropTargetIndex] ?? null);
 

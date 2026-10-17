@@ -15,21 +15,9 @@ export const timelineTableStyle = {
   "--database-table-min-width": `${timelineTableMinWidth}px`,
 } as CSSProperties;
 
-export function TimelineNameHeaderRow({
-  label,
-  sticky = false,
-}: {
-  label: string;
-  sticky?: boolean;
-}) {
+export function TimelineNameHeaderRow({ label }: { label: string }) {
   return (
-    <div
-      className={
-        sticky
-          ? "database-timeline-sidebar-name-header database-timeline-sidebar-thead"
-          : "database-timeline-sidebar-name-header h-full w-full"
-      }
-    >
+    <div className="database-timeline-sidebar-name-header">
       <span className="database-name-header-content">
         <span>Aa</span>
         <span>{label}</span>
@@ -43,7 +31,6 @@ export type TimelineSidebarRowCellProps = {
   databaseId: string | null | undefined;
   editable: boolean;
   groupProperty: DatabasePropertyListItem | null;
-  nameColumnLabel: string;
   onAddPage: (groupValue?: string, groupProperty?: DatabasePropertyListItem | null) => void;
   onOpenPage?: (pageId: string) => void;
   onRowMouseEnter?: (rowId: string) => void;
@@ -57,7 +44,6 @@ export const TimelineSidebarRowCell = memo(function TimelineSidebarRowCell({
   databaseId,
   editable,
   groupProperty,
-  nameColumnLabel,
   onAddPage,
   onOpenPage,
   onRowMouseEnter,
@@ -65,23 +51,13 @@ export const TimelineSidebarRowCell = memo(function TimelineSidebarRowCell({
   showPageIcon,
   viewRow,
 }: TimelineSidebarRowCellProps) {
-  if (viewRow.kind === "group-gap") {
-    return (
-      <div
-        aria-hidden
-        className="database-timeline-sidebar-cell database-timeline-sidebar-gap"
-        data-roadmap-ui="gantt-sidebar"
-        style={timelineTableStyle}
-      />
-    );
-  }
-
   if (viewRow.kind === "group-header") {
     const isCollapsed = collapsedGroups[viewRow.section.id] === true;
 
     return (
       <div
         className="database-timeline-sidebar-cell"
+        data-timeline-group-header={viewRow.section.id}
         data-roadmap-ui="gantt-sidebar"
         style={timelineTableStyle}
       >
@@ -106,36 +82,24 @@ export const TimelineSidebarRowCell = memo(function TimelineSidebarRowCell({
     );
   }
 
-  if (viewRow.kind === "name-header") {
-    return (
-      <div
-        className="database-timeline-sidebar-cell"
-        data-roadmap-ui="gantt-sidebar"
-        style={timelineTableStyle}
-      >
-        <TimelineNameHeaderRow label={nameColumnLabel} />
-      </div>
-    );
-  }
-
   if (viewRow.kind === "new-page") {
     return (
       <div
-        className="database-timeline-sidebar-cell"
+        className="database-timeline-sidebar-cell database-timeline-sidebar-create-row"
+        data-database-row-drop-footer
+        data-timeline-group-footer={viewRow.section?.id}
         data-roadmap-ui="gantt-sidebar"
         style={timelineTableStyle}
       >
-        <div className="database-page-create-row">
-          <button
-            className="database-page-create database-page-create-full"
-            disabled={!databaseId}
-            onClick={() => onAddPage(viewRow.section?.groupValue, groupProperty)}
-            type="button"
-          >
-            <Plus />
-            <span>New page</span>
-          </button>
-        </div>
+        <button
+          className="database-table-create"
+          disabled={!databaseId}
+          onClick={() => onAddPage(viewRow.section?.groupValue, groupProperty)}
+          type="button"
+        >
+          <Plus />
+          <span>New page</span>
+        </button>
       </div>
     );
   }
@@ -149,6 +113,7 @@ export const TimelineSidebarRowCell = memo(function TimelineSidebarRowCell({
       <div
         className="database-timeline-sidebar-row"
         data-timeline-row-id={viewRow.item.id}
+        data-timeline-group-id={viewRow.sectionId}
         onMouseEnter={() => onRowMouseEnter?.(viewRow.item.id)}
       >
         <DatabaseCellContent wrapContent={false}>

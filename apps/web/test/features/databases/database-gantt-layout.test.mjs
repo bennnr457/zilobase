@@ -1,22 +1,50 @@
 export function register({ assert, loadModule, test }) {
-  test("timeline add rows span every rendered date column", async () => {
-    const { getTimelineColumnCount } = await loadModule(
-      "/src/sections/databases/views/timeline/gantt/components/gantt-view.tsx",
+  test("ReUI model keeps records, empty tracks and structural rows in the same order", async () => {
+    const { buildTimelineGanttModel, getTimelineResourceHeight } = await loadModule(
+      "/src/sections/databases/views/timeline/lib/reui-model.ts",
     );
-    const timelineData = [
-      {
-        year: 2026,
-        quarters: [
-          { months: [{ days: 31 }, { days: 28 }, { days: 31 }] },
-          { months: [{ days: 30 }, { days: 31 }, { days: 30 }] },
-          { months: [{ days: 31 }, { days: 31 }, { days: 30 }] },
-          { months: [{ days: 31 }, { days: 30 }, { days: 31 }] },
-        ],
-      },
+    const section = { id: "group", name: "Open", rows: [], groupValue: "Open" };
+    const rows = [
+      { kind: "group-header", section },
+      { kind: "item", item: { id: "a" } },
+      { kind: "item", item: { id: "b" } },
+      { kind: "new-page", section },
     ];
-
-    assert.equal(getTimelineColumnCount(timelineData, "daily"), 365);
-    assert.equal(getTimelineColumnCount(timelineData, "monthly"), 12);
-    assert.equal(getTimelineColumnCount(timelineData, "quarterly"), 12);
+    const startAt = new Date(2026, 9, 15);
+    const endAt = new Date(2026, 9, 18);
+    const model = buildTimelineGanttModel(
+      rows,
+      new Map([
+        [
+          "a",
+          { id: "a", name: "Scheduled", status: { color: "gray" }, feature: { startAt, endAt } },
+        ],
+        ["b", { id: "b", name: "Unscheduled", status: { color: "gray" }, feature: null }],
+      ]),
+      true,
+    );
+    assert.equal(model.resources.length, rows.length);
+    assert.deepEqual([...model.rowsByResourceId.values()], rows);
+    assert.deepEqual(
+      model.resources.slice(1, 3).map((r) => r.id),
+      ["a", "b"],
+    );
+    assert.deepEqual(rows.map(getTimelineResourceHeight), [2.5, 2, 2, 2]);
+    assert.equal(model.events.length, 1);
+    assert.equal(model.events[0].resourceId, "a");
+    assert.equal(model.events[0].start, startAt);
+    assert.equal(model.events[0].end, endAt);
+    assert.equal(model.events[0].allDay, true);
+    assert.equal(model.events[0].readOnly, false);
+    assert.equal(
+      buildTimelineGanttModel(
+        rows,
+        new Map([
+          ["a", { id: "a", name: "A", status: { color: "gray" }, feature: { startAt, endAt } }],
+        ]),
+        false,
+      ).events[0].readOnly,
+      true,
+    );
   });
 }

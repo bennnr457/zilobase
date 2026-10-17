@@ -9,8 +9,9 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("timeline view rows keep New page aligned with its grid row", async () => {
-    const { buildTimelineViewRows, getTimelineContentRows, getTimelineViewRowHeight } =
-      await loadModule("/src/sections/databases/views/timeline/lib/presentation-model.ts");
+    const { buildTimelineViewRows, getTimelineViewRowHeight } = await loadModule(
+      "/src/sections/databases/views/timeline/lib/presentation-model.ts",
+    );
     const statusProperty = createProperty("status", "status");
     const firstItem = createItem("row-1");
     const secondItem = createItem("row-2");
@@ -19,34 +20,21 @@ export function register({ assert, loadModule, readSource, test }) {
       createSection("in-progress", "In progress", [secondItem]),
     ];
 
-    const rows = getTimelineContentRows(
-      buildTimelineViewRows({
-        collapsedGroups: {},
-        editable: true,
-        groupProperty: statusProperty,
-        items: [firstItem, secondItem],
-        sections,
-      }),
-      true,
-    );
+    const rows = buildTimelineViewRows({
+      collapsedGroups: {},
+      editable: true,
+      groupProperty: statusProperty,
+      items: [firstItem, secondItem],
+      sections,
+    });
 
     assert.deepEqual(
       rows.map((row) => row.kind),
-      [
-        "group-header",
-        "name-header",
-        "item",
-        "new-page",
-        "group-gap",
-        "group-header",
-        "name-header",
-        "item",
-        "new-page",
-      ],
+      ["group-header", "item", "new-page", "group-header", "item", "new-page"],
     );
-    assert.equal(rows[3].section.id, "not-started");
-    assert.equal(rows[8].section.id, "in-progress");
-    assert.equal(getTimelineViewRowHeight(rows[3]), 32);
+    assert.equal(rows[2].section.id, "not-started");
+    assert.equal(rows[5].section.id, "in-progress");
+    assert.equal(getTimelineViewRowHeight(rows[2]), 32);
   });
 
   test("timeline view rows omit New page for collapsed groups", async () => {

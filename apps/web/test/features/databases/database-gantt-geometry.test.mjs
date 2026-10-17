@@ -1,104 +1,87 @@
 export function register({ assert, loadModule, test }) {
-  test("gantt daily geometry snaps previews to exact columns", async () => {
-    const { getGanttSelection } = await loadModule(
-      "/src/sections/databases/views/timeline/gantt/lib/gantt-geometry.ts",
+  test("grouped timeline targets include each group's final boundary and empty creation row", async () => {
+    const { getTimelineGroupDropTarget } = await loadModule(
+      "/src/sections/databases/views/timeline/lib/database-timeline-layout.ts",
     );
-    const geometry = {
-      columnWidth: 50,
-      range: "daily",
-      timelineStart: new Date(2026, 0, 1),
-      timelineWidth: 365 * 50,
-    };
-
-    const selection = getGanttSelection(126, 5, geometry);
-
-    assert.equal(selection.left, 100);
-    assert.equal(selection.width, 250);
-    assert.deepEqual(
-      [selection.startAt.getFullYear(), selection.startAt.getMonth(), selection.startAt.getDate()],
-      [2026, 0, 3],
-    );
-    assert.equal(selection.endAt.getDate(), 8);
-  });
-
-  test("gantt preview stays inside the final timeline column", async () => {
-    const { getGanttSelection } = await loadModule(
-      "/src/sections/databases/views/timeline/gantt/lib/gantt-geometry.ts",
-    );
-    const geometry = {
-      columnWidth: 50,
-      range: "daily",
-      timelineStart: new Date(2026, 0, 1),
-      timelineWidth: 10 * 50,
-    };
-
-    const selection = getGanttSelection(499, 5, geometry);
-
-    assert.equal(selection.left, 250);
-    assert.equal(selection.width, 250);
-  });
-
-  test("gantt date and pixel conversion share one coordinate model", async () => {
-    const { dateToTimelineX, timelineXToDate } = await loadModule(
-      "/src/sections/databases/views/timeline/gantt/lib/gantt-geometry.ts",
-    );
-    const geometry = {
-      columnWidth: 50,
-      range: "daily",
-      timelineStart: new Date(2026, 0, 1),
-    };
-    const date = new Date(2026, 6, 13);
-    const x = dateToTimelineX(date, geometry);
-
-    assert.equal(timelineXToDate(x, geometry).getTime(), date.getTime());
-  });
-
-  test("gantt single-date items retain one full daily column", async () => {
-    const { getTimelineItemWidth } = await loadModule(
-      "/src/sections/databases/views/timeline/gantt/lib/gantt-geometry.ts",
-    );
-    const date = new Date(2026, 0, 3);
-
-    assert.equal(
-      getTimelineItemWidth(date, date, {
-        columnWidth: 50,
-        range: "daily",
-        timelineStart: new Date(2026, 0, 1),
-      }),
-      50,
-    );
-  });
-
-  test("gantt preview hides synchronously before a row can remount", async () => {
-    const { hideGanttPreview, shouldPositionGanttPreviewOnFocus, showGanttPreview } =
-      await loadModule("/src/sections/databases/views/timeline/gantt/lib/gantt-preview.ts");
-    const properties = new Map();
-    const element = {
-      dataset: {},
-      style: {
-        setProperty(name, value) {
-          properties.set(name, value);
-        },
+    const groups = [
+      {
+        sectionId: "open",
+        top: 0,
+        bottom: 168,
+        footerTop: 136,
+        rows: [
+          { top: 72, bottom: 104 },
+          { top: 104, bottom: 136 },
+        ],
       },
-    };
-    const selection = {
-      endAt: new Date(2026, 0, 8),
-      left: 100,
-      startAt: new Date(2026, 0, 3),
-      width: 250,
-    };
-
-    showGanttPreview(element, selection);
-    assert.equal(element.dataset.previewVisible, "true");
-    assert.equal(properties.get("--gantt-add-left"), "100px");
-    assert.equal(properties.get("--gantt-add-width"), "250px");
-    assert.equal(properties.get("--gantt-add-opacity"), "1");
-
-    hideGanttPreview(element);
-    assert.equal(element.dataset.previewVisible, "false");
-    assert.equal(properties.get("--gantt-add-opacity"), "0");
-
-    assert.equal(shouldPositionGanttPreviewOnFocus({ matches: () => false }), false);
-    assert.equal(shouldPositionGanttPreviewOnFocus({ matches: () => true }), true);
+      { sectionId: "empty", top: 188, bottom: 292, footerTop: 260, rows: [] },
+      {
+        sectionId: "done",
+        top: 312,
+        bottom: 448,
+        footerTop: 416,
+        rows: [{ top: 384, bottom: 416 }],
+      },
+    ];
+    assert.deepEqual(getTimelineGroupDropTarget(groups, 150), {
+      sectionId: "open",
+      localTargetIndex: 2,
+      top: 136,
+    });
+    assert.deepEqual(getTimelineGroupDropTarget(groups, 270), {
+      sectionId: "empty",
+      localTargetIndex: 0,
+      top: 260,
+    });
+    assert.deepEqual(getTimelineGroupDropTarget(groups, 390), {
+      sectionId: "done",
+      localTargetIndex: 0,
+      top: 384,
+    });
+    assert.deepEqual(getTimelineGroupDropTarget(groups, 410), {
+      sectionId: "done",
+      localTargetIndex: 1,
+      top: 416,
+    });
+    assert.equal(getTimelineGroupDropTarget(groups, 177).sectionId, "open");
+    assert.equal(getTimelineGroupDropTarget(groups, 180).sectionId, "empty");
+    assert.equal(getTimelineGroupDropTarget([], 100), null);
+  });
+  test("ReUI scheduling normalizes clicks and drags to existing day-based date semantics", async () => {
+    const { getTimelineScheduleDates } = await loadModule(
+      "/src/sections/databases/views/timeline/lib/reui-model.ts",
+    );
+    const date = new Date(2026, 9, 17, 13, 45);
+    const click = getTimelineScheduleDates({ date, allDay: false });
+    assert.equal(click.start.getHours(), 0);
+    assert.equal(click.start.getDate(), 17);
+    assert.equal(click.end.getDate(), 22);
+    const drag = getTimelineScheduleDates({
+      start: date,
+      end: new Date(2026, 9, 20, 16),
+      allDay: false,
+    });
+    assert.equal(drag.end.getDate(), 20);
+    const short = getTimelineScheduleDates({
+      start: date,
+      end: new Date(2026, 9, 17, 14),
+      allDay: false,
+    });
+    assert.equal(short.end.getDate(), 18);
+  });
+  test("ReUI axis supports all five scales and timezone-safe period navigation", async () => {
+    const { getGanttDateRange, stepGanttDate } = await loadModule(
+      "/src/components/ui/gantt/gantt-lib.tsx",
+    );
+    const date = new Date("2026-10-17T10:00:00Z");
+    const opts = { timeZone: "Asia/Kolkata", weekStartsOn: 1 };
+    for (const scale of ["day", "week", "month", "quarter", "year"]) {
+      const { activeRange, visibleRange } = getGanttDateRange(scale, date, opts);
+      assert.ok(activeRange.start <= date && date < activeRange.end);
+      assert.ok(visibleRange.start <= activeRange.start && visibleRange.end >= activeRange.end);
+      const next = stepGanttDate(scale, date, 1, opts);
+      assert.ok(next > date);
+      assert.equal(stepGanttDate(scale, next, -1, opts).getTime(), date.getTime());
+    }
   });
 }

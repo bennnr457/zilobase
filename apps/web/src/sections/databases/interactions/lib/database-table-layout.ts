@@ -1,3 +1,10 @@
+export type DatabaseRowLayout = {
+  centers: Record<string, number>;
+  dropTops: number[];
+  heights: Record<string, number>;
+  rowIds: string[];
+};
+
 export function getDatabaseRowDropTargetIndex(dropTops: number[], pointerTop: number) {
   if (dropTops.length < 2) {
     return 0;

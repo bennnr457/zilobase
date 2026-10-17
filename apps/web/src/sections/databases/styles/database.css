@@ -664,231 +664,75 @@
   }
 
   .database-timeline-view {
-    @apply min-h-[28rem] overflow-visible pb-0;
-    --database-table-min-width: 220px;
-    --gantt-sidebar-width: var(--database-table-min-width);
+    @apply relative min-h-0 overflow-visible pb-0;
+    --database-table-min-width: 250px;
   }
 
   .database-timeline-row-drag-rail {
-    @apply z-[70];
+    @apply pointer-events-none absolute inset-0 z-[70];
   }
 
-  .database-timeline-row-drop-line {
-    @apply z-[65];
+  .database-timeline-gantt {
+    @apply bg-surface-canvas text-content-primary;
   }
 
-  .database-timeline-view .database-timeline-gantt.gantt {
-    @apply rounded-none border-0 bg-transparent shadow-none;
-    --gantt-header-height: 2rem;
-    --gantt-row-height: 2rem;
-    --gantt-toolbar-height: 2.5rem;
-    --gantt-sidebar-width: var(--database-table-min-width, 220px);
-    background-color: transparent !important;
+  .database-timeline-gantt :is([data-slot="gantt-row-group"], [data-gantt-row]) {
+    box-sizing: border-box;
   }
 
-  .database-timeline-view .database-timeline-gantt .gantt-content-header {
-    @apply z-20 bg-surface-canvas;
+  .database-timeline-gantt
+    :is([data-slot="gantt-row-group"], [data-gantt-row])[data-selected="true"] {
+    background-color: var(--zb-color-selection-background-row);
   }
 
-  .database-timeline-view .database-timeline-gantt .gantt-content-header > .grid > div {
-    @apply text-sm font-medium text-content-secondary;
+  .database-timeline-gantt [data-slot="gantt-tree-header"] {
+    @apply flex items-end border-stroke-default;
   }
 
-  .database-timeline-view .database-timeline-gantt .gantt-columns {
-    @apply border-t-0;
+  .database-timeline-sidebar-cell {
+    @apply h-full min-h-0 min-w-0 bg-transparent;
   }
 
-  .database-timeline-view .database-timeline-gantt-scroll {
-    @apply min-h-full items-stretch rounded-none border-0 bg-transparent pb-0 shadow-none;
-    grid-auto-flow: row;
-    background-color: transparent !important;
+  .database-timeline-sidebar-name-header {
+    @apply flex h-8 w-full shrink-0 items-center border-b border-stroke-default text-sm font-medium text-content-secondary;
   }
 
-  .database-timeline-view .database-timeline-gantt-grid-overlay {
-    @apply pointer-events-none absolute z-0;
-    top: var(--gantt-header-height);
-    left: var(--gantt-sidebar-width);
-    right: 0;
-    bottom: 0;
-  }
-
-  .database-timeline-view .database-timeline-toolbar-chrome {
-    @apply relative z-50 flex h-10 shrink-0 bg-surface-canvas;
-  }
-
-  .database-timeline-view .database-timeline-toolbar-sidebar-spacer {
-    @apply flex shrink-0 items-center justify-end border-r border-stroke-default bg-surface-canvas pr-0.5;
-    width: var(--database-table-min-width, 220px);
-  }
-
-  .database-timeline-view .database-timeline-toolbar {
-    @apply flex min-h-10 min-w-0 flex-1 items-center justify-between gap-3 border-b border-stroke-default bg-surface-canvas px-3;
-  }
-
-  .database-timeline-view .database-timeline-toolbar-title-group {
-    @apply flex min-w-0 items-center gap-1;
-  }
-
-  .database-timeline-view .database-timeline-toolbar-title {
-    @apply truncate text-sm font-medium text-content-primary;
-  }
-
-  .database-timeline-view .database-timeline-toolbar-controls {
-    @apply flex shrink-0 items-center gap-1;
-  }
-
-  .database-timeline-view .database-timeline-toolbar-range {
-    @apply text-xs;
-  }
-
-  .database-timeline-view .database-timeline-gantt-grid-overlay .gantt-columns {
-    @apply h-full;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-cell {
-    @apply sticky left-0 z-50 min-h-0 min-w-0 border-r border-stroke-default bg-surface-canvas;
-    width: var(--database-table-min-width, 220px);
-    max-width: var(--database-table-min-width, 220px);
-  }
-
-  .database-timeline-view
-    .database-timeline-sidebar-cell:not(.database-timeline-sidebar-header-cell):not(
-      .database-timeline-sidebar-fill
-    ) {
-    @apply overflow-clip;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-fill,
-  .database-timeline-view .database-timeline-gantt-fill {
-    @apply min-h-0;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-header-cell {
-    @apply sticky top-0 z-[60] flex h-[var(--gantt-header-height)] shrink-0 items-center overflow-visible border-t-0;
-  }
-
-  .database-timeline-view .database-timeline-header-spacer {
-    @apply border-b border-stroke-default;
-  }
-
-  .database-timeline-view .database-timeline-gantt-header-cell {
-    @apply relative z-20 h-[var(--gantt-header-height)] min-h-0 min-w-0 shrink-0;
-  }
-
-  .database-timeline-view .database-timeline-gantt-header-cell .gantt-content-header {
-    @apply sticky top-0 z-20;
-  }
-
-  .database-timeline-view .database-timeline-gantt-cell {
-    @apply relative z-0 min-h-0 min-w-0;
-  }
-
-  .database-timeline-view .database-timeline-add-cell {
-    @apply pointer-events-auto z-10 h-8;
-  }
-
-  .database-timeline-view .gantt-add-preview {
-    opacity: var(--gantt-add-opacity, 0);
-    width: var(--gantt-add-width);
-    transform: translate3d(var(--gantt-add-left), 0, 0);
-  }
-
-  .gantt-marker-preview {
-    transform: translate3d(var(--gantt-marker-left, 0px), 0, 0) translateX(-50%);
-  }
-
-  [data-preview-visible="true"] > .gantt-marker-preview {
-    opacity: 1;
-  }
-
-  .database-timeline-view .database-timeline-gantt-dates {
-    @apply h-full;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-row {
+  .database-timeline-sidebar-row,
+  .database-timeline-sidebar-create-row {
     @apply flex h-8 min-h-8 items-center border-b border-stroke-default;
+    box-sizing: border-box;
   }
 
-  .database-timeline-view .database-timeline-sidebar-row .database-page-link {
-    @apply h-8 min-h-8;
+  .database-timeline-sidebar-row .database-page-link {
+    @apply h-full min-h-0;
   }
 
-  .database-timeline-view .database-timeline-group-toggle {
+  .database-timeline-sidebar-row
+    .database-cell-content[data-wrap-content="false"]
+    > .database-page-link {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .database-timeline-sidebar-row
+    .database-cell-content[data-wrap-content="false"]
+    .database-page-link
+    .database-page-main {
+    @apply min-w-0 flex-1 translate-y-0.5;
+  }
+
+  .database-timeline-sidebar-row
+    .database-cell-content[data-wrap-content="false"]
+    .database-page-title {
+    @apply overflow-hidden text-ellipsis font-semibold;
+  }
+
+  .database-timeline-group-toggle {
     @apply mb-2 h-8 min-h-8;
   }
 
-  .database-timeline-view .database-timeline-bar {
-    @apply h-full min-h-0 py-0;
-  }
-
-  .database-timeline-view .database-timeline-bar > div {
-    top: 0 !important;
-    height: 100% !important;
-    transform: none !important;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-thead {
-    @apply sticky top-0 z-[60] bg-surface-canvas;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-thead th,
-  .database-timeline-view .database-timeline-sidebar-name-header {
-    @apply bg-surface-canvas;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-name-header {
-    @apply flex h-8 shrink-0 items-center border-0 border-b border-t-0 border-stroke-default text-sm font-medium text-content-secondary;
-  }
-
-  .database-timeline-view[data-sidebar-collapsed="true"] {
-    --gantt-sidebar-width: 0px;
-    --database-table-min-width: 0px;
-  }
-
-  .database-timeline-view[data-sidebar-collapsed="true"] .database-timeline-sidebar-cell {
-    @apply hidden;
-  }
-
-  .database-timeline-view[data-sidebar-collapsed="true"] .database-timeline-gantt-grid-overlay {
-    left: 0;
-  }
-
-  .database-timeline-view [data-roadmap-ui="gantt-sidebar"] {
-    @apply border-0 bg-surface-canvas backdrop-blur-none;
-    background-color: var(--zb-color-surface-background-canvas) !important;
-  }
-
-  .database-timeline-view .database-timeline-sidebar-cell .database-page-create-row {
-    @apply mt-0 h-8;
-    width: var(--database-table-min-width, 220px);
-    min-width: var(--database-table-min-width, 220px);
-  }
-
-  .database-timeline-view .database-timeline-gantt .space-y-4 > :not([hidden]) ~ :not([hidden]) {
-    margin-top: 0;
-  }
-
-  .database-timeline-view .database-timeline-gantt .border-stroke-default {
-    border-color: var(--zb-color-data-border-timeline-grid);
-  }
-
-  .database-timeline-view .database-timeline-bar [data-slot="card"] {
-    @apply h-full min-h-0 gap-0 rounded-md border-0 p-0 shadow-none outline-none ring-0;
-    background-color: var(--zb-color-data-background-bar) !important;
-    box-shadow: none !important;
-    color: var(--zb-color-data-text-on-bar);
-    --tw-ring-width: 0 !important;
-    --tw-ring-shadow: 0 0 transparent !important;
-    --tw-ring-offset-width: 0 !important;
-    --tw-ring-offset-shadow: 0 0 transparent !important;
-  }
-
-  .database-timeline-view .database-timeline-bar [data-slot="card"] > div {
-    @apply min-h-0 px-2;
-  }
-
-  .database-timeline-view .database-timeline-bar .cursor-col-resize {
-    @apply rounded-none;
+  .database-timeline-sidebar-create-row .database-table-create {
+    @apply h-full;
   }
 
   .database-inline-scroll {
@@ -961,7 +805,7 @@
   }
 
   .database-table-groups {
-    @apply flex min-w-0 flex-col gap-5;
+    @apply flex min-w-0 flex-col;
   }
 
   .database-table-group {

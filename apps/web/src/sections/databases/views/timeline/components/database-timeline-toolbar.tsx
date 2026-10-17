@@ -1,147 +1,39 @@
-import { addMonths, format } from "date-fns";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/icons";
-import { useContext, useMemo } from "react";
-
-import {
-  GanttContext,
-  getDateByTimelinePosition,
-  useGanttScrollX,
-  type Range,
-} from "../gantt/components/gantt-view";
+import { ChevronsLeft, ChevronsRight } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const rangeOptions: { label: string; value: Range }[] = [
-  { label: "Day", value: "daily" },
-  { label: "Month", value: "monthly" },
-  { label: "Quarter", value: "quarterly" },
-];
-
-type DatabaseTimelineToolbarProps = {
-  onRangeChange: (range: Range) => void;
-  onSidebarCollapsedChange: (collapsed: boolean) => void;
-  range: Range;
-  sidebarCollapsed: boolean;
-};
+  GanttNav,
+  GanttNavToday,
+  GanttNavPrev,
+  GanttNavNext,
+  GanttScaleSwitcher,
+  GanttTitle,
+} from "@/components/ui/gantt/gantt-nav";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function DatabaseTimelineToolbarChrome({
-  onRangeChange,
-  onSidebarCollapsedChange,
-  range,
   sidebarCollapsed,
-}: DatabaseTimelineToolbarProps) {
-  return (
-    <div className="database-timeline-toolbar-chrome">
-      {!sidebarCollapsed ? (
-        <div className="database-timeline-toolbar-sidebar-spacer" data-roadmap-ui="gantt-sidebar">
-          <Button
-            aria-label="Collapse sidebar"
-            className="database-timeline-toolbar-collapse h-7 w-7 shrink-0 px-0"
-            onClick={() => onSidebarCollapsedChange(true)}
-            type="button"
-            variant="ghost"
-          >
-            <ChevronsLeft className="size-4" />
-          </Button>
-        </div>
-      ) : null}
-      <DatabaseTimelineToolbar
-        onRangeChange={onRangeChange}
-        onSidebarCollapsedChange={onSidebarCollapsedChange}
-        range={range}
-        sidebarCollapsed={sidebarCollapsed}
-      />
-    </div>
-  );
-}
-
-function DatabaseTimelineToolbar({
-  onRangeChange,
   onSidebarCollapsedChange,
-  range,
-  sidebarCollapsed,
-}: DatabaseTimelineToolbarProps) {
-  const gantt = useContext(GanttContext);
-  const [scrollX] = useGanttScrollX();
-
-  const visibleDate = useMemo(
-    () => getDateByTimelinePosition(gantt, Math.max(0, scrollX - gantt.sidebarWidth)),
-    [gantt.columnWidth, gantt.range, gantt.sidebarWidth, gantt.timelineData, gantt.zoom, scrollX],
-  );
-
-  const scrollTo = (date: Date) => {
-    gantt.scrollToDate?.(date);
-  };
-
-  const shiftFocus = (direction: -1 | 1) => {
-    const nextDate =
-      range === "quarterly"
-        ? addMonths(visibleDate, direction * 3)
-        : addMonths(visibleDate, direction);
-
-    scrollTo(nextDate);
-  };
-
+}: {
+  sidebarCollapsed: boolean;
+  onSidebarCollapsedChange: (collapsed: boolean) => void;
+}) {
   return (
-    <div className="database-timeline-toolbar">
-      <div className="database-timeline-toolbar-title-group">
-        {sidebarCollapsed ? (
-          <Button
-            aria-label="Expand sidebar"
-            className="database-timeline-toolbar-expand h-7 w-7 shrink-0 px-0"
-            onClick={() => onSidebarCollapsedChange(false)}
-            type="button"
-            variant="ghost"
-          >
-            <ChevronsRight className="size-4" />
-          </Button>
-        ) : null}
-        <p className="database-timeline-toolbar-title">{format(visibleDate, "MMMM yyyy")}</p>
-      </div>
-      <div className="database-timeline-toolbar-controls">
-        <Select onValueChange={(value) => onRangeChange(value as Range)} value={range}>
-          <SelectTrigger className="database-timeline-toolbar-range w-[6.5rem]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="end">
-            {rangeOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          className="database-timeline-toolbar-nav h-7 w-7 shrink-0 px-0"
-          onClick={() => shiftFocus(-1)}
-          type="button"
-          variant="ghost"
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-        <Button
-          className="database-timeline-toolbar-today"
-          onClick={() => scrollTo(new Date())}
-          type="button"
-          variant="ghost"
-        >
-          Today
-        </Button>
-        <Button
-          className="database-timeline-toolbar-nav h-7 w-7 shrink-0 px-0"
-          onClick={() => shiftFocus(1)}
-          type="button"
-          variant="ghost"
-        >
-          <ChevronRight className="size-4" />
-        </Button>
-      </div>
-    </div>
+    <GanttNav className="database-timeline-toolbar h-10 min-h-10 flex-none flex-nowrap gap-1 border-0 px-0 py-0">
+      <Button
+        aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        variant="ghost"
+        size="icon"
+        onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
+      >
+        {sidebarCollapsed ? <ChevronsRight /> : <ChevronsLeft />}
+      </Button>
+      <TooltipProvider delayDuration={600}>
+        <GanttTitle className="min-w-0 flex-1 truncate" />
+        <GanttScaleSwitcher />
+        <GanttNavToday />
+        <GanttNavPrev />
+        <GanttNavNext />
+      </TooltipProvider>
+    </GanttNav>
   );
 }

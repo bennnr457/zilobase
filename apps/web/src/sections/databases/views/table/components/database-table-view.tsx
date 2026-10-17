@@ -1,3 +1,7 @@
+import {
+  DatabaseRowDragControls,
+  DatabaseRowDropLine,
+} from "../../../interactions/components/database-row-controls";
 import { getDatabaseRowMoveAnchors } from "@zilobase/features/databases";
 import { useManualRecordPlacement } from "../../state/components/manual-record-placement";
 import {
@@ -7,7 +11,7 @@ import {
 } from "../lib/database-table-model";
 import { useTableRowLayout } from "../hooks/row-layout";
 import { useTableColumns } from "../hooks/use-table-columns";
-import { useTableSelection } from "../hooks/selection";
+import { useDatabaseSelection } from "../../shared/hooks/selection";
 import { createCellEditHistoryAction } from "@zilobase/features/databases";
 import {
   Fragment,
@@ -110,12 +114,8 @@ import {
   useSyncedHorizontalScroll,
 } from "./database-table-shell";
 import { CreateDatabaseRowButton, DatabaseActiveTableCell } from "./database-table-cell";
-import { DatabaseTableSelectionToolbar } from "./database-table-selection-toolbar";
-import {
-  DatabaseHeaderReorderItem,
-  DatabaseRowDragControls,
-  DatabaseRowDropLine,
-} from "./database-table-drag-controls";
+import { DatabaseSelectionToolbar } from "../../shared/components/database-selection-toolbar";
+import { DatabaseHeaderReorderItem } from "./database-table-drag-controls";
 
 export function DatabaseTableView() {
   const sidePane = useOptionalPageSidePane();
@@ -193,7 +193,7 @@ export function DatabaseTableView() {
     copySelectedRowLinks,
     saveSelectedPropertyValue,
     toggleSelectedRow,
-  } = useTableSelection({
+  } = useDatabaseSelection({
     rows,
     propertyValuesByKey,
     propertyValuesByKeyRef,
@@ -1535,7 +1535,7 @@ export function DatabaseTableView() {
   return (
     <>
       {selectedRows.length > 0 ? (
-        <DatabaseTableSelectionToolbar
+        <DatabaseSelectionToolbar
           clearSelection={() => setSelectedRowIds(new Set())}
           copyLinks={copySelectedRowLinks}
           getSelectionValue={getSelectionValue}
@@ -1714,7 +1714,7 @@ export function DatabaseTableView() {
               <DatabaseRowDropLine depth={rowDropLineDepth} top={rowDropLineTop} />
             ) : null}
             {isTableGrouped ? (
-              <div className="database-table-groups">
+              <div className="database-table-groups gap-0">
                 {groupedSections.map((section) => {
                   const isCollapsed = collapsedGroups[section.id] === true;
 

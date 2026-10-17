@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("database table selection keeps only five property actions visible", async () => {
     const { DATABASE_SELECTION_PRIMARY_PROPERTY_LIMIT, splitDatabaseSelectionProperties } =
-      await loadModule("/src/sections/databases/views/table/hooks/selection.ts");
+      await loadModule("/src/sections/databases/views/shared/hooks/selection.ts");
     const properties = ["status", "assignee", "date", "priority", "type", "effort"];
     const groups = splitDatabaseSelectionProperties(properties);
 
@@ -12,7 +12,7 @@ export function register({ assert, loadModule, test }) {
 
   test("database table selection reports shared and mixed property values", async () => {
     const { getSharedDatabaseSelectionValue } = await loadModule(
-      "/src/sections/databases/views/table/hooks/selection.ts",
+      "/src/sections/databases/views/shared/hooks/selection.ts",
     );
     const areEqual = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 

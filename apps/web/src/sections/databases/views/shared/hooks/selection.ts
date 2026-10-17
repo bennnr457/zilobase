@@ -9,7 +9,7 @@ import {
 import { useCallback, useMemo, useState, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import type { useUndoHistory } from "@/app/shortcuts/undo-history";
-import type { TableRow } from "../lib/database-table-model";
+import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
 export const DATABASE_SELECTION_PRIMARY_PROPERTY_LIMIT = 5;
 
@@ -27,14 +27,14 @@ export function splitDatabaseSelectionProperties<T>(
 
 export { getSharedDatabaseSelectionValue } from "@zilobase/features/databases";
 
-export function useTableSelection({
+export function useDatabaseSelection({
   rows,
   propertyValuesByKey,
   propertyValuesByKeyRef,
   savePropertyValue,
   undoHistory,
 }: {
-  rows: TableRow[];
+  rows: SortableDatabaseItem[];
   propertyValuesByKey: Record<string, DatabasePropertyValueType>;
   propertyValuesByKeyRef: MutableRefObject<Record<string, DatabasePropertyValueType>>;
   savePropertyValue: DatabaseViewProviderValue["savePropertyValue"];

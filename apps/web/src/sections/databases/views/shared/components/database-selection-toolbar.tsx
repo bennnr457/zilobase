@@ -203,7 +203,7 @@ function DatabaseSelectionPropertyAction({
   );
 }
 
-export function DatabaseTableSelectionToolbar({
+export function DatabaseSelectionToolbar({
   clearSelection,
   copyLinks,
   getSelectionValue,

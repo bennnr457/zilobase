@@ -715,7 +715,7 @@ export function PageMetadata({
       (editable || totalCommentCount > 0));
 
   const metadataActionVisibilityClassName =
-    "opacity-0 transition-opacity pointer-events-none group-focus-within/metadata:opacity-100 group-focus-within/metadata:pointer-events-auto group-has-[[data-state=open]]/metadata:opacity-100 group-has-[[data-state=open]]/metadata:pointer-events-auto group-hover/metadata:opacity-100 group-hover/metadata:pointer-events-auto";
+    "opacity-0 transition-opacity pointer-events-none group-hover/metadata:opacity-100 group-hover/metadata:pointer-events-auto";
 
   return (
     <section className="group/metadata relative" contentEditable={false}>

@@ -20,6 +20,14 @@ function layoutsMatch(current: TimelineBreakoutLayout | null, next: TimelineBrea
   );
 }
 
+// Context/undo providers may wrap the view in display: contents. Those nodes
+// have no layout box, so measure and observe the nearest real container.
+function getTimelineLayoutAnchor(timeline: HTMLElement) {
+  let anchor = timeline.parentElement;
+  while (anchor && getComputedStyle(anchor).display === "contents") anchor = anchor.parentElement;
+  return anchor;
+}
+
 /**
  * Lets an expanded timeline use the editor surface width while the rest of a
  * narrow page stays centered. This intentionally changes layout width instead
@@ -36,7 +44,7 @@ export function useTimelineBreakout(
     const narrowPage = timeline?.closest<HTMLElement>('[data-editor-page-content="narrow"]');
     const editorSurface = timeline?.closest<HTMLElement>("[data-editor-surface]");
     const editor = timeline?.closest<HTMLElement>(".tiptap-editor");
-    const anchor = timeline?.parentElement;
+    const anchor = timeline ? getTimelineLayoutAnchor(timeline) : null;
 
     if (!enabled || !timeline || !narrowPage || !editorSurface || !editor || !anchor) {
       setLayout((current) => (current === null ? current : null));
@@ -71,7 +79,7 @@ export function useTimelineBreakout(
     }
 
     const observer = new ResizeObserver(measure);
-    observer.observe(timeline.parentElement ?? timeline);
+    observer.observe(getTimelineLayoutAnchor(timeline) ?? timeline);
     if (narrowPage) observer.observe(narrowPage);
     if (editorSurface) observer.observe(editorSurface);
     window.addEventListener("resize", measure);

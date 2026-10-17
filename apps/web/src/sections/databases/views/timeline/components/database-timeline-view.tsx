@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { GanttProvider, type Range } from "../gantt/components/gantt-view";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useUndoHistory } from "@/app/shortcuts/undo-history";
+import { useDatabaseSelection } from "../../shared/hooks/selection";
+import { DatabaseSelectionToolbar } from "../../shared/components/database-selection-toolbar";
 
 import { getRawDatabaseGroupValue } from "@zilobase/features/databases";
 import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
@@ -17,14 +19,11 @@ import {
 } from "../lib/presentation-model";
 import {
   buildTimelineViewRows,
-  getTimelineContentRows,
   getTimelineItems,
-  getTimelineViewRowHeight,
   type TimelineGroupSection,
 } from "../lib/presentation-model";
 import { DatabaseTimelineGrid } from "./database-timeline-grid";
 import { DatabaseTimelineSetup } from "./database-timeline-setup";
-import { DatabaseTimelineToolbarChrome } from "./database-timeline-toolbar";
 import { TimelineRowDragLayer } from "./database-timeline-row-drag-layer";
 import { useTimelineRowDrag } from "./database-timeline-row-drag";
 import { useTimelineBreakout } from "../hooks/use-timeline-breakout";
@@ -39,6 +38,7 @@ export function DatabaseTimelineView() {
     setViewDateProperty,
     setupTimelineDateProperty,
     addTimelineRow,
+    updateDatabasePropertyConfig,
   } = useDatabaseActionsContext();
   const {
     activeDatabaseFilters,
@@ -58,7 +58,6 @@ export function DatabaseTimelineView() {
   const { activeView, showPageIconInTitle, titlePropertyLabel } = useDatabaseUiContext();
 
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const [timelineRange, setTimelineRange] = useState<Range>("daily");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const timelineBreakoutStyle = useTimelineBreakout(
@@ -66,6 +65,21 @@ export function DatabaseTimelineView() {
     !sidebarCollapsed,
     timelineDateProperty?.id,
   );
+
+  const propertyValuesByKeyRef = useRef(propertyValuesByKey);
+  propertyValuesByKeyRef.current = propertyValuesByKey;
+  const undoHistory = useUndoHistory();
+  const selection = useDatabaseSelection({
+    rows: items,
+    propertyValuesByKey,
+    propertyValuesByKeyRef,
+    savePropertyValue,
+    undoHistory,
+  });
+
+  useEffect(() => {
+    selection.setSelectedRowIds(new Set());
+  }, [databaseId, activeView?.id, selection.setSelectedRowIds]);
 
   const statusProperty = useMemo(
     () => properties.find((property) => property.property.type === "status") ?? null,
@@ -136,27 +150,14 @@ export function DatabaseTimelineView() {
 
   const viewRows = useMemo(
     () =>
-      getTimelineContentRows(
-        buildTimelineViewRows({
-          collapsedGroups,
-          editable,
-          groupProperty,
-          items: sortedItems,
-          sections: groupedSections,
-        }),
-        isGrouped,
-      ),
-    [collapsedGroups, editable, groupProperty, groupedSections, isGrouped, sortedItems],
-  );
-
-  const gridTemplateRows = useMemo(
-    () =>
-      [
-        "var(--gantt-header-height)",
-        ...viewRows.map((viewRow) => `${getTimelineViewRowHeight(viewRow)}px`),
-        "minmax(0, 1fr)",
-      ].join(" "),
-    [viewRows],
+      buildTimelineViewRows({
+        collapsedGroups,
+        editable,
+        groupProperty,
+        items: sortedItems,
+        sections: groupedSections,
+      }),
+    [collapsedGroups, editable, groupProperty, groupedSections, sortedItems],
   );
 
   const visibleRows = useMemo(() => getTimelineItems(viewRows), [viewRows]);
@@ -167,11 +168,12 @@ export function DatabaseTimelineView() {
   );
 
   const rowMeasureKey = useMemo(
-    () => ({ gridTemplateRows, sidebarCollapsed, timelineBreakoutStyle }),
-    [gridTemplateRows, sidebarCollapsed, timelineBreakoutStyle],
+    () => ({ viewRows, sidebarCollapsed, timelineBreakoutStyle }),
+    [viewRows, sidebarCollapsed, timelineBreakoutStyle],
   );
   const {
     getDropTargetIndex: getRowDropTargetIndex,
+    getGroupDropTarget,
     handleScroll: handleTimelineScroll,
     layout: rowLayout,
     measureRows,
@@ -187,6 +189,7 @@ export function DatabaseTimelineView() {
       databaseId,
       editable,
       getDropTargetIndex: getRowDropTargetIndex,
+      getGroupDropTarget,
       groupProperty,
       hostDatabaseId,
       groupedSections,
@@ -208,6 +211,7 @@ export function DatabaseTimelineView() {
       databaseId,
       editable,
       getRowDropTargetIndex,
+      getGroupDropTarget,
       groupProperty,
       hostDatabaseId,
       groupedSections,
@@ -275,7 +279,6 @@ export function DatabaseTimelineView() {
       databaseId,
       editable,
       groupProperty,
-      nameColumnLabel: titlePropertyLabel,
       onAddPage: addDatabaseRow,
       onOpenPage,
       onRowMouseEnter: rowDrag.setHoveredRowId,
@@ -291,23 +294,9 @@ export function DatabaseTimelineView() {
       onOpenPage,
       rowDrag.setHoveredRowId,
       showPageIconInTitle,
-      titlePropertyLabel,
       toggleGroupCollapsed,
     ],
   );
-  const timelineGridStyle = useMemo(() => ({ gridTemplateRows }), [gridTemplateRows]);
-  const timelineToolbar = useMemo(
-    () => (
-      <DatabaseTimelineToolbarChrome
-        onRangeChange={setTimelineRange}
-        onSidebarCollapsedChange={setSidebarCollapsed}
-        range={timelineRange}
-        sidebarCollapsed={sidebarCollapsed}
-      />
-    ),
-    [sidebarCollapsed, timelineRange],
-  );
-
   if (!timelineDateProperty) {
     return (
       <DatabaseTimelineSetup
@@ -322,8 +311,20 @@ export function DatabaseTimelineView() {
 
   return (
     <>
+      {editable && selection.selectedRows.length > 0 ? (
+        <DatabaseSelectionToolbar
+          clearSelection={() => selection.setSelectedRowIds(new Set())}
+          copyLinks={selection.copySelectedRowLinks}
+          getSelectionValue={selection.getSelectionValue}
+          onApply={selection.saveSelectedPropertyValue}
+          onUpdateConfig={updateDatabasePropertyConfig}
+          personOptions={personOptions}
+          properties={properties}
+          selectedCount={selection.selectedRows.length}
+        />
+      ) : null}
       <div
-        className="database-timeline-view min-h-0 flex-1 overflow-visible"
+        className="database-timeline-view min-h-0 overflow-visible"
         data-sidebar-collapsed={sidebarCollapsed ? "true" : undefined}
         onDragLeave={rowDrag.handleDragLeave}
         onDragOver={rowDrag.handleDragOver}
@@ -331,38 +332,36 @@ export function DatabaseTimelineView() {
         onMouseLeave={() => {
           if (!rowDrag.draggedRowId) rowDrag.setHoveredRowId(null);
         }}
+        onMouseOver={(event) => {
+          const row = (event.target as HTMLElement).closest<HTMLElement>("[data-gantt-row-id]");
+          if (row && rowsById.has(row.dataset.ganttRowId ?? ""))
+            rowDrag.setHoveredRowId(row.dataset.ganttRowId!);
+        }}
         onScrollCapture={handleTimelineScroll}
         ref={timelineRef}
         style={timelineBreakoutStyle}
       >
         <TimelineRowDragLayer
           controller={rowDrag}
+          rowsById={rowsById}
+          selectedRowIds={selection.selectedRowIds}
+          onSelectedRowChange={selection.toggleSelectedRow}
           editable={editable}
           layout={rowLayout}
           sidebarCollapsed={sidebarCollapsed}
         />
-        <GanttProvider
-          className="database-timeline-gantt h-full min-h-[28rem]"
-          headerHeight={32}
-          hideHeaderTitle
-          range={timelineRange}
-          rowHeight={32}
-          scrollClassName="database-timeline-gantt-scroll"
-          style={timelineGridStyle}
-          toolbar={timelineToolbar}
-          zoom={100}
-        >
-          <DatabaseTimelineGrid
-            addTimelineItem={addTimelineRow}
-            grouped={isGrouped}
-            onMoveItem={handleMoveFeature}
-            onSelectItem={handleSelectRow}
-            sidebarCellProps={sidebarCellProps}
-            timelineItemsById={timelineRowById}
-            titlePropertyLabel={titlePropertyLabel}
-            viewRows={viewRows}
-          />
-        </GanttProvider>
+        <DatabaseTimelineGrid
+          addTimelineItem={addTimelineRow}
+          selectedRowIds={selection.selectedRowIds}
+          sidebarCollapsed={sidebarCollapsed}
+          onSidebarCollapsedChange={setSidebarCollapsed}
+          onMoveItem={handleMoveFeature}
+          onSelectItem={handleSelectRow}
+          sidebarCellProps={sidebarCellProps}
+          timelineItemsById={timelineRowById}
+          titlePropertyLabel={titlePropertyLabel}
+          viewRows={viewRows}
+        />
       </div>
       <DatabaseRecordWindowControl />
     </>

@@ -165,6 +165,13 @@
     white-space: nowrap;
   }
 
+  /* Compact records include the collapsed table border in their 32px height. */
+  .database-table tbody td .database-cell-content[data-wrap-content="false"],
+  .database-table tbody td .database-cell-content[data-wrap-content="false"] > * {
+    height: calc(2rem - 1px);
+    min-height: calc(2rem - 1px);
+  }
+
   .database-cell-content[data-wrap-content="true"] {
     @apply h-auto overflow-visible;
   }
