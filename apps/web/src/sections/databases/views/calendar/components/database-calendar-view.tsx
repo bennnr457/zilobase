@@ -28,16 +28,7 @@ import { useSharedDataRevision } from "@zilobase/features/data/react";
 import { getPaletteColor } from "@/lib/color-tokens";
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, ChevronDown, ChevronRight, GripVertical } from "@/components/icons";
-import { EventCalendar } from "@/components/ui/event-calendar/event-calendar";
-import { EventCalendarContent } from "@/components/ui/event-calendar/event-calendar-content";
-import {
-  EventCalendarNav,
-  EventCalendarTitle,
-  EventCalendarViewSwitcher,
-  EventCalendarNavToday,
-  EventCalendarNavPrev,
-  EventCalendarNavNext,
-} from "@/components/ui/event-calendar/event-calendar-nav";
+import { CalendarRenderer } from "@/sections/calendar/primitives/components/calendar-renderer";
 import type {
   CalendarEvent,
   CalendarView,
@@ -45,7 +36,6 @@ import type {
   EventCalendarSlotInfo,
   EventCalendarOccurrence,
 } from "@/components/ui/event-calendar/event-calendar-types";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   Select,
   SelectTrigger,
@@ -62,7 +52,6 @@ import {
 import { DatabaseRecordWindowControl } from "../../shared/components/database-record-window-control";
 import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
 
-const calendarModes: CalendarView[] = ["month", "week", "day", "agenda"];
 const rowMime = "application/x-zilobase-calendar-row";
 
 function CalendarRecordIcon({ pageId }: { pageId: string }) {
@@ -330,7 +319,7 @@ export function DatabaseCalendarView() {
       onDropCapture={drop}
       onDragEnd={clearDrop}
     >
-      <EventCalendar
+      <CalendarRenderer
         className="database-event-calendar gap-0 border-0 bg-surface-canvas text-content-primary"
         style={
           {
@@ -341,7 +330,6 @@ export function DatabaseCalendarView() {
         }
         events={events}
         view={mode}
-        views={calendarModes}
         onViewChange={setView}
         eventOrder={eventOrder}
         weekStartsOn={1}
@@ -393,18 +381,7 @@ export function DatabaseCalendarView() {
             <span className="truncate">{occurrence.event.title}</span>
           </span>
         )}
-      >
-        <EventCalendarNav className="h-10 min-h-10 flex-none flex-nowrap gap-1 border-0 px-0 py-0">
-          <TooltipProvider delayDuration={600}>
-            <EventCalendarTitle className="min-w-0 flex-1 truncate" />
-            <EventCalendarViewSwitcher />
-            <EventCalendarNavToday />
-            <EventCalendarNavPrev />
-            <EventCalendarNavNext />
-          </TooltipProvider>
-        </EventCalendarNav>
-        <EventCalendarContent />
-      </EventCalendar>
+      />
       <div className="mt-2 border-t border-stroke-default">
         <button
           type="button"

@@ -1,0 +1,64 @@
+import type { ReactNode } from "react";
+import {
+  EventCalendar,
+  type EventCalendarProps,
+} from "@/components/ui/event-calendar/event-calendar";
+import { EventCalendarContent } from "@/components/ui/event-calendar/event-calendar-content";
+import {
+  EventCalendarNav,
+  EventCalendarTitle,
+  EventCalendarViewSwitcher,
+  EventCalendarNavToday,
+  EventCalendarNavPrev,
+  EventCalendarNavNext,
+} from "@/components/ui/event-calendar/event-calendar-nav";
+import type { CalendarView } from "@/components/ui/event-calendar/event-calendar-types";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+export const CALENDAR_VIEWS: CalendarView[] = ["month", "week", "day", "agenda"];
+
+export type CalendarRendererProps<TData = unknown> = Omit<EventCalendarProps<TData>, "children"> & {
+  actions?: ReactNode;
+  leading?: ReactNode;
+  beforeContent?: ReactNode;
+  content?: ReactNode;
+};
+
+/** Shared presentation only: each owner controls its own data, gestures, and navigation. */
+export function CalendarRenderer<TData = unknown>({
+  className,
+  actions,
+  leading,
+  beforeContent,
+  content,
+  ...props
+}: CalendarRendererProps<TData>) {
+  return (
+    <EventCalendar<TData>
+      views={CALENDAR_VIEWS}
+      slotDuration={60}
+      snapDuration={30}
+      agendaDayCount={30}
+      fixedWeeks
+      showOutsideDays
+      scrollbars="native"
+      className={cn("gap-0 border-0 bg-surface-canvas text-content-primary", className)}
+      {...props}
+    >
+      <TooltipProvider delayDuration={600}>
+        <EventCalendarNav className="min-h-10 flex-none flex-wrap gap-1 border-0 px-0 py-0">
+          {leading}
+          <EventCalendarTitle className="min-w-0 flex-1 truncate" />
+          <EventCalendarNavToday />
+          <EventCalendarNavPrev />
+          <EventCalendarNavNext />
+          <EventCalendarViewSwitcher />
+          {actions}
+        </EventCalendarNav>
+      </TooltipProvider>
+      {beforeContent}
+      {content ?? <EventCalendarContent />}
+    </EventCalendar>
+  );
+}
