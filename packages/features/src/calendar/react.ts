@@ -4,3 +4,4 @@ export * from "./preference-hooks";
 export * from "./integration-hooks";
 export * from "./search-hooks";
 export { useCalendarCache, type CalendarCacheOptions } from "./cache-hooks";
+export { useCalendarEventCommands } from "./command-hooks";

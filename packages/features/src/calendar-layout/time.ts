@@ -46,6 +46,7 @@ export function calendarDays(
   alignStart = false,
 ) {
   if (view === "day") return [date];
+  if (view === "agenda") return Array.from({ length: 30 }, (_, i) => addCalendarDays(date, i));
   if (view === "month") return alignedPeriodDays(date, weekStartsOn, true);
   if (dayCount !== 7 || alignStart) return customWeekDays(date, dayCount, showWeekends);
   return alignedPeriodDays(date, weekStartsOn, false);
@@ -83,7 +84,13 @@ export function shiftCalendarPeriod(
     view === "month"
       ? { months: direction }
       : {
-          days: direction * (view === "day" ? 1 : Math.max(1, Math.min(31, Math.trunc(dayCount)))),
+          days:
+            direction *
+            (view === "agenda"
+              ? 30
+              : view === "day"
+                ? 1
+                : Math.max(1, Math.min(31, Math.trunc(dayCount)))),
         };
   return Temporal.PlainDate.from(date).add(span).toString();
 }

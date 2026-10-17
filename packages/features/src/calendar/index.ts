@@ -69,3 +69,5 @@ export {
   type TimelineAnchor,
   type TimelineCoverage,
 } from "../calendar-layout/index";
+
+export { createMemoryCalendarStorage } from "./memory-storage";

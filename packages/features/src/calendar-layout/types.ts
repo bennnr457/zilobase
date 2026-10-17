@@ -3,9 +3,9 @@ export type CalendarTime =
   | { date: string; dateTime?: never; timeZone?: never }
   | { date?: never; dateTime: string; timeZone: string };
 export type CalendarSpan = { start: CalendarTime; end: CalendarTime };
-export type CalendarView = "day" | "week" | "month";
+export type CalendarView = "day" | "week" | "month" | "agenda";
 
 /** Missing or invalid route values use Week. */
 export function normalizeCalendarView(value: unknown): CalendarView {
-  return value === "day" || value === "month" ? value : "week";
+  return value === "day" || value === "month" || value === "agenda" ? value : "week";
 }

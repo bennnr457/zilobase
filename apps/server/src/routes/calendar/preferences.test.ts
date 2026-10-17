@@ -38,11 +38,11 @@ test("preferences require the current shape and reject unsupported colors", () =
     }).calendarColors.calendar,
   ).toBe("green");
 });
-test("preferences reject unsupported views", () => {
+test("preferences accept Agenda and reject unsupported views", () => {
   expect(
     calendarPreferencesSchema.safeParse({ ...defaultCalendarPreferences(), view: "agenda" })
       .success,
-  ).toBe(false);
+  ).toBe(true);
   expect(
     calendarPreferencesSchema.safeParse({ ...defaultCalendarPreferences(), view: "invalid" })
       .success,

@@ -106,7 +106,7 @@ function calendarSearchDate(value: unknown) {
 export function validateCalendarSearch(search: Record<string, unknown>): {
   align?: boolean;
   days?: number;
-  view?: "day" | "week" | "month";
+  view?: "day" | "week" | "month" | "agenda";
   date?: string;
   binding?: string;
   calendar?: string;
@@ -114,7 +114,7 @@ export function validateCalendarSearch(search: Record<string, unknown>): {
   workspace?: string;
   connection?: "success" | "cancelled";
 } {
-  const views = ["day", "week", "month"] as const;
+  const views = ["day", "week", "month", "agenda"] as const;
   return {
     align: search.align === true || search.align === "true" ? true : undefined,
     days:
@@ -126,7 +126,7 @@ export function validateCalendarSearch(search: Record<string, unknown>): {
       search.connection === "success" || search.connection === "cancelled"
         ? search.connection
         : undefined,
-    view: search.view === "agenda" ? "week" : views.find((view) => view === search.view),
+    view: views.find((view) => view === search.view),
     date: calendarSearchDate(search.date),
     binding: calendarSearchString(search.binding),
     calendar: calendarSearchString(search.calendar),

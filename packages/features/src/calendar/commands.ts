@@ -34,8 +34,11 @@ async function settle(
   database: CalendarDatabase,
   pending: PendingCalendarMutation,
   result: CalendarMutationResponse,
+  current = () => database.isOpen(),
 ) {
+  if (!current()) return;
   await database.transaction("rw", async (database) => {
+    if (!current() || !(await database.readPending()).some((row) => row.id === pending.id)) return;
     const settlement = calendarMutationSettlement(pending, result);
     if (settlement) {
       await presentEvent(database, settlement.event, pending.eventKey);
@@ -54,11 +57,17 @@ export async function runCalendarMutation(
     write: CalendarEventWriteRequest;
     destination?: string;
     responseStatus?: "accepted" | "declined" | "tentative";
+    isCurrent?: () => boolean;
   },
   transport: ApiFetcher,
 ) {
   const { database, event, action, write } = input,
     key = calendarEventKey(event);
+  const current = () => database.isOpen() && (input.isCurrent?.() ?? true);
+  const check = () => {
+    if (!current()) throw new Error("Calendar operation scope expired");
+  };
+  check();
   const pending = createPendingCalendarMutation(
     action,
     event,
@@ -68,29 +77,41 @@ export async function runCalendarMutation(
       : (await database.readEvents([key]))[0]?.event,
   );
   await database.transaction("rw", async (database) => {
+    check();
     if ((await database.readPending(key)).length)
       throw new Error(
         "This event has an unresolved change. Check its status before editing again.",
       );
+    check();
     await database.write({ addPending: [pending] });
     await presentEvent(database, action === "delete" ? undefined : pending.optimistic, key);
+    check();
   });
   try {
+    check();
     const result = await postCalendarMutation(transport, database.identity, input);
-    await settle(database, pending, result);
+    check();
+    await settle(database, pending, result, current);
     return result;
   } catch (error) {
+    if (!current()) throw error;
     const definite = definiteCalendarRejection(error);
-    await settle(database, pending, {
-      operationId: write.operationId,
-      status: definite ? "failed" : "ambiguous",
-    });
+    await settle(
+      database,
+      pending,
+      {
+        operationId: write.operationId,
+        status: definite ? "failed" : "ambiguous",
+      },
+      current,
+    );
     throw error;
   }
 }
 export async function reconcileCalendarMutations(
   database: CalendarDatabase,
   transport: ApiFetcher,
+  isCurrent = () => database.isOpen(),
 ) {
   for (const pending of await database.readPending()) {
     try {
@@ -99,7 +120,8 @@ export async function reconcileCalendarMutations(
         database.identity.workspaceId,
         pending.id,
       );
-      if (database.isOpen()) await settle(database, pending, result);
+      if (!isCurrent()) return;
+      await settle(database, pending, result, isCurrent);
     } catch {
       return;
     }

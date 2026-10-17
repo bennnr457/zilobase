@@ -58,7 +58,7 @@ export type CalendarEvent = CalendarIdentity & {
   conferenceStatus?: "pending" | "success" | "failure";
 };
 export type CalendarOccurrence = CalendarEvent;
-export type CalendarView = "day" | "week" | "month";
+export type CalendarView = "day" | "week" | "month" | "agenda";
 export type CalendarRangeRequest = {
   calendarId: string;
   start: string;

@@ -10,6 +10,7 @@ import type { CalendarConnection, CachedRange } from "./contracts";
 import type { CalendarMetricName } from "./telemetry";
 import { calendarKeys } from "./model";
 import { reconcileCalendarMutations } from "./commands";
+import { memoryCalendarStorage } from "./memory-storage";
 import {
   useEffect,
   useState,
@@ -83,6 +84,8 @@ export function useCalendarCache(
     cacheStorage,
   } = useZilobaseFeatures();
   const lifecycle = options.lifecycle ?? configuredLifecycle;
+  const owner = sharedClient(client);
+  const runtimeKey = owner.capture().key;
   const [database, setDatabase] = useState<CalendarDatabase | null>(null),
     [error, setError] = useState<unknown>(),
     [syncing, setSyncing] = useState(false);
@@ -96,6 +99,7 @@ export function useCalendarCache(
         cacheStorage?.calendar,
         setDatabase,
         setError,
+        memoryCalendarStorage(client),
       ),
     [
       connection.bindingId,
@@ -103,6 +107,7 @@ export function useCalendarCache(
       userId,
       options.apiOrigin,
       cacheStorage?.calendar,
+      runtimeKey,
     ],
   );
   const activeRequest = useRef(0);
@@ -349,26 +354,30 @@ function openBoundCalendarDatabase(
   storage: CalendarCacheStorage | undefined,
   setDatabase: (value: CalendarDatabase | null) => void,
   setError: (value: unknown) => void,
+  fallback: CalendarCacheStorage,
 ) {
   let active = true;
   setDatabase(null);
-  if (!storage) {
-    setError(new Error("Calendar cache storage is not configured"));
-    return () => {
-      active = false;
-    };
-  }
-  void storage
-    .open({
-      apiOrigin,
-      userId,
-      workspaceId: connection.workspaceId,
-      bindingId: connection.bindingId,
-    })
-    .then((db) => {
-      if (active) setDatabase(db);
-    })
-    .catch(setError);
+  const identity = {
+    apiOrigin,
+    userId,
+    workspaceId: connection.workspaceId,
+    bindingId: connection.bindingId,
+  };
+  void (async () => {
+    let db: CalendarDatabase;
+    try {
+      db = await (storage ?? fallback).open(identity);
+    } catch {
+      db = await fallback.open(identity);
+    }
+    if (active && db.isOpen()) {
+      setError(undefined);
+      setDatabase(db);
+    }
+  })().catch((error) => {
+    if (active) setError(error);
+  });
   return () => {
     active = false;
   };

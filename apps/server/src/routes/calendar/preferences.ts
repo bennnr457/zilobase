@@ -70,7 +70,7 @@ const CalendarPreferencesBase = Schema.Struct({
   removedCalendarKeys: Schema.Array(
     Schema.String.pipe(Schema.check(Schema.isMaxLength(1024))),
   ).pipe(Schema.check(Schema.isMaxLength(500))),
-  view: Schema.Literals(["day", "week", "month"]),
+  view: Schema.Literals(["day", "week", "month", "agenda"]),
   hiddenCalendarKeys: Schema.Array(Schema.String.pipe(Schema.check(Schema.isMaxLength(1024)))).pipe(
     Schema.check(Schema.isMaxLength(500)),
   ),

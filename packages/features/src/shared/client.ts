@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { sessionQueryKey } from "../auth/queries";
 import type { SessionResponse } from "../auth/contracts";
 import { disposeSharedClient, installSharedClient } from "../data/client";
+import { disposeMemoryCalendarStorage } from "../calendar/memory-storage";
 import { disposeDatabaseControllers } from "../databases/interactions/store";
 import { createZilobaseQueryClient } from "./query-client";
 
@@ -27,6 +28,7 @@ export function initializeZilobaseClient(queryClient: QueryClient, deployment: C
   const data = installSharedClient(queryClient, identity);
   data.configure(identity, () => {
     disposeDatabaseControllers(queryClient);
+    disposeMemoryCalendarStorage(queryClient);
     const predicate = (query: { queryKey: readonly unknown[] }) => query.queryKey[0] !== "session";
     for (const query of queryClient.getQueryCache().findAll({ predicate })) {
       // Removed requests can settle after destroy; do not leave an orphan GC timer.
@@ -50,6 +52,7 @@ export function createZilobaseClient(input: {
     queryClient,
     dispose() {
       disposeDatabaseControllers(queryClient);
+      disposeMemoryCalendarStorage(queryClient);
       disposeSharedClient(queryClient);
       for (const query of queryClient.getQueryCache().getAll())
         query.setOptions({ ...query.options, gcTime: Infinity });

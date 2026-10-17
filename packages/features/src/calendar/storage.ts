@@ -27,6 +27,8 @@ export type CalendarCacheWrite = {
 export type CalendarCacheStore = {
   readonly name: string;
   readonly identity: CalendarCacheIdentity;
+  /** False for the runtime-only fallback; omitted by existing durable adapters. */
+  readonly persistent?: boolean;
   isOpen(): boolean;
   readCalendars(): Promise<CalendarRecord[]>;
   readEvents(keys?: readonly string[]): Promise<(CalendarStoredEvent | undefined)[]>;
