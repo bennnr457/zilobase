@@ -47,6 +47,7 @@ import {
 import { CollaborationPresence } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
 import type { CollaborationPresenceUser } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
 import { PageMetadataProperties } from "../../databases/page-properties/components/page-metadata-properties";
+import { usePageCommentFocusRequest } from "../editor/comments/components/comments-context";
 
 export type PageMetadataHandle = {
   focusTitleEnd: () => boolean;
@@ -188,6 +189,7 @@ export function PageMetadata({
   const [localDescription, setLocalDescription] = useState("");
   const [localTitle, setLocalTitle] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const commentFocus = usePageCommentFocusRequest(pageId);
   const [draftValues, setDraftValues] = useState<Record<string, DatabasePropertyValue>>({});
   const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
   const [presenceByDatabase, setPresenceByDatabase] = useState<
@@ -416,6 +418,9 @@ export function PageMetadata({
       setCommentsOpen(true);
     }
   }, [editorCommentsOpenRequest]);
+  useEffect(() => {
+    if (commentFocus.requested) setCommentsOpen(true);
+  }, [commentFocus.requested]);
 
   const updateCover = (nextCover: string) => {
     if (!editable) {
@@ -943,6 +948,7 @@ export function PageMetadata({
                 >
                   <PageCommentThread
                     placeholder={index === 0 ? "Add a comment..." : "Reply..."}
+                    acceptPageFocus={index === 0}
                     threadId={thread.id}
                     pageId={pageId}
                   />

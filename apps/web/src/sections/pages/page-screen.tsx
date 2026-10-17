@@ -79,7 +79,6 @@ function AuthenticatedPage() {
             <PageWorkspaceGate pageId={renderedSidePanePageId}>
               <PageContent
                 databaseId={sidePaneDatabaseId}
-                enableComments={false}
                 layoutPanelMode="overlay"
                 key={renderedSidePanePageId}
                 onOpenPage={openPage}

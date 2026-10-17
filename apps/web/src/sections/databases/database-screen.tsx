@@ -134,7 +134,6 @@ function AuthenticatedDatabasePage() {
           >
             <PageContent
               databaseId={sidePaneDatabaseId ?? databaseId}
-              enableComments={false}
               key={renderedSidePanePageId}
               onOpenPage={openPage}
               pageId={renderedSidePanePageId}

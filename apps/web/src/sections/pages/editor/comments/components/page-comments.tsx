@@ -64,6 +64,7 @@ import {
 } from "@zilobase/features/comments";
 import {
   useOptionalPageEditorComments,
+  usePageCommentFocusRequest,
   usePageCommentController,
   usePageCommentsSnapshot,
 } from "./comments-context";
@@ -649,6 +650,7 @@ export function PageCommentThread({
   onCreateThread,
   collapseLongThreads = false,
   compact = false,
+  acceptPageFocus = false,
 }: {
   pageId?: string | null;
   threadId?: string | null;
@@ -660,11 +662,24 @@ export function PageCommentThread({
   onCreateThread?: (body: string) => string | null;
   collapseLongThreads?: boolean;
   compact?: boolean;
+  acceptPageFocus?: boolean;
 }) {
   const editorComments = useOptionalPageEditorComments();
   const { data: session } = useSession();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const controller = usePageCommentController(pageId);
+  const focusRequest = usePageCommentFocusRequest(pageId);
+  useEffect(() => {
+    if (
+      (!threadId || acceptPageFocus) &&
+      focusRequest.requested &&
+      controller?.canEdit &&
+      inputRef.current
+    ) {
+      inputRef.current.focus({ preventScroll: false });
+      focusRequest.consume();
+    }
+  }, [focusRequest.requested, controller, controller?.canEdit, threadId, acceptPageFocus]);
   const commentsSnapshot = usePageCommentsSnapshot(pageId);
   const { data: accessTargets } = usePagePersonAccessTargets(pageId ?? null);
 

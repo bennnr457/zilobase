@@ -10,8 +10,13 @@ import {
 } from "react";
 
 import type { PageCommentController } from "../lib/yjs-comments";
+import { useZilobaseFeatures } from "@zilobase/features";
+import { sharedClient } from "@zilobase/features/data";
 
 type Registry = {
+  requestFocus: (pageId: string) => void;
+  focusRequested: (pageId: string) => boolean;
+  consumeFocus: (pageId: string) => void;
   get: (pageId: string) => PageCommentController | null;
   register: (pageId: string, controller: PageCommentController) => () => void;
   subscribe: (pageId: string, listener: () => void) => () => void;
@@ -20,6 +25,9 @@ type Registry = {
 const PageCommentsRegistryContext = createContext<Registry | null>(null);
 
 export function PageCommentsRegistryProvider({ children }: { children: ReactNode }) {
+  const { queryClient } = useZilobaseFeatures();
+  const client = sharedClient(queryClient);
+  const focusRequests = useRef(new Map<string, ReturnType<typeof client.capture>>());
   const controllers = useRef(new Map<string, PageCommentController>());
   const listeners = useRef(new Map<string, Set<() => void>>());
 
@@ -49,7 +57,27 @@ export function PageCommentsRegistryProvider({ children }: { children: ReactNode
       if (pageListeners.size === 0) listeners.current.delete(pageId);
     };
   }, []);
-  const value = useMemo(() => ({ get, register, subscribe }), [get, register, subscribe]);
+  const value = useMemo(
+    () => ({
+      get,
+      register,
+      subscribe,
+      requestFocus: (pageId: string) => {
+        focusRequests.current.clear();
+        focusRequests.current.set(pageId, client.capture());
+        notify(pageId);
+      },
+      focusRequested: (pageId: string) => {
+        const read = focusRequests.current.get(pageId);
+        return Boolean(read && client.isCurrent(read));
+      },
+      consumeFocus: (pageId: string) => {
+        focusRequests.current.delete(pageId);
+        notify(pageId);
+      },
+    }),
+    [get, register, subscribe, notify, client],
+  );
 
   return (
     <PageCommentsRegistryContext.Provider value={value}>
@@ -62,6 +90,28 @@ export function usePageCommentsRegistry() {
   const registry = useContext(PageCommentsRegistryContext);
   if (!registry) throw new Error("PageCommentsRegistryProvider is missing");
   return registry;
+}
+
+export function useOptionalPageCommentsRegistry() {
+  return useContext(PageCommentsRegistryContext);
+}
+
+export function usePageCommentFocusRequest(pageId?: string | null) {
+  const registry = useContext(PageCommentsRegistryContext);
+  const requested = useSyncExternalStore(
+    useCallback(
+      (listener) => (pageId && registry ? registry.subscribe(pageId, listener) : () => {}),
+      [pageId, registry],
+    ),
+    () => Boolean(pageId && registry?.focusRequested(pageId)),
+    () => false,
+  );
+  return {
+    requested,
+    consume: () => {
+      if (pageId) registry?.consumeFocus(pageId);
+    },
+  };
 }
 
 export function usePageCommentController(pageId?: string | null) {

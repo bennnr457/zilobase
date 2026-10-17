@@ -7,7 +7,10 @@ import { usePageSidePane } from "@/sections/pages/presentation/components/page-p
 import type { OpenPageSidePaneOptions } from "@/sections/pages/presentation/components/page-presentation";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { resolveEmbeddedItemsOpenAsFromCache, type Page } from "@zilobase/features/pages";
+import { readCachedPage } from "@zilobase/features/pages";
 import { readPublishedEmbeddedItemsOpenAs } from "../../access/lib/public-page-opening-preferences";
+import { useOptionalPageCommentsRegistry } from "../../editor/comments/components/comments-context";
+import { useOpenInNewTab } from "@/sections/desktop/tabs/components/desktop-tabs";
 
 export function useOpenEmbeddedPage({
   contextPageId,
@@ -19,6 +22,8 @@ export function useOpenEmbeddedPage({
   page: Page | null | undefined;
 }) {
   const { queryClient } = useZilobaseFeatures();
+  const comments = useOptionalPageCommentsRegistry();
+  const openNewTab = useOpenInNewTab();
   const {
     closeEmbeddedPageDialog,
     closeSidePane,
@@ -33,10 +38,22 @@ export function useOpenEmbeddedPage({
     (pageId: string, options?: OpenPageOptions) =>
       Effect.runSync(
         Effect.gen(function* () {
+          if (options?.focusComment) comments?.requestFocus(pageId);
           if (isMobileViewport()) {
             yield* Effect.sync(() =>
               openPageInMainPane(pageId, { databaseId: options?.databaseId ?? databaseId }),
             );
+            return;
+          }
+          if (options?.presentation === "newtab") {
+            openNewTab({
+              href: `/p/${encodeURIComponent(pageId)}`,
+              title: readCachedPage(queryClient, pageId)?.name || "Untitled",
+            });
+            return;
+          }
+          if (options?.presentation === "fullpage") {
+            openPageInMainPane(pageId, { databaseId: options?.databaseId ?? databaseId });
             return;
           }
           const mode = resolveEmbeddedItemsOpenAsFromCache(
@@ -45,11 +62,15 @@ export function useOpenEmbeddedPage({
             page,
             readPublishedEmbeddedItemsOpenAs,
           );
-          const usesDialog = options?.presentation === "dialog" || mode === "dialog";
+          const usesDialog = (options?.presentation ?? mode) === "dialog";
           const activePageId = usesDialog ? dialogPageId : sidePanePageId;
           const isCurrentlyOpen = activePageId === pageId;
 
-          if (pageId === contextPageId || isCurrentlyOpen) {
+          if (
+            (pageId === contextPageId || isCurrentlyOpen) &&
+            !options?.presentation &&
+            !options?.focusComment
+          ) {
             if (usesDialog) {
               yield* Effect.sync(closeEmbeddedPageDialog);
             } else {
@@ -85,6 +106,8 @@ export function useOpenEmbeddedPage({
       openPageInMainPane,
       openSidePane,
       queryClient,
+      comments,
+      openNewTab,
       sidePanePageId,
       page,
     ],
@@ -93,4 +116,7 @@ export function useOpenEmbeddedPage({
   return { openPage };
 }
 
-export type OpenPageOptions = OpenPageSidePaneOptions & { presentation?: "dialog" };
+export type OpenPageOptions = OpenPageSidePaneOptions & {
+  presentation?: "dialog" | "sidepanel" | "fullpage" | "newtab";
+  focusComment?: boolean;
+};
