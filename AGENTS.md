@@ -339,7 +339,6 @@ The current implementation is a foundation, not proof that every boundary is
 complete. When working in these areas, address and test the remaining gaps:
 
 - Late mutation success/rollback callbacks can cross account changes.
-- Calendar currently requires its storage adapter despite optional persistence.
 - Offline session restoration/logout cleanup and image-upload API/domain work
   still have ownership in web that should be split into shared policy and adapters.
 

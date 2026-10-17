@@ -101,6 +101,11 @@ test("timed click creates one hour and dragging saves one snapped mutation", asy
     Date.parse(state.writes[0].event.end.dateTime) -
       Date.parse(state.writes[0].event.start.dateTime),
   ).toBe(3600000);
+  await expect(page.locator("[data-calendar-event-panel]")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator("#right-sidebar-dock")).not.toHaveAttribute(
+    "data-sidebar-transitioning",
+    "",
+  );
   const bar = await card(page).boundingBox();
   await page.mouse.move(bar.x + 30, bar.y + 12);
   await page.mouse.down();

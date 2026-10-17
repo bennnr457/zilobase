@@ -21,54 +21,6 @@ export function chromeCalendarDate(
 ) {
   return visibleDate ?? routeDate ?? todayInZone(zone);
 }
-/** Bookmark writes of the settled date must not copy the route into the jump target. */
-function calendarRouteRetargets(routeDate: string | undefined, bookmarkDate: string | null) {
-  return Boolean(routeDate) && routeDate !== bookmarkDate;
-}
-/** Jump target stays on explicit navigation; chrome date follows the viewport. */
-export function useCalendarVisibleDate(
-  routeDate: string,
-  searchDate: string | undefined,
-  zone: string,
-  visibleDate: string | null,
-  setVisibleDate: (date: string) => void,
-) {
-  const [anchorDate, setAnchorDate] = useState(routeDate);
-  const lastBookmark = useRef<string | null>(null);
-  const anchorRef = useRef(anchorDate);
-  anchorRef.current = anchorDate;
-  const date = chromeCalendarDate(visibleDate, searchDate, zone);
-  useEffect(() => {
-    if (!visibleDate) setVisibleDate(anchorDate);
-  }, []);
-  useEffect(() => {
-    if (
-      !calendarRouteRetargets(searchDate, lastBookmark.current) ||
-      !searchDate ||
-      searchDate === anchorRef.current
-    )
-      return;
-    lastBookmark.current = null;
-    setAnchorDate(searchDate);
-    setVisibleDate(searchDate);
-  }, [searchDate, setVisibleDate]);
-  const markExplicit = useCallback(
-    (next: string) => {
-      lastBookmark.current = null;
-      setAnchorDate(next);
-      setVisibleDate(next);
-    },
-    [setVisibleDate],
-  );
-  const markBookmark = useCallback(
-    (next: string) => {
-      lastBookmark.current = next;
-      setVisibleDate(next);
-    },
-    [setVisibleDate],
-  );
-  return { anchorDate, date, lastBookmark, markExplicit, markBookmark };
-}
 export function calendarDestinationRange(
   next: CalendarDestination,
   preferences: CalendarPreferences,
@@ -84,7 +36,10 @@ export function calendarDestinationRange(
       fixedWeeks: true,
     },
   );
-  return { start: visibleRange.start.toISOString(), end: visibleRange.end.toISOString() };
+  return {
+    start: new Date(visibleRange.start.getTime()).toISOString(),
+    end: new Date(visibleRange.end.getTime()).toISOString(),
+  };
 }
 /** One latest destination; callbacks only run after materialized coverage is ready. */
 export function useCalendarNavigation({

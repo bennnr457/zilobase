@@ -1,173 +1,107 @@
 import { test, expect } from "@playwright/test";
-const calendars = [
-  {
-    id: "primary",
-    bindingId: "binding",
-    name: "Personal",
-    timeZone: "Asia/Kolkata",
-    primary: true,
-    permissions: { read: true, write: true, owner: true, freeBusyOnly: false },
-    defaultReminders: [],
-  },
-];
-async function setup(page) {
-  await page.route("**/workspaces/workspace/calendar/**", (route) => {
-    const url = new URL(route.request().url());
-    if (url.pathname.endsWith("/catalog") || url.pathname.endsWith("/sync"))
-      return route.fulfill({ json: { calendars, revisions: { primary: 1 }, pending: false } });
-    if (url.pathname.endsWith("/ranges")) return complete(route);
-    return route.fulfill({ json: {} });
-  });
-  await page.goto("/scripts/calendar/e2e/index.html");
-  await expect(page.locator('[data-calendar-period-ready="true"]')).toHaveCount(3);
-}
-function complete(route) {
-  const url = new URL(route.request().url());
-  return route.fulfill({
-    json: {
-      calendarId: "primary",
-      start: url.searchParams.get("start"),
-      end: url.searchParams.get("end"),
-      generation: 1,
-      revision: 1,
-      events: [],
-      complete: true,
-      nextPageToken: null,
-    },
-  });
-}
-async function holdRanges(page) {
-  const held = [];
-  const handler = (route) => {
-    held.push(route);
-  };
-  await page.route("**/ranges?**", handler);
-  return async (fail = false) => {
-    await page.unroute("**/ranges?**", handler);
-    await Promise.all(
-      held
-        .splice(0)
-        .map((route) =>
-          fail
-            ? route.fulfill({ status: 503, json: { message: "Try loading again" } })
-            : complete(route),
-        ),
-    );
-  };
-}
+import { setupCalendar, completeRange, event, card } from "./test-fixture.mjs";
 const date = (page) => page.evaluate(() => window.calendarFixture.search().date);
-test("cached dates navigate during loading and uncached arrows wait for committed empty coverage", async ({
+const request = (page, date, view = "week") =>
+  page.evaluate(({ date, view }) => window.calendarFixture.request(date, view), { date, view });
+
+test("cached dates open immediately while uncached dates retain the prior period until ready", async ({
   page,
 }) => {
-  await setup(page);
-  const release = await holdRanges(page);
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-16");
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
+  const state = await setupCalendar(page);
+  await expect(card(page)).toBeVisible();
+  const held = [];
+  state.rangeHandler = (route, url) => {
+    if (url.searchParams.get("start").startsWith("2030")) {
+      held.push(route);
+      return;
+    }
+    return completeRange(route, [event]);
+  };
+  await request(page, "2030-01-09");
   await expect(
-    page.getByRole("status").filter({ hasText: "Loading dates…" }).first(),
+    page.getByRole("status").filter({ hasText: "Loading selected dates" }),
   ).toBeVisible();
-  expect(await date(page)).toBe("2026-09-16");
-  await release();
-  await expect.poll(() => date(page)).toBe("2026-09-23");
-  await expect(page.locator('[data-calendar-period="1"]')).toHaveAttribute(
-    "data-calendar-period-ready",
-    "true",
-  );
+  expect(await date(page)).toBe("2026-09-09");
+  await expect.poll(() => held.length).toBeGreaterThan(0);
+  state.rangeHandler = undefined;
+  await Promise.all(held.map((route) => completeRange(route)));
+  await expect.poll(() => date(page)).toBe("2030-01-09");
 });
-test("a newer cached destination cancels the old navigation intent", async ({ page }) => {
-  await setup(page);
-  const release = await holdRanges(page);
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-16");
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Cancel", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Previous period", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-09");
-  await release();
-  await expect(page.locator('[data-calendar-period-ready="true"]')).toHaveCount(3);
+
+test("a newer cached intent cancels an older uncached navigation", async ({ page }) => {
+  const state = await setupCalendar(page);
+  const held = [];
+  state.rangeHandler = (route, url) =>
+    url.searchParams.get("start").startsWith("2030")
+      ? void held.push(route)
+      : completeRange(route, [event]);
+  await request(page, "2030-01-09");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Loading selected dates" }),
+  ).toBeVisible();
+  await request(page, "2026-09-09");
+  await expect(page.getByRole("status").filter({ hasText: "Loading selected dates" })).toHaveCount(
+    0,
+  );
+  state.rangeHandler = undefined;
+  await Promise.all(held.map((route) => completeRange(route)));
   expect(await date(page)).toBe("2026-09-09");
 });
-test("horizontal scrolling stops at unloaded dates while vertical hours remain usable", async ({
+
+test("uncached failed navigation offers retry and cached events remain visible", async ({
   page,
 }) => {
-  await setup(page);
-  const release = await holdRanges(page);
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-16");
-  const scroll = page.locator("[data-calendar-period-scroll]");
-  await scroll.evaluate((el) => {
-    el.scrollLeft = el.clientWidth * 2;
-  });
-  await expect
-    .poll(() => scroll.evaluate((el) => Math.abs(el.scrollLeft - el.clientWidth)))
-    .toBeLessThan(3);
-  expect(await date(page)).toBe("2026-09-16");
-  await release();
-  await expect.poll(() => date(page)).toBe("2026-09-23");
-});
-test("uncached failed navigation stays put and supports retry", async ({ page }) => {
-  await setup(page);
-  const release = await holdRanges(page);
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-16");
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await page.route("**/ranges?**", (route) =>
-    route.fulfill({ status: 503, json: { message: "Try loading again" } }),
-  );
-  await release(true);
-  // Retry after restoring the server. The failed period must not be committed.
-  expect(await date(page)).toBe("2026-09-16");
-  await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
-  await page.unroute("**/ranges?**");
+  const state = await setupCalendar(page);
+  state.rangeHandler = (route, url) =>
+    url.searchParams.get("start").startsWith("2030")
+      ? route.fulfill({ status: 503, json: { message: "Try loading again" } })
+      : completeRange(route, [event]);
+  await request(page, "2030-01-09");
+  await expect(page.getByRole("alert")).toContainText("Try loading again");
+  await expect(card(page)).toBeVisible();
+  state.rangeHandler = undefined;
   await page.getByRole("button", { name: "Retry", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-23");
+  await expect.poll(() => date(page)).toBe("2030-01-09");
 });
-test("offline cached navigation works and uncached dates explain the boundary", async ({
+
+test("offline navigation permits cached dates and blocks writes and unavailable dates", async ({
   page,
 }) => {
-  await setup(page);
+  await setupCalendar(page);
+  await expect(card(page)).toBeVisible();
   await page.evaluate(() => window.calendarFixture.offline());
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect.poll(() => date(page)).toBe("2026-09-16");
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect(
-    page.getByRole("alert").filter({ hasText: "These dates are not cached" }),
-  ).toBeVisible();
-  expect(await date(page)).toBe("2026-09-16");
+  await expect(page.getByRole("button", { name: "Create event", exact: true })).toBeDisabled();
+  await request(page, "2026-09-09", "day");
+  await expect(page.locator('[data-slot="event-calendar-content"]')).toHaveAttribute(
+    "data-view",
+    "day",
+  );
+  await request(page, "2030-01-09", "day");
+  await expect(page.getByRole("alert")).toContainText("not cached");
+  expect(await date(page)).toBe("2026-09-09");
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
 });
-test("month scrolling holds its anchor at an unloaded boundary then resumes", async ({ page }) => {
-  await setup(page);
-  await page.getByRole("combobox", { name: "Calendar view" }).click();
-  await page.getByRole("option", { name: "Month", exact: true }).click();
-  const scroll = page.locator("[data-calendar-month-scroll]");
-  await expect(scroll).toBeVisible();
-  await expect(scroll.getByRole("status")).toHaveCount(0);
-  const release = await holdRanges(page);
-  // Move beyond the original buffer; a loaded shift is allowed, the next stops.
-  await scroll.evaluate((el) => {
-    el.scrollTop = el.scrollHeight - el.clientHeight - 10;
-  });
-  await expect
-    .poll(() => scroll.evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop))
-    .toBeGreaterThan(300);
-  const before = await scroll.evaluate((el) => ({
-    top: el.scrollTop,
-    week: el.querySelector("[data-calendar-week]")?.getAttribute("data-calendar-week"),
-  }));
-  await scroll.evaluate((el) => {
-    el.scrollTop = el.scrollHeight - el.clientHeight - 10;
-  });
-  await expect(page.getByRole("button", { name: "Cancel", exact: true })).toBeVisible();
-  await expect.poll(() => scroll.evaluate((el) => el.scrollTop)).toBe(before.top);
-  await release();
-  await expect(page.getByRole("button", { name: "Cancel", exact: true })).toHaveCount(0);
-  await expect
-    .poll(() =>
-      scroll.evaluate((el) =>
-        el.querySelector("[data-calendar-week]")?.getAttribute("data-calendar-week"),
-      ),
-    )
-    .not.toBe(before.week);
+
+test("Agenda navigation advances thirty days and source loading covers all rendered Month cells", async ({
+  page,
+}) => {
+  const state = await setupCalendar(page);
+  await request(page, "2026-09-09", "agenda");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect.poll(() => date(page)).toBe("2026-10-09");
+  await request(page, "2026-09-09", "month");
+  await expect(page.locator('[data-slot="event-calendar-content"]')).toHaveAttribute(
+    "data-view",
+    "month",
+  );
+  const days = await page
+    .locator('[data-slot="event-calendar-month-cell"]')
+    .evaluateAll((cells) => cells.map((cell) => Number(cell.dataset.ecDay)));
+  const requested = state.ranges.map((range) => [Date.parse(range.start), Date.parse(range.end)]);
+  expect(
+    requested.some(([start, end]) => start <= Math.min(...days) && end > Math.min(...days)),
+  ).toBe(true);
+  expect(
+    requested.some(([start, end]) => start <= Math.max(...days) && end > Math.max(...days)),
+  ).toBe(true);
 });

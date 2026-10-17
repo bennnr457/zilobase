@@ -91,7 +91,7 @@ export const GoogleEvent = Schema.Struct({
       ),
     }),
   ),
-  colorId: Schema.optionalKey(Schema.String),
+  colorId: Schema.optionalKey(Schema.NullOr(Schema.String)),
   htmlLink: Schema.optionalKey(Schema.String),
   hangoutLink: Schema.optionalKey(Schema.String),
 });

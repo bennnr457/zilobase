@@ -298,6 +298,7 @@ test.skipIf(!enabled)(
         sendUpdates: "all" as const,
         event: {
           title: "Fixture event",
+          colorId: null,
           start: { date: "2026-09-09" },
           end: { date: "2026-09-10" },
         },

@@ -1,7 +1,7 @@
 export function register({ assert, loadModule, test }) {
   test("overlapping calendar requests share delivery and isolate cancellation", async () => {
     const { requestCalendarIntervals } = await loadModule(
-      "/src/sections/calendar/sync/lib/calendar-range-queue.ts",
+      "/packages/features/src/calendar/range-queue.ts",
     );
     const calls = [];
     let release;
@@ -37,7 +37,7 @@ export function register({ assert, loadModule, test }) {
   });
   test("range queue reserves foreground capacity and aborts unused reads", async () => {
     const { requestCalendarIntervals } = await loadModule(
-      "/src/sections/calendar/sync/lib/calendar-range-queue.ts",
+      "/packages/features/src/calendar/range-queue.ts",
     );
     const started = [];
     const releases = [];
@@ -202,11 +202,14 @@ export function register({ assert, loadModule, test }) {
     const fake = await import("fake-indexeddb");
     globalThis.indexedDB = fake.indexedDB;
     globalThis.IDBKeyRange = fake.IDBKeyRange;
-    const { openCalendarDatabase, applyCalendarRange, destroyCalendarDatabase } = await loadModule(
-      "/src/platform/storage/calendar-database.ts",
-    );
+    const {
+      calendarCacheStore,
+      openCalendarDatabase,
+      applyCalendarRange,
+      destroyCalendarDatabase,
+    } = await loadModule("/src/platform/storage/calendar-database.ts");
     const { synchronizeCalendarCache } = await loadModule(
-      "/src/sections/calendar/sync/lib/calendar-cache-sync.ts",
+      "/packages/features/src/calendar/sync.ts",
     );
     const database = await openCalendarDatabase({
       apiOrigin: "https://calendar-catalog.example",
@@ -233,7 +236,7 @@ export function register({ assert, loadModule, test }) {
       await applyCalendarRange(database, range);
       const requests = [];
       await synchronizeCalendarCache(
-        database,
+        calendarCacheStore(database),
         range.start,
         range.end,
         async (path) => {
@@ -255,11 +258,11 @@ export function register({ assert, loadModule, test }) {
     const fake = await import("fake-indexeddb");
     globalThis.indexedDB = fake.indexedDB;
     globalThis.IDBKeyRange = fake.IDBKeyRange;
-    const { openCalendarDatabase, destroyCalendarDatabase } = await loadModule(
+    const { calendarCacheStore, openCalendarDatabase, destroyCalendarDatabase } = await loadModule(
       "/src/platform/storage/calendar-database.ts",
     );
     const { synchronizeCalendarCache } = await loadModule(
-      "/src/sections/calendar/sync/lib/calendar-cache-sync.ts",
+      "/packages/features/src/calendar/sync.ts",
     );
     const database = await openCalendarDatabase({
       apiOrigin: "https://calendar-ranges.example",
@@ -273,7 +276,7 @@ export function register({ assert, loadModule, test }) {
       await database.calendars.put({ id: "c", bindingId: "binding", permissions: { read: true } });
       const ranges = [];
       await synchronizeCalendarCache(
-        database,
+        calendarCacheStore(database),
         start,
         end,
         async (path) => {

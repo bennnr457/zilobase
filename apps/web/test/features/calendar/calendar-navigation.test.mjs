@@ -59,13 +59,14 @@ export function register({ assert, loadModule, test }) {
     globalThis.indexedDB = fake.indexedDB;
     globalThis.IDBKeyRange = fake.IDBKeyRange;
     const {
+      calendarCacheStore,
       openCalendarDatabase,
       applyCalendarRange,
       readCalendarRangeCache,
       destroyCalendarDatabase,
     } = await loadModule("/src/platform/storage/calendar-database.ts");
     const { synchronizeCalendarCache } = await loadModule(
-      "/src/sections/calendar/sync/lib/calendar-cache-sync.ts",
+      "/packages/features/src/calendar/sync.ts",
     );
     const db = await openCalendarDatabase({
       apiOrigin: "https://navigation.test",
@@ -107,7 +108,7 @@ export function register({ assert, loadModule, test }) {
       assert.equal(partial.events.length, 1);
       const calls = [];
       await synchronizeCalendarCache(
-        db,
+        calendarCacheStore(db),
         at(1),
         at(10),
         async (path) => {

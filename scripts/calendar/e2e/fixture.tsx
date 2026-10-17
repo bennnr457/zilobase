@@ -35,10 +35,11 @@ import {
   RouterProvider,
   Outlet,
   createMemoryHistory,
+  useNavigate,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider, onlineManager } from "@tanstack/react-query";
 import { CalendarSchedule } from "@/sections/calendar/views/components/calendar-schedule";
-import { defaultCalendarPreferences } from "@zilobase/features/calendar";
+import { type CalendarPreferences, defaultCalendarPreferences } from "@zilobase/features/calendar";
 import "@/styles/global.css";
 import "@/styles/app.css";
 const preferences = defaultCalendarPreferences("Asia/Kolkata");
@@ -53,9 +54,16 @@ const connections = [
   },
 ];
 function FixtureSchedule(props: Parameters<typeof CalendarSchedule>[0]) {
+  const navigate = useNavigate();
   const workspace = useCalendarWorkspace(),
     isMobile = useIsMobile();
   const [chatOpen, setChat] = useCalendarChatVisibility();
+  Object.assign(window.calendarFixture ?? {}, {
+    request: (date: string, view = "week") =>
+      workspace.navigateCalendar({ date, view: view as CalendarPreferences["view"] }, () => {
+        void navigate({ to: "/calendar", search: { date, view } });
+      }),
+  });
   const settingsPreferences = useCalendarPreferences("workspace");
   const [settings, setSettings] = useState(false);
   const [floating, setFloating] = useState(false);

@@ -1,101 +1,54 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { CalendarItem, CalendarSurfaceProps } from "@/sections/calendar/primitives/lib/types";
-import type { CalendarView } from "@zilobase/features/calendar";
-import { eventClock } from "@zilobase/features/calendar";
+import { CalendarRenderer } from "@/sections/calendar/primitives/components/calendar-renderer";
+import type {
+  CalendarEvent,
+  CalendarView,
+} from "@/components/ui/event-calendar/event-calendar-types";
 import "@/styles/global.css";
 import "@/styles/app.css";
-const params = new URLSearchParams(location.search);
-const baselinePath = "/.dev/calendar-baseline/shared/components/calendar/index.ts";
-const { CalendarSurface } = params.has("baseline")
-  ? ((await import(/* @vite-ignore */ baselinePath)) as {
-      CalendarSurface: React.ComponentType<CalendarSurfaceProps>;
-    })
-  : await import("@/sections/calendar/primitives/components/calendar-surface");
-const count = Number(params.get("count") ?? 10000);
-const items: CalendarItem[] = Array.from({ length: count }, (_, index) => ({
-  id: `item-${index}`,
-  title: `Meeting ${index}`,
-  editable: true,
-  start: {
-    dateTime: new Date(
-      Date.UTC(2026, 8, (index % 28) + 1, 3 + (Math.floor(index / 28) % 14), (index % 4) * 15),
-    ).toISOString(),
-    timeZone: "Asia/Kolkata",
-  },
-  end: {
-    dateTime: new Date(
-      Date.UTC(2026, 8, (index % 28) + 1, 4 + (Math.floor(index / 28) % 14), (index % 4) * 15),
-    ).toISOString(),
-    timeZone: "Asia/Kolkata",
-  },
+const count = Number(new URLSearchParams(location.search).get("count") ?? 10000);
+const items: CalendarEvent[] = Array.from({ length: count }, (_, i) => ({
+  id: `event-${i}`,
+  title: `Meeting ${i}`,
+  start: new Date(Date.UTC(2026, 8, (i % 28) + 1, 3 + (Math.floor(i / 28) % 14))),
+  end: new Date(Date.UTC(2026, 8, (i % 28) + 1, 4 + (Math.floor(i / 28) % 14))),
 }));
-const preferences = {
-  timeZone: "Asia/Kolkata",
-  timeFormat: "24" as const,
-  weekStartsOn: 1 as const,
-  showWeekends: true,
-  showWeekNumbers: false,
-  timeZoneColumns: [{ zone: "Asia/Kolkata", label: "Kolkata" }],
-  hourHeight: 48,
-};
-const metrics = { cards: 0, ranges: 0 };
+const metrics = { cards: 0 };
 function Fixture() {
   const [view, setView] = useState<CalendarView>("month"),
-    [date, setDate] = useState("2026-09-09"),
     [revision, setRevision] = useState(0);
-  const [current, setItems] = useState(items);
-  const navigate = useCallback((date: string, view: CalendarView) => {
-    setDate(date);
-    setView(view);
-  }, []);
-  const range = useCallback(() => {
-    metrics.ranges++;
-  }, []);
-  const change = useCallback(
-    (item: CalendarItem) =>
-      setItems((items) => items.map((old) => (old.id === item.id ? item : old))),
-    [],
-  );
-  const renderItem = useCallback((item: CalendarItem) => {
+  const render = useCallback(({ occurrence }: { occurrence: { event: CalendarEvent } }) => {
     metrics.cards++;
-    return (
-      <>
-        <span className="w-full truncate font-medium">{item.title}</span>
-        <span className="truncate text-[11px] opacity-80">
-          {eventClock(item.start, preferences.timeZone, preferences.timeFormat)}–
-          {eventClock(item.end, preferences.timeZone, preferences.timeFormat)}
-        </span>
-      </>
-    );
+    return <span data-calendar-event-card>{occurrence.event.title}</span>;
   }, []);
-  useEffect(() => {
-    Object.assign(window, {
-      surfaceFixture: {
-        navigate: (view: CalendarView) => setView(view),
-        refresh: () => setRevision((i) => i + 1),
-        metrics,
-        reset: () => {
-          metrics.cards = 0;
-          metrics.ranges = 0;
-        },
+  Object.assign(window, {
+    surfaceFixture: {
+      navigate: (view: CalendarView) => setView(view),
+      reset: () => {
+        metrics.cards = 0;
       },
-    });
-  }, []);
+      refresh: () => setRevision((r) => r + 1),
+      metrics,
+    },
+  });
   return (
-    <main className="flex h-screen flex-col bg-surface-canvas text-content-primary">
+    <main className="flex h-screen flex-col">
       <output>
-        {date} {view} {revision}
+        {view} {revision}
       </output>
-      <CalendarSurface
-        items={current}
-        date={date}
+      <CalendarRenderer
+        className="min-h-0 flex-1"
+        defaultDate={new Date("2026-09-09T00:00:00+05:30")}
         view={view}
-        preferences={preferences}
-        onNavigate={navigate}
-        onRangeChange={range}
-        onChange={change}
-        renderItem={renderItem}
+        onViewChange={setView}
+        events={items}
+        timeZone="Asia/Kolkata"
+        weekStartsOn={1}
+        maxEventsPerCell={3}
+        scrollMode="contained"
+        renderEvent={render}
+        renderAgendaEvent={render}
       />
     </main>
   );

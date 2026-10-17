@@ -1,6 +1,16 @@
 import { test, expect } from "vitest";
-import { CalendarGateway, normalizeEvent } from "./gateway";
+import { CalendarGateway, googleEventSchema, normalizeEvent } from "./gateway";
 import { encryptCalendarSecret, decryptCalendarSecret } from "./credentials";
+test("default event color can be cleared through the provider write schema", () => {
+  const event = googleEventSchema.parse({
+    id: "default-color",
+    summary: "Draft",
+    colorId: null,
+    start: { date: "2026-10-17" },
+    end: { date: "2026-10-18" },
+  });
+  expect(event.colorId).toBeNull();
+});
 test("normalization preserves all-day end and moved recurrence identity", () => {
   const event = normalizeEvent(
     {

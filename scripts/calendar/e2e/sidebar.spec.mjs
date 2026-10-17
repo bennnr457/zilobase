@@ -41,7 +41,17 @@ test.beforeEach(async ({ page }) => {
     showWeekNumbers: false,
     timeFormat: "24",
     timeZone: "Asia/Kolkata",
-    secondaryTimeZones: [],
+    timeZoneColumns: [{ zone: "Asia/Kolkata", label: "Kolkata" }],
+    promptTimeZoneChanges: false,
+    todayAlignment: "week",
+    meetingPreviewMinutes: 15,
+    mapsProvider: "google",
+    hourHeight: 48,
+    accountOrder: [],
+    calendarOrder: [],
+    collapsedAccountIds: [],
+    calendarColors: {},
+    removedCalendarKeys: [],
     remindersEnabled: false,
   };
   await page.route("**/workspaces/workspace/calendar/**", async (route) => {
@@ -99,10 +109,10 @@ test("sidebar date picker and Google-only connection dialog use shared controls"
   await page.keyboard.press("Escape");
   const mini = page.locator('[aria-label="Choose calendar date"]');
   await mini.getByRole("button", { name: /September 15th, 2026/ }).click();
-  await expect(page.getByRole("combobox")).toContainText("Week");
-  await expect(
-    page.getByRole("button", { name: "Create event 2026-09-14 9:00", exact: true }),
-  ).toBeVisible();
+  await expect(page.locator('[data-slot="event-calendar-view-switcher"]')).toContainText("Week");
+  await expect(page.locator('[data-slot="event-calendar-day-header"]').first()).toContainText(
+    "Mon 14",
+  );
 });
 test("calendar eye, color submenu, removal confirmation and restoration persist", async ({
   page,
@@ -230,7 +240,7 @@ test("calendar source panel pages independently and creates on its selected sour
   await panel.getByRole("button", { name: "Create event", exact: true }).click();
   await expect(page.getByLabel("Title", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Calendar", { exact: true })).toContainText("Personal");
-  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page.getByRole("button", { name: "Holidays in India", exact: true }).click();
   await expect(
     page
@@ -258,52 +268,19 @@ test("source collapse and order survive reload", async ({ page }) => {
   await expect(page.locator("[data-calendar-row]").first()).toContainText(name);
 });
 
-test("custom day count persists through navigation and reload", async ({ page }) => {
-  await page.getByRole("button", { name: "Visible day count" }).click();
-  await page.getByLabel("Visible days (1–31)").fill("3");
-  await page.keyboard.press("Escape");
-  await expect(page.locator('[data-calendar-period="1"] [data-calendar-day-column]')).toHaveCount(
-    3,
-  );
-  await page.getByRole("button", { name: "Next period", exact: true }).click();
-  await expect(page.locator('[data-calendar-period="1"] [data-calendar-day-column]')).toHaveCount(
-    3,
-  );
-  await page.reload();
-  await expect(page.getByRole("button", { name: "Visible day count" })).toContainText("3 days");
-  await page
-    .locator('[aria-label="Choose calendar date"]')
-    .getByRole("button", { name: /September 15th, 2026/ })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Create event 2026-09-15 9:00", exact: true }),
-  ).toBeVisible();
-  await expect(page.locator('[data-calendar-period="1"] [data-calendar-day-column]')).toHaveCount(
-    3,
-  );
-});
-
-test("general preferences persist and Today uses the chosen alignment", async ({ page }) => {
-  await page.clock.install({ time: new Date("2026-09-10T09:00:00Z") });
+test("settings persist regional preferences and obsolete scroll controls are absent", async ({
+  page,
+}) => {
   await page.getByRole("button", { name: "Calendar settings", exact: true }).click();
-  await page.getByLabel("Today navigation", { exact: true }).click();
-  await page.getByRole("option", { name: "Align today at the start" }).click();
+  await expect(page.getByLabel("Today navigation", { exact: true })).toHaveCount(0);
   await page.getByLabel("Maps preference", { exact: true }).click();
   await page.getByRole("option", { name: "Apple Maps", exact: true }).click();
-  await page.getByLabel("Meeting preview (minutes before)").fill("30");
+  await page.getByLabel("Meeting preview minutes", { exact: true }).fill("30");
   await page.getByRole("button", { name: "Save preferences" }).click();
-  await page.getByRole("button", { name: "Today", exact: true }).click();
-  await expect(
-    page.locator('[data-calendar-period="1"] [data-calendar-day-column]').first(),
-  ).toHaveAttribute("data-calendar-day-column", "2026-09-10");
   await page.reload();
   await page.getByRole("button", { name: "Calendar settings", exact: true }).click();
   await expect(page.getByLabel("Maps preference", { exact: true })).toContainText("Apple Maps");
-  await expect(page.getByLabel("Meeting preview (minutes before)")).toHaveValue("30");
-  await expect(page.getByRole("link", { name: "Profile settings" })).toHaveAttribute(
-    "href",
-    "/settings/profile",
-  );
+  await expect(page.getByLabel("Meeting preview minutes", { exact: true })).toHaveValue("30");
 });
 
 async function pickZone(page, zone) {

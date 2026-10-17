@@ -1,112 +1,101 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { CalendarSurface } from "@/sections/calendar/primitives/components/calendar-surface";
-import {
-  type CalendarItem,
-  type CalendarDisplayPreferences,
-} from "@/sections/calendar/primitives/lib/types";
-import { type CalendarView } from "@zilobase/features/calendar";
+import { CalendarRenderer } from "@/sections/calendar/primitives/components/calendar-renderer";
+import type {
+  CalendarEvent,
+  CalendarView,
+} from "@/components/ui/event-calendar/event-calendar-types";
 import "@/styles/global.css";
 import "@/styles/app.css";
-const defaults: CalendarDisplayPreferences = {
-  timeZone: "Asia/Kolkata",
-  timeFormat: "24",
-  weekStartsOn: 1,
-  showWeekends: true,
-  showWeekNumbers: false,
-  secondaryTimeZones: [],
-};
-const sample: CalendarItem[] = [
+const sample: CalendarEvent[] = [
   {
     id: "meeting",
     title: "Plain meeting",
-    start: { dateTime: "2026-09-09T04:30:00Z", timeZone: "Asia/Kolkata" },
-    end: { dateTime: "2026-09-09T05:30:00Z", timeZone: "Asia/Kolkata" },
-    editable: true,
+    start: new Date("2026-09-09T04:30:00Z"),
+    end: new Date("2026-09-09T05:30:00Z"),
   },
   {
     id: "holiday",
     title: "Plain holiday",
-    start: { date: "2026-09-09" },
-    end: { date: "2026-09-11" },
-    editable: true,
+    start: new Date("2026-09-08T18:30:00Z"),
+    end: new Date("2026-09-10T18:30:00Z"),
+    allDay: true,
   },
   {
     id: "readonly",
     title: "Read only",
-    start: { date: "2026-09-08" },
-    end: { date: "2026-09-09" },
+    start: new Date("2026-09-07T18:30:00Z"),
+    end: new Date("2026-09-08T18:30:00Z"),
+    allDay: true,
+    readOnly: true,
   },
 ];
 function Fixture({ name }: { name: string }) {
-  const [preferences, setPreferences] = useState(defaults);
-  const [date, setDate] = useState("2026-09-09"),
-    [view, setView] = useState<CalendarView>("week");
+  const [date, setDate] = useState(new Date("2026-09-09T00:00:00+05:30"));
+  const [view, setView] = useState<CalendarView>("week");
   const [items, setItems] = useState(sample),
     [action, setAction] = useState("");
+  const [density, setDensity] = useState(48),
+    [zone, setZone] = useState("Asia/Kolkata"),
+    [weekends, setWeekends] = useState(true);
   return (
     <section
       aria-label={name}
       className="flex h-screen min-w-0 flex-1 flex-col bg-surface-canvas text-content-primary"
     >
       <nav>
-        {(["day", "week", "month"] as const).map((view) => (
-          <button key={view} onClick={() => setView(view)}>
-            {view}
-          </button>
-        ))}
-      </nav>
-      <nav>
-        <button
-          onClick={() =>
-            setPreferences((p) => ({ ...p, hourHeight: p.hourHeight === 96 ? 48 : 96 }))
-          }
-        >
-          Toggle density
-        </button>
-        <button onClick={() => setPreferences((p) => ({ ...p, showWeekends: !p.showWeekends }))}>
-          Toggle weekends
-        </button>
-        <button
-          onClick={() =>
-            setPreferences((p) => ({
-              ...p,
-              timeZone: p.timeZone === "UTC" ? "Asia/Kolkata" : "UTC",
-            }))
-          }
-        >
+        <button onClick={() => setDensity(density === 48 ? 96 : 48)}>Toggle density</button>
+        <button onClick={() => setZone(zone === "UTC" ? "Asia/Kolkata" : "UTC")}>
           Toggle timezone
         </button>
-        <button onClick={() => setPreferences((p) => ({ ...p, weekStartsOn: 0 }))}>
-          Start Sunday
-        </button>
+        <button onClick={() => setWeekends(!weekends)}>Toggle weekends</button>
       </nav>
       <output>
-        {date} {action}
+        {date.toISOString()} {action}
       </output>
-      <CalendarSurface
+      <CalendarRenderer
+        className="min-h-0 flex-1"
+        events={items}
         date={date}
         view={view}
-        preferences={preferences}
-        items={items}
-        onNavigate={(date, view) => {
-          setDate(date);
-          setView(view);
+        onDateChange={setDate}
+        onViewChange={setView}
+        timeZone={zone}
+        hourHeight={density}
+        viewSettings={{ weekends }}
+        scrollMode="contained"
+        showDayAddButton
+        onEventClick={({ eventId }) => setAction(`selected:${eventId}`)}
+        onSlotClick={(slot) => setAction(`created:${slot.date.toISOString()}:${slot.allDay}`)}
+        onSelectSlot={(slot) =>
+          setAction(`range:${slot.start.toISOString()}:${slot.end.toISOString()}`)
+        }
+        onEventUpdate={(update) => {
+          setItems((items) =>
+            items.map((item) =>
+              item.id === update.event.id
+                ? { ...item, start: update.start, end: update.end, allDay: update.allDay }
+                : item,
+            ),
+          );
+          setAction(`changed:${update.event.id}`);
+          return true;
         }}
-        onSelect={(item) => setAction(`selected:${item.id}`)}
-        onCreate={(day, hour, duration) => setAction(`created:${day}:${hour}:${duration}`)}
-        onChange={(item) => {
-          setItems((items) => items.map((current) => (current.id === item.id ? item : current)));
-          setAction(`changed:${item.id}`);
-        }}
-        onError={(error) => setAction(error.message)}
+        renderEvent={({ occurrence }) => (
+          <span data-calendar-event-card>{occurrence.event.title}</span>
+        )}
       />
     </section>
   );
 }
-createRoot(document.getElementById("root")!).render(
-  <main className="flex">
-    <Fixture name="First calendar" />
-    <Fixture name="Second calendar" />
-  </main>,
-);
+const root = createRoot(document.getElementById("root")!);
+let mount = 0;
+const render = () =>
+  root.render(
+    <main className="flex" key={++mount}>
+      <Fixture name="First calendar" />
+      <Fixture name="Second calendar" />
+    </main>,
+  );
+Object.assign(window, { calendarSurface: { remount: render } });
+render();

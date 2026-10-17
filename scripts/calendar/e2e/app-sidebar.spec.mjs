@@ -110,6 +110,8 @@ test("section dragging saves order and customization completes through the contr
       .find((tab) => tab.id === "home")
       .sections.map((section) => section.id),
   ).toEqual(["meetings", "favorites", "private"]);
+  // dnd-kit deliberately captures clicks for 50ms after a completed drag.
+  await page.waitForTimeout(60);
   await sidebar.getByRole("button", { name: "Customize sidebar", exact: true }).click();
   await sidebar.getByRole("button", { name: "Done", exact: true }).click();
   await expect(
