@@ -7,7 +7,7 @@ import {
   type CalendarRecord,
   type CalendarAttendee,
 } from "@zilobase/features/calendar";
-import type { CalendarDatabase } from "@/platform/storage/calendar-database";
+import type { CalendarCacheStore } from "@zilobase/features/calendar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -25,7 +25,7 @@ import { EventActions } from "../../events/components/event-actions";
 
 type Props = {
   selected: CalendarEvent;
-  database: CalendarDatabase | null;
+  database: CalendarCacheStore | null;
   calendars: CalendarRecord[];
   mapsProvider?: "google" | "apple";
   online: boolean;
@@ -147,7 +147,7 @@ function EventPeople({
 }: {
   event: CalendarEvent;
   attendees: CalendarAttendee[];
-  database: CalendarDatabase | null;
+  database: CalendarCacheStore | null;
   actions: Parameters<typeof EventActions>[0];
 }) {
   const [expanded, setExpanded] = useState(false);

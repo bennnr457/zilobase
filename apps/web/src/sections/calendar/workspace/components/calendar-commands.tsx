@@ -49,8 +49,7 @@ export function CalendarCommands({
     workspace.navigateCalendar(search, () => {
       void navigate({ to: "/calendar", search });
     });
-  const period = (date: string, nextView: CalendarView = view, align = search.align) =>
-    route({ date, view: nextView, days: search.days, align });
+  const period = (date: string, nextView: CalendarView = view) => route({ date, view: nextView });
   const save = async (value: CalendarPreferences) => {
     if (!onPreferences || pending) return;
     setPending(true);
@@ -169,43 +168,22 @@ function calendarCommandItems(input: {
         input.period(
           todayInZone(input.workspace.travelZone ?? input.preferences.timeZone),
           input.view,
-          input.preferences.todayAlignment === "start" || undefined,
         ),
     },
     {
       id: "previous",
       label: "Previous period",
       shortcut: "←",
-      run: () =>
-        input.period(
-          shiftCalendarPeriod(
-            input.date,
-            input.view,
-            -1,
-            input.search.days,
-            input.preferences.showWeekends,
-            input.search.align,
-          ),
-        ),
+      run: () => input.period(shiftCalendarPeriod(input.date, input.view, -1)),
     },
     {
       id: "next",
       label: "Next period",
       shortcut: "→",
-      run: () =>
-        input.period(
-          shiftCalendarPeriod(
-            input.date,
-            input.view,
-            1,
-            input.search.days,
-            input.preferences.showWeekends,
-            input.search.align,
-          ),
-        ),
+      run: () => input.period(shiftCalendarPeriod(input.date, input.view, 1)),
     },
     ...input.workspace.featureCommands,
-    ...(["day", "week", "month"] as const).map((next) => ({
+    ...(["day", "week", "month", "agenda"] as const).map((next) => ({
       id: `view:${next}`,
       label: `Switch to ${next} view`,
       run: () => input.period(input.date, next),
@@ -218,7 +196,6 @@ function calendarCommandItems(input: {
         input.workspace.panelOpen ? input.workspace.closePanel() : input.workspace.openPanel(),
     },
     { id: "settings", label: "Calendar settings", run: input.onSettings },
-    ...dayCountCommands(input),
     ...hourHeightCommands(input),
     ...visibilityCommands(input),
     ...zoneCommands(input),
@@ -241,28 +218,6 @@ function calendarCommandItems(input: {
       run: () => input.setMode("help"),
     },
   ];
-}
-function dayCountCommands(input: {
-  view: CalendarView;
-  date: string;
-  search: { days?: number; align?: boolean };
-  route: (search: import("../hooks/calendar-navigation").CalendarDestination) => void;
-}): CalendarCommand[] {
-  return ([-1, 1] as const).map((direction) => ({
-    id: `days:${direction}`,
-    label: direction > 0 ? "Show more days" : "Show fewer days",
-    disabled:
-      input.view !== "week" ||
-      (input.search.days ?? 7) + direction < 1 ||
-      (input.search.days ?? 7) + direction > 31,
-    run: () =>
-      input.route({
-        date: input.date,
-        view: input.view,
-        align: input.search.align,
-        days: (input.search.days ?? 7) + direction,
-      }),
-  }));
 }
 function hourHeightCommands(input: {
   preferences: CalendarPreferences;

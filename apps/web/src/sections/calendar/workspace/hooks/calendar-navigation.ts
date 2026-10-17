@@ -1,7 +1,6 @@
+import { getViewDateRange } from "@/components/ui/event-calendar/event-calendar-lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  addCalendarDays,
-  calendarDays,
   dayInstant,
   todayInZone,
   type CalendarPreferences,
@@ -74,29 +73,18 @@ export function calendarDestinationRange(
   next: CalendarDestination,
   preferences: CalendarPreferences,
 ): CalendarWindow {
-  const days = calendarDays(
-    next.date,
+  const { visibleRange } = getViewDateRange(
     next.view,
-    preferences.weekStartsOn,
-    next.days,
-    preferences.showWeekends,
-    next.align,
+    new Date(dayInstant(next.date, preferences.timeZone)),
+    {
+      timeZone: preferences.timeZone,
+      weekStartsOn: preferences.weekStartsOn,
+      dayCount: 7,
+      agendaDayCount: 30,
+      fixedWeeks: true,
+    },
   );
-  // Month opens at its first week; reserve enough weeks for a tall viewport.
-  const last =
-    next.view === "month"
-      ? addCalendarDays(
-          days[0]!,
-          Math.max(
-            42,
-            typeof window === "undefined" ? 42 : Math.ceil(window.innerHeight / 144) * 7,
-          ),
-        )
-      : addCalendarDays(days.at(-1)!, 1);
-  return {
-    start: dayInstant(days[0]!, preferences.timeZone),
-    end: dayInstant(last, preferences.timeZone),
-  };
+  return { start: visibleRange.start.toISOString(), end: visibleRange.end.toISOString() };
 }
 /** One latest destination; callbacks only run after materialized coverage is ready. */
 export function useCalendarNavigation({

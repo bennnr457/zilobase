@@ -1,6 +1,7 @@
 import { useCalendarCache as useSharedCalendarCache } from "@zilobase/features/calendar/react";
 import type { CalendarConnection, CalendarWindow } from "@zilobase/features/calendar";
-import { calendarCacheDatabase } from "@/platform/storage/calendar-database";
+import { useEffect, useState } from "react";
+import type { PendingCalendarMutation } from "@zilobase/features/calendar";
 import { emitCalendarMetric } from "@/platform/diagnostics/calendar-metrics";
 import { startCalendarRecovery } from "../../realtime/lib/calendar-recovery";
 import { toApiUrl } from "@/platform/network/api";
@@ -13,12 +14,7 @@ const calendarLifecycle = {
 const bindRecovery: NonNullable<Parameters<typeof useSharedCalendarCache>[4]["bindRecovery"]> = (
   store,
   refresh,
-) =>
-  startCalendarRecovery(
-    calendarCacheDatabase(store),
-    refresh,
-    () => getConnectivityState() === "online",
-  );
+) => startCalendarRecovery(store, refresh, () => getConnectivityState() === "online");
 export function useCalendarCache(
   connection: CalendarConnection,
   userId: string,
@@ -34,5 +30,14 @@ export function useCalendarCache(
     bindRecovery,
     onMetric: emitCalendarMetric,
   });
-  return { ...state, database: state.database ? calendarCacheDatabase(state.database) : null };
+  const [pending, setPending] = useState<PendingCalendarMutation[]>([]);
+  useEffect(() => {
+    setPending([]);
+    return state.database?.observe(
+      (store) => store.readPending(),
+      setPending,
+      () => {},
+    );
+  }, [state.database]);
+  return { ...state, pending };
 }

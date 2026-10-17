@@ -2,13 +2,43 @@ import {
   calendarEventKey,
   canClaimCalendarReminder,
   type DueCalendarReminder,
+  type CalendarCacheStore,
 } from "@zilobase/features/calendar";
-import type { CalendarDatabase } from "./calendar-database";
+import { CalendarDatabase, calendarCacheDatabaseIfAvailable } from "./calendar-database";
+const runtimeClaims = new WeakMap<CalendarCacheStore, Map<string, number>>();
 export async function claimCalendarReminder(
-  database: CalendarDatabase,
+  backing: CalendarDatabase | CalendarCacheStore,
   reminder: DueCalendarReminder,
   now = Date.now(),
 ) {
+  const database =
+    "reminders" in backing
+      ? (backing as CalendarDatabase)
+      : calendarCacheDatabaseIfAvailable(backing);
+  if (!database) {
+    const store = backing as CalendarCacheStore;
+    return store.transaction("rw", async (tx) => {
+      let claims = runtimeClaims.get(store);
+      if (!claims) {
+        claims = new Map();
+        runtimeClaims.set(store, claims);
+      }
+      for (const [key, expires] of claims) if (expires < now) claims.delete(key);
+      if (claims.has(reminder.key)) return false;
+      const key = calendarEventKey(reminder.event);
+      const current = (await tx.readEvents([key]))[0]?.event;
+      if (
+        !(await canClaimCalendarReminder(
+          current,
+          reminder,
+          async () => (await tx.readPending(key)).length,
+        ))
+      )
+        return false;
+      claims.set(reminder.key, reminder.expiresAt);
+      return true;
+    });
+  }
   return database.transaction(
     "rw",
     database.reminders,

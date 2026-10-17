@@ -7,11 +7,11 @@ import {
   validCalendarInvalidation,
 } from "@zilobase/features/calendar";
 import { apiFetch } from "@/platform/network/api";
-import type { CalendarDatabase } from "@/platform/storage/calendar-database";
+import type { CalendarCacheStore } from "@zilobase/features/calendar";
 type Refresh = (recover: boolean) => Promise<unknown>;
 const coordinators = new Map<string, { subscribers: Set<Refresh>; stop: () => void }>();
 export function startCalendarRecovery(
-  database: CalendarDatabase,
+  database: CalendarCacheStore,
   refresh: Refresh,
   isOnline: () => boolean,
 ) {
@@ -43,7 +43,7 @@ export function startCalendarRecovery(
   };
 }
 function createCalendarRecovery(
-  database: CalendarDatabase,
+  database: CalendarCacheStore,
   refresh: Refresh,
   isOnline: () => boolean,
 ) {
@@ -73,12 +73,10 @@ function createCalendarRecovery(
   };
   const invalidation = async (data: unknown) => {
     if (!validCalendarInvalidation(data, scope) || !database.isOpen()) return;
-    const prior = await database.state.get(data.calendarId);
+    const prior = await database.readState(data.calendarId);
     if (newerCalendarRevision(prior, data)) return;
-    await database.state.put({
-      key: data.calendarId,
-      generation: data.generation,
-      revision: data.revision,
+    await database.write({
+      state: [{ key: data.calendarId, generation: data.generation, revision: data.revision }],
     });
     await recover(false);
   };
@@ -186,7 +184,7 @@ function attachCalendarSocket(
   setSocket: (ws: WebSocket | null) => void,
   receivedHealth: (type: string) => void,
   invalidation: (value: unknown) => Promise<void>,
-  scope: CalendarDatabase["identity"],
+  scope: CalendarCacheStore["identity"],
   channel: BroadcastChannel | null,
   onClose: () => void,
   socketHealthy: () => boolean,
@@ -235,7 +233,7 @@ function handleCalendarSocketMessage(
   ignore: () => boolean,
   receivedHealth: (type: string) => void,
   onInvalidate: (value: unknown) => void,
-  scope: CalendarDatabase["identity"],
+  scope: CalendarCacheStore["identity"],
 ) {
   if (ignore()) return;
   const value = decodeCalendarMessage(data);

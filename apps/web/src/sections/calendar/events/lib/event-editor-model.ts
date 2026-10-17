@@ -24,6 +24,7 @@ export function eventEditorDefaults(event: CalendarEvent, zone: string) {
     guests: event.attendees.map((a) => a.email).join(", "),
     sendUpdates: "all" as "all" | "none",
     calendarId: event.calendarId,
+    bindingId: event.bindingId,
     colorId: event.colorId ?? "default",
     busy: event.transparency,
     visibility: event.visibility === "confidential" ? "private" : event.visibility,

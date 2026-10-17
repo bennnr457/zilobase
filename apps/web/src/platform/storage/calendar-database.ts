@@ -82,6 +82,9 @@ export async function destroyCalendarDatabase(name: string) {
 
 const stores = new WeakMap<CalendarDatabase, CalendarCacheStore>();
 const databases = new WeakMap<CalendarCacheStore, CalendarDatabase>();
+export function calendarCacheDatabaseIfAvailable(store: CalendarCacheStore) {
+  return databases.get(store);
+}
 export function calendarCacheDatabase(store: CalendarCacheStore) {
   const database = databases.get(store);
   if (!database) throw new Error("Calendar storage belongs to another runtime");

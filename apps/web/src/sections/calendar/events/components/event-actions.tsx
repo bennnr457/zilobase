@@ -1,12 +1,12 @@
 import type { EventAction } from "@zilobase/features/calendar";
 import { RecurrenceScope } from "./recurrence-controls";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   calendarCapability,
   type CalendarEvent,
   type CalendarRecord,
 } from "@zilobase/features/calendar";
-import type { CalendarDatabase } from "@/platform/storage/calendar-database";
+import type { CalendarCacheStore } from "@zilobase/features/calendar";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -25,7 +25,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { runCalendarMutation } from "../lib/calendar-mutations";
+import { useCalendarEventCommands } from "@zilobase/features/calendar/react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/platform/network/api";
 export function EventActions({
@@ -39,7 +39,7 @@ export function EventActions({
   section = "manage",
 }: {
   event: CalendarEvent;
-  database: CalendarDatabase;
+  database: CalendarCacheStore;
   calendars: CalendarRecord[];
   online: boolean;
   onEdit: () => void;
@@ -47,6 +47,14 @@ export function EventActions({
   onDone: () => void;
   section?: "manage" | "rsvp";
 }) {
+  const commands = useCalendarEventCommands(database);
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
   const [deleting, setDeleting] = useState(false),
     [busy, setBusy] = useState(false),
     [destination, setDestination] = useState("");
@@ -63,7 +71,7 @@ export function EventActions({
   ) => {
     setBusy(true);
     try {
-      const result = await runCalendarMutation({
+      const result = await commands.run({
         database,
         event,
         action,
@@ -77,12 +85,13 @@ export function EventActions({
           event: {},
         },
       });
+      if (!active.current) return;
       if (result.status === "succeeded") onDone();
       else toast.info("Change pending. Zilobase is checking delivery.");
     } catch (error) {
-      toast.error(getApiErrorMessage(error));
+      if (active.current) toast.error(getApiErrorMessage(error));
     } finally {
-      setBusy(false);
+      if (active.current) setBusy(false);
     }
   };
   if (section === "rsvp")

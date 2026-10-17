@@ -3,6 +3,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -49,6 +50,8 @@ import { addDays, addMinutes, differenceInMinutes, format } from "date-fns";
 import { Slot } from "radix-ui";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight } from "@/components/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 /** Current time, refreshed on an interval and on tab focus. */
@@ -184,6 +187,17 @@ function EventCalendarTimeGrid({
     viewConfig.scrollbars,
   ]);
 
+  const previousDensity = useRef(viewConfig.hourHeight ?? 64);
+  useLayoutEffect(() => {
+    const height = viewConfig.hourHeight ?? 64;
+    const viewport = scrollRef.current?.querySelector<HTMLElement>(
+      "[data-slot=scroll-area-viewport]",
+    );
+    if (viewport && previousDensity.current !== height)
+      viewport.scrollTop *= height / previousDensity.current;
+    previousDensity.current = height;
+  }, [viewConfig.hourHeight]);
+
   // Gutter slots in minutes from the zoned day start
   const slots = useMemo(() => {
     const result: number[] = [];
@@ -254,7 +268,9 @@ function EventCalendarTimeGrid({
         // merged, not spread: every measurement in the timed track is a
         // calc() on --ec-hour-height, so a consumer style prop must not
         // replace it (base gets this for free through mergeProps)
-        style={{ "--ec-hour-height": "4rem", ...style } as CSSProperties}
+        style={
+          { "--ec-hour-height": `${viewConfig.hourHeight ?? 64}px`, ...style } as CSSProperties
+        }
         {...props}
       >
         {/* Day-header row (sticky below the nav in page scroll mode) */}
@@ -265,7 +281,9 @@ function EventCalendarTimeGrid({
             viewConfig.classNames?.timeGridHeader,
           )}
         >
-          <div className="w-(--ec-gutter-width,4.5rem) shrink-0 border-e" />
+          <div className="flex w-(--ec-gutter-width,4.5rem) shrink-0 items-center border-e">
+            {viewConfig.renderTimeGutterHeader?.()}
+          </div>
           <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns }}>
             {days.map((day) => (
               <EventCalendarDayHeader key={day.getTime()} day={day} view={view} />
@@ -297,10 +315,51 @@ function EventCalendarTimeGrid({
                   )}
                 >
                   <span className="flex h-[calc(var(--ec-month-bar-h,1.625rem)-0.125rem)] items-center justify-end">
-                    {settings.i18n.labels.allDay}
+                    {viewConfig.onAllDayCollapsedChange ? (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={
+                          viewConfig.allDayCollapsed
+                            ? "Expand all-day events"
+                            : "Collapse all-day events"
+                        }
+                        aria-expanded={!viewConfig.allDayCollapsed}
+                        onClick={() =>
+                          viewConfig.onAllDayCollapsedChange?.(!viewConfig.allDayCollapsed)
+                        }
+                      >
+                        {viewConfig.allDayCollapsed ? <ChevronRight /> : <ChevronDown />}
+                      </Button>
+                    ) : (
+                      settings.i18n.labels.allDay
+                    )}
                   </span>
                 </div>
-                <EventCalendarAllDayBars days={days} gridTemplateColumns={gridTemplateColumns} />
+                {viewConfig.allDayCollapsed ? (
+                  <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns }}>
+                    {days.map((day) => {
+                      const count = allDaySegments.filter(
+                        (segment) =>
+                          getDayKey(segment.day, settings.timeZone) ===
+                          getDayKey(day, settings.timeZone),
+                      ).length;
+                      return (
+                        <button
+                          key={day.getTime()}
+                          type="button"
+                          className="h-8 truncate border-e px-2 text-left text-content-secondary hover:bg-surface-muted"
+                          aria-label={`Expand ${count} all-day events on ${getDayKey(day, settings.timeZone)}`}
+                          onClick={() => viewConfig.onAllDayCollapsedChange?.(false)}
+                        >
+                          {count ? `${count} ${count === 1 ? "event" : "events"}` : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <EventCalendarAllDayBars days={days} gridTemplateColumns={gridTemplateColumns} />
+                )}
               </>
             )}
           </div>

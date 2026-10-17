@@ -1,63 +1,148 @@
 export function register({ assert, loadModule, readSource, test }) {
-  test("calendar renderers use translated wheel buffers without native pane snapping", async () => {
-    const timed = await readSource(
-      "/src/sections/calendar/primitives/components/calendar-timeline.tsx",
+  const base = {
+    workspaceId: "workspace",
+    bindingId: "binding",
+    calendarId: "primary",
+    eventId: "event",
+    etag: "v1",
+    title: "Review",
+    description: "",
+    location: "",
+    start: { date: "2026-10-31" },
+    end: { date: "2026-11-02" },
+    status: "confirmed",
+    eventType: "default",
+    attendees: [],
+    reminders: { useDefault: true },
+    transparency: "opaque",
+    visibility: "default",
+    colorId: null,
+    htmlLink: "",
+  };
+  test("both owners use one provider-independent ReUI calendar composition", async () => {
+    const renderer = await readSource(
+      "/src/sections/calendar/primitives/components/calendar-renderer.tsx",
     );
-    const month = await readSource(
-      "/src/sections/calendar/primitives/components/calendar-month-view.tsx",
-    );
-    assert.doesNotMatch(timed + month, /lastSafe|snap-mandatory|preparedPeriod|restoringTop/);
-    assert.match(timed, /useCalendarWheelScroll/);
-    assert.match(timed, /overflow-y-auto overflow-x-hidden overscroll-none/);
-    assert.match(timed, /translateX/);
-    assert.match(timed, /onViewport\(visibleFirst, visibleLast, true\)/);
-    assert.match(month, /useCalendarWheelScroll/);
-    assert.match(month, /translateY/);
-    const wheel = await readSource(
-      "/src/sections/calendar/primitives/hooks/use-calendar-wheel-scroll.ts",
-    );
-    assert.match(wheel, /SCROLL_END_DEBOUNCE_MS = 150/);
-    assert.match(wheel, /CALENDAR_SNAP_ANIMATION_MS = 200/);
-    assert.match(wheel, /event\.preventDefault\(\)/);
-    const schedule = await readSource(
+    assert.match(renderer, /EventCalendar<TData>/);
+    assert.doesNotMatch(renderer, /useCalendarWorkspace|useDatabase.*Context|apiFetch/);
+    for (const owner of [
       "/src/sections/calendar/views/components/calendar-schedule.tsx",
-    );
-    const navigation = await readSource(
-      "/src/sections/calendar/workspace/hooks/calendar-navigation.ts",
-    );
-    assert.match(schedule, /bookmarkVisibleDate/);
-    assert.match(schedule, /date: anchorDate/);
-    assert.match(navigation, /useCalendarVisibleDate/);
-    assert.match(navigation, /lastBookmark/);
+      "/src/sections/databases/views/calendar/components/database-calendar-view.tsx",
+    ])
+      assert.match(await readSource(owner), /CalendarRenderer/);
   });
-  test("drag hit testing includes scroll displacement and hidden weekends", async () => {
-    const { calendarDragDisplacement } = await loadModule(
-      "/src/sections/calendar/primitives/lib/event-geometry.ts",
+  for (const timeZone of ["Asia/Kolkata", "America/New_York", "Pacific/Auckland"])
+    test(`Google all-day exclusive ends round-trip in ${timeZone} across DST`, async () => {
+      const { googleCalendarEvent, googleEventTiming } = await loadModule(
+        "/src/sections/calendar/views/lib/reui-events.ts",
+      );
+      const { defaultCalendarPreferences } = await loadModule(
+        "/packages/features/src/calendar/model.ts",
+      );
+      const calendar = { permissions: { read: true, write: true, freeBusyOnly: false } };
+      const item = googleCalendarEvent(base, calendar, defaultCalendarPreferences(timeZone), true);
+      assert.equal(item.allDay, true);
+      assert.deepEqual(googleEventTiming(item, timeZone, base), {
+        start: base.start,
+        end: base.end,
+      });
+      assert.equal(item.data, base);
+      assert.equal(item.recurrence, undefined);
+      assert.notEqual(
+        item.id,
+        googleCalendarEvent(
+          { ...base, bindingId: "another" },
+          calendar,
+          defaultCalendarPreferences(timeZone),
+          true,
+        ).id,
+      );
+    });
+  test("timed movement preserves source timezone and instant; provider recurrence is not expanded twice", async () => {
+    const { googleCalendarEvent, googleEventProposal } = await loadModule(
+      "/src/sections/calendar/views/lib/reui-events.ts",
     );
-    const forward = calendarDragDisplacement("2026-09-11", 120.5, 120.5, 24, false, false, 48);
-    assert.deepEqual(forward, { target: "2026-09-14", days: 3, minutes: 30 });
-    assert.equal(calendarDragDisplacement("2026-09-14", 120, -120, 0, false, false, 48).days, -3);
-    assert.equal(calendarDragDisplacement("2026-09-07", 120, 0, 144, false, true, 48).days, 7);
-  });
-  test("Calendar drag preserves all-day boundaries and rejects DST gaps and inverted resizing", async () => {
-    const { shiftEventGeometry } = await loadModule(
-      "/src/sections/calendar/primitives/lib/event-geometry.ts",
+    const { defaultCalendarPreferences } = await loadModule(
+      "/packages/features/src/calendar/model.ts",
     );
-    const allDay = { start: { date: "2026-09-09" }, end: { date: "2026-09-11" } };
-    const moved = shiftEventGeometry(allDay, "Asia/Kolkata", 2, 0);
-    assert.equal(moved.start.date, "2026-09-11");
-    assert.equal(moved.end.date, "2026-09-13");
-    assert.throws(() => shiftEventGeometry(allDay, "UTC", -2, 0, "end"));
-    const timed = {
-      start: { dateTime: "2026-03-07T02:30:00-05:00", timeZone: "America/New_York" },
-      end: { dateTime: "2026-03-07T03:30:00-05:00", timeZone: "America/New_York" },
+    const event = {
+      ...base,
+      start: { dateTime: "2026-11-01T01:30:00-04:00", timeZone: "America/New_York" },
+      end: { dateTime: "2026-11-01T01:30:00-05:00", timeZone: "America/New_York" },
+      recurringEventId: "series",
+      recurrence: ["RRULE:FREQ=DAILY"],
     };
-    assert.throws(() => shiftEventGeometry(timed, "America/New_York", 1, 0));
-    assert.throws(() => shiftEventGeometry(timed, "America/New_York", 0, -60, "end"));
-    assert.equal(
-      Date.parse(shiftEventGeometry(timed, "America/New_York", 0, 15).start.dateTime) -
-        Date.parse(timed.start.dateTime),
-      900000,
+    const item = googleCalendarEvent(
+      event,
+      { permissions: { read: true, write: true } },
+      defaultCalendarPreferences("Asia/Kolkata"),
+      true,
     );
+    assert.equal(item.end.getTime() - item.start.getTime(), 3600000);
+    assert.equal(item.recurrence, undefined);
+    const proposed = googleEventProposal(
+      {
+        event: item,
+        start: new Date(item.start.getTime() + 1800000),
+        end: new Date(item.end.getTime() + 1800000),
+        allDay: false,
+      },
+      "Asia/Kolkata",
+    );
+    assert.equal(proposed.start.timeZone, "America/New_York");
+    assert.equal(proposed.recurringEventId, "series");
+    assert.equal(Date.parse(proposed.start.dateTime) - Date.parse(event.start.dateTime), 1800000);
+  });
+  test("read-only, pending and specialized events cannot be manipulated, with color overrides retained", async () => {
+    const { googleCalendarEvent } = await loadModule(
+      "/src/sections/calendar/views/lib/reui-events.ts",
+    );
+    const { defaultCalendarPreferences } = await loadModule(
+      "/packages/features/src/calendar/model.ts",
+    );
+    const prefs = defaultCalendarPreferences("UTC");
+    prefs.calendarColors[JSON.stringify(["binding", "primary"])] = "red";
+    const writable = { permissions: { read: true, write: true }, colorId: "2" };
+    const normal = googleCalendarEvent(base, writable, prefs, true);
+    assert.equal(normal.readOnly, false);
+    assert.match(normal.color, /red/);
+    assert.equal(googleCalendarEvent(base, writable, prefs, false).readOnly, true);
+    assert.equal(googleCalendarEvent(base, writable, prefs, true, true).readOnly, true);
+    assert.equal(
+      googleCalendarEvent({ ...base, eventType: "focusTime" }, writable, prefs, true).readOnly,
+      true,
+    );
+    assert.equal(
+      googleCalendarEvent(base, { permissions: { read: true, write: false } }, prefs, true)
+        .readOnly,
+      true,
+    );
+  });
+  test("click defaults use one civil day or one hour and drag ranges remain unmodified", async () => {
+    const { googleSlotRange, googleEventTiming } = await loadModule(
+      "/src/sections/calendar/views/lib/reui-events.ts",
+    );
+    const date = new Date("2026-03-08T05:00:00Z");
+    const range = googleSlotRange({ date, allDay: true, view: "month" }, "America/New_York");
+    assert.equal(range.end - range.start, 23 * 3600000);
+    assert.deepEqual(googleEventTiming(range, "America/New_York"), {
+      start: { date: "2026-03-08" },
+      end: { date: "2026-03-09" },
+    });
+    assert.equal(
+      googleSlotRange({ date, allDay: false, view: "week" }, "America/New_York").end - date,
+      3600000,
+    );
+    const drawn = {
+      start: date,
+      end: new Date("2026-03-11T04:00:00Z"),
+      allDay: true,
+      view: "month",
+    };
+    assert.deepEqual(googleSlotRange(drawn, "America/New_York"), {
+      start: drawn.start,
+      end: drawn.end,
+      allDay: true,
+    });
   });
 }

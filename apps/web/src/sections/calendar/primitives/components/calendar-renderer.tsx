@@ -3,6 +3,8 @@ import {
   EventCalendar,
   type EventCalendarProps,
 } from "@/components/ui/event-calendar/event-calendar";
+import { EventCalendarList } from "@/components/ui/event-calendar/event-calendar-list";
+import { EventCalendarEvent } from "@/components/ui/event-calendar/event-calendar-event";
 import { EventCalendarContent } from "@/components/ui/event-calendar/event-calendar-content";
 import {
   EventCalendarNav,
@@ -18,7 +20,10 @@ import { cn } from "@/lib/utils";
 
 export const CALENDAR_VIEWS: CalendarView[] = ["month", "week", "day", "agenda"];
 
-export type CalendarRendererProps<TData = unknown> = Omit<EventCalendarProps<TData>, "children"> & {
+export type CalendarRendererProps<TData = unknown> = Omit<
+  EventCalendarProps<TData>,
+  "children" | "content"
+> & {
   actions?: ReactNode;
   leading?: ReactNode;
   beforeContent?: ReactNode;
@@ -43,6 +48,16 @@ export function CalendarRenderer<TData = unknown>({
       fixedWeeks
       showOutsideDays
       scrollbars="native"
+      renderMoreContent={({ segments }) =>
+        segments.length > 30 ? (
+          <EventCalendarList
+            rows={segments.map((segment) => ({ key: segment.occurrence.key, segment }))}
+            renderRow={({ segment }) => (
+              <EventCalendarEvent segment={segment} className="min-h-8 w-full" />
+            )}
+          />
+        ) : undefined
+      }
       className={cn("gap-0 border-0 bg-surface-canvas text-content-primary", className)}
       {...props}
     >

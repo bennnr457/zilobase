@@ -76,26 +76,6 @@ export function CalendarSettings({
           onSave(draft);
         }}
       >
-        <SettingsRow title="Today navigation">
-          <Select
-            value={draft.todayAlignment ?? "week"}
-            onValueChange={(todayAlignment) =>
-              setDraft({
-                ...draft,
-                todayAlignment: todayAlignment as "week" | "start",
-              })
-            }
-          >
-            <SelectTrigger aria-label="Today navigation" className="w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">Go to today&apos;s week</SelectItem>
-              <SelectItem value="start">Align today at the start</SelectItem>
-            </SelectContent>
-          </Select>
-        </SettingsRow>
-
         <SettingsRow
           description="How early an upcoming meeting appears in the preview."
           title="Meeting preview"

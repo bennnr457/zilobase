@@ -1463,6 +1463,10 @@ interface EventCalendarViewConfig<TData = unknown> {
     totalMinutes: number;
   }) => ReactNode;
   renderDayHeader?: (props: { day: Date; view: CalendarView; isToday: boolean }) => ReactNode;
+  hourHeight?: number;
+  renderTimeGutterHeader?: () => ReactNode;
+  allDayCollapsed?: boolean;
+  onAllDayCollapsedChange?: (collapsed: boolean) => void;
   renderTimeGutterSlot?: (props: { time: Date; hour: number; minute: number }) => ReactNode;
   renderAllDaySection?: (props: {
     days: Date[];
@@ -1610,6 +1614,10 @@ const VIEW_CONFIG_KEYS: Array<keyof EventCalendarViewConfig> = [
   "renderMonthCell",
   "renderDayColumnBackground",
   "renderDayHeader",
+  "hourHeight",
+  "renderTimeGutterHeader",
+  "allDayCollapsed",
+  "onAllDayCollapsedChange",
   "renderTimeGutterSlot",
   "renderAllDaySection",
   "renderMoreIndicator",

@@ -58,14 +58,29 @@ function useWorkspaceState() {
       trigger.current = document.activeElement;
     setPanelOpen(true);
   }, []);
+  const closeGuard = useRef<((close: () => void) => void) | null>(null);
+  const confirmPanelChange = useCallback((change: () => void) => {
+    if (closeGuard.current) closeGuard.current(change);
+    else change();
+  }, []);
   const showSource = useCallback(
     (value: { bindingId: string; calendarId: string } | null) => {
-      setSource(value);
-      if (value) openPanel();
+      const change = () => {
+        setSource(value);
+        if (value) openPanel();
+      };
+      if (value) confirmPanelChange(change);
+      else change();
     },
-    [openPanel],
+    [openPanel, confirmPanelChange],
   );
-  const closePanel = useCallback(() => {
+  const registerCloseGuard = useCallback((guard: (close: () => void) => void) => {
+    closeGuard.current = guard;
+    return () => {
+      if (closeGuard.current === guard) closeGuard.current = null;
+    };
+  }, []);
+  const discardPanel = useCallback(() => {
     setPanelOpen(false);
     setSource(null);
     actions.current?.close();
@@ -74,6 +89,10 @@ function useWorkspaceState() {
       else document.querySelector<HTMLButtonElement>("[data-calendar-panel-toggle]")?.focus();
     });
   }, []);
+  const closePanel = useCallback(() => {
+    if (closeGuard.current) closeGuard.current(discardPanel);
+    else discardPanel();
+  }, [discardPanel]);
   const suspendPanel = useCallback(() => setPanelOpen(false), []);
   const register = useCallback((value: PanelActions) => {
     actions.current = value;
@@ -91,6 +110,7 @@ function useWorkspaceState() {
     setVisibleDate(null);
     actions.current = null;
     trigger.current = null;
+    closeGuard.current = null;
   }, []);
   const create = useCallback(() => actions.current?.create(), []);
   return useMemo(
@@ -113,6 +133,9 @@ function useWorkspaceState() {
       panelOpen,
       openPanel,
       closePanel,
+      discardPanel,
+      registerCloseGuard,
+      confirmPanelChange,
       suspendPanel,
       register,
       reset,
@@ -131,9 +154,12 @@ function useWorkspaceState() {
       openPanel,
       closePanel,
       suspendPanel,
+      discardPanel,
+      registerCloseGuard,
       register,
       reset,
       create,
+      confirmPanelChange,
     ],
   );
 }

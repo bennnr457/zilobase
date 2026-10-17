@@ -158,7 +158,10 @@ export function useCalendarCache(
     if (database && online && options.bindRecovery)
       return options.bindRecovery(database, (recover) => refreshRef.current(recover));
   }, [database, online, options.bindRecovery]);
-  useEffect(() => bindCalendarMutationReconcile(database, online, apiFetch), [database, online]);
+  useEffect(
+    () => bindCalendarMutationReconcile(database, online, apiFetch, client),
+    [database, online, client, runtimeKey],
+  );
   const cached = useCalendarSnapshot(
     client,
     database,
@@ -386,11 +389,20 @@ function bindCalendarMutationReconcile(
   database: CalendarDatabase | null,
   online: boolean,
   apiFetch: ApiFetcher,
+  client: QueryClient,
 ) {
   if (!database || !online) return;
-  void reconcileCalendarMutations(database, apiFetch);
-  const timer = setInterval(() => void reconcileCalendarMutations(database, apiFetch), 30_000);
-  return () => clearInterval(timer);
+  let active = true;
+  const owner = sharedClient(client),
+    capture = owner.capture();
+  const current = () => active && database.isOpen() && owner.isCurrent(capture);
+  const reconcile = () => reconcileCalendarMutations(database, apiFetch, current);
+  void reconcile();
+  const timer = setInterval(() => void reconcile(), 30_000);
+  return () => {
+    active = false;
+    clearInterval(timer);
+  };
 }
 async function readCalendarSnapshot(
   database: CalendarDatabase | null,

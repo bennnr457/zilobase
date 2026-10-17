@@ -39,6 +39,7 @@ async function settle(
   if (!current()) return;
   await database.transaction("rw", async (database) => {
     if (!current() || !(await database.readPending()).some((row) => row.id === pending.id)) return;
+    if (!current()) return;
     const settlement = calendarMutationSettlement(pending, result);
     if (settlement) {
       await presentEvent(database, settlement.event, pending.eventKey);

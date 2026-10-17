@@ -43,8 +43,6 @@ export function CalendarMiniCalendar({
         onSelect={(day) => {
           if (day)
             route({
-              align: search.align,
-              days: search.days,
               view: search.view ?? preferences.view,
               date: `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`,
             });

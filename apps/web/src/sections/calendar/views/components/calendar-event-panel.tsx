@@ -1,7 +1,7 @@
 import { useCalendarWorkspace } from "../../workspace/components/calendar-workspace";
 import { Button } from "@/components/ui/button";
 import type { CalendarEvent, CalendarRecord } from "@zilobase/features/calendar";
-import type { CalendarDatabase } from "@/platform/storage/calendar-database";
+import type { CalendarCacheStore } from "@zilobase/features/calendar";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, type ReactNode } from "react";
 import { XIcon } from "@/components/icons";
@@ -10,7 +10,8 @@ import { CalendarEventDetails } from "./calendar-event-details";
 type PanelProps = {
   preview?: ReactNode;
   selected: CalendarEvent | null;
-  database: CalendarDatabase | null;
+  database: CalendarCacheStore | null;
+  stores?: ReadonlyMap<string, CalendarCacheStore>;
   calendars: CalendarRecord[];
   mapsProvider?: "google" | "apple";
   online: boolean;
@@ -28,12 +29,14 @@ export function CalendarEventPanel(props: PanelProps) {
   const event = props.selected;
   useEffect(() => {
     if (!workspace.panelOpen) return;
+    if (props.editing && props.creating) return;
     const frame = requestAnimationFrame(() => heading.current?.focus());
     return () => cancelAnimationFrame(frame);
-  }, [workspace.panelOpen, event?.eventId]);
+  }, [workspace.panelOpen, event?.eventId, props.editing, props.creating]);
   return createPortal(
     <div
       data-calendar-event-panel
+      data-calendar-creating={props.creating || undefined}
       className="flex h-full min-h-0 flex-col"
       aria-hidden={!workspace.panelOpen}
       inert={!workspace.panelOpen || undefined}
@@ -50,7 +53,7 @@ export function CalendarEventPanel(props: PanelProps) {
           tabIndex={-1}
           className="min-w-0 flex-1 truncate text-xs/relaxed font-medium outline-none"
         >
-          {eventPanelHeading(event, props.editing)}
+          {props.creating ? "New event" : eventPanelHeading(event, props.editing)}
         </h2>
         <Button
           variant="ghost"
@@ -64,7 +67,7 @@ export function CalendarEventPanel(props: PanelProps) {
       <div
         className={`@container min-h-0 flex-1 overflow-y-auto ${props.editing || !event ? "p-3" : ""}`}
       >
-        {eventPanelBody(event, props, workspace.create)}
+        {eventPanelBody(event, props, workspace.create, workspace.discardPanel)}
       </div>
     </div>,
     workspace.panelElement,
@@ -74,7 +77,12 @@ function eventPanelHeading(event: CalendarEvent | null, editing: boolean) {
   if (!event) return "Calendar event";
   return editing ? "Edit event" : "Event";
 }
-function eventPanelBody(event: CalendarEvent | null, props: PanelProps, create: () => void) {
+function eventPanelBody(
+  event: CalendarEvent | null,
+  props: PanelProps,
+  create: () => void,
+  discardPanel: () => void,
+) {
   if (!event)
     return (
       <div className="grid gap-3 text-xs/relaxed">
@@ -86,13 +94,15 @@ function eventPanelBody(event: CalendarEvent | null, props: PanelProps, create: 
   if (props.editing && props.database)
     return (
       <EventEditor
-        key={event.eventId}
+        key={`${event.eventId}:${event.start.date ?? event.start.dateTime}:${event.end.date ?? event.end.dateTime}`}
         event={event}
         database={props.database}
         calendars={props.calendars}
+        stores={props.stores}
         online={props.online}
         isNew={props.creating}
-        onSaved={props.onClose}
+        onSaved={discardPanel}
+        onCancel={discardPanel}
       />
     );
   return <CalendarEventDetails key={event.eventId} {...props} selected={event} />;

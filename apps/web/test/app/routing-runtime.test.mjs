@@ -355,7 +355,7 @@ export function register({ assert, sourcePath, test }) {
         days: 4,
         workspace: undefined,
         connection: undefined,
-        view: "week",
+        view: "agenda",
         date: undefined,
         binding: undefined,
         calendar: undefined,

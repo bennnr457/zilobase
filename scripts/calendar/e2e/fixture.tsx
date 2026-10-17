@@ -19,7 +19,6 @@ import {
   CalendarDockMount,
   useCalendarWorkspace,
 } from "@/sections/calendar/workspace/components/calendar-workspace";
-import { CalendarToolbar } from "@/sections/calendar/workspace/components/calendar-toolbar";
 import { webClientLifecycle } from "@/platform/network/connectivity";
 import { webClientCacheStorage } from "@/platform/storage/client-cache-storage";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
@@ -83,17 +82,11 @@ function FixtureSchedule(props: Parameters<typeof CalendarSchedule>[0]) {
           <div className="flex h-full min-h-0 flex-col">
             <PageHeader
               pathname="/calendar"
+              actions={<></>}
               showBreadcrumb={false}
               leadingControl={<span>Calendar</span>}
-              actions={
-                <CalendarToolbar
-                  onPreferences={(data) => settingsPreferences.save.mutateAsync(data)}
-                  preferences={props.preferences}
-                  onSettings={() => setSettings(true)}
-                />
-              }
             />
-            <CalendarSchedule {...props} />
+            <CalendarSchedule {...props} onSettings={() => setSettings(true)} />
           </div>
         </ResizablePanel>
         <RightSidebars {...panels} navigationSidebarOpen={false} />
@@ -192,13 +185,17 @@ const router = createRouter({
   history,
 });
 const queryClient = new QueryClient();
-const auth = { getSession: async () => ({ user: { id: "user" } }) } as ZilobaseAuthClient;
+const auth = {
+  getSession: async () => ({ user: { id: "user" }, session: { id: "session" } }),
+} as ZilobaseAuthClient;
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <ZilobaseFeaturesProvider
       value={{
         deployment: "calendar-test",
-        cacheStorage: webClientCacheStorage,
+        cacheStorage: new URLSearchParams(location.search).has("memory")
+          ? undefined
+          : webClientCacheStorage,
         lifecycle: webClientLifecycle,
         queryClient,
         auth: appSidebarMode ? sidebarFixtureAuth : auth,

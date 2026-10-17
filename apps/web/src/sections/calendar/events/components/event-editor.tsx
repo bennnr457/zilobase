@@ -1,10 +1,23 @@
 import { EventTimingFields, EventRecurrenceFields } from "./event-timing-fields";
 import { eventEditorZone, editorWrite } from "@zilobase/features/calendar";
 import { eventEditorDefaults, type EventEditorDraft } from "../lib/event-editor-model";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useCalendarEventCommands } from "@zilobase/features/calendar/react";
+import { useCalendarWorkspace } from "../../workspace/components/calendar-workspace";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import {
   calendarCapability,
   eventEditorCapability,
+  calendarSelectionKey,
   type CalendarEvent,
   type CalendarRecord,
 } from "@zilobase/features/calendar";
@@ -21,8 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getApiErrorMessage } from "@/platform/network/api";
-import { runCalendarMutation, reconcileCalendarMutations } from "../lib/calendar-mutations";
-import type { CalendarDatabase } from "@/platform/storage/calendar-database";
+import type { CalendarCacheStore } from "@zilobase/features/calendar";
 export function EventEditor({
   event,
   calendars,
@@ -30,16 +42,55 @@ export function EventEditor({
   online,
   isNew,
   onSaved,
+  onCancel,
+  stores,
 }: {
   event: CalendarEvent;
   calendars: CalendarRecord[];
-  database: CalendarDatabase;
+  database: CalendarCacheStore;
   online: boolean;
   isNew: boolean;
   onSaved: () => void;
+  onCancel: () => void;
+  stores?: ReadonlyMap<string, CalendarCacheStore>;
 }) {
+  const commands = useCalendarEventCommands(database);
+  const workspace = useCalendarWorkspace();
+  const active = useRef(true),
+    submitting = useRef(false);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const [discard, setDiscard] = useState<(() => void) | null>(null);
+  const titleInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!isNew) return;
+    let frame = 0,
+      attempts = 0;
+    const focus = () => {
+      if (titleInput.current?.isConnected && !titleInput.current.closest("[inert]"))
+        titleInput.current.focus({ preventScroll: true });
+      else if (++attempts < 60) frame = requestAnimationFrame(focus);
+    };
+    frame = requestAnimationFrame(focus);
+    return () => cancelAnimationFrame(frame);
+  }, [isNew]);
   const zone = eventEditorZone(event, calendars);
   const [draft, setDraft] = useState(() => eventEditorDefaults(event, zone));
+  const initial = useRef(JSON.stringify(draft));
+  const dirty = useRef(false);
+  dirty.current = isNew || JSON.stringify(draft) !== initial.current;
+  useEffect(
+    () =>
+      workspace.registerCloseGuard((close) => {
+        if (dirty.current || submitting.current) setDiscard(() => close);
+        else close();
+      }),
+    [workspace.registerCloseGuard],
+  );
   const {
     title,
     description,
@@ -64,8 +115,10 @@ export function EventEditor({
     setDraft((current) => ({ ...current, guests: value }));
   const setSendUpdates = (value: EventEditorDraft["sendUpdates"]) =>
     setDraft((current) => ({ ...current, sendUpdates: value }));
-  const setCalendarId = (value: EventEditorDraft["calendarId"]) =>
-    setDraft((current) => ({ ...current, calendarId: value }));
+  const setCalendarId = (value: string) => {
+    const [bindingId, calendarId] = JSON.parse(value) as [string, string];
+    setDraft((current) => ({ ...current, bindingId, calendarId }));
+  };
   const setColorId = (value: EventEditorDraft["colorId"]) =>
     setDraft((current) => ({ ...current, colorId: value }));
   const setBusy = (value: EventEditorDraft["busy"]) =>
@@ -83,23 +136,37 @@ export function EventEditor({
     [uncertain, setUncertain] = useState(false);
   const [recurrence, setRecurrence] = useState<string[] | undefined>(),
     [scope, setScope] = useState<"occurrence" | "following" | "series">("occurrence");
-  const capability = eventEditorCapability(isNew, scope, calendars, event, calendarId);
+  const targetStore = stores?.get(draft.bindingId) ?? database;
+  const targetEvent = {
+    ...event,
+    bindingId: draft.bindingId,
+    workspaceId: targetStore.identity.workspaceId,
+  };
+  const capability = eventEditorCapability(isNew, scope, calendars, targetEvent, calendarId);
   const save = async () => {
-    await saveEventEditor({
-      online,
-      capability,
-      setPending,
-      setError,
-      setUncertain,
-      event,
-      draft,
-      isNew,
-      recurrence,
-      scope,
-      database,
-      calendarId,
-      onSaved,
-    });
+    if (submitting.current) return;
+    submitting.current = true;
+    try {
+      await saveEventEditor({
+        run: commands.run,
+        current: () => active.current,
+        online,
+        capability,
+        setPending,
+        setError,
+        setUncertain,
+        event: targetEvent,
+        draft,
+        isNew,
+        recurrence,
+        scope,
+        database: targetStore,
+        calendarId,
+        onSaved,
+      });
+    } finally {
+      submitting.current = false;
+    }
   };
   return (
     <form
@@ -115,11 +182,21 @@ export function EventEditor({
       >
         <Label className="grid min-w-0 gap-2">
           Title
-          <Input required value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input
+            ref={titleInput}
+            autoFocus={isNew}
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </Label>
         <Label className="grid min-w-0 gap-2">
           Calendar
-          <Select value={calendarId} disabled={!isNew} onValueChange={setCalendarId}>
+          <Select
+            value={calendarSelectionKey(draft.bindingId, calendarId)}
+            disabled={!isNew}
+            onValueChange={setCalendarId}
+          >
             <SelectTrigger aria-label="Calendar">
               <SelectValue />
             </SelectTrigger>
@@ -127,11 +204,14 @@ export function EventEditor({
               {calendars
                 .filter(
                   (c) =>
-                    c.bindingId === event.bindingId &&
+                    (isNew || c.bindingId === event.bindingId) &&
                     calendarCapability("create", c.permissions).allowed,
                 )
                 .map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
+                  <SelectItem
+                    key={calendarSelectionKey(c.bindingId, c.id)}
+                    value={calendarSelectionKey(c.bindingId, c.id)}
+                  >
                     {c.name}
                   </SelectItem>
                 ))}
@@ -239,7 +319,12 @@ export function EventEditor({
           />
           Send updates to guests
         </Label>
-        <Button type="submit">{pending ? "Saving…" : "Save event"}</Button>
+        <div className="sticky bottom-0 flex items-center gap-2 bg-surface-canvas py-2">
+          <Button type="submit">{pending ? "Saving…" : "Save event"}</Button>
+          <Button type="button" variant="ghost" disabled={pending || uncertain} onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
       </fieldset>
       <EventEditorAlerts
         capability={capability}
@@ -248,7 +333,36 @@ export function EventEditor({
         uncertain={uncertain}
         database={database}
         onSaved={onSaved}
+        reconcile={commands.reconcile}
       />
+      <AlertDialog
+        open={discard !== null}
+        onOpenChange={(open) => {
+          if (!open) setDiscard(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved event changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The event has not been saved. Your draft will be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending || uncertain}
+              onClick={() => {
+                const close = discard;
+                setDiscard(null);
+                close?.();
+              }}
+            >
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }
@@ -259,13 +373,15 @@ function EventEditorAlerts({
   uncertain,
   database,
   onSaved,
+  reconcile,
 }: {
   capability: ReturnType<typeof calendarCapability>;
   online: boolean;
   error: unknown;
   uncertain: boolean;
-  database: CalendarDatabase;
+  database: CalendarCacheStore;
   onSaved: () => void;
+  reconcile: () => Promise<void>;
 }) {
   return (
     <>
@@ -281,8 +397,8 @@ function EventEditorAlerts({
           type="button"
           variant="outline"
           onClick={async () => {
-            await reconcileCalendarMutations(database);
-            if (!(await database.pending.count())) onSaved();
+            await reconcile();
+            if (!(await database.readPending().then((rows) => rows.length))) onSaved();
           }}
         >
           Check delivery status
@@ -293,6 +409,8 @@ function EventEditorAlerts({
 }
 
 async function saveEventEditor(input: {
+  run: ReturnType<typeof useCalendarEventCommands>["run"];
+  current: () => boolean;
   online: boolean;
   capability: ReturnType<typeof calendarCapability>;
   setPending: (value: boolean) => void;
@@ -303,7 +421,7 @@ async function saveEventEditor(input: {
   isNew: boolean;
   recurrence: string[] | undefined;
   scope: "occurrence" | "following" | "series";
-  database: CalendarDatabase;
+  database: CalendarCacheStore;
   calendarId: string;
   onSaved: () => void;
 }) {
@@ -312,21 +430,23 @@ async function saveEventEditor(input: {
   input.setError(undefined);
   try {
     const write = editorWrite(input.event, input.draft, input.isNew, input.recurrence, input.scope);
-    const result = await runCalendarMutation({
+    const result = await input.run({
       database: input.database,
       event: { ...input.event, calendarId: input.calendarId },
       action: input.isNew ? "create" : "update",
       write,
     });
+    if (!input.current()) return;
     if (result.status === "succeeded") input.onSaved();
     else {
       input.setUncertain(true);
       input.setError(new Error("Delivery is being checked. Do not create another copy."));
     }
   } catch (cause) {
+    if (!input.current()) return;
     input.setError(cause);
-    input.setUncertain((await input.database.pending.count()) > 0);
+    input.setUncertain((await input.database.readPending().then((rows) => rows.length)) > 0);
   } finally {
-    input.setPending(false);
+    if (input.current()) input.setPending(false);
   }
 }

@@ -2,7 +2,6 @@ import { CalendarConnectionStatus } from "./connections/components/calendar-conn
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { useSetActiveWorkspace } from "@zilobase/features/workspaces/react";
 import { useRef } from "react";
-import { CalendarToolbar } from "./workspace/components/calendar-toolbar";
 import { useCalendarWorkspace } from "./workspace/components/calendar-workspace";
 import { RemovedCalendars } from "./preferences/components/removed-calendars";
 import type { CalendarConnection, CalendarPreferences } from "@zilobase/features/calendar";
@@ -20,7 +19,6 @@ import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SettingsIcon } from "@/components/icons";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { useCalendarAccounts } from "./connections/hooks/use-calendar-accounts";
 import { useCalendarPreferences } from "./preferences/hooks/use-calendar-preferences";
@@ -82,24 +80,7 @@ function CalendarWorkspace({ workspaceId }: { workspaceId: string }) {
             className="min-w-0 flex-1"
             leadingControl={<MainPaneHeaderLeadingControl />}
             pathname="/calendar"
-            actions={
-              preferences.query.data ? (
-                <CalendarToolbar
-                  onPreferences={(data) => preferences.save.mutateAsync(data)}
-                  preferences={preferences.query.data}
-                  onSettings={() => setSettings(true)}
-                />
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Calendar settings"
-                  onClick={() => setSettings(true)}
-                >
-                  <SettingsIcon />
-                </Button>
-              )
-            }
+            actions={<></>}
           />
         </div>
       }
@@ -140,6 +121,7 @@ function CalendarWorkspace({ workspaceId }: { workspaceId: string }) {
               connections={accounts.data.connections}
               preferences={preferences.query.data}
               error={preferences.query.error}
+              onSettings={() => setSettings(true)}
               userId={session?.user?.id}
             />
           )}
@@ -173,12 +155,14 @@ function CalendarScheduleContent({
   preferences,
   userId,
   error,
+  onSettings,
 }: {
   workspaceId: string;
   connections?: CalendarConnection[];
   preferences?: CalendarPreferences;
   userId?: string;
   error: unknown;
+  onSettings: () => void;
 }) {
   if (error)
     return (
@@ -200,6 +184,7 @@ function CalendarScheduleContent({
       connections={connections}
       userId={userId}
       preferences={preferences}
+      onSettings={onSettings}
     />
   );
 }

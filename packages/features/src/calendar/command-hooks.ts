@@ -5,7 +5,7 @@ import { runCalendarMutation, reconcileCalendarMutations } from "./commands";
 import type { CalendarCacheStore } from "./storage";
 
 /** Capture runtime and mounted source before each write; late results cannot update the next view. */
-export function useCalendarEventCommands(database: CalendarCacheStore | null) {
+export function useCalendarEventCommands(database: CalendarCacheStore | null, scope?: string) {
   const { queryClient, apiFetch } = useZilobaseFeatures();
   const lifetime = useRef<symbol | null>(null);
   useEffect(() => {
@@ -14,17 +14,22 @@ export function useCalendarEventCommands(database: CalendarCacheStore | null) {
     return () => {
       if (lifetime.current === token) lifetime.current = null;
     };
-  }, [database]);
+  }, [database, scope]);
   const run = useCallback(
-    async (input: Omit<Parameters<typeof runCalendarMutation>[0], "database" | "isCurrent">) => {
-      if (!database) throw new Error("Calendar is not available");
+    async (
+      input: Omit<Parameters<typeof runCalendarMutation>[0], "database" | "isCurrent"> & {
+        database?: CalendarCacheStore;
+      },
+    ) => {
+      const store = input.database ?? database;
+      if (!store) throw new Error("Calendar is not available");
       const owner = sharedClient(queryClient),
         capture = owner.capture(),
         token = lifetime.current;
       return runCalendarMutation(
         {
           ...input,
-          database,
+          database: store,
           isCurrent: () => token !== null && token === lifetime.current && owner.isCurrent(capture),
         },
         apiFetch,

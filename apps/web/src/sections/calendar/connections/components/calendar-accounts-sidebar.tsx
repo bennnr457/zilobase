@@ -1,5 +1,5 @@
 import { orderCalendarSources, moveCalendarSource } from "@zilobase/features/calendar";
-import { MoreHorizontalIcon, LogOutIcon } from "@/components/icons";
+import { ChevronDown, ChevronRight, MoreHorizontalIcon, LogOutIcon } from "@/components/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -72,7 +72,10 @@ export function CalendarAccountsSidebar({ workspaceId }: { workspaceId: string }
 
   return (
     <>
-      <aside className="space-y-4 px-2 py-2" aria-label="Calendar accounts">
+      <aside className="space-y-3 px-2 py-2" aria-label="Calendar accounts">
+        <div className="flex h-7 items-center px-2 text-xs font-medium text-content-secondary">
+          Calendars<span className="ml-auto tabular-nums">{catalog.calendars.length}</span>
+        </div>
         {preferences.query.data && <CalendarMiniCalendar preferences={preferences.query.data} />}
         {orderedAccounts.map((account, index) => (
           <CalendarAccountSection
@@ -176,7 +179,7 @@ function CalendarAccountSection({
 }) {
   const collapsed = value?.collapsedAccountIds?.includes(account.accountId);
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div className="group/nav-row relative">
         <SidebarMenuButton
           id={`calendar-account-${account.bindingId}`}
@@ -193,6 +196,11 @@ function CalendarAccountSection({
           }}
           className={`${SIDEBAR_NAV_ROW_INTERACTION_CLASS_NAME} pr-8 text-content-secondary`}
         >
+          {collapsed ? (
+            <ChevronRight className="size-3.5 shrink-0" />
+          ) : (
+            <ChevronDown className="size-3.5 shrink-0" />
+          )}
           <span className="truncate" title={account.workspaceName}>
             {account.email}
             {account.workspaceId !== workspaceId && account.workspaceName

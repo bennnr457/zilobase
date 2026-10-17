@@ -10,6 +10,7 @@ import {
   useEventCalendarSettings,
   useEventCalendarViewConfig,
 } from "@/components/ui/event-calendar/event-calendar";
+import { EventCalendarList } from "./event-calendar-list";
 import { EventCalendarEvent } from "@/components/ui/event-calendar/event-calendar-event";
 import {
   getDayKey,
@@ -76,6 +77,45 @@ function EventCalendarAgendaView({
     getDayKey(day, settings.timeZone) === getDayKey(new Date(), settings.timeZone);
 
   const native = viewConfig.scrollbars === "native";
+
+  const rows = groups.flatMap(({ day, bucket }) => {
+    const items = [...(bucket?.allDay ?? []), ...(bucket?.timed ?? [])];
+    return [
+      { key: `header:${day.getTime()}`, day, segment: null as EventCalendarSegment | null },
+      ...items.map((segment) => ({
+        key: `${day.getTime()}:${segment.occurrence.key}`,
+        day,
+        segment,
+      })),
+    ];
+  });
+  const virtualBody =
+    rows.length > 200 ? (
+      <EventCalendarList
+        className="h-full"
+        rows={rows}
+        renderRow={({ day, segment }) =>
+          segment ? (
+            <EventCalendarAgendaItem segment={segment} />
+          ) : (
+            <div
+              role="heading"
+              aria-level={3}
+              className="flex justify-between border-b bg-surface-muted px-4 py-2 font-medium"
+            >
+              <span>
+                {format(toZoned(day, settings.timeZone), "EEEE", { locale: settings.locale })}
+              </span>
+              <span>
+                {format(toZoned(day, settings.timeZone), "MMMM d, yyyy", {
+                  locale: settings.locale,
+                })}
+              </span>
+            </div>
+          )
+        }
+      />
+    ) : null;
 
   const body = (
     <>
@@ -184,17 +224,18 @@ function EventCalendarAgendaView({
         )}
         {...props}
       >
-        {native ? (
-          <div
-            data-slot="scroll-area-viewport"
-            data-ec-native-scroll=""
-            className="h-full overflow-y-auto"
-          >
-            {body}
-          </div>
-        ) : (
-          <ScrollArea className="h-full">{body}</ScrollArea>
-        )}
+        {virtualBody ??
+          (native ? (
+            <div
+              data-slot="scroll-area-viewport"
+              data-ec-native-scroll=""
+              className="h-full overflow-y-auto"
+            >
+              {body}
+            </div>
+          ) : (
+            <ScrollArea className="h-full">{body}</ScrollArea>
+          ))}
       </Comp>
     </EventCalendarViewContext.Provider>
   );
