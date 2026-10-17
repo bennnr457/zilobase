@@ -14,6 +14,7 @@ import {
 } from "./grouping";
 import { getDefaultKanbanHiddenPropertyIds } from "./kanban-group-settings";
 import { getTimelineDateProperties, getTimelineDateProperty } from "./timeline-date";
+import { getCalendarDateProperty } from "./calendar";
 import { getDatabaseChartSettings } from "./chart-config";
 import { getPropertyValue, type DatabasePropertyValue } from "../schema/property-values";
 import {
@@ -90,6 +91,8 @@ export function deriveDatabaseViewModel({
   const activeViewConfig = activeView?.config ?? databaseConfig;
   const isKanbanView = activeView?.type === "kanban";
   const isTimelineView = activeView?.type === "timeline";
+  const calendarDateProperty =
+    activeView?.type === "calendar" ? getCalendarDateProperty(properties, activeViewConfig) : null;
   const chartSettings = getDatabaseChartSettings(activeViewConfig);
   const layoutSettings = getDatabaseLayoutSettings(activeViewConfig);
   const activeVisibilityConfig = getActiveVisibilityConfig({
@@ -202,6 +205,7 @@ export function deriveDatabaseViewModel({
     kanbanGroupProperty,
     timelineDateProperties,
     timelineDateProperty,
+    calendarDateProperty,
     kanbanOptions,
     layoutSettings,
     personOptions,

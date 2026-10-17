@@ -65,6 +65,12 @@ import {
 } from "./row-plans";
 import type { DatabaseMutations } from "./mutation-bindings";
 import { createAddDatabaseRowMutation } from "./row-mutations";
+import {
+  calendarScheduleToValue,
+  getCalendarDateProperty,
+  type DatabaseCalendarSchedule,
+  type DatabaseCalendarMode,
+} from "../views/calendar";
 
 export type DatabaseViewCommands = ReturnType<typeof createDatabaseViewCommands>;
 
@@ -305,6 +311,53 @@ export function createDatabaseViewCommands({
   };
 
   return {
+    addCalendarRow: async (schedule: DatabaseCalendarSchedule) => {
+      const dateProperty = getCalendarDateProperty(
+        viewProperties ?? properties,
+        activeView?.config,
+      );
+      if (!editable || !databaseId || !dateProperty)
+        throw new Error("Calendar is not editable or has no date property");
+      const row = await addRow.mutateAsync({
+        databaseId,
+        ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
+        title: "",
+        initialValues: [
+          {
+            propertyId: dateProperty.property.id,
+            value: serializePropertyValue("date", calendarScheduleToValue(schedule)),
+          },
+        ],
+      });
+      return { rowId: row.id, pageId: row.pageId };
+    },
+    addCalendarView: () => {
+      if (!editable || !databaseId || addDatabaseView.isPending || addProperty.isPending) return;
+      ensureTimelineDatePropertyId((datePropertyId) => {
+        addDatabaseView.mutate(
+          {
+            config: { datePropertyId, calendarView: "month" },
+            databaseId: viewDatabaseId ?? databaseId,
+            dataSourceId: databaseId,
+            name: "Calendar",
+            type: "calendar",
+          },
+          {
+            onSuccess: (view) => onViewCreated(view.id),
+            onError: () => notify.error("Couldn't add calendar view"),
+          },
+        );
+      });
+    },
+    setCalendarMode: (calendarView: DatabaseCalendarMode) => {
+      if (!editable || !databaseId || !activeView) return;
+      const config = latestConfig();
+      updateDatabaseView.mutate({
+        databaseId: viewDatabaseId ?? databaseId,
+        databaseViewId: activeView.id,
+        configuration: diffConfiguration(config, getMergedDatabaseConfig(config, { calendarView })),
+      });
+    },
     addDatabaseProperty: (type = "text", label = "Property", position?: number) => {
       if (!editable || !databaseId) {
         return;
@@ -877,18 +930,20 @@ export function createDatabaseViewCommands({
       });
     },
     setViewType: (
-      type: "table" | "kanban" | "timeline" | "chart" | "gallery" | "list" | "form",
+      type: "table" | "kanban" | "timeline" | "calendar" | "chart" | "gallery" | "list" | "form",
     ) => {
       if (!databaseId || !activeView?.id || type === activeView.type) {
         return;
       }
 
-      if (type === "timeline") {
+      if (type === "timeline" || type === "calendar") {
         ensureTimelineDatePropertyId((datePropertyId) => {
           const groupPropertyId =
-            getGroupPropertyId(activeView.config) ??
-            getTimelineGroupPropertyId(properties) ??
-            undefined;
+            type === "calendar"
+              ? undefined
+              : (getGroupPropertyId(activeView.config) ??
+                getTimelineGroupPropertyId(properties) ??
+                undefined);
 
           updateDatabaseView.mutate({
             configuration: diffConfiguration(

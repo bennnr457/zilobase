@@ -20,6 +20,7 @@ export type DatabaseViewType =
   | "table"
   | "kanban"
   | "timeline"
+  | "calendar"
   | "list"
   | "gallery"
   | "chart"

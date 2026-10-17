@@ -345,6 +345,14 @@ export {
 } from "./views/timeline-date";
 export type { TimelineDateRange } from "./views/timeline-date";
 export {
+  getDatabaseCalendarMode,
+  getCalendarDateProperty,
+  parseCalendarSchedule,
+  calendarScheduleToValue,
+  calendarClickSchedule,
+} from "./views/calendar";
+export type { DatabaseCalendarMode, DatabaseCalendarSchedule } from "./views/calendar";
+export {
   hasViewHiddenPropertyIds,
   databaseItemMatchesFilter,
   getFilteredDatabaseItems,

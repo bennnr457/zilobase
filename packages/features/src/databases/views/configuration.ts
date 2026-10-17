@@ -148,6 +148,7 @@ export type DatabasePropertyConfig = {
 };
 
 type DatabaseConfig = {
+  calendarView?: "month" | "week" | "day" | "agenda";
   chart?: DatabaseChartSettings;
   conditionalColors?: DatabaseConditionalColorConfig[];
   datePropertyId?: string;
