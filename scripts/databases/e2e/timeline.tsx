@@ -1,3 +1,4 @@
+import { Toaster } from "sonner";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient } from "@tanstack/react-query";
@@ -8,6 +9,11 @@ import {
   DatabaseViewProvider,
   type DatabaseViewProviderValue,
 } from "../../../apps/web/src/sections/databases/views/state/components/database-view-context";
+import { DatabaseCalendarView } from "../../../apps/web/src/sections/databases/views/calendar/components/database-calendar-view";
+import {
+  calendarScheduleToValue,
+  type DatabaseCalendarSchedule,
+} from "@zilobase/features/databases";
 import { DatabaseTimelineView } from "../../../apps/web/src/sections/databases/views/timeline/components/database-timeline-view";
 import { DatabasePageLink } from "../../../apps/web/src/sections/databases/interactions/components/database-page-link";
 import { DatabaseCellContent } from "../../../apps/web/src/sections/databases/views/shared/components/database-cell-content";
@@ -18,6 +24,9 @@ import type { DatabasePropertyValue, SortableDatabaseItem } from "@zilobase/feat
 import "../../../apps/web/src/styles/global.css";
 import "../../../apps/web/src/styles/app.css";
 
+const isCalendar = window.location.pathname.endsWith("/calendar.html");
+const openedOptions: unknown[] = [];
+const created: unknown[] = [];
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 });
@@ -83,8 +92,11 @@ function makeRow(index: number): SortableDatabaseItem {
 const proof = {
   saves,
   opened,
+  openedOptions,
+  created,
   commands,
   setOptions: (_options: Record<string, unknown>) => {},
+  setDates: (_dates: Record<string, DatabasePropertyValue>) => {},
   setStatuses: (_statuses: Record<string, string>) => {},
   rollback: () => {},
   readValues: (): Record<string, DatabasePropertyValue> => ({}),
@@ -95,7 +107,11 @@ function Proof() {
   const [options, setOptions] = useState({
     editable: true,
     grouped: false,
-    count: 40,
+    count: isCalendar ? 4 : 40,
+    calendarView: "month",
+    createDelay: 0,
+    failCreate: false,
+    viewScope: "",
     dateEnabled: true,
     sorted: false,
     embedded: false,
@@ -116,6 +132,13 @@ function Proof() {
     ...extraRows,
   ];
   proof.setOptions = (patch) => setOptions((current) => ({ ...current, ...patch }));
+  proof.setDates = (dates) =>
+    setValues((current) => ({
+      ...current,
+      ...Object.fromEntries(
+        Object.entries(dates).map(([index, value]) => [`page-${index}:date`, value]),
+      ),
+    }));
   proof.setStatuses = (statuses) =>
     setValues((current) => ({
       ...current,
@@ -156,9 +179,13 @@ function Proof() {
       : [],
     activeConditionalColors: [],
     activeView: {
-      id: "timeline",
-      config: options.dateEnabled ? { datePropertyId: "date" } : {},
-      type: "timeline",
+      id: (isCalendar ? "calendar" : "timeline") + options.viewScope,
+      config: options.dateEnabled
+        ? { datePropertyId: "date", calendarView: options.calendarView }
+        : isCalendar
+          ? { datePropertyId: "missing" }
+          : {},
+      type: isCalendar ? "calendar" : "timeline",
     },
     groupProperty: options.grouped ? statusProperty : null,
     items: rows,
@@ -169,6 +196,21 @@ function Proof() {
     propertyValuesByKey: values,
     timelineDateProperties: [dateProperty],
     timelineDateProperty: options.dateEnabled ? dateProperty : null,
+    calendarDateProperty: options.dateEnabled ? dateProperty : null,
+    setCalendarMode: (calendarView: string) =>
+      setOptions((current) => ({ ...current, calendarView })),
+    addCalendarRow: async (schedule: DatabaseCalendarSchedule) => {
+      const waitUntil = performance.now() + options.saveDelay;
+      while (performance.now() < waitUntil) {}
+      if (options.createDelay)
+        await new Promise((resolve) => setTimeout(resolve, options.createDelay));
+      if (options.failCreate) throw new Error("Creation failed");
+      const index = addRow();
+      const next = calendarScheduleToValue(schedule);
+      setValues((current) => ({ ...current, [`page-${index}:date`]: next }));
+      created.push({ rowId: `row-${index}`, pageId: `page-${index}`, next });
+      return { rowId: `row-${index}`, pageId: `page-${index}` };
+    },
     showPageIconInTitle: true,
     titlePropertyLabel: "Name",
     hasNextPage: false,
@@ -215,8 +257,9 @@ function Proof() {
       const row = rows.find((row) => row.id === rowId)!;
       setValues((current) => ({ ...current, [`${row.pageId}:${propertyId}`]: next }));
     },
-    onOpenPage: (pageId: string) => {
+    onOpenPage: (pageId: string, options: unknown) => {
       opened.push(pageId);
+      openedOptions.push(options);
     },
     updateDatabasePropertyConfig: async () => {},
     setViewDateProperty: () => setOptions((current) => ({ ...current, dateEnabled: true })),
@@ -226,6 +269,7 @@ function Proof() {
   return (
     <ZilobaseFeaturesProvider value={features}>
       <ShortcutProvider>
+        <Toaster />
         <div
           key={String(options.pageViewport)}
           data-editor-surface={options.embedded ? "" : undefined}
@@ -307,7 +351,7 @@ function Proof() {
                 </div>
                 <section className="database-scroll-section" style={{ position: "relative" }}>
                   <DatabaseViewProvider value={value}>
-                    <DatabaseTimelineView />
+                    {isCalendar ? <DatabaseCalendarView /> : <DatabaseTimelineView />}
                   </DatabaseViewProvider>
                 </section>
               </div>

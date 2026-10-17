@@ -1,5 +1,6 @@
 import {
   CalendarRange,
+  CalendarDays,
   ChartPie,
   FilePenLine,
   GalleryThumbnails,
@@ -12,6 +13,7 @@ export const databaseViewTypeOptions = [
   { icon: Table2, label: "Table", type: "table" },
   { icon: Kanban, label: "Board", type: "kanban" },
   { icon: CalendarRange, label: "Timeline", type: "timeline" },
+  { icon: CalendarDays, label: "Calendar", type: "calendar" },
   { icon: List, label: "List", type: "list" },
   { icon: GalleryThumbnails, label: "Gallery", type: "gallery" },
   { icon: ChartPie, label: "Chart", type: "chart" },

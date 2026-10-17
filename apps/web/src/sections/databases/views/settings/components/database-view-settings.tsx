@@ -312,41 +312,43 @@ export function DatabaseViewSettingsMenu({
           right={activeDatabaseSorts.length > 0 ? activeDatabaseSorts.length : undefined}
         />
       </DatabaseSortSubmenu>
-      <DropDrawerSub displayMode="inline" title="Group">
-        <DropDrawerSubTrigger>
-          <ViewSettingsRow
-            icon={<IntersectSquareIcon />}
-            label="Group"
-            right={activeGroupProperty?.property.name ?? "None"}
-          />
-        </DropDrawerSubTrigger>
-        <DropDrawerSubContent className="w-72">
-          <DropDrawerItem onSelect={() => onSetViewGroupProperty(null)}>
-            <IntersectSquareIcon />
-            <span>No grouping</span>
-            {groupPropertyId === null ? <Check className="ml-auto text-content-primary" /> : null}
-          </DropDrawerItem>
-          {groupProperties.length > 0 ? (
-            groupProperties.map((property) => {
-              const PropertyIcon = getDatabasePropertyType(property.property.type).icon;
-              const isSelected = property.property.id === groupPropertyId;
+      {activeViewType !== "calendar" ? (
+        <DropDrawerSub displayMode="inline" title="Group">
+          <DropDrawerSubTrigger>
+            <ViewSettingsRow
+              icon={<IntersectSquareIcon />}
+              label="Group"
+              right={activeGroupProperty?.property.name ?? "None"}
+            />
+          </DropDrawerSubTrigger>
+          <DropDrawerSubContent className="w-72">
+            <DropDrawerItem onSelect={() => onSetViewGroupProperty(null)}>
+              <IntersectSquareIcon />
+              <span>No grouping</span>
+              {groupPropertyId === null ? <Check className="ml-auto text-content-primary" /> : null}
+            </DropDrawerItem>
+            {groupProperties.length > 0 ? (
+              groupProperties.map((property) => {
+                const PropertyIcon = getDatabasePropertyType(property.property.type).icon;
+                const isSelected = property.property.id === groupPropertyId;
 
-              return (
-                <DropDrawerItem
-                  key={property.id}
-                  onSelect={() => onSetViewGroupProperty(property.property.id)}
-                >
-                  <PropertyIcon />
-                  <span>{property.property.name}</span>
-                  {isSelected ? <Check className="ml-auto text-content-primary" /> : null}
-                </DropDrawerItem>
-              );
-            })
-          ) : (
-            <DropDrawerItem disabled>No groupable properties yet</DropDrawerItem>
-          )}
-        </DropDrawerSubContent>
-      </DropDrawerSub>
+                return (
+                  <DropDrawerItem
+                    key={property.id}
+                    onSelect={() => onSetViewGroupProperty(property.property.id)}
+                  >
+                    <PropertyIcon />
+                    <span>{property.property.name}</span>
+                    {isSelected ? <Check className="ml-auto text-content-primary" /> : null}
+                  </DropDrawerItem>
+                );
+              })
+            ) : (
+              <DropDrawerItem disabled>No groupable properties yet</DropDrawerItem>
+            )}
+          </DropDrawerSubContent>
+        </DropDrawerSub>
+      ) : null}
       <DropDrawerSub displayMode="inline" title="Conditional color">
         <DropDrawerSubTrigger>
           <ViewSettingsRow

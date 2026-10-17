@@ -118,6 +118,7 @@ export function DatabaseViewToolbar({
     addListView,
     addTableView,
     addTimelineView,
+    addCalendarView,
     clearDatabaseFilter,
     clearDatabaseSort,
     copyDatabaseViewLink,
@@ -208,6 +209,9 @@ export function DatabaseViewToolbar({
       case "timeline":
         addTimelineView();
         break;
+      case "calendar":
+        addCalendarView();
+        break;
       case "list":
         addListView();
         break;
@@ -225,7 +229,7 @@ export function DatabaseViewToolbar({
   const isAddViewTypeDisabled = (type: DatabaseViewType) =>
     !databaseId ||
     isAddingDatabaseView ||
-    ((type === "kanban" || type === "timeline") && isAddingDatabaseProperty);
+    ((type === "kanban" || type === "timeline" || type === "calendar") && isAddingDatabaseProperty);
 
   useLayoutEffect(() => {
     const navigation = viewNavigationRef.current;
@@ -655,6 +659,7 @@ export function DatabaseViewToolbar({
                                 "list",
                                 "chart",
                                 "timeline",
+                                "calendar",
                                 "form",
                               ] as const
                             ).map((type) => {

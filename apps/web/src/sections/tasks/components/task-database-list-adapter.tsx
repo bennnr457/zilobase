@@ -16,6 +16,9 @@ type UnsupportedTaskDatabaseAction =
   | "addTableView"
   | "addTimelineRow"
   | "addTimelineView"
+  | "addCalendarView"
+  | "addCalendarRow"
+  | "setCalendarMode"
   | "deleteDatabaseView"
   | "duplicateDatabaseView"
   | "getDatabasePageDragPayload"
@@ -57,6 +60,11 @@ export function TaskDatabaseListAdapter({
         addTableView: ignoreUnsupportedAction,
         addTimelineRow: ignoreUnsupportedAction,
         addTimelineView: ignoreUnsupportedAction,
+        addCalendarView: ignoreUnsupportedAction,
+        setCalendarMode: ignoreUnsupportedAction,
+        addCalendarRow: async () => {
+          throw new Error("Task list cannot create calendar records");
+        },
         deleteDatabaseView: ignoreUnsupportedAction,
         duplicateDatabaseView: ignoreUnsupportedAction,
         getDatabasePageDragPayload: () => null,

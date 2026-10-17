@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   CalendarRange,
+  CalendarDays,
   ChartPie,
   Database,
   GalleryThumbnails,
@@ -24,15 +25,17 @@ function getLinkedViewIcon(type: string) {
   const ViewIcon =
     type === "kanban"
       ? Kanban
-      : type === "timeline"
-        ? CalendarRange
-        : type === "chart"
-          ? ChartPie
-          : type === "gallery"
-            ? GalleryThumbnails
-            : type === "list"
-              ? List
-              : Table2;
+      : type === "calendar"
+        ? CalendarDays
+        : type === "timeline"
+          ? CalendarRange
+          : type === "chart"
+            ? ChartPie
+            : type === "gallery"
+              ? GalleryThumbnails
+              : type === "list"
+                ? List
+                : Table2;
 
   return <ViewIcon className="size-4 text-content-secondary" />;
 }

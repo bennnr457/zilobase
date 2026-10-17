@@ -255,6 +255,7 @@ export function register({ readSource, assert, loadModule, test }) {
         { label: "Table", type: "table" },
         { label: "Board", type: "kanban" },
         { label: "Timeline", type: "timeline" },
+        { label: "Calendar", type: "calendar" },
         { label: "List", type: "list" },
         { label: "Gallery", type: "gallery" },
         { label: "Chart", type: "chart" },

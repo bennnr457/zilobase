@@ -135,6 +135,12 @@ export function DatabaseViewSkeleton({ viewType }: { viewType?: string }) {
         <DatabaseKanbanSkeleton />
       ) : viewType === "timeline" ? (
         <DatabaseTimelineSkeleton />
+      ) : viewType === "calendar" ? (
+        <div className="grid grid-cols-7 gap-px border border-stroke-default">
+          {Array.from({ length: 35 }, (_, index) => (
+            <Skeleton key={index} className="h-24 rounded-none" />
+          ))}
+        </div>
       ) : viewType === "chart" ? (
         <DatabaseChartSkeleton />
       ) : viewType === "gallery" ? (

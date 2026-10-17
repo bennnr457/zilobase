@@ -343,6 +343,14 @@
     @apply relative mt-2 max-w-full overflow-visible;
   }
 
+  .database-calendar-view [data-calendar-drop] {
+    @apply bg-action-selected-subtle ring-2 ring-inset ring-action-primary;
+  }
+
+  .database-event-calendar {
+    --ec-sticky-offset: 0px;
+  }
+
   .database-selection-toolbar {
     @apply absolute;
     left: 0;

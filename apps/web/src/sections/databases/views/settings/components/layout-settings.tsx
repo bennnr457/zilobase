@@ -84,6 +84,7 @@ export function LayoutSettingsSection({
 }: LayoutSettingsSectionProps) {
   const isKanbanView = activeViewType === "kanban";
   const isTimelineView = activeViewType === "timeline";
+  const isCalendarView = activeViewType === "calendar";
   const isChartView = activeViewType === "chart";
   const isGalleryView = activeViewType === "gallery";
   const isListView = activeViewType === "list";
@@ -243,12 +244,12 @@ export function LayoutSettingsSection({
             />
           </DropDrawerItem>
         ) : null}
-        {isTimelineView ? (
-          <DropDrawerSub title="Show timeline by">
+        {isTimelineView || isCalendarView ? (
+          <DropDrawerSub title={isCalendarView ? "Show calendar by" : "Show timeline by"}>
             <DropDrawerSubTrigger>
               <ViewSettingsRow
                 icon={<CalendarRange />}
-                label="Show timeline by"
+                label={isCalendarView ? "Show calendar by" : "Show timeline by"}
                 right={activeDateProperty?.property.name ?? "None"}
               />
             </DropDrawerSubTrigger>

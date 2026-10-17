@@ -6,6 +6,7 @@ import { DatabaseViewToolbar } from "./database-view-toolbar";
 import { DatabaseKanbanView } from "../../kanban/components/database-kanban-view";
 import { DatabaseTableView } from "../../table/components/database-table-view";
 import { DatabaseTimelineView } from "../../timeline/components/database-timeline-view";
+import { DatabaseCalendarView } from "../../calendar/components/database-calendar-view";
 import { DatabaseChartView } from "../../chart/components/database-chart-view";
 import { DatabaseGalleryView } from "../../gallery/components/database-gallery-view";
 import { DatabaseListView } from "../../list/components/database-list-view";
@@ -20,6 +21,7 @@ export type { DatabaseViewProps };
 function DatabaseViewContent({ viewType }: { viewType?: string }) {
   if (viewType === "kanban") return <DatabaseKanbanView />;
   if (viewType === "timeline") return <DatabaseTimelineView />;
+  if (viewType === "calendar") return <DatabaseCalendarView />;
   if (viewType === "chart") return <DatabaseChartView />;
   if (viewType === "gallery") return <DatabaseGalleryView />;
   if (viewType === "list") return <DatabaseListView />;

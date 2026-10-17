@@ -1,4 +1,5 @@
 import { createDatabaseSourceCommands } from "@zilobase/features/databases";
+import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
 import { shouldUseDatabaseSetupMode } from "@/sections/databases/setup/lib/setup-mode";
 import { useCallback, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
 
@@ -54,7 +55,7 @@ export type DatabaseViewProps = {
   hideWhenDeleted?: boolean;
   onDeleted?: () => void;
   onActiveViewIdChange?: (viewId: string | null) => void;
-  onOpenPage?: (pageId: string, options?: { databaseId?: string | null }) => void;
+  onOpenPage?: (pageId: string, options?: OpenPageOptions) => void;
   onDismissSetup?: () => void;
   onSetupComplete?: () => void;
   onShowTitleChange?: (showTitle: boolean) => void;
@@ -267,6 +268,7 @@ export function useDatabaseViewController({
     kanbanOptions,
     layoutSettings,
     timelineDateProperties,
+    calendarDateProperty,
     timelineDateProperty,
     personOptions,
     properties,
@@ -470,6 +472,10 @@ export function useDatabaseViewController({
     addTableView: commands.addTableView,
     addTimelineRow: commands.addTimelineRow,
     addTimelineView: commands.addTimelineView,
+    addCalendarView: commands.addCalendarView,
+    addCalendarRow: commands.addCalendarRow,
+    setCalendarMode: commands.setCalendarMode,
+    calendarDateProperty,
     canAddDatabaseFilter,
     canAddDatabaseProperties: true,
     canAddDatabaseRows: true,

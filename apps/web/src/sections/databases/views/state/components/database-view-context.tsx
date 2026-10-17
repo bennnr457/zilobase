@@ -47,6 +47,8 @@ import {
   useUndoHistory,
 } from "@/app/shortcuts/undo-history";
 import { areSerializedPropertyValuesEqual } from "@zilobase/features/databases";
+import type { DatabaseCalendarSchedule, DatabaseCalendarMode } from "@zilobase/features/databases";
+import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
 
 export type DatabaseActiveConditionalColor = Omit<DatabaseConditionalColorConfig, "filter"> & {
   filter: DatabaseActiveFilter;
@@ -98,7 +100,7 @@ export type DatabaseViewProviderValue = {
   unlinkDataSource?: (dataSourceId: string) => void;
   addDataSourceView?: (
     dataSourceId: string,
-    type: "table" | "kanban" | "timeline" | "list" | "gallery" | "chart" | "form",
+    type: "table" | "kanban" | "timeline" | "calendar" | "list" | "gallery" | "chart" | "form",
     mode?: "add" | "replace",
   ) => void;
   replaceActiveViewSource?: (view: DatabaseSourceViewSelection) => void;
@@ -110,6 +112,12 @@ export type DatabaseViewProviderValue = {
     groupProperty?: DatabasePropertyListItem | null,
   ) => void;
   addTimelineView: () => void;
+  addCalendarView: () => void;
+  addCalendarRow: (
+    schedule: DatabaseCalendarSchedule,
+  ) => Promise<{ rowId: string; pageId: string }>;
+  setCalendarMode: (mode: DatabaseCalendarMode) => void;
+  calendarDateProperty: DatabasePropertyListItem | null;
   canAddDatabaseFilter: boolean;
   canAddDatabaseProperties?: boolean;
   canAddDatabaseRows?: boolean;
@@ -169,7 +177,7 @@ export type DatabaseViewProviderValue = {
   items: DatabaseRow[];
   layoutSettings: DatabaseLayoutSettings;
   newRowLabel?: string;
-  onOpenPage?: (pageId: string, options?: { databaseId?: string | null }) => void;
+  onOpenPage?: (pageId: string, options?: OpenPageOptions) => void;
   options: DatabaseSelectOption[];
   workspaceId?: string | null;
   personOptions: Array<{ id: string; name: string; suffix?: string }>;
@@ -204,7 +212,7 @@ export type DatabaseViewProviderValue = {
   setupTimelineDateProperty: () => void;
   setViewGroupProperty: (groupPropertyId: string | null) => void;
   setViewType: (
-    type: "table" | "kanban" | "timeline" | "chart" | "gallery" | "list" | "form",
+    type: "table" | "kanban" | "timeline" | "calendar" | "chart" | "gallery" | "list" | "form",
   ) => void;
   timelineDateProperties: DatabasePropertyListItem[];
   timelineDateProperty: DatabasePropertyListItem | null;
@@ -294,6 +302,7 @@ const databaseDataKeys = [
   "subItemParentRowIdsByRowId",
   "timelineDateProperties",
   "timelineDateProperty",
+  "calendarDateProperty",
   "visibleProperties",
   "visiblePropertyCount",
   "views",
@@ -342,6 +351,9 @@ const databaseActionKeys = [
   "addTableView",
   "addTimelineRow",
   "addTimelineView",
+  "addCalendarView",
+  "addCalendarRow",
+  "setCalendarMode",
   "clearDatabaseFilter",
   "clearDatabaseSort",
   "configureDataSources",

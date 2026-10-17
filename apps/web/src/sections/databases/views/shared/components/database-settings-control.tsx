@@ -73,6 +73,7 @@ export function DatabaseSettingsControl({
     properties,
     timelineDateProperties,
     timelineDateProperty,
+    calendarDateProperty,
     sortFieldOptions,
     visiblePropertyCount,
   } = useDatabaseDataContext();
@@ -99,7 +100,7 @@ export function DatabaseSettingsControl({
     }
   };
   const source = useSettingsSource();
-  const { activeViewTabId, viewTabs } = useDatabaseUiContext();
+  const { activeView, activeViewTabId, viewTabs } = useDatabaseUiContext();
   const activeViewTab = viewTabs.find((view) => view.id === activeViewTabId);
   return (
     <DatabaseViewSettingsMenu
@@ -144,7 +145,10 @@ export function DatabaseSettingsControl({
       }}
       onSaveDatabaseViewTitle={saveDatabaseViewTitle}
       dateProperties={timelineDateProperties}
-      datePropertyId={timelineDateProperty?.property.id ?? null}
+      datePropertyId={
+        (activeView?.type === "calendar" ? calendarDateProperty : timelineDateProperty)?.property
+          .id ?? null
+      }
       onSetViewDateProperty={setViewDateProperty}
       onSetViewGroupProperty={setViewGroupProperty}
       onSetViewType={setViewType}

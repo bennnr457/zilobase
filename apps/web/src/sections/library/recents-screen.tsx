@@ -332,6 +332,11 @@ export default function RecentsScreen() {
                     addTableView: () => {},
                     addTimelineRow: () => {},
                     addTimelineView: () => {},
+                    addCalendarView: () => {},
+                    addCalendarRow: async () => {
+                      throw new Error("Recents cannot create calendar records");
+                    },
+                    setCalendarMode: () => {},
                     canAddDatabaseProperties: false,
                     canAddDatabaseRows: false,
                     canAddDatabaseViews: false,
