@@ -377,6 +377,41 @@ async function rowMenu(page, index) {
   await expect(page.getByRole("menuitem", { name: "Duplicate", exact: true })).toBeEnabled();
 }
 
+test("selection actions float directly above the table without moving full, grouped or embedded rows", async ({
+  page,
+}) => {
+  const toolbar = page.getByRole("toolbar", { name: "Selected row actions" });
+  for (const mode of [
+    { grouped: false, embedded: false },
+    { grouped: true, embedded: false },
+    { grouped: true, embedded: true },
+  ]) {
+    await options(page, mode);
+    const before = await cell(page, 0, "name").boundingBox();
+    await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+    await expect(toolbar).toBeVisible();
+    expect(await cell(page, 0, "name").boundingBox()).toEqual(before);
+    const floating = await toolbar.boundingBox();
+    const view = await page.locator(".database-scroll-section").boundingBox();
+    expect(floating.x).toBe(view.x);
+    expect(floating.x + floating.width).toBeLessThanOrEqual(view.x + view.width);
+    expect(floating.y + floating.height).toBe(view.y - 8);
+    await toolbar.getByRole("button", { name: "Clear selection of 1 rows" }).click();
+    expect(await cell(page, 0, "name").boundingBox()).toEqual(before);
+  }
+  await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+  await options(page, { count: 400 });
+  await page.setViewportSize({ width: 500, height: 800 });
+  const floating = await toolbar.boundingBox();
+  expect(floating.x).toBeGreaterThanOrEqual(0);
+  expect(floating.x + floating.width).toBeLessThanOrEqual(500);
+  const view = await page.locator(".database-scroll-section").boundingBox();
+  expect(floating.x).toBe(view.x);
+  expect(floating.y + floating.height).toBe(view.y - 8);
+  await toolbar.getByRole("button", { name: "More selected row actions" }).click();
+  await expect(page.getByRole("textbox", { name: "Search selected row actions" })).toBeFocused();
+});
+
 test("handle and More share one menu and preserve or replace checkbox selection appropriately", async ({
   page,
 }) => {
@@ -435,10 +470,122 @@ test("action search and bulk property editing retain one undo across the selecte
   await page.getByRole("button", { name: "Apply", exact: true }).click();
   await expect(cell(page, 0, "text")).toContainText("Bulk value");
   await expect(cell(page, 1, "text")).toContainText("Bulk value");
+  await page.getByRole("button", { name: "Back from Text", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Text", exact: true })).toBeFocused();
+  await page.keyboard.press("Escape");
   await grid(page).focus();
   await page.keyboard.press("Control+z");
   await expect(cell(page, 0, "text")).toContainText("Text 0");
   await expect(cell(page, 1, "text")).toContainText("Text 1");
+});
+
+test("property editors replace the submenu in place and Back restores its property list", async ({
+  page,
+}) => {
+  await page.evaluate(() =>
+    window.tableProof.remote({ "page-1:date": ["2026-10-18", "2026-10-19"] }),
+  );
+  await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Select Record 1", exact: true }).check();
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit property", exact: true }).hover();
+  const submenu = page.locator('[data-slot="drop-drawer-sub-content"]');
+  await expect(submenu).toBeVisible();
+  const origin = await submenu.boundingBox();
+  await page.getByRole("menuitem", { name: "Status", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Back from Status", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("menuitem", { name: "Copy links to all", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const position = await submenu.boundingBox();
+  expect(Math.abs(position.x - origin.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(position.y - origin.y)).toBeLessThanOrEqual(1);
+  const optionSearch = submenu.getByPlaceholder("Search for an option...");
+  await optionSearch.press("Shift+Tab");
+  await expect(submenu.getByRole("button", { name: "Close Status", exact: true })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(optionSearch).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(
+    submenu.getByRole("button", { name: "Back from Status", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("menuitem", { name: "Status", exact: true })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await submenu.getByRole("button", { name: "Done", exact: true }).click();
+  await expect.poll(async () => (await values(page))["page-0:status"]).toBe("Done");
+  await expect.poll(async () => (await values(page))["page-1:status"]).toBe("Done");
+  await page.getByRole("button", { name: "Back from Status", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Status", exact: true })).toBeFocused();
+  await page.getByRole("menuitem", { name: "Date", exact: true }).click();
+  await expect(
+    submenu.getByRole("textbox", { name: "Date start date", exact: true }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "Back from Date", exact: true }).click();
+  expect((await values(page))["page-0:date"]).toBe("2026-10-17");
+  expect((await values(page))["page-1:date"]).toEqual(["2026-10-18", "2026-10-19"]);
+  await page.getByRole("menuitem", { name: "Date", exact: true }).click();
+  await submenu.getByRole("textbox", { name: "Date start date", exact: true }).fill("2026-10-21");
+  await page.keyboard.press("Tab");
+  await expect.poll(async () => (await values(page))["page-0:date"]).toBe("2026-10-21");
+  await expect.poll(async () => (await values(page))["page-1:date"]).toBe("2026-10-21");
+  await page.getByRole("button", { name: "Back from Date", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Check", exact: true }).click();
+  await submenu.getByRole("button", { name: "Checked", exact: true }).click();
+  await expect.poll(async () => (await values(page))["page-0:check"]).toBe("true");
+  await expect.poll(async () => (await values(page))["page-1:check"]).toBe("true");
+  await page.getByRole("button", { name: "Back from Check", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Text", exact: true }).click();
+  await page.getByRole("textbox", { name: "Text value for selected rows" }).fill("Unsaved draft");
+  await page.getByRole("button", { name: "Close Text", exact: true }).click();
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Clear selection of 2 rows" })).toBeVisible();
+  expect((await values(page))["page-0:text"]).toBe("Text 0");
+});
+
+test("inline date calendars use the surrounding menu surface in light and dark themes", async ({
+  page,
+}) => {
+  await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit property", exact: true }).hover();
+  await page.getByRole("menuitem", { name: "Date", exact: true }).click();
+  const panel = page.locator("[data-row-property-panel]");
+  for (const dark of [false, true]) {
+    await page.evaluate((dark) => document.documentElement.classList.toggle("dark", dark), dark);
+    await expect(panel.locator('[data-slot="calendar"]')).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
+    await panel.getByRole("switch", { name: "End date", exact: true }).check();
+    await expect(panel.getByRole("textbox", { name: "Date end date", exact: true })).toBeVisible();
+    await expect(panel.locator('[data-slot="calendar"]')).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
+    await panel.getByRole("switch", { name: "End date", exact: true }).uncheck();
+  }
+});
+
+test("mobile property editor returns to the same drawer property list", async ({ page }) => {
+  await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+  await page.setViewportSize({ width: 600, height: 900 });
+  await page.getByRole("button", { name: "More selected row actions" }).click();
+  const drawer = page.getByRole("dialog");
+  await drawer.getByText("Edit property", { exact: true }).click();
+  await drawer
+    .locator('[data-slot="drop-drawer-item"]')
+    .filter({ hasText: /^Status$/ })
+    .click();
+  await expect(drawer.getByRole("button", { name: "Back from Status", exact: true })).toBeVisible();
+  await drawer.getByRole("button", { name: "Done", exact: true }).click();
+  await expect.poll(async () => (await values(page))["page-0:status"]).toBe("Done");
+  await drawer.getByRole("button", { name: "Back from Status", exact: true }).click();
+  await expect(
+    drawer.locator('[data-slot="drop-drawer-item"]').filter({ hasText: /^Status$/ }),
+  ).toBeVisible();
 });
 
 test("row actions favorite, duplicate, and trash through the shared operations", async ({

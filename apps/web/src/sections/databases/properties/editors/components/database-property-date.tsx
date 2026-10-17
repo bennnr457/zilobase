@@ -10,7 +10,7 @@ import {
   toDatabaseDateValue as toDateValue,
   getDatabaseTimeValue as getTimeValueFromDate,
 } from "@zilobase/features/databases";
-import { useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Check, ChevronRight, HelpCircle } from "@/components/icons";
 import type { DateRange } from "react-day-picker";
 
@@ -33,6 +33,7 @@ import {
 } from "@zilobase/features/databases";
 
 type DatabasePropertyDateProps = {
+  inline?: boolean;
   editable?: boolean;
   emptyLabel?: string;
   label: string;
@@ -46,6 +47,7 @@ type DatabasePropertyDateProps = {
 };
 
 export function DatabasePropertyDate({
+  inline = false,
   editable = true,
   emptyLabel,
   label,
@@ -75,6 +77,10 @@ export function DatabasePropertyDate({
   const timeFormatLabel = getTimeFormatLabel(timeFormat);
   const hasTime = timeFormat !== "hidden";
   const isOpen = controlledOpen ?? uncontrolledOpen;
+
+  useEffect(() => {
+    if (inline) startDateInputRef.current?.focus({ preventScroll: true });
+  }, [inline]);
 
   const setOpen = (open: boolean) => {
     if (controlledOpen === undefined) setUncontrolledOpen(open);
@@ -162,6 +168,188 @@ export function DatabasePropertyDate({
     return <span className="database-date-cell-trigger">{displayContent}</span>;
   }
 
+  const panel = (
+    <>
+      <div className="grid gap-1 px-2 pt-1">
+        <DateInput
+          inputRef={startDateInputRef}
+          action={
+            <Button
+              className="h-auto shrink-0 self-stretch active:not-aria-[haspopup]:translate-y-0"
+              onClick={(event) => {
+                event.stopPropagation();
+                const today = new Date();
+
+                commitDate(today, isRange, hasTime ? getTimeValueFromDate(today) : "");
+              }}
+              size="xs"
+              type="button"
+              variant="secondary"
+            >
+              Today
+            </Button>
+          }
+          fieldLabel={isRange ? "Start date" : "Date"}
+          label={`${label} start date`}
+          onCommit={(nextValue) => {
+            if (isRange) {
+              commitRange(nextValue, draftEndValue);
+            } else {
+              const date = parseDatabaseDateValue(nextValue);
+              const nextValueWithTime = date
+                ? toDateValue(date, hasTime ? draftStartTimeValue : "")
+                : "";
+
+              onSelect(nextValueWithTime);
+              setDraftStartValue(nextValueWithTime);
+              setDraftStartTimeValue(getTimeFromValue(nextValueWithTime));
+              setDraftEndValue("");
+              setDraftEndTimeValue("");
+            }
+          }}
+          onValueChange={setDraftStartValue}
+          placeholder={isRange ? "Start date" : "Add date"}
+          value={getDateFromValue(draftStartValue)}
+        />
+        {hasTime ? (
+          <TimeInput
+            fieldLabel={isRange ? "Start time" : "Time"}
+            label={`${label} start time`}
+            onCommit={(nextValue) => {
+              if (isRange) {
+                commitRange(draftStartValue, draftEndValue, nextValue);
+                return;
+              }
+
+              const date = parseDatabaseDateValue(draftStartValue);
+              const nextDateValue = date ? toDateValue(date, nextValue) : "";
+
+              onSelect(nextDateValue);
+              setDraftStartValue(nextDateValue);
+              setDraftStartTimeValue(nextValue);
+            }}
+            onValueChange={setDraftStartTimeValue}
+            value={draftStartTimeValue}
+          />
+        ) : null}
+        {isRange ? (
+          <>
+            <DateInput
+              fieldLabel="End date"
+              label={`${label} end date`}
+              onCommit={(nextValue) => commitRange(draftStartValue, nextValue)}
+              onValueChange={setDraftEndValue}
+              placeholder="End date"
+              value={getDateFromValue(draftEndValue)}
+            />
+            {hasTime ? (
+              <TimeInput
+                fieldLabel="End time"
+                label={`${label} end time`}
+                onCommit={(nextValue) =>
+                  commitRange(draftStartValue, draftEndValue, draftStartTimeValue, nextValue)
+                }
+                onValueChange={setDraftEndTimeValue}
+                value={draftEndTimeValue}
+              />
+            ) : null}
+          </>
+        ) : null}
+      </div>
+      <div className="relative px-2 [--cell-size:calc((18rem-1.5rem)/7)]">
+        {isRange ? (
+          <DateCalendar
+            className="w-full bg-transparent py-1"
+            classNames={{
+              root: "relative w-full",
+              month: "w-full",
+              month_grid: "w-full",
+              months: "w-full",
+            }}
+            defaultMonth={selectedRange.start}
+            mode="range"
+            onSelect={commitCalendarRange}
+            selected={{
+              from: selectedRange.start,
+              to: selectedRange.end,
+            }}
+          />
+        ) : (
+          <DateCalendar
+            className="w-full bg-transparent py-1"
+            classNames={{
+              root: "relative w-full",
+              month: "w-full",
+              month_grid: "w-full",
+              months: "w-full",
+            }}
+            defaultMonth={selectedRange.start}
+            mode="single"
+            onSelect={(date) => commitDate(date)}
+            selected={selectedRange.start}
+          />
+        )}
+      </div>
+      <div className="border-t pt-1">
+        <DatabaseDateRangeOption
+          checked={isRange}
+          onCheckedChange={(checked) => {
+            const nextIsRange = checked === true;
+
+            setIsRange(nextIsRange);
+
+            if (!nextIsRange) {
+              commitRange(draftStartValue, "");
+            }
+          }}
+        />
+        {onPropertyConfigChange ? (
+          <>
+            <DatabaseDateFormatOption
+              label="Date format"
+              onSelect={(nextValue) => void updateDateFormat(nextValue)}
+              options={dateFormatOptions}
+              selectedValue={dateFormat}
+              value={dateFormatLabel}
+            />
+            <DatabaseDateFormatOption
+              label="Time format"
+              onSelect={(nextValue) => void updateTimeFormat(nextValue)}
+              options={timeFormatOptions}
+              selectedValue={timeFormat}
+              value={timeFormatLabel}
+            />
+            <DatabaseDateOption label="Remind" value="None" />
+          </>
+        ) : null}
+      </div>
+      <Button
+        className="w-full justify-start rounded-md border-t"
+        onClick={() => {
+          onSelect("");
+          setDraftStartValue("");
+          setDraftEndValue("");
+          setDraftStartTimeValue("");
+          setDraftEndTimeValue("");
+        }}
+        type="button"
+        variant="ghost"
+      >
+        Clear
+      </Button>
+      <div className="flex items-center gap-1.5 rounded-md border-t px-2 py-1 text-sm text-content-secondary">
+        <HelpCircle className="size-4 shrink-0" />
+        <span>Learn about reminders</span>
+      </div>
+    </>
+  );
+  if (inline)
+    return (
+      <div className="w-72 gap-1 p-1" data-database-property-editor="date">
+        {panel}
+      </div>
+    );
+
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -186,177 +374,7 @@ export function DatabasePropertyDate({
         }}
         sideOffset={0}
       >
-        <div className="grid gap-1 px-2 pt-1">
-          <DateInput
-            inputRef={startDateInputRef}
-            action={
-              <Button
-                className="h-auto shrink-0 self-stretch active:not-aria-[haspopup]:translate-y-0"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  const today = new Date();
-
-                  commitDate(today, isRange, hasTime ? getTimeValueFromDate(today) : "");
-                }}
-                size="xs"
-                type="button"
-                variant="secondary"
-              >
-                Today
-              </Button>
-            }
-            fieldLabel={isRange ? "Start date" : "Date"}
-            label={`${label} start date`}
-            onCommit={(nextValue) => {
-              if (isRange) {
-                commitRange(nextValue, draftEndValue);
-              } else {
-                const date = parseDatabaseDateValue(nextValue);
-                const nextValueWithTime = date
-                  ? toDateValue(date, hasTime ? draftStartTimeValue : "")
-                  : "";
-
-                onSelect(nextValueWithTime);
-                setDraftStartValue(nextValueWithTime);
-                setDraftStartTimeValue(getTimeFromValue(nextValueWithTime));
-                setDraftEndValue("");
-                setDraftEndTimeValue("");
-              }
-            }}
-            onValueChange={setDraftStartValue}
-            placeholder={isRange ? "Start date" : "Add date"}
-            value={getDateFromValue(draftStartValue)}
-          />
-          {hasTime ? (
-            <TimeInput
-              fieldLabel={isRange ? "Start time" : "Time"}
-              label={`${label} start time`}
-              onCommit={(nextValue) => {
-                if (isRange) {
-                  commitRange(draftStartValue, draftEndValue, nextValue);
-                  return;
-                }
-
-                const date = parseDatabaseDateValue(draftStartValue);
-                const nextDateValue = date ? toDateValue(date, nextValue) : "";
-
-                onSelect(nextDateValue);
-                setDraftStartValue(nextDateValue);
-                setDraftStartTimeValue(nextValue);
-              }}
-              onValueChange={setDraftStartTimeValue}
-              value={draftStartTimeValue}
-            />
-          ) : null}
-          {isRange ? (
-            <>
-              <DateInput
-                fieldLabel="End date"
-                label={`${label} end date`}
-                onCommit={(nextValue) => commitRange(draftStartValue, nextValue)}
-                onValueChange={setDraftEndValue}
-                placeholder="End date"
-                value={getDateFromValue(draftEndValue)}
-              />
-              {hasTime ? (
-                <TimeInput
-                  fieldLabel="End time"
-                  label={`${label} end time`}
-                  onCommit={(nextValue) =>
-                    commitRange(draftStartValue, draftEndValue, draftStartTimeValue, nextValue)
-                  }
-                  onValueChange={setDraftEndTimeValue}
-                  value={draftEndTimeValue}
-                />
-              ) : null}
-            </>
-          ) : null}
-        </div>
-        <div className="relative px-2 [--cell-size:calc((18rem-1.5rem)/7)]">
-          {isRange ? (
-            <DateCalendar
-              className="w-full py-1"
-              classNames={{
-                root: "relative w-full",
-                month: "w-full",
-                month_grid: "w-full",
-                months: "w-full",
-              }}
-              defaultMonth={selectedRange.start}
-              mode="range"
-              onSelect={commitCalendarRange}
-              selected={{
-                from: selectedRange.start,
-                to: selectedRange.end,
-              }}
-            />
-          ) : (
-            <DateCalendar
-              className="w-full py-1"
-              classNames={{
-                root: "relative w-full",
-                month: "w-full",
-                month_grid: "w-full",
-                months: "w-full",
-              }}
-              defaultMonth={selectedRange.start}
-              mode="single"
-              onSelect={(date) => commitDate(date)}
-              selected={selectedRange.start}
-            />
-          )}
-        </div>
-        <div className="border-t pt-1">
-          <DatabaseDateRangeOption
-            checked={isRange}
-            onCheckedChange={(checked) => {
-              const nextIsRange = checked === true;
-
-              setIsRange(nextIsRange);
-
-              if (!nextIsRange) {
-                commitRange(draftStartValue, "");
-              }
-            }}
-          />
-          {onPropertyConfigChange ? (
-            <>
-              <DatabaseDateFormatOption
-                label="Date format"
-                onSelect={(nextValue) => void updateDateFormat(nextValue)}
-                options={dateFormatOptions}
-                selectedValue={dateFormat}
-                value={dateFormatLabel}
-              />
-              <DatabaseDateFormatOption
-                label="Time format"
-                onSelect={(nextValue) => void updateTimeFormat(nextValue)}
-                options={timeFormatOptions}
-                selectedValue={timeFormat}
-                value={timeFormatLabel}
-              />
-              <DatabaseDateOption label="Remind" value="None" />
-            </>
-          ) : null}
-        </div>
-        <Button
-          className="w-full justify-start rounded-md border-t"
-          onClick={() => {
-            onSelect("");
-            setDraftStartValue("");
-            setDraftEndValue("");
-            setDraftStartTimeValue("");
-            setDraftEndTimeValue("");
-          }}
-          type="button"
-          variant="ghost"
-        >
-          Clear
-        </Button>
-        <div className="flex items-center gap-1.5 rounded-md border-t px-2 py-1 text-sm text-content-secondary">
-          <HelpCircle className="size-4 shrink-0" />
-          <span>Learn about reminders</span>
-        </div>
+        {panel}
       </PopoverContent>
     </Popover>
   );
@@ -382,6 +400,7 @@ function DateInput({
   value: string;
 }) {
   const id = useId();
+  const dirty = useRef(false);
   return (
     <div className="grid gap-1 text-xs font-medium text-content-secondary">
       <label className="px-1" htmlFor={id}>
@@ -393,13 +412,22 @@ function DateInput({
           id={id}
           ref={inputRef}
           className="text-content-primary selection:bg-selection-editor selection:text-content-primary"
-          onBlur={() => onCommit(value)}
-          onChange={(event) => onValueChange(event.target.value)}
+          onBlur={() => {
+            if (!dirty.current) return;
+            dirty.current = false;
+            onCommit(value);
+          }}
+          onChange={(event) => {
+            dirty.current = true;
+            onValueChange(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key !== "Enter") {
               return;
             }
 
+            if (!dirty.current) return;
+            dirty.current = false;
             onCommit(value);
           }}
           placeholder={placeholder}
@@ -424,19 +452,29 @@ function TimeInput({
   onValueChange: (value: string) => void;
   value: string;
 }) {
+  const dirty = useRef(false);
   return (
     <label className="grid gap-1 text-xs font-medium text-content-secondary">
       <span className="px-1">{fieldLabel}</span>
       <Input
         aria-label={label}
         className="text-content-primary selection:bg-selection-editor selection:text-content-primary [&::-webkit-calendar-picker-indicator]:hidden"
-        onBlur={() => onCommit(value)}
-        onChange={(event) => onValueChange(event.target.value)}
+        onBlur={() => {
+          if (!dirty.current) return;
+          dirty.current = false;
+          onCommit(value);
+        }}
+        onChange={(event) => {
+          dirty.current = true;
+          onValueChange(event.target.value);
+        }}
         onKeyDown={(event) => {
           if (event.key !== "Enter") {
             return;
           }
 
+          if (!dirty.current) return;
+          dirty.current = false;
           onCommit(value);
         }}
         step={60}
@@ -455,15 +493,16 @@ function DatabaseDateRangeOption({
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <button
-      aria-pressed={checked}
-      className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm outline-hidden select-none hover:bg-action-neutral-hover hover:text-action-on-neutral"
-      onClick={() => onCheckedChange(!checked)}
-      type="button"
-    >
+    <label className="flex w-full cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm outline-hidden select-none hover:bg-action-neutral-hover hover:text-action-on-neutral">
       <span>End date</span>
-      <Switch checked={checked} className="ml-auto pointer-events-none" size="sm" tabIndex={-1} />
-    </button>
+      <Switch
+        aria-label="End date"
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="ml-auto"
+        size="sm"
+      />
+    </label>
   );
 }
 

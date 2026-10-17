@@ -351,14 +351,18 @@
     --ec-sticky-offset: 0px;
   }
 
+  .database-selection-toolbar-layer {
+    @apply pointer-events-none absolute inset-x-0 top-0 z-[60];
+  }
+
   .database-selection-toolbar {
-    @apply relative mb-2;
+    @apply pointer-events-auto absolute bottom-2 left-0 shadow-lg;
     width: fit-content;
     max-width: 100%;
     z-index: 60;
   }
 
-  .database-scroll-section:has(> .database-selection-toolbar) {
+  .database-scroll-section:has(> .database-selection-toolbar-layer) {
     z-index: 50;
   }
 

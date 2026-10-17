@@ -173,6 +173,27 @@ test("the app page viewport owns scrolling and the timeline fills it after resiz
   await assertAligned(page);
 });
 
+test("selection actions float above the timeline without moving its header or tracks", async ({
+  page,
+}) => {
+  await options(page, { pageViewport: true });
+  const view = page.locator(timeline);
+  const before = await view.boundingBox();
+  const rowBefore = await page.locator(track("row-0")).boundingBox();
+  await selectRow(page, 0);
+  const toolbar = page.getByRole("toolbar", { name: "Selected row actions" });
+  await expect(toolbar).toBeVisible();
+  expect(await view.boundingBox()).toEqual(before);
+  expect(await page.locator(track("row-0")).boundingBox()).toEqual(rowBefore);
+  const floating = await toolbar.boundingBox();
+  const section = await page.locator(".database-scroll-section").boundingBox();
+  expect(floating.x).toBe(section.x);
+  expect(floating.y + floating.height).toBe(section.y - 8);
+  await assertAligned(page);
+  await toolbar.getByRole("button", { name: "Clear selection of 1 rows" }).click();
+  await expect(toolbar).toHaveCount(0);
+});
+
 test("checkboxes share bulk property editing, grouped undo and clear-selection actions", async ({
   page,
 }) => {
@@ -185,7 +206,10 @@ test("checkboxes share bulk property editing, grouped undo and clear-selection a
   await page.getByRole("button", { name: "More selected row actions" }).click();
   await page.getByRole("menuitem", { name: "Edit property", exact: true }).hover();
   await page.getByRole("menuitem", { name: "Status", exact: true }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Done", exact: true }).click();
+  await page
+    .locator("[data-row-property-panel]")
+    .getByRole("button", { name: "Done", exact: true })
+    .click();
   await expect
     .poll(() =>
       page.evaluate(

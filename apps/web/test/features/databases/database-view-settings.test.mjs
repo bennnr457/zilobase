@@ -214,8 +214,9 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(settings, /viewConfig: config/);
     assert.match(settings, /onUnlinkDataSource/);
     assert.match(subItems, /displayMode="inline"[\s\S]*?title="Sub-items"/);
-    assert.match(dropdrawer, /aria-label=\{`Back from \$\{activePanel\.title\}`\}/);
-    assert.match(dropdrawer, /aria-label=\{`Close \$\{activePanel\.title\}`\}/);
+    assert.match(dropdrawer, /aria-label=\{`Back from \$\{title\}`\}/);
+    assert.match(dropdrawer, /<DropdownMenuPanelHeader[\s\S]*?title=\{activePanel\.title\}/);
+    assert.match(dropdrawer, /aria-label=\{`Close \$\{title\}`\}/);
     assert.match(dropdrawer, /min-h-0 flex-1 overflow-y-auto overscroll-contain/);
     assert.match(dropdrawerContent, /menuViewportClassName/);
   });

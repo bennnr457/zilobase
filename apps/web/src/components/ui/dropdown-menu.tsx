@@ -140,6 +140,54 @@ function DropdownMenuTrigger({
   return <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+function DropdownMenuPanelHeader({
+  title,
+  onBack,
+  onClose,
+  backRef,
+}: {
+  title: string;
+  onBack: () => void;
+  onClose?: () => void;
+  backRef?: React.Ref<HTMLButtonElement>;
+}) {
+  const closeButton = (
+    <Button
+      aria-label={`Close ${title}`}
+      className="text-content-secondary"
+      size="icon-sm"
+      type="button"
+      variant="ghost"
+      onClick={onClose}
+    >
+      <XIcon />
+    </Button>
+  );
+  return (
+    <div className="flex shrink-0 items-center gap-1 px-1 py-1">
+      <Button
+        ref={backRef}
+        aria-label={`Back from ${title}`}
+        className="text-content-secondary"
+        onClick={onBack}
+        size="icon-sm"
+        type="button"
+        variant="ghost"
+      >
+        <ChevronLeftIcon />
+      </Button>
+      <div className="min-w-0 flex-1 truncate px-1 text-xs font-medium text-content-primary">
+        {title}
+      </div>
+      {onClose ? (
+        closeButton
+      ) : (
+        <DropdownMenuPrimitive.Item asChild>{closeButton}</DropdownMenuPrimitive.Item>
+      )}
+    </div>
+  );
+}
+
 function DropdownMenuContent({
   className,
   align = "start",
@@ -201,33 +249,11 @@ function DropdownMenuContent({
         </InlineSubmenuRegistrationContext.Provider>
         {activePanel ? (
           <>
-            <div className="flex shrink-0 items-center gap-1 px-1 py-1">
-              <Button
-                ref={backButtonRef}
-                aria-label={`Back from ${activePanel.title}`}
-                className="text-content-secondary"
-                onClick={inlineNavigation?.goBack}
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-              >
-                <ChevronLeftIcon />
-              </Button>
-              <div className="min-w-0 flex-1 truncate px-1 text-xs font-medium text-content-primary">
-                {activePanel.title}
-              </div>
-              <DropdownMenuPrimitive.Item asChild>
-                <Button
-                  aria-label={`Close ${activePanel.title}`}
-                  className="text-content-secondary"
-                  size="icon-sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <XIcon />
-                </Button>
-              </DropdownMenuPrimitive.Item>
-            </div>
+            <DropdownMenuPanelHeader
+              backRef={backButtonRef}
+              title={activePanel.title}
+              onBack={() => inlineNavigation?.goBack()}
+            />
             <div
               className={cn(
                 "min-h-0 flex-1 overflow-y-auto overscroll-contain",
@@ -563,6 +589,7 @@ function DropdownMenuSubContent({
 }
 
 export {
+  DropdownMenuPanelHeader,
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,

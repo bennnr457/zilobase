@@ -249,7 +249,7 @@ function MobileDropDrawerContent({
                   className="h-full w-full space-y-0.5 px-1 pb-2"
                 >
                   <SubmenuPanelContext.Provider value>
-                    {activeSubmenuEntry?.content ?? submenuContentRef.current.get(activeSubmenu)}
+                    {submenuContentRef.current.get(activeSubmenu) ?? activeSubmenuEntry?.content}
                   </SubmenuPanelContext.Provider>
                 </motion.div>
               </AnimatePresence>

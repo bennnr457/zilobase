@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useId,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Effect } from "effect";
 import { useZilobaseFeatures } from "@zilobase/features";
 import { sharedClient } from "@zilobase/features/data";
@@ -31,6 +39,7 @@ import {
   DropDrawerSubTrigger,
   DropDrawerSubContent,
 } from "@/components/ui/dropdrawer";
+import { DropdownMenuPanelHeader } from "@/components/ui/dropdown-menu";
 import { SearchableActionMenuContent } from "@/components/ui/searchable-action-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -114,12 +123,16 @@ export function DatabaseRowActionsProvider({
   const [search, setSearch] = useState("");
   const [panel, setPanel] = useState<"icon" | "move" | null>(null);
   const [propertyId, setPropertyId] = useState<string | null>(null);
+  const propertyMenuId = useId();
   const [trashOpen, setTrashOpen] = useState(false);
   const [destinationSearch, setDestinationSearch] = useState("");
   const [propertyMode, setPropertyMode] = useState<"match" | "duplicate">("match");
   const anchorElement = useRef<HTMLElement | null>(null);
-  const pendingPanel = useRef<{ next: string; scope: string; selection: string } | null>(null);
-  const ignorePropertyCloseUntil = useRef(0);
+  const pendingPanel = useRef<{ next: "icon" | "move"; scope: string; selection: string } | null>(
+    null,
+  );
+  const propertyItems = useRef(new Map<string, HTMLDivElement>());
+  const previousPropertyId = useRef<string | null>(null);
   const mounted = useRef(false);
   const selectionKey = selection.selectedRows.map((row) => row.id).join(":");
   const currentSelection = useRef(selectionKey);
@@ -161,6 +174,7 @@ export function DatabaseRowActionsProvider({
   const single = selection.selectedRows.length === 1;
   const close = () => {
     setAnchor(null);
+    setPropertyId(null);
     setSearch("");
   };
   useEffect(() => {
@@ -206,6 +220,11 @@ export function DatabaseRowActionsProvider({
       window.removeEventListener("resize", close);
     };
   }, [anchor, items]);
+  useEffect(() => {
+    const previous = previousPropertyId.current;
+    previousPropertyId.current = propertyId;
+    if (previous && !propertyId) propertyItems.current.get(previous)?.focus();
+  }, [propertyId]);
   const open = (element: HTMLElement, rowId?: string) => {
     pendingPanel.current = null;
     if (rowId && !selection.selectedRowIds.has(rowId))
@@ -237,7 +256,7 @@ export function DatabaseRowActionsProvider({
         `Updated ${result.succeeded.length} record${result.succeeded.length === 1 ? "" : "s"}`,
       );
   };
-  const deferredPanel = (next: string) => {
+  const deferredPanel = (next: "icon" | "move") => {
     pendingPanel.current = { next, scope, selection: selectionKey };
     close();
   };
@@ -259,11 +278,7 @@ export function DatabaseRowActionsProvider({
         currentSelection.current !== requested.selection
       )
         return;
-      if (requested.next === "icon" || requested.next === "move") setPanel(requested.next);
-      else {
-        ignorePropertyCloseUntil.current = performance.now() + 250;
-        setPropertyId(requested.next);
-      }
+      setPanel(requested.next);
     });
   };
   const rect = anchorElement.current?.isConnected
@@ -347,37 +362,78 @@ export function DatabaseRowActionsProvider({
             </DropDrawerItem>
           ) : null}
           {editProperties.length ? (
-            <DropDrawerSub>
+            <DropDrawerSub
+              id={propertyMenuId}
+              title="Edit property"
+              onOpenChange={(next) => {
+                if (!next) setPropertyId(null);
+              }}
+            >
               <DropDrawerSubTrigger disabled={!canEdit || pending} title={reason}>
                 <List />
                 <span>Edit property</span>
               </DropDrawerSubTrigger>
-              <DropDrawerSubContent className="w-64">
-                {editProperties.map((item) => {
-                  const kind = getDatabasePropertyType(item.property.type);
-                  const Icon = kind.icon;
-                  return (
-                    <DropDrawerItem
-                      key={item.id}
-                      disabled={[
-                        "formula",
-                        "rollup",
-                        "files",
-                        "relation",
-                        "button",
-                        "created_time",
-                        "last_edited_time",
-                        "created_by",
-                        "last_edited_by",
-                        "id",
-                      ].includes(item.property.type)}
-                      onSelect={() => deferredPanel(item.id)}
-                    >
-                      <Icon />
-                      <span>{item.property.name}</span>
-                    </DropDrawerItem>
-                  );
-                })}
+              <DropDrawerSubContent className={property ? "w-72 p-0" : "w-64"}>
+                {property && value ? (
+                  <div
+                    data-row-property-panel={property.id}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Escape") event.stopPropagation();
+                    }}
+                  >
+                    <DropdownMenuPanelHeader
+                      title={property.property.name}
+                      onBack={() => setPropertyId(null)}
+                      onClose={close}
+                    />
+                    <div>
+                      <DatabaseSelectionPropertyAction
+                        key={property.id}
+                        property={property}
+                        mixed={value.mixed}
+                        value={value.value}
+                        personOptions={personOptions}
+                        onUpdateConfig={updateDatabasePropertyConfig}
+                        onApply={(next) => {
+                          if (canEdit) selection.saveSelectedPropertyValue(property, next);
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  editProperties.map((item) => {
+                    const kind = getDatabasePropertyType(item.property.type);
+                    const Icon = kind.icon;
+                    return (
+                      <DropDrawerItem
+                        key={item.id}
+                        ref={(element) => {
+                          if (element) propertyItems.current.set(item.id, element);
+                          else propertyItems.current.delete(item.id);
+                        }}
+                        disabled={[
+                          "formula",
+                          "rollup",
+                          "files",
+                          "relation",
+                          "button",
+                          "created_time",
+                          "last_edited_time",
+                          "created_by",
+                          "last_edited_by",
+                          "id",
+                        ].includes(item.property.type)}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          setPropertyId(item.id);
+                        }}
+                      >
+                        <Icon />
+                        <span>{item.property.name}</span>
+                      </DropDrawerItem>
+                    );
+                  })
+                )}
               </DropDrawerSubContent>
             </DropDrawerSub>
           ) : null}
@@ -601,23 +657,6 @@ export function DatabaseRowActionsProvider({
           ) : null}
         </PopoverContent>
       </Popover>
-      {property && value ? (
-        <DatabaseSelectionPropertyAction
-          open
-          property={property}
-          mixed={value.mixed}
-          value={value.value}
-          personOptions={personOptions}
-          onUpdateConfig={updateDatabasePropertyConfig}
-          trigger={hiddenAnchor}
-          onOpenChange={(next) => {
-            if (!next && performance.now() >= ignorePropertyCloseUntil.current) setPropertyId(null);
-          }}
-          onApply={(next) => {
-            if (canEdit) selection.saveSelectedPropertyValue(property, next);
-          }}
-        />
-      ) : null}
       <AlertDialog open={trashOpen} onOpenChange={setTrashOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -36,6 +36,7 @@ function DatabaseSelectBadge({
 
 export function DatabasePropertySelect({
   allowCreate = true,
+  inline = false,
   editable = true,
   emptyLabel,
   propertyConfig,
@@ -52,6 +53,7 @@ export function DatabasePropertySelect({
   valueKey = "name",
 }: {
   allowCreate?: boolean;
+  inline?: boolean;
   defaultOptions?: DatabasePropertySelectOption[];
   editable?: boolean;
   emptyLabel?: string;
@@ -275,6 +277,8 @@ export function DatabasePropertySelect({
       </div>
     </>
   );
+
+  if (inline) return <div data-database-property-editor="select">{panel}</div>;
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>

@@ -10,37 +10,39 @@ export function DatabaseSelectionToolbar({
 }) {
   const actions = useDatabaseRowActions();
   return (
-    <ButtonGroup
-      aria-label="Selected row actions"
-      className="database-selection-toolbar"
-      role="toolbar"
-      variant="segmented"
-    >
-      <ButtonGroupItem
-        aria-label={`Clear selection of ${selectedCount} rows`}
-        onClick={clearSelection}
-        tone="accent"
-        type="button"
+    <div className="database-selection-toolbar-layer">
+      <ButtonGroup
+        aria-label="Selected row actions"
+        className="database-selection-toolbar"
+        role="toolbar"
+        variant="segmented"
       >
-        {selectedCount} selected
-      </ButtonGroupItem>
-      <ButtonGroupItem
-        aria-label="Move selected rows to Trash"
-        disabled={!actions?.canTrash || actions.pending}
-        layout="icon"
-        onClick={() => actions?.trash()}
-        type="button"
-      >
-        <Trash2 />
-      </ButtonGroupItem>
-      <ButtonGroupItem
-        aria-label="More selected row actions"
-        layout="icon"
-        onClick={(event) => actions?.open(event.currentTarget)}
-        type="button"
-      >
-        <MoreHorizontal />
-      </ButtonGroupItem>
-    </ButtonGroup>
+        <ButtonGroupItem
+          aria-label={`Clear selection of ${selectedCount} rows`}
+          onClick={clearSelection}
+          tone="accent"
+          type="button"
+        >
+          {selectedCount} selected
+        </ButtonGroupItem>
+        <ButtonGroupItem
+          aria-label="Move selected rows to Trash"
+          disabled={!actions?.canTrash || actions.pending}
+          layout="icon"
+          onClick={() => actions?.trash()}
+          type="button"
+        >
+          <Trash2 />
+        </ButtonGroupItem>
+        <ButtonGroupItem
+          aria-label="More selected row actions"
+          layout="icon"
+          onClick={(event) => actions?.open(event.currentTarget)}
+          type="button"
+        >
+          <MoreHorizontal />
+        </ButtonGroupItem>
+      </ButtonGroup>
+    </div>
   );
 }
