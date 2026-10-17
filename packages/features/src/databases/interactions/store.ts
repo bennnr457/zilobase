@@ -10,7 +10,7 @@ import { applyConfigurationChanges } from "./configuration";
 import { resolveDatabaseBootstrap } from "../cache-references";
 import { refreshTitleMembership, refreshPropertyMembership } from "../queries/invalidation";
 import { valueIdentity } from "../schema/cache-entities";
-import { sharedClient } from "../../data/client";
+import { sharedClient, type SharedClient } from "../../data/client";
 import type { QueryClient } from "@tanstack/react-query";
 import type { ApiFetcher } from "../../shared/api-fetcher";
 import { databaseRecordEntitySchema } from "../core/entities";
@@ -42,6 +42,7 @@ import {
 } from "./model";
 
 type Job = {
+  authorization: ReturnType<SharedClient["capture"]>;
   input: DatabaseCommandInput;
   previewEffects: RecordEffect[];
   promise: Promise<DatabaseCommandAck>;
@@ -60,6 +61,12 @@ type Job = {
   contentChanges?: { pageIds: string[]; propertyIds: string[] };
   synchronizationFailed?: boolean;
   scopeExpired?: boolean;
+  previewStarted?: boolean;
+  delivery?: {
+    promise: Promise<void>;
+    resolve: () => void;
+    reject: (error: Error) => void;
+  };
 };
 type Window = { dataSourceId: string; sourceVersion: number | null };
 
@@ -212,6 +219,7 @@ export class DatabaseController {
     const queued = [...this.jobs.values()].at(-1);
     if (
       queued?.interaction.status === "queued" &&
+      !queued.previewStarted &&
       cellOnly(input) &&
       cellOnly(queued.input) &&
       input.databaseId === queued.input.databaseId &&
@@ -302,6 +310,7 @@ export class DatabaseController {
       fail = reject;
     });
     this.jobs.set(id, {
+      authorization: sharedClient(this.queryClient).capture(),
       input,
       previewEffects: effects,
       promise,
@@ -318,6 +327,38 @@ export class DatabaseController {
     });
     this.publish([...this.snapshot, interaction]);
     this.pump();
+    // Existing records can preview independently while source writes remain ordered.
+    // Wait one microtask so synchronous changes to the same queued row still coalesce.
+    queueMicrotask(() => {
+      const job = this.jobs.get(id);
+      if (this.disposed || !job || job.previewStarted || job.interaction.status !== "queued")
+        return;
+      const command = job.input.command;
+      const owner = sharedClient(this.queryClient);
+      if (!owner.isCurrent(job.authorization)) return;
+      const entities = owner.database(input.databaseId, this.sessionId);
+      if (
+        command.type !== "row.change" ||
+        command.placement ||
+        command.hierarchy ||
+        command.clearSortViewId ||
+        !entities?.databases.records.collection.base.has(command.rowId) ||
+        Object.keys(command.valuesByPropertyId ?? {}).some(
+          (propertyId) => !entities.databases.definitions.collection.base.has(propertyId),
+        )
+      )
+        return;
+      let resolve!: () => void;
+      let reject!: (error: Error) => void;
+      const promise = new Promise<void>((accept, fail) => {
+        resolve = accept;
+        reject = fail;
+      });
+      job.delivery = { promise, resolve, reject };
+      void promise.catch(() => undefined);
+      job.previewStarted = true;
+      void this.save(job);
+    });
     return promise;
   }
 
@@ -347,7 +388,11 @@ export class DatabaseController {
       if (canStart) {
         job.interaction = { ...job.interaction, status: "saving" };
         this.update(job.interaction);
-        void this.save(job);
+        if (job.previewStarted) job.delivery?.resolve();
+        else {
+          job.previewStarted = true;
+          void this.save(job);
+        }
       }
     }
   }
@@ -370,9 +415,15 @@ export class DatabaseController {
     job.previewEffects = this.remapReferences(job.previewEffects);
     try {
       const owner = sharedClient(this.queryClient);
+      const authorization = job.authorization;
+      job.scopeExpired = !owner.isCurrent(authorization);
+      if (job.scopeExpired) throw new Error("Database session ended");
       const entities = owner.database(job.input.databaseId, this.sessionId);
-      const authorization = owner.capture();
       const send = async () => {
+        if (job.delivery) await job.delivery.promise;
+        job.scopeExpired = !owner.isCurrent(authorization);
+        if (this.disposed || !this.jobs.has(job.interaction.id) || job.scopeExpired)
+          throw new Error("Database session ended");
         const ack = await executeDatabaseCommand(this.apiFetch, job.input, {
           isOnline: this.lifecycle.isOnline,
           commandId: job.interaction.id,
@@ -595,7 +646,9 @@ export class DatabaseController {
       this.collect();
       this.pump();
     } catch (cause) {
-      if (this.disposed) return;
+      if (this.disposed || !this.jobs.has(job.interaction.id)) return;
+      job.previewStarted = false;
+      job.delivery = undefined;
       const error = cause instanceof Error ? cause : new Error(String(cause));
       if (error instanceof DatabaseCommandUnconfirmedError) {
         job.interaction = { ...job.interaction, status: "unconfirmed" };
@@ -630,6 +683,7 @@ export class DatabaseController {
           if (!referencesFailed(dependent.input.command)) continue;
           for (const id of createdIds(dependent)) failedIds.add(id);
           this.jobs.delete(dependent.interaction.id);
+          dependent.delivery?.reject(error);
           this.publish(this.snapshot.filter(({ id }) => id !== dependent.interaction.id));
           dependent.release(error);
           dependent.reject(error);
@@ -771,6 +825,7 @@ export class DatabaseController {
     this.disposed = true;
     this.unsubscribe();
     for (const job of this.jobs.values()) {
+      job.delivery?.reject(new Error("Database session ended"));
       job.release(null);
       job.reject(new Error("Database session ended"));
     }

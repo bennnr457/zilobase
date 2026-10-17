@@ -6,6 +6,7 @@ import { DatabaseController } from "./store";
 import { DatabaseCommandUnconfirmedError, DatabaseReconciliationError } from "../mutations/execute";
 import { databaseAccessQueryKey } from "../queries/queries";
 import { pagesQueryKey, pageQueryKey } from "../../pages/queries";
+import { sharedClient } from "../../data/client";
 
 function harness() {
   const requests: Array<{
@@ -73,6 +74,25 @@ function harness() {
 const tick = async () => {
   for (let i = 0; i < 10; i++) await Promise.resolve();
 };
+
+test("queued record writes cannot start delivery after their authorization expires", async () => {
+  const h = harness();
+  try {
+    const first = h.submit("first");
+    const next = h.submit("next");
+    const expired = assert.rejects(next, /session ended/);
+    sharedClient(h.client).clear();
+    h.ack(0);
+    await first;
+    await expired;
+    assert.equal(h.requests.length, 1);
+    assert(
+      h.store.getSnapshot().every((item) => item.status === "committed" && !item.effects.length),
+    );
+  } finally {
+    h.close();
+  }
+});
 
 test("host configuration forms a barrier between record writes without blocking unrelated hosts", async () => {
   const h = harness();

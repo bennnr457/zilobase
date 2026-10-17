@@ -21,6 +21,8 @@ import type {
   DatabaseRecordEntity,
 } from "./core/entities";
 import { sourceLinkIdentity, valueIdentity } from "./schema/cache-entities";
+import { DatabaseController } from "./interactions/store";
+import type { ApiFetcher } from "../shared/api-fetcher";
 
 const stamp = (n: number) => `2026-10-05T00:00:00.${String(n).padStart(3, "0")}Z`;
 function bootstrap(host = "host", position = 0): DatabaseBootstrapResponse {
@@ -155,6 +157,144 @@ function fixture() {
   const databases = new DatabaseCollections(session, pages);
   return { session, pages, databases };
 }
+
+test("fill previews every existing record before ordered delivery and rolls back only a failed cell", async () => {
+  const client = new TestQueryClient();
+  const cache = sharedClient(client);
+  const ref = normalizeDatabaseBootstrap(client, cache.capture(), "host", bootstrap());
+  client.setQueryData(["db", "session", "host", "bootstrap"], ref);
+  const owner = cache.get(ref.cacheId)!;
+  await owner.session.ready();
+  const records = Array.from({ length: 3 }, (_, index) => {
+    const item = record();
+    const id = `record-${index}`;
+    const pageId = `page-${index}`;
+    return {
+      ...item,
+      id,
+      pageId,
+      page: { ...item.page, id: pageId },
+      valuesByPropertyId: {
+        definition: { ...item.valuesByPropertyId.definition!, id: `value-${index}`, pageId },
+      },
+    };
+  });
+  owner.databases.ingestWindow("host", "source", "q-fixture", window(1, records));
+  const requests: Array<{
+    body: { commandId: string };
+    receipt: ReturnType<typeof Promise.withResolvers<unknown>>;
+  }> = [];
+  const controller = new DatabaseController(client, "session", ((_, init) => {
+    const receipt = Promise.withResolvers<unknown>();
+    requests.push({ body: JSON.parse(String(init?.body)), receipt });
+    return receipt.promise;
+  }) as ApiFetcher);
+  const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+  const value = (index: number) =>
+    owner.databases.resolveRecord(records[index]!.id)?.valuesByPropertyId.definition?.value;
+  const confirm = (index: number, recordIndex: number, version: number) => {
+    const request = requests[index]!;
+    const original = records[recordIndex]!;
+    const saved = {
+      ...original,
+      updatedAt: stamp(version),
+      page: { ...original.page, name: "Filled title", updatedAt: stamp(version) },
+      valuesByPropertyId: {
+        definition: {
+          ...original.valuesByPropertyId.definition!,
+          value: "Filled",
+          updatedAt: stamp(version),
+        },
+      },
+    };
+    request.receipt.resolve({
+      commandId: request.body.commandId,
+      result: saved,
+      sourceVersions: { source: version },
+      event: {
+        ...event({ records: [saved], sourceVersions: { source: version } }, version),
+        commandId: request.body.commandId,
+        eventId: request.body.commandId,
+      },
+    });
+  };
+  try {
+    const writes = records.map((item) =>
+      controller.submit(
+        {
+          databaseId: "host",
+          dataSourceId: "source",
+          command: {
+            type: "row.change",
+            rowId: item.id,
+            title: "Filled title",
+            valuesByPropertyId: { definition: "Filled" },
+          },
+        },
+        [
+          {
+            dataSourceId: "source",
+            rowId: item.id,
+            title: "Filled title",
+            values: { definition: "Filled" },
+          },
+        ],
+      ),
+    );
+    const rejected = assert.rejects(writes[1]!, /forbidden/);
+    await tick();
+    assert.equal(requests.length, 1, "source delivery remains serialized");
+    for (let index = 0; index < records.length; index++) {
+      assert.equal(value(index), "Filled", "queued cells render before their request begins");
+      assert.equal(owner.pages.get(records[index]!.pageId)?.name, "Filled title");
+    }
+    confirm(0, 0, 2);
+    await writes[0];
+    await tick();
+    assert.equal(requests.length, 2);
+    requests[1]!.receipt.reject(Object.assign(new Error("forbidden"), { status: 403 }));
+    await rejected;
+    await tick();
+    assert.deepEqual(value(1), ["Value 1"]);
+    assert.equal(owner.pages.get(records[1]!.pageId)?.name, "Page 1");
+    assert.equal(value(0), "Filled");
+    assert.equal(value(2), "Filled", "another queued preview survives the rejection");
+    assert.equal(requests.length, 3);
+    confirm(2, 2, 3);
+    await writes[2];
+    assert.equal(value(2), "Filled");
+
+    const cancelled = records.map((item) =>
+      controller.submit(
+        {
+          databaseId: "host",
+          dataSourceId: "source",
+          command: {
+            type: "row.change",
+            rowId: item.id,
+            valuesByPropertyId: { definition: "Cancelled" },
+          },
+        },
+        [{ dataSourceId: "source", rowId: item.id, values: { definition: "Cancelled" } }],
+      ),
+    );
+    const cancellations = cancelled.map((write) => assert.rejects(write, /session ended/));
+    await tick();
+    assert.equal(requests.length, 4);
+    assert.equal(value(2), "Cancelled");
+    controller.dispose();
+    await Promise.all(cancellations);
+    requests[3]!.receipt.reject(Object.assign(new Error("forbidden"), { status: 403 }));
+    await tick();
+    assert.equal(requests.length, 4, "disposed queued previews never send requests");
+    assert.equal(value(0), "Filled");
+    assert.deepEqual(value(1), ["Value 1"]);
+    assert.equal(value(2), "Filled");
+  } finally {
+    controller.dispose();
+    client.clear();
+  }
+});
 
 test("page metadata confirmations do not require replacement reads but value, placement and lifecycle changes do", async () => {
   const { session, databases } = fixture();
