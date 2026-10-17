@@ -19,6 +19,7 @@ import type { EmbeddedItemsOpenAs } from "@zilobase/features/pages";
 
 export type OpenPageSidePaneOptions = {
   databaseId?: string | null;
+  focusTitle?: boolean;
 };
 
 export type PageSidePaneContextValue = {
@@ -26,6 +27,7 @@ export type PageSidePaneContextValue = {
   closeSidePane: () => void;
   dialogDatabaseId: string | null;
   dialogPageId: string | null;
+  dialogFocusTitle: boolean;
   embeddedItemsOpenAs: EmbeddedItemsOpenAs;
   mainHeader?: ReactNode;
   mainPaneNavigationActive: boolean;
@@ -133,6 +135,7 @@ export function usePageSidePaneState(
   const { getEditorHandle } = usePageEditorRegistry();
   const [dialogPageId, setDialogPageId] = useState<string | null>(null);
   const [dialogDatabaseId, setDialogDatabaseId] = useState<string | null>(null);
+  const [dialogFocusTitle, setDialogFocusTitle] = useState(false);
   const [renderedSidePanePageId, setRenderedSidePanePageId] = useState<string | null>(null);
   const [renderedSidePaneDatabaseId, setRenderedSidePaneDatabaseId] = useState<string | null>(null);
   const [sidePaneAnimatedOpen, setSidePaneAnimatedOpen] = useState(false);
@@ -180,6 +183,7 @@ export function usePageSidePaneState(
   const closeEmbeddedPageDialog = useCallback(() => {
     setDialogPageId(null);
     setDialogDatabaseId(null);
+    setDialogFocusTitle(false);
   }, []);
   const openSidePane = useCallback(
     (nextPageId: string, options?: OpenPageSidePaneOptions) => {
@@ -306,6 +310,7 @@ export function usePageSidePaneState(
           closeSidePane();
           setDialogPageId(nextPageId);
           setDialogDatabaseId(options?.databaseId ?? null);
+          setDialogFocusTitle(options?.focusTitle ?? false);
         }),
       );
     },
@@ -426,6 +431,7 @@ export function usePageSidePaneState(
       closeEmbeddedPageDialog,
       closeSidePane,
       dialogDatabaseId,
+      dialogFocusTitle,
       dialogPageId,
       embeddedItemsOpenAs,
       mainPaneNavigationActive: Boolean(promotedFullPagePath || pendingMainPanePathRef.current),
@@ -447,6 +453,7 @@ export function usePageSidePaneState(
       closeSidePane,
       dialogDatabaseId,
       dialogPageId,
+      dialogFocusTitle,
       embeddedItemsOpenAs,
       promotedFullPagePath,
       openEmbeddedPageDialog,

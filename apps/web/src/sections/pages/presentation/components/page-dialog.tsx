@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Effect } from "effect";
 import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -29,7 +29,29 @@ export function PageDialog({
   readOnly?: boolean;
 }) {
   const { openPage } = useOpenEmbeddedPage({ contextPageId, databaseId, page: hostPage });
-  const { closeEmbeddedPageDialog, dialogDatabaseId, dialogPageId } = usePageSidePane();
+  const { closeEmbeddedPageDialog, dialogDatabaseId, dialogPageId, dialogFocusTitle } =
+    usePageSidePane();
+  const [panel, setPanel] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!dialogPageId || !dialogFocusTitle || !panel || readOnly) return;
+    const focus = () => {
+      const title = panel.querySelector<HTMLTextAreaElement>('textarea[aria-label="Page title"]');
+      if (!title || title.readOnly) return false;
+      title.focus({ preventScroll: true });
+      return true;
+    };
+    if (focus()) return;
+    const observer = new MutationObserver(() => {
+      if (focus()) observer.disconnect();
+    });
+    observer.observe(panel, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["readonly"],
+    });
+    return () => observer.disconnect();
+  }, [dialogPageId, dialogFocusTitle, readOnly, panel]);
   const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -52,11 +74,13 @@ export function PageDialog({
       open={dialogPageId !== null}
     >
       <DialogContent
+        ref={setPanel}
         className="flex h-[90dvh] max-h-[90dvh] min-h-0 w-full flex-col gap-0 overflow-hidden p-0 dark:bg-surface-navigation sm:h-[90vh] sm:max-h-[90vh] sm:max-w-4xl"
         data-page-dialog-panel
-        onOpenAutoFocus={() => {
+        onOpenAutoFocus={(event) => {
           returnFocus.current =
             document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          if (dialogFocusTitle) event.preventDefault();
         }}
         onCloseAutoFocus={(event) => {
           if (returnFocus.current?.isConnected) {

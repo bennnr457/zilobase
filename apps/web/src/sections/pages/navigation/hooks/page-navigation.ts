@@ -30,7 +30,7 @@ export function useOpenEmbeddedPage({
   } = usePageSidePane();
 
   const openPage = useCallback(
-    (pageId: string, options?: OpenPageSidePaneOptions) =>
+    (pageId: string, options?: OpenPageOptions) =>
       Effect.runSync(
         Effect.gen(function* () {
           if (isMobileViewport()) {
@@ -45,7 +45,7 @@ export function useOpenEmbeddedPage({
             page,
             readPublishedEmbeddedItemsOpenAs,
           );
-          const usesDialog = mode === "dialog";
+          const usesDialog = options?.presentation === "dialog" || mode === "dialog";
           const activePageId = usesDialog ? dialogPageId : sidePanePageId;
           const isCurrentlyOpen = activePageId === pageId;
 
@@ -62,7 +62,10 @@ export function useOpenEmbeddedPage({
 
           if (usesDialog) {
             yield* Effect.sync(() =>
-              openEmbeddedPageDialog(pageId, { databaseId: options?.databaseId ?? databaseId }),
+              openEmbeddedPageDialog(pageId, {
+                databaseId: options?.databaseId ?? databaseId,
+                focusTitle: options?.focusTitle,
+              }),
             );
             return;
           }
@@ -90,6 +93,4 @@ export function useOpenEmbeddedPage({
   return { openPage };
 }
 
-export type OpenPageOptions = {
-  databaseId?: string | null;
-};
+export type OpenPageOptions = OpenPageSidePaneOptions & { presentation?: "dialog" };

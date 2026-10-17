@@ -69,7 +69,7 @@ function DatabaseBlockView({
         hideWhenDeleted
         includeDeleted
         onDeleted={removeDeletedBlock}
-        onOpenPage={(pageId) => options.onOpenPage?.(pageId, { databaseId })}
+        onOpenPage={(pageId, opening) => options.onOpenPage?.(pageId, { ...opening, databaseId })}
         onDismissSetup={() => updateAttributes({ setupMode: false })}
         onSetupComplete={() => updateAttributes({ setupMode: false })}
         onShowTitleChange={(nextShowTitle) => updateAttributes({ showTitle: nextShowTitle })}
