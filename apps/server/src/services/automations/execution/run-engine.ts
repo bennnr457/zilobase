@@ -46,7 +46,8 @@ export async function processDatabaseAutomationRun(
   env: RuntimeEnv,
   input: { runId: string; workerId: string },
 ) {
-  if (!isDatabaseAutomationExecutionEnabled(env)) return { outcome: "noop" as const };
+  if (!isDatabaseAutomationExecutionEnabled(env))
+    return { outcome: "retry" as const, availableAt: new Date(Date.now() + 60_000).toISOString() };
   try {
     const result = await drainDatabaseAutomationRuns(env, {
       limit: 1,

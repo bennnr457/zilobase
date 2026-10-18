@@ -208,7 +208,11 @@ export function createNodeQueueRuntime(
               throw new UnrecoverableError("BACKGROUND_INVALID_ENVELOPE");
             }
             try {
-              const result = await callbacks.deliver(job.data, lane, `${workerId}:${job.id}`);
+              const result = await callbacks.deliver(
+                job.data,
+                lane,
+                `${workerId}:${job.id}:${crypto.randomUUID()}`,
+              );
               if (result.outcome === "defer") {
                 await job.moveToDelayed(
                   Math.max(Date.now() + 1000, Date.parse(result.availableAt)),

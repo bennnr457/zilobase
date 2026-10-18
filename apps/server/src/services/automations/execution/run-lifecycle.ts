@@ -13,11 +13,12 @@ import {
   RetryableAutomationActionError,
   actionFailure,
   isAutomationLeaseLost,
+  isRetryableAutomationDatabaseError,
 } from "./action-error";
 import { type ExecutionContext, loadExecutionContext } from "./execution-context";
 import { restoreStepOutput, requireOwner } from "../actions/action-values";
 
-import { renewRunLease } from "./run-claims";
+import { lockOwnedAutomationRun, ownedRunPredicate, renewRunLease } from "./run-claims";
 import { executeClaimedStep } from "./run-step";
 
 export async function executeClaimedRun(runId: string, workerId: string, env: RuntimeEnv) {
@@ -44,6 +45,10 @@ export async function executeClaimedRun(runId: string, workerId: string, env: Ru
         throw new AutomationActionError("Automation run lease was lost", "AUTOMATION_LEASE_LOST");
       }
     });
+  } catch (error) {
+    if (isRetryableAutomationDatabaseError(error)) throw error;
+    if (isAutomationLeaseLost(error)) return "retry" as const;
+    throw error;
   } finally {
     clearInterval(heartbeat);
   }
@@ -59,10 +64,11 @@ async function executeRunWithLease(
   try {
     loaded = await loadExecutionContext(runId, workerId);
   } catch (error) {
+    if (isRetryableAutomationDatabaseError(error)) throw error;
     await failClaimedRun(runId, workerId, actionFailure(error));
     return "failed" as const;
   }
-  if (!loaded) return "failed" as const;
+  if (!loaded) return "retry" as const;
   const context: ExecutionContext = {
     ...loaded,
     actionOutputs: {},
@@ -111,54 +117,50 @@ async function executeRunWithLease(
 
     const now = new Date();
     await db.transaction(async (tx) => {
-      await tx
+      const owned = await lockOwnedAutomationRun(tx, runId, workerId);
+      const [updated] = await tx
         .update(databaseAutomationRun)
         .set({
           finishedAt: now,
           leaseExpiresAt: null,
           leaseOwner: null,
           status: "succeeded",
+          errorCode: null,
+          errorSummary: null,
           updatedAt: now,
         })
-        .where(
-          and(eq(databaseAutomationRun.id, runId), eq(databaseAutomationRun.leaseOwner, workerId)),
-        );
+        .where(ownedRunPredicate(runId, workerId))
+        .returning({ id: databaseAutomationRun.id });
+      if (!updated)
+        throw new AutomationActionError("Automation run lease was lost", "AUTOMATION_LEASE_LOST");
       await tx
         .update(databaseAutomation)
         .set({ lastRunAt: now, lastRunStatus: "succeeded", updatedAt: now })
-        .where(eq(databaseAutomation.id, context.automation.id));
+        .where(
+          and(
+            eq(databaseAutomation.id, owned.automationId),
+            eq(databaseAutomation.status, "active"),
+            eq(databaseAutomation.currentRevisionId, owned.revisionId),
+          ),
+        );
     });
     return "succeeded" as const;
   } catch (error) {
+    if (isRetryableAutomationDatabaseError(error)) throw error;
     if (isAutomationLeaseLost(error)) return "retry" as const;
     if (error instanceof RetryableAutomationActionError) return "retry" as const;
     const failure = actionFailure(error);
-    await failClaimedRun(runId, workerId, failure, context.automation.id);
+    await assertLease();
+    await failClaimedRun(runId, workerId, failure);
     return "failed" as const;
   }
 }
 
-async function failClaimedRun(
-  runId: string,
-  workerId: string,
-  failure: AutomationActionError,
-  knownAutomationId?: string,
-) {
-  const automationId =
-    knownAutomationId ??
-    (
-      await db
-        .select({ automationId: databaseAutomationRun.automationId })
-        .from(databaseAutomationRun)
-        .where(
-          and(eq(databaseAutomationRun.id, runId), eq(databaseAutomationRun.leaseOwner, workerId)),
-        )
-        .limit(1)
-    )[0]?.automationId;
-  if (!automationId) return;
+async function failClaimedRun(runId: string, workerId: string, failure: AutomationActionError) {
   const now = new Date();
   await db.transaction(async (tx) => {
-    await tx
+    const owned = await lockOwnedAutomationRun(tx, runId, workerId);
+    const [updated] = await tx
       .update(databaseAutomationRun)
       .set({
         errorCode: failure.code,
@@ -169,9 +171,10 @@ async function failClaimedRun(
         status: "failed",
         updatedAt: now,
       })
-      .where(
-        and(eq(databaseAutomationRun.id, runId), eq(databaseAutomationRun.leaseOwner, workerId)),
-      );
+      .where(ownedRunPredicate(runId, workerId))
+      .returning({ id: databaseAutomationRun.id });
+    if (!updated)
+      throw new AutomationActionError("Automation run lease was lost", "AUTOMATION_LEASE_LOST");
     await tx
       .update(databaseAutomation)
       .set({
@@ -185,23 +188,32 @@ async function failClaimedRun(
         status: "error",
         updatedAt: now,
       })
-      .where(eq(databaseAutomation.id, automationId));
+      .where(
+        and(
+          eq(databaseAutomation.id, owned.automationId),
+          eq(databaseAutomation.status, "active"),
+          eq(databaseAutomation.currentRevisionId, owned.revisionId),
+        ),
+      );
   });
 }
 
 async function skipClaimedRun(runId: string, workerId: string, skipReason: string) {
-  const now = new Date();
-  await db
-    .update(databaseAutomationRun)
-    .set({
-      finishedAt: now,
-      leaseExpiresAt: null,
-      leaseOwner: null,
-      skipReason,
-      status: "skipped",
-      updatedAt: now,
-    })
-    .where(
-      and(eq(databaseAutomationRun.id, runId), eq(databaseAutomationRun.leaseOwner, workerId)),
-    );
+  await db.transaction(async (tx) => {
+    await lockOwnedAutomationRun(tx, runId, workerId);
+    const [updated] = await tx
+      .update(databaseAutomationRun)
+      .set({
+        finishedAt: new Date(),
+        leaseExpiresAt: null,
+        leaseOwner: null,
+        skipReason,
+        status: "skipped",
+        updatedAt: new Date(),
+      })
+      .where(ownedRunPredicate(runId, workerId))
+      .returning({ id: databaseAutomationRun.id });
+    if (!updated)
+      throw new AutomationActionError("Automation run lease was lost", "AUTOMATION_LEASE_LOST");
+  });
 }

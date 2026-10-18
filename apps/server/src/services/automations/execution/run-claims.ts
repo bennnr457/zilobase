@@ -2,9 +2,41 @@ import { and, asc, eq, gt, inArray, lte, or, sql } from "drizzle-orm";
 
 import { db } from "../../../infrastructure/database";
 import { databaseAutomationRun } from "../../../infrastructure/database/schema";
+import { AutomationActionError } from "./action-error";
 
 const RUN_LEASE_MS = 2 * 60_000;
 const WORKSPACE_RUN_LIMIT = 10;
+
+export type AutomationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export const ownedRunPredicate = (runId: string, workerId: string) =>
+  and(
+    eq(databaseAutomationRun.id, runId),
+    eq(databaseAutomationRun.status, "running"),
+    eq(databaseAutomationRun.leaseOwner, workerId),
+    gt(databaseAutomationRun.leaseExpiresAt, sql`clock_timestamp()`),
+  );
+
+// Hold the claim lock while changing step or run bookkeeping so a recovery
+// worker cannot acquire ownership between the check and the writes.
+export async function lockOwnedAutomationRun(
+  tx: AutomationTransaction,
+  runId: string,
+  workerId: string,
+) {
+  const [run] = await tx
+    .select({
+      id: databaseAutomationRun.id,
+      automationId: databaseAutomationRun.automationId,
+      revisionId: databaseAutomationRun.revisionId,
+    })
+    .from(databaseAutomationRun)
+    .where(ownedRunPredicate(runId, workerId))
+    .for("update");
+  if (!run)
+    throw new AutomationActionError("Automation run lease was lost", "AUTOMATION_LEASE_LOST");
+  return run;
+}
 
 export function selectWorkspaceRunClaims(
   candidates: Array<{ id: string; workspaceId: string }>,
@@ -119,13 +151,7 @@ export async function renewRunLease(runId: string, workerId: string) {
       leaseExpiresAt: sql`current_timestamp + (${RUN_LEASE_MS} * interval '1 millisecond')`,
       updatedAt: sql`current_timestamp`,
     })
-    .where(
-      and(
-        eq(databaseAutomationRun.id, runId),
-        eq(databaseAutomationRun.status, "running"),
-        eq(databaseAutomationRun.leaseOwner, workerId),
-      ),
-    )
+    .where(ownedRunPredicate(runId, workerId))
     .returning({ id: databaseAutomationRun.id });
   return Boolean(renewed);
 }

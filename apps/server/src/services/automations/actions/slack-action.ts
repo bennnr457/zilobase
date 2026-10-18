@@ -9,7 +9,11 @@ import {
 } from "../../../infrastructure/database/schema";
 import { invalidateDatabaseAutomationDependencies } from "../service";
 import { listSlackChannels, sendSlackMessage, SlackProviderError } from "./slack-provider";
-import { AutomationActionError, RetryableAutomationActionError } from "../execution/action-error";
+import {
+  AutomationActionError,
+  RetryableAutomationActionError,
+  isRetryableAutomationDatabaseError,
+} from "../execution/action-error";
 import { type ExecutionContext } from "../execution/execution-context";
 import { displayValue, resolveExpression, requireOwner } from "./action-values";
 import { measureBackgroundProvider } from "../../../infrastructure/background/telemetry";
@@ -134,6 +138,7 @@ export async function executeSlackAction(
       .where(eq(databaseAutomationDelivery.deliveryId, deliveryId));
     return { deliveryId, messageTs: result.messageTs, reused: false };
   } catch (error) {
+    if (isRetryableAutomationDatabaseError(error)) throw error;
     if (error instanceof SlackProviderError && error.code === "SLACK_CONNECTION_REVOKED")
       await markSlackConnectionRevoked(connection.id, error);
     const failure =

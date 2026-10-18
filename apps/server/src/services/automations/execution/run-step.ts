@@ -1,20 +1,25 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { type RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import {
   databaseAutomationRun,
   databaseAutomationStepRun,
 } from "../../../infrastructure/database/schema";
-
 import {
   AutomationActionError,
   RetryableAutomationActionError,
   actionFailure,
   isAutomationLeaseLost,
+  isRetryableAutomationDatabaseError,
 } from "./action-error";
 import { type ExecutionContext } from "./execution-context";
 import { restoreStepOutput, toJson } from "../actions/action-values";
 import { executeAction } from "./action-executor";
+import {
+  lockOwnedAutomationRun,
+  ownedRunPredicate,
+  type AutomationTransaction,
+} from "./run-claims";
 import { createBackgroundTask } from "../../../infrastructure/background/contracts";
 import {
   dispatchBackgroundTasks,
@@ -25,35 +30,47 @@ export async function executeClaimedStep(
   context: ExecutionContext,
   action: ExecutionContext["definition"]["actions"][number],
   actionIndex: number,
-  execution: {
-    workerId: string;
-    env: RuntimeEnv;
-    assertLease: () => Promise<void>;
-  },
+  execution: { workerId: string; env: RuntimeEnv; assertLease: () => Promise<void> },
 ) {
   const { workerId, env, assertLease } = execution;
   const runId = context.run.id;
   await assertLease();
-  const step = await startStep(context.run.id, action.id, actionIndex);
+  const step = await db.transaction(async (tx) => {
+    await lockOwnedAutomationRun(tx, runId, workerId);
+    return startStep(tx, runId, action.id, actionIndex);
+  });
+  if (step.status === "succeeded") {
+    restoreStepOutput(context, action.id, step.outputSummary);
+    return "completed" as const;
+  }
   try {
     await assertLease();
     const output = await executeAction(context, action, env);
     await assertLease();
-    await db
-      .update(databaseAutomationStepRun)
-      .set({
-        finishedAt: new Date(),
-        outputSummary: toJson(output),
-        status: "succeeded",
-        updatedAt: new Date(),
-      })
-      .where(eq(databaseAutomationStepRun.id, step.id));
+    await db.transaction(async (tx) => {
+      await lockOwnedAutomationRun(tx, runId, workerId);
+      await tx
+        .update(databaseAutomationStepRun)
+        .set({
+          finishedAt: new Date(),
+          outputSummary: toJson(output),
+          status: "succeeded",
+          errorCode: null,
+          errorSummary: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(databaseAutomationStepRun.id, step.id));
+    });
     restoreStepOutput(context, action.id, output);
   } catch (error) {
+    if (isRetryableAutomationDatabaseError(error)) throw error;
     if (isAutomationLeaseLost(error)) return "retry" as const;
+    // A provider can fail after the heartbeat has observed a lost lease.
+    await assertLease();
     const failure = actionFailure(error, action.id);
     if (failure instanceof RetryableAutomationActionError) {
       await backgroundTransaction(env, async (tx) => {
+        await lockOwnedAutomationRun(tx, runId, workerId);
         await tx
           .update(databaseAutomationStepRun)
           .set({
@@ -64,7 +81,7 @@ export async function executeClaimedStep(
             updatedAt: new Date(),
           })
           .where(eq(databaseAutomationStepRun.id, step.id));
-        await tx
+        const [updated] = await tx
           .update(databaseAutomationRun)
           .set({
             availableAt: failure.availableAt,
@@ -75,12 +92,10 @@ export async function executeClaimedStep(
             status: "queued",
             updatedAt: new Date(),
           })
-          .where(
-            and(
-              eq(databaseAutomationRun.id, runId),
-              eq(databaseAutomationRun.leaseOwner, workerId),
-            ),
-          );
+          .where(ownedRunPredicate(runId, workerId))
+          .returning({ id: databaseAutomationRun.id });
+        if (!updated)
+          throw new AutomationActionError("Automation run lease was lost", "AUTOMATION_LEASE_LOST");
         await dispatchBackgroundTasks(env, [
           createBackgroundTask({
             availableAt: failure.availableAt,
@@ -92,25 +107,33 @@ export async function executeClaimedStep(
       });
       return "retry" as const;
     }
-    await db
-      .update(databaseAutomationStepRun)
-      .set({
-        errorCode: failure.code,
-        errorSummary: failure.message,
-        finishedAt: new Date(),
-        status: "failed",
-        updatedAt: new Date(),
-      })
-      .where(eq(databaseAutomationStepRun.id, step.id));
+    await db.transaction(async (tx) => {
+      await lockOwnedAutomationRun(tx, runId, workerId);
+      await tx
+        .update(databaseAutomationStepRun)
+        .set({
+          errorCode: failure.code,
+          errorSummary: failure.message,
+          finishedAt: new Date(),
+          status: "failed",
+          updatedAt: new Date(),
+        })
+        .where(eq(databaseAutomationStepRun.id, step.id));
+    });
     throw failure;
   }
   return "completed" as const;
 }
 
-async function startStep(runId: string, actionId: string, actionIndex: number) {
+async function startStep(
+  tx: AutomationTransaction,
+  runId: string,
+  actionId: string,
+  actionIndex: number,
+) {
   const idempotencyKey = `${runId}:${actionId}`;
   const now = new Date();
-  const [created] = await db
+  const [created] = await tx
     .insert(databaseAutomationStepRun)
     .values({
       actionId,
@@ -127,14 +150,14 @@ async function startStep(runId: string, actionId: string, actionIndex: number) {
     .onConflictDoNothing()
     .returning();
   if (created) return created;
-  const [existing] = await db
+  const [existing] = await tx
     .select()
     .from(databaseAutomationStepRun)
     .where(eq(databaseAutomationStepRun.idempotencyKey, idempotencyKey))
     .limit(1);
   if (!existing) throw new AutomationActionError("Action receipt was unavailable");
   if (existing.status === "succeeded") return existing;
-  const [claimed] = await db
+  const [claimed] = await tx
     .update(databaseAutomationStepRun)
     .set({
       attempts: existing.attempts + 1,
@@ -144,5 +167,6 @@ async function startStep(runId: string, actionId: string, actionIndex: number) {
     })
     .where(eq(databaseAutomationStepRun.id, existing.id))
     .returning();
-  return claimed!;
+  if (!claimed) throw new AutomationActionError("Action receipt was unavailable");
+  return claimed;
 }

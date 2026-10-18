@@ -1,3 +1,21 @@
+import { isDatabaseUnavailableError } from "../../../shared/errors/database-errors";
+
+export function isRetryableAutomationDatabaseError(error: unknown): boolean {
+  if (isDatabaseUnavailableError(error)) return true;
+  const pending = [error];
+  const seen = new Set<unknown>();
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current || typeof current !== "object" || seen.has(current)) continue;
+    seen.add(current);
+    const record = current as { code?: unknown; cause?: unknown; errors?: unknown };
+    if (record.code === "40001" || record.code === "40P01") return true;
+    pending.push(record.cause);
+    if (Array.isArray(record.errors)) pending.push(...record.errors);
+  }
+  return false;
+}
+
 export class AutomationActionError extends Error {
   constructor(
     message: string,

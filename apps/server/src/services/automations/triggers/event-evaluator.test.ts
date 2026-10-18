@@ -211,3 +211,16 @@ test("event windows discard missing rows and respect execution disablement", asy
   assert.equal(state.writes.at(-1)?.terminalReason, "row_unavailable");
   assert.deepEqual(state.runs, []);
 });
+
+test("disabled event delivery is deferred for sixty seconds", async () => {
+  const { processDatabaseAutomationEventWindow } = await import("./event-evaluator");
+  const before = Date.now();
+  const result = await processDatabaseAutomationEventWindow(
+    { DATABASE_AUTOMATIONS_EXECUTION_DISABLED: "true" },
+    { windowId: "window", workerId: "worker" },
+  );
+  assert.equal(result.outcome, "retry");
+  assert.ok("availableAt" in result);
+  assert.ok(new Date(result.availableAt!).getTime() >= before + 60_000);
+  assert.equal(state.writes.length, 0);
+});

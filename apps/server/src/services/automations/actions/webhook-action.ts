@@ -14,7 +14,11 @@ import {
 } from "../../../infrastructure/database/schema";
 import { decryptAutomationSecret } from "./secret-crypto";
 import { sendPinnedWebhook, validateWebhookHeaderName, WebhookEgressError } from "./webhook-egress";
-import { AutomationActionError, RetryableAutomationActionError } from "../execution/action-error";
+import {
+  AutomationActionError,
+  RetryableAutomationActionError,
+  isRetryableAutomationDatabaseError,
+} from "../execution/action-error";
 import { type ExecutionContext } from "../execution/execution-context";
 import { resolveExpression, toJson, requireOwner } from "./action-values";
 import { measureBackgroundProvider } from "../../../infrastructure/background/telemetry";
@@ -161,6 +165,7 @@ export async function executeWebhookAction(
       .where(eq(databaseAutomationDelivery.deliveryId, deliveryId));
     return { deliveryId, responseStatus: result.status, reused: false };
   } catch (error) {
+    if (isRetryableAutomationDatabaseError(error)) throw error;
     const failure =
       error instanceof WebhookEgressError
         ? error

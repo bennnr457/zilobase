@@ -16,6 +16,7 @@ const url = process.env.ZILOBASE_QUEUE_VERIFY_URL;
 assert.ok(url && new URL(url).hostname === "127.0.0.1", "Disposable queue Redis is required");
 const cell = crypto.randomUUID();
 const env = { QUEUE_REDIS_URL: url, ZILOBASE_CELL_ID: cell };
+const deliveryOwners = new Map<string, string[]>();
 const effects: string[] = [];
 const exhausted: string[] = [];
 const attempts = new Map<string, number>();
@@ -28,8 +29,9 @@ const callbacks = {
   exhausted: async (body: unknown) => {
     exhausted.push(decodeBackgroundTaskV2(body, cell).resourceId);
   },
-  deliver: async (body: unknown) => {
+  deliver: async (body: unknown, _lane: unknown, owner: string) => {
     const task = decodeBackgroundTaskV2(body, cell);
+    deliveryOwners.set(task.resourceId, [...(deliveryOwners.get(task.resourceId) ?? []), owner]);
     attempts.set(task.resourceId, (attempts.get(task.resourceId) ?? 0) + 1);
     if (task.resourceId === "held")
       await new Promise<void>((resolve) => {
@@ -103,6 +105,11 @@ try {
   ]);
   await until(() => exhausted.includes("unexpected"));
   assert.equal(attempts.get("unexpected"), 6, "Initial attempt plus five transport redeliveries");
+  assert.equal(
+    new Set(deliveryOwners.get("unexpected")).size,
+    6,
+    "Each redelivery has a fresh lease owner",
+  );
   await producer.dispatch([
     createBackgroundTaskV2({ env, kind: "notification.publish", resourceId: "held" }),
   ]);

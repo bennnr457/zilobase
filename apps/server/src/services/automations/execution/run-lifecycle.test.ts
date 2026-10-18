@@ -26,8 +26,13 @@ vi.mock("../../../infrastructure/database", () => {
     transaction<T>(work: (tx: Record<string, unknown>) => Promise<T>): Promise<T> {
       return work(db);
     },
-    select() {
-      const rows = mocks.selectRows.shift();
+    select(fields?: Record<string, unknown>) {
+      const rows =
+        fields?.automationId && fields?.revisionId
+          ? mocks.renewed
+            ? [{ id: "run-1", automationId: "automation-1", revisionId: "pinned-revision" }]
+            : []
+          : mocks.selectRows.shift();
       if (!rows) throw new Error("Unexpected database read");
       const builder = {
         from() {
@@ -200,7 +205,7 @@ describe("claimed automation run lifecycle", () => {
       "run-1:action-1",
     );
     const terminal = writes("database_automation_run", "succeeded")[0]!;
-    expect(sqlQuery(terminal.where).params).toEqual(["run-1", "worker-1"]);
+    expect(sqlQuery(terminal.where).params).toEqual(["run-1", "running", "worker-1"]);
     expect(
       mocks.queries.map(sqlQuery).some((query) => query.sql.includes("pg_advisory_xact_lock")),
     ).toBe(true);
@@ -335,4 +340,92 @@ describe("claimed automation run lifecycle", () => {
     ).rejects.toBeInstanceOf(AutomationRunCapacityError);
     expect(mocks.action).not.toHaveBeenCalled();
   });
+});
+
+describe("automation recovery regressions", () => {
+  it("durably defers disabled execution instead of completing the delivery", async () => {
+    const { processDatabaseAutomationRun } = await import("./run-engine");
+    const { runBackgroundDelivery } = await import("../../../app/background/delivery");
+    const store = {
+      load: vi.fn().mockResolvedValue("ready"),
+      complete: vi.fn(),
+      reschedule: vi.fn(),
+    };
+    await runBackgroundDelivery({
+      body: {
+        version: 2,
+        cellId: "default",
+        taskId: crypto.randomUUID(),
+        kind: "automation.run",
+        resourceId: "run-1",
+        availableAt: new Date().toISOString(),
+      },
+      cellId: "default",
+      lane: "automation",
+      store,
+      execute: () =>
+        processDatabaseAutomationRun(
+          { DATABASE_AUTOMATIONS_EXECUTION_DISABLED: "true" },
+          { runId: "run-1", workerId: "worker-1" },
+        ),
+    });
+    expect(store.complete).not.toHaveBeenCalled();
+    expect(store.reschedule).toHaveBeenCalledWith(expect.anything(), "2026-01-01T00:01:00.000Z");
+  });
+
+  it("does not fail a step or automation after losing its lease during a failing action", async () => {
+    prepare();
+    const action = Promise.withResolvers<Record<string, unknown>>();
+    mocks.action.mockReturnValue(action.promise);
+    const run = drainDatabaseAutomationRuns(env, { workerId: "worker-1" });
+    await vi.advanceTimersByTimeAsync(0);
+    mocks.renewed = false;
+    await vi.advanceTimersByTimeAsync(30_000);
+    action.reject(new AutomationActionError("Provider rejected", "PROVIDER_DENIED"));
+    await run;
+    expect(writes("database_automation_step_run", "failed")).toHaveLength(0);
+    expect(writes("database_automation", "error")).toHaveLength(0);
+  });
+
+  it("propagates temporary context database failures for transport retry", async () => {
+    prepare();
+    const error = Object.assign(new Error("connection reset"), { code: "ECONNRESET" });
+    mocks.context.mockRejectedValue(error);
+    mocks.selectRows.splice(2, 1, [{ automationId: "automation-1" }]);
+    await expect(drainDatabaseAutomationRuns(env, { workerId: "worker-1" })).rejects.toBe(error);
+    expect(writes("database_automation", "error")).toHaveLength(0);
+  });
+});
+
+it.each(["ECONNRESET", "40001", "40P01"])(
+  "retries wrapped database failure %s during an action without terminal writes",
+  async (code) => {
+    prepare();
+    const error = new Error("query failed", { cause: { code } });
+    mocks.action.mockRejectedValue(error);
+    await expect(drainDatabaseAutomationRuns(env, { workerId: "worker-1" })).rejects.toBe(error);
+    expect(writes("database_automation", "error")).toHaveLength(0);
+    expect(writes("database_automation_step_run", "failed")).toHaveLength(0);
+  },
+);
+
+it("reuses a successful receipt found after loading context", async () => {
+  prepare();
+  mocks.receiptCreated = false;
+  mocks.selectRows.push([
+    { id: "step-existing", status: "succeeded", outputSummary: { variables: { restored: 7 } } },
+  ]);
+  await drainDatabaseAutomationRuns(env, { workerId: "worker-1" });
+  expect(mocks.action).not.toHaveBeenCalled();
+  expect(writes("database_automation_step_run", "succeeded")).toHaveLength(0);
+});
+
+it("fences parent failure updates to the active pinned revision", async () => {
+  prepare();
+  mocks.action.mockRejectedValue(new AutomationActionError("Failed"));
+  await drainDatabaseAutomationRuns(env, { workerId: "worker-1" });
+  const failure = writes("database_automation", "error")[0]!;
+  expect(sqlQuery(failure.where).params).toEqual(["automation-1", "active", "pinned-revision"]);
+  const predicates = mocks.predicates.map(sqlQuery);
+  expect(predicates.some(({ sql }) => sql.includes("clock_timestamp()"))).toBe(true);
 });

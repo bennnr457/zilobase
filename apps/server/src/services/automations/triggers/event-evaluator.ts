@@ -33,6 +33,7 @@ import { recordRecoveredBackgroundLease } from "../../../infrastructure/backgrou
 import { requireDataSourceAccess } from "../../databases/access/data-source-access";
 import { promoteClosedDatabaseAutomationEventWindows } from "./event-capture";
 import { matchesDatabaseAutomationEvent } from "./trigger-evaluator";
+import { isRetryableAutomationDatabaseError } from "../execution/action-error";
 
 const EVENT_LEASE_MS = 60_000;
 
@@ -110,6 +111,7 @@ export async function drainDatabaseAutomationEventWindows(
       runsCreated += runIds.length;
       completed += 1;
     } catch (error) {
+      if (isRetryableAutomationDatabaseError(error)) throw error;
       const attempts = window.attempts + 1;
       const availableAt = new Date(Date.now() + Math.min(60_000, 1_000 * 2 ** attempts));
       await backgroundTransaction(env, async () => {
@@ -150,7 +152,8 @@ export async function processDatabaseAutomationEventWindow(
   env: RuntimeEnv,
   input: { windowId: string; workerId: string },
 ) {
-  if (!isDatabaseAutomationExecutionEnabled(env)) return { outcome: "noop" as const };
+  if (!isDatabaseAutomationExecutionEnabled(env))
+    return { outcome: "retry" as const, availableAt: new Date(Date.now() + 60_000).toISOString() };
   const result = await drainDatabaseAutomationEventWindows(env, {
     limit: 1,
     windowId: input.windowId,
@@ -284,7 +287,8 @@ async function evaluateWindow(env: RuntimeEnv, windowId: string, workerId: strin
       if (!skipReason && record.automation.ownerUserId) {
         try {
           await requireDataSourceAccess(window.dataSourceId, record.automation.ownerUserId, "full");
-        } catch {
+        } catch (error) {
+          if (isRetryableAutomationDatabaseError(error)) throw error;
           skipReason = "revoked_authority";
         }
       } else if (!record.automation.ownerUserId) {
