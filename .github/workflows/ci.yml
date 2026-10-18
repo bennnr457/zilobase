@@ -45,3 +45,71 @@ jobs:
       - run: npm run verify:core
       - run: npm run lint
       - run: npm run verify:architecture
+
+  runtime-adapters:
+    name: Runtime adapters
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p .test-results/adapters
+      - run: npm test --workspace @zilobase/runtime-adapter -- --reporter=default --reporter=junit --outputFile=../../.test-results/adapters/node.xml
+      - run: npm run test:workers --workspace @zilobase/runtime-adapter -- --reporter=default --reporter=junit --outputFile=../../.test-results/adapters/worker.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-adapter-results
+          path: .test-results/adapters/
+          if-no-files-found: warn
+
+  automation-acceptance:
+    name: Automation ${{ matrix.runtime }} acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [node, worker]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: docker pull postgres:17.10-alpine
+      - run: docker pull valkey/valkey:8-alpine
+      - run: npm run test:automations:${{ matrix.runtime }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: automation-${{ matrix.runtime }}-results
+          path: .test-results/automations/
+          if-no-files-found: warn
+
+  background-recovery:
+    name: Background recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: docker pull postgres:17.10-alpine
+      - run: docker pull valkey/valkey:8-alpine
+      - run: mkdir -p .test-results/background
+      - run: npm run test:background:isolated 2>&1 | tee .test-results/background/recovery.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: background-recovery-results
+          path: .test-results/background/
+          if-no-files-found: warn
