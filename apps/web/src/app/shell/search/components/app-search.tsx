@@ -3,6 +3,9 @@ import type { AppSearchResult as SearchResult } from "@zilobase/features/search"
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { DatabaseIcon } from "@/components/icons";
+import { useZilobaseFeatures } from "@zilobase/features";
+import { useSharedDataRevision } from "@zilobase/features/data/react";
+import { readCachedPage } from "@zilobase/features/pages";
 
 import {
   Command,
@@ -123,6 +126,9 @@ function useDebouncedValue<T>(value: T, delay: number) {
 }
 
 function ResultIcon({ result }: { result: SearchResult }) {
+  const { queryClient } = useZilobaseFeatures();
+  useSharedDataRevision(queryClient);
+  const page = result.type === "page" ? readCachedPage(queryClient, result.id) : null;
   if (result.emoji) {
     return <PageIconDisplay size="sm" value={result.emoji} />;
   }
@@ -130,6 +136,6 @@ function ResultIcon({ result }: { result: SearchResult }) {
   return result.type === "database" ? (
     <DatabaseIcon className="size-4 text-content-secondary" />
   ) : (
-    <DefaultPageIcon className="text-content-secondary" />
+    <DefaultPageIcon className="text-content-secondary" page={page} />
   );
 }

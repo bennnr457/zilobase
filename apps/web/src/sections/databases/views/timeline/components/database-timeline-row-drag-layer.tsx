@@ -1,7 +1,7 @@
 import { DatabaseRowDragControls } from "../../../interactions/components/database-row-controls";
 import { DefaultPageIcon } from "@/sections/pages/appearance/components/page-icon";
 
-import type { SortableDatabaseItem } from "@zilobase/features/databases";
+import type { DatabaseRow } from "@zilobase/features/databases";
 import type { TimelineRowLayout } from "../lib/database-timeline-layout";
 import type { TimelineRowDragController } from "./database-timeline-row-drag";
 
@@ -20,7 +20,7 @@ export function TimelineRowDragLayer({
   sidebarCollapsed: boolean;
   selectedRowIds: Set<string>;
   onSelectedRowChange: (rowId: string, selected: boolean) => void;
-  rowsById: ReadonlyMap<string, SortableDatabaseItem>;
+  rowsById: ReadonlyMap<string, DatabaseRow>;
 }) {
   return (
     <>
@@ -38,7 +38,9 @@ export function TimelineRowDragLayer({
           }}
         >
           <span className="database-row-drag-overlay-cell">
-            <DefaultPageIcon />
+            <DefaultPageIcon
+              page={controller.draggedRowId ? rowsById.get(controller.draggedRowId)?.page : null}
+            />
             <span>{controller.overlay.title}</span>
           </span>
         </div>

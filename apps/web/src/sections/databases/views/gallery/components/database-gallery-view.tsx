@@ -160,7 +160,11 @@ export function DatabaseGalleryView() {
           >
             {showPageIconInTitle ? (
               <span className="database-gallery-card-icon">
-                {emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon />}
+                {emoji ? (
+                  <PageIconDisplay size="sm" value={emoji} />
+                ) : (
+                  <DefaultPageIcon page={row.page} />
+                )}
               </span>
             ) : null}
             <span>{row.page.name?.trim() || "Untitled"}</span>

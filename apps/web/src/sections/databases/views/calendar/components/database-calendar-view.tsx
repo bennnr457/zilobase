@@ -59,7 +59,7 @@ function CalendarRecordIcon({ pageId }: { pageId: string }) {
   useSharedDataRevision(queryClient);
   const page = readCachedPage(queryClient, pageId);
   const emoji = page ? getPageEmoji(page) : null;
-  return emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon />;
+  return emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon page={page} />;
 }
 
 export function DatabaseCalendarView() {

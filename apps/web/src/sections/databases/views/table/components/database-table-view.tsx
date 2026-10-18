@@ -1711,7 +1711,9 @@ export function DatabaseTableView() {
                   }}
                 >
                   <span className="database-row-drag-overlay-cell">
-                    <DefaultPageIcon />
+                    <DefaultPageIcon
+                      page={draggedRowId ? rowsById.get(draggedRowId)?.page : null}
+                    />
                     <span>{rowDragOverlay.overlay.title}</span>
                   </span>
                 </div>,

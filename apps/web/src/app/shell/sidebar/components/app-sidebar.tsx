@@ -53,8 +53,10 @@ import {
 import {
   getDatabaseIconNode,
   getPageIconNode,
+  getPageIconValue,
   PageIconDisplay,
 } from "@/sections/pages/appearance/components/page-icon";
+import type { PageMetadata } from "@zilobase/features/pages";
 import type { useSession } from "@zilobase/features/auth/react";
 import {
   useSetTeamspaceMembership,
@@ -1340,10 +1342,19 @@ function DatabaseSection({
 }) {
   const { open, setOpen, database, records, rows, title, activeDataSourceId, addRow, hasMore } =
     useSidebarDatabaseSection({ section, storageKey, currentUserId: sidebar.currentUserId });
+  const pagesByRowId = new Map(records.records.map((record) => [record.id, record.page]));
   const items: SidebarNavItem[] = rows.map((row) => ({
     id: row.id,
     name: row.page.name.trim() || "Untitled",
-    emoji: section.showPageIcon ? { kind: "file" } : null,
+    emoji: section.showPageIcon
+      ? {
+          kind: "value",
+          value: getPageIconValue({
+            hasContent: pagesByRowId.get(row.id)?.hasContent,
+            metadata: pagesByRowId.get(row.id)?.metadata as PageMetadata | null,
+          }),
+        }
+      : null,
     pageId: row.pageId,
     pages: [],
     isShared: false,

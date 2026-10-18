@@ -1,7 +1,10 @@
-import { getPageEmoji, type Page } from "@zilobase/features/pages";
+import { getPageEmoji, hasPageBodyContent, type Page } from "@zilobase/features/pages";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 import { getIconTextClassName } from "@/lib/color-tokens";
-import { DEFAULT_PAGE_ITEM_ICON } from "../../../../components/navigation/lib/navigation-icons";
+import {
+  CONTENT_PAGE_ITEM_ICON,
+  DEFAULT_PAGE_ITEM_ICON,
+} from "@/components/navigation/lib/navigation-icons";
 import { cn } from "@/lib/utils";
 import {
   getDatabaseIconConfig,
@@ -72,18 +75,29 @@ export function PageIconDisplay({
   );
 }
 
-function getPageIconValue(page: Pick<Page, "metadata">) {
-  return getPageEmoji(page) ?? DEFAULT_PAGE_ITEM_ICON;
+type PageIconSource = Pick<Page, "content" | "hasContent" | "metadata">;
+
+export function getDefaultPageIconValue(page?: Pick<Page, "content" | "hasContent"> | null) {
+  const hasContent = page?.hasContent ?? hasPageBodyContent(page?.content);
+  return hasContent ? CONTENT_PAGE_ITEM_ICON : DEFAULT_PAGE_ITEM_ICON;
+}
+
+export function getPageIconValue(page?: PageIconSource | null) {
+  return (page ? getPageEmoji(page) : null) ?? getDefaultPageIconValue(page);
 }
 
 export function DefaultPageIcon({
   className,
+  page,
   size = "sm",
 }: {
   className?: string;
+  page?: Pick<Page, "content" | "hasContent"> | null;
   size?: keyof typeof iconSizeClasses;
 }) {
-  return <PageIconDisplay className={className} size={size} value={DEFAULT_PAGE_ITEM_ICON} />;
+  return (
+    <PageIconDisplay className={className} size={size} value={getDefaultPageIconValue(page)} />
+  );
 }
 
 export function getPageIconNode(page: Pick<Page, "content" | "hasContent" | "metadata">) {

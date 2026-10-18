@@ -47,15 +47,15 @@ export function register({ readSource, assert, test }) {
     assert.match(defaultIconsSource, /data-icon-library="phosphor"/);
     assert.match(defaultIconsSource, /data-icon-weight="bold"/);
     assert.match(defaultIconsSource, /viewBox="0 0 256 256"/);
-    assert.equal(defaultIconsSource.match(/buildPhosphorFallbackIcon\(/g)?.length, 4);
+    assert.equal(defaultIconsSource.match(/buildPhosphorFallbackIcon\(/g)?.length, 5);
     assert.match(appIconProviderSource, /weight: "bold"/);
     assert.doesNotMatch(iconPickerSource, /Icon weight|PhosphorPickerWeight|iconWeight/);
     assert.equal(phosphorIconPickerSource.match(/weight="fill"/g)?.length, 2);
     assert.doesNotMatch(phosphorIconPickerSource, /PhosphorPickerWeight/);
     assert.doesNotMatch(defaultIconsSource, /stroke-width=/);
     assert.match(pageIconSource, /export function DefaultPageIcon/);
-    assert.match(pageIconSource, /getPageEmoji\(page\) \?\? DEFAULT_PAGE_ITEM_ICON/);
-    assert.match(databasePageLinkSource, /<DefaultPageIcon \/>/);
+    assert.match(pageIconSource, /getDefaultPageIconValue\(page\)/);
+    assert.match(databasePageLinkSource, /<DefaultPageIcon page=\{pageSummary\} \/>/);
     assert.doesNotMatch(databasePageLinkSource, /<FileText \/>/);
   });
 }

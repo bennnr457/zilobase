@@ -38,7 +38,7 @@ type PageBlockOptions = {
   workspaceId?: string | null;
 };
 
-type PageSummary = Pick<Page, "id" | "metadata" | "name">;
+type PageSummary = Pick<Page, "id" | "metadata" | "name" | "content" | "hasContent">;
 
 function findCachedDatabaseRowPage(
   queryClient: ReturnType<typeof useZilobaseFeatures>["queryClient"],
@@ -292,7 +292,7 @@ function PageBlockView({ editor, extension, getPos, node, updateAttributes }: Re
           type="button"
         >
           <span className="flex size-5 shrink-0 items-center justify-center text-content-secondary">
-            {emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon />}
+            {emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon page={page} />}
           </span>
           <span className="min-w-0 truncate font-medium">{title}</span>
         </button>
@@ -342,7 +342,7 @@ function PageBlockView({ editor, extension, getPos, node, updateAttributes }: Re
                         {pageEmoji ? (
                           <PageIconDisplay size="sm" value={pageEmoji} />
                         ) : (
-                          <DefaultPageIcon />
+                          <DefaultPageIcon page={page} />
                         )}
                       </span>
                       <span className="min-w-0 truncate">{pageTitle}</span>

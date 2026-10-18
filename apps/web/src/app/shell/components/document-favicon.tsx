@@ -14,13 +14,13 @@ import {
 import {
   DEFAULT_DATABASE_ITEM_ICON,
   DEFAULT_MEETING_ITEM_ICON,
-  DEFAULT_PAGE_ITEM_ICON,
 } from "@/components/navigation/lib/navigation-icons";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
 import { useMeeting } from "@zilobase/features/meetings/react";
 import { getPageEmoji } from "@zilobase/features/pages";
 import { usePage } from "@zilobase/features/pages/react";
+import { getPageIconValue } from "@/sections/pages/appearance/components/page-icon";
 
 export function DocumentFavicon() {
   const location = useRouterState({ select: (state) => state.location });
@@ -42,7 +42,7 @@ export function DocumentFavicon() {
     : meetingId
       ? ((page ? getPageEmoji(page) : null) ?? DEFAULT_MEETING_ITEM_ICON)
       : directPageId
-        ? ((page ? getPageEmoji(page) : null) ?? DEFAULT_PAGE_ITEM_ICON)
+        ? getPageIconValue(page)
         : null;
   const itemTitle = databaseId
     ? databasePayload?.database.name

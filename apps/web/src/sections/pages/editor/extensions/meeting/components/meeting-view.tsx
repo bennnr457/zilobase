@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSharedDataRevision } from "@zilobase/features/data/react";
 import {
   ArrowUpRightIcon,
   CircleStop,
@@ -31,7 +32,12 @@ import {
   useUpdateMeeting,
 } from "@zilobase/features/meetings/react";
 import { useSession } from "@zilobase/features/auth/react";
-import { getPageEmoji, isMeetingLocked, type PageMetadata } from "@zilobase/features/pages";
+import {
+  getPageEmoji,
+  isMeetingLocked,
+  readCachedPage,
+  type PageMetadata,
+} from "@zilobase/features/pages";
 import { usePage, useUpdatePage } from "@zilobase/features/pages/react";
 import { toast } from "sonner";
 
@@ -96,6 +102,8 @@ export function MeetingView({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useSharedDataRevision(queryClient);
+  const embeddedPageRecord = embeddedPage ? readCachedPage(queryClient, embeddedPage.id) : null;
   const showMeetingTitle = showTitle ?? !fullPage;
   const meetingQuery = useMeeting(meetingId);
   const generateSummary = useGenerateMeetingSummary(meetingId);
@@ -508,7 +516,7 @@ export function MeetingView({
                     {embeddedPage.emoji ? (
                       <PageIconDisplay size="sm" value={embeddedPage.emoji} />
                     ) : (
-                      <DefaultPageIcon className="size-4" />
+                      <DefaultPageIcon className="size-4" page={embeddedPageRecord} />
                     )}
                     <span className="truncate">{embeddedPage.name}</span>
                     <ArrowUpRightIcon className="size-4 shrink-0" />

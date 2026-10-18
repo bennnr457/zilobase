@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useOptionalUndoHistory } from "@/app/shortcuts/undo-history";
 
 type DatabasePageSummary = {
+  content?: unknown;
+  hasContent?: boolean;
   iconKind?: "database" | "page";
   id?: string;
   name?: string;
@@ -82,7 +84,7 @@ export function DatabasePageLink({
   ) : pageSummary?.iconKind === "database" ? (
     <DatabaseIcon />
   ) : (
-    <DefaultPageIcon />
+    <DefaultPageIcon page={pageSummary} />
   );
   const actionLabel = isOpen ? "Close" : "Open";
   const canEditTitle = editable && Boolean(pageSummary);

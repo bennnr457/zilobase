@@ -51,7 +51,7 @@ import {
 import { isEmbeddedMobileViewer } from "@/sections/pages/layout/components/page-layout";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { getDatabaseEmoji } from "@zilobase/features/databases";
-import { getPageEmoji } from "@zilobase/features/pages";
+import { getPageIconValue } from "@/sections/pages/appearance/components/page-icon";
 import { usePage, useRecordItemVisit } from "@zilobase/features/pages/react";
 import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
@@ -270,7 +270,7 @@ function AppShellContent({
   const desktopTabIcon = databasePayload?.activeDataSource
     ? getDatabaseEmoji(databasePayload.activeDataSource)
     : hostPage
-      ? getPageEmoji(hostPage)
+      ? getPageIconValue(hostPage)
       : null;
   const recordItemVisit = useRecordItemVisit();
   const recordedVisitKeyRef = useRef<string | null>(null);

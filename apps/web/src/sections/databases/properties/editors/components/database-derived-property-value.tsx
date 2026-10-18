@@ -388,5 +388,5 @@ function RelationPageOptionIcon({ page }: { page: DatabaseRecordEntity["page"] }
     metadata: page.metadata as PageMetadata | null | undefined,
   });
 
-  return emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon />;
+  return emoji ? <PageIconDisplay size="sm" value={emoji} /> : <DefaultPageIcon page={page} />;
 }
