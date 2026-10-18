@@ -42,6 +42,8 @@ const BLOCK_SELECTOR = [
   ".node-meetingBlock",
   ".page-block",
   ".editor-details",
+  ".editor-callout",
+  ".editor-tabs",
 ].join(",");
 
 const STRUCTURAL_NODE_TYPES = new Set([
@@ -56,6 +58,7 @@ const STRUCTURAL_NODE_TYPES = new Set([
   "tableHeader",
   "column",
   "columnBlock",
+  "tabPanel",
 ]);
 
 const DATABASE_BLOCK_SELECTOR = ".database-block, .node-databaseBlock";
@@ -67,6 +70,23 @@ const DRAG_HANDLE_WIDTH = 64;
 const MIN_COORD_INSET = 4;
 
 const isListItemType = (typeName?: string) => typeName === "listItem" || typeName === "taskItem";
+
+// The container owns its opening text block; subsequent blocks keep their own controls.
+// Embedded meetings use a separate editor document, with the meeting's handle outside it.
+export function containerOwnsFirstBlock(
+  view: EditorView,
+  node: ProseMirrorNode,
+  parent: ProseMirrorNode | null,
+  index: number,
+) {
+  return (
+    index === 0 &&
+    node.isTextblock &&
+    (parent?.type.name === "callout" ||
+      parent?.type.name === "tabPanel" ||
+      (parent === view.state.doc && Boolean(view.dom.closest(".node-meetingBlock"))))
+  );
+}
 
 const numberStyle = (
   element: HTMLElement,
@@ -198,6 +218,10 @@ function blockFromDOM(view: EditorView, element: HTMLElement): DragHandleTarget 
   });
   if (!coords || coords.inside < 0) return null;
 
+  if (element.matches(".editor-tabs")) return nodeAtDOM(view, element, "tabsBlock");
+
+  if (element.matches(".editor-callout")) return nodeAtDOM(view, element, "callout");
+
   if (element.matches("table")) {
     const tablePos = Math.max(0, coords.inside - 2);
     const table = view.state.doc.nodeAt(tablePos);
@@ -212,7 +236,7 @@ function blockFromDOM(view: EditorView, element: HTMLElement): DragHandleTarget 
     if (inside != null && inside >= 0) return blockFromPos(view, inside);
   }
 
-  return blockFromPos(view, coords.inside);
+  return blockFromPos(view, coords.pos);
 }
 
 function blockElementAtPoint(view: EditorView, elements: Element[]) {
@@ -235,6 +259,8 @@ function blockElementAtPoint(view: EditorView, elements: Element[]) {
 }
 
 function dropLineAnchor(element: HTMLElement): HorizontalAnchor | null {
+  const calloutContent = element.closest("[data-callout-content], .editor-tab-panel");
+  if (calloutContent) return calloutContent.getBoundingClientRect();
   const blockquote = element.closest("blockquote");
   if (blockquote) return blockquote.getBoundingClientRect();
 
@@ -264,7 +290,10 @@ function nodeAtDOM(
   let match: { node: ProseMirrorNode; pos: number } | null = null;
 
   view.state.doc.descendants((node, pos) => {
-    if (node.type.name !== typeName || view.nodeDOM(pos) !== element) return;
+    if (node.type.name !== typeName) return;
+    const dom = view.nodeDOM(pos);
+    if (dom !== element && (!(dom instanceof HTMLElement) || dom.firstElementChild !== element))
+      return;
     match = { node, pos };
     return false;
   });
@@ -272,14 +301,20 @@ function nodeAtDOM(
   return match;
 }
 
-function columnDropTarget(view: EditorView, point: Point): BlockDropTarget | null {
+function containerDropTarget(view: EditorView, point: Point): BlockDropTarget | null {
   for (const element of elementsFromPoint(view, point)) {
     if (!(element instanceof HTMLElement)) continue;
 
-    const column = element.closest<HTMLElement>(".column[data-type='column']");
+    const column = element.closest<HTMLElement>(
+      ".column[data-type='column'], [data-callout-content], .editor-tab-panel",
+    );
     if (!column || !view.dom.contains(column)) continue;
 
-    const match = nodeAtDOM(view, column, "column");
+    const isTabPanel = column.matches(".editor-tab-panel");
+    const isCallout = column.hasAttribute("data-callout-content");
+    const host = isCallout ? column.closest<HTMLElement>(".editor-callout") : column;
+    if (!host) continue;
+    const match = nodeAtDOM(view, host, isCallout ? "callout" : isTabPanel ? "tabPanel" : "column");
     if (!match) continue;
 
     let insertPos = match.pos + 1 + match.node.content.size;
@@ -340,7 +375,7 @@ export function getEditorInsertDropTarget(
   event: Pick<DragEvent, "clientX" | "clientY">,
 ) {
   const point = { x: event.clientX, y: event.clientY };
-  return columnDropTarget(view, point) ?? blockDropTarget(view, point);
+  return containerDropTarget(view, point) ?? blockDropTarget(view, point);
 }
 
 export function resolveBlockDragTargetFromPoint({
@@ -371,7 +406,16 @@ export function resolveBlockDragTargetFromPoint({
   }
 
   const element = blockElementAtPoint(view, elements);
-  return element ? blockFromDOM(view, element) : null;
+  const target = element ? blockFromDOM(view, element) : null;
+  if (!target) return null;
+  const $pos = view.state.doc.resolve(target.pos);
+  if (!containerOwnsFirstBlock(view, target.node, $pos.parent, $pos.index())) return target;
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const node = $pos.node(depth);
+    if (node.type.name === "callout" || node.type.name === "tabsBlock")
+      return { node, pos: $pos.before(depth) };
+  }
+  return null;
 }
 
 export function getBlockDragHandleRect(view: EditorView, target: DragHandleTarget) {

@@ -25,6 +25,47 @@ test.afterAll(async () => {
   await server?.destroy();
   document?.destroy();
 });
+test("embedded meeting opening text has no extra handle and later paragraphs retain theirs", async ({
+  page,
+}) => {
+  await page.route("**/meetings/m/collaboration-ticket", (route) =>
+    route.fulfill({
+      json: {
+        documentName: "meeting:m",
+        expiresAt: "2099-01-01T00:00:00Z",
+        token: "ticket",
+        websocketUrl: "ws://127.0.0.1:1503",
+      },
+    }),
+  );
+  await page.goto("/scripts/editor/e2e/meeting-runtime.html?embedded");
+  await expect.poll(() => page.evaluate(() => window.meetingSnapshot?.().synced)).toBe(true);
+  await page.evaluate(() =>
+    window.meetingEditor.commands.setContent("<p>Opening line</p><p>Later line</p>"),
+  );
+  const first = page.locator(".tiptap-editor > p").first();
+  const second = page.locator(".tiptap-editor > p").nth(1);
+  const handle = page.getByRole("button", { name: "Open block actions", exact: true });
+  await first.hover({ position: { x: 8, y: 10 } });
+  await expect(handle).toBeHidden();
+  await second.hover({ position: { x: 8, y: 10 } });
+  await expect(handle).toBeVisible();
+  await first.hover({ position: { x: 8, y: 10 } });
+  await expect(handle).toBeHidden();
+  await second.hover({ position: { x: 8, y: 10 } });
+  await expect(handle).toBeVisible();
+  const editorBox = await page.locator(".tiptap-editor").boundingBox();
+  const firstBox = await first.boundingBox();
+  await page.mouse.move(editorBox.x + 2, firstBox.y + firstBox.height / 2);
+  await expect(handle).toBeHidden();
+  // A standalone meeting editor has no enclosing block handle to replace it.
+  await page.evaluate(() =>
+    document.querySelector(".node-meetingBlock").classList.remove("node-meetingBlock"),
+  );
+  await second.hover({ position: { x: 8, y: 10 } });
+  await first.hover({ position: { x: 8, y: 10 } });
+  await expect(handle).toBeVisible();
+});
 test("meeting runtime retains profile edits, persists locally, rehydrates and isolates account changes", async ({
   page,
 }) => {

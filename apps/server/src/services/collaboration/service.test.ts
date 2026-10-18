@@ -99,6 +99,90 @@ test("canonical page JSON round-trips through Yjs", () => {
   assert.deepEqual(materializePageContentFromYjs(encodePageContentAsYjs(content)), content);
 });
 
+test("callouts preserve their icon and nested blocks through canonical Yjs materialization", () => {
+  const paragraph = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
+  const content = {
+    type: "doc",
+    content: [
+      {
+        type: "callout",
+        attrs: { icon: "💡" },
+        content: [
+          { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Title" }] },
+          paragraph("Body"),
+          {
+            type: "codeBlock",
+            attrs: { language: "ts" },
+            content: [{ type: "text", text: "const ready = true;" }],
+          },
+          { type: "bulletList", content: [{ type: "listItem", content: [paragraph("Item")] }] },
+          { type: "callout", attrs: { icon: "🚀" }, content: [paragraph("Nested")] },
+          {
+            type: "columnBlock",
+            attrs: { widths: [50, 50] },
+            content: [
+              { type: "column", content: [paragraph("Left")] },
+              { type: "column", content: [paragraph("Right")] },
+            ],
+          },
+          { type: "databaseBlock", attrs: { databaseId: "database-1" } },
+        ],
+      },
+    ],
+  };
+  assert.deepEqual(materializePageContentFromYjs(encodePageContentAsYjs(content)), content);
+});
+
+test("tabs preserve panel names and all hidden nested content through Yjs materialization", () => {
+  const paragraph = (text: string) => ({ type: "paragraph", content: [{ type: "text", text }] });
+  const content = {
+    type: "doc",
+    content: [
+      {
+        type: "tabsBlock",
+        content: [
+          {
+            type: "tabPanel",
+            attrs: { title: "Overview", tabId: "tab-overview", icon: "🚀" },
+            content: [
+              paragraph("First"),
+              { type: "callout", attrs: { icon: "💡" }, content: [paragraph("Note")] },
+            ],
+          },
+          {
+            type: "tabPanel",
+            attrs: { title: "Code" },
+            content: [
+              {
+                type: "codeBlock",
+                attrs: { language: "ts" },
+                content: [{ type: "text", text: "const n = 1;" }],
+              },
+            ],
+          },
+          {
+            type: "tabPanel",
+            attrs: { title: "More" },
+            content: [
+              {
+                type: "tabsBlock",
+                content: [
+                  {
+                    type: "tabPanel",
+                    attrs: { title: "Nested" },
+                    content: [paragraph("Hidden nested content")],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  assert.deepEqual(materializePageContentFromYjs(encodePageContentAsYjs(content)), content);
+});
+
 test("materialized page JSON ignores Yjs-native comment metadata", () => {
   const content = {
     type: "doc",

@@ -1,5 +1,5 @@
 import { createPositionAnchor } from "../../operations/lib/position-anchor";
-import type { Content, Editor, Range } from "@tiptap/core";
+import type { Content, Editor, JSONContent, Range } from "@tiptap/core";
 import { Fragment, type Node as ProseMirrorNode, type Schema } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { getSelectedBlockRangesForTarget } from "../../extensions/lib/block-selection";
@@ -22,6 +22,8 @@ export type BlockCommandId =
   | "orderedList"
   | "taskList"
   | "blockquote"
+  | "callout"
+  | "tabsBlock"
   | "codeBlock"
   | "details"
   | "columns2"
@@ -54,6 +56,8 @@ export const convertibleBlockIds = new Set<BlockCommandId>([
   "orderedList",
   "taskList",
   "blockquote",
+  "callout",
+  "tabsBlock",
   "codeBlock",
   "details",
 ]);
@@ -67,6 +71,17 @@ export function canEditEditorStructure(editor: Editor) {
   );
 }
 
+export function createTabsContent(content: JSONContent[] = [{ type: "paragraph" }]): JSONContent {
+  return {
+    type: "tabsBlock",
+    content: Array.from({ length: 3 }, (_, index) => ({
+      type: "tabPanel",
+      attrs: { title: `Tab ${index + 1}` },
+      content: index === 0 ? content : [{ type: "paragraph" }],
+    })),
+  };
+}
+
 /** Construct the entire replacement before mutating a transaction. */
 export function blockContentForConversion(
   id: BlockCommandId,
@@ -74,6 +89,22 @@ export function blockContentForConversion(
   schema: Schema,
 ): ProseMirrorNode[] | null {
   if (!convertibleBlockIds.has(id)) return null;
+  if (id === "tabsBlock") {
+    try {
+      const node = schema.nodeFromJSON(createTabsContent(nodes.map((node) => node.toJSON())));
+      node.check();
+      return [node];
+    } catch {
+      return null;
+    }
+  }
+  if (id === "callout") {
+    try {
+      return [schema.nodes.callout.createChecked(null, [...nodes])];
+    } catch {
+      return null;
+    }
+  }
   const blocks: ProseMirrorNode[] = [];
   const containers = new Set([
     "bulletList",
@@ -82,6 +113,9 @@ export function blockContentForConversion(
     "listItem",
     "taskItem",
     "blockquote",
+    "callout",
+    "tabsBlock",
+    "tabPanel",
     "details",
     "detailsContent",
   ]);
@@ -318,6 +352,10 @@ function blockContentForItem(
         type: "taskList",
         content: [{ type: "taskItem", content: [{ type: "paragraph" }] }],
       };
+    case "tabsBlock":
+      return createTabsContent();
+    case "callout":
+      return { type: "callout", content: [{ type: "paragraph" }] };
     case "blockquote":
       return {
         type: "blockquote",
@@ -395,6 +433,17 @@ function blockContentForItem(
 }
 
 function selectInsertedBlock(editor: Editor, pos: number, item: SlashCommandItem) {
+  if (item.id === "tabsBlock") {
+    editor
+      .chain()
+      .focus()
+      .command(({ tr }) => {
+        tr.setSelection(TextSelection.near(tr.doc.resolve(pos + 2)));
+        return true;
+      })
+      .run();
+    return;
+  }
   if (item.id === "databaseBlock") {
     editor
       .chain()
@@ -661,6 +710,12 @@ export function runBlockCommand(
       return;
     case "taskList":
       chain.toggleTaskList().run();
+      return;
+    case "tabsBlock":
+      chain.insertTabs().run();
+      return;
+    case "callout":
+      chain.setCallout().run();
       return;
     case "blockquote":
       chain.toggleBlockquote().run();

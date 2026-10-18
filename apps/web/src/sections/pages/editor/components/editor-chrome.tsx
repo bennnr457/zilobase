@@ -7,6 +7,7 @@ import type { Editor as TiptapEditor } from "@tiptap/react";
 import type { TableOfContentDataItem } from "@tiptap/extension-table-of-contents";
 import type { PageCommentController } from "@/sections/pages/editor/comments/lib/yjs-comments";
 import { getBlockCommentHandleRect } from "../drag-drop/lib/block-drag";
+import { containerOwnsFirstBlock } from "../drag-drop/lib/block-drag-geometry";
 import { BlockCommentPopover } from "../comments/components/block-comment-popover";
 import { ColumnControls } from "../toolbar/components/column-controls";
 import { DragBlockMenu } from "../drag-drop/components/drag-block-menu";
@@ -173,6 +174,7 @@ const NESTED_HANDLE: NestedOptions = {
             "tableRow",
             "tableCell",
             "tableHeader",
+            "tabPanel",
           ].includes(node.type.name)
         )
           return 1000;
@@ -182,6 +184,11 @@ const NESTED_HANDLE: NestedOptions = {
           }
         return 0;
       },
+    },
+    {
+      id: "containerOwnsOpeningBlock",
+      evaluate: ({ view, node, parent, index }: RuleContext) =>
+        containerOwnsFirstBlock(view, node, parent, index) ? 1000 : 0,
     },
   ],
 };
@@ -266,12 +273,35 @@ function EditorBlockHandle(
     },
     [workspace, editorId],
   );
-  const onDragEnd = useCallback(() => workspace.drag.endNative(), [workspace]);
+  const onDragEnd = useCallback(() => {
+    nativeDraggingRef.current = false;
+    workspace.drag.endNative();
+  }, [workspace]);
   useEffect(() => {
     // useEditor can replace this instance in a parent effect before React
     // reconnects this child's effects during development or a document change.
     if (editor.isDestroyed || !editor.isInitialized) return;
     editor.commands.setMeta("lockDragHandle", props.dragHandleMenuOpen);
+  }, [editor, props.dragHandleMenuOpen]);
+  useEffect(() => {
+    if (editor.isDestroyed || !editor.isInitialized) return;
+    const view = editor.view;
+    if (!view.dom.closest(".node-meetingBlock")) return;
+    const hideOpeningBlockHandle = (event: MouseEvent) => {
+      if (props.dragHandleMenuOpen || nativeDraggingRef.current || !targetRef.current) return;
+      const first = view.state.doc.firstChild;
+      if (!first || !containerOwnsFirstBlock(view, first, view.state.doc, 0)) return;
+      const dom = view.nodeDOM(0);
+      if (!(dom instanceof HTMLElement) || !(event.target instanceof Node)) return;
+      const overOpeningText = dom.contains(event.target);
+      const rect = event.target === view.dom ? dom.getBoundingClientRect() : null;
+      const overOpeningGutter = rect && event.clientY >= rect.top && event.clientY < rect.bottom;
+      // Tiptap keeps the previous handle when scoring finds no target.
+      // Clear it over both the opening text and its empty left gutter.
+      if (overOpeningText || overOpeningGutter) editor.commands.setMeta("hideDragHandle", true);
+    };
+    view.dom.addEventListener("mousemove", hideOpeningBlockHandle);
+    return () => view.dom.removeEventListener("mousemove", hideOpeningBlockHandle);
   }, [editor, props.dragHandleMenuOpen]);
   const commentPosition = target ? getBlockCommentHandleRect(editor.view, target) : null;
   return (

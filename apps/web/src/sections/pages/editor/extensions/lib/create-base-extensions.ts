@@ -22,6 +22,8 @@ import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import { AskAiBlock } from "../components/ask-ai-block";
 import { BookmarkBlock } from "../components/bookmark-block";
+import { TabsBlock, TabPanel } from "../components/tabs-block";
+import { Callout } from "../components/callout";
 import { CodeBlockShiki } from "../components/code-block-shiki";
 import { ColumnsExtension } from "./columns";
 import { CommentExtension } from "./comment-extension";
@@ -159,6 +161,9 @@ export const createBaseExtensions = ({
     defaultTheme: "github-dark",
     themes: { light: "github-light", dark: "github-dark" },
   }),
+  Callout,
+  TabsBlock,
+  TabPanel,
   ColumnsExtension,
   Table.configure({
     cellMinWidth: 180,

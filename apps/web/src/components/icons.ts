@@ -165,6 +165,7 @@ export {
   IntersectSquare as IntersectSquareIcon,
   ImageSquare as ImagePlus,
   Info as InfoIcon,
+  Lightbulb as LightbulbIcon,
   Kanban as Kanban,
   Key as KeyRoundIcon,
   Layout as LayoutTemplateIcon,

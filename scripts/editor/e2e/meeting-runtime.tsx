@@ -67,7 +67,18 @@ function Runtime() {
       changeName: setName,
     });
   }, []);
-  return mounted ? <Probe account={account} name={name} /> : <p>Unmounted</p>;
+  const probe = <Probe account={account} name={name} />;
+  return !mounted ? (
+    <p>Unmounted</p>
+  ) : new URLSearchParams(location.search).has("embedded") ? (
+    <div className="node-meetingBlock">
+      <div className="meeting-block-shell">
+        <div className="meeting-collaborative-editor">{probe}</div>
+      </div>
+    </div>
+  ) : (
+    probe
+  );
 }
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

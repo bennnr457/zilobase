@@ -317,3 +317,47 @@
     top: -0.25rem;
   }
 }
+
+@layer components {
+  .tiptap-editor .editor-callout {
+    @apply grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg bg-surface-muted p-4;
+  }
+
+  .editor-callout-icon {
+    @apply flex items-start;
+  }
+
+  .editor-callout-content {
+    @apply min-w-0;
+  }
+
+  .editor-callout-content > [data-node-view-content-react] > * + * {
+    @apply mt-2;
+  }
+
+  .editor-callout-content :is(p, h1, h2, h3, h4, h5, h6) {
+    @apply min-w-0;
+  }
+}
+
+@layer components {
+  .tiptap-editor .editor-tabs {
+    @apply min-w-0 rounded-lg border border-stroke-default p-3;
+  }
+
+  .tiptap-editor .editor-tabs-header {
+    @apply flex min-w-0 items-center gap-1;
+  }
+
+  .tiptap-editor .editor-tabs-content {
+    @apply min-w-0 pt-3;
+  }
+
+  .tiptap-editor .editor-tab-panel {
+    @apply min-h-12 min-w-0;
+  }
+
+  .tiptap-editor .editor-tab-panel > * + * {
+    @apply mt-2;
+  }
+}

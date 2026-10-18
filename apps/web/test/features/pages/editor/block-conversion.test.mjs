@@ -13,6 +13,9 @@ export function register({ assert, loadModule, test }) {
         codeBlock: { group: "block", content: "text*", marks: "", code: true },
         hardBreak: { group: "inline", inline: true },
         blockquote: { group: "block", content: "block+" },
+        tabsBlock: { group: "block", content: "tabPanel+" },
+        tabPanel: { content: "block+", attrs: { title: { default: "Tab" } } },
+        callout: { group: "block", content: "block+", attrs: { icon: { default: "💡" } } },
         bulletList: { group: "block", content: "listItem+" },
         listItem: { content: "paragraph block*" },
         orderedList: { group: "block", content: "listItem+" },
@@ -36,6 +39,8 @@ export function register({ assert, loadModule, test }) {
       "heading2",
       "heading3",
       "blockquote",
+      "callout",
+      "tabsBlock",
       "bulletList",
       "orderedList",
       "taskList",
@@ -58,6 +63,8 @@ export function register({ assert, loadModule, test }) {
         "heading2",
         "heading3",
         "blockquote",
+        "callout",
+        "tabsBlock",
         "bulletList",
         "orderedList",
         "taskList",
@@ -83,6 +90,17 @@ export function register({ assert, loadModule, test }) {
     );
     assert.equal(convert("codeBlock", [schema.node("databaseBlock")], schema), null);
     assert.equal(convert("imageBlock", [paragraph], schema), null);
+    const blocks = [
+      schema.node("heading", { level: 2 }, schema.text("Title")),
+      schema.node("databaseBlock"),
+    ];
+    const wrapped = convert("callout", blocks, schema);
+    wrapped[0].check();
+    assert.deepEqual(
+      wrapped[0].content.toJSON(),
+      blocks.map((block) => block.toJSON()),
+    );
+    assert.equal(wrapped[0].attrs.icon, "💡");
   });
 
   async function plusFixture({ text = "draft", insertError, cleanupError } = {}) {
