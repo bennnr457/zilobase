@@ -23,6 +23,8 @@ export function register({ readSource, assert, test }) {
     assert.match(tabsSource, /aria-\[current=page\]:bg-action-neutral-hover/);
     assert.match(tabsSource, /aria-\[current=page\]:active:bg-action-neutral-pressed/);
     assert.match(tabsSource, /rounded-lg p-0/);
+    assert.match(tabsSource, /scroll: "min-w-0 overflow-x-auto rounded-none"/);
+    assert.match(tabsSource, /hidden: "overflow-hidden rounded-none"/);
     assert.match(buttonSource, /icon: "size-7/);
     assert.match(inputSource, /buttonControlHeightClassName,[\s\S]*?"w-full/);
     assert.match(sidebarSource, /buttonControlHeightClassName,[\s\S]*?peer\/menu-button/);

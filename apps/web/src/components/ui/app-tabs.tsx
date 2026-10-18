@@ -35,8 +35,8 @@ const tabsListVariants = cva(
       },
       overflow: {
         visible: "overflow-visible",
-        scroll: "min-w-0 overflow-x-auto",
-        hidden: "overflow-hidden",
+        scroll: "min-w-0 overflow-x-auto rounded-none",
+        hidden: "overflow-hidden rounded-none",
       },
       width: {
         fit: "w-fit",
