@@ -161,6 +161,7 @@ try {
         resourceId: "exhaustion",
       });
       await persistBackgroundTasks(env, [failing]);
+      await publishBackgroundDispatches(env);
       const [ticket] = await first.db
         .select()
         .from(backgroundDispatch)
@@ -213,8 +214,8 @@ try {
             .from(backgroundDispatch)
             .where(eq(backgroundDispatch.id, queued.taskId))
         )[0].status,
-        "pending",
-        "Maintenance cannot invoke a feature handler",
+        "published",
+        "Maintenance may publish work but cannot invoke a feature handler",
       );
       assert.ok(
         (

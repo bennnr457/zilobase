@@ -78,3 +78,6 @@ graft/.cache/
 
 # Editor browser acceptance artifacts
 .dev/editor-e2e-results/
+
+# Isolated backend test reports
+.test-results/
