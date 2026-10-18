@@ -530,6 +530,18 @@
     @apply relative z-10 border-stroke-default bg-surface-canvas;
   }
 
+  .database-table-header-checkbox {
+    @apply absolute left-[-1.5rem] z-50 -translate-y-1/2 opacity-0 transition-opacity;
+  }
+
+  .database-table-wrap:has(.database-table thead:hover) > .database-table-header-checkbox,
+  .database-table-header-checkbox:hover,
+  .database-table-header-checkbox:focus-visible,
+  .database-table-header-checkbox[data-state="checked"],
+  .database-table-header-checkbox[data-state="indeterminate"] {
+    @apply opacity-100;
+  }
+
   .database-row-drag-handle[data-dragging="true"] {
     @apply text-content-primary;
     transition: none;

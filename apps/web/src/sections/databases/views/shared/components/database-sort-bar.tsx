@@ -23,7 +23,6 @@ export function DatabaseSortBar({
   activeDatabaseSorts,
   addableSortFieldOptions,
   canAddDatabaseSort,
-  onClearDatabaseSort,
   onCreateDatabaseSort,
   onRemoveDatabaseSort,
   onUpdateDatabaseSort,
@@ -103,7 +102,7 @@ export function DatabaseSortBar({
           <DropDrawerTrigger asChild>
             <Button
               aria-label="Add another sort"
-              className="h-7 gap-1.5 border border-dashed border-control-border text-xs text-content-secondary"
+              className="h-7 gap-1.5 text-xs text-content-secondary"
               type="button"
               variant="ghost"
             >
@@ -130,15 +129,6 @@ export function DatabaseSortBar({
           </DropDrawerContent>
         </DropDrawer>
       ) : null}
-      <Button
-        aria-label="Clear all sorts"
-        className="h-7 px-2 text-xs text-content-secondary"
-        onClick={onClearDatabaseSort}
-        type="button"
-        variant="ghost"
-      >
-        Clear all
-      </Button>
     </div>
   );
 }

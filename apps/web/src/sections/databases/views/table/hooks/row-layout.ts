@@ -80,6 +80,7 @@ export function useTableRowLayout({
   tableScrollRef: RefObject<HTMLDivElement | null>;
   isInlineTableScrollEnabled: boolean;
 }) {
+  const headerCheckboxRef = useRef<HTMLButtonElement | null>(null);
   const [rowLayout, setRowLayout] = useState<RowLayout>({
     centers: {},
     dropTops: [],
@@ -117,6 +118,13 @@ export function useTableRowLayout({
       return emptyLayout;
     }
 
+    const wrapperRect = tableWrapRef.current?.getBoundingClientRect();
+    const headerRect = tableWrapRef.current
+      ?.querySelector<HTMLElement>(".database-table thead tr")
+      ?.getBoundingClientRect();
+    if (wrapperRect && headerRect && headerCheckboxRef.current) {
+      headerCheckboxRef.current.style.top = `${headerRect.top + headerRect.height / 2 - wrapperRect.top}px`;
+    }
     const nextLayout = measureTableRowLayout(layoutElement, getRowElements());
     rowLayoutRef.current = nextLayout;
 
@@ -136,6 +144,7 @@ export function useTableRowLayout({
   }, [measureRows]);
   useEffect(() => {
     window.addEventListener("resize", scheduleMeasureRows);
+    window.addEventListener("scroll", scheduleMeasureRows, true);
     const resizeObserver = new ResizeObserver(scheduleMeasureRows);
     const wrapperElement = tableWrapRef.current;
 
@@ -150,9 +159,11 @@ export function useTableRowLayout({
       }
       resizeObserver.disconnect();
       window.removeEventListener("resize", scheduleMeasureRows);
+      window.removeEventListener("scroll", scheduleMeasureRows, true);
     };
   }, [scheduleMeasureRows]);
   return {
+    headerCheckboxRef,
     rowLayout,
     rowLayoutRef,
     getRowLayoutElement,

@@ -377,6 +377,99 @@ async function rowMenu(page, index) {
   await expect(page.getByRole("menuitem", { name: "Duplicate", exact: true })).toBeEnabled();
 }
 
+test("the header checkbox appears on hover or keyboard focus and stays visible for selection", async ({
+  page,
+}) => {
+  const all = page.getByRole("checkbox", { name: "Select all records", exact: true });
+  await expect(all).toHaveCSS("opacity", "0");
+  await page.getByRole("button", { name: "Name column options" }).hover();
+  await expect(all).toHaveCSS("opacity", "1");
+  await page.mouse.move(0, 0);
+  await expect(all).toHaveCSS("opacity", "0");
+  await all.focus();
+  await expect(all).toHaveCSS("opacity", "1");
+  await page.keyboard.press("Tab");
+  await expect(all).toHaveCSS("opacity", "0");
+  await all.hover();
+  await expect(all).toHaveCSS("opacity", "1");
+  await expect(all).not.toBeChecked();
+  await expect
+    .poll(async () => {
+      const header = await page.getByRole("button", { name: "Name column options" }).boundingBox();
+      const control = await all.boundingBox();
+      return Math.abs(control.y + control.height / 2 - header.y - header.height / 2);
+    })
+    .toBeLessThanOrEqual(1);
+  const header = await page.getByRole("button", { name: "Name column options" }).boundingBox();
+  const control = await all.boundingBox();
+  expect(control.x + control.width).toBeLessThan(header.x);
+  expect(
+    await page.locator(".database-table-header-checkbox").getAttribute("draggable"),
+  ).toBeNull();
+  await page.getByRole("checkbox", { name: "Select Record 0", exact: true }).check();
+  await expect(all).toHaveAttribute("aria-checked", "mixed");
+  await page.mouse.move(0, 0);
+  await expect(all).toHaveCSS("opacity", "1");
+  await expect(all.locator('[data-slot="checkbox-indeterminate"]')).toBeVisible();
+  await expect(all.locator('[data-slot="checkbox-check"]')).toBeHidden();
+  const rowCheckbox = await page
+    .getByRole("checkbox", { name: "Select Record 0", exact: true })
+    .boundingBox();
+  expect(control.x).toBe(rowCheckbox.x);
+  await all.click();
+  await expect(all).toBeChecked();
+  await expect(all.locator('[data-slot="checkbox-check"]')).toBeVisible();
+  await expect(all.locator('[data-slot="checkbox-indeterminate"]')).toBeHidden();
+  await expect(page.locator('[data-row-selected="true"]')).toHaveCount(8);
+  await page.getByRole("checkbox", { name: "Select Record 1", exact: true }).uncheck();
+  await expect(all).toHaveAttribute("aria-checked", "mixed");
+  await all.click();
+  await all.press("Space");
+  await expect(all).not.toBeChecked();
+  await expect(page.locator('[data-row-selected="true"]')).toHaveCount(0);
+  await expect(page.getByRole("toolbar", { name: "Selected row actions" })).toHaveCount(0);
+  await page.mouse.move(0, 0);
+  await page.keyboard.press("Tab");
+  await expect(all).toHaveCSS("opacity", "0");
+});
+
+test("header selection includes loaded records across collapsed and virtualized groups without changing geometry", async ({
+  page,
+}) => {
+  await options(page, { grouped: true, count: 400 });
+  const all = page.getByRole("checkbox", { name: "Select all records", exact: true });
+  await expect(all).toHaveCount(1);
+  await page.locator(".database-table-group-toggle").first().click();
+  const before = await page.getByRole("button", { name: "Name column options" }).boundingBox();
+  await all.check();
+  await expect(page.getByRole("button", { name: "Clear selection of 400 rows" })).toBeVisible();
+  expect(await page.getByRole("button", { name: "Name column options" }).boundingBox()).toEqual(
+    before,
+  );
+  await page.locator("[data-page-scroll-viewport]").evaluate((node) => {
+    node.scrollTop = 300;
+  });
+  await expect
+    .poll(async () => {
+      const header = await page.getByRole("button", { name: "Name column options" }).boundingBox();
+      const control = await all.boundingBox();
+      return Math.abs(control.y + control.height / 2 - header.y - header.height / 2);
+    })
+    .toBeLessThanOrEqual(1);
+  await options(page, { embedded: true });
+  await page.setViewportSize({ width: 600, height: 800 });
+  await expect(all).toBeVisible();
+  await expect(all).toHaveCount(1);
+  await expect(all).toBeChecked();
+  await all.uncheck();
+  await options(page, { count: 0 });
+  await expect(all).toBeVisible();
+  await expect(all).toBeDisabled();
+  await expect(all).not.toBeChecked();
+  await options(page, { editable: false });
+  await expect(all).toHaveCount(0);
+});
+
 test("selection actions float directly above the table without moving full, grouped or embedded rows", async ({
   page,
 }) => {

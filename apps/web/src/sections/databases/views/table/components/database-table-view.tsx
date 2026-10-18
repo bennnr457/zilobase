@@ -31,6 +31,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronRight, Loader2, Plus } from "@/components/icons";
 import { toast } from "sonner";
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
@@ -301,12 +302,18 @@ export function DatabaseTableView() {
     hasNextPage,
     isFetchingNextPage,
   });
-  const { rowLayout, rowLayoutRef, getRowLayoutElement, measureRows, scheduleMeasureRows } =
-    useTableRowLayout({
-      tableWrapRef,
-      tableScrollRef,
-      isInlineTableScrollEnabled,
-    });
+  const {
+    headerCheckboxRef,
+    rowLayout,
+    rowLayoutRef,
+    getRowLayoutElement,
+    measureRows,
+    scheduleMeasureRows,
+  } = useTableRowLayout({
+    tableWrapRef,
+    tableScrollRef,
+    isInlineTableScrollEnabled,
+  });
   const groupedSections = useMemo<GroupSection[]>(() => {
     if (!isTableGrouped) {
       return [];
@@ -1488,6 +1495,26 @@ export function DatabaseTableView() {
               clearRowDrag();
             }}
           >
+            {editable ? (
+              <Checkbox
+                aria-label="Select all records"
+                className="database-row-checkbox database-table-header-checkbox"
+                ref={headerCheckboxRef}
+                checked={
+                  selectedRows.length > 0
+                    ? selectedRows.length === rows.length
+                      ? true
+                      : "indeterminate"
+                    : false
+                }
+                disabled={rows.length === 0}
+                onCheckedChange={(checked) =>
+                  setSelectedRowIds(
+                    checked === true ? new Set(rows.map((row) => row.id)) : new Set(),
+                  )
+                }
+              />
+            ) : null}
             {!isInlineTableScrollEnabled ? (
               <DatabaseRowDragControls
                 canReorderRows={canReorderRows}

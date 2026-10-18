@@ -191,7 +191,7 @@ export function DatabaseFilterBar(props: DatabaseFilterMenuProps) {
           <DropDrawerTrigger asChild>
             <Button
               aria-label="Add another filter"
-              className="h-7 gap-1.5 border border-dashed border-control-border text-xs text-content-secondary"
+              className="h-7 gap-1.5 text-xs text-content-secondary"
               type="button"
               variant="ghost"
             >
@@ -229,14 +229,6 @@ export function DatabaseFilterBar(props: DatabaseFilterMenuProps) {
           <SlidersHorizontalIcon className="size-3.5" />
         </Button>
       </DatabaseFilterPopover>
-      <Button
-        className="h-7 px-2 text-xs text-content-secondary"
-        onClick={props.onClearDatabaseFilter}
-        type="button"
-        variant="ghost"
-      >
-        Clear all
-      </Button>
     </div>
   );
 }
