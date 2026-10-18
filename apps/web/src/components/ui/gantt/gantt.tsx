@@ -1412,6 +1412,8 @@ interface GanttViewConfig<TData = unknown> {
    */
   /** Optional full-width row/header renderers for table-like consumers. */
   renderResourceRow?: (resource: GanttResource) => ReactNode;
+  /** Render a semantic table for the tree body using the timeline's exact row geometry. */
+  renderTreeRows?: (rows: GanttTreeRowRenderData[]) => ReactNode;
   renderTreeHeader?: () => ReactNode;
   /** Row height in rem, shared by both panes. */
   getResourceRowHeight?: (resource: GanttResource) => number;
@@ -1551,6 +1553,7 @@ const VIEW_CONFIG_KEYS: Array<keyof GanttViewConfig> = [
   "renderEvent",
   "renderEventMenu",
   "renderResourceRow",
+  "renderTreeRows",
   "renderTreeHeader",
   "getResourceRowHeight",
   "getResourceRowClassName",
@@ -1748,6 +1751,12 @@ export {
   useGanttState,
   useGanttViewConfig,
 };
+export type GanttTreeRowRenderData = {
+  resource: GanttResource;
+  heightRem: number;
+  selected: boolean;
+};
+
 export type {
   GanttActivationConfig,
   GanttApi,

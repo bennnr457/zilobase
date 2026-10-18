@@ -2087,7 +2087,11 @@ function GanttView({
   const namePaddingStart = reorderEnabled ? "3.125rem" : "2.25rem";
   const treeContent = (
     <div
-      style={viewConfig.renderResourceRow ? { width: treeConfig.nameColumnWidth } : undefined}
+      style={
+        viewConfig.renderResourceRow || viewConfig.renderTreeRows
+          ? { width: treeConfig.nameColumnWidth }
+          : undefined
+      }
       className={cn(
         "flex min-h-full w-max min-w-full flex-col",
         // clearance for the pinned horizontal scrollbar strip
@@ -2151,21 +2155,29 @@ function GanttView({
         )}
       </div>
       <div ref={treeRowsRef} className="flex flex-col">
-        {rows.map((row) => (
-          <GanttTreeRow
-            key={row.resource.id}
-            row={row}
-            heightRem={rowBars.get(row.resource.id)?.heightRem ?? minRowRem}
-            bandRem={rowBars.get(row.resource.id)?.bandRem ?? minRowRem}
-            columns={columns}
-            nameWidth={treeConfig.nameColumnWidth}
-            dimmed={reorder?.resourceId === row.resource.id}
-            selected={selectedSet.has(row.resource.id)}
-            onSelectedChange={row.isGroup ? undefined : toggleRowSelected}
-            onGripPointerDown={reorderEnabled ? beginRowReorder : undefined}
-            onToggle={onToggleRow}
-          />
-        ))}
+        {viewConfig.renderTreeRows
+          ? viewConfig.renderTreeRows(
+              rows.map((row) => ({
+                resource: row.resource,
+                heightRem: rowBars.get(row.resource.id)?.heightRem ?? minRowRem,
+                selected: selectedSet.has(row.resource.id),
+              })),
+            )
+          : rows.map((row) => (
+              <GanttTreeRow
+                key={row.resource.id}
+                row={row}
+                heightRem={rowBars.get(row.resource.id)?.heightRem ?? minRowRem}
+                bandRem={rowBars.get(row.resource.id)?.bandRem ?? minRowRem}
+                columns={columns}
+                nameWidth={treeConfig.nameColumnWidth}
+                dimmed={reorder?.resourceId === row.resource.id}
+                selected={selectedSet.has(row.resource.id)}
+                onSelectedChange={row.isGroup ? undefined : toggleRowSelected}
+                onGripPointerDown={reorderEnabled ? beginRowReorder : undefined}
+                onToggle={onToggleRow}
+              />
+            ))}
         {showCreateTask && (
           <button
             type="button"

@@ -17,8 +17,11 @@ import {
 import { DatabaseCalendarView } from "../../../apps/web/src/sections/databases/views/calendar/components/database-calendar-view";
 import {
   calendarScheduleToValue,
+  getDatabaseLayoutSettings,
+  getDatabaseSubItemsSettings,
   type DatabaseCalendarSchedule,
 } from "@zilobase/features/databases";
+import { DatabaseTableView } from "../../../apps/web/src/sections/databases/views/table/components/database-table-view";
 import { DatabaseTimelineView } from "../../../apps/web/src/sections/databases/views/timeline/components/database-timeline-view";
 import { DatabasePageLink } from "../../../apps/web/src/sections/databases/interactions/components/database-page-link";
 import { DatabaseCellContent } from "../../../apps/web/src/sections/databases/views/shared/components/database-cell-content";
@@ -142,6 +145,7 @@ function Proof() {
   const [options, setOptions] = useState({
     editable: true,
     grouped: false,
+    tablePreview: false,
     count: isCalendar ? 4 : 40,
     calendarView: "month",
     createDelay: 0,
@@ -220,7 +224,7 @@ function Proof() {
         : isCalendar
           ? { datePropertyId: "missing" }
           : {},
-      type: isCalendar ? "calendar" : "timeline",
+      type: options.tablePreview ? "table" : isCalendar ? "calendar" : "timeline",
     },
     groupProperty: options.grouped ? statusProperty : null,
     items: rows,
@@ -246,6 +250,15 @@ function Proof() {
       created.push({ rowId: `row-${index}`, pageId: `page-${index}`, next });
       return { rowId: `row-${index}`, pageId: `page-${index}` };
     },
+    headerMenusEnabled: false,
+    layoutSettings: getDatabaseLayoutSettings({}),
+    subItemsSettings: getDatabaseSubItemsSettings({}),
+    subItemChildRowIdsByParentId: {},
+    subItemDepthByRowId: {},
+    subItemParentRowIdsByRowId: {},
+    getDatabasePageDragPayload: () => null,
+    hasDatabasePageDragPayload: () => false,
+    saveDatabaseSorts: async () => {},
     showPageIconInTitle: true,
     titlePropertyLabel: "Name",
     hasNextPage: false,
@@ -305,6 +318,51 @@ function Proof() {
     <ZilobaseFeaturesProvider value={features}>
       <ShortcutProvider>
         <Toaster />
+        <nav
+          aria-label="Fixture controls"
+          className="flex gap-4 p-3 text-sm"
+          style={options.pageViewport ? { position: "absolute", top: 0 } : undefined}
+        >
+          <label>
+            Theme
+            <select
+              aria-label="Theme"
+              onChange={(event) =>
+                document.documentElement.setAttribute("data-theme-family", event.target.value)
+              }
+            >
+              {["default", "warm", "midnight", "forest", "ocean", "notion"].map((theme) => (
+                <option key={theme} value={theme}>
+                  {theme}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Appearance
+            <select
+              aria-label="Appearance"
+              onChange={(event) =>
+                document.documentElement.classList.toggle("dark", event.target.value === "dark")
+              }
+            >
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+          <button
+            onClick={() => setOptions((current) => ({ ...current, grouped: !current.grouped }))}
+          >
+            {options.grouped ? "Remove grouping" : "Group by Status"}
+          </button>
+          <button
+            onClick={() =>
+              setOptions((current) => ({ ...current, tablePreview: !current.tablePreview }))
+            }
+          >
+            {options.tablePreview ? "Show timeline" : "Show table"}
+          </button>
+        </nav>
         <div
           key={String(options.pageViewport)}
           data-editor-surface={options.embedded ? "" : undefined}
@@ -392,7 +450,13 @@ function Proof() {
                 </div>
                 <section className="database-scroll-section" style={{ position: "relative" }}>
                   <DatabaseViewProvider value={value}>
-                    {isCalendar ? <DatabaseCalendarView /> : <DatabaseTimelineView />}
+                    {options.tablePreview ? (
+                      <DatabaseTableView />
+                    ) : isCalendar ? (
+                      <DatabaseCalendarView />
+                    ) : (
+                      <DatabaseTimelineView />
+                    )}
                   </DatabaseViewProvider>
                 </section>
               </div>

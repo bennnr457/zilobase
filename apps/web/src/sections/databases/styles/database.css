@@ -697,46 +697,44 @@
     @apply flex items-end border-stroke-default;
   }
 
-  .database-timeline-sidebar-cell {
-    @apply h-full min-h-0 min-w-0 bg-transparent;
-  }
-
   .database-timeline-sidebar-name-header {
-    @apply flex h-8 w-full shrink-0 items-center border-b border-stroke-default text-sm font-medium text-content-secondary;
+    @apply h-8 w-full shrink-0;
   }
 
-  .database-timeline-sidebar-row,
-  .database-timeline-sidebar-create-row {
-    @apply flex h-8 min-h-8 items-center border-b border-stroke-default;
-    box-sizing: border-box;
+  .database-timeline-sidebar-grid .database-table tbody tr {
+    height: 2rem;
   }
 
-  .database-timeline-sidebar-row .database-page-link {
-    @apply h-full min-h-0;
+  .database-timeline-sidebar-grid .database-table tbody td {
+    @apply border-b border-stroke-default;
   }
 
-  .database-timeline-sidebar-row
+  /* The fixed timeline name column truncates the table's unwrapped title in place. */
+  .database-timeline-sidebar-grid
     .database-cell-content[data-wrap-content="false"]
     > .database-page-link {
-    width: 100%;
-    min-width: 0;
+    @apply w-full min-w-0;
   }
 
-  .database-timeline-sidebar-row
+  .database-timeline-sidebar-grid
     .database-cell-content[data-wrap-content="false"]
     .database-page-link
     .database-page-main {
-    @apply min-w-0 flex-1 translate-y-0.5;
+    @apply min-w-0 flex-1;
   }
 
-  .database-timeline-sidebar-row
+  .database-timeline-sidebar-grid
     .database-cell-content[data-wrap-content="false"]
     .database-page-title {
-    @apply overflow-hidden text-ellipsis font-semibold;
+    @apply overflow-hidden text-ellipsis;
   }
 
-  .database-timeline-group-toggle {
-    @apply mb-2 h-8 min-h-8;
+  .database-timeline-sidebar-grid .database-timeline-group-toggle {
+    @apply mb-0 h-8 min-h-8;
+  }
+
+  .database-timeline-sidebar-grid tr[data-timeline-group-header] > td {
+    @apply p-0 align-top;
   }
 
   .database-timeline-sidebar-create-row .database-table-create {

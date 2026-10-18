@@ -31,6 +31,7 @@ import {
   type DataGridFeatures,
   type DataGridCellSelectionSnapshot,
   type DataGridCellsChangeDetails,
+  type DataGridCellEditRequest,
 } from "@/components/ui/data-grid/data-grid";
 import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
 import { ADD_PROPERTY_COLUMN_ID, getColumnWidth, type TableRow } from "../lib/database-table-model";
@@ -125,7 +126,7 @@ export function useDatabaseGrid({
           editable &&
           (title || Boolean(property && isDatabaseSpreadsheetWritable(property.property.type)));
         const text =
-          title || (property && getDatabasePropertyCellKind(property.property.type) === "input");
+          !title && property && getDatabasePropertyCellKind(property.property.type) === "input";
         return {
           id,
           accessorFn: (row) => row.cellValues[id] ?? "",
@@ -171,6 +172,29 @@ export function useDatabaseGrid({
     },
     (state) => ({ ...state, cellSelection: unobservedSelection }),
   );
+  const titleEditRequestId = useRef(0);
+  const [titleEditRequest, setTitleEditRequest] = useState<{
+    rowId: string;
+    scope: string;
+    id: number;
+    initialText?: string;
+  } | null>(null);
+  const onCellEditRequest = useCallback(
+    (request: DataGridCellEditRequest<DatabaseGridRow>) => {
+      if (request.columnId !== "name") return false;
+      setTitleEditRequest({
+        rowId: request.rowId,
+        scope: controllerScope,
+        initialText: request.initialText,
+        id: ++titleEditRequestId.current,
+      });
+      return true;
+    },
+    [controllerScope],
+  );
+  const onTitleEditRequestHandled = useCallback((id: number) => {
+    setTitleEditRequest((current) => (current?.id === id ? null : current));
+  }, []);
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const onCellSelectionChange = useCallback((snapshot: DataGridCellSelectionSnapshot) => {
     setFocusedRowId(snapshot.focused?.rowId ?? null);
@@ -180,6 +204,7 @@ export function useDatabaseGrid({
   useEffect(() => {
     if (previousShape.current === selectionShape) return;
     previousShape.current = selectionShape;
+    setTitleEditRequest(null);
     table.resetCellSelection(true);
     setFocusedRowId(null);
   }, [selectionShape, table]);
@@ -370,6 +395,9 @@ export function useDatabaseGrid({
   return {
     table,
     onCellsChange,
+    onCellEditRequest,
+    onTitleEditRequestHandled,
+    titleEditRequest: titleEditRequest?.scope === controllerScope ? titleEditRequest : null,
     onCellSelectionChange,
     onScrollToCell,
     scrollContext,

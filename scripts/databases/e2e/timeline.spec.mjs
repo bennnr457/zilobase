@@ -336,7 +336,7 @@ test("unscheduled rows, new pages, external drops and date setup remain usable",
     .toBe(1);
   await options(page, { dateEnabled: false });
   await expect(page.getByText("Choose a date property", { exact: true })).toBeVisible();
-  await page.getByRole("combobox").click();
+  await page.getByRole("combobox").filter({ hasText: "Choose a date property" }).click();
   await page.getByRole("option", { name: "Date", exact: true }).click();
   await expect(page.locator(`${timeline} [data-slot=gantt-view]`)).toBeVisible();
 });
@@ -928,5 +928,42 @@ test("the timeline fills the remaining page without gaps or an internal vertical
       )
       .evaluate((el) => el.scrollTop),
   ).toBe(0);
+  await assertAligned(page);
+});
+
+test("table and timeline share the popover title editor for mouse and keyboard activation", async ({
+  page,
+}) => {
+  for (const surface of ["table", "timeline"]) {
+    if (surface === "table")
+      await page.getByRole("button", { name: "Show table", exact: true }).click();
+    else await page.getByRole("button", { name: "Show timeline", exact: true }).click();
+    const root =
+      surface === "table"
+        ? page.locator(".database-table-wrap").last()
+        : page.locator(".database-timeline-sidebar-grid");
+    const keyboardTarget = surface === "table" ? root.getByRole("grid") : root;
+    const title = root.locator('tr[data-database-row-id="row-0"] .database-page-title-button');
+    await title.dblclick();
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true })).toBeVisible();
+    await expect(page.locator('[data-slot="data-grid-cell-editor"]')).toHaveCount(0);
+    await page.getByRole("textbox", { name: "Page title", exact: true }).press("Escape");
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true })).toHaveCount(0);
+    // Plain clicks edit immediately. Navigate to the first cell from the
+    // grid container so F2 and typing exercise keyboard activation directly.
+    await keyboardTarget.focus();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.press("F2");
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true })).toBeVisible();
+    await page.getByRole("textbox", { name: "Page title", exact: true }).press("Escape");
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true })).toHaveCount(0);
+    await keyboardTarget.focus();
+    await page.keyboard.press("Control+Home");
+    await page.keyboard.press("z");
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true })).toHaveValue("z");
+    await expect(page.locator('[data-slot="data-grid-cell-editor"]')).toHaveCount(0);
+    await page.getByRole("textbox", { name: "Page title", exact: true }).press("Escape");
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true })).toHaveCount(0);
+  }
   await assertAligned(page);
 });

@@ -1257,6 +1257,10 @@ export function DatabaseTableView() {
                         <DatabaseCellContent wrapContent={nameColumnWrapContent}>
                           <DatabasePageLink
                             editable={editable}
+                            editRequest={
+                              grid.titleEditRequest?.rowId === row.id ? grid.titleEditRequest : null
+                            }
+                            onEditRequestHandled={grid.onTitleEditRequestHandled}
                             onActiveChange={setActive}
                             onOpen={onOpenPage}
                             pageId={row.pageId}
@@ -1365,6 +1369,7 @@ export function DatabaseTableView() {
         table={grid.table}
         recordCount={visibleRows.length}
         onCellsChange={grid.onCellsChange}
+        onCellEditRequest={grid.onCellEditRequest}
         onCellSelectionChange={grid.onCellSelectionChange}
         tableLayout={{
           dense: true,

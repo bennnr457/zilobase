@@ -25,6 +25,8 @@ type DatabasePageSummary = {
 
 export function DatabasePageLink({
   editable = false,
+  editRequest,
+  onEditRequestHandled,
   onActiveChange,
   onOpen,
   openMode = "button",
@@ -33,6 +35,8 @@ export function DatabasePageLink({
   showPageIcon = true,
 }: {
   editable?: boolean;
+  editRequest?: { id: number; initialText?: string } | null;
+  onEditRequestHandled?: (id: number) => void;
   onActiveChange?: (active: boolean) => void;
   onOpen?: (pageId: string) => void;
   openMode?: "button" | "title";
@@ -68,6 +72,7 @@ export function DatabasePageLink({
   const undoHistory = useOptionalUndoHistory();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titleEditFinishedRef = useRef(false);
+  const handledEditRequest = useRef<typeof editRequest>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const targetPageId = pageSummary?.id ?? pageId;
@@ -119,6 +124,15 @@ export function DatabasePageLink({
     onActiveChange?.(true);
     setIsEditingTitle(true);
   };
+  useEffect(() => {
+    if (!editRequest || editRequest === handledEditRequest.current || !canEditTitle) return;
+    handledEditRequest.current = editRequest;
+    setDraftTitle(editRequest.initialText ?? pageSummary?.name ?? "");
+    titleEditFinishedRef.current = false;
+    onActiveChange?.(true);
+    setIsEditingTitle(true);
+    onEditRequestHandled?.(editRequest.id);
+  }, [editRequest, canEditTitle, pageSummary?.name, onActiveChange, onEditRequestHandled]);
   const cancelTitleEdit = () => {
     titleEditFinishedRef.current = true;
     setDraftTitle(pageSummary?.name ?? "");
@@ -192,6 +206,11 @@ export function DatabasePageLink({
               <button
                 className="database-page-title database-page-title-button"
                 onClick={(event) => event.stopPropagation()}
+                onDoubleClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  startTitleEdit();
+                }}
                 title="Edit page title"
                 type="button"
               >

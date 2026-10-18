@@ -1178,14 +1178,14 @@ function DataGridCellSelection<TData extends object>({
       }
       const onCellEditRequest = context.props.onCellEditRequest;
       if (cellEdit && onCellEditRequest) {
-        onCellEditRequest({
+        const handled = onCellEditRequest({
           rowId: cell.row.id,
           columnId: cell.column.id,
           row: cell.row.original,
           previousValue: cell.getValue(),
           initialText,
         });
-        return true;
+        if (handled !== false) return true;
       }
       // Generic activation: a custom control rendered in the cell (a
       // select trigger, a combobox input, a button) toggles from the

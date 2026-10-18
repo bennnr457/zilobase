@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode } from "react";
+import { type ComponentPropsWithoutRef, type CSSProperties, type ReactNode } from "react";
 import { useDataGrid } from "@/components/ui/data-grid/data-grid";
 import { DataGridTableBodyRowCell } from "@/components/ui/data-grid/data-grid-table";
 import type { DatabaseGridRow } from "../hooks/use-database-grid";
@@ -82,13 +82,19 @@ export function CreateDatabaseRowButton({
   columnCount,
   disabled,
   onClick,
+  rowProps,
 }: {
   columnCount: number;
   disabled: boolean;
   onClick: () => void;
+  rowProps?: ComponentPropsWithoutRef<"tr"> & Record<`data-${string}`, unknown>;
 }) {
   return (
-    <tr className="database-table-create-row" data-database-row-drop-footer>
+    <tr
+      {...rowProps}
+      className={cn("database-table-create-row", rowProps?.className)}
+      data-database-row-drop-footer
+    >
       <td colSpan={columnCount}>
         <button
           className="database-table-create"

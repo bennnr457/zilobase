@@ -805,7 +805,8 @@ export interface DataGridProps<TFeatures extends TableFeatures, TData extends ob
    * Opens the consumer's editor from the keyboard: Enter, F2, or typing on
    * the focused cell. Absent: Enter keeps moving down, typing does nothing.
    */
-  onCellEditRequest?: (request: DataGridCellEditRequest<TData>) => void;
+  /** Return false to let the cell's own control handle the request. */
+  onCellEditRequest?: (request: DataGridCellEditRequest<TData>) => void | boolean;
   /**
    * Fires on every cell-selection change (focus moves, ranges grow or
    * clear) with a resolved snapshot, so a selection count, formula bar or
