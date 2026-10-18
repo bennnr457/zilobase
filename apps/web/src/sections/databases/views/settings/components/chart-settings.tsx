@@ -38,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cyclingColorTokens, getColorToken, getPaletteColor } from "@/lib/color-tokens";
+import { cyclingColorTokens, getColorToken, getPaletteBackgroundColor } from "@/lib/color-tokens";
 import { cn } from "@/lib/utils";
 
 import { getDatabasePropertyType } from "../../../properties/lib/property-catalog";
@@ -128,8 +128,9 @@ export function DatabaseChartSettingsSection({
   const selectedColorToken = settings.color === "auto" ? null : getColorToken(settings.color);
   const colorLabel = selectedColorToken?.name ?? "Auto";
   const colorSwatch = selectedColorToken
-    ? (getPaletteColor(selectedColorToken.value) ?? "var(--zb-color-action-background-selected)")
-    : "linear-gradient(90deg, var(--zb-color-palette-text-blue), var(--zb-color-palette-text-purple), var(--zb-color-palette-text-pink), var(--zb-color-palette-text-orange))";
+    ? (getPaletteBackgroundColor(selectedColorToken.value) ??
+      "var(--zb-color-palette-background-blue-subtle)")
+    : "linear-gradient(90deg, var(--zb-color-palette-background-blue-subtle), var(--zb-color-palette-background-purple-subtle), var(--zb-color-palette-background-pink-subtle), var(--zb-color-palette-background-orange-subtle))";
   const updateReferenceLine = (id: string, patch: Partial<DatabaseChartReferenceLine>) =>
     onChange({
       referenceLines: referenceLines.map((line) => (line.id === id ? { ...line, ...patch } : line)),
@@ -261,7 +262,8 @@ export function DatabaseChartSettingsSection({
                       className="size-2.5 rounded-full"
                       style={{
                         backgroundColor:
-                          getPaletteColor(group.color) ?? "var(--zb-color-content-text-secondary)",
+                          getPaletteBackgroundColor(group.color) ??
+                          "var(--zb-color-content-text-secondary)",
                       }}
                     />
                     <span>{group.name}</span>
@@ -600,7 +602,7 @@ export function DatabaseChartSettingsSection({
                 })
               }
             >
-              <span className={cn("size-3 rounded-sm border", color.swatchClass)} />
+              <span className={cn("size-3 rounded-sm border", color.backgroundClass)} />
               <span>{color.name}</span>
               {settings.color === color.value ? (
                 <Check className="ml-auto text-content-primary" />

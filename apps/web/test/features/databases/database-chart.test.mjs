@@ -1,18 +1,26 @@
 export function register({ assert, loadModule, test }) {
-  test("database charts use the semantic palette for defaults and variants", async () => {
-    const { DEFAULT_CHART_COLOR, getColorVariant } = await loadModule(
+  test("database chart fills match badge surfaces while strokes retain contrast", async () => {
+    const { DEFAULT_CHART_COLOR, getChartStrokeColor, getColorVariant } = await loadModule(
       "/src/sections/databases/views/chart/lib/database-chart-data.ts",
     );
 
-    assert.equal(DEFAULT_CHART_COLOR, "var(--zb-color-palette-text-blue)");
+    assert.equal(DEFAULT_CHART_COLOR, "var(--zb-color-palette-background-blue-subtle)");
+    assert.equal(getColorVariant(DEFAULT_CHART_COLOR, 0), DEFAULT_CHART_COLOR);
     assert.equal(
-      getColorVariant("var(--zb-color-palette-text-blue)", 0),
-      "var(--zb-color-palette-text-blue)",
-    );
-    assert.equal(
-      getColorVariant("var(--zb-color-palette-text-blue)", 1),
+      getColorVariant(DEFAULT_CHART_COLOR, 1),
       "var(--zb-color-palette-background-blue-variant-82)",
     );
+    const percentages = [100, 82, 68, 54, 88, 74, 60, 46, 100];
+    for (const [index, percentage] of percentages.entries()) {
+      assert.equal(
+        getChartStrokeColor(getColorVariant(DEFAULT_CHART_COLOR, index)),
+        percentage === 100
+          ? "var(--zb-color-palette-text-blue)"
+          : `var(--zb-color-palette-text-blue-variant-${percentage})`,
+      );
+    }
+    assert.equal(getColorVariant("currentColor", 1), "currentColor");
+    assert.equal(getChartStrokeColor("currentColor"), "currentColor");
   });
 
   test("database chart config normalizes persisted settings", async () => {
@@ -44,6 +52,34 @@ export function register({ assert, loadModule, test }) {
           "property-status:Done": "green",
         },
       },
+    );
+  });
+
+  test("bar tooltip payloads carry the rendered automatic and selected fills", async () => {
+    const { getChartDataWithFills } = await loadModule(
+      "/src/sections/databases/views/chart/lib/database-chart-data.ts",
+    );
+    const data = [
+      { name: "Not started", count: 3, color: "var(--zb-color-palette-background-gray-subtle)" },
+      { name: "Done", count: 3, color: "var(--zb-color-palette-background-green-subtle)" },
+    ];
+
+    assert.deepEqual(
+      getChartDataWithFills(data, null).map(({ fill }) => fill),
+      data.map(({ color }) => color),
+    );
+    assert.deepEqual(
+      getChartDataWithFills(data, "var(--zb-color-palette-background-purple-subtle)").map(
+        ({ fill }) => fill,
+      ),
+      [
+        "var(--zb-color-palette-background-purple-subtle)",
+        "var(--zb-color-palette-background-purple-variant-82)",
+      ],
+    );
+    assert.ok(
+      data.every((item) => !("fill" in item)),
+      "Source data must remain unchanged",
     );
   });
 
@@ -254,6 +290,13 @@ export function register({ assert, loadModule, test }) {
     const seriesKeys = Object.fromEntries(
       result.series.map((series) => [series.label, series.key]),
     );
+    assert.deepEqual(
+      Object.fromEntries(result.series.map((series) => [series.label, series.color])),
+      {
+        Doing: "var(--zb-color-palette-background-blue-subtle)",
+        Done: "var(--zb-color-palette-background-green-subtle)",
+      },
+    );
 
     assert.deepEqual(
       result.data.map((item) => ({
@@ -293,14 +336,14 @@ export function register({ assert, loadModule, test }) {
     assert.equal(firstColor, secondColor);
     assert.equal(
       firstColor,
-      `var(--zb-color-palette-text-${getAutomaticChartColor(status, "Backlog")})`,
+      `var(--zb-color-palette-background-${getAutomaticChartColor(status, "Backlog")}-subtle)`,
     );
     assert.equal(
       createChartData({
         ...input,
         valueColors: { "status:Backlog": "purple" },
       })[0].color,
-      "var(--zb-color-palette-text-purple)",
+      "var(--zb-color-palette-background-purple-subtle)",
     );
   });
 }

@@ -28,7 +28,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { getPaletteColor } from "@/lib/color-tokens";
+import { getPaletteBackgroundColor, getPaletteColor } from "@/lib/color-tokens";
 import { DatabaseRecordWindowControl } from "../../shared/components/database-record-window-control";
 import {
   useDatabaseDataContext,
@@ -43,8 +43,10 @@ import {
   createChartData,
   createOuterPieSegments,
   createSplitChartData,
+  getChartDataWithFills,
   getChartGroupProperty,
   getChartMeasureValue,
+  getChartStrokeColor,
   getColorVariant,
   type DatabaseChartDataItem,
   type DatabaseChartSeriesItem,
@@ -157,11 +159,14 @@ export function DatabaseChartView() {
   const selectedColor =
     chartSettings.color === "auto"
       ? null
-      : (getPaletteColor(chartSettings.color) ?? DEFAULT_CHART_COLOR);
+      : (getPaletteBackgroundColor(chartSettings.color) ?? DEFAULT_CHART_COLOR);
   const getDisplayColor = (item: DatabaseChartDataItem, index = 0) =>
     selectedColor ? getColorVariant(selectedColor, index) : item.color;
   const getSeriesDisplayColor = (series: DatabaseChartSeriesItem, index = 0) =>
     selectedColor ? getColorVariant(selectedColor, index) : series.color;
+  const barChartData = shouldSplitSeries
+    ? displayChartData
+    : getChartDataWithFills(displayChartData, selectedColor);
   const chartConfig = Object.fromEntries([
     [
       "count",
@@ -220,7 +225,7 @@ export function DatabaseChartView() {
       return (
         <BarChart
           accessibilityLayer
-          data={displayChartData}
+          data={barChartData}
           layout="vertical"
           margin={{ bottom: 12, left: 12, right: 18, top: 12 }}
         >
@@ -329,7 +334,7 @@ export function DatabaseChartView() {
                 fillOpacity={0.35}
                 key={series.key}
                 name={series.label}
-                stroke={getSeriesDisplayColor(series, index)}
+                stroke={getChartStrokeColor(getSeriesDisplayColor(series, index))}
                 strokeWidth={2}
                 type="natural"
               />
@@ -340,7 +345,7 @@ export function DatabaseChartView() {
               fill={`url(#fill-${gradientId}-count)`}
               fillOpacity={0.4}
               name={metricLabel}
-              stroke={getDisplayColor(displayChartData[0]!, 0)}
+              stroke={getChartStrokeColor(getDisplayColor(displayChartData[0]!, 0))}
               strokeWidth={2}
               type="natural"
             />
@@ -358,7 +363,7 @@ export function DatabaseChartView() {
             {chartData.map((item, index) => (
               <Cell fill={getDisplayColor(item, index)} key={item.name} />
             ))}
-            <LabelList className="fill-content-primary text-xs" dataKey="name" stroke="none" />
+            <LabelList className="fill-palette-on-subtle text-xs" dataKey="name" stroke="none" />
           </Pie>
           {outerPieSegments.length > 0 ? (
             <Pie
@@ -400,7 +405,7 @@ export function DatabaseChartView() {
                   fillOpacity={0.25}
                   key={series.key}
                   name={series.label}
-                  stroke={color}
+                  stroke={getChartStrokeColor(color)}
                   strokeWidth={2}
                 />
               );
@@ -411,7 +416,7 @@ export function DatabaseChartView() {
               fill={radarColor}
               fillOpacity={0.6}
               name={metricLabel}
-              stroke={radarColor}
+              stroke={getChartStrokeColor(radarColor)}
               strokeWidth={2}
             />
           )}
@@ -438,7 +443,7 @@ export function DatabaseChartView() {
           <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="name" />} cursor={false} />
           <RadialBar background dataKey="count" name={metricLabel}>
             <LabelList
-              className="fill-data-label text-[11px] capitalize mix-blend-luminosity"
+              className="fill-palette-on-subtle text-[11px] capitalize"
               dataKey="name"
               position="insideStart"
               stroke="none"
@@ -451,7 +456,7 @@ export function DatabaseChartView() {
     return (
       <BarChart
         accessibilityLayer
-        data={displayChartData}
+        data={barChartData}
         margin={{ bottom: 12, left: 0, right: 12, top: 12 }}
       >
         <CartesianGrid vertical={false} />

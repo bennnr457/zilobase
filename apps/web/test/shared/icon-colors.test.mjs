@@ -19,6 +19,22 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.equal(isPaletteColorActive("blue", "pink"), false);
   });
 
+  test("palette background values use the same surfaces as badges in both themes", async () => {
+    const { colorTokens, getPaletteBackgroundColor } = await loadModule("/src/lib/color-tokens.ts");
+
+    for (const id of paletteIds) {
+      const token = colorTokens.find((entry) => entry.value === id);
+      assert.equal(
+        getPaletteBackgroundColor(id),
+        `var(--zb-color-palette-background-${id}-subtle)`,
+      );
+      assert.equal(token.backgroundClass, `bg-palette-${id}-subtle`);
+    }
+    assert.equal(getPaletteBackgroundColor(null), null);
+    assert.equal(getPaletteBackgroundColor("default"), null);
+    assert.equal(getPaletteBackgroundColor("not-a-color"), null);
+  });
+
   test("yellow consumes semantic editor tokens", async () => {
     const { colorTokens } = await loadModule("/src/lib/color-tokens.ts");
     const yellowToken = colorTokens.find((token) => token.value === "yellow");

@@ -46,14 +46,19 @@ Canonical names use `--zb-color-{concept}-{property}-{variant}-{state}`. Tailwin
 
 `feedback-{text|background}-{success|warning|error}[-subtle]` maps to `feedback-{success|warning|error}[-text|-subtle]`. Use these only for validation or outcome feedback; they replace every `status-*` token. `feedback-text-favorite` maps to `feedback-favorite` and is reserved for favorite indicators.
 
+The vibrant palette is shared by badges, calendar events, icons, editor highlights, and charts. Chart fills use the same subtle background tokens as badges in each theme, with series variants derived from those fills; line and radar strokes retain the contrasting palette text colors. Feedback subtle fills reference the green, yellow, and red palette tokens directly; dark feedback text and favorite indicators also reuse palette text tokens. Light feedback text keeps deeper tones for readable contrast on the tinted fills. Tune shared hues in the palette block of `color-tokens.css`, keeping feedback roles distinct at usage sites.
+
 The persisted palette IDs are `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, and `red`:
 
-| Canonical pattern                    | Alias pattern         | Allowed use                           | Replaces                  |
-| ------------------------------------ | --------------------- | ------------------------------------- | ------------------------- |
-| `palette-text-{id}`                  | `palette-{id}`        | Editor text, charts, cursors, icons   | `editor-{id}`             |
-| `palette-background-{id}-subtle`     | `palette-{id}-subtle` | Editor highlights and database tags   | `editor-{id}-surface`     |
-| `palette-text-on-subtle`             | `palette-on-subtle`   | Text/icons on any subtle palette fill | `editor-color-foreground` |
-| `palette-background-{id}-variant-{82 | 68                    | 54                                    | 88                        | 74  | 60  | 46}` | none (runtime chart token) | Derived chart series shades only | runtime chart color mixing |
+| Canonical pattern                              | Alias pattern              | Allowed use                                   | Replaces                   |
+| ---------------------------------------------- | -------------------------- | --------------------------------------------- | -------------------------- |
+| `palette-text-{id}`                            | `palette-{id}`             | Editor text, chart strokes, cursors, icons    | `editor-{id}`              |
+| `palette-background-{id}-subtle`               | `palette-{id}-subtle`      | Editor highlights, database tags, chart fills | `editor-{id}-surface`      |
+| `palette-text-on-subtle`                       | `palette-on-subtle`        | Text/icons on any subtle palette fill         | `editor-color-foreground`  |
+| `palette-background-{id}-variant-{percentage}` | none (runtime chart token) | Derived chart fill shades                     | runtime chart color mixing |
+| `palette-text-{id}-variant-{percentage}`       | none (runtime chart token) | Contrasting line and radar stroke shades      | runtime chart color mixing |
+
+Chart variant percentages are `82`, `68`, `54`, `88`, `74`, `60`, and `46`.
 
 ## Derived roles
 

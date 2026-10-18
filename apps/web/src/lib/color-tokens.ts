@@ -137,6 +137,14 @@ export function getPaletteColor(color?: string | null) {
   return `var(--zb-color-palette-text-${color})`;
 }
 
+export function getPaletteBackgroundColor(color?: string | null) {
+  if (!color || color === "default" || !isPaletteColor(color)) {
+    return null;
+  }
+
+  return `var(--zb-color-palette-background-${color}-subtle)`;
+}
+
 export function getColorToken(color?: string | null) {
   if (!color || color === "default") {
     return colorTokens[0];
