@@ -5,6 +5,9 @@ import {
   sharingResponse,
   sharingWrites,
 } from "./sharing-api-fixture";
+import { MeetingView } from "@/sections/pages/editor/extensions/meeting/components/meeting-view";
+import type { MeetingCapturePhase } from "@/platform/meetings/capture-types";
+import { installMeetingCaptureRuntime } from "@/platform/meetings/capture-runtime";
 import { SharePopover } from "@/components/sharing/components/share-popover";
 import { SettingsDialog } from "@/sections/settings/shell/components/settings-dialog";
 import { ChatSidebarPanel } from "@/sections/ai/workspace/components/chat-sidebar";
@@ -55,6 +58,31 @@ import { PageDesignEditorProvider } from "@/sections/pages/design/components/pag
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 
+const meetingFixture = new URLSearchParams(window.location.search).get("workspace") === "meeting";
+const fixtureCaptureStatus = (phase: MeetingCapturePhase) => ({
+  checkpointPath: null,
+  elapsedMs: 0,
+  error: null,
+  meetingId: "fixture",
+  phase,
+  sampleRate: 48000,
+});
+if (meetingFixture)
+  installMeetingCaptureRuntime({
+    observe: (_id, observer) => {
+      observer.setDevices([]);
+      return () => {};
+    },
+    prepare: async () => {},
+    cancelPreparation: async () => {},
+    start: async () => fixtureCaptureStatus("recording"),
+    pause: async () => fixtureCaptureStatus("paused"),
+    resume: async () => fixtureCaptureStatus("recording"),
+    stop: async () => fixtureCaptureStatus("stopped"),
+    refreshTransport: async () => {},
+    deleteLocalFile: async () => {},
+    openLocalFile: async () => {},
+  });
 const fixtureAudience = new URLSearchParams(window.location.search).get("audience");
 let settings = { ...defaultUserSettings };
 const requests: string[] = [];
@@ -77,6 +105,24 @@ const records = ["main", "child", "other"].map((id) => ({
 }));
 const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => {
   requests.push(path);
+  if (meetingFixture && path === "/meetings/fixture")
+    return {
+      meeting: {
+        id: "fixture",
+        pageId: "main",
+        notesPageId: "main",
+        workspaceId: "workspace",
+        title: "Meeting",
+        status: "idle",
+        language: "en",
+        instructionsPreset: "auto",
+        consentMessage: "Everyone must be notified.",
+        autoPlayConsent: false,
+        archiveLocalAudio: false,
+        summaryGeneratedAt: null,
+        summarySourceSegmentCount: 0,
+      },
+    } as T;
   const sharedResponse = sharingResponse(path, options);
   if (sharedResponse !== undefined) return sharedResponse as T;
   if (path === "/user-settings") {
@@ -212,6 +258,31 @@ function Content({ id }: { id: string }) {
   useEffect(() => {
     Object.assign(window, { pageLayoutCommands: state });
   }, [state]);
+  if (meetingFixture) {
+    const fullPage = new URLSearchParams(window.location.search).has("full");
+    const editable = !new URLSearchParams(window.location.search).has("readonly");
+    const view = (
+      <MeetingView
+        meetingId="fixture"
+        editable={editable}
+        fullPage={fullPage}
+        embeddedPage={{ id: "child", name: "Related page", emoji: null }}
+      />
+    );
+    return (
+      <PageSidePaneContext.Provider value={state}>
+        {fullPage ? (
+          <div className="p-4">{view}</div>
+        ) : (
+          <div className="tiptap-editor" style={{ padding: 16 }}>
+            <div className="node-meetingBlock">
+              <div data-node-view-wrapper>{view}</div>
+            </div>
+          </div>
+        )}
+      </PageSidePaneContext.Provider>
+    );
+  }
   if (sharingTarget)
     return (
       <div className="p-8">

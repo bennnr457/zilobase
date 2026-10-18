@@ -62,7 +62,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
+import { getAppTabTriggerClassName, Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { useOpenEmbeddedPage } from "@/sections/pages/navigation/hooks/page-navigation";
 import { DefaultPageIcon, PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
 import { cn } from "@/lib/utils";
@@ -410,7 +410,7 @@ export function MeetingView({
       contentEditable={false}
     >
       <div className="database-toolbar-section meeting-block-header">
-        <div className="database-toolbar">
+        <div className="database-toolbar meeting-block-toolbar">
           {showMeetingTitle ? (
             <div className="group/title flex min-w-0 items-center gap-3">
               {emojiPicker}
@@ -473,7 +473,7 @@ export function MeetingView({
               </DropDrawer>
             </div>
           ) : null}
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Tabs
               className="min-w-0"
               onValueChange={(value) => {
@@ -481,7 +481,7 @@ export function MeetingView({
               }}
               value={activeTab}
             >
-              <TabsList overflow="scroll" width="full">
+              <TabsList aria-label="Meeting sections" overflow="scroll">
                 {tabs.map((tab) => (
                   <TabsTrigger className="capitalize" key={tab} value={tab} width="content">
                     {tab === "summary" ? (
@@ -497,7 +497,9 @@ export function MeetingView({
                 {embeddedPage ? (
                   <Link
                     aria-label={`Open ${embeddedPage.name}`}
-                    className="relative inline-flex h-8 max-w-52 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent px-3 py-0.5 text-xs font-medium text-content-secondary outline-none transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral focus-visible:border-action-focus-ring focus-visible:ring-2 focus-visible:ring-action-focus-ring active:bg-action-neutral-pressed active:text-action-on-neutral"
+                    className={getAppTabTriggerClassName("max-w-52 no-underline", {
+                      width: "content",
+                    })}
                     params={{ pageId: embeddedPage.id }}
                     search={{ meeting: meetingId }}
                     title={`Open ${embeddedPage.name}`}
@@ -506,10 +508,10 @@ export function MeetingView({
                     {embeddedPage.emoji ? (
                       <PageIconDisplay size="sm" value={embeddedPage.emoji} />
                     ) : (
-                      <DefaultPageIcon className="size-3.5" />
+                      <DefaultPageIcon className="size-4" />
                     )}
                     <span className="truncate">{embeddedPage.name}</span>
-                    <ArrowUpRightIcon className="size-3.5 shrink-0" />
+                    <ArrowUpRightIcon className="size-4 shrink-0" />
                   </Link>
                 ) : null}
               </TabsList>

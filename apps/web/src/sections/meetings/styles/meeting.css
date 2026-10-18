@@ -15,11 +15,11 @@
   > [data-node-view-wrapper]
   > .meeting-block-shell
   > .meeting-block-header {
-  @apply box-border px-4 pt-4;
+  @apply box-border px-3 pt-3;
 }
 
 .tiptap-editor .node-meetingBlock > [data-node-view-wrapper] > .meeting-block-shell {
-  @apply min-w-0 overflow-visible rounded-xl border border-stroke-default bg-transparent transition-[border-color,box-shadow];
+  @apply min-w-0 overflow-visible rounded-lg border border-stroke-default bg-transparent transition-[border-color,box-shadow];
 }
 
 .tiptap-editor
@@ -44,10 +44,16 @@
   cursor: default;
 }
 
-.tiptap-editor .meeting-block-shell input,
-.tiptap-editor .meeting-block-shell button,
+.tiptap-editor .meeting-block-shell input {
+  cursor: text;
+}
+
 .tiptap-editor .meeting-collaborative-editor {
   cursor: auto;
+}
+
+.meeting-block-header > .meeting-block-toolbar {
+  @apply min-h-0 gap-3 p-0;
 }
 
 .meeting-block-body {
@@ -59,7 +65,7 @@
   > [data-node-view-wrapper]
   > .meeting-block-shell
   > .meeting-block-body {
-  @apply mt-0 px-4 py-4;
+  @apply mt-0 p-3;
 }
 
 .meeting-collaborative-editor .tiptap-editor {
