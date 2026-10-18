@@ -343,8 +343,8 @@ export const dataGridCellSelectionCellClasses = cn(
   // side that belongs to the range perimeter deterministically stays
   // primary.
   "data-[cell-selected]:before:border-e data-[cell-selected]:before:border-b",
-  "data-[cell-selected]:not-data-[cell-edge-right]:before:border-e-border",
-  "data-[cell-selected]:not-data-[cell-edge-bottom]:before:border-b-border",
+  "data-[cell-selected]:not-data-[cell-edge-right]:before:border-e-stroke-default",
+  "data-[cell-selected]:not-data-[cell-edge-bottom]:before:border-b-stroke-default",
   // The Sheets model: a single selected cell IS its own range, so the four
   // edge attributes below already draw its full primary box; inside a
   // larger range the anchor reads by its unfilled background alone. The

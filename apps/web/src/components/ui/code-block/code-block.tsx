@@ -45,6 +45,7 @@ import type {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Check, ChevronDown, ChevronRight, Copy, Download } from "@/components/icons";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Context                                   */
@@ -564,18 +565,11 @@ const CodeBlockLineRow = memo(function CodeBlockLineRow({
             folded && "text-content-secondary",
           )}
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-3"
-          >
-            <path d={folded ? "m9 18 6-6-6-6" : "m6 9 6 6 6-6"} />
-          </svg>
+          {folded ? (
+            <ChevronRight aria-hidden="true" className="size-3" />
+          ) : (
+            <ChevronDown aria-hidden="true" className="size-3" />
+          )}
         </button>
       ) : null}
       {actions && active ? (
@@ -1678,32 +1672,7 @@ function CodeBlockLanguage({ className, children, ...props }: ComponentProps<"sp
 /* -------------------------------------------------------------------------- */
 
 function CopyIcon({ copied }: { copied: boolean }) {
-  return copied ? (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  ) : (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
+  return copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />;
 }
 
 export type CodeBlockCopyButtonProps = {
@@ -2042,19 +2011,7 @@ function CodeBlockDownloadButton({
       )}
       {...props}
     >
-      {children ?? (
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-        </svg>
-      )}
+      {children ?? <Download aria-hidden="true" />}
     </Button>
   );
 }

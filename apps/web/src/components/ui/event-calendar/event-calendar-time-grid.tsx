@@ -396,7 +396,7 @@ function EventCalendarDayHeader({ day, view }: { day: Date; view: CalendarView }
       data-slot="event-calendar-day-header"
       data-today={isToday || undefined}
       className={cn(
-        "data-today:text-action-primary min-w-0 truncate border-e px-2 py-1.5 font-medium last:border-e-0",
+        "data-today:text-action-selected-text min-w-0 truncate border-e px-2 py-1.5 font-medium last:border-e-0",
         isToday && viewConfig.todayClassName,
       )}
     >
@@ -660,8 +660,7 @@ function EventCalendarAllDayBars({
                 )}
                 style={
                   {
-                    "--ec-event-color":
-                      dragGhost.color ?? "var(--zb-color-action-background-primary)",
+                    "--ec-event-color": dragGhost.color ?? "var(--zb-color-data-background-bar)",
                   } as CSSProperties
                 }
               >
@@ -792,7 +791,7 @@ function EventCalendarAllDayCell({ day }: { day: Date }) {
       {viewConfig.showDayAddButton && !inDraft && (
         <span
           aria-hidden
-          className="pointer-events-none absolute right-1 top-0 hidden text-action-primary group-hover/all-day:block"
+          className="pointer-events-none absolute right-1 top-0 hidden text-action-selected-text group-hover/all-day:block"
         >
           +
         </span>
@@ -1100,7 +1099,7 @@ function EventCalendarDayColumn({
         <div
           aria-hidden
           data-slot="event-calendar-time-add"
-          className="pointer-events-none absolute inset-x-0 z-10 flex items-center justify-end rounded-sm border border-action-primary bg-action-selected-subtle px-2 text-action-primary"
+          className="pointer-events-none absolute inset-x-0 z-10 flex items-center justify-end rounded-sm border border-action-selected-border bg-action-selected-subtle px-2 text-action-selected-text"
           style={{
             top: `${((hoverMinute - boundsStartMin) / boundsMinutes) * 100}%`,
             height: `calc(var(--ec-hour-height) / 2)`,
@@ -1182,7 +1181,7 @@ function EventCalendarDayColumn({
           style={
             {
               ...minuteBlockStyle(dragGhost.window[0], dragGhost.window[1], boundsStartMin),
-              "--ec-event-color": dragGhost.color ?? "var(--zb-color-action-background-primary)",
+              "--ec-event-color": dragGhost.color ?? "var(--zb-color-data-background-bar)",
             } as CSSProperties
           }
         >

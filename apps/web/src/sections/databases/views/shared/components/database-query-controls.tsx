@@ -44,7 +44,7 @@ export function DatabaseFilterControl() {
     <Button
       aria-label={showFilterPill ? "Hide filters" : "Show filters"}
       aria-expanded={showFilterPill}
-      className="text-action-primary hover:text-action-primary active:text-action-primary aria-expanded:text-action-primary"
+      className="text-action-selected-text hover:text-action-selected-text active:text-action-selected-text aria-expanded:text-action-selected-text"
       onClick={toggleFilterPillVisibility}
       size="icon"
       type="button"
@@ -92,7 +92,7 @@ export function DatabaseSortControl() {
     <Button
       aria-label={showSortPill ? "Hide sorts" : "Show sorts"}
       aria-expanded={showSortPill}
-      className="text-action-primary hover:text-action-primary active:text-action-primary aria-expanded:text-action-primary"
+      className="text-action-selected-text hover:text-action-selected-text active:text-action-selected-text aria-expanded:text-action-selected-text"
       onClick={toggleSortPillVisibility}
       size="icon"
       type="button"

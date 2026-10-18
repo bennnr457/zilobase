@@ -7,7 +7,7 @@ import {
   type NodeProps,
   useReactFlow,
 } from "@xyflow/react";
-import { BanIcon, RotateCwIcon, Trash2Icon } from "@/components/icons";
+import { BanIcon, Minus, MoreHorizontal, RotateCwIcon, Trash2Icon } from "@/components/icons";
 import type { MouseEvent as ReactMouseEvent } from "react";
 
 import { cn } from "@/lib/utils";
@@ -279,15 +279,18 @@ function normalizeRotation(rotation: number) {
 }
 
 function StrokeStyleIcon({ style }: { style: CanvasStrokeStyle }) {
-  return (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16">
-      <path
-        d="M2 8H14"
-        stroke="currentColor"
-        strokeDasharray={style === "dashed" ? "5 3" : style === "dotted" ? "0.8 3" : undefined}
-        strokeLinecap={style === "solid" ? "square" : "round"}
-        strokeWidth="1.75"
-      />
-    </svg>
-  );
+  if (style === "dotted") {
+    return <MoreHorizontal aria-hidden="true" className="size-4" />;
+  }
+
+  if (style === "dashed") {
+    return (
+      <span aria-hidden="true" className="inline-flex size-4 items-center">
+        <Minus className="size-2" />
+        <Minus className="size-2" />
+      </span>
+    );
+  }
+
+  return <Minus aria-hidden="true" className="size-4" />;
 }

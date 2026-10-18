@@ -411,7 +411,7 @@ function EventCalendarResourceAllDayCell({
           data-drop-target={isDropTarget}
           className={cn(
             "pointer-events-none absolute inset-0.5 z-10 rounded-sm border border-dashed",
-            isDropTarget === "valid" ? "border-action-primary" : "border-feedback-error",
+            isDropTarget === "valid" ? "border-action-selected-border" : "border-feedback-error",
             viewConfig.classNames?.dropIndicator,
           )}
         />
@@ -676,7 +676,7 @@ function EventCalendarResourceColumn({
           style={
             {
               ...minuteBlockStyle(dragGhost.window[0], dragGhost.window[1], boundsStartMin),
-              "--ec-event-color": dragGhost.color ?? "var(--zb-color-action-background-primary)",
+              "--ec-event-color": dragGhost.color ?? "var(--zb-color-data-background-bar)",
             } as CSSProperties
           }
         >

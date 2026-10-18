@@ -302,7 +302,7 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     // consumer-rendered preview (renderDragPreview): the view mounts it from
     // drag state; positionOverlay adopts it lazily and only writes transforms
     if (customMoveOverlay) return;
-    const color = occurrence.event.color ?? "var(--zb-color-action-background-primary)";
+    const color = occurrence.event.color ?? "var(--zb-color-data-background-bar)";
     overlay = document.createElement("div");
     overlay.setAttribute("data-slot", "gantt-drag-overlay");
     // container: the bar + its label ride together; the label stays OUTSIDE
@@ -386,7 +386,7 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     // consumer-rendered indicator: rect capture above still runs (the engine
     // positions the consumer's wrapper), only the default DOM is skipped
     if (customResizeOverlay) return;
-    const color = occurrence.event.color ?? "var(--zb-color-action-background-primary)";
+    const color = occurrence.event.color ?? "var(--zb-color-data-background-bar)";
     resizeOverlay = document.createElement("div");
     resizeOverlay.setAttribute("data-slot", "gantt-resize-indicator");
     resizeOverlay.className =
@@ -689,7 +689,7 @@ function beginGesture<TData>(config: BeginGestureConfig<TData>) {
     }
     if (resizeLine) {
       resizeLine.style.background = valid
-        ? (occurrence!.event.color ?? "var(--zb-color-action-background-primary)")
+        ? (occurrence!.event.color ?? "var(--zb-color-data-background-bar)")
         : "var(--zb-color-action-background-danger)";
     }
     setBodyDragging(true, !valid);

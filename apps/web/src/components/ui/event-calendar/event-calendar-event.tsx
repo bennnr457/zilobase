@@ -34,21 +34,14 @@ import { addDays, format } from "date-fns";
 import { Slot } from "radix-ui";
 
 import { cn } from "@/lib/utils";
+import { cyclingColorTokens, getPaletteColor } from "@/lib/color-tokens";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-/** Event color presets; each stays legible on light and dark surfaces. */
-const EVENT_CALENDAR_COLORS: Array<{ name: string; value: string }> = [
-  { name: "Blue", value: "var(--color-blue-500)" },
-  { name: "Emerald", value: "var(--color-emerald-500)" },
-  { name: "Violet", value: "var(--color-violet-500)" },
-  { name: "Rose", value: "var(--color-rose-500)" },
-  { name: "Amber", value: "var(--color-amber-500)" },
-  { name: "Cyan", value: "var(--color-cyan-500)" },
-  { name: "Orange", value: "var(--color-orange-500)" },
-  { name: "Pink", value: "var(--color-pink-500)" },
-  { name: "Teal", value: "var(--color-teal-500)" },
-  { name: "Indigo", value: "var(--color-indigo-500)" },
-];
+/** Event presets share the persisted Zilobase content palette. */
+const EVENT_CALENDAR_COLORS = cyclingColorTokens.map(({ name, value }) => ({
+  name,
+  value: getPaletteColor(value)!,
+}));
 
 /**
  * Drag-ghost surfaces, shared verbatim by every view. A move CARRIES the
@@ -85,8 +78,8 @@ const EVENT_CALENDAR_FADE_TRUNCATE =
  * ends so it reads as one dashed box rather than a row of them.
  */
 const EVENT_CALENDAR_SLOT_DRAFT = {
-  box: "rounded-sm border border-dashed border-action-primary bg-action-selected-subtle",
-  segment: "border-y border-dashed border-action-primary",
+  box: "rounded-sm border border-dashed border-action-selected-border bg-action-selected-subtle",
+  segment: "border-y border-dashed border-action-selected-border",
   segmentStart: "rounded-s-sm border-s",
   segmentEnd: "rounded-e-sm border-e",
   /**
@@ -100,7 +93,7 @@ const EVENT_CALENDAR_SLOT_DRAFT = {
    * 4rem hour height), and looser leading renders ~18px, clipped by the
    * draft's own overflow-hidden.
    */
-  label: "text-action-primary truncate px-1 py-0.5 text-[0.6875rem] leading-none font-medium",
+  label: "text-action-selected-text truncate px-1 py-0.5 text-[0.6875rem] leading-none font-medium",
 } as const;
 
 interface EventCalendarChipContextValue<TData = unknown> {
@@ -444,7 +437,7 @@ function EventCalendarEvent<TData = unknown>({
       // so a consumer style prop must not replace it (base uses mergeProps)
       style={
         {
-          "--ec-event-color": event.color ?? "var(--zb-color-action-background-primary)",
+          "--ec-event-color": event.color ?? "var(--zb-color-data-background-bar)",
           ...style,
         } as CSSProperties
       }
@@ -474,7 +467,7 @@ function EventCalendarEvent<TData = unknown>({
       }}
       className={cn(
         "group/ec-event text-content-primary relative flex w-full min-w-0 cursor-pointer touch-none items-center overflow-hidden text-start select-none",
-        "focus-visible:ring-action-primary outline-none focus-visible:ring-2",
+        "focus-visible:ring-action-focus-ring outline-none focus-visible:ring-2",
         preview && "pointer-events-none",
         view === "agenda"
           ? // plain list row: color lives in the dot badge, not a tinted pill;

@@ -2535,13 +2535,15 @@ function GanttView({
               <span
                 className={cn(
                   "ms-0.5 size-0 shrink-0 border-y-4 border-s-8 border-y-transparent",
-                  reorder.valid ? "border-s-action-primary" : "border-s-action-danger",
+                  reorder.valid
+                    ? "border-s-action-selected-border"
+                    : "border-s-action-danger-border",
                 )}
               />
               <span
                 className={cn(
                   "h-px min-w-0 flex-1",
-                  reorder.valid ? "bg-action-primary" : "bg-action-danger",
+                  reorder.valid ? "bg-action-selected-border" : "bg-action-danger",
                 )}
               />
             </div>
@@ -2562,7 +2564,7 @@ function GanttView({
             tabIndex={0}
             data-slot="gantt-splitter"
             className={cn(
-              "group/gantt-splitter bg-stroke-default hover:bg-action-primary data-resizing:bg-action-primary relative z-30 w-px shrink-0 cursor-col-resize touch-none outline-none",
+              "group/gantt-splitter bg-stroke-default hover:bg-action-selected-border data-resizing:bg-action-selected-border relative z-30 w-px shrink-0 cursor-col-resize touch-none outline-none",
               "focus-visible:ring-action-focus-ring focus-visible:ring-2",
               "after:absolute after:inset-y-0 after:-start-1 after:-end-1",
             )}
@@ -2586,7 +2588,7 @@ function GanttView({
             <span
               aria-hidden
               data-slot="gantt-splitter-grip"
-              className="bg-action-primary group-data-resizing/gantt-splitter:bg-action-primary absolute top-1/2 left-1/2 h-6 w-0.75 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 transition-opacity duration-150 group-hover/gantt-splitter:opacity-100 group-focus-visible/gantt-splitter:opacity-100 group-data-resizing/gantt-splitter:opacity-100"
+              className="bg-action-selected-border group-data-resizing/gantt-splitter:bg-action-selected-border absolute top-1/2 left-1/2 h-6 w-0.75 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 transition-opacity duration-150 group-hover/gantt-splitter:opacity-100 group-focus-visible/gantt-splitter:opacity-100 group-data-resizing/gantt-splitter:opacity-100"
             />
           </div>
         ) : (
@@ -3542,7 +3544,7 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
                 style={
                   {
                     "--gantt-event-color":
-                      row.resource.color ?? "var(--zb-color-action-background-primary)",
+                      row.resource.color ?? "var(--zb-color-data-background-bar)",
                     insetInlineStart: plan.baseline.milestone
                       ? `clamp(0rem, ${from * 100}% - ${laneHeightRem / 2}rem, 100% - ${laneHeightRem}rem)`
                       : `${from * 100}%`,
@@ -3596,8 +3598,7 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
               )}
               style={
                 {
-                  "--gantt-event-color":
-                    plan.event.color ?? "var(--zb-color-action-background-primary)",
+                  "--gantt-event-color": plan.event.color ?? "var(--zb-color-data-background-bar)",
                   /* clamped into the row box: the layer's paint containment
                      slices anything that overhangs it, which would cut an
                      edge milestone's diamond in half - so it nudges inward
@@ -3783,7 +3784,8 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
               /* height via the class, not an inline style, so a consumer's
                  own selector can still outrank it */
               "pointer-events-none absolute z-40 h-(--gantt-ghost-height) rounded-sm border border-dashed font-medium",
-              !ghost.valid && "border-action-danger bg-feedback-error-subtle text-action-danger",
+              !ghost.valid &&
+                "border-action-danger-border bg-feedback-error-subtle text-action-danger-text",
               ghost.valid &&
                 ghost.kind === "move" &&
                 "border-(--gantt-event-color)/50 bg-(--gantt-event-color)/8",
@@ -3814,7 +3816,7 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
                 /* metrics-driven, and published so a consumer can size
                    against the SAME number instead of hardcoding 1.25 */
                 "--gantt-ghost-height": `${ghostHeightRem}rem`,
-                "--gantt-event-color": ghost.color ?? "var(--zb-color-action-background-primary)",
+                "--gantt-event-color": ghost.color ?? "var(--zb-color-data-background-bar)",
               } as CSSProperties
             }
           >
@@ -3824,7 +3826,7 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
                   "size-2.5 rotate-45 rounded-[2px] border border-dashed",
                   ghost.valid
                     ? "border-(--gantt-event-color)/70 bg-(--gantt-event-color)/10"
-                    : "border-action-danger bg-feedback-error-subtle",
+                    : "border-action-danger-border bg-feedback-error-subtle",
                 )}
               />
             )}
@@ -3846,7 +3848,7 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
             // the bar it is going under - as a tint that read as a smudge over
             // the bar's own label. Punched out of the backdrop it reads as a
             // distinct object sliding underneath, which is what it is.
-            className="border-action-primary bg-surface-canvas pointer-events-none absolute z-40 overflow-hidden rounded-sm border border-dashed"
+            className="border-action-selected-border bg-surface-canvas pointer-events-none absolute z-40 overflow-hidden rounded-sm border border-dashed"
             style={{
               insetInlineStart: `${draft.from * 100}%`,
               width: `${Math.max((draft.to - draft.from) * 100, 0.5)}%`,
@@ -3956,7 +3958,7 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
                 // KEYBOARD use - pointer-events never blocks Enter/Space.
                 // No cursor class here: pointer-events-none makes it unreachable.
                 // The row carries it (see `hintVisible`).
-                className="border-action-primary ring-surface-canvas pointer-events-none block size-5 rounded-full border-2 bg-transparent ring-1"
+                className="border-action-selected-border ring-surface-canvas pointer-events-none block size-5 rounded-full border-2 bg-transparent ring-1"
                 onPointerDown={(e) => {
                   // with drag-create on the press belongs to the row's create
                   // gesture; a sub-threshold press still ends as this click
@@ -4172,7 +4174,7 @@ function GanttOffscreenChips({
                 <span
                   aria-hidden
                   className="ring-surface-canvas absolute -end-px -top-px size-1.5 rounded-full ring-1"
-                  style={{ background: chip.color ?? "var(--zb-color-action-background-primary)" }}
+                  style={{ background: chip.color ?? "var(--zb-color-data-background-bar)" }}
                 />
               </button>
             </TooltipTrigger>

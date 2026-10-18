@@ -282,7 +282,7 @@ function GanttBar<TData = unknown>({
       })}
       style={
         {
-          "--gantt-event-color": event.color ?? "var(--zb-color-action-background-primary)",
+          "--gantt-event-color": event.color ?? "var(--zb-color-data-background-bar)",
         } as CSSProperties
       }
       onPointerDown={(e: React.PointerEvent) => {
@@ -331,7 +331,7 @@ function GanttBar<TData = unknown>({
           data-slot="gantt-bar-milestone"
           className={cn(
             "size-2.5 shrink-0 rotate-45 rounded-[2px] border border-(--gantt-event-color) bg-(--gantt-event-color)/80",
-            isSelected && "ring-action-focus-ring ring-2",
+            isSelected && "ring-action-selected-border ring-2",
           )}
         />
       )}

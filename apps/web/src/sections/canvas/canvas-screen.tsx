@@ -1,4 +1,5 @@
 import "@xyflow/react/dist/style.css";
+import "./canvas.css";
 
 import { ReactFlowProvider } from "@xyflow/react";
 

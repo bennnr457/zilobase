@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 as Spinner, Plus } from "@/components/icons";
+import { ChevronDown, Loader2 as Spinner, PinIcon, Plus } from "@/components/icons";
 
 // Static spacing lookups; called once per cell, so they stay plain string
 // picks instead of runtime variant machinery.
@@ -1401,7 +1401,7 @@ function DataGridTableHeadRowCell<TData extends object>({
           aria-hidden="true"
           data-slot="data-grid-table-head-group-rule"
           className={cn(
-            "bg-border pointer-events-none absolute h-px",
+            "bg-stroke-default pointer-events-none absolute h-px",
             // On the cell's last pixel row: over the transparent header
             // border when there is one, as the border-b rule paints.
             props.tableLayout?.headerBorder ? "-bottom-px" : "bottom-0",
@@ -1414,7 +1414,7 @@ function DataGridTableHeadRowCell<TData extends object>({
           aria-hidden="true"
           data-slot="data-grid-table-head-divider"
           className={cn(
-            "bg-border pointer-events-none absolute inset-y-0 w-px",
+            "bg-stroke-default pointer-events-none absolute inset-y-0 w-px",
             groupLineEdge === "end" ? "end-0" : "start-0",
           )}
         />
@@ -1539,7 +1539,7 @@ function DataGridTableHeadRowCellResize<TData extends object>({
                 "start-0 w-5 justify-start",
                 props.tableLayout?.columnsPinnable
                   ? "before:hidden"
-                  : "before:absolute before:inset-y-0 before:start-0 before:w-px before:bg-border",
+                  : "before:absolute before:inset-y-0 before:start-0 before:w-px before:bg-stroke-default",
               )
             : isLastVisibleColumn
               ? "end-0 w-5 justify-end before:hidden"
@@ -1557,7 +1557,7 @@ function DataGridTableHeadRowCellResize<TData extends object>({
                     // column showing a resize cursor and no indicator at all.
                     props.tableLayout?.columnsPinnable
                       ? "before:hidden"
-                      : "before:absolute before:inset-y-0 before:end-0 before:w-px before:bg-border",
+                      : "before:absolute before:inset-y-0 before:end-0 before:w-px before:bg-stroke-default",
                   )
                 : cn(
                     "-end-2 w-5 justify-center",
@@ -1568,19 +1568,19 @@ function DataGridTableHeadRowCellResize<TData extends object>({
                     // cell's last pixel column, where a th border-e paints.
                     props.tableLayout?.cellBorder || hidesLastCenterLine
                       ? "before:hidden"
-                      : "before:absolute before:inset-y-0 before:end-2 before:w-px before:bg-border",
+                      : "before:absolute before:inset-y-0 before:end-2 before:w-px before:bg-stroke-default",
                   ),
           column.getIsResizing() &&
             (isResizeModeOnEnd
               ? "opacity-100"
               : isLastVisibleColumn && isPinned !== "end"
-                ? "before:absolute before:end-0 before:block before:inset-y-0 before:w-0.5 before:bg-action-primary opacity-100"
+                ? "before:absolute before:end-0 before:block before:inset-y-0 before:w-0.5 before:bg-action-selected-border opacity-100"
                 : isPinned
-                  ? "before:block before:bg-action-primary before:w-0.5 opacity-100"
+                  ? "before:block before:bg-action-selected-border before:w-0.5 opacity-100"
                   : cn(
                       // Positioned explicitly: under cellBorder the resting
                       // line is hidden and unpositioned.
-                      "before:absolute before:inset-y-0 before:block before:w-0.5 before:bg-action-primary opacity-100",
+                      "before:absolute before:inset-y-0 before:block before:w-0.5 before:bg-action-selected-border opacity-100",
                       // A th border-e ends the padding box 1px inside the
                       // cell edge, so the line moves out by that pixel.
                       props.tableLayout?.cellBorder && !hidesLastCenterLine
@@ -1708,10 +1708,10 @@ function DataGridTableResizeIndicator({
       data-slot="data-grid-table-resize-indicator"
       className="pointer-events-none absolute inset-y-0 z-50"
     >
-      <div className="bg-action-primary absolute inset-y-0 left-0 w-px -translate-x-1/2" />
+      <div className="bg-action-selected-border absolute inset-y-0 left-0 w-px -translate-x-1/2" />
       <div
         ref={indicatorHeadRef}
-        className="bg-action-primary rounded-b-sm absolute top-0 left-0 -translate-x-1/2 shadow-xs"
+        className="bg-action-selected-border rounded-b-sm absolute top-0 left-0 -translate-x-1/2 shadow-xs"
         style={{ width: 5 }}
       />
     </div>
@@ -2233,8 +2233,8 @@ function DataGridTableBodyRowCell<TData extends object>({
                        overlap, so the square cannot merge with a gridline
                        into a wider-than-tall blob, and it can never leave
                        the grid, which is why it needs no boundary clamps. */
-                    "bg-action-primary end-0 bottom-0 size-[5px]"
-                  : "bg-action-primary border-surface-canvas end-0 bottom-0 size-[9px] rounded-full border",
+                    "bg-action-selected-border end-0 bottom-0 size-[5px]"
+                  : "bg-action-selected-border border-surface-canvas end-0 bottom-0 size-[9px] rounded-full border",
               props.tableClassNames?.cellFillHandle,
             )}
           />
@@ -2424,33 +2424,7 @@ function DataGridTableRowPin<TData extends object>({ row }: { row: Row<DataGridF
         isPinned && "text-action-link hover:text-action-link",
       )}
     >
-      {isPinned ? (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          stroke="none"
-        >
-          <path d="M16 2l4.585 4.586-2.122 2.121L17.05 7.293l-3.535 3.536 1.413 5.658-2.12 2.121-4.244-4.243L4.322 18.6l-1.414-1.41 4.242-4.244-4.243-4.243 2.122-2.121 5.656 1.414 3.536-3.536-1.414-1.414z" />
-        </svg>
-      ) : (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="12" y1="17" x2="12" y2="22" />
-          <path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24z" />
-        </svg>
-      )}
+      <PinIcon aria-hidden="true" className="size-4" weight={isPinned ? "fill" : "bold"} />
     </button>
   );
 }
@@ -2565,21 +2539,10 @@ function DataGridTableRowExpand<TData extends object>({
           )}
         >
           {children ?? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <ChevronDown
               aria-hidden="true"
-              className="transition-transform duration-200 in-aria-[expanded=false]:-rotate-90 rtl:in-aria-[expanded=false]:rotate-90"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+              className="size-4 transition-transform duration-200 in-aria-[expanded=false]:-rotate-90 rtl:in-aria-[expanded=false]:rotate-90"
+            />
           )}
         </button>
       ) : (
@@ -2643,26 +2606,10 @@ function DataGridTableBodyRows<TData extends object>({
           className="p-8"
         >
           <div className="flex items-center justify-center">
-            <svg
-              className="text-content-secondary mr-3 -ml-1 h-5 w-5 animate-spin"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
+            <Spinner
+              aria-hidden="true"
+              className="text-content-secondary mr-3 -ml-1 size-5 animate-spin"
+            />
             {props.loadingMessage || i18n.labels.loading}
           </div>
         </td>

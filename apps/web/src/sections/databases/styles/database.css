@@ -343,7 +343,7 @@
   }
 
   .database-calendar-view [data-calendar-drop] {
-    @apply bg-action-selected-subtle ring-2 ring-inset ring-action-primary;
+    @apply bg-action-selected-subtle ring-2 ring-inset ring-action-selected-border;
   }
 
   .database-event-calendar {

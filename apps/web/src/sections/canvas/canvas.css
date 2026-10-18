@@ -1,0 +1,37 @@
+/* Override React Flow's bundled palette through its public theme variables. */
+.zilobase-canvas.react-flow {
+  --xy-background-color: var(--zb-color-surface-background-canvas);
+  --xy-background-pattern-color: var(--zb-color-border-stroke-default);
+  --xy-edge-stroke: var(--zb-color-content-text-secondary);
+  --xy-edge-stroke-selected: var(--zb-color-action-border-selected);
+  --xy-connectionline-stroke: var(--zb-color-action-border-selected);
+  --xy-attribution-background-color: var(--zb-color-surface-background-overlay);
+  --xy-minimap-background-color: var(--zb-color-surface-background-card);
+  --xy-minimap-mask-background-color: var(--zb-color-effect-background-backdrop);
+  --xy-minimap-mask-stroke-color: var(--zb-color-border-stroke-default);
+  --xy-minimap-node-background-color: var(--zb-color-surface-background-muted);
+  --xy-minimap-node-stroke-color: var(--zb-color-border-stroke-default);
+  --xy-node-color: var(--zb-color-content-text-primary);
+  --xy-node-border: 1px solid var(--zb-color-border-stroke-default);
+  --xy-node-background-color: var(--zb-color-surface-background-card);
+  --xy-node-group-background-color: var(--zb-color-surface-background-subtle);
+  --xy-node-boxshadow-hover: var(--shadow-xs);
+  --xy-node-boxshadow-selected: 0 0 0 1px var(--zb-color-action-border-selected);
+  --xy-handle-background-color: var(--zb-color-action-background-selected);
+  --xy-handle-border-color: var(--zb-color-surface-background-canvas);
+  --xy-selection-background-color: var(--zb-color-selection-background-editor);
+  --xy-selection-border: 1px dotted var(--zb-color-action-border-selected);
+  --xy-controls-button-background-color: var(--zb-color-surface-background-overlay);
+  --xy-controls-button-background-color-hover: var(--zb-color-action-background-neutral-hover);
+  --xy-controls-button-color: var(--zb-color-content-text-primary);
+  --xy-controls-button-color-hover: var(--zb-color-action-text-on-neutral);
+  --xy-controls-button-border-color: var(--zb-color-border-stroke-default);
+  --xy-controls-box-shadow: var(--shadow-xs);
+  --xy-edge-label-background-color: var(--zb-color-surface-background-overlay);
+  --xy-edge-label-color: var(--zb-color-content-text-primary);
+  --xy-resize-background-color: var(--zb-color-action-border-selected);
+}
+
+.zilobase-canvas .react-flow__attribution a {
+  color: var(--zb-color-content-text-secondary);
+}

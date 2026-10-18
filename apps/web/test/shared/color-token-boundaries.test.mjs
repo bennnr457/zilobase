@@ -11,6 +11,16 @@ const paletteUtility = new RegExp(
   `(?<![a-z0-9-])(?:${colorUtilities})-(?:${tailwindPalette})(?:-[0-9]{2,3})?(?:/[0-9]{1,3})?\\b`,
   "g",
 );
+const paletteVariable = new RegExp(
+  `--color-(?:${tailwindPalette})(?:-[0-9]{2,3})?(?![a-z0-9-])`,
+  "g",
+);
+// Background tokens must not color labels, borders, or focus rings. These
+// vendor utilities can compile but bypass the role's contrast in other themes.
+const mismatchedActionRole =
+  /(?<![a-z0-9-])(?:text|border(?:-[xysetblr])?|ring|outline)-action-(?:primary|danger)(?![a-z0-9-])/g;
+const retiredStrokeUtility =
+  /(?<![a-z0-9-])(?:bg-border|border(?:-[xysetblr])?-border|ring-offset-background)(?![a-z0-9-])/g;
 const opacityColorUtility = new RegExp(
   `(?<![a-z0-9-])(?:${colorUtilities})-[a-z][a-z0-9-]*/[0-9]{1,3}\\b`,
   "g",
@@ -94,7 +104,15 @@ export function register({ appPath, assert, test }) {
       const source = await readFile(file, "utf8");
 
       for (const [lineIndex, line] of source.split("\n").entries()) {
-        for (const pattern of [rawColor, paletteUtility, opacityColorUtility, systemColor]) {
+        for (const pattern of [
+          rawColor,
+          paletteUtility,
+          paletteVariable,
+          opacityColorUtility,
+          systemColor,
+          mismatchedActionRole,
+          retiredStrokeUtility,
+        ]) {
           pattern.lastIndex = 0;
           for (const match of line.matchAll(pattern)) {
             if (pattern === rawColor && literalExceptions.has(relativeFile)) continue;

@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronsRightIcon, FilterIcon, MessageSquarePlusIcon } from "@/components/icons";
+import {
+  CheckIcon,
+  ChevronsRightIcon,
+  FilterIcon,
+  MessageSquarePlusIcon,
+} from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 
 import { PageCommentThread } from "./page-comments";
@@ -108,7 +113,7 @@ export function DiscussionsSidebarPanel({
           <DropdownMenuContent align="end">
             {(["all", "block", "page"] as const).map((value) => (
               <DropdownMenuItem key={value} onClick={() => setFilter(value)}>
-                {filter === value ? "✓ " : ""}
+                {filter === value ? <CheckIcon aria-hidden="true" className="size-4" /> : null}
                 {filterLabel(value)}
               </DropdownMenuItem>
             ))}

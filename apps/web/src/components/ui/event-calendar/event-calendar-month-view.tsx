@@ -529,8 +529,7 @@ function EventCalendarMonthWeek({
                 )}
                 style={
                   {
-                    "--ec-event-color":
-                      dragGhost.color ?? "var(--zb-color-action-background-primary)",
+                    "--ec-event-color": dragGhost.color ?? "var(--zb-color-data-background-bar)",
                   } as CSSProperties
                 }
               >
@@ -765,7 +764,7 @@ function EventCalendarMonthCell({
       )}
       style={
         {
-          "--ec-event-color": inlineDrop.color ?? "var(--zb-color-action-background-primary)",
+          "--ec-event-color": inlineDrop.color ?? "var(--zb-color-data-background-bar)",
           height: "calc(var(--ec-month-bar-h, 1.75rem) - 0.125rem)",
         } as CSSProperties
       }
@@ -853,7 +852,7 @@ function EventCalendarMonthCell({
             aria-label={settings.i18n.labels.addEvent}
             // a different icon/markup is a renderMonthCell job
             className={cn(
-              "bg-action-primary text-content-inverse flex size-5 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity group-hover/ec-cell:opacity-100 focus-visible:opacity-100",
+              "bg-action-primary text-action-on-primary flex size-5 cursor-pointer items-center justify-center rounded-sm opacity-0 transition-opacity group-hover/ec-cell:opacity-100 focus-visible:opacity-100",
               viewConfig.classNames?.dayAddButton,
             )}
             onClick={(e) => {
@@ -874,7 +873,7 @@ function EventCalendarMonthCell({
             // Same font-size as every other day; a lighter weight cancels the
             // way white digits on the filled circle read bolder/larger than the
             // dark-on-light numbers around them.
-            isToday && "bg-action-primary text-content-inverse font-light",
+            isToday && "bg-action-selected text-action-on-selected font-light",
             viewConfig.classNames?.monthDayNumber,
           )}
         >
@@ -922,7 +921,7 @@ function EventCalendarMonthCell({
         isOff && offClassName,
         isToday &&
           cn(
-            "bg-action-selected-subtle border-b-action-primary relative border-b-2",
+            "bg-action-selected-subtle border-b-action-selected-border relative border-b-2",
             viewConfig.todayClassName,
           ),
         viewConfig.dayClassName?.(day),
@@ -1035,7 +1034,7 @@ function EventCalendarMoreIndicator({
         style={
           dropInto
             ? ({
-                "--ec-event-color": dropInto.color ?? "var(--zb-color-action-background-primary)",
+                "--ec-event-color": dropInto.color ?? "var(--zb-color-data-background-bar)",
                 height: "calc(var(--ec-month-bar-h, 1.75rem) - 0.125rem)",
               } as CSSProperties)
             : undefined

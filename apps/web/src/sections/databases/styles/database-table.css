@@ -3,7 +3,6 @@
 @layer components {
   .database-table {
     @apply table-fixed border-collapse overflow-hidden;
-    --database-selection-color: var(--zb-color-action-background-selected);
     width: var(--database-table-min-width, max-content);
     min-width: var(--database-table-min-width, max-content);
   }
@@ -27,22 +26,22 @@
 
   .tiptap-editor .database-table tbody tr[data-side-pane-open="true"] > td {
     box-shadow:
-      inset 0 2px var(--database-selection-color, var(--zb-color-action-border-selected)),
-      inset 0 -2px var(--database-selection-color, var(--zb-color-action-border-selected));
+      inset 0 2px var(--zb-color-action-border-selected),
+      inset 0 -2px var(--zb-color-action-border-selected);
   }
 
   .tiptap-editor .database-table tbody tr[data-side-pane-open="true"] > td:first-child {
     box-shadow:
-      inset 2px 0 var(--database-selection-color, var(--zb-color-action-border-selected)),
-      inset 0 2px var(--database-selection-color, var(--zb-color-action-border-selected)),
-      inset 0 -2px var(--database-selection-color, var(--zb-color-action-border-selected));
+      inset 2px 0 var(--zb-color-action-border-selected),
+      inset 0 2px var(--zb-color-action-border-selected),
+      inset 0 -2px var(--zb-color-action-border-selected);
   }
 
   .tiptap-editor .database-table tbody tr[data-side-pane-open="true"] > td:last-child {
     box-shadow:
-      inset -2px 0 var(--database-selection-color, var(--zb-color-action-border-selected)),
-      inset 0 2px var(--database-selection-color, var(--zb-color-action-border-selected)),
-      inset 0 -2px var(--database-selection-color, var(--zb-color-action-border-selected));
+      inset -2px 0 var(--zb-color-action-border-selected),
+      inset 0 2px var(--zb-color-action-border-selected),
+      inset 0 -2px var(--zb-color-action-border-selected);
   }
 
   .tiptap-editor .database-table tbody td.database-virtual-spacer {
