@@ -254,6 +254,155 @@ test("read-only code controls reject mutation while copy stays available", async
   await expect(pane.getByRole("button", { name: "Copy code" })).toBeEnabled();
 });
 
+async function setCodeBlock(page, text, language) {
+  await page.evaluate(
+    ({ text, language }) => {
+      window.readyEditors.main
+        .chain()
+        .setContent({
+          type: "doc",
+          content: [{ type: "codeBlock", attrs: { language }, content: [{ type: "text", text }] }],
+        })
+        .setMeta("addToHistory", false)
+        .run();
+    },
+    { text, language },
+  );
+}
+
+test("ReUI code chrome keeps one editable surface, highlighting, language changes and undo", async ({
+  page,
+}) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await setCodeBlock(page, "const answer = 42;\nconsole.log(answer);", "js");
+  const block = page.getByTestId("main-pane").locator(".code-block-shiki");
+  await expect(block.locator('[data-slot="code-block"]')).toHaveCount(1);
+  await expect(block.locator('[data-slot="code-block-header"]')).toHaveCount(1);
+  await expect(block.locator("pre")).toHaveCount(1);
+  await expect(block.locator("code")).toHaveCount(1);
+  await expect.poll(() => block.locator("code span[style]").count()).toBeGreaterThan(0);
+  const source = await block.locator("code").textContent();
+  await page.evaluate(() => {
+    const editor = window.readyEditors.main;
+    editor.commands.setTextSelection(editor.state.doc.firstChild.nodeSize - 1);
+    editor.view.focus();
+  });
+  await page.keyboard.type(" // edited");
+  await expect(block.locator("code")).toHaveText(source + " // edited");
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(block.locator("code")).toHaveText(source);
+  await block.getByRole("combobox", { name: "Code block language" }).click();
+  await page.getByRole("menuitem", { name: "Python", exact: true }).click();
+  await expect(block.getByRole("combobox", { name: "Code block language" })).toContainText(
+    "Python",
+  );
+  expect(
+    await page.evaluate(() => window.readyEditors.main.getJSON().content[0].attrs.language),
+  ).toBe("py");
+  const html = await page.evaluate(() => window.readyEditors.main.getHTML());
+  expect(html).toContain('class="language-py"');
+  expect(html).not.toContain("code-block-header");
+  expect(html).not.toContain("Wrap");
+  expect(errors).toEqual([]);
+});
+
+test("ReUI copy preserves literal source, reports clipboard errors and keeps long lines scrollable", async ({
+  page,
+}) => {
+  const source =
+    'const message = "' +
+    "a long value ".repeat(35) +
+    '"; // [!code highlight]\n\n// trailing newline\n';
+  await page.evaluate((source) => {
+    window.codeCopied = [];
+    Object.defineProperty(navigator.clipboard, "writeText", {
+      configurable: true,
+      value: async (text) => {
+        window.codeCopied.push(text);
+      },
+    });
+    window.readyEditors.main.commands.setContent({
+      type: "doc",
+      content: [
+        { type: "codeBlock", attrs: { language: "js" }, content: [{ type: "text", text: source }] },
+      ],
+    });
+  }, source);
+  const block = page.getByTestId("main-pane").locator(".code-block-shiki");
+  const before = await page.evaluate(() => window.readyEditors.main.getJSON());
+  await block.getByRole("button", { name: "Copy code", exact: true }).click();
+  await expect(block.getByRole("button", { name: "Copied code", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => window.codeCopied)).toEqual([source]);
+  await expect(block.locator("code")).toHaveCSS("white-space", "pre");
+  await expect(block.getByRole("button", { name: "Wrap code", exact: true })).toHaveCount(0);
+  expect(await block.locator("pre").evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(
+    true,
+  );
+  expect(await page.evaluate(() => window.readyEditors.main.getJSON())).toEqual(before);
+  await page.evaluate(() =>
+    Object.defineProperty(navigator.clipboard, "writeText", {
+      configurable: true,
+      value: async () => {
+        throw new Error("Clipboard denied");
+      },
+    }),
+  );
+  await block.locator('[data-slot="code-block-copy"]').click();
+  await expect(page.getByText("Could not copy code.", { exact: true })).toBeVisible();
+});
+
+test("ReUI code blocks keep transparent outer corners in both themes and remain editable", async ({
+  page,
+}) => {
+  await setCodeBlock(page, "const value: number = 1;", "ts");
+  const block = page.getByTestId("main-pane").locator(".code-block-shiki");
+  await expect.poll(() => block.locator("code span[style]").count()).toBeGreaterThan(0);
+  const light = await block
+    .locator('[data-slot="code-block"]')
+    .evaluate((node) => getComputedStyle(node).backgroundColor);
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  const dark = await block
+    .locator('[data-slot="code-block"]')
+    .evaluate((node) => getComputedStyle(node).backgroundColor);
+  expect(dark).not.toBe(light);
+  await expect(block.getByRole("combobox", { name: "Code block language" })).toBeEnabled();
+  await expect(block.getByRole("button", { name: "Wrap code" })).toHaveCount(0);
+  const assertTransparentTokens = async () => {
+    expect(
+      await block
+        .locator("code span")
+        .evaluateAll((tokens) =>
+          tokens.every((token) => getComputedStyle(token).backgroundColor === "rgba(0, 0, 0, 0)"),
+        ),
+    ).toBe(true);
+  };
+  await assertTransparentTokens();
+  const outer = page.getByTestId("main-pane").locator(".node-codeBlock");
+  await expect(outer).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(block).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await expect(outer).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await assertTransparentTokens();
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.evaluate(() => {
+    const editor = window.readyEditors.main;
+    editor.commands.setTextSelection(editor.state.doc.firstChild.nodeSize - 1);
+    editor.view.focus();
+  });
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("// more code");
+  await expect(block.locator("code")).toHaveText("const value: number = 1;\n// more code");
+  await page
+    .getByTestId("main-pane")
+    .locator(".node-codeBlock")
+    .screenshot({ path: test.info().outputPath("reui-code-block.png") });
+  await page.keyboard.press("ControlOrMeta+z");
+  expect(await page.evaluate(() => window.readyEditors.main.getJSON().content[0].type)).toBe(
+    "codeBlock",
+  );
+});
+
 test("selected ordinary blocks accept replacement typing and Markdown paste", async ({ page }) => {
   const editor = page.getByTestId("main-pane").locator(".tiptap-editor");
   await page.evaluate(() => window.readyEditors.main.commands.setContent("<p>One</p><p>Two</p>"));

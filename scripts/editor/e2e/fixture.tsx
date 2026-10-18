@@ -3,6 +3,7 @@ import "@/styles/app.css";
 import { ZilobaseFeaturesProvider, type ZilobaseAuthClient } from "@zilobase/features";
 import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Toaster } from "sonner";
 import { QueryClient } from "@tanstack/react-query";
 import { Editor as TiptapEditor, Node, Mark } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
@@ -165,6 +166,7 @@ createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ZilobaseFeaturesProvider value={features}>
       <ShortcutProvider>
+        <Toaster />
         <PageEditorRegistryProvider>
           <Panes />
         </PageEditorRegistryProvider>

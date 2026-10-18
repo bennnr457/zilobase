@@ -7,11 +7,16 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import type { ReactNodeViewProps } from "@tiptap/react";
-import { Check, ChevronsUpDown, Copy } from "@/components/icons";
-import { useState, useRef, useEffect } from "react";
+import { Check, ChevronsUpDown } from "@/components/icons";
 import CodeBlockShikiBase from "tiptap-extension-code-block-shiki";
 
 import { Button } from "@/components/ui/button";
+import {
+  CodeBlock,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+  CodeBlockHeader,
+} from "@/components/ui/code-block/code-block";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -142,103 +147,85 @@ const codeBlockLanguages = [
 
 function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewProps) {
   const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
   const language = node.attrs.language ?? "auto";
   const codeLanguage = language === "auto" ? "" : language;
   const activeLanguage =
     codeBlockLanguages.find((option) => option.value === language) ?? codeBlockLanguages[0];
 
-  const copyCode = () =>
-    Effect.runPromise(
-      Effect.tryPromise({
-        try: () => navigator.clipboard.writeText(node.textContent),
-        catch: (error) => error,
-      }).pipe(
-        Effect.tap(() =>
-          Effect.sync(() => {
-            if (editor.isDestroyed) return;
-            setCopied(true);
-            clearTimeout(timer.current);
-            timer.current = setTimeout(() => setCopied(false), 1200);
-          }),
-        ),
-        Effect.catch(() => Effect.sync(() => toast.error("Could not copy code."))),
-      ),
-    );
-
   return (
-    <NodeViewWrapper as="pre" className="code-block-shiki">
-      <div
-        className="code-block-controls absolute right-2 top-2 z-10 flex items-center gap-1 opacity-0 transition-opacity"
-        contentEditable={false}
-        onMouseDown={(event) => {
-          event.stopPropagation();
-        }}
-        onPointerDown={(event) => {
-          event.stopPropagation();
-        }}
-      >
-        <Button
-          aria-label={copied ? "Copied code" : "Copy code"}
-          className="bg-effect-backdrop shadow-sm"
-          onClick={() => {
-            void copyCode();
-          }}
-          size="icon-sm"
-          title={copied ? "Copied" : "Copy code"}
-          type="button"
-          variant="outline"
+    <NodeViewWrapper as="div" className="code-block-shiki">
+      <CodeBlock code={node.textContent} language={codeLanguage} highlight={false}>
+        <CodeBlockHeader
+          contentEditable={false}
+          onMouseDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
         >
-          {copied ? <Check /> : <Copy />}
-        </Button>
-        <DropDrawer>
-          <DropDrawerTrigger asChild>
-            <Button
-              aria-label="Code block language"
-              disabled={!isEditable}
-              role="combobox"
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <span className="truncate">{activeLanguage.label}</span>
-              <ChevronsUpDown className="opacity-50" />
-            </Button>
-          </DropDrawerTrigger>
-          <DropDrawerContent
-            align="end"
-            side="bottom"
-            onMouseDown={(event) => {
-              event.stopPropagation();
-            }}
-            onPointerDown={(event) => {
-              event.stopPropagation();
-            }}
-          >
-            {codeBlockLanguages.map((option) => (
-              <DropDrawerItem
-                icon={option.value === language ? <Check /> : undefined}
-                key={option.value}
-                onSelect={() => {
-                  if (!editor.isEditable || editor.isDestroyed) return;
-                  updateAttributes({
-                    language: option.value === "auto" ? null : option.value,
-                  });
-                }}
+          <DropDrawer>
+            <DropDrawerTrigger asChild>
+              <Button
+                aria-label="Code block language"
+                disabled={!isEditable}
+                role="combobox"
+                size="sm"
+                type="button"
+                variant="outline"
               >
-                {option.label}
-              </DropDrawerItem>
-            ))}
-          </DropDrawerContent>
-        </DropDrawer>
-      </div>
-      <NodeViewContent<"code">
-        as="code"
-        className={codeLanguage ? `language-${codeLanguage}` : undefined}
-        spellCheck={false}
-      />
+                <span className="truncate">{activeLanguage.label}</span>
+                <ChevronsUpDown className="opacity-50" />
+              </Button>
+            </DropDrawerTrigger>
+            <DropDrawerContent
+              align="end"
+              side="bottom"
+              onMouseDown={(event) => {
+                event.stopPropagation();
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              {codeBlockLanguages.map((option) => (
+                <DropDrawerItem
+                  icon={option.value === language ? <Check /> : undefined}
+                  key={option.value}
+                  onSelect={() => {
+                    if (!editor.isEditable || editor.isDestroyed) return;
+                    updateAttributes({
+                      language: option.value === "auto" ? null : option.value,
+                    });
+                  }}
+                >
+                  {option.label}
+                </DropDrawerItem>
+              ))}
+            </DropDrawerContent>
+          </DropDrawer>
+          <CodeBlockCopyButton
+            className="ml-auto"
+            preserveSource
+            copyText={(value) =>
+              Effect.runPromise(
+                Effect.tryPromise({
+                  try: () => navigator.clipboard.writeText(value),
+                  catch: (error) => error,
+                }),
+              )
+            }
+            onCopyError={() => toast.error("Could not copy code.")}
+            labels={{ copy: "Copy code", copied: "Copied code" }}
+          />
+        </CodeBlockHeader>
+        <CodeBlockContent>
+          <pre className="editor-code-content">
+            <NodeViewContent<"code">
+              as="code"
+              className={codeLanguage ? `language-${codeLanguage}` : undefined}
+              spellCheck={false}
+              style={{ whiteSpace: "pre" }}
+            />
+          </pre>
+        </CodeBlockContent>
+      </CodeBlock>
     </NodeViewWrapper>
   );
 }

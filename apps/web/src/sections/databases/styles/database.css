@@ -140,26 +140,25 @@
   }
 
   .tiptap-editor .code-block-shiki {
-    @apply relative min-h-24 overflow-hidden rounded-md pt-10 pb-10;
+    @apply relative;
   }
 
-  .tiptap-editor .code-block-shiki.shiki {
-    @apply rounded-md;
+  .tiptap-editor :is(.node-codeBlock, .code-block-shiki) {
+    /* Shiki decorates the outer React node with its light-theme background.
+       The ReUI surface owns the rounded frame in both themes. */
+    background-color: transparent !important;
+  }
+
+  .tiptap-editor .code-block-shiki .editor-code-content {
+    @apply m-0 min-h-16 rounded-none bg-transparent p-3;
   }
 
   .tiptap-editor .code-block-shiki code {
-    @apply block min-h-10 whitespace-pre;
+    @apply block min-h-6 whitespace-pre p-0 text-sm font-normal leading-6;
   }
 
-  .tiptap-editor .code-block-shiki:hover .code-block-controls,
-  .tiptap-editor .code-block-shiki:focus-within .code-block-controls {
-    @apply opacity-100;
-  }
-
-  .dark .tiptap-editor .shiki,
-  .dark .tiptap-editor .shiki span {
+  .dark .tiptap-editor .code-block-shiki code span {
     color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
   }
 
   .tiptap-editor hr {
