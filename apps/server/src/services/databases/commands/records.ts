@@ -35,6 +35,37 @@ import {
 import { inheritDatabaseRowProperties } from "../records/import";
 import { changeRecordHierarchy } from "@zilobase/features/runtime";
 import { getDatabaseRecordEntity } from "./record-entity";
+import {
+  lockDatabaseAutomationFactRows,
+  type DatabaseAutomationMutationFactCandidate,
+} from "../../automations/triggers/event-capture";
+
+function automationFact(
+  context: DatabaseCommandContext,
+  record: DatabaseRecordEntity,
+  before?: DatabaseRecordEntity,
+): DatabaseAutomationMutationFactCandidate {
+  const propertyIds = new Set([
+    ...Object.keys(before?.valuesByPropertyId ?? {}),
+    ...Object.keys(record.valuesByPropertyId),
+  ]);
+  return {
+    actorId: context.actorId,
+    dataSourceId: record.dataSourceId,
+    origin: "user",
+    pageId: record.pageId,
+    rowId: record.id,
+    rowAdded: !before,
+    changedValues: [
+      { propertyId: "name", before: before?.page.name ?? null, after: record.page.name },
+      ...[...propertyIds].map((propertyId) => ({
+        propertyId,
+        before: before?.valuesByPropertyId[propertyId]?.value ?? null,
+        after: record.valuesByPropertyId[propertyId]?.value ?? null,
+      })),
+    ],
+  };
+}
 
 type OrderedRow = {
   id: string;
@@ -371,6 +402,7 @@ export async function createRow(
     for (const mutation of transferred.mutations)
       if (!byHost.has(mutation.databaseId)) byHost.set(mutation.databaseId, mutation);
     return {
+      automationFacts: [automationFact(context, record)],
       mutations: [...byHost.values()].map((mutation) => ({
         ...mutation,
         areas: ["records", "properties"],
@@ -380,7 +412,7 @@ export async function createRow(
       result: record,
     };
   }
-  return { mutations, result: record };
+  return { automationFacts: [automationFact(context, record)], mutations, result: record };
 }
 
 async function changeRow(
@@ -406,6 +438,27 @@ async function changeRow(
       )
     : row.orderKey;
   const values = command.valuesByPropertyId ?? {};
+  const changedCandidates =
+    command.title !== undefined || Object.keys(values).length || command.hierarchy
+      ? command.hierarchy
+        ? rows
+        : [row]
+      : [];
+  await lockDatabaseAutomationFactRows(
+    context.transaction,
+    changedCandidates.map((record) => ({ dataSourceId: source.id, rowId: record.id })),
+  );
+  const beforeRecords = new Map(
+    await Promise.all(
+      changedCandidates.map(
+        async (candidate) =>
+          [
+            candidate.id,
+            await getDatabaseRecordEntity(context.transaction, source.id, candidate.id),
+          ] as const,
+      ),
+    ),
+  );
   await propertiesForValues(context, source, values);
   await writeValues(context, row.pageId, values, now);
   await context.transaction
@@ -508,6 +561,10 @@ async function changeRow(
     [...changedRowIds].map((id) => getDatabaseRecordEntity(context.transaction, source.id, id)),
   );
   return {
+    automationFacts: records.flatMap((record) => {
+      const before = beforeRecords.get(record.id);
+      return before ? [automationFact(context, record, before)] : [];
+    }),
     mutations: await mutationForHosts(context, records[0], { records }),
     result: records[0],
   };

@@ -22,6 +22,8 @@ import { getDatabasePropertyEntity } from "../metadata-entities";
 import { getDatabaseRecordEntity } from "../record-entity";
 import { sourceMutations, sourceRecord } from "../source-command-state";
 import { resolveNeighborIndex } from "./ordering";
+import type { Database } from "../../../../infrastructure/database";
+import { invalidateDatabaseAutomationDependencies } from "../../../automations/definition/definition-catalog";
 
 async function orderedProperties(context: DatabaseCommandContext) {
   return context.transaction
@@ -199,6 +201,14 @@ export async function propertyState(
       updatedAt: now,
     })
     .where(eq(pageProperty.id, record.propertyId));
+  if (!restore) {
+    await invalidateDatabaseAutomationDependencies({
+      dependencyType: "property",
+      dependencyId: record.propertyId,
+      executor: context.transaction as unknown as Database,
+      reason: "A property used by this automation was archived",
+    });
+  }
   const ordered = await orderedProperties(context);
   await updateDatabasePropertyPositions(
     context.transaction,

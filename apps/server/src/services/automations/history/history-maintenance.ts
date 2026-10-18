@@ -21,6 +21,10 @@ export async function cleanupDatabaseAutomationHistory(
   const retention = getDatabaseAutomationRetention(env);
   const detailCutoff = new Date(now.getTime() - retention.stepDetailDays * 86_400_000);
   const summaryCutoff = new Date(now.getTime() - retention.runSummaryDays * 86_400_000);
+  const terminalRuns = db
+    .select({ id: databaseAutomationRun.id })
+    .from(databaseAutomationRun)
+    .where(inArray(databaseAutomationRun.status, ["succeeded", "failed", "skipped", "cancelled"]));
   const [stepIds, deliveryIds, runIds, eventWindowIds, automationIds] = await Promise.all([
     db
       .select({ id: databaseAutomationStepRun.id })
@@ -28,6 +32,7 @@ export async function cleanupDatabaseAutomationHistory(
       .where(
         and(
           inArray(databaseAutomationStepRun.status, ["succeeded", "failed", "skipped"]),
+          inArray(databaseAutomationStepRun.runId, terminalRuns),
           lt(databaseAutomationStepRun.createdAt, detailCutoff),
         ),
       )
@@ -39,6 +44,7 @@ export async function cleanupDatabaseAutomationHistory(
       .where(
         and(
           inArray(databaseAutomationDelivery.status, ["succeeded", "failed"]),
+          inArray(databaseAutomationDelivery.runId, terminalRuns),
           lt(databaseAutomationDelivery.createdAt, detailCutoff),
         ),
       )
