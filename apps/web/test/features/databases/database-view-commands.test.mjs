@@ -1040,7 +1040,7 @@ export function register({ assert, loadModule, test }) {
     ]);
   });
 
-  test("database view commands add kanban view grouped by name without properties", async () => {
+  test("database view commands create a Status property before adding a Kanban view without suitable properties", async () => {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
@@ -1068,13 +1068,18 @@ export function register({ assert, loadModule, test }) {
     });
 
     commands.addKanbanView();
-
-    assert.deepEqual(addProperty.calls, []);
+    assert.equal(addProperty.calls.length, 1);
+    assert.equal(addProperty.calls[0][0].type, "status");
+    assert.equal(addProperty.calls[0][0].name, "Status");
+    assert.equal(addProperty.calls[0][0].config.options.length, 3);
+    assert.equal(addDatabaseView.calls.length, 0);
+    const status = createProperty("status-column", "status-field", "Status", "status");
+    addProperty.calls[0][1].onSuccess(status);
     assert.deepEqual(
       addDatabaseView.calls.map(([input]) => input),
       [
         {
-          config: { groupPropertyId: "name", hiddenPropertyIds: [] },
+          config: { groupPropertyId: "status-field", hiddenPropertyIds: ["status-column"] },
           dataSourceId: databaseId,
           databaseId,
           name: "Kanban",
@@ -1082,6 +1087,196 @@ export function register({ assert, loadModule, test }) {
         },
       ],
     );
+  });
+
+  test("view conversion reuses source properties and creates missing required fields before switching", async () => {
+    const { getDatabaseViewCommands } = await loadModule(
+      "/src/sections/databases/views/commands/lib/view-commands.ts",
+    );
+    const defaults = (properties, mutations, patch = {}) => ({
+      notify: { error() {}, success() {} },
+      copyViewLink: async () => {},
+      activeDatabaseFilters: [],
+      activeDatabaseSorts: [],
+      activeView: {
+        id: "view-1",
+        type: "timeline",
+        name: "Roadmap",
+        config: { filters: [], datePropertyId: "deleted-date" },
+      },
+      databaseId,
+      viewDatabaseId: "host-1",
+      editable: true,
+      isKanbanView: false,
+      items: [],
+      kanbanGroupProperty: null,
+      timelineDateProperty: null,
+      mutations: createMutations(mutations),
+      viewData: createViewData({ properties }),
+      properties,
+      setActiveViewId() {},
+      setFilterPickerOpen() {},
+      setShowFilterPill() {},
+      setShowSortPill() {},
+      setSortPickerOpen() {},
+      ...patch,
+    });
+    for (const type of ["status", "select", "multi_select", "checkbox", "person"]) {
+      const property = createProperty("column", "field", "Grouping", type);
+      const addProperty = createMutation(),
+        updateDatabaseView = createMutation();
+      const commands = getDatabaseViewCommands(
+        defaults([property], { addProperty, updateDatabaseView }),
+      );
+      commands.setViewType("kanban");
+      assert.equal(addProperty.calls.length, 0);
+      assert.equal(updateDatabaseView.calls[0][0].databaseId, "host-1");
+      const config = applyConfigurationChanges(
+        { filters: [], datePropertyId: "deleted-date" },
+        updateDatabaseView.calls[0][0].configuration,
+      );
+      assert.equal(config.groupPropertyId, "field");
+      assert.deepEqual(config.filters, []);
+    }
+    const text = createProperty("text-column", "text-field", "Notes", "text");
+    const addProperty = createMutation(),
+      updateDatabaseView = createMutation();
+    const commands = getDatabaseViewCommands(defaults([text], { addProperty, updateDatabaseView }));
+    commands.setViewType("kanban");
+    commands.setViewType("kanban");
+    assert.equal(addProperty.calls.length, 1, "rapid requests share pending property creation");
+    assert.equal(updateDatabaseView.calls.length, 0);
+    addProperty.calls[0][1].onSuccess(
+      createProperty("status-column", "status-field", "Status", "status"),
+    );
+    const converted = applyConfigurationChanges(
+      { filters: [], datePropertyId: "deleted-date" },
+      updateDatabaseView.calls[0][0].configuration,
+    );
+    assert.equal(converted.groupPropertyId, "status-field");
+    assert.ok(converted.hiddenPropertyIds.includes("status-column"));
+
+    for (const target of ["timeline", "calendar"]) {
+      const date = createProperty("date-column", "date-field", "Due date", "date");
+      const addProperty = createMutation(),
+        updateDatabaseView = createMutation();
+      const commands = getDatabaseViewCommands(
+        defaults(
+          [date],
+          { addProperty, updateDatabaseView },
+          {
+            activeView: { id: "view-1", type: "table", config: { datePropertyId: "deleted-date" } },
+          },
+        ),
+      );
+      commands.setViewType(target);
+      assert.equal(addProperty.calls.length, 0);
+      assert.equal(
+        applyConfigurationChanges(
+          { datePropertyId: "deleted-date" },
+          updateDatabaseView.calls[0][0].configuration,
+        ).datePropertyId,
+        "date-field",
+      );
+      const missing = getDatabaseViewCommands(
+        defaults(
+          [],
+          { addProperty, updateDatabaseView },
+          { activeView: { id: "view-2", type: "table", config: {} } },
+        ),
+      );
+      missing.setViewType(target);
+      assert.equal(addProperty.calls[0][0].type, "date");
+      assert.equal(updateDatabaseView.calls.length, 1);
+      addProperty.calls[0][1].onSuccess(date);
+      assert.equal(updateDatabaseView.calls[1][0].type, target);
+    }
+    const errors = [],
+      failedProperty = createMutation(),
+      failedView = createMutation();
+    const failed = getDatabaseViewCommands(
+      defaults(
+        [],
+        { addProperty: failedProperty, updateDatabaseView: failedView },
+        { notify: { error: (message) => errors.push(message), success() {} } },
+      ),
+    );
+    failed.setViewType("kanban");
+    failedProperty.calls[0][1].onError(new Error("denied"));
+    assert.equal(failedView.calls.length, 0);
+    assert.equal(errors.length, 1);
+    const locked = getDatabaseViewCommands(
+      defaults(
+        [],
+        { addProperty: failedProperty, updateDatabaseView: failedView },
+        { editable: false },
+      ),
+    );
+    locked.setViewType("kanban");
+    locked.setViewType("calendar");
+    assert.equal(failedProperty.calls.length, 1);
+    assert.equal(failedView.calls.length, 0);
+  });
+
+  test("saved Kanban views without grouping still resolve their existing Status property", async () => {
+    const { deriveDatabaseViewModel } = await loadModule(
+      "/packages/features/src/databases/views/model.ts",
+    );
+    const status = createProperty("status-column", "status-field", "Status", "status");
+    const viewData = createViewData({
+      properties: [status],
+      views: [
+        { id: "view-1", dataSourceId: "source-1", name: "Board", type: "kanban", config: {} },
+      ],
+    });
+    const model = deriveDatabaseViewModel({ activeViewId: "view-1", viewData });
+    assert.equal(model.groupProperty?.property.id, "status-field");
+    assert.equal(model.kanbanGroupProperty?.property.id, "status-field");
+  });
+
+  test("required-property setup stops after a view or identity change", async () => {
+    const { getDatabaseViewCommands } = await loadModule(
+      "/src/sections/databases/views/commands/lib/view-commands.ts",
+    );
+    for (const type of ["kanban", "calendar", "timeline"]) {
+      let current = true;
+      const addProperty = createMutation(),
+        updateDatabaseView = createMutation();
+      const commands = getDatabaseViewCommands({
+        notify: { error() {}, success() {} },
+        copyViewLink: async () => {},
+        activeDatabaseFilters: [],
+        activeDatabaseSorts: [],
+        activeView: { id: "view-1", type, name: "View", config: {} },
+        databaseId,
+        editable: true,
+        isKanbanView: type === "kanban",
+        items: [],
+        kanbanGroupProperty: null,
+        timelineDateProperty: null,
+        mutations: createMutations({ addProperty, updateDatabaseView }),
+        viewData: createViewData(),
+        properties: [],
+        isCurrent: () => current,
+        setActiveViewId() {},
+        setFilterPickerOpen() {},
+        setShowFilterPill() {},
+        setShowSortPill() {},
+        setSortPickerOpen() {},
+      });
+      commands.setupRequiredViewProperties();
+      assert.equal(addProperty.calls.length, 1);
+      current = false;
+      addProperty.calls[0][1].onSuccess(
+        createProperty(
+          "new-column",
+          "new-field",
+          "New field",
+          type === "kanban" ? "status" : "date",
+        ),
+      );
+      assert.equal(updateDatabaseView.calls.length, 0);
+    }
   });
 
   test("database view commands add kanban view with three visible non-grouped properties", async () => {
@@ -1209,23 +1404,26 @@ export function register({ assert, loadModule, test }) {
     commands.setViewType("kanban");
     commands.setViewType("table");
 
-    assert.deepEqual(updateDatabaseView.calls, [
+    assert.deepEqual(
+      updateDatabaseView.calls.map(([input]) => [input]),
       [
-        {
-          configuration: diffConfiguration(
-            { emoji: "pin" },
-            {
-              emoji: "pin",
-              groupPropertyId: "property-status",
-              hiddenPropertyIds: ["database-property-1"],
-            },
-          ),
-          databaseId,
-          databaseViewId: "view-1",
-          type: "kanban",
-        },
+        [
+          {
+            configuration: diffConfiguration(
+              { emoji: "pin" },
+              {
+                emoji: "pin",
+                groupPropertyId: "property-status",
+                hiddenPropertyIds: ["database-property-1"],
+              },
+            ),
+            databaseId,
+            databaseViewId: "view-1",
+            type: "kanban",
+          },
+        ],
       ],
-    ]);
+    );
   });
 
   test("database view commands remove grouping when a board becomes a table", async () => {

@@ -1,5 +1,8 @@
-import type { DatabaseProperty } from "../core/export-payload";
-import { getGroupPropertyId, type DatabasePropertyListItem } from "./grouping";
+import {
+  getGroupPropertyId,
+  getKanbanGroupProperty,
+  type DatabasePropertyListItem,
+} from "./grouping";
 import { getDefaultKanbanHiddenPropertyIds } from "./kanban-group-settings";
 import { hasViewHiddenPropertyIds } from "../interactions/item-utils";
 import { getMergedDatabaseConfig, getViewHiddenPropertyIds } from "./configuration";
@@ -9,7 +12,7 @@ type ViewTypeTransition = {
   type: string;
   previousType: string;
   kanbanGroupProperty: DatabasePropertyListItem | null;
-  properties: DatabaseProperty[];
+  properties: DatabasePropertyListItem[];
 };
 
 export function getConvertedViewConfig(input: ViewTypeTransition) {
@@ -26,7 +29,7 @@ type GroupingInput = Pick<
 
 function getKanbanConfig({ currentConfig, kanbanGroupProperty, properties }: GroupingInput) {
   const groupPropertyId =
-    kanbanGroupProperty?.property.id ?? (properties.length === 0 ? "name" : null);
+    (kanbanGroupProperty ?? getKanbanGroupProperty(properties, currentConfig))?.property.id ?? null;
 
   return getMergedDatabaseConfig(currentConfig, {
     groupPropertyId: groupPropertyId ?? undefined,

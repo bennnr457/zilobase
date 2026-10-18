@@ -6,14 +6,11 @@ import type { DatabaseRow } from "../core/export-payload";
 import type { DatabaseViewData } from "../views/source-state";
 
 import { defaultStatusOption } from "../schema/property-defaults";
-import { getGroupPropertyId } from "../views/grouping";
+import { getGroupPropertyId, getKanbanGroupProperty } from "../views/grouping";
 import type { DatabasePropertyListItem } from "../views/grouping";
 import { getDefaultKanbanHiddenPropertyIds } from "../views/kanban-group-settings";
 import { ganttMoveToDateValue, getTimelineDateProperty } from "../views/timeline-date";
-import {
-  getDefaultDatabasePropertyConfig,
-  isSelectLikePropertyType,
-} from "../schema/property-defaults";
+import { getDefaultDatabasePropertyConfig } from "../schema/property-defaults";
 import { serializePropertyValue } from "../schema/property-values";
 import type { DatabasePropertyValue } from "../schema/property-values";
 import {
@@ -93,6 +90,7 @@ export function createDatabaseViewCommands({
   onSortsChanged,
   getLatestViewConfig,
   getSourcePropertyMode,
+  isCurrent = () => true,
 }: {
   activeDatabaseFilters: DatabasePropertyFilterConfig[];
   activeDatabaseSorts: DatabaseSortConfig[];
@@ -115,6 +113,7 @@ export function createDatabaseViewCommands({
     databaseViewId: string,
     fallbackConfig: unknown,
   ) => unknown;
+  isCurrent?: () => boolean;
   getSourcePropertyMode?: (
     dragPayload: DatabasePageDragPayload,
   ) => Promise<"duplicate" | "match" | null>;
@@ -144,8 +143,49 @@ export function createDatabaseViewCommands({
     viewData,
     properties,
     timelineDateProperty,
+    config: activeView?.config,
+    isCurrent,
     notify,
   });
+
+  let resolvingKanbanProperty = false;
+  const ensureKanbanGroupProperty = (
+    onResolved: (
+      property: DatabasePropertyEntity,
+      currentProperties: DatabasePropertyEntity[],
+    ) => void,
+  ) => {
+    const currentProperties = viewProperties ?? properties;
+    const existing = getKanbanGroupProperty(
+      currentProperties,
+      activeView?.type === "kanban" ? latestConfig() : null,
+    );
+    if (existing) {
+      onResolved(existing, currentProperties);
+      return;
+    }
+    if (!editable || !databaseId || addProperty.isPending || resolvingKanbanProperty) return;
+    resolvingKanbanProperty = true;
+    addProperty.mutate(
+      {
+        databaseId,
+        name: "Status",
+        type: "status",
+        config: getDefaultDatabasePropertyConfig("status"),
+      },
+      {
+        onSuccess: (created) => {
+          resolvingKanbanProperty = false;
+          if (!isCurrent()) return;
+          onResolved(created, [...currentProperties, created]);
+        },
+        onError: () => {
+          resolvingKanbanProperty = false;
+          if (isCurrent()) notify.error("Couldn't add status property");
+        },
+      },
+    );
+  };
 
   const addRowWithValues = createAddDatabaseRowMutation({
     addRow,
@@ -590,53 +630,29 @@ export function createDatabaseViewCommands({
       );
     },
     addKanbanView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending) {
-        return;
-      }
-
-      const currentProperties = viewProperties ?? [];
-      const groupProperty =
-        currentProperties.find((property) => property.property.type === "status") ??
-        currentProperties.find(
-          (property) =>
-            property.property.type !== "status" && isSelectLikePropertyType(property.property.type),
-        ) ??
-        currentProperties[0] ??
-        null;
-      const addView = (
-        groupPropertyId: string,
-        hiddenPropertyIds: string[],
-        onViewAdded?: () => void,
-      ) => {
+      if (!editable || !databaseId || addDatabaseView.isPending || addProperty.isPending) return;
+      ensureKanbanGroupProperty((groupProperty, currentProperties) => {
+        const groupPropertyId = groupProperty.property.id;
         addDatabaseView.mutate(
           {
-            config: { groupPropertyId, hiddenPropertyIds },
+            config: {
+              groupPropertyId,
+              hiddenPropertyIds: getDefaultKanbanHiddenPropertyIds(
+                currentProperties,
+                groupPropertyId,
+              ),
+            },
             databaseId: viewDatabaseId ?? databaseId,
-            dataSourceId: databaseId ?? undefined,
+            dataSourceId: databaseId,
             name: "Kanban",
             type: "kanban",
           },
           {
-            onSuccess: (view) => {
-              onViewCreated(view.id);
-              onViewAdded?.();
-            },
-            onError: () => {
-              notify.error("Couldn't add kanban view");
-            },
+            onSuccess: (view) => onViewCreated(view.id),
+            onError: () => notify.error("Couldn't add kanban view"),
           },
         );
-      };
-
-      if (groupProperty) {
-        addView(
-          groupProperty.property.id,
-          getDefaultKanbanHiddenPropertyIds(currentProperties, groupProperty.property.id),
-        );
-        return;
-      }
-
-      addView("name", []);
+      });
     },
     addListView: () => {
       if (!editable || !databaseId || addDatabaseView.isPending) {
@@ -792,6 +808,39 @@ export function createDatabaseViewCommands({
     setViewDateProperty: (datePropertyId: string | null) => {
       updateTimelineDateProperty(datePropertyId);
     },
+    setupRequiredViewProperties: () => {
+      if (!editable || !databaseId || !activeView || !isCurrent() || updateDatabaseView.isPending)
+        return;
+      if (activeView.type === "kanban") {
+        ensureKanbanGroupProperty((groupProperty, currentProperties) => {
+          if (!isCurrent()) return;
+          const currentConfig = latestConfig();
+          updateDatabaseView.mutate(
+            {
+              databaseId: viewDatabaseId ?? databaseId,
+              databaseViewId: activeView.id,
+              configuration: diffConfiguration(
+                currentConfig,
+                getConvertedViewConfig({
+                  currentConfig,
+                  type: "kanban",
+                  previousType: "kanban",
+                  kanbanGroupProperty: groupProperty,
+                  properties: currentProperties,
+                }),
+              ),
+            },
+            {
+              onError: () => {
+                if (isCurrent()) notify.error("Couldn't configure view grouping");
+              },
+            },
+          );
+        });
+      } else if (activeView.type === "timeline" || activeView.type === "calendar") {
+        ensureTimelineDatePropertyId(updateTimelineDateProperty);
+      }
+    },
     setupTimelineDateProperty: () => {
       if (!databaseId || !activeView?.id) {
         return;
@@ -932,31 +981,62 @@ export function createDatabaseViewCommands({
     setViewType: (
       type: "table" | "kanban" | "timeline" | "calendar" | "chart" | "gallery" | "list" | "form",
     ) => {
-      if (!databaseId || !activeView?.id || type === activeView.type) {
+      if (
+        !editable ||
+        !databaseId ||
+        !activeView?.id ||
+        type === activeView.type ||
+        updateDatabaseView.isPending
+      ) {
+        return;
+      }
+
+      const changeType = (nextConfig: unknown, currentConfig = latestConfig()) => {
+        if (!isCurrent()) return;
+        updateDatabaseView.mutate(
+          {
+            configuration: diffConfiguration(currentConfig, nextConfig),
+            databaseId: viewDatabaseId ?? databaseId,
+            databaseViewId: activeView.id,
+            type,
+          },
+          { onError: () => notify.error("Couldn't change view layout") },
+        );
+      };
+
+      if (type === "kanban") {
+        ensureKanbanGroupProperty((groupProperty, currentProperties) => {
+          const currentConfig = latestConfig();
+          changeType(
+            getConvertedViewConfig({
+              currentConfig,
+              type,
+              previousType: activeView.type,
+              kanbanGroupProperty: groupProperty,
+              properties: currentProperties,
+            }),
+            currentConfig,
+          );
+        });
         return;
       }
 
       if (type === "timeline" || type === "calendar") {
         ensureTimelineDatePropertyId((datePropertyId) => {
+          const currentConfig = latestConfig();
           const groupPropertyId =
             type === "calendar"
               ? undefined
-              : (getGroupPropertyId(activeView.config) ??
-                getTimelineGroupPropertyId(properties) ??
+              : (getGroupPropertyId(currentConfig) ??
+                getTimelineGroupPropertyId(viewProperties ?? properties) ??
                 undefined);
-
-          updateDatabaseView.mutate({
-            configuration: diffConfiguration(
-              activeView.config,
-              getMergedDatabaseConfig(activeView.config, {
-                datePropertyId,
-                ...(groupPropertyId ? { groupPropertyId } : {}),
-              }),
-            ),
-            databaseId: viewDatabaseId ?? databaseId,
-            databaseViewId: activeView.id,
-            type,
-          });
+          changeType(
+            getMergedDatabaseConfig(currentConfig, {
+              datePropertyId,
+              ...(groupPropertyId ? { groupPropertyId } : {}),
+            }),
+            currentConfig,
+          );
         });
         return;
       }
@@ -1241,6 +1321,8 @@ function createTimelineDateResolver({
   viewData,
   properties,
   timelineDateProperty,
+  config,
+  isCurrent,
   notify,
 }: {
   addProperty: DatabaseMutations["addProperty"];
@@ -1249,8 +1331,11 @@ function createTimelineDateResolver({
   viewData: DatabaseViewData | null | undefined;
   properties: DatabasePropertyEntity[];
   timelineDateProperty: DatabasePropertyListItem | null;
+  config?: unknown;
+  isCurrent: () => boolean;
   notify: { error: (message: string) => void };
 }) {
+  let resolving = false;
   return (onResolved: (datePropertyId: string) => void) => {
     const viewProperties = viewData
       ? viewData.bootstrap.properties.filter(
@@ -1259,17 +1344,19 @@ function createTimelineDateResolver({
       : null;
     const currentProperties = viewProperties ?? properties;
     const existingDateProperty =
-      timelineDateProperty ?? getTimelineDateProperty(currentProperties, null);
+      (timelineDateProperty?.property.type === "date" ? timelineDateProperty : null) ??
+      getTimelineDateProperty(currentProperties, config);
 
     if (existingDateProperty) {
       onResolved(existingDateProperty.property.id);
       return;
     }
 
-    if (!editable || !databaseId || addProperty.isPending) {
+    if (!editable || !databaseId || addProperty.isPending || resolving) {
       return;
     }
 
+    resolving = true;
     addProperty.mutate(
       {
         databaseId,
@@ -1278,10 +1365,13 @@ function createTimelineDateResolver({
       },
       {
         onSuccess: (createdDateProperty) => {
+          resolving = false;
+          if (!isCurrent()) return;
           onResolved(createdDateProperty.property.id);
         },
         onError: () => {
-          notify.error("Couldn't add date property");
+          resolving = false;
+          if (isCurrent()) notify.error("Couldn't add date property");
         },
       },
     );

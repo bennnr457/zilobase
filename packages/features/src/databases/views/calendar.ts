@@ -6,7 +6,7 @@ import {
 } from "../schema/date-value";
 import type { DatabasePropertyValue } from "../schema/property-values";
 import type { DatabasePropertyListItem } from "./grouping";
-import { getTimelineDatePropertyId } from "./timeline-date";
+import { getTimelineDateProperty } from "./timeline-date";
 
 export type DatabaseCalendarMode = "month" | "week" | "day" | "agenda";
 export type DatabaseCalendarSchedule = { start: Date; end: Date; allDay: boolean };
@@ -17,10 +17,7 @@ export function getDatabaseCalendarMode(config: unknown): DatabaseCalendarMode {
 }
 
 export function getCalendarDateProperty(properties: DatabasePropertyListItem[], config: unknown) {
-  const id = getTimelineDatePropertyId(config);
-  return (
-    properties.find((p) => p.property.type === "date" && (!id || p.property.id === id)) ?? null
-  );
+  return getTimelineDateProperty(properties, config);
 }
 
 /** Database all-day ends are inclusive; calendar layout ends are exclusive. */

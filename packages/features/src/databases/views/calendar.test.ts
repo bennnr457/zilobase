@@ -52,13 +52,13 @@ test("calendar civil dates survive DST and non-UTC time zones", () => {
   }
 });
 
-test("calendar configuration does not silently replace a missing configured property", () => {
+test("calendar configuration reuses a compatible date when the configured property is missing", () => {
   const date = {
     id: "column",
     position: 0,
     property: { id: "date", type: "date", name: "Due", config: {} },
   };
-  assert.equal(getCalendarDateProperty([date], { datePropertyId: "deleted" }), null);
+  assert.equal(getCalendarDateProperty([date], { datePropertyId: "deleted" }), date);
   assert.equal(getCalendarDateProperty([date], {}), date);
   assert.equal(getDatabaseCalendarMode({ calendarView: "week" }), "week");
   assert.equal(getDatabaseCalendarMode({ calendarView: "unknown" }), "month");

@@ -92,7 +92,10 @@ export function getConfiguredGroupProperty(
     : null;
 }
 
-export function getKanbanGroupProperty(properties: DatabasePropertyListItem[], config: unknown) {
+export function getKanbanGroupProperty<T extends DatabasePropertyListItem>(
+  properties: T[],
+  config: unknown,
+) {
   const configuredGroupPropertyId = getGroupPropertyId(config);
   const configuredGroupProperty = configuredGroupPropertyId
     ? (properties.find(
@@ -105,7 +108,8 @@ export function getKanbanGroupProperty(properties: DatabasePropertyListItem[], c
     configuredGroupProperty ??
     properties.find((property) => property.property.type === "status") ??
     properties.find((property) => isSelectLikePropertyType(property.property.type)) ??
-    properties[0] ??
+    properties.find((property) => property.property.type === "checkbox") ??
+    properties.find((property) => property.property.type === "person") ??
     null
   );
 }

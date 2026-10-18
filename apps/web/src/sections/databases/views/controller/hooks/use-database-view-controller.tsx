@@ -1,7 +1,14 @@
 import { createDatabaseSourceCommands } from "@zilobase/features/databases";
 import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
 import { shouldUseDatabaseSetupMode } from "@/sections/databases/setup/lib/setup-mode";
-import { useCallback, useEffect, useMemo, useState, type DragEvent as ReactDragEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent as ReactDragEvent,
+} from "react";
 
 import { isDatabaseLocked } from "@zilobase/features/databases";
 import {
@@ -385,6 +392,23 @@ export function useDatabaseViewController({
       mode,
     );
 
+  const commandScope = JSON.stringify([
+    databaseController.sessionId,
+    databaseId,
+    activeDatabaseId,
+    activeView?.id,
+    activeView?.type,
+    editable,
+  ]);
+  const commandScopeRef = useRef<string | null>(commandScope);
+  commandScopeRef.current = commandScope;
+  useEffect(() => {
+    commandScopeRef.current = commandScope;
+    return () => {
+      commandScopeRef.current = null;
+    };
+  }, [commandScope]);
+  const requiredSetupAttemptRef = useRef<string | null>(null);
   const commands = getDatabaseViewCommands({
     notify: toast,
     copyViewLink: (id) =>
@@ -420,7 +444,48 @@ export function useDatabaseViewController({
     setSortPickerOpen,
     getLatestViewConfig,
     getSourcePropertyMode,
+    isCurrent: () => commandScopeRef.current === commandScope,
   });
+
+  useEffect(() => {
+    const missingRequiredProperty =
+      activeView?.type === "kanban"
+        ? !kanbanGroupProperty
+        : activeView?.type === "timeline"
+          ? !timelineDateProperty
+          : activeView?.type === "calendar"
+            ? !calendarDateProperty
+            : false;
+    if (!missingRequiredProperty) {
+      requiredSetupAttemptRef.current = null;
+      return;
+    }
+    if (
+      !editable ||
+      bootstrapState.status !== "success" ||
+      recordWindow.status !== "success" ||
+      recordWindow.isPlaceholderData ||
+      addProperty.isPending ||
+      updateDatabaseView.isPending
+    )
+      return;
+    if (requiredSetupAttemptRef.current === commandScope) return;
+    requiredSetupAttemptRef.current = commandScope;
+    commands.setupRequiredViewProperties();
+  }, [
+    activeView?.type,
+    kanbanGroupProperty,
+    timelineDateProperty,
+    calendarDateProperty,
+    editable,
+    bootstrapState.status,
+    recordWindow.status,
+    recordWindow.isPlaceholderData,
+    addProperty.isPending,
+    updateDatabaseView.isPending,
+    commandScope,
+    commands,
+  ]);
 
   const handleDatabaseBlockDragOver = (event: ReactDragEvent<HTMLDivElement>) => {
     if (!editable || !hasDatabasePageDragPayload(event.dataTransfer)) {

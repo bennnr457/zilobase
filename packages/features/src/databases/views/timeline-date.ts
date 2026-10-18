@@ -28,7 +28,10 @@ export function getTimelineDateProperties(properties: DatabasePropertyListItem[]
 export function getTimelineDateProperty(properties: DatabasePropertyListItem[], config: unknown) {
   const configuredDatePropertyId = getTimelineDatePropertyId(config);
   const configuredDateProperty = configuredDatePropertyId
-    ? (properties.find((property) => property.property.id === configuredDatePropertyId) ?? null)
+    ? (properties.find(
+        (property) =>
+          property.property.id === configuredDatePropertyId && property.property.type === "date",
+      ) ?? null)
     : null;
 
   return (

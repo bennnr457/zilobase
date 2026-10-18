@@ -112,7 +112,14 @@ export function deriveDatabaseViewModel({
   const databaseSorts = getDatabaseSorts(activeViewConfig);
   const databaseFilters = getDatabaseFilters(activeViewConfig);
   const databaseConditionalColors = getDatabaseConditionalColors(activeViewConfig);
-  const groupProperty = resolveGroupProperty(properties, activeViewConfig, nameGroupProperty);
+  const configuredGroupProperty = resolveGroupProperty(
+    properties,
+    activeViewConfig,
+    nameGroupProperty,
+  );
+  const groupProperty =
+    configuredGroupProperty ??
+    (isKanbanView ? getKanbanGroupProperty(properties, activeViewConfig) : null);
   const groupOptions = getGroupOptions(groupProperty);
   const kanbanGroupProperty = isKanbanView
     ? groupProperty
