@@ -1,18 +1,3 @@
-import { useTaskDatabases } from "@zilobase/features/tasks/react";
-import { createTaskDatabase as createSharedTaskDatabase } from "@zilobase/features/tasks";
-import {
-  buildTasksViewData as deriveTasksViewData,
-  getSyntheticRowId,
-  TASKS_DATABASE_ID,
-  TASKS_DATA_SOURCE_ID,
-  TASKS_VIEW_ID,
-  STATUS_COLUMN_ID,
-  ASSIGNEE_COLUMN_ID,
-  DUE_DATE_COLUMN_ID,
-  SOURCE_COLUMN_ID,
-} from "@zilobase/features/tasks";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
 import {
   CheckCircle2Icon,
   DatabaseIcon,
@@ -20,6 +5,22 @@ import {
   PlusIcon,
   Settings2Icon,
 } from "@/components/icons";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useZilobaseFeatures, type ClientOperationContext } from "@zilobase/features";
+import {
+  ASSIGNEE_COLUMN_ID,
+  createTaskDatabase as createSharedTaskDatabase,
+  buildTasksViewData as deriveTasksViewData,
+  DUE_DATE_COLUMN_ID,
+  getSyntheticRowId,
+  SOURCE_COLUMN_ID,
+  STATUS_COLUMN_ID,
+  TASKS_DATA_SOURCE_ID,
+  TASKS_DATABASE_ID,
+  TASKS_VIEW_ID,
+} from "@zilobase/features/tasks";
+import { useTaskDatabases } from "@zilobase/features/tasks/react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { type DatabaseSetupSelection } from "@/sections/databases/setup/components/database-setup-card";
-import { DatabaseViewSkeleton } from "@/sections/databases/views/shared/components/database-view-skeleton";
 import { getDatabaseViewModel } from "@/sections/databases/views/shared/components/database-view-model";
-import type { DatabaseViewData } from "@zilobase/features/databases";
+import { DatabaseViewSkeleton } from "@/sections/databases/views/shared/components/database-view-skeleton";
+import { useSession } from "@zilobase/features/auth/react";
+import type {
+  DatabaseFilterUpdatePatch,
+  DatabaseSortUpdatePatch,
+  DatabaseViewData,
+} from "@zilobase/features/databases";
 import {
   getDatabaseFilterOperatorsForType,
   getMergedDatabaseConfig,
@@ -43,25 +49,29 @@ import {
   getMergedPropertyConfig,
   getValidDatabaseFilterOperator,
   type DatabaseConditionalColorConfig,
+  type DatabaseExportPayload,
   type DatabaseFilterItemConfig,
   type DatabasePropertyConfig,
+  type DatabasePropertyValue,
   type DatabaseSortConfig,
   type DatabaseSubItemsSettings,
 } from "@zilobase/features/databases";
-import type { DatabaseFilterUpdatePatch } from "@zilobase/features/databases";
-import type { DatabaseSortUpdatePatch } from "@zilobase/features/databases";
-import { type DatabasePropertyValue } from "@zilobase/features/databases";
-import { TaskDatabaseListAdapter } from "./components/task-database-list-adapter";
-import { type DatabaseExportPayload } from "@zilobase/features/databases";
 import {
   useAddDatabaseRow,
   useApplyDatabaseTemplate,
   useCreateDatabase,
   useUpdateDatabasePropertyValue,
 } from "@zilobase/features/databases/react";
-import { useSession } from "@zilobase/features/auth/react";
-import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { usePageNavigation } from "@zilobase/features/pages/react";
+import {
+  buildTaskRows,
+  filterMyTaskRows,
+  getTaskCompletionUpdate,
+  getTaskCreationInput,
+  getTaskDatabaseSchema,
+  getTaskPropertyUpdate,
+  type TaskRow,
+} from "@zilobase/features/tasks";
 import {
   defaultUserSettings,
   normalizeSidebarConfig,
@@ -69,16 +79,11 @@ import {
   withSidebarWorkspaceLayout,
 } from "@zilobase/features/user-settings";
 import { useUpdateUserSettings, useUserSettings } from "@zilobase/features/user-settings/react";
-import { useWorkspaceAccessTargets } from "@zilobase/features/workspaces/react";
 import {
-  buildTaskRows,
-  filterMyTaskRows,
-  getTaskDatabaseSchema,
-  getTaskPropertyUpdate,
-  getTaskCreationInput,
-  getTaskCompletionUpdate,
-  type TaskRow,
-} from "@zilobase/features/tasks";
+  useActiveWorkspaceId,
+  useWorkspaceAccessTargets,
+} from "@zilobase/features/workspaces/react";
+import { TaskDatabaseListAdapter } from "./components/task-database-list-adapter";
 
 const DatabaseListView = lazy(() =>
   import("@/sections/databases/views/list/components/database-list-view").then((module) => ({
@@ -99,6 +104,7 @@ const DatabaseViewToolbar = lazy(() =>
 const emptyAsync = async () => undefined;
 
 export default function TasksScreen() {
+  const operationContext = useZilobaseFeatures();
   const workspaceId = useActiveWorkspaceId();
   const { data: session } = useSession();
   const { data: navigation, isLoading: navigationLoading } = usePageNavigation(workspaceId);
@@ -138,9 +144,7 @@ export default function TasksScreen() {
 
   const selectTaskDataSource = async (selection: DatabaseSetupSelection) => {
     try {
-      await createTaskDatabase({
-        applyTemplate,
-        createDatabase,
+      await createTaskDatabase(operationContext, {
         saveTaskDatabaseIds,
         selection,
         selectedDatabaseIds,
@@ -749,12 +753,16 @@ function ConfigureTaskDatabasesDialog({
   );
 }
 
-async function createTaskDatabase(input: Parameters<typeof createSharedTaskDatabase>[0]) {
-  const result = await createSharedTaskDatabase(input);
-  if (result === "already-connected") toast.message("That data source is already connected.");
+async function createTaskDatabase(
+  context: ClientOperationContext,
+  input: Parameters<typeof createSharedTaskDatabase>[1],
+) {
+  const result = await createSharedTaskDatabase(context, input);
+  if (result.status === "already-connected")
+    toast.message("That data source is already connected.");
   else
     toast.success(
-      result === "linked" ? "Data source linked." : "Data source created and connected.",
+      result.status === "linked" ? "Data source linked." : "Data source created and connected.",
     );
 }
 

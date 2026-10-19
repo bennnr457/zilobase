@@ -1,10 +1,11 @@
-import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
+import * as React from "react";
 import { toast } from "sonner";
 
-import { importNotionZipFile, NotionImportError } from "../conversion/lib/notion-import";
-import { useCreatePage, useUpdatePage } from "@zilobase/features/pages/react";
 import posthog from "@/platform/analytics/posthog";
+import { useZilobaseFeatures } from "@zilobase/features";
+import { createPage, updatePage } from "@zilobase/features/pages";
+import { importNotionZipFile, NotionImportError } from "../conversion/lib/notion-import";
 
 export function useNotionImport({
   navigateToEntry = true,
@@ -14,8 +15,7 @@ export function useNotionImport({
   workspaceId: string | null | undefined;
 }) {
   const navigate = useNavigate();
-  const createPage = useCreatePage();
-  const updatePage = useUpdatePage();
+  const operationContext = useZilobaseFeatures();
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [isImporting, setIsImporting] = React.useState(false);
 
@@ -43,9 +43,9 @@ export function useNotionImport({
 
       try {
         const result = await importNotionZipFile({
-          createPage: (input) => createPage.mutateAsync(input),
+          createPage: (input) => createPage(operationContext, input),
           file,
-          updatePage: (input) => updatePage.mutateAsync(input),
+          updatePage: (input) => updatePage(operationContext, input),
           workspaceId,
         });
         posthog?.capture("notion_import_completed", {
@@ -79,7 +79,7 @@ export function useNotionImport({
         setIsImporting(false);
       }
     },
-    [createPage, navigate, navigateToEntry, updatePage, workspaceId],
+    [operationContext, navigate, navigateToEntry, workspaceId],
   );
 
   return {

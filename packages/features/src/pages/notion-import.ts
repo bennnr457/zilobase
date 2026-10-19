@@ -34,7 +34,16 @@ export type ImportNotionZipResult = {
   warnings: string[];
 };
 
-export class NotionImportError extends Error {}
+export class NotionImportError extends Error {
+  constructor(
+    message: string,
+    readonly partialResult?: ImportNotionZipResult,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "NotionImportError";
+  }
+}
 
 export async function importNotionPages({
   createPage,
@@ -52,42 +61,56 @@ export async function importNotionPages({
   let skippedAssets = 0;
   const warnings: string[] = [];
 
-  for (const entry of htmlEntries) {
-    const parsed = normalizeHtml(entry.html);
+  try {
+    for (const entry of htmlEntries) {
+      const parsed = normalizeHtml(entry.html);
 
-    const parentItemId = entry.parentPath ? pageIdsByPath.get(entry.parentPath) : undefined;
-    const page = await createPage({
-      emoji: parsed.emoji ?? undefined,
-      name: parsed.title,
-      parentItemId,
-      workspaceId,
-    });
+      const parentItemId = entry.parentPath ? pageIdsByPath.get(entry.parentPath) : undefined;
+      const page = await createPage({
+        emoji: parsed.emoji ?? undefined,
+        name: parsed.title,
+        parentItemId,
+        workspaceId,
+      });
 
-    pageIdsByPath.set(entry.path, page.id);
-    pageIdsByPath.set(stripHtmlExtension(entry.path), page.id);
-    createdPageIds.push(page.id);
-  }
-
-  const pagePathMap = buildPagePathMap(pageIdsByPath);
-
-  for (const entry of htmlEntries) {
-    const pageId = pageIdsByPath.get(entry.path);
-    if (!pageId) {
-      continue;
+      pageIdsByPath.set(entry.path, page.id);
+      pageIdsByPath.set(stripHtmlExtension(entry.path), page.id);
+      createdPageIds.push(page.id);
     }
 
-    const parsed = normalizeHtml(entry.html, { pagePathMap });
-    skippedAssets += parsed.skippedAssets;
-    warnings.push(...parsed.warnings);
-    await updatePage({ id: pageId, content: parsed.content });
-  }
+    const pagePathMap = buildPagePathMap(pageIdsByPath);
 
-  return {
-    createdPageIds,
-    entryPageId: createdPageIds[0] ?? null,
-    skippedAssets,
-    warnings: [...new Set(warnings)],
-  };
+    for (const entry of htmlEntries) {
+      const pageId = pageIdsByPath.get(entry.path);
+      if (!pageId) {
+        continue;
+      }
+
+      const parsed = normalizeHtml(entry.html, { pagePathMap });
+      skippedAssets += parsed.skippedAssets;
+      warnings.push(...parsed.warnings);
+      await updatePage({ id: pageId, content: parsed.content });
+    }
+
+    return {
+      createdPageIds,
+      entryPageId: createdPageIds[0] ?? null,
+      skippedAssets,
+      warnings: [...new Set(warnings)],
+    };
+  } catch (cause) {
+    if (!createdPageIds.length) throw cause;
+    throw new NotionImportError(
+      cause instanceof Error ? cause.message : "Could not finish importing Notion pages.",
+      {
+        createdPageIds: [...createdPageIds],
+        entryPageId: createdPageIds[0] ?? null,
+        skippedAssets,
+        warnings: [...new Set(warnings)],
+      },
+      { cause },
+    );
+  }
 }
 
 function getParentPagePath(path: string) {
