@@ -1,68 +1,68 @@
-export type * from "./contracts";
-export { orderCalendarSources, moveCalendarSource } from "./source-order";
-export { calendarConnectionReturnPath } from "./onboarding";
+export { createEventIndex } from "../calendar-layout/event-index";
+export {
+  addCalendarDays,
+  calendarDate,
+  calendarDays,
+  dayInstant,
+  eventClock,
+  eventInstant,
+  eventOverlaps,
+  shiftCalendarPeriod,
+  timedLayoutByKey,
+  todayInZone,
+  wallTime,
+} from "../calendar-layout/time";
+export {
+  civilDayOrdinal,
+  contiguousTimeline,
+  dateFromOrdinal,
+  dateFromRank,
+  visibleDateRank,
+} from "../calendar-layout/timeline";
+export type { CalendarSpan } from "../calendar-layout/types";
 export {
   calendarCapability,
   eventEditorCapability,
   type CalendarCapability,
   type CalendarOperation,
 } from "./capabilities";
+export type * from "./contracts";
 export {
-  newCalendarEvent,
   calendarApiBasePath,
-  calendarKeys,
   calendarEventKey,
+  calendarKeys,
   defaultCalendarPreferences,
+  newCalendarEvent,
 } from "./model";
-export {
-  calendarDate,
-  dayInstant,
-  addCalendarDays,
-  todayInZone,
-  wallTime,
-  eventInstant,
-  eventOverlaps,
-  calendarDays,
-  shiftCalendarPeriod,
-  eventClock,
-} from "../calendar-layout/time";
-export type { CalendarSpan } from "../calendar-layout/types";
-export { createEventIndex } from "../calendar-layout/event-index";
-export {
-  civilDayOrdinal,
-  dateFromOrdinal,
-  dateFromRank,
-  visibleDateRank,
-  contiguousTimeline,
-} from "../calendar-layout/timeline";
-export { timedLayoutByKey } from "../calendar-layout/time";
+export { calendarConnectionReturnPath } from "./onboarding";
+export { moveCalendarSource, orderCalendarSources } from "./source-order";
 
 export { timedLayout } from "./context";
 
-export { calendarMetric, type CalendarMetricName } from "./telemetry";
 export { normalizeCalendarView } from "../calendar-layout/types";
-export { calendarLocationUrl, upcomingCalendarMeeting } from "./context";
-export { calendarTravelPreferences } from "./travel";
-export * from "./selection";
-export * from "./time-zones";
-export * from "./recovery";
-export * from "./coverage";
-export * from "./cache";
 export * from "./buffer-preferences";
-export * from "./reminders";
-export * from "./event-write";
-export * from "./queries";
-export * from "./mutations";
-export * from "./search";
-export * from "./range-queue";
-export * from "./sync-queue";
-export * from "./search-model";
+export * from "./cache";
+export { calendarLocationUrl, upcomingCalendarMeeting } from "./context";
+export * from "./coverage";
 export * from "./event-visibility";
+export * from "./event-write";
+export * from "./mutations";
+export * from "./queries";
+export * from "./range-queue";
+export * from "./recovery";
+export * from "./reminders";
+export * from "./search";
+export * from "./search-model";
+export * from "./selection";
+export * from "./sync-queue";
+export { calendarMetric, type CalendarMetricName } from "./telemetry";
+export * from "./time-zones";
+export { calendarTravelPreferences } from "./travel";
 
+export * from "./commands";
 export * from "./storage";
 export * from "./store";
 export * from "./sync";
-export * from "./commands";
 
 export {
   type CalendarTime,
@@ -71,3 +71,5 @@ export {
 } from "../calendar-layout/index";
 
 export { createMemoryCalendarStorage } from "./memory-storage";
+
+export * from "./operations";

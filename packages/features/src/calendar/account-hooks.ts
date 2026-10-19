@@ -1,9 +1,9 @@
-import { useSession } from "../auth/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSession } from "../auth/react";
 import { useZilobaseFeatures } from "../shared/context";
 import type { CalendarConnection } from "./contracts";
-import { calendarAccountsQueryOptions, calendarSourcesQueryKey } from "./queries";
-import { startCalendarConnection, disconnectCalendar } from "./mutations";
+import { connectCalendar, disconnectCalendarConnection } from "./operations";
+import { calendarAccountsQueryOptions } from "./queries";
 export function useCalendarAccounts(
   workspaceId: string,
   options: {
@@ -14,17 +14,17 @@ export function useCalendarAccounts(
   },
 ) {
   const { data: session } = useSession();
-  const { apiFetch, queryClient: client } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
+  const { apiFetch } = context;
   const accounts = useQuery(
     calendarAccountsQueryOptions(apiFetch, session?.user?.id ?? "", workspaceId),
   );
   const connect = useMutation({
     mutationFn: async () => {
-      const { authorizationUrl } = await startCalendarConnection(
-        apiFetch,
+      const { authorizationUrl } = await connectCalendar(context, {
         workspaceId,
-        options.client,
-      );
+        client: options.client,
+      });
       await options.authorize(authorizationUrl);
     },
     onError: options.onError,
@@ -35,12 +35,11 @@ export function useCalendarAccounts(
         (source) => source.bindingId === bindingId,
       );
       if (!connection) throw new Error("Calendar source is no longer available.");
-      await disconnectCalendar(apiFetch, connection);
+      await disconnectCalendarConnection(context, { connection });
       return connection;
     },
     onSuccess: async (connection, bindingId) => {
       await options.disconnected(connection, bindingId);
-      await client.invalidateQueries({ queryKey: calendarSourcesQueryKey });
     },
     onError: options.onError,
   });

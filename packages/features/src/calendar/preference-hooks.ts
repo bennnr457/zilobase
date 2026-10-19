@@ -1,24 +1,19 @@
-import { sharedClient } from "../data/client";
 import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
 import { useZilobaseFeatures } from "../shared/context";
-import { calendarApiBasePath } from "./model";
-import { calendarPreferencesQueryOptions } from "./queries";
 import type { CalendarPreferences } from "./contracts";
+import { saveCalendarPreferences } from "./operations";
+import { calendarPreferencesQueryOptions } from "./queries";
 export function useCalendarPreferences(workspaceId: string, onError?: (error: unknown) => void) {
-  const { apiFetch, queryClient: client } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
+  const { apiFetch } = context;
   const options = calendarPreferencesQueryOptions(apiFetch, workspaceId),
-    queryKey = options.queryKey,
-    path = `${calendarApiBasePath(workspaceId)}/preferences`;
+    queryKey = options.queryKey;
   const query = useQuery(options);
   const pending = useIsMutating({ mutationKey: queryKey }) > 0;
   const save = useMutation({
     mutationKey: queryKey,
-    onMutate: () => sharedClient(client).capture(),
-    mutationFn: (data: CalendarPreferences) =>
-      apiFetch<CalendarPreferences>(path, { method: "PUT", body: JSON.stringify(data) }),
-    onSuccess: (data, _variables, capture) => {
-      if (capture && sharedClient(client).isCurrent(capture)) client.setQueryData(queryKey, data);
-    },
+    mutationFn: (preferences: CalendarPreferences) =>
+      saveCalendarPreferences(context, { workspaceId, preferences }),
     onError,
   });
   return { query, save, pending };

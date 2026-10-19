@@ -1,15 +1,22 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  claimMeetingRecorder,
+  createMeeting,
+  deleteMeeting,
+  meetingLifecycle,
+  recordMeetingConsent,
+  releaseMeetingRecorder,
+  updateMeeting,
+} from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import { meetingKeys, meetingQueryOptions, workspaceMeetingsQueryOptions } from "./queries";
 import type {
   CreateMeetingInput,
   MeetingLifecycleAction,
   MeetingPatch,
   MeetingResponse,
-  MeetingRecorderClaim,
 } from "./contracts";
-import { pageQueryKey, pagesNavRootQueryKey } from "../pages/queries";
+import { meetingKeys, meetingQueryOptions, workspaceMeetingsQueryOptions } from "./queries";
 
 export function useMeeting(meetingId: string | null | undefined) {
   const { apiFetch } = useZilobaseFeatures();
@@ -22,140 +29,40 @@ export function useWorkspaceMeetings(workspaceId: string | null | undefined) {
 }
 
 export function useCreateMeeting() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: CreateMeetingInput) =>
-      apiFetch<MeetingResponse>("/meetings", {
-        body: JSON.stringify(input),
-        method: "POST",
-      }),
-    onSuccess: (payload) => {
-      queryClient.setQueryData(meetingKeys.detail(payload.meeting.id), payload);
-      return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
-    },
+    mutationFn: (variables: CreateMeetingInput) => createMeeting(context, variables),
   });
 }
 
 export function useDeleteMeeting() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-
-  return useMutation({
-    mutationFn: (meetingId: string) =>
-      apiFetch<MeetingResponse>(`/meetings/${meetingId}`, {
-        method: "DELETE",
-      }),
-    onSuccess: async ({ meeting }) => {
-      queryClient.removeQueries({ queryKey: meetingKeys.detail(meeting.id) });
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: meetingKeys.lists() }),
-        queryClient.invalidateQueries({
-          queryKey: pagesNavRootQueryKey(meeting.workspaceId),
-        }),
-        meeting.notesPageId
-          ? queryClient.invalidateQueries({
-              queryKey: pageQueryKey(meeting.notesPageId),
-            })
-          : Promise.resolve(),
-      ]);
-    },
-  });
+  const context = useZilobaseFeatures();
+  return useMutation({ mutationFn: (variables: string) => deleteMeeting(context, variables) });
 }
 
 export function useUpdateMeeting(meetingId: string) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (patch: MeetingPatch) =>
-      apiFetch<MeetingResponse>(`/meetings/${meetingId}`, {
-        body: JSON.stringify(patch),
-        method: "PATCH",
-      }),
-    onMutate: async (patch) => {
-      const queryKey = meetingKeys.detail(meetingId);
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<MeetingResponse>(queryKey);
-      if (previous) {
-        queryClient.setQueryData<MeetingResponse>(queryKey, {
-          meeting: { ...previous.meeting, ...patch },
-        });
-      }
-      return { previous };
-    },
-    onError: (_error, _patch, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(meetingKeys.detail(meetingId), context.previous);
-      }
-    },
-    onSuccess: async (payload, patch) => {
-      queryClient.setQueryData(meetingKeys.detail(meetingId), payload);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: meetingKeys.lists() }),
-        patch.title !== undefined && payload.meeting.notesPageId
-          ? queryClient.invalidateQueries({
-              queryKey: pageQueryKey(payload.meeting.notesPageId),
-            })
-          : Promise.resolve(),
-      ]);
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: meetingKeys.detail(meetingId) });
-    },
+    mutationFn: (variables: MeetingPatch) => updateMeeting(context, { meetingId, ...variables }),
   });
 }
 
 export function useMeetingLifecycle(meetingId: string) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: ({
-      action,
-      durationMs,
-      leaseId,
-    }: {
+    mutationFn: (variables: {
       action: MeetingLifecycleAction;
       durationMs?: number;
       leaseId?: string;
-    }) =>
-      apiFetch<MeetingResponse>(`/meetings/${meetingId}/${action}`, {
-        body: JSON.stringify({
-          ...(durationMs === undefined ? {} : { durationMs }),
-          ...(leaseId ? { leaseId } : {}),
-        }),
-        method: "POST",
-      }),
-    onSuccess: (payload) => {
-      queryClient.setQueryData(meetingKeys.detail(meetingId), payload);
-      return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
-    },
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: meetingKeys.detail(meetingId) });
-    },
+    }) => meetingLifecycle(context, { meetingId, ...variables }),
   });
 }
 
 export function useMeetingRecorder(meetingId: string) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-  const claim = useMutation({
-    mutationFn: () =>
-      apiFetch<MeetingRecorderClaim>(`/meetings/${meetingId}/recorder/claim`, {
-        body: "{}",
-        method: "POST",
-      }),
-    onSuccess: (payload) => {
-      queryClient.setQueryData(meetingKeys.detail(meetingId), {
-        meeting: payload.meeting,
-      });
-      return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
-    },
-  });
+  const context = useZilobaseFeatures();
+  const claim = useMutation({ mutationFn: () => claimMeetingRecorder(context, { meetingId }) });
   const release = useMutation({
-    mutationFn: (leaseId: string) =>
-      apiFetch<MeetingResponse>(`/meetings/${meetingId}/recorder/release`, {
-        body: JSON.stringify({ leaseId }),
-        method: "POST",
-      }),
-    onSuccess: (payload) => {
-      queryClient.setQueryData(meetingKeys.detail(meetingId), payload);
-      return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
-    },
+    mutationFn: (leaseId: string) => releaseMeetingRecorder(context, { meetingId, leaseId }),
   });
   return { claim, release };
 }
@@ -204,15 +111,9 @@ async function waitForAiJob(
 }
 
 export function useRecordMeetingConsent(meetingId: string) {
-  const { apiFetch } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (mode: "confirmed" | "played") =>
-      apiFetch<{ consent: { id: string } }>(`/meetings/${meetingId}/consent`, {
-        body: JSON.stringify({
-          metadata: { source: "meeting-block" },
-          mode,
-        }),
-        method: "POST",
-      }),
+    mutationFn: (variables: "confirmed" | "played") =>
+      recordMeetingConsent(context, { meetingId, mode: variables }),
   });
 }

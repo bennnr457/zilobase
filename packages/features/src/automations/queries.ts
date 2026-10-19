@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { SlackAutomationChannel } from "./contracts";
 
 import type { ApiFetcher } from "../shared/api-fetcher";
 import type {
@@ -123,4 +124,21 @@ export const databaseAutomationRunQueryOptions = (
         { signal },
       ),
     queryKey: databaseAutomationKeys.run(databaseId, automationId, runId),
+  });
+
+export const slackAutomationChannelsQueryOptions = (
+  apiFetch: ApiFetcher,
+  databaseId: string,
+  dataSourceId: string,
+  connectionId: string,
+) =>
+  queryOptions({
+    enabled: Boolean(databaseId && dataSourceId && connectionId),
+    queryFn: ({ signal }) =>
+      apiFetch<{ channels: SlackAutomationChannel[] }>(
+        `/databases/${encoded(databaseId)}/automation-slack/connections/${encoded(connectionId)}/channels?dataSourceId=${encoded(dataSourceId)}`,
+        { signal },
+      ),
+    queryKey: databaseAutomationKeys.slackChannels(databaseId, dataSourceId, connectionId),
+    staleTime: 60_000,
   });

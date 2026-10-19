@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useZilobaseFeatures } from "../shared/context";
 import { sharedClient } from "../data/client";
-import { runCalendarMutation, reconcileCalendarMutations } from "./commands";
+import { useZilobaseFeatures } from "../shared/context";
+import { runCalendarMutation } from "./commands";
+import { executeCalendarMutation, reconcileCalendarWrites } from "./operations";
 import type { CalendarCacheStore } from "./storage";
 
 /** Capture runtime and mounted source before each write; late results cannot update the next view. */
 export function useCalendarEventCommands(database: CalendarCacheStore | null, scope?: string) {
-  const { queryClient, apiFetch } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
+  const { queryClient, apiFetch } = context;
   const lifetime = useRef<symbol | null>(null);
   useEffect(() => {
     const token = Symbol();
@@ -26,14 +28,11 @@ export function useCalendarEventCommands(database: CalendarCacheStore | null, sc
       const owner = sharedClient(queryClient),
         capture = owner.capture(),
         token = lifetime.current;
-      return runCalendarMutation(
-        {
-          ...input,
-          database: store,
-          isCurrent: () => token !== null && token === lifetime.current && owner.isCurrent(capture),
-        },
-        apiFetch,
-      );
+      return executeCalendarMutation(context, {
+        ...input,
+        database: store,
+        isCurrent: () => token !== null && token === lifetime.current && owner.isCurrent(capture),
+      });
     },
     [database, queryClient, apiFetch],
   );
@@ -42,11 +41,10 @@ export function useCalendarEventCommands(database: CalendarCacheStore | null, sc
     const owner = sharedClient(queryClient),
       capture = owner.capture(),
       token = lifetime.current;
-    await reconcileCalendarMutations(
+    await reconcileCalendarWrites(context, {
       database,
-      apiFetch,
-      () => token !== null && token === lifetime.current && owner.isCurrent(capture),
-    );
+      isCurrent: () => token !== null && token === lifetime.current && owner.isCurrent(capture),
+    });
   }, [database, queryClient, apiFetch]);
   return { run, reconcile };
 }

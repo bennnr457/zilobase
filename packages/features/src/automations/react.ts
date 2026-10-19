@@ -1,26 +1,28 @@
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createDatabaseAutomation,
+  createDatabaseAutomationSecret,
+  databaseAutomationLifecycle,
+  startSlackAutomationOauth,
+  updateDatabaseAutomation,
+  validateDatabaseAutomation,
+} from "./operations";
+import { slackAutomationChannelsQueryOptions } from "./queries";
 
 import { useZilobaseFeatures } from "../shared/context";
 import type {
   CreateDatabaseAutomationRequest,
   DatabaseAutomationDefinition,
-  DatabaseAutomationDetail,
-  DatabaseAutomationSummary,
-  DatabaseAutomationValidationResult,
   UpdateDatabaseAutomationRequest,
-  SlackAutomationChannel,
 } from "./contracts";
 import {
   databaseAutomationCapabilityQueryOptions,
   databaseAutomationCatalogQueryOptions,
   databaseAutomationDetailQueryOptions,
-  databaseAutomationKeys,
   databaseAutomationListQueryOptions,
   databaseAutomationRunQueryOptions,
   databaseAutomationRunsQueryOptions,
 } from "./queries";
-
-const encoded = (value: string) => encodeURIComponent(value);
 
 export function useDatabaseAutomationCapability(
   databaseId: string | null | undefined,
@@ -56,116 +58,52 @@ export function useDatabaseAutomationRun(databaseId: string, automationId: strin
 }
 
 export function useCreateDatabaseAutomation(databaseId: string, dataSourceId: string) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
     mutationFn: (
-      body: Omit<CreateDatabaseAutomationRequest, "dataSourceId" | "idempotencyKey">,
-    ) => {
-      const idempotencyKey = crypto.randomUUID();
-      return apiFetch<DatabaseAutomationDetail>(`/databases/${encoded(databaseId)}/automations`, {
-        body: JSON.stringify({ ...body, dataSourceId, idempotencyKey }),
-        headers: { "Idempotency-Key": idempotencyKey },
-        method: "POST",
-      });
-    },
-    onSuccess: (automation) => {
-      queryClient.setQueryData(
-        databaseAutomationKeys.detail(databaseId, automation.id),
-        automation,
-      );
-      return queryClient.invalidateQueries({
-        queryKey: databaseAutomationKeys.list(databaseId, dataSourceId),
-      });
-    },
+      variables: Omit<CreateDatabaseAutomationRequest, "dataSourceId" | "idempotencyKey">,
+    ) => createDatabaseAutomation(context, { databaseId, dataSourceId, ...variables }),
   });
 }
 
 export function useUpdateDatabaseAutomation(databaseId: string, automationId: string) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: ({ body, version }: { body: UpdateDatabaseAutomationRequest; version: number }) =>
-      apiFetch<DatabaseAutomationDetail>(
-        `/databases/${encoded(databaseId)}/automations/${encoded(automationId)}`,
-        { body: JSON.stringify(body), headers: { "If-Match": String(version) }, method: "PATCH" },
-      ),
-    onSuccess: (automation) => {
-      queryClient.setQueryData(databaseAutomationKeys.detail(databaseId, automationId), automation);
-      return queryClient.invalidateQueries({ queryKey: databaseAutomationKeys.all });
-    },
+    mutationFn: (variables: { body: UpdateDatabaseAutomationRequest; version: number }) =>
+      updateDatabaseAutomation(context, { databaseId, automationId, ...variables }),
   });
 }
 
 export function useDatabaseAutomationLifecycle(databaseId: string, dataSourceId: string) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-  return useMutation<
-    DatabaseAutomationDetail | DatabaseAutomationSummary | { deleted: boolean },
-    Error,
-    {
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (variables: {
       action: "delete" | "duplicate" | "pause" | "resume";
       automationId: string;
-    }
-  >({
-    mutationFn: ({
-      action,
-      automationId,
-    }: {
-      action: "delete" | "duplicate" | "pause" | "resume";
-      automationId: string;
-    }) => {
-      const path = `/databases/${encoded(databaseId)}/automations/${encoded(automationId)}`;
-      if (action === "delete") return apiFetch<{ deleted: boolean }>(path, { method: "DELETE" });
-      const idempotencyKey = crypto.randomUUID();
-      return apiFetch<DatabaseAutomationDetail | DatabaseAutomationSummary>(`${path}/${action}`, {
-        headers: action === "duplicate" ? { "Idempotency-Key": idempotencyKey } : undefined,
-        method: "POST",
-      });
-    },
-    onSettled: () =>
-      queryClient.invalidateQueries({
-        queryKey: databaseAutomationKeys.list(databaseId, dataSourceId),
-      }),
+    }) => databaseAutomationLifecycle(context, { databaseId, dataSourceId, ...variables }),
   });
 }
 
 export function useValidateDatabaseAutomation(databaseId: string) {
-  const { apiFetch } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: ({
-      dataSourceId,
-      definition,
-    }: {
-      dataSourceId: string;
-      definition: DatabaseAutomationDefinition;
-    }) =>
-      apiFetch<DatabaseAutomationValidationResult>(
-        `/databases/${encoded(databaseId)}/automations/validate`,
-        {
-          body: JSON.stringify({ dataSourceId, definition }),
-          method: "POST",
-        },
-      ),
+    mutationFn: (variables: { dataSourceId: string; definition: DatabaseAutomationDefinition }) =>
+      validateDatabaseAutomation(context, { databaseId, ...variables }),
   });
 }
 
 export function useCreateDatabaseAutomationSecret(databaseId: string, dataSourceId: string) {
-  const { apiFetch } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (body: { purpose: "webhook_header"; value: string }) =>
-      apiFetch<{ id: string; purpose: "webhook_header" }>(
-        `/databases/${encoded(databaseId)}/automation-secrets`,
-        { body: JSON.stringify({ ...body, dataSourceId }), method: "POST" },
-      ),
+    mutationFn: (variables: { purpose: "webhook_header"; value: string }) =>
+      createDatabaseAutomationSecret(context, { databaseId, dataSourceId, ...variables }),
   });
 }
 
 export function useStartSlackAutomationOauth(databaseId: string, dataSourceId: string) {
-  const { apiFetch } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: () =>
-      apiFetch<{ authorizationUrl: string }>(
-        `/databases/${encoded(databaseId)}/automation-slack/oauth/start`,
-        { body: JSON.stringify({ dataSourceId }), method: "POST" },
-      ),
+    mutationFn: () => startSlackAutomationOauth(context, { databaseId, dataSourceId }),
   });
 }
 
@@ -176,15 +114,6 @@ export function useSlackAutomationChannels(
 ) {
   const { apiFetch } = useZilobaseFeatures();
   return useQuery(
-    queryOptions({
-      enabled: Boolean(databaseId && dataSourceId && connectionId),
-      queryFn: ({ signal }) =>
-        apiFetch<{ channels: SlackAutomationChannel[] }>(
-          `/databases/${encoded(databaseId)}/automation-slack/connections/${encoded(connectionId)}/channels?dataSourceId=${encoded(dataSourceId)}`,
-          { signal },
-        ),
-      queryKey: databaseAutomationKeys.slackChannels(databaseId, dataSourceId, connectionId),
-      staleTime: 60_000,
-    }),
+    slackAutomationChannelsQueryOptions(apiFetch, databaseId, dataSourceId, connectionId),
   );
 }
