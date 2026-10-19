@@ -19,6 +19,10 @@
     "./realtime-api": {
       "types": "./src/public/realtime-api.ts",
       "default": "./src/public/realtime-api.ts"
+    },
+    "./operations": {
+      "types": "./src/public/operations.ts",
+      "default": "./src/public/operations.ts"
     }
   },
   "scripts": {
