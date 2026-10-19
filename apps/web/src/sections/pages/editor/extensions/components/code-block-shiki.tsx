@@ -1,3 +1,4 @@
+import { lazy, Suspense, useState } from "react";
 import { Effect } from "effect";
 import { toast } from "sonner";
 import {
@@ -7,10 +8,12 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import type { ReactNodeViewProps } from "@tiptap/react";
-import { Check, ChevronsUpDown } from "@/components/icons";
+import { Check, ChevronDown, Code, PanelTop, Rows3 } from "@/components/icons";
 import CodeBlockShikiBase from "tiptap-extension-code-block-shiki";
+import { createMermaidHighlightingPlugin } from "../lib/mermaid-highlighting";
 
-import { Button } from "@/components/ui/button";
+import { ButtonGroup, ButtonGroupItem } from "@/components/ui/button-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   CodeBlock,
   CodeBlockContent,
@@ -23,6 +26,14 @@ import {
   DropDrawerItem,
   DropDrawerTrigger,
 } from "@/components/ui/dropdrawer";
+
+const MermaidPreview = lazy(() => import("./mermaid-preview"));
+const mermaidViews = [
+  { value: "code", label: "Code", icon: Code },
+  { value: "split", label: "Split view", icon: Rows3 },
+  { value: "preview", label: "Preview", icon: PanelTop },
+] as const;
+type MermaidView = (typeof mermaidViews)[number]["value"];
 
 const codeBlockLanguages = [
   { label: "Auto detect", value: "auto" },
@@ -147,8 +158,14 @@ const codeBlockLanguages = [
 
 function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewProps) {
   const isEditable = useEditorState({ editor, selector: ({ editor }) => editor.isEditable });
+  const [mermaidView, setMermaidView] = useState<MermaidView>(isEditable ? "split" : "preview");
+  const [viewPickerOpen, setViewPickerOpen] = useState(false);
   const language = node.attrs.language ?? "auto";
   const codeLanguage = language === "auto" ? "" : language;
+  const isMermaid = language === "mermaid";
+  const view = isMermaid ? mermaidView : "code";
+  const activeMermaidView = mermaidViews.find((option) => option.value === mermaidView)!;
+  const ViewIcon = activeMermaidView.icon;
   const activeLanguage =
     codeBlockLanguages.find((option) => option.value === language) ?? codeBlockLanguages[0];
 
@@ -156,67 +173,109 @@ function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewPro
     <NodeViewWrapper as="div" className="code-block-shiki">
       <CodeBlock code={node.textContent} language={codeLanguage} highlight={false}>
         <CodeBlockHeader
+          className="justify-end border-b-0 px-2 py-1"
           contentEditable={false}
           onMouseDown={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <DropDrawer>
-            <DropDrawerTrigger asChild>
-              <Button
-                aria-label="Code block language"
-                disabled={!isEditable}
-                role="combobox"
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <span className="truncate">{activeLanguage.label}</span>
-                <ChevronsUpDown className="opacity-50" />
-              </Button>
-            </DropDrawerTrigger>
-            <DropDrawerContent
-              align="end"
-              side="bottom"
-              onMouseDown={(event) => {
-                event.stopPropagation();
-              }}
-              onPointerDown={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              {codeBlockLanguages.map((option) => (
-                <DropDrawerItem
-                  icon={option.value === language ? <Check /> : undefined}
-                  key={option.value}
-                  onSelect={() => {
-                    if (!editor.isEditable || editor.isDestroyed) return;
-                    updateAttributes({
-                      language: option.value === "auto" ? null : option.value,
-                    });
-                  }}
+          <ButtonGroup aria-label="Code block controls" variant="segmented">
+            <DropDrawer>
+              <DropDrawerTrigger asChild>
+                <ButtonGroupItem
+                  aria-label="Code block language"
+                  disabled={!isEditable}
+                  role="combobox"
+                  type="button"
                 >
-                  {option.label}
-                </DropDrawerItem>
-              ))}
-            </DropDrawerContent>
-          </DropDrawer>
-          <CodeBlockCopyButton
-            className="ml-auto"
-            preserveSource
-            copyText={(value) =>
-              Effect.runPromise(
-                Effect.tryPromise({
-                  try: () => navigator.clipboard.writeText(value),
-                  catch: (error) => error,
-                }),
-              )
-            }
-            onCopyError={() => toast.error("Could not copy code.")}
-            labels={{ copy: "Copy code", copied: "Copied code" }}
-          />
+                  <span className="truncate">{activeLanguage.label}</span>
+                  <ChevronDown className="opacity-50" />
+                </ButtonGroupItem>
+              </DropDrawerTrigger>
+              <DropDrawerContent
+                align="end"
+                side="bottom"
+                onMouseDown={(event) => {
+                  event.stopPropagation();
+                }}
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                }}
+              >
+                {codeBlockLanguages.map((option) => (
+                  <DropDrawerItem
+                    icon={option.value === language ? <Check /> : undefined}
+                    key={option.value}
+                    onSelect={() => {
+                      if (!editor.isEditable || editor.isDestroyed) return;
+                      updateAttributes({
+                        language: option.value === "auto" ? null : option.value,
+                      });
+                    }}
+                  >
+                    {option.label}
+                  </DropDrawerItem>
+                ))}
+              </DropDrawerContent>
+            </DropDrawer>
+            {isMermaid && (
+              <Popover open={viewPickerOpen} onOpenChange={setViewPickerOpen}>
+                <PopoverTrigger asChild>
+                  <ButtonGroupItem
+                    aria-label="Mermaid view"
+                    title={`Mermaid view: ${activeMermaidView.label}`}
+                    layout="icon"
+                    size="icon"
+                  >
+                    <ViewIcon />
+                  </ButtonGroupItem>
+                </PopoverTrigger>
+                <PopoverContent
+                  aria-label="Mermaid view options"
+                  width="auto"
+                  padding="none"
+                  gap="none"
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
+                >
+                  <ButtonGroup aria-label="Mermaid view options" variant="plain" className="p-1">
+                    {mermaidViews.map(({ value, label, icon: Icon }) => (
+                      <ButtonGroupItem
+                        key={value}
+                        aria-label={label}
+                        aria-pressed={mermaidView === value}
+                        title={label}
+                        size="icon"
+                        variant={mermaidView === value ? "selected" : "ghost"}
+                        onClick={() => {
+                          setMermaidView(value);
+                          setViewPickerOpen(false);
+                        }}
+                      >
+                        <Icon />
+                      </ButtonGroupItem>
+                    ))}
+                  </ButtonGroup>
+                </PopoverContent>
+              </Popover>
+            )}
+            <CodeBlockCopyButton
+              size="icon"
+              preserveSource
+              copyText={(value) =>
+                Effect.runPromise(
+                  Effect.tryPromise({
+                    try: () => navigator.clipboard.writeText(value),
+                    catch: (error) => error,
+                  }),
+                )
+              }
+              onCopyError={() => toast.error("Could not copy code.")}
+              labels={{ copy: "Copy code", copied: "Copied code" }}
+            />
+          </ButtonGroup>
         </CodeBlockHeader>
         <CodeBlockContent>
-          <pre className="editor-code-content">
+          <pre className="editor-code-content" hidden={view === "preview"}>
             <NodeViewContent<"code">
               as="code"
               className={codeLanguage ? `language-${codeLanguage}` : undefined}
@@ -224,6 +283,20 @@ function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewPro
               style={{ whiteSpace: "pre" }}
             />
           </pre>
+          {isMermaid && view !== "code" && (
+            <div
+              contentEditable={false}
+              className={view === "split" ? "border-t border-stroke-default" : undefined}
+              onMouseDown={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <Suspense
+                fallback={<p className="p-4 text-xs text-content-secondary">Loading diagram…</p>}
+              >
+                <MermaidPreview source={node.textContent} />
+              </Suspense>
+            </div>
+          )}
         </CodeBlockContent>
       </CodeBlock>
     </NodeViewWrapper>
@@ -232,7 +305,10 @@ function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewPro
 
 export const CodeBlockShiki = CodeBlockShikiBase.extend({
   addProseMirrorPlugins() {
-    return (this.parent?.() ?? []).filter((plugin) => !plugin.props.handlePaste);
+    return [
+      ...(this.parent?.() ?? []).filter((plugin) => !plugin.props.handlePaste),
+      createMermaidHighlightingPlugin(),
+    ];
   },
   addNodeView() {
     return ReactNodeViewRenderer(CodeBlockShikiView);

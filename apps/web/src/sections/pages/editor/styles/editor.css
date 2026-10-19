@@ -1,6 +1,29 @@
 @reference "../../../../styles/global.css";
 
 @layer components {
+  .tiptap-editor .code-block-shiki code span[data-mermaid-token] {
+    color: var(--editor-mermaid-light) !important;
+  }
+
+  .dark .tiptap-editor .code-block-shiki code span[data-mermaid-token] {
+    color: var(--editor-mermaid-dark) !important;
+  }
+
+  .editor-mermaid-preview {
+    --pele-bg: var(--color-surface-card);
+    --pele-fg: var(--color-content-primary);
+    --pele-muted: var(--color-content-secondary);
+    --pele-line: var(--color-content-secondary);
+    --pele-surface: var(--color-surface-subtle);
+    --pele-surface-alt: var(--color-surface-muted);
+    --pele-border: var(--color-stroke-default);
+    --pele-accent: var(--color-action-primary);
+    --pele-error: var(--color-action-danger-text);
+    --pele-font: var(--font-sans);
+    --pele-font-mono: var(--font-mono);
+  }
+
+
   .tex-block-render .katex-display {
     margin: 0;
   }

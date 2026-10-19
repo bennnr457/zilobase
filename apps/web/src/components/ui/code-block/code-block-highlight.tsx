@@ -142,6 +142,11 @@ export const codeBlockLanguages: Record<string, () => Promise<unknown>> = {
   jsx: () => import("shiki/langs/jsx.mjs"),
   kotlin: () => import("shiki/langs/kotlin.mjs"),
   markdown: () => import("shiki/langs/markdown.mjs"),
+  mermaid: async () => {
+    const { default: grammars } = await import("shiki/langs/mermaid.mjs");
+    // The bundled grammar starts at a Markdown fence; code blocks contain only its body.
+    return grammars.map((grammar) => ({ ...grammar, patterns: [{ include: "#mermaid" }] }));
+  },
   php: () => import("shiki/langs/php.mjs"),
   python: () => import("shiki/langs/python.mjs"),
   ruby: () => import("shiki/langs/ruby.mjs"),
