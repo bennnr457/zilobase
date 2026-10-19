@@ -1,7 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { markInProductNotificationRead } from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import { notificationKeys, notificationListQueryOptions } from "./queries";
+import { notificationListQueryOptions } from "./queries";
 
 export function useInProductNotifications(workspaceId: string | null | undefined) {
   const { apiFetch } = useZilobaseFeatures();
@@ -9,14 +10,9 @@ export function useInProductNotifications(workspaceId: string | null | undefined
 }
 
 export function useMarkInProductNotificationRead(workspaceId: string | null | undefined) {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (notificationId: string | "all") =>
-      apiFetch(
-        `/workspaces/${encodeURIComponent(workspaceId!)}/notifications/${encodeURIComponent(notificationId)}/read`,
-        { method: "POST" },
-      ),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: notificationKeys.workspace(workspaceId ?? "") }),
+    mutationFn: (variables: string | "all") =>
+      markInProductNotificationRead(context, { workspaceId, notificationId: variables }),
   });
 }

@@ -1,8 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { updateUserSettings } from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import { defaultUserSettings, userSettingsQueryKey, userSettingsQueryOptions } from "./queries";
 import type { UserSettings } from "./contracts";
+import { userSettingsQueryOptions } from "./queries";
 
 type UpdateUserSettingsInput = Partial<UserSettings>;
 
@@ -13,35 +14,8 @@ export function useUserSettings() {
 }
 
 export function useUpdateUserSettings() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async (patch: UpdateUserSettingsInput) => {
-      const result = await apiFetch<{ settings: UserSettings }>("/user-settings", {
-        method: "PATCH",
-        body: JSON.stringify(patch),
-      });
-
-      return result.settings;
-    },
-    onMutate: async (patch) => {
-      await queryClient.cancelQueries({ queryKey: userSettingsQueryKey });
-
-      const previous = queryClient.getQueryData<UserSettings>(userSettingsQueryKey);
-
-      queryClient.setQueryData<UserSettings>(userSettingsQueryKey, (current) => ({
-        ...defaultUserSettings,
-        ...(current ?? {}),
-        ...patch,
-      }));
-
-      return { previous };
-    },
-    onError: (_error, _patch, context) => {
-      queryClient.setQueryData(userSettingsQueryKey, context?.previous ?? defaultUserSettings);
-    },
-    onSuccess: (settings) => {
-      queryClient.setQueryData(userSettingsQueryKey, settings);
-    },
+    mutationFn: (variables: UpdateUserSettingsInput) => updateUserSettings(context, variables),
   });
 }
