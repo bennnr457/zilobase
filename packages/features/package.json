@@ -184,6 +184,10 @@
     "./ai": {
       "types": "./src/ai/index.ts",
       "default": "./src/ai/index.ts"
+    },
+    "./ai/react": {
+      "types": "./src/ai/react.ts",
+      "default": "./src/ai/react.ts"
     }
   }
 }

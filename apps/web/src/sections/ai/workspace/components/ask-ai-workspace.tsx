@@ -1,5 +1,7 @@
 "use client";
 
+import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
+import { useSession } from "@zilobase/features/auth/react";
 import { lazy, Suspense, type ReactNode } from "react";
 import {
   ChevronsRightIcon,
@@ -15,6 +17,8 @@ import type { ChatPresentationMode } from "./chat-sidebar";
 const Chatbot = lazy(() => import("../../chat/components/chatbot"));
 
 export function AskAiWorkspace({
+  pageId,
+  databaseId,
   externalSidePane = null,
   externalSidePaneOpen = false,
   externalSidePaneVisible = false,
@@ -34,9 +38,17 @@ export function AskAiWorkspace({
   pageId?: string | null;
   presentationMode?: ChatPresentationMode;
 }) {
+  const workspaceId = useActiveWorkspaceId() ?? null;
+  const { data: session } = useSession();
   const chat = (
     <Suspense fallback={<LoadingChat />}>
-      <Chatbot isSidebar={isSidebar} />
+      <Chatbot
+        key={`${session?.session?.id}:${workspaceId}`}
+        isSidebar={isSidebar}
+        workspaceId={workspaceId}
+        pageId={pageId}
+        databaseId={databaseId}
+      />
     </Suspense>
   );
 
