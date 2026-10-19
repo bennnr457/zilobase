@@ -27,6 +27,10 @@ vi.mock("../../services/access/effective-access", async (original) => ({
 vi.mock("../../services/access/principal-access", async (original) => ({
   ...(await original<typeof import("../../services/access/principal-access")>()),
   getWorkspacePrincipalKind: async () => state.principalKind,
+  getMembership: async () => {
+    state.calls.push("workspace");
+    return state.mismatch ? {} : null;
+  },
 }));
 vi.mock("../../services/access/resource-access-records", async (original) => ({
   ...(await original<typeof import("../../services/access/resource-access-records")>()),
@@ -35,12 +39,7 @@ vi.mock("../../services/access/resource-access-records", async (original) => ({
     return state.record;
   },
 }));
-vi.mock("../access/workspace-mismatch", () => ({
-  rejectActiveWorkspaceMismatch: async (c: import("hono").Context<AppBindings>) => {
-    state.calls.push("workspace");
-    return state.mismatch ? c.json({ error: "workspace mismatch" }, 409) : null;
-  },
-}));
+
 vi.mock("../../services/pages/read/page-records", async (original) => ({
   ...(await original<typeof import("../../services/pages/read/page-records")>()),
   getPageIncludingDeleted: async () => state.record,
@@ -56,6 +55,7 @@ vi.mock("../../services/pages/properties/property-payload", async (original) => 
 function app(authenticated: boolean) {
   return new Hono<AppBindings>()
     .use("*", async (c, next) => {
+      c.set("session", { activeWorkspaceId: "active" } as never);
       if (authenticated)
         c.set("user", {
           id: "user",

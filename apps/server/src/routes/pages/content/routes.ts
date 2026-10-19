@@ -1,142 +1,60 @@
-import { Hono } from "hono";
-import { preparePageCollaboration } from "../../../services/pages/content/collaboration-bootstrap";
-import { replacePageBody, updatePage } from "../../../services/pages/content/update-page";
-import { updatePageProperty } from "../../../services/pages/properties/update-value";
-import { attachServiceErrorHandler } from "../../http/route-error";
-import { authorizePageRoute } from "../access";
-
 import { getCollaborationWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
-import { getWorkspacePrincipalKind } from "../../../services/access/principal-access";
+import { Hono } from "hono";
+import {
+  getPropertiesPageOperation,
+  prepareCollaborationPageOperation,
+  replaceContentPageOperation,
+  updatePageOperation,
+  updatePropertyPageOperation,
+} from "../../../services/pages/content/operations";
 import type { AppBindings } from "../../../shared/contracts/http";
+import { serverOperationContext } from "../../http/operation-context";
 import { readJsonBody } from "../../http/request";
-
-import { getPagePropertyPayload } from "../../../services/pages/properties/property-payload";
-
+import { attachServiceErrorHandler } from "../../http/route-error";
 export const pageContentRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 
 pageContentRoutes.get("/:id/properties", async (c) => {
-  const authorization = await authorizePageRoute(c, "view");
-  if (!authorization.ok) return authorization.response;
-  const { user, record } = authorization;
-
-  return c.json({
-    ...(await getPagePropertyPayload(record.id, record.workspaceId, user.id)),
-    viewerType: (await getWorkspacePrincipalKind(record.workspaceId, user.id)) ?? "guest",
+  const result = await getPropertiesPageOperation(serverOperationContext(c), {
+    pageId: c.req.param("id"),
   });
+  return c.json(result);
 });
 
 pageContentRoutes.put("/:id/properties/:propertyId/value", async (c) => {
-  const authorization = await authorizePageRoute(c, "edit");
-  if (!authorization.ok) return authorization.response;
-  const { user, record } = authorization;
-
-  const body = await readJsonBody(c.req);
-
-  if (!body || typeof body !== "object") {
-    return c.json({ error: "A JSON body is required" }, 400);
-  }
-
-  const propertyId = c.req.param("propertyId");
-  const { value = null } = body as { value?: unknown };
-  return c.json(
-    await updatePageProperty(
-      record,
-      user,
-      propertyId,
-      value,
-      c.env,
-      c.get("authMethod") === "apiKey",
-    ),
+  const result = await updatePropertyPageOperation(
+    serverOperationContext(c),
+    { pageId: c.req.param("id"), propertyId: c.req.param("propertyId"), body: undefined },
+    () => readJsonBody(c.req),
   );
+  return c.json(result);
 });
 
 pageContentRoutes.post("/:id/collaboration-bootstrap", async (c) => {
-  const authorization = await authorizePageRoute(c, "view");
-  if (!authorization.ok) return authorization.response;
-  const { user, record: existing, accessLevel } = authorization;
-
-  const body = await readJsonBody(c.req);
-  if (
-    !body ||
-    typeof body !== "object" ||
-    !("includeState" in body) ||
-    typeof body.includeState !== "boolean"
-  ) {
-    return c.json({ error: "includeState must be a boolean" }, 400);
-  }
-
-  const bootstrap = await preparePageCollaboration(
-    existing,
-    user,
-    accessLevel,
-    body.includeState,
-    c.env,
+  const result = await prepareCollaborationPageOperation(
+    serverOperationContext(c),
+    { pageId: c.req.param("id"), body: undefined },
+    () => readJsonBody(c.req),
   );
-  const { documentName } = bootstrap;
   const websocketUrl = new URL(getCollaborationWebSocketUrl(c.req.raw));
-  websocketUrl.searchParams.set("document", documentName);
-
+  websocketUrl.searchParams.set("document", result.documentName);
   c.header("Cache-Control", "no-store");
-  return c.json({
-    ...bootstrap,
-    websocketUrl: websocketUrl.toString(),
-  });
+  return c.json({ ...result, websocketUrl: websocketUrl.toString() });
 });
 
 pageContentRoutes.patch("/:id/content", async (c) => {
-  const authorization = await authorizePageRoute(c, "edit");
-  if (!authorization.ok) return authorization.response;
-  const { user, record: existing } = authorization;
-
-  const body = await readJsonBody(c.req);
-
-  if (!body || typeof body !== "object") {
-    return c.json({ error: "A JSON body is required" }, 400);
-  }
-
-  const { content, baseUpdatedAt } = body as {
-    baseUpdatedAt?: unknown;
-    content?: unknown;
-  };
-
-  if (!("content" in body)) {
-    return c.json({ error: "content is required" }, 400);
-  }
-
-  let baseRevision: Date | undefined;
-  if (baseUpdatedAt !== undefined) {
-    if (typeof baseUpdatedAt !== "string")
-      return c.json({ error: "baseUpdatedAt must be a string" }, 400);
-    baseRevision = new Date(baseUpdatedAt);
-    if (Number.isNaN(baseRevision.getTime()))
-      return c.json({ error: "baseUpdatedAt must be a valid date" }, 400);
-  }
-  const result = await replacePageBody(existing, user, content, c.env, baseRevision);
-  if ("conflict" in result)
-    return c.json(
-      { error: "Page content was updated by another request.", page: result.conflict },
-      409,
-    );
-  return c.json({ page: result.page });
+  const result = await replaceContentPageOperation(
+    serverOperationContext(c),
+    { pageId: c.req.param("id"), body: undefined },
+    () => readJsonBody(c.req),
+  );
+  return c.json(result);
 });
 
 pageContentRoutes.patch("/:id", async (c) => {
-  const authorization = await authorizePageRoute(c, "edit");
-  if (!authorization.ok) return authorization.response;
-  const { user, record: existing } = authorization;
-
-  const body = await readJsonBody(c.req);
-
-  if (!body || typeof body !== "object") {
-    return c.json({ error: "A JSON body is required" }, 400);
-  }
-
-  const patch = body as {
-    type?: unknown;
-    name?: unknown;
-    url?: unknown;
-    content?: unknown;
-    metadata?: unknown;
-  };
-  return c.json(await updatePage(existing, user, patch, c.env, c.get("authMethod") === "apiKey"));
+  const result = await updatePageOperation(
+    serverOperationContext(c),
+    { pageId: c.req.param("id"), body: undefined },
+    () => readJsonBody(c.req),
+  );
+  return c.json(result);
 });
