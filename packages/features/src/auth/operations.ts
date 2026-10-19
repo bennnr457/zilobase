@@ -43,276 +43,229 @@ async function refreshSessionQuery(auth: ZilobaseAuthClient, queryClient: QueryC
   }
 }
 
-function defineRequestSignInOtpMutation(context: AuthenticatedClientOperationContext) {
-  const { auth } = context;
-
-  return clientMutation({
-    mutationFn: (email: string) => auth.requestSignInOtp(email),
-  });
-}
-export type RequestSignInOtpOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineRequestSignInOtpMutation>["mutationFn"]>
->[0];
+export type RequestSignInOtpOperationInput = string;
 export type RequestSignInOtpOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineRequestSignInOtpMutation>["mutationFn"]>>
+  ReturnType<ZilobaseAuthClient["requestSignInOtp"]>
 >;
 export function requestSignInOtp(
   context: AuthenticatedClientOperationContext,
   input: RequestSignInOtpOperationInput,
 ): Promise<RequestSignInOtpOperationResult> {
-  return runClientMutation(context, input, (context) => defineRequestSignInOtpMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth } = context;
 
-function defineSignInWithOtpMutation(context: AuthenticatedClientOperationContext) {
-  const { auth, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: SignInWithOtpInput) => auth.signInWithOtp(input),
-    onSuccess: async () => {
-      await refreshSessionQuery(auth, queryClient);
-    },
+    return clientMutation({
+      mutationFn: (email: RequestSignInOtpOperationInput) => auth.requestSignInOtp(email),
+    });
   });
 }
-export type SignInWithOtpOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineSignInWithOtpMutation>["mutationFn"]>
->[0];
-export type SignInWithOtpOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSignInWithOtpMutation>["mutationFn"]>>
->;
+
+export type SignInWithOtpOperationInput = SignInWithOtpInput;
+export type SignInWithOtpOperationResult = Awaited<ReturnType<ZilobaseAuthClient["signInWithOtp"]>>;
 export function signInWithOtp(
   context: AuthenticatedClientOperationContext,
   input: SignInWithOtpOperationInput,
 ): Promise<SignInWithOtpOperationResult> {
-  return runClientMutation(context, input, (context) => defineSignInWithOtpMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth, queryClient } = context;
 
-function defineSignInWithPasswordMutation(context: AuthenticatedClientOperationContext) {
-  const { auth, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: SignInWithPasswordInput) => auth.signInWithPassword(input),
-    onSuccess: async () => {
-      await refreshSessionQuery(auth, queryClient);
-    },
+    return clientMutation({
+      mutationFn: (input: SignInWithOtpOperationInput) => auth.signInWithOtp(input),
+      onSuccess: async () => {
+        await refreshSessionQuery(auth, queryClient);
+      },
+    });
   });
 }
-export type SignInWithPasswordOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineSignInWithPasswordMutation>["mutationFn"]>
->[0];
+
+export type SignInWithPasswordOperationInput = SignInWithPasswordInput;
 export type SignInWithPasswordOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSignInWithPasswordMutation>["mutationFn"]>>
+  ReturnType<ZilobaseAuthClient["signInWithPassword"]>
 >;
 export function signInWithPassword(
   context: AuthenticatedClientOperationContext,
   input: SignInWithPasswordOperationInput,
 ): Promise<SignInWithPasswordOperationResult> {
-  return runClientMutation(context, input, (context) => defineSignInWithPasswordMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth, queryClient } = context;
 
-function defineSignUpMutation(context: AuthenticatedClientOperationContext) {
-  const { auth } = context;
-
-  return clientMutation({
-    mutationFn: (input: SignUpInput) => auth.signUp(input),
+    return clientMutation({
+      mutationFn: (input: SignInWithPasswordOperationInput) => auth.signInWithPassword(input),
+      onSuccess: async () => {
+        await refreshSessionQuery(auth, queryClient);
+      },
+    });
   });
 }
-export type SignUpOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineSignUpMutation>["mutationFn"]>
->[0];
-export type SignUpOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSignUpMutation>["mutationFn"]>>
->;
+
+export type SignUpOperationInput = SignUpInput;
+export type SignUpOperationResult = Awaited<ReturnType<ZilobaseAuthClient["signUp"]>>;
 export function signUp(
   context: AuthenticatedClientOperationContext,
   input: SignUpOperationInput,
 ): Promise<SignUpOperationResult> {
-  return runClientMutation(context, input, (context) => defineSignUpMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth } = context;
 
-function defineRequestEmailVerificationOtpMutation(context: AuthenticatedClientOperationContext) {
-  const { auth } = context;
-
-  return clientMutation({
-    mutationFn: (email: string) => auth.requestEmailVerificationOtp(email),
+    return clientMutation({
+      mutationFn: (input: SignUpOperationInput) => auth.signUp(input),
+    });
   });
 }
-export type RequestEmailVerificationOtpOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineRequestEmailVerificationOtpMutation>["mutationFn"]>
->[0];
+
+export type RequestEmailVerificationOtpOperationInput = string;
 export type RequestEmailVerificationOtpOperationResult = Awaited<
-  ReturnType<
-    NonNullable<ReturnType<typeof defineRequestEmailVerificationOtpMutation>["mutationFn"]>
-  >
+  ReturnType<ZilobaseAuthClient["requestEmailVerificationOtp"]>
 >;
 export function requestEmailVerificationOtp(
   context: AuthenticatedClientOperationContext,
   input: RequestEmailVerificationOtpOperationInput,
 ): Promise<RequestEmailVerificationOtpOperationResult> {
-  return runClientMutation(context, input, (context) =>
-    defineRequestEmailVerificationOtpMutation(context),
-  );
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth } = context;
 
-function defineVerifyEmailOtpMutation(context: AuthenticatedClientOperationContext) {
-  const { auth, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: VerifyEmailOtpInput) => auth.verifyEmailOtp(input),
-    onSuccess: async () => {
-      await refreshSessionQuery(auth, queryClient);
-    },
+    return clientMutation({
+      mutationFn: (email: RequestEmailVerificationOtpOperationInput) =>
+        auth.requestEmailVerificationOtp(email),
+    });
   });
 }
-export type VerifyEmailOtpOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineVerifyEmailOtpMutation>["mutationFn"]>
->[0];
+
+export type VerifyEmailOtpOperationInput = VerifyEmailOtpInput;
 export type VerifyEmailOtpOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineVerifyEmailOtpMutation>["mutationFn"]>>
+  ReturnType<ZilobaseAuthClient["verifyEmailOtp"]>
 >;
 export function verifyEmailOtp(
   context: AuthenticatedClientOperationContext,
   input: VerifyEmailOtpOperationInput,
 ): Promise<VerifyEmailOtpOperationResult> {
-  return runClientMutation(context, input, (context) => defineVerifyEmailOtpMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth, queryClient } = context;
 
-function defineSignOutMutation(context: AuthenticatedClientOperationContext) {
-  const { auth, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: () => auth.signOut(),
-    onSuccess: () => {
-      queryClient.setQueryData(sessionQueryKey, { user: null, session: null });
-    },
+    return clientMutation({
+      mutationFn: (input: VerifyEmailOtpOperationInput) => auth.verifyEmailOtp(input),
+      onSuccess: async () => {
+        await refreshSessionQuery(auth, queryClient);
+      },
+    });
   });
 }
-export type SignOutOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineSignOutMutation>["mutationFn"]>
->[0];
-export type SignOutOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSignOutMutation>["mutationFn"]>>
->;
+
+export type SignOutOperationInput = void;
+export type SignOutOperationResult = Awaited<ReturnType<ZilobaseAuthClient["signOut"]>>;
 export function signOut(
   context: AuthenticatedClientOperationContext,
   input: SignOutOperationInput,
 ): Promise<SignOutOperationResult> {
-  return runClientMutation(context, input, (context) => defineSignOutMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { auth, queryClient } = context;
 
-function defineUpdateUserProfileMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: { email: string; name: string }) =>
-      apiFetch<{ user: SessionUser }>("/user-settings/profile", {
-        method: "PATCH",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: ({ user }) => {
-      queryClient.setQueryData(sessionQueryKey, (current: SessionResponse | undefined) => ({
-        session: current?.session ?? null,
-        user,
-      }));
-    },
+    return clientMutation({
+      mutationFn: () => auth.signOut(),
+      onSuccess: () => {
+        queryClient.setQueryData(sessionQueryKey, { user: null, session: null });
+      },
+    });
   });
 }
-export type UpdateUserProfileOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineUpdateUserProfileMutation>["mutationFn"]>
->[0];
-export type UpdateUserProfileOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineUpdateUserProfileMutation>["mutationFn"]>>
->;
+
+export type UpdateUserProfileOperationInput = { email: string; name: string };
+export type UpdateUserProfileOperationResult = { user: SessionUser };
 export function updateUserProfile(
   context: ClientOperationContext,
   input: UpdateUserProfileOperationInput,
 ): Promise<UpdateUserProfileOperationResult> {
-  return runClientMutation(context, input, (context) => defineUpdateUserProfileMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { apiFetch, queryClient } = context;
 
-function defineChangePasswordMutation(context: AuthenticatedClientOperationContext) {
-  const { apiFetch, auth, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: {
-      currentPassword: string;
-      newPassword: string;
-      revokeOtherSessions?: boolean;
-    }) =>
-      apiFetch<{
-        token: string | null;
-        user: SessionUser;
-      }>("/api/auth/change-password", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: async () => {
-      await refreshSessionQuery(auth, queryClient);
-    },
+    return clientMutation({
+      mutationFn: (input: UpdateUserProfileOperationInput) =>
+        apiFetch<{ user: SessionUser }>("/user-settings/profile", {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        }),
+      onSuccess: ({ user }) => {
+        queryClient.setQueryData(sessionQueryKey, (current: SessionResponse | undefined) => ({
+          session: current?.session ?? null,
+          user,
+        }));
+      },
+    });
   });
 }
-export type ChangePasswordOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineChangePasswordMutation>["mutationFn"]>
->[0];
-export type ChangePasswordOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineChangePasswordMutation>["mutationFn"]>>
->;
+
+export type ChangePasswordOperationInput = {
+  currentPassword: string;
+  newPassword: string;
+  revokeOtherSessions?: boolean;
+};
+export type ChangePasswordOperationResult = {
+  token: string | null;
+  user: SessionUser;
+};
 export function changePassword(
   context: AuthenticatedClientOperationContext,
   input: ChangePasswordOperationInput,
 ): Promise<ChangePasswordOperationResult> {
-  return runClientMutation(context, input, (context) => defineChangePasswordMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { apiFetch, auth, queryClient } = context;
 
-function defineSetPasswordMutation(context: AuthenticatedClientOperationContext) {
-  const { apiFetch, auth, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: { newPassword: string }) =>
-      apiFetch<{ status: boolean }>("/api/auth/set-password", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: async () => {
-      await refreshSessionQuery(auth, queryClient);
-    },
+    return clientMutation({
+      mutationFn: (input: ChangePasswordOperationInput) =>
+        apiFetch<{
+          token: string | null;
+          user: SessionUser;
+        }>("/api/auth/change-password", {
+          method: "POST",
+          body: JSON.stringify(input),
+        }),
+      onSuccess: async () => {
+        await refreshSessionQuery(auth, queryClient);
+      },
+    });
   });
 }
-export type SetPasswordOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineSetPasswordMutation>["mutationFn"]>
->[0];
-export type SetPasswordOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSetPasswordMutation>["mutationFn"]>>
->;
+
+export type SetPasswordOperationInput = { newPassword: string };
+export type SetPasswordOperationResult = { status: boolean };
 export function setPassword(
   context: AuthenticatedClientOperationContext,
   input: SetPasswordOperationInput,
 ): Promise<SetPasswordOperationResult> {
-  return runClientMutation(context, input, (context) => defineSetPasswordMutation(context));
-}
+  return runClientMutation(context, input, (context) => {
+    const { apiFetch, auth, queryClient } = context;
 
-function defineDeleteAccountMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: { password?: string }) =>
-      apiFetch<{ message: string; success: boolean }>("/api/auth/delete-user", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: () => {
-      queryClient.setQueryData(sessionQueryKey, { user: null, session: null });
-    },
+    return clientMutation({
+      mutationFn: (input: SetPasswordOperationInput) =>
+        apiFetch<{ status: boolean }>("/api/auth/set-password", {
+          method: "POST",
+          body: JSON.stringify(input),
+        }),
+      onSuccess: async () => {
+        await refreshSessionQuery(auth, queryClient);
+      },
+    });
   });
 }
-export type DeleteAccountOperationInput = Parameters<
-  NonNullable<ReturnType<typeof defineDeleteAccountMutation>["mutationFn"]>
->[0];
-export type DeleteAccountOperationResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineDeleteAccountMutation>["mutationFn"]>>
->;
+
+export type DeleteAccountOperationInput = { password?: string };
+export type DeleteAccountOperationResult = { message: string; success: boolean };
 export function deleteAccount(
   context: ClientOperationContext,
   input: DeleteAccountOperationInput,
 ): Promise<DeleteAccountOperationResult> {
-  return runClientMutation(context, input, (context) => defineDeleteAccountMutation(context));
+  return runClientMutation(context, input, (context) => {
+    const { apiFetch, queryClient } = context;
+
+    return clientMutation({
+      mutationFn: (input: DeleteAccountOperationInput) =>
+        apiFetch<{ message: string; success: boolean }>("/api/auth/delete-user", {
+          method: "POST",
+          body: JSON.stringify(input),
+        }),
+      onSuccess: () => {
+        queryClient.setQueryData(sessionQueryKey, { user: null, session: null });
+      },
+    });
+  });
 }

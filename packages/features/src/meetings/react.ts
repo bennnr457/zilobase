@@ -1,3 +1,4 @@
+import type { MeetingLifecycleOperationInput } from "./operations";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   claimMeetingRecorder,
@@ -10,12 +11,7 @@ import {
 } from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import type {
-  CreateMeetingInput,
-  MeetingLifecycleAction,
-  MeetingPatch,
-  MeetingResponse,
-} from "./contracts";
+import type { CreateMeetingInput, MeetingPatch, MeetingResponse } from "./contracts";
 import { meetingKeys, meetingQueryOptions, workspaceMeetingsQueryOptions } from "./queries";
 
 export function useMeeting(meetingId: string | null | undefined) {
@@ -50,11 +46,8 @@ export function useUpdateMeeting(meetingId: string) {
 export function useMeetingLifecycle(meetingId: string) {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      action: MeetingLifecycleAction;
-      durationMs?: number;
-      leaseId?: string;
-    }) => meetingLifecycle(context, { meetingId, ...variables }),
+    mutationFn: (variables: Omit<MeetingLifecycleOperationInput, "meetingId">) =>
+      meetingLifecycle(context, { meetingId, ...variables }),
   });
 }
 

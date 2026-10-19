@@ -1,3 +1,9 @@
+import type {
+  UpdateUserProfileOperationInput,
+  ChangePasswordOperationInput,
+  SetPasswordOperationInput,
+  DeleteAccountOperationInput,
+} from "./operations";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   changePassword,
@@ -76,7 +82,7 @@ export function useSignOut() {
 export function useUpdateUserProfile() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { email: string; name: string }) =>
+    mutationFn: (variables: UpdateUserProfileOperationInput) =>
       updateUserProfile(context, variables),
   });
 }
@@ -84,24 +90,20 @@ export function useUpdateUserProfile() {
 export function useChangePassword() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      currentPassword: string;
-      newPassword: string;
-      revokeOtherSessions?: boolean;
-    }) => changePassword(context, variables),
+    mutationFn: (variables: ChangePasswordOperationInput) => changePassword(context, variables),
   });
 }
 
 export function useSetPassword() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { newPassword: string }) => setPassword(context, variables),
+    mutationFn: (variables: SetPasswordOperationInput) => setPassword(context, variables),
   });
 }
 
 export function useDeleteAccount() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { password?: string }) => deleteAccount(context, variables),
+    mutationFn: (variables: DeleteAccountOperationInput) => deleteAccount(context, variables),
   });
 }

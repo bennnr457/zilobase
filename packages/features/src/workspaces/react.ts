@@ -1,3 +1,14 @@
+import type {
+  UpdateWorkspaceGuestPolicyOperationInput,
+  ReviewWorkspaceGuestRequestOperationInput,
+  PromoteWorkspaceGuestOperationInput,
+  RevokeWorkspaceGuestOperationInput,
+  InviteWorkspaceMemberOperationInput,
+  UpdateWorkspaceMemberOperationInput,
+  RemoveWorkspaceMemberOperationInput,
+  UpdateWorkspaceOperationInput,
+  DeleteWorkspaceOperationInput,
+} from "./operations";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { resolveActiveWorkspaceId } from "./model";
 import {
@@ -17,7 +28,6 @@ import {
 
 import { useSession } from "../auth/react";
 import { useZilobaseFeatures } from "../shared/context";
-import type { GuestInviteMode, InvitableWorkspaceRole, WorkspaceRole } from "./contracts";
 import {
   workspaceAccessTargetsQueryOptions,
   workspaceGuestPolicyQueryOptions,
@@ -94,7 +104,7 @@ export function useWorkspaceGuestRequests(
 export function useUpdateWorkspaceGuestPolicy() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { mode: GuestInviteMode; workspaceId: string }) =>
+    mutationFn: (variables: UpdateWorkspaceGuestPolicyOperationInput) =>
       updateWorkspaceGuestPolicy(context, variables),
   });
 }
@@ -102,18 +112,15 @@ export function useUpdateWorkspaceGuestPolicy() {
 export function useReviewWorkspaceGuestRequest() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      action: "approve" | "reject";
-      requestId: string;
-      workspaceId: string;
-    }) => reviewWorkspaceGuestRequest(context, variables),
+    mutationFn: (variables: ReviewWorkspaceGuestRequestOperationInput) =>
+      reviewWorkspaceGuestRequest(context, variables),
   });
 }
 
 export function usePromoteWorkspaceGuest() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { userId: string; workspaceId: string }) =>
+    mutationFn: (variables: PromoteWorkspaceGuestOperationInput) =>
       promoteWorkspaceGuest(context, variables),
   });
 }
@@ -121,7 +128,7 @@ export function usePromoteWorkspaceGuest() {
 export function useRevokeWorkspaceGuest() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { userId: string; workspaceId: string }) =>
+    mutationFn: (variables: RevokeWorkspaceGuestOperationInput) =>
       revokeWorkspaceGuest(context, variables),
   });
 }
@@ -134,31 +141,23 @@ export function useCreateWorkspace() {
 export function useInviteWorkspaceMember() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      accessExpiresAt?: string | null;
-      email: string;
-      workspaceId: string;
-      role: InvitableWorkspaceRole;
-    }) => inviteWorkspaceMember(context, variables),
+    mutationFn: (variables: InviteWorkspaceMemberOperationInput) =>
+      inviteWorkspaceMember(context, variables),
   });
 }
 
 export function useUpdateWorkspaceMember() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      accessExpiresAt?: string | null;
-      memberId: string;
-      role: WorkspaceRole;
-      workspaceId: string;
-    }) => updateWorkspaceMember(context, variables),
+    mutationFn: (variables: UpdateWorkspaceMemberOperationInput) =>
+      updateWorkspaceMember(context, variables),
   });
 }
 
 export function useRemoveWorkspaceMember() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { memberId: string; workspaceId: string }) =>
+    mutationFn: (variables: RemoveWorkspaceMemberOperationInput) =>
       removeWorkspaceMember(context, variables),
   });
 }
@@ -178,20 +177,13 @@ export function useSetActiveWorkspace() {
 export function useUpdateWorkspace() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      workspaceId: string;
-      logo?: string | null;
-      metadata?: string | null;
-      name?: string;
-      slug?: string;
-    }) => updateWorkspace(context, variables),
+    mutationFn: (variables: UpdateWorkspaceOperationInput) => updateWorkspace(context, variables),
   });
 }
 
 export function useDeleteWorkspace() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { confirmationName: string; workspaceId: string }) =>
-      deleteWorkspace(context, variables),
+    mutationFn: (variables: DeleteWorkspaceOperationInput) => deleteWorkspace(context, variables),
   });
 }

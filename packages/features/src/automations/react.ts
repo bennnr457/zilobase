@@ -1,3 +1,9 @@
+import type {
+  UpdateDatabaseAutomationOperationInput,
+  DatabaseAutomationLifecycleOperationInput,
+  ValidateDatabaseAutomationOperationInput,
+  CreateDatabaseAutomationSecretOperationInput,
+} from "./operations";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createDatabaseAutomation,
@@ -10,11 +16,7 @@ import {
 import { slackAutomationChannelsQueryOptions } from "./queries";
 
 import { useZilobaseFeatures } from "../shared/context";
-import type {
-  CreateDatabaseAutomationRequest,
-  DatabaseAutomationDefinition,
-  UpdateDatabaseAutomationRequest,
-} from "./contracts";
+import type { CreateDatabaseAutomationRequest } from "./contracts";
 import {
   databaseAutomationCapabilityQueryOptions,
   databaseAutomationCatalogQueryOptions,
@@ -69,25 +71,25 @@ export function useCreateDatabaseAutomation(databaseId: string, dataSourceId: st
 export function useUpdateDatabaseAutomation(databaseId: string, automationId: string) {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { body: UpdateDatabaseAutomationRequest; version: number }) =>
-      updateDatabaseAutomation(context, { databaseId, automationId, ...variables }),
+    mutationFn: (
+      variables: Omit<UpdateDatabaseAutomationOperationInput, "databaseId" | "automationId">,
+    ) => updateDatabaseAutomation(context, { databaseId, automationId, ...variables }),
   });
 }
 
 export function useDatabaseAutomationLifecycle(databaseId: string, dataSourceId: string) {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      action: "delete" | "duplicate" | "pause" | "resume";
-      automationId: string;
-    }) => databaseAutomationLifecycle(context, { databaseId, dataSourceId, ...variables }),
+    mutationFn: (
+      variables: Omit<DatabaseAutomationLifecycleOperationInput, "databaseId" | "dataSourceId">,
+    ) => databaseAutomationLifecycle(context, { databaseId, dataSourceId, ...variables }),
   });
 }
 
 export function useValidateDatabaseAutomation(databaseId: string) {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { dataSourceId: string; definition: DatabaseAutomationDefinition }) =>
+    mutationFn: (variables: Omit<ValidateDatabaseAutomationOperationInput, "databaseId">) =>
       validateDatabaseAutomation(context, { databaseId, ...variables }),
   });
 }
@@ -95,8 +97,9 @@ export function useValidateDatabaseAutomation(databaseId: string) {
 export function useCreateDatabaseAutomationSecret(databaseId: string, dataSourceId: string) {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { purpose: "webhook_header"; value: string }) =>
-      createDatabaseAutomationSecret(context, { databaseId, dataSourceId, ...variables }),
+    mutationFn: (
+      variables: Omit<CreateDatabaseAutomationSecretOperationInput, "databaseId" | "dataSourceId">,
+    ) => createDatabaseAutomationSecret(context, { databaseId, dataSourceId, ...variables }),
   });
 }
 
