@@ -89,11 +89,10 @@ export async function getTeamspaceSettingsOperation(
   requireOperationPolicy(context, { write: false, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return ((service, userId, workspaceId) => service.getWorkspaceSettings(workspaceId, userId))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.getWorkspaceSettings(workspaceId, userId);
 }
 
 export type UpdateTeamspaceSettingsOperationInput = { workspaceId: string; body?: unknown };
@@ -107,12 +106,10 @@ export async function updateTeamspaceSettingsOperation(
 
   const parsed = await parseOperationBody(UpdateTeamspaceSettingsInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.updateWorkspaceSettings({ ...parsed.data, userId, workspaceId }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.updateWorkspaceSettings({ ...parsed.data, userId, workspaceId });
 }
 
 export type UpdateTeamspaceDefaultsOperationInput = { workspaceId: string; body?: unknown };
@@ -126,16 +123,14 @@ export async function updateTeamspaceDefaultsOperation(
 
   const parsed = await parseOperationBody(UpdateTeamspaceDefaultsInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.updateDefaults({
-      defaultTeamspaceIds: [...parsed.data.defaultTeamspaceIds],
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.updateDefaults({
+    defaultTeamspaceIds: [...parsed.data.defaultTeamspaceIds],
+    userId,
+    workspaceId,
+  });
 }
 
 export type ListTeamspacesOperationInput = { workspaceId: string; status?: string };
@@ -146,17 +141,16 @@ export async function listTeamspacesOperation(
   requireOperationPolicy(context, { write: false, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return (async (service, userId, workspaceId) => ({
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return {
     teamspaces: await service.list({
       includeArchived: operationInput.status === "archived",
       userId,
       workspaceId,
     }),
-  }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  };
 }
 
 export type CreateTeamspaceOperationInput = { workspaceId: string; body?: unknown };
@@ -170,12 +164,10 @@ export async function createTeamspaceOperation(
 
   const parsed = await parseOperationBody(CreateTeamspaceInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.create({ ...parsed.data, userId, workspaceId }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.create({ ...parsed.data, userId, workspaceId });
 }
 
 export type GetTeamspaceOperationInput = { workspaceId: string; teamspaceId: string };
@@ -186,16 +178,14 @@ export async function getTeamspaceOperation(
   requireOperationPolicy(context, { write: false, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return ((service, userId, workspaceId) =>
-    service.get({
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.get({
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type UpdateTeamspaceOperationInput = {
@@ -213,17 +203,15 @@ export async function updateTeamspaceOperation(
 
   const parsed = await parseOperationBody(UpdateTeamspaceInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.update({
-      ...parsed.data,
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.update({
+    ...parsed.data,
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type SetTeamspaceMembershipOperationInput = {
@@ -238,16 +226,14 @@ export async function setTeamspaceMembershipOperation(
   requireOperationPolicy(context, { write: true, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return ((service, userId, workspaceId) =>
-    service[operationInput.action]({
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service[operationInput.action]({
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type TeamspaceLifecycleOperationInput = {
@@ -262,16 +248,16 @@ export async function teamspaceLifecycleOperation(
   requireOperationPolicy(context, { write: true, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return ((service, userId, workspaceId) =>
-    service[operationInput.action === "recover-owner" ? "recoverOwner" : operationInput.action]({
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service[
+    operationInput.action === "recover-owner" ? "recoverOwner" : operationInput.action
+  ]({
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type UpdateTeamspaceInviteLinkOperationInput = {
@@ -289,17 +275,15 @@ export async function updateTeamspaceInviteLinkOperation(
 
   const parsed = await parseOperationBody(UpdateInviteLinkInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.updateInviteLink({
-      enabled: parsed.data.enabled,
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.updateInviteLink({
+    enabled: parsed.data.enabled,
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type AcceptTeamspaceInviteOperationInput = { workspaceId: string; token: string };
@@ -310,16 +294,14 @@ export async function acceptTeamspaceInviteOperation(
   requireOperationPolicy(context, { write: true, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return ((service, userId, workspaceId) =>
-    service.acceptInvite({
-      token: operationInput.token,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.acceptInvite({
+    token: operationInput.token,
+    userId,
+    workspaceId,
+  });
 }
 
 export type ListTeamspacePrincipalsOperationInput = { workspaceId: string; teamspaceId: string };
@@ -330,17 +312,16 @@ export async function listTeamspacePrincipalsOperation(
   requireOperationPolicy(context, { write: false, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return (async (service, userId, workspaceId) => ({
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return {
     principals: await service.listPrincipals({
       teamspaceId: operationInput.teamspaceId,
       userId,
       workspaceId,
     }),
-  }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  };
 }
 
 export type AddTeamspacePrincipalOperationInput = {
@@ -358,20 +339,18 @@ export async function addTeamspacePrincipalOperation(
 
   const parsed = await parseOperationBody(AddPrincipalInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.addPrincipal({
-      role: parsed.data.role,
-      accessLevelOverride: parsed.data.accessLevelOverride,
-      principalType: parsed.data.principalType ?? "user",
-      targetUserId: parsed.data.userId,
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.addPrincipal({
+    role: parsed.data.role,
+    accessLevelOverride: parsed.data.accessLevelOverride,
+    principalType: parsed.data.principalType ?? "user",
+    targetUserId: parsed.data.userId,
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type UpdateTeamspacePrincipalOperationInput = {
@@ -390,19 +369,17 @@ export async function updateTeamspacePrincipalOperation(
 
   const parsed = await parseOperationBody(UpdatePrincipalInput, readBody, strictJson);
   if (!parsed.ok) return deny({ error: parsed.message }, 400);
-  return ((service, userId, workspaceId) =>
-    service.updatePrincipal({
-      principalId: operationInput.principalId,
-      role: parsed.data.role,
-      accessLevelOverride: parsed.data.accessLevelOverride,
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.updatePrincipal({
+    principalId: operationInput.principalId,
+    role: parsed.data.role,
+    accessLevelOverride: parsed.data.accessLevelOverride,
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 export type RemoveTeamspacePrincipalOperationInput = {
@@ -417,19 +394,25 @@ export async function removeTeamspacePrincipalOperation(
   requireOperationPolicy(context, { write: true, oauthScope: undefined });
   requireOperationWorkspace(context, operationInput.workspaceId);
 
-  return ((service, userId, workspaceId) =>
-    service.removePrincipal({
-      principalId: operationInput.principalId,
-      teamspaceId: operationInput.teamspaceId,
-      userId,
-      workspaceId,
-    }))(
-    new TeamspaceManagementService(undefined, context.editionExtension ?? undefined, context.env),
-    requireOperationActor(context).id,
-    operationInput.workspaceId,
-  );
+  const service = teamspaceService(context);
+  const userId = requireOperationActor(context).id;
+  const workspaceId = operationInput.workspaceId;
+  return service.removePrincipal({
+    principalId: operationInput.principalId,
+    teamspaceId: operationInput.teamspaceId,
+    userId,
+    workspaceId,
+  });
 }
 
 function deny(body: Record<string, unknown>, status: number): never {
   throw new ServerOperationError(body, status);
+}
+
+function teamspaceService(context: ServerOperationContext) {
+  return new TeamspaceManagementService(
+    undefined,
+    context.editionExtension ?? undefined,
+    context.env,
+  );
 }

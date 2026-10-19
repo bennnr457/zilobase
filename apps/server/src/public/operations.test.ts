@@ -76,6 +76,58 @@ function app(routes: Hono<AppBindings>, ctx: ServerOperationContext) {
 }
 beforeEach(() => vi.clearAllMocks());
 
+for (const scenario of [
+  {
+    name: "feature availability before actor lookup",
+    authMethod: "session",
+    enabled: false,
+    user: false,
+    status: 404,
+  },
+  {
+    name: "OAuth policy before feature availability",
+    authMethod: "oauth",
+    enabled: false,
+    user: true,
+    status: 403,
+  },
+  {
+    name: "demo write policy before feature availability",
+    authMethod: "demo",
+    enabled: false,
+    user: true,
+    status: 403,
+  },
+  {
+    name: "actor lookup before body validation",
+    authMethod: null,
+    enabled: true,
+    user: false,
+    status: 401,
+  },
+] as const) {
+  test(`direct meeting creation preserves ${scenario.name}`, async () => {
+    const ctx = context();
+    ctx.authentication = {
+      ...ctx.authentication,
+      authMethod: scenario.authMethod,
+      user: scenario.user ? ctx.authentication.user : null,
+    };
+    ctx.env = { ...ctx.env, MEETING_BLOCK_ENABLED: String(scenario.enabled) };
+    let bodyReads = 0;
+    await assert.rejects(
+      createServerOperations(ctx).meetings.create({
+        get body() {
+          bodyReads++;
+          throw new Error("Body must not be read before denial");
+        },
+      }),
+      (error: unknown) => error instanceof ServerOperationError && error.status === scenario.status,
+    );
+    assert.equal(bodyReads, 0);
+  });
+}
+
 test("direct and HTTP notifications use the verified actor, never a payload actor", async () => {
   const ctx = context();
   const input = { workspaceId: "workspace", notificationId: "all", userId: "untrusted" };

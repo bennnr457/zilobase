@@ -84,12 +84,9 @@ export async function listMeetingsOperation(
   context: ServerOperationContext,
   operationInput: ListMeetingsOperationInput,
 ) {
-  requireOperationPolicy(context, { write: false, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, false);
 
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   const workspaceId = operationInput.workspaceId;
   if (!workspaceId) {
     return deny({ error: "workspaceId is required" }, 400);
@@ -114,12 +111,9 @@ export async function createMeetingOperation(
   operationInput: CreateMeetingOperationInput,
   readBody: () => Promise<unknown> = async () => operationInput.body,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   const parsed = await parseOperationBody(CreateMeetingInput, readBody);
   if (!parsed.ok) {
     return deny({ error: "Invalid meeting payload" }, 400);
@@ -138,13 +132,10 @@ export async function getMeetingOperation(
   context: ServerOperationContext,
   operationInput: GetMeetingOperationInput,
 ) {
-  requireOperationPolicy(context, { write: false, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, false);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   try {
     return { meeting: await getMeetingForUser(operationInput.id, user.id) };
   } catch (error) {
@@ -160,13 +151,10 @@ export async function prepareMeetingCollaborationOperation(
   context: ServerOperationContext,
   operationInput: PrepareMeetingCollaborationOperationInput,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   try {
     const existing = await getMeetingForUser(operationInput.id, user.id);
     const accessLevel = await getEffectivePageAccessInWorkspace(
@@ -204,13 +192,10 @@ export async function claimMeetingRecorderOperation(
   context: ServerOperationContext,
   operationInput: ClaimMeetingRecorderOperationInput,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   try {
     const lease = await claimMeetingRecorder({
       env: context.env,
@@ -251,13 +236,10 @@ export async function recordMeetingConsentOperation(
   operationInput: RecordMeetingConsentOperationInput,
   readBody: () => Promise<unknown> = async () => operationInput.body,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   const parsed = await parseOperationBody(ConsentInput, readBody);
   if (!parsed.ok) return deny({ error: "Invalid consent event" }, 400);
   try {
@@ -279,13 +261,10 @@ export async function releaseMeetingRecorderOperation(
   operationInput: ReleaseMeetingRecorderOperationInput,
   readBody: () => Promise<unknown> = async () => operationInput.body,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   const parsed = await parseOperationBody(RecorderLeaseInput, readBody);
   if (!parsed.ok) return deny({ error: "Invalid recorder lease" }, 400);
   try {
@@ -308,13 +287,10 @@ export async function updateMeetingOperation(
   operationInput: UpdateMeetingOperationInput,
   readBody: () => Promise<unknown> = async () => operationInput.body,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   const parsed = await parseOperationBody(UpdateMeetingInput, readBody, strictJson);
   if (!parsed.ok) {
     return deny({ error: "Invalid meeting patch" }, 400);
@@ -342,13 +318,10 @@ export async function transitionMeetingOperation(
   operationInput: TransitionMeetingOperationInput,
   readBody: () => Promise<unknown> = async () => operationInput.body,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   const parsed = await parseOperationBody(LifecycleInput, readBody);
   if (!parsed.ok) {
     return deny({ error: "Invalid lifecycle payload" }, 400);
@@ -374,13 +347,10 @@ export async function deleteMeetingOperation(
   context: ServerOperationContext,
   operationInput: DeleteMeetingOperationInput,
 ) {
-  requireOperationPolicy(context, { write: true, oauthScope: undefined });
-  if (context.env.MEETING_BLOCK_ENABLED !== "true")
-    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
+  requireMeetingPolicy(context, true);
 
   await requireMeetingWorkspace(context, operationInput.id);
-  const user = context.authentication.user;
-  if (!user) return deny({ error: "Unauthorized" }, 401);
+  const user = requireOperationActor(context);
   try {
     return {
       meeting: await deleteMeeting({
@@ -403,4 +373,10 @@ async function requireMeetingWorkspace(context: ServerOperationContext, id: stri
   const user = requireOperationActor(context);
   const record = await getMeetingForUser(id, user.id);
   requireOperationWorkspace(context, record.workspaceId);
+}
+
+function requireMeetingPolicy(context: ServerOperationContext, write: boolean) {
+  requireOperationPolicy(context, { write, oauthScope: undefined });
+  if (context.env.MEETING_BLOCK_ENABLED !== "true")
+    throw new ServerOperationError({ error: "Meeting blocks are not enabled" }, 404);
 }

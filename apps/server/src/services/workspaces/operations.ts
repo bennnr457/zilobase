@@ -1,6 +1,7 @@
 import { parseOperationBody } from "../../shared/validation";
 import { getMembership } from "../access/principal-access";
 import {
+  requireOperationActor,
   requireOperationPolicy,
   requireOperationWorkspace,
   ServerOperationError,
@@ -16,8 +17,7 @@ export async function listWorkspacesOperation(
 ) {
   requireOperationPolicy(context, { write: false, oauthScope: "workspaces.read" });
 
-  const requestUser = context.authentication.user;
-  if (!requestUser) return deny({ error: "Unauthorized" }, 401);
+  const requestUser = requireOperationActor(context);
   const pinnedWorkspaceId = context.pinnedWorkspaceId;
   const records = await listWorkspaces(requestUser.id, pinnedWorkspaceId);
   return { workspaces: records.map(({ workspace: record }) => record) };
@@ -30,8 +30,7 @@ export async function getWorkspaceOperation(
 ) {
   requireOperationPolicy(context, { write: false, oauthScope: "workspaces.read" });
 
-  const requestUser = context.authentication.user;
-  if (!requestUser) return deny({ error: "Unauthorized" }, 401);
+  const requestUser = requireOperationActor(context);
   const workspaceId = operationInput.workspaceId;
   requireOperationWorkspace(context, workspaceId);
 
@@ -58,10 +57,7 @@ export async function deleteWorkspaceOperation(
     );
   requireOperationPolicy(context, { write: true, oauthScope: undefined });
 
-  const requestUser = context.authentication.user;
-  if (!requestUser) {
-    return deny({ error: "Unauthorized" }, 401);
-  }
+  const requestUser = requireOperationActor(context);
   const workspaceId = operationInput.workspaceId;
   requireOperationWorkspace(context, workspaceId);
 
