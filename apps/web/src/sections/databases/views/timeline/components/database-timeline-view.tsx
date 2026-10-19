@@ -1,34 +1,35 @@
-import { DatabaseRowActionsProvider } from "../../shared/components/database-row-actions";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
 import { useUndoHistory } from "@/app/shortcuts/undo-history";
-import { useDatabaseSelection } from "../../shared/hooks/selection";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DatabaseRowActionsProvider } from "../../shared/components/database-row-actions";
 import { DatabaseSelectionToolbar } from "../../shared/components/database-selection-toolbar";
+import { useDatabaseSelection } from "../../shared/hooks/selection";
 
-import { getRawDatabaseGroupValue } from "@zilobase/features/databases";
-import { getDatabaseTableGroupSections } from "@zilobase/features/databases";
+import {
+  ganttMoveToCellValue,
+  getDatabaseTableGroupSections,
+  getRawDatabaseGroupValue,
+  getTimelineDatePropertyId,
+} from "@zilobase/features/databases";
 import { DatabaseRecordWindowControl } from "../../shared/components/database-record-window-control";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/components/database-view-context";
-import { getTimelineDatePropertyId, ganttMoveToCellValue } from "@zilobase/features/databases";
+import { useTimelineRowLayout } from "../hooks/use-timeline-row-layout";
 import {
   buildTimelineRowItem,
-  getGanttStatusForValue,
-  type TimelineRowItem,
-} from "../lib/presentation-model";
-import {
   buildTimelineViewRows,
+  getGanttStatusForValue,
   getTimelineItems,
   type TimelineGroupSection,
+  type TimelineRowItem,
 } from "../lib/presentation-model";
 import { DatabaseTimelineGrid } from "./database-timeline-grid";
-import { DatabaseTimelineSetup } from "./database-timeline-setup";
-import { TimelineRowDragLayer } from "./database-timeline-row-drag-layer";
 import { useTimelineRowDrag } from "./database-timeline-row-drag";
-import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
-import { useTimelineRowLayout } from "../hooks/use-timeline-row-layout";
+import { TimelineRowDragLayer } from "./database-timeline-row-drag-layer";
+import { DatabaseTimelineSetup } from "./database-timeline-setup";
 
 export function DatabaseTimelineView() {
   const {

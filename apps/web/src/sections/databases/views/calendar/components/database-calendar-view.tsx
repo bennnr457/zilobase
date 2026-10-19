@@ -1,3 +1,39 @@
+import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
+import { CalendarPlus, ChevronDown, ChevronRight, GripVertical } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import type {
+  CalendarEvent,
+  CalendarView,
+  EventCalendarOccurrence,
+  EventCalendarSlotDraft,
+  EventCalendarSlotInfo,
+} from "@/components/ui/event-calendar/event-calendar-types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getPaletteColor } from "@/lib/color-tokens";
+import { CalendarRenderer } from "@/sections/calendar/primitives/components/calendar-renderer";
+import { DefaultPageIcon, PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
+import { useZilobaseFeatures } from "@zilobase/features";
+import { useSession } from "@zilobase/features/auth/react";
+import { useSharedDataRevision } from "@zilobase/features/data/react";
+import {
+  calendarClickSchedule,
+  calendarScheduleToValue,
+  getDatabaseCalendarMode,
+  getRawDatabaseGroupValue,
+  getTimelineDatePropertyId,
+  getTimelineStatusForValue,
+  parseCalendarSchedule,
+  type DatabaseCalendarMode,
+  type DatabaseCalendarSchedule,
+} from "@zilobase/features/databases";
+import { getPageEmoji, readCachedPage } from "@zilobase/features/pages";
+import { addMinutes } from "date-fns";
 import {
   useCallback,
   useEffect,
@@ -8,49 +44,13 @@ import {
   type CSSProperties,
   type DragEvent,
 } from "react";
-import { addMinutes } from "date-fns";
 import { toast } from "sonner";
-import { useSession } from "@zilobase/features/auth/react";
-import {
-  calendarClickSchedule,
-  calendarScheduleToValue,
-  getDatabaseCalendarMode,
-  getTimelineDatePropertyId,
-  getRawDatabaseGroupValue,
-  getTimelineStatusForValue,
-  parseCalendarSchedule,
-  type DatabaseCalendarMode,
-  type DatabaseCalendarSchedule,
-} from "@zilobase/features/databases";
-import { getPageEmoji, readCachedPage } from "@zilobase/features/pages";
-import { useZilobaseFeatures } from "@zilobase/features";
-import { useSharedDataRevision } from "@zilobase/features/data/react";
-import { getPaletteColor } from "@/lib/color-tokens";
-import { Button } from "@/components/ui/button";
-import { CalendarPlus, ChevronDown, ChevronRight, GripVertical } from "@/components/icons";
-import { CalendarRenderer } from "@/sections/calendar/primitives/components/calendar-renderer";
-import type {
-  CalendarEvent,
-  CalendarView,
-  EventCalendarSlotDraft,
-  EventCalendarSlotInfo,
-  EventCalendarOccurrence,
-} from "@/components/ui/event-calendar/event-calendar-types";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { DefaultPageIcon, PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
+import { DatabaseRecordWindowControl } from "../../shared/components/database-record-window-control";
 import {
   useDatabaseActionsContext,
   useDatabaseDataContext,
   useDatabaseUiContext,
 } from "../../state/components/database-view-context";
-import { DatabaseRecordWindowControl } from "../../shared/components/database-record-window-control";
-import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
 
 const rowMime = "application/x-zilobase-calendar-row";
 
