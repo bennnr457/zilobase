@@ -1,126 +1,43 @@
-import { useDatabaseController } from "../interactions/react";
 import { useMutation } from "@tanstack/react-query";
 import { useZilobaseFeatures } from "../../shared/context";
-import { type UpdateDatabaseInput } from "./databases";
-import { resolveDataSourceCommandScope } from "./scope";
-import type { DatabaseViewEntity, DataSourceEntity } from "../core/entities";
-type LinkDatabaseDataSourceInput = {
-  config?: unknown;
-  databaseId: string;
-  dataSourceId: string;
-  name?: string;
-  type?: string;
-};
-type CreateDatabaseDataSourceInput = {
-  config?: unknown;
-  databaseId: string;
-  name?: string;
-  viewName?: string;
-  viewType?: string;
-};
-type ReplaceDatabaseViewDataSourceInput = {
-  databaseId: string;
-  databaseViewId: string;
-  dataSourceId: string;
-};
+import {
+  createDatabaseDataSource,
+  linkDatabaseDataSource,
+  replaceDatabaseViewDataSource,
+  unlinkDatabaseDataSource,
+  updateDataSource,
+} from "./data-sources-operations";
 export function useUpdateDataSource() {
-  const controller = useDatabaseController();
-  const { queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId: dataSourceId, ...patch }: UpdateDatabaseInput) => {
-      const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, dataSourceId);
-      const ack = await controller.execute({
-        command: { patch, type: "dataSource.update" },
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      return ack.result as DataSourceEntity;
-    },
+    mutationFn: (input: Parameters<typeof updateDataSource>[1]) => updateDataSource(context, input),
   });
 }
 export function useLinkDatabaseDataSource() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({
-      config,
-      databaseId,
-      dataSourceId,
-      name,
-      type,
-    }: LinkDatabaseDataSourceInput) => {
-      const result = (
-        await controller.execute({
-          databaseId,
-          command: {
-            type: "dataSource.link",
-            dataSourceId,
-            afterId: null,
-            beforeId: null,
-            view: {
-              name: name?.trim() || "",
-              type: type?.trim() || "table",
-              config: config ?? null,
-            },
-          },
-        })
-      ).result as { dataSource: DataSourceEntity; view: DatabaseViewEntity };
-      return result;
-    },
+    mutationFn: (input: Parameters<typeof linkDatabaseDataSource>[1]) =>
+      linkDatabaseDataSource(context, input),
   });
 }
 export function useCreateDatabaseDataSource() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId, ...input }: CreateDatabaseDataSourceInput) => {
-      const ack = await controller.execute({
-        command: {
-          config: input.config ?? {},
-          name: input.name?.trim() || "New data source",
-          type: "dataSource.create",
-          viewName: input.viewName?.trim() || "Table",
-          viewType: input.viewType?.trim() || "table",
-        },
-        databaseId,
-      });
-      return ack.result as {
-        dataSource: DataSourceEntity;
-        view: DatabaseViewEntity;
-      };
-    },
+    mutationFn: (input: Parameters<typeof createDatabaseDataSource>[1]) =>
+      createDatabaseDataSource(context, input),
   });
 }
 export function useReplaceDatabaseViewDataSource() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({
-      databaseId,
-      databaseViewId,
-      dataSourceId,
-    }: ReplaceDatabaseViewDataSourceInput) => {
-      const ack = await controller.execute({
-        command: {
-          dataSourceId,
-          type: "view.setDataSource",
-          viewId: databaseViewId,
-        },
-        databaseId,
-      });
-      return ack.result as DatabaseViewEntity;
-    },
+    mutationFn: (input: Parameters<typeof replaceDatabaseViewDataSource>[1]) =>
+      replaceDatabaseViewDataSource(context, input),
   });
 }
 export function useUnlinkDatabaseDataSource() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({
-      databaseId,
-      dataSourceId,
-    }: Pick<LinkDatabaseDataSourceInput, "databaseId" | "dataSourceId">) => {
-      const ack = await controller.execute({
-        command: { dataSourceId, type: "dataSource.unlink" },
-        databaseId,
-      });
-      return ack.result as DataSourceEntity;
-    },
+    mutationFn: (input: Parameters<typeof unlinkDatabaseDataSource>[1]) =>
+      unlinkDatabaseDataSource(context, input),
   });
 }

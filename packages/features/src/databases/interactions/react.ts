@@ -1,18 +1,16 @@
-import { useSharedDataRevision } from "../../data/react";
-import { sharedClient } from "../../data/client";
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { sharedClient } from "../../data/client";
+import { useSharedDataRevision } from "../../data/react";
 import { useZilobaseFeatures } from "../../shared/context";
-import type {
-  ChangeRowCommand,
-  DatabaseRecordEntity,
-  DatabaseBootstrapResponse,
-} from "../core/entities";
-import { projectDatabaseMetadata } from "./metadata";
-import { useDatabaseSessionId } from "../queries/session";
-import { databaseController } from "./store";
-import { projectRecordInteractions, type RecordEffect } from "./model";
-import { changeRecordHierarchy } from "./hierarchy";
+import { changeDatabaseRow } from "../commands";
+import type { DatabaseBootstrapResponse, DatabaseRecordEntity } from "../core/entities";
 import type { DatabaseCommandTarget } from "../mutations/pending";
+import { useDatabaseSessionId } from "../queries/session";
+import { projectDatabaseMetadata } from "./metadata";
+import { projectRecordInteractions } from "./model";
+import { type ChangeDatabaseRowInput } from "./record-change";
+import { databaseController } from "./store";
+export { submitRecordChange, type ChangeDatabaseRowInput } from "./record-change";
 
 export function useDatabaseEntityCommandState(target: DatabaseCommandTarget) {
   const state = useDatabaseController().commandState;
@@ -98,74 +96,13 @@ export function useProjectedDatabaseRecords(input: {
   );
 }
 
-export type ChangeDatabaseRowInput = Omit<ChangeRowCommand, "type"> & {
-  databaseId: string;
-  dataSourceId: string;
-};
-
-export function submitRecordChange(
-  store: ReturnType<typeof useDatabaseController>,
-  input: ChangeDatabaseRowInput,
-) {
-  const { databaseId, dataSourceId, ...change } = input;
-  if (change.placement)
-    change.placement = {
-      afterRowId: change.placement.afterRowId,
-      beforeRowId: change.placement.beforeRowId,
-    };
-  if (change.placement) {
-    // A second gesture expresses the currently displayed destination, even if
-    // the preceding move is subsequently rejected.
-    for (const interaction of [...store.getSnapshot()].reverse()) {
-      if (interaction.status === "committed") continue;
-      for (const effect of interaction.effects) {
-        if (effect.dataSourceId !== dataSourceId || effect.rowId !== input.rowId || effect.remove)
-          continue;
-        if (effect.values)
-          change.valuesByPropertyId = { ...effect.values, ...change.valuesByPropertyId };
-        if (change.title === undefined && effect.title !== undefined) change.title = effect.title;
-      }
-    }
-  }
-  const rows = store.records(dataSourceId);
-  const record = rows.find(({ id }) => id === input.rowId);
-  const effects: RecordEffect[] = [
-    {
-      dataSourceId,
-      rowId: input.rowId,
-      record,
-      placement: change.placement,
-      title: change.title,
-      values: change.valuesByPropertyId,
-      ...(input.hierarchy ? { parentRowId: input.hierarchy.parentRowId } : {}),
-    },
-  ];
-  if (input.hierarchy) {
-    for (const value of changeRecordHierarchy({
-      ...input.hierarchy,
-      rowId: input.rowId,
-      rows,
-      values: rows.flatMap(({ valuesByPropertyId }) => Object.values(valuesByPropertyId)),
-    })) {
-      effects.push({
-        dataSourceId,
-        rowId: value.rowId,
-        values: { [value.propertyId]: value.value },
-      });
-    }
-  }
-  return store.submit(
-    { databaseId, dataSourceId, command: { ...change, type: "row.change" } },
-    effects,
-  );
-}
-
 export function useChangeDatabaseRow() {
+  const context = useZilobaseFeatures();
   const store = useDatabaseController();
   const interactions = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   const mutateAsync = (input: ChangeDatabaseRowInput) => {
     try {
-      return submitRecordChange(store, input).then((ack) => ack.result as DatabaseRecordEntity);
+      return changeDatabaseRow(context, input);
     } catch (error) {
       return Promise.reject(error);
     }

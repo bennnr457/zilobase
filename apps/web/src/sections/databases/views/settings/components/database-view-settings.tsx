@@ -9,7 +9,6 @@ import {
   Lock,
   Palette,
   SlidersHorizontalIcon,
-  X,
 } from "@/components/icons";
 import { useState } from "react";
 
@@ -140,7 +139,7 @@ export function DatabaseViewSettingsMenu({
             <PopoverTrigger asChild>
               <button
                 aria-label="Change view icon"
-                className="flex size-7 items-center justify-center rounded-md border bg-surface-canvas text-content-secondary transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+                className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 leading-none focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
                 disabled={!editable}
                 type="button"
               >
@@ -151,17 +150,6 @@ export function DatabaseViewSettingsMenu({
                 )}
               </button>
             </PopoverTrigger>
-            {viewIcon ? (
-              <button
-                aria-label="Reset view icon"
-                className="absolute -right-1 -top-1 hidden size-4 items-center justify-center rounded-full border bg-surface-canvas text-content-secondary shadow-sm hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral group-focus-within/view-settings-icon:flex group-hover/view-settings-icon:flex [&_svg]:size-2.5"
-                disabled={!editable}
-                onClick={() => onSaveDatabaseViewIcon("")}
-                type="button"
-              >
-                <X />
-              </button>
-            ) : null}
           </div>
           <PopoverContent
             align="start"
@@ -171,6 +159,14 @@ export function DatabaseViewSettingsMenu({
             sideOffset={6}
           >
             <IconEmojiPicker
+              onRemove={
+                viewIcon
+                  ? () => {
+                      onSaveDatabaseViewIcon("");
+                      setIconPickerOpen(false);
+                    }
+                  : undefined
+              }
               onEmojiSelect={(icon) => {
                 onSaveDatabaseViewIcon(icon);
                 setIconPickerOpen(false);

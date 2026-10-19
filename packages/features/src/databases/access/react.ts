@@ -1,43 +1,31 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useDatabaseController } from "../interactions/react";
-import { resolveDatabaseAccessReferences } from "../../pages/access-references";
 import { useSharedDataRevision } from "../../data/react";
+import { resolveDatabaseAccessReferences } from "../../pages/access-references";
 import { useZilobaseFeatures } from "../../shared/context";
 import { databaseAccessQueryOptions } from "../queries/queries";
-type DatabaseAccessInput = {
-  accessLevel: "view" | "edit" | "full";
-  databaseId: string;
-  targetId: string;
-  targetType: "public" | "user" | "team";
-};
+import { deleteDatabaseAccess, setDatabasePublished, upsertDatabaseAccess } from "./operations";
 
 export function useUpsertDatabaseAccess() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId, ...body }: DatabaseAccessInput) =>
-      (await controller.execute({ databaseId, command: { type: "access.upsert", ...body } }))
-        .result,
+    mutationFn: (input: Parameters<typeof upsertDatabaseAccess>[1]) =>
+      upsertDatabaseAccess(context, input),
   });
 }
 
 export function useDeleteDatabaseAccess() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId, ruleId }: { databaseId: string; ruleId: string }) =>
-      (await controller.execute({ databaseId, command: { type: "access.remove", ruleId } })).result,
+    mutationFn: (input: Parameters<typeof deleteDatabaseAccess>[1]) =>
+      deleteDatabaseAccess(context, input),
   });
 }
 
 export function useSetDatabasePublished() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId, isPublished }: { databaseId: string; isPublished: boolean }) =>
-      (
-        await controller.execute({
-          databaseId,
-          command: { type: "database.publish", published: isPublished },
-        })
-      ).result,
+    mutationFn: (input: Parameters<typeof setDatabasePublished>[1]) =>
+      setDatabasePublished(context, input),
   });
 }
 

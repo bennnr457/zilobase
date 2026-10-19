@@ -1,34 +1,43 @@
 export {
-  useUpsertDatabaseAccess,
+  useDatabaseAccess,
   useDeleteDatabaseAccess,
   useSetDatabasePublished,
+  useUpsertDatabaseAccess,
 } from "./access/react";
 export {
+  useChangeDatabaseRow,
+  useDatabaseController,
+  useDatabaseEntityCommandState,
+  useDatabaseInteractionRecovery,
+  useProjectedDatabaseRecords,
+} from "./interactions/react";
+export {
+  useCreateDatabaseDataSource,
+  useLinkDatabaseDataSource,
+  useReplaceDatabaseViewDataSource,
+  useUnlinkDatabaseDataSource,
+  useUpdateDataSource,
+} from "./mutations/data-sources";
+export {
   useCreateDatabase,
-  useUpdateDatabase,
   useDeleteDatabase,
   useRestoreDatabase,
   useSetDatabaseFavorite,
+  useUpdateDatabase,
 } from "./mutations/databases";
-export {
-  useUpdateDataSource,
-  useLinkDatabaseDataSource,
-  useCreateDatabaseDataSource,
-  useReplaceDatabaseViewDataSource,
-  useUnlinkDatabaseDataSource,
-} from "./mutations/data-sources";
-export {
-  useUpdateDatabaseView,
-  useAddDatabaseView,
-  useDeleteDatabaseView,
-} from "./mutations/views";
 export {
   useAddDatabaseProperty,
   useApplyDatabaseTemplate,
-  useUpdateDatabaseProperty,
   useDeleteDatabaseProperty,
   useDuplicateDatabaseProperty,
+  useUpdateDatabaseProperty,
 } from "./mutations/properties";
+export {
+  useAddDatabaseRow,
+  useArchiveDatabaseRow,
+  useRestoreDatabaseRow,
+  useUpdateDatabasePropertyValue,
+} from "./mutations/rows";
 export {
   useArchiveDatabaseTemplate,
   useCreateDatabaseTemplate,
@@ -36,31 +45,21 @@ export {
   useUpdateDatabaseTemplate,
 } from "./mutations/templates";
 export {
-  useAddDatabaseRow,
-  useArchiveDatabaseRow,
-  useRestoreDatabaseRow,
-  useUpdateDatabasePropertyValue,
-} from "./mutations/rows";
-export { useDatabaseEntityCommandState } from "./interactions/react";
-export { useDatabaseSessionId } from "./queries/session";
-export { useDatabaseRecordActions, useDatabaseRecordActionAccess } from "./records/row-actions";
-export type { DatabaseRowAction, DatabaseRowActionResult } from "./records/row-actions";
-export { useDatabaseRowMoveDestinations } from "./records/row-action-destinations";
-export { useDatabaseBootstrap } from "./queries/bootstrap";
-export { useDatabaseRecords } from "./queries/records";
-export { useDatabaseAccess } from "./access/react";
-export { useDatabaseRealtime } from "./realtime/realtime";
-export { useDatabaseIdForRowPage } from "./records/use-database-id-for-row-page";
+  useAddDatabaseView,
+  useDeleteDatabaseView,
+  useUpdateDatabaseView,
+} from "./mutations/views";
 export type { DatabaseScope } from "./queries/bootstrap";
+export { useDatabaseBootstrap } from "./queries/bootstrap-react";
 export type { DatabaseViewScope, DatabaseWindowFetchScope } from "./queries/records";
-export {
-  useDatabaseController,
-  useChangeDatabaseRow,
-  useProjectedDatabaseRecords,
-  useDatabaseInteractionRecovery,
-} from "./interactions/react";
+export { useDatabaseRecords } from "./queries/records-react";
+export { useDatabaseSessionId } from "./queries/session";
+export { useDatabaseRealtime } from "./realtime/realtime";
+export { useDatabaseRowMoveDestinations } from "./records/row-action-destinations";
+export { useDatabaseRecordActionAccess, useDatabaseRecordActions } from "./records/row-actions";
+export type { DatabaseRowAction, DatabaseRowActionResult } from "./records/row-actions";
+export { useDatabaseIdForRowPage } from "./records/use-database-id-for-row-page";
 
-export { useDatabaseMetadata } from "./queries/metadata";
-export { useDatabaseSecondaryPayload } from "./queries/metadata";
+export { useDatabaseMetadata, useDatabaseSecondaryPayload } from "./queries/metadata";
 
 export { useDatabaseViewData } from "./queries/view-data";

@@ -1,6 +1,7 @@
+import { addDays } from "date-fns";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addDays } from "date-fns";
+import { createDatabaseViewCommands } from "../records/view-commands";
 import {
   calendarClickSchedule,
   calendarScheduleToValue,
@@ -8,7 +9,6 @@ import {
   getDatabaseCalendarMode,
   parseCalendarSchedule,
 } from "./calendar";
-import { createDatabaseViewCommands } from "../records/view-commands";
 
 test("calendar dates round-trip inclusive all-day ranges and timed scalar values", () => {
   for (const value of [
@@ -88,15 +88,13 @@ test("calendar commands create blank-title dated records, preserve configuration
       timelineDateProperty: null,
       kanbanGroupProperty: null,
       mutations: {
-        addRow: {
-          mutateAsync: async (input: unknown) => {
-            calls.push(input);
-            return { id: "row", pageId: "page" };
-          },
+        addRow: async (input: unknown) => {
+          calls.push(input);
+          return { id: "row", pageId: "page" };
         },
-        addDatabaseView: { isPending: false, mutate: (input: unknown) => calls.push(input) },
-        addProperty: { isPending: false },
-        updateDatabaseView: { mutate: (input: unknown) => calls.push(input) },
+        addDatabaseView: async (input: unknown) => calls.push(input),
+        addProperty: async () => undefined,
+        updateDatabaseView: async (input: unknown) => calls.push(input),
       },
       notify: { error() {}, success() {} },
       onViewCreated() {},

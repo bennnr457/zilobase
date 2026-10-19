@@ -882,6 +882,30 @@ test("embedded narrow pages preserve breakout, outside controls, and grouped cre
   await assertAligned(page);
 });
 
+test("embedded tables retain the full inline horizontal scroll viewport", async ({ page }) => {
+  await options(page, { embedded: true, tablePreview: true, count: 2 });
+  const scroll = page.locator('.database-table-scroll[role="grid"]');
+  await expect(scroll).toBeVisible();
+  for (const width of [900, 760]) {
+    await page.locator('[data-editor-page-content="narrow"]').evaluate((el, width) => {
+      el.style.maxWidth = `${width}px`;
+    }, width);
+    await expect
+      .poll(() =>
+        scroll.evaluate((el) => {
+          const rect = el.getBoundingClientRect();
+          const surface = el.closest("[data-editor-surface]").getBoundingClientRect();
+          return Math.max(Math.abs(rect.left - surface.left), Math.abs(rect.width - surface.width));
+        }),
+      )
+      .toBeLessThan(1);
+    await scroll.evaluate((el) => {
+      el.scrollLeft = 100;
+    });
+    await expect.poll(() => scroll.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+  }
+});
+
 test("the timeline fills the remaining page without gaps or an internal vertical scroller", async ({
   page,
 }) => {

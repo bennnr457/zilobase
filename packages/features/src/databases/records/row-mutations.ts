@@ -1,5 +1,6 @@
-import type { NewRowSetup } from "./row-plans";
 import type { DatabaseRowMutations } from "./mutation-bindings";
+import { observeOperation } from "./mutation-bindings";
+import type { NewRowSetup } from "./row-plans";
 
 export function createAddDatabaseRowMutation({
   addRow,
@@ -15,7 +16,7 @@ export function createAddDatabaseRowMutation({
   return ({ parentRelation, propertyValues, title }: NewRowSetup) => {
     if (!editable || !databaseId) return;
     const values = new Map(propertyValues.map((value) => [value.propertyId, value]));
-    addRow.mutate({
+    observeOperation(addRow, {
       databaseId,
       ...(hostDatabaseId ? { hostDatabaseId } : {}),
       ...(values.size ? { initialValues: [...values.values()] } : {}),

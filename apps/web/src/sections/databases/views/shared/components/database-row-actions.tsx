@@ -571,25 +571,17 @@ export function DatabaseRowActionsProvider({
           }}
         >
           {panel === "icon" ? (
-            <>
-              <IconEmojiPicker
-                onEmojiSelect={(icon) => {
-                  void perform({ type: "icon", icon });
-                }}
-                onIconSelect={(icon) => {
-                  void perform({ type: "icon", icon });
-                }}
-              />
-              <button
-                className="w-full border-t p-2 text-sm"
-                type="button"
-                onClick={() => {
-                  void perform({ type: "icon", icon: null });
-                }}
-              >
-                Remove icon
-              </button>
-            </>
+            <IconEmojiPicker
+              onRemove={() => {
+                void perform({ type: "icon", icon: null });
+              }}
+              onEmojiSelect={(icon) => {
+                void perform({ type: "icon", icon });
+              }}
+              onIconSelect={(icon) => {
+                void perform({ type: "icon", icon });
+              }}
+            />
           ) : panel === "move" ? (
             <div className="space-y-2 p-2">
               <Input

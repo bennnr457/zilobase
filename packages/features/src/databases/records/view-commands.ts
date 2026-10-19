@@ -1,32 +1,39 @@
 import { diffConfiguration } from "../interactions/configuration";
 import { getConvertedViewConfig, removeDatabaseGroupProperty } from "../views/type-transition";
+import { observeOperation } from "./mutation-bindings";
 
 import type { DatabasePropertyEntity, DatabaseViewEntity } from "../core/entities";
 import type { DatabaseRow } from "../core/export-payload";
 import type { DatabaseViewData } from "../views/source-state";
 
-import { defaultStatusOption } from "../schema/property-defaults";
-import { getGroupPropertyId, getKanbanGroupProperty } from "../views/grouping";
-import type { DatabasePropertyListItem } from "../views/grouping";
-import { getDefaultKanbanHiddenPropertyIds } from "../views/kanban-group-settings";
-import { ganttMoveToDateValue, getTimelineDateProperty } from "../views/timeline-date";
-import { getDefaultDatabasePropertyConfig } from "../schema/property-defaults";
-import { serializePropertyValue } from "../schema/property-values";
-import type { DatabasePropertyValue } from "../schema/property-values";
 import {
   areSerializedPropertyValuesEqual,
   hasViewHiddenPropertyIds,
 } from "../interactions/item-utils";
-import type { DatabasePageDragPayload } from "./page-drop";
+import type { DatabasePropertyFilterConfig } from "../schema/filter";
 import {
   getDatabaseFilterOperatorsForType,
-  isDatabaseFilterGroup,
   getValidDatabaseFilterOperator,
+  isDatabaseFilterGroup,
 } from "../schema/filter";
+import { defaultStatusOption, getDefaultDatabasePropertyConfig } from "../schema/property-defaults";
+import type { DatabasePropertyValue } from "../schema/property-values";
+import { serializePropertyValue } from "../schema/property-values";
+import { getRelationLimitTrimUpdates, relationPayloadFromViewData } from "../schema/relations";
+import type { DatabaseChartSettings } from "../views/chart-config";
+import { defaultDatabaseChartSettings, getDatabaseChartSettings } from "../views/chart-config";
+import type {
+  DatabaseConditionalColorConfig,
+  DatabaseLayoutSettings,
+  DatabaseNameColumnConfig,
+  DatabasePropertyConfig,
+  DatabaseSortConfig,
+  DatabaseSubItemsSettings,
+} from "../views/configuration";
 import {
   getDatabaseFilters,
-  getDatabaseSorts,
   getDatabaseLayoutSettings,
+  getDatabaseSorts,
   getDatabaseSubItemsSettings,
   getMergedDatabaseConfig,
   getMergedNameColumnConfig,
@@ -35,43 +42,41 @@ import {
   getShowPropertyTitles,
   getViewHiddenPropertyIds,
 } from "../views/configuration";
-import type {
-  DatabaseConditionalColorConfig,
-  DatabasePropertyConfig,
-  DatabaseLayoutSettings,
-  DatabaseNameColumnConfig,
-  DatabaseSortConfig,
-  DatabaseSubItemsSettings,
-} from "../views/configuration";
-import type { DatabasePropertyFilterConfig } from "../schema/filter";
 import type { DatabaseFilterUpdatePatch } from "../views/contracts";
-import { getRelationLimitTrimUpdates, relationPayloadFromViewData } from "../schema/relations";
-import { defaultDatabaseChartSettings, getDatabaseChartSettings } from "../views/chart-config";
-import type { DatabaseChartSettings } from "../views/chart-config";
-import { getDatabaseFormHeaderSettings } from "../views/form";
-import type { DatabaseFormHeaderSettings } from "../views/form";
-import { getDatabaseFormQuestionSettingsById } from "../views/form";
-import type { DatabaseFormQuestionSettingsPatch } from "../views/form";
-import { getDatabaseFormShareSettings } from "../views/form";
-import type { DatabaseFormShareSettings } from "../views/form";
+import type {
+  DatabaseFormHeaderSettings,
+  DatabaseFormQuestionSettingsPatch,
+  DatabaseFormShareSettings,
+} from "../views/form";
+import {
+  getDatabaseFormHeaderSettings,
+  getDatabaseFormQuestionSettingsById,
+  getDatabaseFormShareSettings,
+} from "../views/form";
+import type { DatabasePropertyListItem } from "../views/grouping";
+import { getGroupPropertyId, getKanbanGroupProperty } from "../views/grouping";
+import { getDefaultKanbanHiddenPropertyIds } from "../views/kanban-group-settings";
+import { ganttMoveToDateValue, getTimelineDateProperty } from "../views/timeline-date";
+import type { DatabasePageDragPayload } from "./page-drop";
 
+import {
+  calendarScheduleToValue,
+  getCalendarDateProperty,
+  type DatabaseCalendarMode,
+  type DatabaseCalendarSchedule,
+} from "../views/calendar";
+import type { DatabaseMutations } from "./mutation-bindings";
+import { createAddDatabaseRowMutation } from "./row-mutations";
 import {
   getDraggedRowGroupSetup,
   getNewRowGroupSetup,
   getTimelineGroupPropertyId,
 } from "./row-plans";
-import type { DatabaseMutations } from "./mutation-bindings";
-import { createAddDatabaseRowMutation } from "./row-mutations";
-import {
-  calendarScheduleToValue,
-  getCalendarDateProperty,
-  type DatabaseCalendarSchedule,
-  type DatabaseCalendarMode,
-} from "../views/calendar";
 
 export type DatabaseViewCommands = ReturnType<typeof createDatabaseViewCommands>;
 
 export function createDatabaseViewCommands({
+  pending = {},
   activeDatabaseFilters,
   activeDatabaseSorts,
   activeView,
@@ -92,6 +97,7 @@ export function createDatabaseViewCommands({
   getSourcePropertyMode,
   isCurrent = () => true,
 }: {
+  pending?: Partial<Record<keyof DatabaseMutations, boolean>>;
   activeDatabaseFilters: DatabasePropertyFilterConfig[];
   activeDatabaseSorts: DatabaseSortConfig[];
   activeView: DatabaseViewEntity | null;
@@ -137,6 +143,7 @@ export function createDatabaseViewCommands({
       )
     : null;
   const ensureTimelineDatePropertyId = createTimelineDateResolver({
+    pending,
     addProperty,
     databaseId,
     editable,
@@ -164,9 +171,10 @@ export function createDatabaseViewCommands({
       onResolved(existing, currentProperties);
       return;
     }
-    if (!editable || !databaseId || addProperty.isPending || resolvingKanbanProperty) return;
+    if (!editable || !databaseId || pending.addProperty || resolvingKanbanProperty) return;
     resolvingKanbanProperty = true;
-    addProperty.mutate(
+    observeOperation(
+      addProperty,
       {
         databaseId,
         name: "Status",
@@ -202,7 +210,7 @@ export function createDatabaseViewCommands({
     onSortsChanged(nextSorts.length > 0);
     const currentConfig = latestConfig();
 
-    return updateDatabaseView.mutateAsync({
+    return updateDatabaseView({
       configuration: diffConfiguration(
         currentConfig,
         getMergedDatabaseConfig(currentConfig, {
@@ -220,7 +228,7 @@ export function createDatabaseViewCommands({
     }
 
     const currentConfig = latestConfig();
-    updateDatabaseView.mutate({
+    observeOperation(updateDatabaseView, {
       configuration: diffConfiguration(
         currentConfig,
         getMergedDatabaseConfig(currentConfig, {
@@ -239,7 +247,7 @@ export function createDatabaseViewCommands({
       return;
     }
 
-    updateDatabaseView.mutate({
+    observeOperation(updateDatabaseView, {
       configuration: diffConfiguration(
         activeView.config,
         getMergedDatabaseConfig(activeView.config, {
@@ -296,7 +304,7 @@ export function createDatabaseViewCommands({
       return;
     }
 
-    updateDatabaseView.mutate({
+    observeOperation(updateDatabaseView, {
       configuration: diffConfiguration(
         activeView.config,
         getMergedDatabaseConfig(activeView.config, {
@@ -322,7 +330,7 @@ export function createDatabaseViewCommands({
       },
     });
 
-    updateDatabaseView.mutate({
+    observeOperation(updateDatabaseView, {
       configuration: diffConfiguration(currentConfig, nextConfig),
       databaseId: viewDatabaseId ?? databaseId,
       databaseViewId: activeView.id,
@@ -343,7 +351,7 @@ export function createDatabaseViewCommands({
       },
     });
 
-    updateDatabaseView.mutate({
+    observeOperation(updateDatabaseView, {
       configuration: diffConfiguration(currentConfig, nextConfig),
       databaseId: viewDatabaseId ?? databaseId,
       databaseViewId: activeView.id,
@@ -358,7 +366,7 @@ export function createDatabaseViewCommands({
       );
       if (!editable || !databaseId || !dateProperty)
         throw new Error("Calendar is not editable or has no date property");
-      const row = await addRow.mutateAsync({
+      const row = await addRow({
         databaseId,
         ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
         title: "",
@@ -372,9 +380,10 @@ export function createDatabaseViewCommands({
       return { rowId: row.id, pageId: row.pageId };
     },
     addCalendarView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending || addProperty.isPending) return;
+      if (!editable || !databaseId || pending.addDatabaseView || pending.addProperty) return;
       ensureTimelineDatePropertyId((datePropertyId) => {
-        addDatabaseView.mutate(
+        observeOperation(
+          addDatabaseView,
           {
             config: { datePropertyId, calendarView: "month" },
             databaseId: viewDatabaseId ?? databaseId,
@@ -392,7 +401,7 @@ export function createDatabaseViewCommands({
     setCalendarMode: (calendarView: DatabaseCalendarMode) => {
       if (!editable || !databaseId || !activeView) return;
       const config = latestConfig();
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
         configuration: diffConfiguration(config, getMergedDatabaseConfig(config, { calendarView })),
@@ -403,7 +412,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      addProperty.mutate({
+      observeOperation(addProperty, {
         config: getDefaultDatabasePropertyConfig(type),
         databaseId,
         name: label,
@@ -489,7 +498,8 @@ export function createDatabaseViewCommands({
             remaining.length,
           ),
         );
-        changeRow.mutate(
+        observeOperation(
+          changeRow,
           {
             databaseId: viewDatabaseId,
             dataSourceId: databaseId,
@@ -533,7 +543,8 @@ export function createDatabaseViewCommands({
       const groupValues = new Map(
         groupSetup.propertyValues.map((propertyValue) => [propertyValue.propertyId, propertyValue]),
       );
-      addRow.mutate(
+      observeOperation(
+        addRow,
         {
           databaseId,
           ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
@@ -557,11 +568,12 @@ export function createDatabaseViewCommands({
       );
     },
     addChartView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending) {
+      if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      addDatabaseView.mutate(
+      observeOperation(
+        addDatabaseView,
         {
           config: {
             chart: {
@@ -585,11 +597,12 @@ export function createDatabaseViewCommands({
       );
     },
     addGalleryView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending) {
+      if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      addDatabaseView.mutate(
+      observeOperation(
+        addDatabaseView,
         {
           databaseId: viewDatabaseId ?? databaseId,
           dataSourceId: databaseId ?? undefined,
@@ -607,11 +620,12 @@ export function createDatabaseViewCommands({
       );
     },
     addFormView: (hiddenPropertyIds: string[]) => {
-      if (!editable || !databaseId || addDatabaseView.isPending) {
+      if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      addDatabaseView.mutate(
+      observeOperation(
+        addDatabaseView,
         {
           config: { hiddenPropertyIds },
           databaseId: viewDatabaseId ?? databaseId,
@@ -630,10 +644,11 @@ export function createDatabaseViewCommands({
       );
     },
     addKanbanView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending || addProperty.isPending) return;
+      if (!editable || !databaseId || pending.addDatabaseView || pending.addProperty) return;
       ensureKanbanGroupProperty((groupProperty, currentProperties) => {
         const groupPropertyId = groupProperty.property.id;
-        addDatabaseView.mutate(
+        observeOperation(
+          addDatabaseView,
           {
             config: {
               groupPropertyId,
@@ -655,11 +670,12 @@ export function createDatabaseViewCommands({
       });
     },
     addListView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending) {
+      if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      addDatabaseView.mutate(
+      observeOperation(
+        addDatabaseView,
         {
           databaseId: viewDatabaseId ?? databaseId,
           dataSourceId: databaseId ?? undefined,
@@ -699,7 +715,7 @@ export function createDatabaseViewCommands({
       });
     },
     addTimelineView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending || addProperty.isPending) {
+      if (!editable || !databaseId || pending.addDatabaseView || pending.addProperty) {
         return;
       }
 
@@ -707,7 +723,8 @@ export function createDatabaseViewCommands({
         const currentProperties = viewProperties ?? properties;
         const groupPropertyId = getTimelineGroupPropertyId(currentProperties);
 
-        addDatabaseView.mutate(
+        observeOperation(
+          addDatabaseView,
           {
             config: {
               datePropertyId,
@@ -730,11 +747,12 @@ export function createDatabaseViewCommands({
       });
     },
     addTableView: () => {
-      if (!editable || !databaseId || addDatabaseView.isPending) {
+      if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      addDatabaseView.mutate(
+      observeOperation(
+        addDatabaseView,
         {
           databaseId: viewDatabaseId ?? databaseId,
           dataSourceId: databaseId ?? undefined,
@@ -799,7 +817,7 @@ export function createDatabaseViewCommands({
         });
       }
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -809,13 +827,14 @@ export function createDatabaseViewCommands({
       updateTimelineDateProperty(datePropertyId);
     },
     setupRequiredViewProperties: () => {
-      if (!editable || !databaseId || !activeView || !isCurrent() || updateDatabaseView.isPending)
+      if (!editable || !databaseId || !activeView || !isCurrent() || pending.updateDatabaseView)
         return;
       if (activeView.type === "kanban") {
         ensureKanbanGroupProperty((groupProperty, currentProperties) => {
           if (!isCurrent()) return;
           const currentConfig = latestConfig();
-          updateDatabaseView.mutate(
+          observeOperation(
+            updateDatabaseView,
             {
               databaseId: viewDatabaseId ?? databaseId,
               databaseViewId: activeView.id,
@@ -900,7 +919,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      updateProperty.mutate({
+      observeOperation(updateProperty, {
         databaseId,
         databasePropertyId,
         name,
@@ -935,7 +954,7 @@ export function createDatabaseViewCommands({
         propertyOrder,
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -947,7 +966,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      updateDatabase.mutate({
+      observeOperation(updateDatabase, {
         configuration: diffConfiguration(
           databaseConfig,
           getMergedDatabaseConfig(databaseConfig, {
@@ -962,7 +981,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      updateDatabase.mutate({
+      observeOperation(updateDatabase, {
         databaseId,
         name: nextTitle,
       });
@@ -972,7 +991,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
         name: nextTitle,
@@ -986,14 +1005,15 @@ export function createDatabaseViewCommands({
         !databaseId ||
         !activeView?.id ||
         type === activeView.type ||
-        updateDatabaseView.isPending
+        pending.updateDatabaseView
       ) {
         return;
       }
 
       const changeType = (nextConfig: unknown, currentConfig = latestConfig()) => {
         if (!isCurrent()) return;
-        updateDatabaseView.mutate(
+        observeOperation(
+          updateDatabaseView,
           {
             configuration: diffConfiguration(currentConfig, nextConfig),
             databaseId: viewDatabaseId ?? databaseId,
@@ -1051,7 +1071,7 @@ export function createDatabaseViewCommands({
         properties,
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1074,7 +1094,7 @@ export function createDatabaseViewCommands({
         },
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1101,7 +1121,7 @@ export function createDatabaseViewCommands({
         },
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1121,7 +1141,7 @@ export function createDatabaseViewCommands({
         },
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1141,7 +1161,7 @@ export function createDatabaseViewCommands({
         },
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1152,7 +1172,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      updateDatabase.mutate({
+      observeOperation(updateDatabase, {
         configuration: diffConfiguration(
           databaseConfig,
           getMergedNameColumnConfig(databaseConfig, config),
@@ -1175,7 +1195,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      updateValue.mutate({
+      observeOperation(updateValue, {
         databaseId,
         ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
         propertyId,
@@ -1213,7 +1233,7 @@ export function createDatabaseViewCommands({
         hiddenPropertyIds: [...hiddenPropertyIds],
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1230,7 +1250,7 @@ export function createDatabaseViewCommands({
         showPropertyTitles: !getShowPropertyTitles(currentConfig),
       });
 
-      updateDatabaseView.mutate({
+      observeOperation(updateDatabaseView, {
         configuration: diffConfiguration(currentConfig, nextConfig),
         databaseId: viewDatabaseId ?? databaseId,
         databaseViewId: activeView.id,
@@ -1255,7 +1275,7 @@ export function createDatabaseViewCommands({
       });
 
       for (const update of trimUpdates) {
-        updateValue.mutate({
+        observeOperation(updateValue, {
           databaseId,
           ...(viewDatabaseId ? { hostDatabaseId: viewDatabaseId } : {}),
           propertyId: update.propertyId,
@@ -1264,7 +1284,7 @@ export function createDatabaseViewCommands({
         });
       }
 
-      return updateProperty.mutateAsync({
+      return updateProperty({
         configuration: diffConfiguration(currentPropertyConfig, nextConfig),
         databaseId,
         databasePropertyId,
@@ -1315,6 +1335,7 @@ export function createDatabaseViewCommands({
 }
 
 function createTimelineDateResolver({
+  pending = {},
   addProperty,
   databaseId,
   editable,
@@ -1325,6 +1346,7 @@ function createTimelineDateResolver({
   isCurrent,
   notify,
 }: {
+  pending?: Partial<Record<keyof DatabaseMutations, boolean>>;
   addProperty: DatabaseMutations["addProperty"];
   databaseId: string | null | undefined;
   editable: boolean;
@@ -1352,12 +1374,13 @@ function createTimelineDateResolver({
       return;
     }
 
-    if (!editable || !databaseId || addProperty.isPending || resolving) {
+    if (!editable || !databaseId || pending.addProperty || resolving) {
       return;
     }
 
     resolving = true;
-    addProperty.mutate(
+    observeOperation(
+      addProperty,
       {
         databaseId,
         name: "Date",

@@ -1,25 +1,25 @@
-import {
-  ManualRecordPlacementProvider,
-  useManualRecordPlacement,
-} from "../../../src/sections/databases/views/state/components/manual-record-placement";
-import { createElement } from "react";
-import { useProjectedDatabaseRecords } from "../../../../../packages/features/src/databases/interactions/react";
-import { flushSync } from "react-dom";
-import { createRoot } from "react-dom/client";
 import { QueryClient } from "@tanstack/react-query";
 import { initializeZilobaseClient } from "@zilobase/features";
+import type {
+  DatabasePropertyListItem,
+  SortableDatabaseItem as DatabaseRow,
+  KanbanGroupOption,
+} from "@zilobase/features/databases";
+import { buildKanbanBoard } from "@zilobase/features/databases";
+import { createElement } from "react";
+import { flushSync } from "react-dom";
+import { createRoot } from "react-dom/client";
+import { useProjectedDatabaseRecords } from "../../../../../packages/features/src/databases/interactions/react";
 import {
   ZilobaseFeaturesProvider,
   type ZilobaseFeaturesConfig,
 } from "../../../../../packages/features/src/shared/context";
 import { useRecordDrops } from "../../../src/sections/databases/views/controller/hooks/use-record-drop";
 import { useDatabaseKanbanCardDrag } from "../../../src/sections/databases/views/kanban/hooks/use-database-kanban-card-drag";
-import { buildKanbanBoard } from "@zilobase/features/databases";
-import type {
-  SortableDatabaseItem as DatabaseRow,
-  KanbanGroupOption,
-} from "@zilobase/features/databases";
-import type { DatabasePropertyListItem } from "@zilobase/features/databases";
+import {
+  ManualRecordPlacementProvider,
+  useManualRecordPlacement,
+} from "../../../src/sections/databases/views/state/components/manual-record-placement";
 
 export function mountRecordDrops(container: HTMLElement) {
   const queryClient = new QueryClient({
@@ -29,7 +29,7 @@ export function mountRecordDrops(container: HTMLElement) {
     },
   });
   const session = {
-    user: null,
+    user: { id: "user" },
     session: { id: "kanban-test", userId: "user", expiresAt: "2099-01-01" },
   };
   queryClient.setQueryData(["session"], session);

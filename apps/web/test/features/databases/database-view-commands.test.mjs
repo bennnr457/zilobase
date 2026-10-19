@@ -1044,8 +1044,8 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
-    const addProperty = createMutation();
+    const addDatabaseView = createMutation(true);
+    const addProperty = createMutation(true);
     const commands = getDatabaseViewCommands({
       notify: { error: () => {}, success: () => {} },
       copyViewLink: async () => {},
@@ -1074,7 +1074,8 @@ export function register({ assert, loadModule, test }) {
     assert.equal(addProperty.calls[0][0].config.options.length, 3);
     assert.equal(addDatabaseView.calls.length, 0);
     const status = createProperty("status-column", "status-field", "Status", "status");
-    addProperty.calls[0][1].onSuccess(status);
+    addProperty.resolveCall(0, status);
+    await Promise.resolve();
     assert.deepEqual(
       addDatabaseView.calls.map(([input]) => input),
       [
@@ -1123,7 +1124,7 @@ export function register({ assert, loadModule, test }) {
     });
     for (const type of ["status", "select", "multi_select", "checkbox", "person"]) {
       const property = createProperty("column", "field", "Grouping", type);
-      const addProperty = createMutation(),
+      const addProperty = createMutation(true),
         updateDatabaseView = createMutation();
       const commands = getDatabaseViewCommands(
         defaults([property], { addProperty, updateDatabaseView }),
@@ -1139,16 +1140,15 @@ export function register({ assert, loadModule, test }) {
       assert.deepEqual(config.filters, []);
     }
     const text = createProperty("text-column", "text-field", "Notes", "text");
-    const addProperty = createMutation(),
+    const addProperty = createMutation(true),
       updateDatabaseView = createMutation();
     const commands = getDatabaseViewCommands(defaults([text], { addProperty, updateDatabaseView }));
     commands.setViewType("kanban");
     commands.setViewType("kanban");
     assert.equal(addProperty.calls.length, 1, "rapid requests share pending property creation");
     assert.equal(updateDatabaseView.calls.length, 0);
-    addProperty.calls[0][1].onSuccess(
-      createProperty("status-column", "status-field", "Status", "status"),
-    );
+    addProperty.resolveCall(0, createProperty("status-column", "status-field", "Status", "status"));
+    await Promise.resolve();
     const converted = applyConfigurationChanges(
       { filters: [], datePropertyId: "deleted-date" },
       updateDatabaseView.calls[0][0].configuration,
@@ -1158,7 +1158,7 @@ export function register({ assert, loadModule, test }) {
 
     for (const target of ["timeline", "calendar"]) {
       const date = createProperty("date-column", "date-field", "Due date", "date");
-      const addProperty = createMutation(),
+      const addProperty = createMutation(true),
         updateDatabaseView = createMutation();
       const commands = getDatabaseViewCommands(
         defaults(
@@ -1188,11 +1188,12 @@ export function register({ assert, loadModule, test }) {
       missing.setViewType(target);
       assert.equal(addProperty.calls[0][0].type, "date");
       assert.equal(updateDatabaseView.calls.length, 1);
-      addProperty.calls[0][1].onSuccess(date);
+      addProperty.resolveCall(0, date);
+      await Promise.resolve();
       assert.equal(updateDatabaseView.calls[1][0].type, target);
     }
     const errors = [],
-      failedProperty = createMutation(),
+      failedProperty = createMutation(true),
       failedView = createMutation();
     const failed = getDatabaseViewCommands(
       defaults(
@@ -1202,7 +1203,8 @@ export function register({ assert, loadModule, test }) {
       ),
     );
     failed.setViewType("kanban");
-    failedProperty.calls[0][1].onError(new Error("denied"));
+    failedProperty.rejectCall(0, new Error("denied"));
+    await Promise.resolve();
     assert.equal(failedView.calls.length, 0);
     assert.equal(errors.length, 1);
     const locked = getDatabaseViewCommands(
@@ -1240,7 +1242,7 @@ export function register({ assert, loadModule, test }) {
     );
     for (const type of ["kanban", "calendar", "timeline"]) {
       let current = true;
-      const addProperty = createMutation(),
+      const addProperty = createMutation(true),
         updateDatabaseView = createMutation();
       const commands = getDatabaseViewCommands({
         notify: { error() {}, success() {} },
@@ -1267,7 +1269,8 @@ export function register({ assert, loadModule, test }) {
       commands.setupRequiredViewProperties();
       assert.equal(addProperty.calls.length, 1);
       current = false;
-      addProperty.calls[0][1].onSuccess(
+      addProperty.resolveCall(
+        0,
         createProperty(
           "new-column",
           "new-field",
@@ -1275,6 +1278,7 @@ export function register({ assert, loadModule, test }) {
           type === "kanban" ? "status" : "date",
         ),
       );
+      await Promise.resolve();
       assert.equal(updateDatabaseView.calls.length, 0);
     }
   });
@@ -1283,7 +1287,7 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
+    const addDatabaseView = createMutation(true);
     const properties = [
       createProperty("database-property-status", "property-status", "Status", "status"),
       createProperty("database-property-owner", "property-owner", "Owner", "person"),
@@ -1498,8 +1502,8 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
-    const addProperty = createMutation();
+    const addDatabaseView = createMutation(true);
+    const addProperty = createMutation(true);
     const dateProperty = createProperty(
       "database-property-date",
       "property-date",
@@ -1632,8 +1636,8 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
-    const addProperty = createMutation();
+    const addDatabaseView = createMutation(true);
+    const addProperty = createMutation(true);
     const commands = getDatabaseViewCommands({
       notify: { error: () => {}, success: () => {} },
       copyViewLink: async () => {},
@@ -1656,15 +1660,18 @@ export function register({ assert, loadModule, test }) {
     });
 
     commands.addTimelineView();
-    addProperty.calls[0][1].onSuccess(
+    addProperty.resolveCall(
+      0,
       createProperty("database-property-date", "property-date", "Date", "date"),
     );
-    addDatabaseView.calls[0][1].onSuccess({
+    await Promise.resolve();
+    addDatabaseView.resolveCall(0, {
       config: { datePropertyId: "property-date" },
       id: "view-timeline",
       name: "Timeline",
       type: "timeline",
     });
+    await Promise.resolve();
 
     assert.deepEqual(addProperty.calls[0][0], {
       databaseId,
@@ -1810,7 +1817,7 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
+    const addDatabaseView = createMutation(true);
     const activeViewIds = [];
     const commands = getDatabaseViewCommands({
       notify: { error: () => {}, success: () => {} },
@@ -1834,11 +1841,12 @@ export function register({ assert, loadModule, test }) {
     });
 
     commands.addChartView();
-    addDatabaseView.calls[0][1].onSuccess({
+    addDatabaseView.resolveCall(0, {
       id: "view-chart",
       name: "Chart",
       type: "chart",
     });
+    await Promise.resolve();
 
     assert.deepEqual(addDatabaseView.calls[0][0], {
       config: {
@@ -1861,8 +1869,8 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
-    const addProperty = createMutation();
+    const addDatabaseView = createMutation(true);
+    const addProperty = createMutation(true);
     const commands = getDatabaseViewCommands({
       notify: { error: () => {}, success: () => {} },
       copyViewLink: async () => {},
@@ -1900,7 +1908,7 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
+    const addDatabaseView = createMutation(true);
     const commands = getDatabaseViewCommands({
       notify: { error: () => {}, success: () => {} },
       copyViewLink: async () => {},
@@ -2131,7 +2139,7 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addDatabaseView = createMutation();
+    const addDatabaseView = createMutation(true);
     const activeViewIds = [];
     const commands = getDatabaseViewCommands({
       notify: { error: () => {}, success: () => {} },
@@ -2155,17 +2163,19 @@ export function register({ assert, loadModule, test }) {
     });
 
     commands.addListView();
-    addDatabaseView.calls[0][1].onSuccess({
+    addDatabaseView.resolveCall(0, {
       id: "view-list",
       name: "List",
       type: "list",
     });
+    await Promise.resolve();
     commands.addGalleryView();
-    addDatabaseView.calls[1][1].onSuccess({
+    addDatabaseView.resolveCall(1, {
       id: "view-gallery",
       name: "Gallery",
       type: "gallery",
     });
+    await Promise.resolve();
 
     assert.deepEqual(
       addDatabaseView.calls.map(([input]) => input),
@@ -2298,7 +2308,7 @@ export function register({ assert, loadModule, test }) {
     const { getDatabaseViewCommands } = await loadModule(
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
-    const addProperty = createMutation();
+    const addProperty = createMutation(true);
     const addRow = createMutation();
     addProperty.isPending = true;
     addRow.isPending = true;
@@ -2338,25 +2348,26 @@ export function register({ assert, loadModule, test }) {
   });
 }
 
-function createMutation() {
+function createMutation(deferred = false) {
   const calls = [];
-
-  return {
-    calls,
-    isPending: false,
-    mutate: (...args) => {
-      calls.push(args);
-    },
-    mutateAsync: async (...args) => {
-      calls.push(args);
-    },
+  const settlements = [];
+  const operation = (input) => {
+    const result = Promise.withResolvers();
+    calls.push([input]);
+    settlements.push(result);
+    if (!deferred) result.resolve();
+    return result.promise;
   };
+  operation.calls = calls;
+  operation.resolveCall = (index, result) => settlements[index].resolve(result);
+  operation.rejectCall = (index, error) => settlements[index].reject(error);
+  return operation;
 }
 
 function createMutations(overrides = {}) {
   return {
-    addDatabaseView: createMutation(),
-    addProperty: createMutation(),
+    addDatabaseView: createMutation(true),
+    addProperty: createMutation(true),
     addRow: createMutation(),
     updateDatabase: createMutation(),
     updateDatabaseView: createMutation(),

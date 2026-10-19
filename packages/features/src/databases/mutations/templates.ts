@@ -1,103 +1,37 @@
-import { useDatabaseController } from "../interactions/react";
 import { useMutation } from "@tanstack/react-query";
 import { useZilobaseFeatures } from "../../shared/context";
-import { resolveDataSourceCommandScope } from "./scope";
-export type DatabaseStoredTemplate = {
-  archivedAt: string | null;
-  id: string;
-  name: string;
-  template: unknown;
-};
-type DatabaseTemplateScope = {
-  databaseId: string;
-  hostDatabaseId?: string;
-};
+import {
+  archiveDatabaseTemplate,
+  createDatabaseTemplate,
+  restoreDatabaseTemplate,
+  updateDatabaseTemplate,
+} from "./templates-operations";
+export type { DatabaseStoredTemplate } from "./templates-operations";
 export function useCreateDatabaseTemplate() {
-  return useDatabaseTemplateMutation(
-    (
-      input: DatabaseTemplateScope & {
-        name: string;
-        template: unknown;
-      },
-    ) => ({
-      name: input.name,
-      template: input.template,
-      type: "template.create" as const,
-    }),
-  );
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof createDatabaseTemplate>[1]) =>
+      createDatabaseTemplate(context, input),
+  });
 }
 export function useUpdateDatabaseTemplate() {
-  return useDatabaseTemplateMutation(
-    (
-      input: DatabaseTemplateScope & {
-        patch: unknown;
-        templateId: string;
-      },
-    ) => ({
-      patch: input.patch,
-      templateId: input.templateId,
-      type: "template.update" as const,
-    }),
-  );
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof updateDatabaseTemplate>[1]) =>
+      updateDatabaseTemplate(context, input),
+  });
 }
 export function useArchiveDatabaseTemplate() {
-  return useDatabaseTemplateMutation(
-    (
-      input: DatabaseTemplateScope & {
-        templateId: string;
-      },
-    ) => ({
-      templateId: input.templateId,
-      type: "template.archive" as const,
-    }),
-  );
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof archiveDatabaseTemplate>[1]) =>
+      archiveDatabaseTemplate(context, input),
+  });
 }
 export function useRestoreDatabaseTemplate() {
-  return useDatabaseTemplateMutation(
-    (
-      input: DatabaseTemplateScope & {
-        templateId: string;
-      },
-    ) => ({
-      templateId: input.templateId,
-      type: "template.restore" as const,
-    }),
-  );
-}
-function useDatabaseTemplateMutation<
-  TInput extends DatabaseTemplateScope,
-  TCommand extends
-    | {
-        name: string;
-        template: unknown;
-        type: "template.create";
-      }
-    | {
-        patch: unknown;
-        templateId: string;
-        type: "template.update";
-      }
-    | {
-        templateId: string;
-        type: "template.archive" | "template.restore";
-      },
->(command: (input: TInput) => TCommand) {
-  const controller = useDatabaseController();
-  const { queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async (input: TInput) => {
-      const scope = resolveDataSourceCommandScope(
-        queryClient,
-        controller.sessionId,
-        input.databaseId,
-        input.hostDatabaseId,
-      );
-      const ack = await controller.execute({
-        command: command(input),
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      return ack.result as DatabaseStoredTemplate;
-    },
+    mutationFn: (input: Parameters<typeof restoreDatabaseTemplate>[1]) =>
+      restoreDatabaseTemplate(context, input),
   });
 }

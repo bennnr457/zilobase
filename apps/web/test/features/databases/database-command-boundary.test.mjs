@@ -40,8 +40,8 @@ export function register({ assert, loadModule, sourcePath, test }) {
       "/src/sections/databases/views/commands/lib/view-commands.ts",
     );
     const events = [];
-    let dateCallbacks;
-    const mutation = { isPending: false, mutate() {}, async mutateAsync() {} };
+    let dateResult;
+    const mutation = async () => {};
     const input = {
       activeDatabaseFilters: [],
       activeDatabaseSorts: [],
@@ -56,11 +56,9 @@ export function register({ assert, loadModule, sourcePath, test }) {
       viewData: null,
       mutations: {
         addDatabaseView: mutation,
-        addProperty: {
-          ...mutation,
-          mutate: (_input, callbacks) => {
-            dateCallbacks = callbacks;
-          },
+        addProperty: () => {
+          dateResult = Promise.withResolvers();
+          return dateResult.promise;
         },
         addRow: mutation,
         updateDatabase: mutation,
@@ -100,9 +98,12 @@ export function register({ assert, loadModule, sourcePath, test }) {
     await Promise.resolve();
     assert.deepEqual(events.at(-1), ["error", "Couldn't copy link to view"]);
     commands.setupTimelineDateProperty();
-    dateCallbacks.onSuccess({ property: { id: "date-property" } });
+    dateResult.resolve({ property: { id: "date-property" } });
+    await Promise.resolve();
     assert.notDeepEqual(events.at(-1), ["error", "Couldn't add date property"]);
-    dateCallbacks.onError();
+    getDatabaseViewCommands(input).setupTimelineDateProperty();
+    dateResult.reject(new Error("denied"));
+    await Promise.resolve();
     assert.deepEqual(events.at(-1), ["error", "Couldn't add date property"]);
   });
 }

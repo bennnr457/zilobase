@@ -3,13 +3,14 @@ import { useSession } from "../../auth/react";
 import { usePagePersonAccessTargets } from "../../pages/query-hooks";
 import { useZilobaseFeatures } from "../../shared/context";
 import type { DatabaseBootstrapResponse } from "../core/entities";
-import { useDatabaseRecords, prefetchDatabaseWindow } from "./records";
-import { useDatabaseSessionId } from "./session";
 import { useProjectedDatabaseRecords } from "../interactions/react";
-import { composeDatabaseViewData } from "../views/source-state";
 import { deriveDatabaseViewModel } from "../views/model";
 import { databaseViewQueryHash } from "../views/query-hash";
+import { composeDatabaseViewData } from "../views/source-state";
 import { getDatabaseInitialPageSize } from "../views/view-evaluation";
+import { prefetchDatabaseWindow } from "./records";
+import { useDatabaseRecords } from "./records-react";
+import { useDatabaseSessionId } from "./session";
 
 export function useDatabaseViewData({
   databaseId,

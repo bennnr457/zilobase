@@ -1,72 +1,23 @@
-import type { ConfigurationChange } from "../interactions/configuration";
-import { useDatabaseController } from "../interactions/react";
 import { useMutation } from "@tanstack/react-query";
-import type { DatabaseViewEntity } from "../core/entities";
-type UpdateDatabaseViewInput = {
-  configuration?: ConfigurationChange[];
-  databaseId: string;
-  databaseViewId: string;
-  name?: string;
-  type?: string;
-};
-type AddDatabaseViewInput = {
-  config?: unknown;
-  databaseId: string;
-  dataSourceId: string;
-  name?: string;
-  type?: string;
-};
-type DeleteDatabaseViewInput = {
-  databaseId: string;
-  databaseViewId: string;
-};
+import { useZilobaseFeatures } from "../../shared/context";
+import { addDatabaseView, deleteDatabaseView, updateDatabaseView } from "./views-operations";
 export function useUpdateDatabaseView() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId, databaseViewId, ...patch }: UpdateDatabaseViewInput) => {
-      const ack = await controller.execute({
-        command: {
-          patch,
-          type: "view.update",
-          viewId: databaseViewId,
-        },
-        databaseId,
-      });
-      return ack.result as DatabaseViewEntity;
-    },
+    mutationFn: (input: Parameters<typeof updateDatabaseView>[1]) =>
+      updateDatabaseView(context, input),
   });
 }
 export function useAddDatabaseView() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ config, databaseId, dataSourceId, name, type }: AddDatabaseViewInput) => {
-      const ack = await controller.execute({
-        command: {
-          afterViewId: null,
-          beforeViewId: null,
-          config: config ?? null,
-          dataSourceId,
-          name: name?.trim() || "Table",
-          type: "view.create",
-          viewType: type?.trim() || "table",
-        },
-        databaseId,
-      });
-      return ack.result as DatabaseViewEntity;
-    },
+    mutationFn: (input: Parameters<typeof addDatabaseView>[1]) => addDatabaseView(context, input),
   });
 }
 export function useDeleteDatabaseView() {
-  const controller = useDatabaseController();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: async ({ databaseId, databaseViewId }: DeleteDatabaseViewInput) => {
-      const ack = await controller.execute({
-        command: { type: "view.delete", viewId: databaseViewId },
-        databaseId,
-      });
-      return ack.result as {
-        viewId: string;
-      };
-    },
+    mutationFn: (input: Parameters<typeof deleteDatabaseView>[1]) =>
+      deleteDatabaseView(context, input),
   });
 }

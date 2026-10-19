@@ -1,31 +1,33 @@
-import { resolveDatabaseBootstrap } from "../../../../../packages/features/src/databases/cache-references";
-import { normalizeDatabaseBootstrap } from "../../../../../packages/features/src/databases/cache-references";
+import { QueryClient } from "@tanstack/react-query";
+import { initializeZilobaseClient } from "@zilobase/features";
 import { createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { QueryClient } from "@tanstack/react-query";
-import { initializeZilobaseClient } from "@zilobase/features";
 import { sharedClient } from "../../../../../packages/features/src/data/client";
 import {
-  ZilobaseFeaturesProvider,
-  type ZilobaseFeaturesConfig,
-} from "../../../../../packages/features/src/shared/context";
-import { useDatabaseBootstrap } from "../../../../../packages/features/src/databases/queries/bootstrap";
-import { useDatabaseViewData } from "../../../../../packages/features/src/databases/queries/view-data";
-import { databaseBootstrapQueryKey } from "../../../../../packages/features/src/databases/queries/keys";
+  normalizeDatabaseBootstrap,
+  resolveDatabaseBootstrap,
+} from "../../../../../packages/features/src/databases/cache-references";
+import type { DatabaseBootstrapResponse } from "../../../../../packages/features/src/databases/core/entities";
 import {
   databaseController,
   disposeDatabaseController,
 } from "../../../../../packages/features/src/databases/interactions/store";
+import { useDatabaseBootstrap } from "../../../../../packages/features/src/databases/queries/bootstrap-react";
+import { databaseBootstrapQueryKey } from "../../../../../packages/features/src/databases/queries/keys";
+import { useDatabaseViewData } from "../../../../../packages/features/src/databases/queries/view-data";
 import { databaseViewQueryHash } from "../../../../../packages/features/src/databases/views/query-hash";
-import type { DatabaseBootstrapResponse } from "../../../../../packages/features/src/databases/core/entities";
+import {
+  ZilobaseFeaturesProvider,
+  type ZilobaseFeaturesConfig,
+} from "../../../../../packages/features/src/shared/context";
 
 export function mountQueryReconciliation(container: HTMLElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { gcTime: Infinity, retry: false } },
   });
   const session = {
-    user: null,
+    user: { id: "user" },
     session: { id: "query-test", userId: "user", expiresAt: "2099-01-01" },
   };
   queryClient.setQueryData(["session"], session);

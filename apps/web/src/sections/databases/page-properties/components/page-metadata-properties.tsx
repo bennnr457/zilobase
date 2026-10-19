@@ -1,21 +1,25 @@
-import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import type { PageLayoutConfig } from "@zilobase/features/pages";
 import { usePageProperties } from "@zilobase/features/pages/react";
+import type { CSSProperties, Dispatch, SetStateAction } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
+import type {
+  DatabasePresenceCollaborator,
+  DatabasePropertyValue,
+} from "@zilobase/features/databases";
+import {
+  defaultStatusOptions,
+  formatDatabaseDateValue,
+  getPersonLimit,
+} from "@zilobase/features/databases";
 import { DatabasePropertyButton } from "../../properties/editors/components/database-property-button";
 import { DatabasePropertyDate } from "../../properties/editors/components/database-property-date";
 import { DatabasePropertyFiles } from "../../properties/editors/components/database-property-files";
 import { DatabasePropertyInput } from "../../properties/editors/components/database-property-input";
 import { DatabasePropertySelect } from "../../properties/editors/components/database-property-select";
 import { DatabaseRelationPropertyValue } from "../../properties/editors/components/database-property-value";
-import { formatDatabaseDateValue } from "@zilobase/features/databases";
-import { defaultStatusOptions } from "@zilobase/features/databases";
 import { getDatabasePropertyType } from "../../properties/lib/property-catalog";
-import { getPersonLimit } from "@zilobase/features/databases";
-import type { DatabasePresenceCollaborator } from "@zilobase/features/databases";
-import type { DatabasePropertyValue } from "@zilobase/features/databases";
 
 type PagePropertyPayload = ReturnType<typeof usePageProperties>["data"];
 type PageProperty = NonNullable<PagePropertyPayload>["properties"][number];
@@ -96,7 +100,7 @@ export function PageMetadataProperties({
   const propertyPresenceById = presenceByProperty;
 
   return (
-    <div className="mt-6 grid gap-1 px-3 py-2">
+    <div className="mt-6 grid gap-1 py-2">
       {(layoutPropertyId
         ? (propertyPayload?.properties.filter((property) => property.id === layoutPropertyId) ?? [])
         : visibleProperties

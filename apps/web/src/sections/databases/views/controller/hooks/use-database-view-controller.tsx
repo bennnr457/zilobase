@@ -1,6 +1,7 @@
-import { createDatabaseSourceCommands } from "@zilobase/features/databases";
-import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
 import { shouldUseDatabaseSetupMode } from "@/sections/databases/setup/lib/setup-mode";
+import type { OpenPageOptions } from "@/sections/pages/navigation/hooks/page-navigation";
+import { useZilobaseFeatures } from "@zilobase/features";
+import { createDatabaseSourceCommands } from "@zilobase/features/databases";
 import {
   useCallback,
   useEffect,
@@ -10,48 +11,48 @@ import {
   type DragEvent as ReactDragEvent,
 } from "react";
 
-import { isDatabaseLocked } from "@zilobase/features/databases";
 import {
-  useAddDatabaseView,
+  composeDatabaseViewData,
+  getDatabaseDataSourceSummaries,
+  getDatabaseSetupDismissed,
+  getDatabaseViewTabs,
+  isDatabaseLocked,
+  resolveRequestedDatabaseViewId,
+} from "@zilobase/features/databases";
+import {
   useAddDatabaseProperty,
   useAddDatabaseRow,
-  useChangeDatabaseRow,
+  useAddDatabaseView,
   useApplyDatabaseTemplate,
+  useChangeDatabaseRow,
   useCreateDatabaseDataSource,
   useDatabaseBootstrap,
+  useDatabaseController,
   useDatabaseViewData,
   useDeleteDatabaseView,
   useLinkDatabaseDataSource,
   useReplaceDatabaseViewDataSource,
   useUnlinkDatabaseDataSource,
   useUpdateDataSource,
-  useUpdateDatabaseView,
   useUpdateDatabaseProperty,
   useUpdateDatabasePropertyValue,
+  useUpdateDatabaseView,
 } from "@zilobase/features/databases/react";
-import { toast } from "sonner";
-import { createSampleRowContent } from "../../../setup/components/database-setup-card";
 import { usePage } from "@zilobase/features/pages/react";
+import { toast } from "sonner";
 import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,
   type DatabasePageDragPayload,
 } from "../../../interactions/lib/database-page-drop";
-import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
+import { createSampleRowContent } from "../../../setup/components/database-setup-card";
 import { getDatabaseViewCommands } from "../../commands/lib/view-commands";
-import { presentDatabaseViewModel } from "../../shared/components/database-view-model";
-import { useDatabaseController } from "@zilobase/features/databases/react";
-import {
-  composeDatabaseViewData,
-  getDatabaseDataSourceSummaries,
-  getDatabaseViewTabs,
-  resolveRequestedDatabaseViewId,
-} from "@zilobase/features/databases";
-import { getDatabaseSetupDismissed } from "@zilobase/features/databases";
 import {
   databaseViewTypeOptions,
   type DatabaseViewType,
 } from "../../settings/lib/view-type-options";
+import { presentDatabaseViewModel } from "../../shared/components/database-view-model";
+import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
 
 export type DatabaseViewProps = {
   activeViewId?: string | null;
@@ -91,6 +92,7 @@ export function useDatabaseViewController({
   showTitle = true,
   pageId = null,
 }: DatabaseViewProps) {
+  const operationContext = useZilobaseFeatures();
   const databaseController = useDatabaseController();
   const updateDatabase = useUpdateDataSource();
   const applyDataSourceTemplate = useApplyDatabaseTemplate();
@@ -352,21 +354,33 @@ export function useDatabaseViewController({
   }, []);
 
   const sourceCommands = createDatabaseSourceCommands({
+    context: operationContext,
+    pending: {
+      updateDatabase: updateDatabase.isPending,
+      applyDataSourceTemplate: applyDataSourceTemplate.isPending,
+      createDataSource: createDataSource.isPending,
+      updateDatabaseView: updateDatabaseView.isPending,
+      addDatabaseView: addDatabaseView.isPending,
+      linkDatabaseDataSource: linkDatabaseDataSource.isPending,
+      replaceDatabaseViewDataSource: replaceDatabaseViewDataSource.isPending,
+      unlinkDatabaseDataSource: unlinkDatabaseDataSource.isPending,
+      deleteDatabaseView: deleteDatabaseView.isPending,
+    },
     databaseId,
     editable,
     bootstrap,
     resolvedActiveViewId,
     activeViewTabId,
     viewTabs,
-    updateDatabase,
-    applyDataSourceTemplate,
-    createDataSource,
-    updateDatabaseView,
-    addDatabaseView,
-    linkDatabaseDataSource,
-    replaceDatabaseViewDataSource,
-    unlinkDatabaseDataSource,
-    deleteDatabaseView,
+    updateDatabase: updateDatabase.mutateAsync,
+    applyDataSourceTemplate: applyDataSourceTemplate.mutateAsync,
+    createDataSource: createDataSource.mutateAsync,
+    updateDatabaseView: updateDatabaseView.mutateAsync,
+    addDatabaseView: addDatabaseView.mutateAsync,
+    linkDatabaseDataSource: linkDatabaseDataSource.mutateAsync,
+    replaceDatabaseViewDataSource: replaceDatabaseViewDataSource.mutateAsync,
+    unlinkDatabaseDataSource: unlinkDatabaseDataSource.mutateAsync,
+    deleteDatabaseView: deleteDatabaseView.mutateAsync,
     onViewSelected: setSelectedActiveViewId,
     notify: toast,
     createSampleRowContent,
@@ -425,15 +439,25 @@ export function useDatabaseViewController({
     items,
     kanbanGroupProperty,
     timelineDateProperty,
+    pending: {
+      addDatabaseView: addDatabaseView.isPending,
+      addProperty: addProperty.isPending,
+      addRow: addRow.isPending,
+      updateDatabase: updateDatabase.isPending,
+      updateDatabaseView: updateDatabaseView.isPending,
+      changeRow: changeRow.isPending,
+      updateProperty: updateProperty.isPending,
+      updateValue: updateValue.isPending,
+    },
     mutations: {
-      addDatabaseView,
-      addProperty,
-      addRow,
-      updateDatabase,
-      updateDatabaseView,
-      changeRow,
-      updateProperty,
-      updateValue,
+      addDatabaseView: addDatabaseView.mutateAsync,
+      addProperty: addProperty.mutateAsync,
+      addRow: addRow.mutateAsync,
+      updateDatabase: updateDatabase.mutateAsync,
+      updateDatabaseView: updateDatabaseView.mutateAsync,
+      changeRow: changeRow.mutateAsync,
+      updateProperty: updateProperty.mutateAsync,
+      updateValue: updateValue.mutateAsync,
     },
     viewData: activeViewData,
     properties,

@@ -1,7 +1,7 @@
-import { useMemo, useEffect } from "react";
-import { useDatabaseBootstrap } from "./bootstrap";
-import { useDatabaseRecords } from "./records";
+import { useEffect, useMemo } from "react";
 import { composeDatabaseViewData } from "../views/source-state";
+import { useDatabaseBootstrap } from "./bootstrap-react";
+import { useDatabaseRecords } from "./records-react";
 export function useDatabaseMetadata(
   databaseId: string | null | undefined,
   options?: {
