@@ -47,8 +47,76 @@ export type DataSourceContext = {
 export type DatabaseRowContext = {
   id: string;
   pageId: string;
+  parentRowId?: string | null;
   position: number;
   name: string;
+};
+
+export const CONTEXT_VERSION = 1 as const;
+
+export type ResourceRef = { type: "page" | "database"; id: string };
+export type ContextProvenance = {
+  capturedAt: string;
+  origin: "saved" | "local-editor";
+  revision?: string;
+};
+export type ContextCoverage = {
+  complete: boolean;
+  totalRows?: number;
+  includedRows?: number;
+  omittedRows?: number;
+  reasons: string[];
+};
+export type ContextPage = {
+  id: string;
+  title: string;
+  path: string;
+  content: unknown;
+  databaseIds: string[];
+  provenance: ContextProvenance;
+  coverage: ContextCoverage;
+};
+export type ContextDatabase = {
+  id: string;
+  name: string;
+  pageId: string | null;
+  sourceIds: string[];
+  views: DatabaseViewSchema[];
+  config?: unknown;
+  provenance: ContextProvenance;
+  coverage: ContextCoverage;
+};
+export type ContextDataSource = {
+  id: string;
+  name: string;
+  parentDatabaseId: string;
+  hostDatabaseIds: string[];
+  config?: unknown;
+  properties: DatabasePropertySchema[];
+  rows: DatabaseRowContext[];
+  values: DatabaseValueContext[];
+  provenance: ContextProvenance;
+  coverage: ContextCoverage;
+};
+export type WorkspaceContext = {
+  version: typeof CONTEXT_VERSION;
+  roots: ResourceRef[];
+  pages: ContextPage[];
+  databases: ContextDatabase[];
+  sources: ContextDataSource[];
+  // Only retain the authorized parent reference when an embedded resource cannot be read.
+  unavailable: Array<{ parent: ResourceRef; reason: string }>;
+};
+export type ContextManifestEntry = {
+  key: string;
+  type: "page" | "database" | "source" | "record";
+  id: string;
+  title: string;
+  pageId?: string;
+  databaseId?: string;
+  sourceId?: string;
+  provenance: ContextProvenance;
+  coverage?: ContextCoverage;
 };
 
 export type DatabaseValueContext = {

@@ -1,4 +1,13 @@
 export {
+  CONTEXT_VERSION,
+  type ResourceRef,
+  type ContextProvenance,
+  type ContextCoverage,
+  type ContextPage,
+  type ContextDatabase,
+  type ContextDataSource,
+  type WorkspaceContext,
+  type ContextManifestEntry,
   type ContextSourceRole,
   type ContextAttachment,
   type ContextSourceRef,
