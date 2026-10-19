@@ -1,60 +1,19 @@
 import { Hono } from "hono";
-import { getAuthenticatedUser as requireUser } from "../http/auth";
+import { searchWorkspaceOperation } from "../../services/search/operations";
+import { serverOperationContext } from "../http/operation-context";
+import { attachServiceErrorHandler } from "../http/route-error";
 
-import { getMembership } from "../../services/access/principal-access";
-import { searchWorkspaceItems } from "../../services/search/workspace-search";
 import type { AppBindings } from "../../shared/contracts/http";
-import { rejectMismatchedApiKeyWorkspace } from "../api-keys/access";
-import { rejectMismatchedPinnedWorkspace, requireOAuthScope } from "../auth/oauth/oauth-access";
 
-export const searchRoutes = new Hono<AppBindings>();
+export const searchRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 
-const maxSearchResults = 50;
-
-searchRoutes.get("/", async (c) => {
-  const denied = requireOAuthScope(c, "search.read");
-  if (denied) {
-    return denied;
-  }
-
-  const user = requireUser(c);
-
-  if (!user) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const workspaceId = c.req.query("workspaceId");
-
-  if (!workspaceId) {
-    return c.json({ error: "workspaceId is required" }, 400);
-  }
-
-  const mismatch =
-    rejectMismatchedApiKeyWorkspace(c, workspaceId) ??
-    rejectMismatchedPinnedWorkspace(c, workspaceId);
-
-  if (mismatch) {
-    return mismatch;
-  }
-
-  if (!(await getMembership(workspaceId, user.id))) {
-    return c.json({ error: "Forbidden" }, 403);
-  }
-
-  const requestedTypes = (c.req.query("types") ?? "")
-    .split(",")
-    .filter((type): type is "database" | "page" => type === "database" || type === "page");
-
-  const results = await searchWorkspaceItems({
-    limit: maxSearchResults,
-    membershipVerified: true,
-    query: c.req.query("q") ?? "",
-    types: requestedTypes.length ? requestedTypes : undefined,
-    userId: user.id,
-    workspaceId,
-  });
-
-  return c.json({
-    results,
-  });
-});
+searchRoutes.get("/", async (c) =>
+  c.json(
+    await searchWorkspaceOperation(serverOperationContext(c), {
+      workspaceId: c.req.query("workspaceId"),
+      types: c.req.query("types"),
+      q: c.req.query("q"),
+    }),
+    200,
+  ),
+);

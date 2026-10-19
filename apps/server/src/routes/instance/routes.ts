@@ -1,7 +1,12 @@
 import { Schema, SchemaTransformation } from "effect";
-import { Hono, type Context } from "hono";
+import { Hono } from "hono";
+import {
+  getInstanceSettingsOperation,
+  updateInstanceSettingsOperation,
+} from "../../services/instance/operations";
+import { serverOperationContext } from "../http/operation-context";
+import { attachServiceErrorHandler } from "../http/route-error";
 
-import { getMembership } from "../../services/access/principal-access";
 import { getZilobaseDiscoveryDocument } from "../../services/instance/discovery/discovery";
 import {
   BootstrapAlreadyCompletedError,
@@ -9,16 +14,11 @@ import {
   BootstrapStateConflictError,
   InvalidBootstrapTokenError,
 } from "../../services/instance/registration/registration";
-import {
-  canManageInstanceSettings,
-  getInstanceAdministrationSettings,
-  updateInstanceAdministrationSettings,
-} from "../../services/instance/settings/administration";
 import { isCommunityRegistration } from "../../shared/config/app-policy";
 import type { AppBindings } from "../../shared/contracts/http";
 import { parseJsonBody } from "../http/schema-json";
 
-export const instanceRoutes = new Hono<AppBindings>();
+export const instanceRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 
 const BootstrapInput = Schema.Struct({
   email: Schema.String.pipe(
@@ -48,22 +48,6 @@ const BootstrapInput = Schema.Struct({
     ),
   ),
 });
-
-const InstanceSettingsUpdate = Schema.Struct({
-  displayName: Schema.optionalKey(
-    Schema.String.pipe(
-      Schema.decode(SchemaTransformation.trim()),
-      Schema.check(Schema.isMinLength(1), Schema.isMaxLength(100)),
-    ),
-  ),
-  registrationMode: Schema.optionalKey(Schema.Literals(["invite-only", "open"])),
-}).check(
-  Schema.makeFilter((value) =>
-    value.displayName !== undefined || value.registrationMode !== undefined
-      ? undefined
-      : "Provide at least one setting to update.",
-  ),
-);
 
 instanceRoutes.get("/.well-known/zilobase", async (c) => {
   c.header("Cache-Control", "no-store");
@@ -110,63 +94,16 @@ instanceRoutes.post("/api/instance/bootstrap", async (c) => {
   }
 });
 
-instanceRoutes.get("/api/instance/settings", async (c) => {
-  const access = await requireSelfHostedOwner(c);
+instanceRoutes.get("/api/instance/settings", async (c) =>
+  c.json(await getInstanceSettingsOperation(serverOperationContext(c), {}), 200),
+);
 
-  if (access instanceof Response) {
-    return access;
-  }
-
-  return c.json({ settings: access.settings });
-});
-
-instanceRoutes.patch("/api/instance/settings", async (c) => {
-  const access = await requireSelfHostedOwner(c);
-
-  if (access instanceof Response) {
-    return access;
-  }
-
-  const parsed = await parseJsonBody(c.req, InstanceSettingsUpdate);
-
-  if (!parsed.ok) {
-    return c.json({ error: parsed.message || "Invalid settings request." }, 400);
-  }
-
-  const settings = await updateInstanceAdministrationSettings(parsed.data);
-  return c.json({ settings: { ...access.settings, ...settings } });
-});
-
-async function requireSelfHostedOwner(c: Context<AppBindings>) {
-  if (!isCommunityRegistration(c.get("appPolicy"))) {
-    return c.json({ error: "Not found" }, 404);
-  }
-
-  const requestUser = c.get("user");
-
-  if (!requestUser || c.get("authMethod") !== "session") {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const settings = await getInstanceAdministrationSettings(c.env);
-
-  if (!settings.pinnedWorkspaceId) {
-    return c.json({ error: "Instance bootstrap is incomplete." }, 409);
-  }
-
-  const membership = await getMembership(settings.pinnedWorkspaceId, requestUser.id);
-
-  if (!canManageInstanceSettings(membership?.role)) {
-    return c.json(
-      {
-        error: "Only the self-hosted instance owner can change server settings.",
-      },
-      403,
-    );
-  }
-
-  return { settings };
-}
+instanceRoutes.patch("/api/instance/settings", async (c) =>
+  c.json(
+    await updateInstanceSettingsOperation(serverOperationContext(c), {}, () => c.req.json()),
+    200,
+  ),
+);
 
 function readBootstrapToken(headers: Headers) {
   const explicitToken = headers.get("x-zilobase-bootstrap-token")?.trim();

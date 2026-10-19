@@ -1,48 +1,17 @@
 import type { Context } from "hono";
 import { Hono } from "hono";
-import { getUserHasPassword } from "../../../services/auth/sessions/password";
-import { ensurePinnedWorkspaceMembership } from "../../../services/auth/sessions/pinned-membership";
-import { isCommunityRegistration } from "../../../shared/config/app-policy";
+import { getSessionOperation } from "../../../services/auth/sessions/operations";
 import type { AppBindings } from "../../../shared/contracts/http";
+import { serverOperationContext } from "../../http/operation-context";
+import { attachServiceErrorHandler } from "../../http/route-error";
 
-export const sessionRoutes = new Hono<AppBindings>();
+export const sessionRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 
 sessionRoutes.get("/", (c) =>
   timed(c, "route_session_total", async () => {
-    const user = c.get("user");
-    const session = c.get("session");
-
-    if (!user) {
-      return c.json({ user: null, session: null }, 401);
-    }
-
-    const [selfHostedWorkspaceId, hasPassword] = await Promise.all([
-      timed(c, "route_session_pin", () =>
-        ensurePinnedWorkspaceMembership(
-          c.env,
-          user.id,
-          user.emailVerified,
-          session?.id,
-          c.get("editionExtension") ?? undefined,
-          isCommunityRegistration(c.get("appPolicy")),
-        ),
-      ),
-      timed(c, "route_session_has_password", () => getUserHasPassword(user.id)),
-    ]);
-    const responseSession =
-      session && selfHostedWorkspaceId && session.activeWorkspaceId !== selfHostedWorkspaceId
-        ? { ...session, activeWorkspaceId: selfHostedWorkspaceId }
-        : session;
-
-    return c.json({
-      demoMode: c.get("authMethod") === "demo",
-      session: responseSession,
-      workspacePinned: c.get("appPolicy").workspaceSelection === "pinned",
-      user: {
-        ...user,
-        hasPassword,
-      },
-    });
+    return c.json(
+      await getSessionOperation(serverOperationContext(c), {}, (name, run) => timed(c, name, run)),
+    );
   }),
 );
 

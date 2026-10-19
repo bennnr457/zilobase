@@ -1,18 +1,20 @@
 import { Hono } from "hono";
 import {
+  completeProfileImageUploadOperation,
+  createProfileImageUploadOperation,
+  removeProfileImageOperation,
+} from "../../../../services/user-settings/profile/images/operations";
+import {
   allowedProfileImageContentTypes,
-  completeProfileImageUpload,
-  createProfileImageUpload,
   getProfileImage,
   getProfileImageMaxBytes,
   isUuid,
   normalizeContentType,
   readPositiveInteger,
-  readString,
-  removeProfileImage,
   sanitizeFilename,
   writeProfileImageUpload,
 } from "../../../../services/user-settings/profile/images/profile-images";
+import { serverOperationContext } from "../../../http/operation-context";
 import { attachServiceErrorHandler } from "../../../http/route-error";
 
 import { resolveImageStorageMode } from "../../../../infrastructure/storage/image-storage";
@@ -20,27 +22,12 @@ import type { AppBindings } from "../../../../shared/contracts/http";
 
 export const profileImageRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 
-type ProfileImageBody = {
-  byteSize?: unknown;
-  contentType?: unknown;
-  filename?: unknown;
-};
-
-profileImageRoutes.post("/image/uploads", async (c) => {
-  const currentUser = c.get("user");
-
-  if (!currentUser) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const input = await readProfileImageBody(c.req.raw, getProfileImageMaxBytes(c.env));
-
-  if ("error" in input) {
-    return c.json({ error: input.error }, 400);
-  }
-
-  return c.json(await createProfileImageUpload(currentUser.id, input, c.env));
-});
+profileImageRoutes.post("/image/uploads", async (c) =>
+  c.json(
+    await createProfileImageUploadOperation(serverOperationContext(c), {}, () => c.req.json()),
+    200,
+  ),
+);
 
 profileImageRoutes.put("/image/uploads/:imageId/body", async (c) => {
   const currentUser = c.get("user");
@@ -86,39 +73,20 @@ profileImageRoutes.put("/image/uploads/:imageId/body", async (c) => {
   return c.json({ ok: true });
 });
 
-profileImageRoutes.post("/image/uploads/:imageId/complete", async (c) => {
-  const currentUser = c.get("user");
+profileImageRoutes.post("/image/uploads/:imageId/complete", async (c) =>
+  c.json(
+    await completeProfileImageUploadOperation(
+      serverOperationContext(c),
+      { imageId: c.req.param("imageId")! },
+      () => c.req.json(),
+    ),
+    200,
+  ),
+);
 
-  if (!currentUser) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const imageId = c.req.param("imageId");
-
-  if (!isUuid(imageId)) {
-    return c.json({ error: "Invalid profile image id" }, 400);
-  }
-
-  const input = await readProfileImageBody(c.req.raw, getProfileImageMaxBytes(c.env));
-
-  if ("error" in input) {
-    return c.json({ error: input.error }, 400);
-  }
-
-  return c.json(await completeProfileImageUpload(currentUser, imageId, input, c.env));
-});
-
-profileImageRoutes.delete("/image", async (c) => {
-  const currentUser = c.get("user");
-
-  if (!currentUser) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  await removeProfileImage(currentUser, c.env);
-
-  return c.json({ image: null });
-});
+profileImageRoutes.delete("/image", async (c) =>
+  c.json(await removeProfileImageOperation(serverOperationContext(c), {}), 200),
+);
 
 profileImageRoutes.get("/images/:userId/:imageId/:filename", async (c) => {
   if (!c.get("user")) {
@@ -150,25 +118,3 @@ profileImageRoutes.get("/images/:userId/:imageId/:filename", async (c) => {
 
   return new Response(object.body, { headers });
 });
-
-async function readProfileImageBody(
-  request: Request,
-  maxBytes: number,
-): Promise<{ byteSize: number; contentType: string; filename: string } | { error: string }> {
-  const body = (await request.json().catch(() => null)) as ProfileImageBody | null;
-  const byteSize = readPositiveInteger(body?.byteSize);
-  const contentType = normalizeContentType(readString(body?.contentType));
-  const filename = sanitizeFilename(readString(body?.filename) ?? "image");
-
-  if (!contentType || !allowedProfileImageContentTypes.has(contentType)) {
-    return { error: "A supported image content type is required" };
-  }
-
-  if (!byteSize || byteSize > maxBytes) {
-    return {
-      error: `Profile image must be between 1 byte and ${maxBytes} bytes`,
-    };
-  }
-
-  return { byteSize, contentType, filename };
-}

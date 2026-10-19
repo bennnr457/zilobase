@@ -1,4 +1,6 @@
-import type { Context } from "hono";
+import { Hono } from "hono";
+import type { AppBindings } from "../../shared/contracts/http";
+import { communityAppPolicy } from "../../shared/config/app-policy";
 import { beforeEach, expect, test, vi } from "vitest";
 
 const create = vi.hoisted(() =>
@@ -8,18 +10,6 @@ vi.mock("../../services/clips/create-clip-service", () => ({
   createClipService: create,
   findDuplicateClip: vi.fn(),
 }));
-vi.mock("../auth/oauth/oauth-access", () => ({
-  rejectMismatchedPinnedWorkspace: () => null,
-  requireOAuthScope: () => null,
-}));
-vi.mock("../http/auth", () => ({
-  getAuthenticatedUser: async () => ({ id: "user" }),
-  readAuthenticatedJson: async (c: Context) => ({
-    ok: true,
-    user: { id: "user" },
-    body: await c.req.json(),
-  }),
-}));
 
 import { clipRoutes } from "./routes";
 const valid = {
@@ -28,8 +18,16 @@ const valid = {
   sourceUrl: "https://example.com",
   captureMode: "article",
 };
+const authenticated = new Hono<AppBindings>();
+authenticated.use("*", async (c, next) => {
+  c.set("user", { id: "user" } as NonNullable<AppBindings["Variables"]["user"]>);
+  c.set("authMethod", "session");
+  c.set("appPolicy", communityAppPolicy);
+  await next();
+});
+authenticated.route("/", clipRoutes);
 const submit = (body: unknown) =>
-  clipRoutes.request("/", {
+  authenticated.request("/", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -81,4 +79,14 @@ test("clip route preserves optional fields and normalizes omitted values", async
   };
   await submit({ ...valid, ...optional });
   expect(create.mock.calls[1][0]).toMatchObject({ request: optional });
+});
+
+test("clip creation requires a verified HTTP actor", async () => {
+  const response = await clipRoutes.request("/", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(valid),
+  });
+  expect(response.status).toBe(401);
+  expect(create).not.toHaveBeenCalled();
 });
