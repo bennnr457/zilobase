@@ -51,22 +51,9 @@ target
 
 # local ui-skills install (https://github.com/ibelick/ui-skills)
 .grok/
-.dev/ai-thread-logs/
-.dev/local/
 
-# Mail browser acceptance artifacts
-.dev/mail-e2e-results/
-
-# Calendar browser acceptance artifacts
-.dev/calendar-e2e-results/
-
-# Database browser acceptance artifacts
-.dev/database-e2e-results/
-.dev/database-app-results/
-.dev/database-app-cache/
-
-# Generated renderer snapshot for calendar benchmark comparisons
-.dev/calendar-baseline/
+# Machine-local development and verification artifacts
+/.dev/
 
 # structure guardrails (RESTRUCTURE_PLAN Pass 0)
 .wrangler/
@@ -75,9 +62,6 @@ target
 coverage/
 *.tsbuildinfo
 graft/.cache/
-
-# Editor browser acceptance artifacts
-.dev/editor-e2e-results/
 
 # Isolated backend test reports
 .test-results/
