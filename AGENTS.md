@@ -368,8 +368,7 @@ documentation-only edit needs formatting and link validation.
 The current implementation is a foundation, not proof that every boundary is
 complete. When working in these areas, address and test the remaining gaps:
 
-- Late mutation success/rollback callbacks can cross account changes.
-- Offline session restoration/logout cleanup and image-upload API/domain work
-  still have ownership in web that should be split into shared policy and adapters.
+- Offline session restoration/logout cleanup still has ownership in web that
+  should be split into shared policy and platform adapters.
 
 These are migration gaps, not patterns to repeat. Remove entries as they are fixed.

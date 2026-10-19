@@ -86,6 +86,9 @@ extension context. Services never accept Hono contexts or format Hono responses.
 Native Request/Headers/Response remain supported at authentication and provider
 boundaries. Services may use Drizzle directly; there is no extra repository layer.
 
+See the [core application operation inventory](OPERATIONS.md) for public API
+extraction, authorization, retries, cache ownership and unsupported legacy calls.
+
 ### Functional owners
 
 - **Auth:** factory at the domain root; session resolution, password inspection,
