@@ -5,17 +5,14 @@ import { isDesktopApp } from "@/platform/desktop/native";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { useShallow } from "zustand/react/shallow";
 
-import { cn } from "@/lib/utils";
 import { isOpenInNewTabShortcut } from "@/app/shortcuts/shortcut-provider";
 import { useAppStore, type DesktopTab } from "@/app/state/app-store";
 import { DesktopTabStrip } from "./desktop-tab-strip";
 import { DesktopWindowTitlebar } from "../../window/components/desktop-window-titlebar";
-import { useSidebar } from "@/components/ui/sidebar";
 
 export function DesktopTabs({ icon, title }: { icon?: string | null; title: string }) {
   const router = useRouter();
   const href = useRouterState({ select: (state) => state.location.href });
-  const { isMobile, open: sidebarOpen } = useSidebar();
   const { activeTabId, activateTab, closeTab, openTab, setTabOrder, syncTab, tabs } = useAppStore(
     useShallow((state) => ({
       activeTabId: state.activeDesktopTabId,
@@ -98,7 +95,7 @@ export function DesktopTabs({ icon, title }: { icon?: string | null; title: stri
 
   return (
     <DesktopWindowTitlebar
-      className={cn(macDesktopApp && (isMobile || !sidebarOpen) && "pl-20")}
+      className={macDesktopApp ? "desktop-tabs-macos" : undefined}
       variant="tabs"
     >
       <DesktopTabStrip

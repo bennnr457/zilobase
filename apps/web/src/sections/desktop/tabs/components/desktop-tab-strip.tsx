@@ -81,7 +81,7 @@ export function DesktopTabStrip({
 
   return (
     <div
-      className="flex min-w-0 max-w-full shrink items-end self-stretch pt-1"
+      className="flex min-w-0 max-w-full shrink items-center self-stretch py-1"
       data-desktop-tab-strip
       style={
         {
@@ -94,7 +94,7 @@ export function DesktopTabStrip({
         as="div"
         axis="x"
         className={cn(
-          "relative flex min-w-0 flex-1 self-stretch items-end pl-1.5",
+          "relative flex min-w-0 flex-1 self-stretch items-center gap-[var(--desktop-tab-gap)]",
           draggingTabId ? "overflow-visible" : "overflow-hidden",
         )}
         data-desktop-drag-region=""
@@ -167,10 +167,10 @@ const DesktopTabItem = memo(function DesktopTabItem({
     <Reorder.Item
       as="div"
       className={cn(
-        "desktop-tab-item group/tab relative flex h-8 min-w-12 max-w-56 flex-[1_1_14rem] cursor-grab items-center rounded-t-md px-1 text-[13px] leading-none select-none active:cursor-grabbing",
+        "desktop-tab-item group/tab relative flex h-7 min-w-12 max-w-56 flex-[1_1_14rem] cursor-grab items-center rounded-md px-1 text-[13px] leading-none select-none active:cursor-grabbing",
         active
           ? "desktop-tab-active z-10 font-medium text-content-primary"
-          : "desktop-tab-inactive rounded-b-md text-content-primary hover:text-content-primary",
+          : "desktop-tab-inactive text-content-primary hover:text-content-primary",
       )}
       dragElastic={0.04}
       dragMomentum={false}
@@ -220,7 +220,7 @@ function DesktopNewTabButton({
   return (
     <motion.button
       aria-label="New tab"
-      className="ml-1 flex size-8 shrink-0 items-center justify-center rounded-md text-content-secondary hover:bg-effect-backdrop hover:text-content-primary"
+      className="flex size-7 shrink-0 items-center justify-center rounded-md text-content-secondary hover:bg-effect-backdrop hover:text-content-primary"
       layout="position"
       onClick={onCreate}
       onPointerDown={stopReorderPointerDown}

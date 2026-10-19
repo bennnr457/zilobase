@@ -77,8 +77,7 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(tabStripSource, /flex-\[1_1_14rem\]/);
     assert.match(tabStripSource, /min-w-12 max-w-56/);
     assert.doesNotMatch(tabStripSource, /gap-2\.5/);
-    assert.match(tabStripSource, /rounded-t-md/);
-    assert.match(tabStripSource, /desktop-tab-inactive rounded-b-md/);
+    assert.match(tabStripSource, /rounded-md/);
     assert.match(tabStripSource, /onPointerEnter=\{onPreload\}/);
     assert.match(tabStripSource, /onPointerDown=\{\(event\) => \{/);
     assert.match(tabStripSource, /motion\.button/);
@@ -91,11 +90,8 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.doesNotMatch(tabStripSource, /onDragEnd=\{/);
     assert.doesNotMatch(tabStripSource, /left-\[calc\(100%/);
     assert.doesNotMatch(tabStripSource, /overflow-x-auto/);
-    assert.match(stylesSource, /--desktop-tab-trailing-width: 2\.625rem/);
+    assert.match(stylesSource, /--desktop-tab-trailing-width: 1\.75rem/);
     assert.match(stylesSource, /--desktop-tab-slot-width: 14rem/);
-    assert.match(stylesSource, /\.desktop-tab-active::before/);
-    assert.match(stylesSource, /\.desktop-tab-active::after/);
-    assert.match(stylesSource, /\.desktop-tab-inactive:has\(\+ \.desktop-tab-inactive\)::after/);
     assert.match(tabsSource, /router\.preloadRoute/);
     assert.match(tabsSource, /pendingNavigation\.current/);
     assert.match(tabsSource, /event\.key === "Tab"/);
