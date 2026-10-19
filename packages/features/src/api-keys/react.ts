@@ -1,5 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createApiKey, deleteApiKey, updateApiKey } from "./operations";
+import {
+  createApiKey,
+  deleteApiKey,
+  updateApiKey,
+  type CreateApiKeyOperationInput,
+  type UpdateApiKeyOperationInput,
+  type DeleteApiKeyOperationInput,
+} from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
 import { useActiveWorkspaceId } from "../workspaces/react";
@@ -15,27 +22,20 @@ export function useApiKeys(workspaceId?: string | null) {
 export function useCreateApiKey() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { expiresIn?: number | null; name: string; workspaceId: string }) =>
-      createApiKey(context, variables),
+    mutationFn: (variables: CreateApiKeyOperationInput) => createApiKey(context, variables),
   });
 }
 
 export function useUpdateApiKey() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: {
-      enabled?: boolean;
-      id: string;
-      name?: string;
-      workspaceId: string;
-    }) => updateApiKey(context, variables),
+    mutationFn: (variables: UpdateApiKeyOperationInput) => updateApiKey(context, variables),
   });
 }
 
 export function useDeleteApiKey() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: { id: string; workspaceId: string }) =>
-      deleteApiKey(context, variables),
+    mutationFn: (variables: DeleteApiKeyOperationInput) => deleteApiKey(context, variables),
   });
 }

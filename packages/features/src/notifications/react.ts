@@ -1,5 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { markInProductNotificationRead } from "./operations";
+import {
+  markInProductNotificationRead,
+  type MarkInProductNotificationReadOperationInput,
+} from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
 import { notificationListQueryOptions } from "./queries";
@@ -12,7 +15,7 @@ export function useInProductNotifications(workspaceId: string | null | undefined
 export function useMarkInProductNotificationRead(workspaceId: string | null | undefined) {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: string | "all") =>
+    mutationFn: (variables: MarkInProductNotificationReadOperationInput["notificationId"]) =>
       markInProductNotificationRead(context, { workspaceId, notificationId: variables }),
   });
 }

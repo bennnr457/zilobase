@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useZilobaseFeatures } from "../shared/context";
-import type { RegistrationMode } from "./contracts";
-import { updateInstanceSettings } from "./operations";
+import { updateInstanceSettings, type UpdateInstanceSettingsOperationInput } from "./operations";
 import { instanceSettingsQueryOptions } from "./queries";
 export function useInstanceSettings() {
   const { apiFetch } = useZilobaseFeatures();
@@ -10,6 +9,7 @@ export function useInstanceSettings() {
 export function useUpdateInstanceSettings() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: RegistrationMode) => updateInstanceSettings(context, variables),
+    mutationFn: (variables: UpdateInstanceSettingsOperationInput) =>
+      updateInstanceSettings(context, variables),
   });
 }

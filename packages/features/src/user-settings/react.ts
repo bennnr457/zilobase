@@ -1,11 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { updateUserSettings } from "./operations";
+import { updateUserSettings, type UpdateUserSettingsOperationInput } from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import type { UserSettings } from "./contracts";
 import { userSettingsQueryOptions } from "./queries";
-
-type UpdateUserSettingsInput = Partial<UserSettings>;
 
 export function useUserSettings() {
   const { apiFetch } = useZilobaseFeatures();
@@ -16,6 +13,7 @@ export function useUserSettings() {
 export function useUpdateUserSettings() {
   const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (variables: UpdateUserSettingsInput) => updateUserSettings(context, variables),
+    mutationFn: (variables: UpdateUserSettingsOperationInput) =>
+      updateUserSettings(context, variables),
   });
 }
