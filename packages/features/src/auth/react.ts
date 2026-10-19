@@ -1,15 +1,26 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  changePassword,
+  deleteAccount,
+  requestEmailVerificationOtp,
+  requestSignInOtp,
+  setPassword,
+  signInWithOtp,
+  signInWithPassword,
+  signOut,
+  signUp,
+  updateUserProfile,
+  verifyEmailOtp,
+} from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import { sessionQueryKey, sessionQueryOptions } from "./queries";
 import type {
-  SessionResponse,
-  SessionUser,
   SignInWithOtpInput,
   SignInWithPasswordInput,
   SignUpInput,
   VerifyEmailOtpInput,
 } from "./contracts";
+import { sessionQueryOptions } from "./queries";
 
 export function useSession() {
   const { auth } = useZilobaseFeatures();
@@ -17,155 +28,80 @@ export function useSession() {
   return useQuery(sessionQueryOptions(auth));
 }
 
-async function refreshSessionQuery(
-  auth: ReturnType<typeof useZilobaseFeatures>["auth"],
-  queryClient: ReturnType<typeof useZilobaseFeatures>["queryClient"],
-) {
-  return queryClient.fetchQuery({
-    ...sessionQueryOptions(auth),
-    staleTime: 0,
-  });
-}
-
 export function useRequestSignInOtp() {
-  const { auth } = useZilobaseFeatures();
-
-  return useMutation({
-    mutationFn: (email: string) => auth.requestSignInOtp(email),
-  });
+  const context = useZilobaseFeatures();
+  return useMutation({ mutationFn: (variables: string) => requestSignInOtp(context, variables) });
 }
 
 export function useSignInWithOtp() {
-  const { auth, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: SignInWithOtpInput) => auth.signInWithOtp(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      await refreshSessionQuery(auth, queryClient);
-    },
+    mutationFn: (variables: SignInWithOtpInput) => signInWithOtp(context, variables),
   });
 }
 
 export function useSignInWithPassword() {
-  const { auth, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: SignInWithPasswordInput) => auth.signInWithPassword(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      await refreshSessionQuery(auth, queryClient);
-    },
+    mutationFn: (variables: SignInWithPasswordInput) => signInWithPassword(context, variables),
   });
 }
 
 export function useSignUp() {
-  const { auth } = useZilobaseFeatures();
-
-  return useMutation({
-    mutationFn: (input: SignUpInput) => auth.signUp(input),
-  });
+  const context = useZilobaseFeatures();
+  return useMutation({ mutationFn: (variables: SignUpInput) => signUp(context, variables) });
 }
 
 export function useRequestEmailVerificationOtp() {
-  const { auth } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (email: string) => auth.requestEmailVerificationOtp(email),
+    mutationFn: (variables: string) => requestEmailVerificationOtp(context, variables),
   });
 }
 
 export function useVerifyEmailOtp() {
-  const { auth, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: VerifyEmailOtpInput) => auth.verifyEmailOtp(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      await refreshSessionQuery(auth, queryClient);
-    },
+    mutationFn: (variables: VerifyEmailOtpInput) => verifyEmailOtp(context, variables),
   });
 }
 
 export function useSignOut() {
-  const { auth, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: () => auth.signOut(),
-    onSuccess: () => {
-      queryClient.setQueryData(sessionQueryKey, { user: null, session: null });
-    },
+    mutationFn: (variables: Parameters<typeof signOut>[1]) => signOut(context, variables),
   });
 }
 
 export function useUpdateUserProfile() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { email: string; name: string }) =>
-      apiFetch<{ user: SessionUser }>("/user-settings/profile", {
-        method: "PATCH",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: ({ user }) => {
-      queryClient.setQueryData(sessionQueryKey, (current: SessionResponse | undefined) => ({
-        session: current?.session ?? null,
-        user,
-      }));
-    },
+    mutationFn: (variables: { email: string; name: string }) =>
+      updateUserProfile(context, variables),
   });
 }
 
 export function useChangePassword() {
-  const { apiFetch, auth, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: {
+    mutationFn: (variables: {
       currentPassword: string;
       newPassword: string;
       revokeOtherSessions?: boolean;
-    }) =>
-      apiFetch<{
-        token: string | null;
-        user: SessionUser;
-      }>("/api/auth/change-password", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      await refreshSessionQuery(auth, queryClient);
-    },
+    }) => changePassword(context, variables),
   });
 }
 
 export function useSetPassword() {
-  const { apiFetch, auth, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { newPassword: string }) =>
-      apiFetch<{ status: boolean }>("/api/auth/set-password", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
-      await refreshSessionQuery(auth, queryClient);
-    },
+    mutationFn: (variables: { newPassword: string }) => setPassword(context, variables),
   });
 }
 
 export function useDeleteAccount() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { password?: string }) =>
-      apiFetch<{ message: string; success: boolean }>("/api/auth/delete-user", {
-        method: "POST",
-        body: JSON.stringify(input),
-      }),
-    onSuccess: () => {
-      queryClient.setQueryData(sessionQueryKey, { user: null, session: null });
-    },
+    mutationFn: (variables: { password?: string }) => deleteAccount(context, variables),
   });
 }

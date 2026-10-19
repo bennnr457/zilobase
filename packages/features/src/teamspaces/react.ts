@@ -1,18 +1,26 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  acceptTeamspaceInvite,
+  addTeamspacePrincipal,
+  createTeamspace,
+  removeTeamspacePrincipal,
+  setTeamspaceMembership,
+  teamspaceLifecycle,
+  updateTeamspace,
+  updateTeamspaceDefaults,
+  updateTeamspaceInviteLink,
+  updateTeamspacePrincipal,
+  updateTeamspaceSettings,
+} from "./operations";
 
 import { useZilobaseFeatures } from "../shared/context";
-import { pagesQueryKey } from "../pages/queries";
+import type { TeamspaceAccessMode } from "./contracts";
 import {
-  archivedTeamspacesQueryKey,
   archivedTeamspacesQueryOptions,
-  teamspacePrincipalsQueryKey,
   teamspacePrincipalsQueryOptions,
-  teamspaceSettingsQueryKey,
   teamspaceSettingsQueryOptions,
-  teamspacesQueryKey,
   teamspacesQueryOptions,
 } from "./queries";
-import type { Teamspace, TeamspaceAccessMode, TeamspaceRole } from "./contracts";
 
 export function useTeamspaces(workspaceId: string | null | undefined) {
   const { apiFetch } = useZilobaseFeatures();
@@ -38,34 +46,21 @@ export function useTeamspacePrincipals(
 }
 
 export function useCreateTeamspace() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: {
+    mutationFn: (variables: {
       accessMode: TeamspaceAccessMode;
       description?: string | null;
       name: string;
       workspaceId: string;
-    }) =>
-      apiFetch<Teamspace>(`/workspaces/${encodeURIComponent(input.workspaceId)}/teamspaces`, {
-        body: JSON.stringify({
-          accessMode: input.accessMode,
-          description: input.description ?? null,
-          name: input.name,
-        }),
-        method: "POST",
-      }),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({
-        queryKey: teamspacesQueryKey(input.workspaceId),
-      });
-    },
+    }) => createTeamspace(context, variables),
   });
 }
 
 export function useUpdateTeamspace() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: {
+    mutationFn: (variables: {
       accessMode?: TeamspaceAccessMode;
       description?: string | null;
       exportEnabled?: boolean;
@@ -78,169 +73,86 @@ export function useUpdateTeamspace() {
       sidebarEditPolicy?: "owners" | "owners_and_members";
       teamspaceId: string;
       workspaceId: string;
-    }) => {
-      const { teamspaceId, workspaceId, ...body } = input;
-      return apiFetch<Teamspace>(
-        `/workspaces/${encodeURIComponent(workspaceId)}/teamspaces/${encodeURIComponent(teamspaceId)}`,
-        { body: JSON.stringify(body), method: "PATCH" },
-      );
-    },
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({
-        queryKey: teamspacesQueryKey(input.workspaceId),
-      });
-    },
+    }) => updateTeamspace(context, variables),
   });
 }
 
 export function useTeamspaceLifecycle() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: {
+    mutationFn: (variables: {
       action: "archive" | "restore" | "recover-owner";
       teamspaceId: string;
       workspaceId: string;
-    }) =>
-      apiFetch(
-        `/workspaces/${encodeURIComponent(input.workspaceId)}/teamspaces/${encodeURIComponent(input.teamspaceId)}/${input.action}`,
-        { method: "POST" },
-      ),
-    onSuccess: async (_result, input) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: teamspacesQueryKey(input.workspaceId) }),
-        queryClient.invalidateQueries({ queryKey: archivedTeamspacesQueryKey(input.workspaceId) }),
-        queryClient.invalidateQueries({ queryKey: pagesQueryKey(input.workspaceId) }),
-      ]);
-    },
+    }) => teamspaceLifecycle(context, variables),
   });
 }
 
 export function useUpdateTeamspaceDefaults() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { defaultTeamspaceIds: string[]; workspaceId: string }) =>
-      apiFetch(`/workspaces/${encodeURIComponent(input.workspaceId)}/teamspace-defaults`, {
-        body: JSON.stringify({ defaultTeamspaceIds: input.defaultTeamspaceIds }),
-        method: "PATCH",
-      }),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({ queryKey: teamspacesQueryKey(input.workspaceId) });
-    },
+    mutationFn: (variables: { defaultTeamspaceIds: string[]; workspaceId: string }) =>
+      updateTeamspaceDefaults(context, variables),
   });
 }
 
 export function useUpdateTeamspaceInviteLink() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { enabled: boolean; teamspaceId: string; workspaceId: string }) =>
-      apiFetch<{ enabled: boolean; token: string | null }>(
-        `/workspaces/${encodeURIComponent(input.workspaceId)}/teamspaces/${encodeURIComponent(input.teamspaceId)}/invite-link`,
-        { body: JSON.stringify({ enabled: input.enabled }), method: "PATCH" },
-      ),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({ queryKey: teamspacesQueryKey(input.workspaceId) });
-    },
+    mutationFn: (variables: { enabled: boolean; teamspaceId: string; workspaceId: string }) =>
+      updateTeamspaceInviteLink(context, variables),
   });
 }
 
 export function useAcceptTeamspaceInvite() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { token: string; workspaceId: string }) =>
-      apiFetch<{ teamspaceId: string }>(
-        `/workspaces/${encodeURIComponent(input.workspaceId)}/teamspace-invites/${encodeURIComponent(input.token)}/accept`,
-        { method: "POST" },
-      ),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({ queryKey: teamspacesQueryKey(input.workspaceId) });
-    },
+    mutationFn: (variables: { token: string; workspaceId: string }) =>
+      acceptTeamspaceInvite(context, variables),
   });
 }
 
 export function useUpdateTeamspaceSettings() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: {
+    mutationFn: (variables: {
       creationPolicy: "workspace_owners" | "workspace_members";
       workspaceId: string;
-    }) =>
-      apiFetch(`/workspaces/${encodeURIComponent(input.workspaceId)}/teamspace-settings`, {
-        body: JSON.stringify({ creationPolicy: input.creationPolicy }),
-        method: "PATCH",
-      }),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({
-        queryKey: teamspaceSettingsQueryKey(input.workspaceId),
-      });
-    },
+    }) => updateTeamspaceSettings(context, variables),
   });
 }
 
 export function useSetTeamspaceMembership() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { action: "join" | "leave"; teamspaceId: string; workspaceId: string }) =>
-      apiFetch(
-        `/workspaces/${encodeURIComponent(input.workspaceId)}/teamspaces/${encodeURIComponent(input.teamspaceId)}/${input.action}`,
-        { method: "POST" },
-      ),
-    onSuccess: async (_result, input) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: teamspacesQueryKey(input.workspaceId) }),
-        queryClient.invalidateQueries({ queryKey: pagesQueryKey(input.workspaceId) }),
-      ]);
-    },
+    mutationFn: (variables: {
+      action: "join" | "leave";
+      teamspaceId: string;
+      workspaceId: string;
+    }) => setTeamspaceMembership(context, variables),
   });
 }
 
 export function useAddTeamspacePrincipal() {
-  return usePrincipalMutation("POST");
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof addTeamspacePrincipal>[1]) =>
+      addTeamspacePrincipal(context, input),
+  });
 }
 
 export function useUpdateTeamspacePrincipal() {
-  return usePrincipalMutation("PATCH");
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof updateTeamspacePrincipal>[1]) =>
+      updateTeamspacePrincipal(context, input),
+  });
 }
 
 export function useRemoveTeamspacePrincipal() {
-  return usePrincipalMutation("DELETE");
-}
-
-function usePrincipalMutation(method: "POST" | "PATCH" | "DELETE") {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: {
-      accessLevelOverride?: "view" | "comment" | "edit" | "full" | null;
-      principalId?: string;
-      principalType?: "user" | "team";
-      role?: TeamspaceRole;
-      teamspaceId: string;
-      userId?: string;
-      workspaceId: string;
-    }) => {
-      const suffix = input.principalId ? `/${encodeURIComponent(input.principalId)}` : "";
-      return apiFetch(
-        `/workspaces/${encodeURIComponent(input.workspaceId)}/teamspaces/${encodeURIComponent(input.teamspaceId)}/principals${suffix}`,
-        {
-          body:
-            method === "DELETE"
-              ? undefined
-              : JSON.stringify({
-                  accessLevelOverride: input.accessLevelOverride,
-                  principalType: input.principalType,
-                  role: input.role,
-                  userId: input.userId,
-                }),
-          method,
-        },
-      );
-    },
-    onSuccess: async (_result, input) => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: teamspacesQueryKey(input.workspaceId) }),
-        queryClient.invalidateQueries({
-          queryKey: teamspacePrincipalsQueryKey(input.workspaceId, input.teamspaceId),
-        }),
-      ]);
-    },
+    mutationFn: (input: Parameters<typeof removeTeamspacePrincipal>[1]) =>
+      removeTeamspacePrincipal(context, input),
   });
 }
