@@ -346,6 +346,12 @@
     @apply bg-action-selected-subtle ring-2 ring-inset ring-action-selected-border;
   }
 
+  [data-radix-popper-content-wrapper]:has(
+    > [data-calendar-unscheduled-popover][aria-hidden="true"]
+  ) {
+    pointer-events: none;
+  }
+
   .database-event-calendar {
     --ec-sticky-offset: 0px;
   }

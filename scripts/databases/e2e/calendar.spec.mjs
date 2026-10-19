@@ -53,6 +53,12 @@ test("property visibility updates every multi-week card and grows or shrinks the
   page,
 }) => {
   await options(page, { showSettings: true, columns: ["date-list", "status-list"] });
+  // Always cross a rendered week boundary, regardless of today's weekday.
+  const range = [
+    await dayValue(page.locator(cells).nth(5)),
+    await dayValue(page.locator(cells).nth(9)),
+  ];
+  await page.evaluate((range) => window.timelineProof.setDates({ 0: range }), range);
   const cards = page.locator(chip("row-0"));
   const heights = () =>
     cards.evaluateAll((elements) =>
@@ -290,6 +296,72 @@ test("Unscheduled drops update the existing record and open its dialog", async (
   expect(await page.evaluate(() => window.timelineProof.openedOptions[0])).toMatchObject({
     presentation: "dialog",
   });
+});
+
+test("dragging an unscheduled record hides the dropdown and dropping on Cancel leaves it unscheduled", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Unscheduled (1)", exact: true }).click();
+  const source = await page.locator('[data-calendar-unscheduled-row="row-1"]').boundingBox();
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(source.x + source.width / 2 + 12, source.y + source.height / 2, {
+    steps: 4,
+  });
+  const cancel = page.getByRole("button", { name: "Cancel scheduling", exact: true });
+  await expect(cancel).toBeVisible();
+  await expect(page.locator('[aria-label="Unscheduled records"]')).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await expect(page.locator('[aria-label="Unscheduled records"]')).toHaveCSS("opacity", "0");
+  const target = await cancel.boundingBox();
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 8 });
+  await expect(cancel).toHaveAttribute("data-calendar-drop", "true");
+  await page.mouse.up();
+  await expect(cancel).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Unscheduled (1)", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => window.timelineProof.saves)).toEqual([]);
+  expect(await page.evaluate(() => window.timelineProof.opened)).toEqual([]);
+  await page.getByRole("button", { name: "Unscheduled (1)", exact: true }).click();
+  await expect(page.locator('[data-calendar-unscheduled-row="row-1"]')).toBeVisible();
+  // The hidden popup's positioning wrapper must also let a drop through.
+  const coveredDate = page.locator(cells).nth(1);
+  const date = await dayValue(coveredDate);
+  await page.locator('[data-calendar-unscheduled-row="row-1"]').dragTo(coveredDate, {
+    targetPosition: { x: 80, y: 60 },
+  });
+  await expect.poll(() => page.evaluate(() => window.timelineProof.saves.length)).toBe(1);
+  expect(await page.evaluate(() => window.timelineProof.saves[0])).toMatchObject({
+    rowId: "row-1",
+    next: date,
+  });
+});
+
+test("calendar controls and weekday headers stay together while the page viewport scrolls", async ({
+  page,
+}) => {
+  await options(page, { pageViewport: true, count: 40 });
+  const viewport = page.locator("[data-page-scroll-viewport]");
+  await viewport.evaluate((el) => {
+    el.style.height = "360px";
+    el.scrollTop = 430;
+  });
+  const nav = page.locator(`${root} [data-slot=event-calendar-nav]`);
+  const header = page.locator(`${root} [data-slot=event-calendar-month-header]`);
+  const geometry = async () => {
+    const v = await viewport.boundingBox(),
+      n = await nav.boundingBox(),
+      h = await header.boundingBox();
+    return [Math.round(n.y - v.y), Math.round(h.y - n.y - n.height)];
+  };
+  await expect.poll(geometry).toEqual([0, 0]);
+  await viewport.evaluate((el) => (el.scrollTop += 80));
+  await expect.poll(geometry).toEqual([0, 0]);
+  await viewport.evaluate((el) => (el.scrollTop -= 40));
+  await expect.poll(geometry).toEqual([0, 0]);
+  await page.getByRole("button", { name: "Unscheduled (1)", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Unscheduled records" })).toBeVisible();
 });
 
 test("all four modes, navigation, themes and narrow layouts remain usable", async ({ page }) => {

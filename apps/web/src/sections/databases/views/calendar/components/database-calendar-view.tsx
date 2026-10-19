@@ -1,5 +1,5 @@
 import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
-import { CalendarPlus, ChevronDown, GripVertical } from "@/components/icons";
+import { CalendarPlus, ChevronDown, GripVertical, X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type {
@@ -101,8 +101,10 @@ export function DatabaseCalendarView() {
   useEffect(() => setMode(savedMode), [activeView?.id, savedMode]);
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const [draggingUnscheduled, setDraggingUnscheduled] = useState(false);
+  const [navHeight, setNavHeight] = useState(40);
   const [height, setHeight] = useState(560);
   const [creating, setCreating] = useState(false);
+  const unscheduledDragFrame = useRef<number | null>(null);
   const request = useRef<symbol | null>(null);
   const mounted = useRef(false);
   const scope = `${session?.session?.id ?? ""}:${databaseId}:${hostDatabaseId}:${activeView?.id}`;
@@ -112,16 +114,42 @@ export function DatabaseCalendarView() {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      if (unscheduledDragFrame.current !== null) cancelAnimationFrame(unscheduledDragFrame.current);
     };
   }, []);
+  const clearDrop = useCallback(() => {
+    root.current
+      ?.querySelectorAll("[data-calendar-drop]")
+      .forEach((el) => el.removeAttribute("data-calendar-drop"));
+  }, []);
+  const finishUnscheduledDrag = useCallback(() => {
+    if (unscheduledDragFrame.current !== null) {
+      cancelAnimationFrame(unscheduledDragFrame.current);
+      unscheduledDragFrame.current = null;
+    }
+    clearDrop();
+    setDraggingUnscheduled(false);
+    setUnscheduledOpen(false);
+  }, [clearDrop]);
   useEffect(() => {
     request.current = null;
     setCreating(false);
-    setUnscheduledOpen(false);
-    setDraggingUnscheduled(false);
-  }, [scope]);
+    finishUnscheduledDrag();
+  }, [scope, finishUnscheduledDrag]);
+  useEffect(() => {
+    if (!draggingUnscheduled) return;
+    // The source lives in a portal, and a drag can end outside the calendar.
+    window.addEventListener("dragend", finishUnscheduledDrag);
+    window.addEventListener("drop", finishUnscheduledDrag);
+    return () => {
+      window.removeEventListener("dragend", finishUnscheduledDrag);
+      window.removeEventListener("drop", finishUnscheduledDrag);
+    };
+  }, [draggingUnscheduled, finishUnscheduledDrag]);
   useLayoutEffect(() => {
     const measure = () => {
+      const nav = root.current?.querySelector<HTMLElement>("[data-slot=event-calendar-nav]");
+      if (nav) setNavHeight(nav.getBoundingClientRect().height);
       if (root.current)
         setHeight(
           Math.max(
@@ -133,12 +161,14 @@ export function DatabaseCalendarView() {
     measure();
     const observer = new ResizeObserver(measure);
     if (root.current?.parentElement) observer.observe(root.current.parentElement);
+    const nav = root.current?.querySelector("[data-slot=event-calendar-nav]");
+    if (nav) observer.observe(nav);
     window.addEventListener("resize", measure);
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, [activeView?.id]);
+  }, [activeView?.id, calendarDateProperty?.id]);
 
   const { events, unscheduled, rows } = useMemo(() => {
     const rows = new Map(sortedItems.map((row) => [row.id, row]));
@@ -246,10 +276,6 @@ export function DatabaseCalendarView() {
       setCalendarMode(view);
     }
   };
-  const clearDrop = () =>
-    root.current
-      ?.querySelectorAll("[data-calendar-drop]")
-      .forEach((el) => el.removeAttribute("data-calendar-drop"));
   const dropTarget = (event: DragEvent) => {
     const cell = (event.target as Element).closest<HTMLElement>("[data-ec-day]");
     if (!cell || !root.current?.contains(cell)) return null;
@@ -273,6 +299,10 @@ export function DatabaseCalendarView() {
     event.preventDefault();
     event.stopPropagation();
     clearDrop();
+    if ((event.target as Element).closest("[data-calendar-cancel-drop]")) {
+      finishUnscheduledDrag();
+      return;
+    }
     if (!editable || !calendarDateProperty) return;
     const row = unscheduled.find((row) => row.id === event.dataTransfer.getData(rowMime));
     const target = dropTarget(event);
@@ -381,22 +411,21 @@ export function DatabaseCalendarView() {
       style={breakout}
       onDragOverCapture={(event) => {
         if (!editable || !event.dataTransfer.types.includes(rowMime)) return;
-        const target = dropTarget(event);
+        clearDrop();
+        const target =
+          (event.target as Element).closest<HTMLElement>("[data-calendar-cancel-drop]") ??
+          dropTarget(event)?.cell;
         if (!target) return;
         event.preventDefault();
         event.stopPropagation();
         event.dataTransfer.dropEffect = "move";
-        clearDrop();
-        target.cell.setAttribute("data-calendar-drop", "true");
+        target.setAttribute("data-calendar-drop", "true");
       }}
       onDragLeave={(event) => {
         if (!root.current?.contains(event.relatedTarget as Node)) clearDrop();
       }}
       onDropCapture={drop}
-      onDragEnd={() => {
-        clearDrop();
-        setDraggingUnscheduled(false);
-      }}
+      onDragEnd={finishUnscheduledDrag}
     >
       <CalendarRenderer
         className="database-event-calendar gap-0 border-0 bg-surface-canvas text-content-primary"
@@ -404,30 +433,57 @@ export function DatabaseCalendarView() {
           {
             height: timed ? height : undefined,
             minHeight: height,
+            "--ec-sticky-offset": `${navHeight}px`,
             "--ec-month-row-min-h": `${Math.max(100, (height - 80) / 6)}px`,
             "--ec-month-bar-h": `${cardHeight + 2}px`,
           } as CSSProperties
         }
         events={events}
         titleActions={
-          <Popover open={unscheduledOpen} onOpenChange={setUnscheduledOpen}>
+          <Popover
+            // Keep the native drag source mounted until dragend. The popup
+            // is hidden during the drag so the calendar remains reachable.
+            open={unscheduledOpen || draggingUnscheduled}
+            onOpenChange={(open) => {
+              if (!draggingUnscheduled) setUnscheduledOpen(open);
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
                 className="shrink-0 gap-1 text-content-secondary"
-                aria-label={`Unscheduled (${unscheduled.length})`}
+                aria-label={
+                  draggingUnscheduled ? "Cancel scheduling" : `Unscheduled (${unscheduled.length})`
+                }
+                data-calendar-cancel-drop={draggingUnscheduled ? "" : undefined}
+                aria-expanded={unscheduledOpen && !draggingUnscheduled}
+                onClick={draggingUnscheduled ? finishUnscheduledDrag : undefined}
               >
-                Unscheduled <span className="tabular-nums">{unscheduled.length}</span>
-                <ChevronDown className="size-3.5" />
+                {draggingUnscheduled ? (
+                  <>
+                    <X className="size-3.5" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    Unscheduled <span className="tabular-nums">{unscheduled.length}</span>
+                    <ChevronDown className="size-3.5" />
+                  </>
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent
               align="start"
+              data-calendar-unscheduled-popover=""
               aria-label="Unscheduled records"
               gap="compact"
               padding="menu"
-              className={cn("w-72 max-w-[calc(100vw-2rem)]", draggingUnscheduled && "opacity-50")}
+              aria-hidden={draggingUnscheduled || undefined}
+              className={cn(
+                "w-72 max-w-[calc(100vw-2rem)] data-closed:invisible",
+                draggingUnscheduled && "pointer-events-none animate-none opacity-0",
+              )}
               onInteractOutside={(event) => {
                 if (draggingUnscheduled) event.preventDefault();
               }}
@@ -444,7 +500,13 @@ export function DatabaseCalendarView() {
                     onDragStart={(event) => {
                       event.dataTransfer.setData(rowMime, row.id);
                       event.dataTransfer.effectAllowed = "move";
-                      setDraggingUnscheduled(true);
+                      // Let the browser capture its drag image before hiding
+                      // the source; hiding it in dragstart cancels native DnD.
+                      unscheduledDragFrame.current = requestAnimationFrame(() => {
+                        unscheduledDragFrame.current = null;
+                        setDraggingUnscheduled(true);
+                        setUnscheduledOpen(false);
+                      });
                     }}
                     className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-action-neutral-hover"
                     onClick={() => {
@@ -474,9 +536,14 @@ export function DatabaseCalendarView() {
           </Popover>
         }
         view={mode}
+        stickyNav
         onViewChange={setView}
         eventOrder={eventOrder}
         classNames={{
+          nav: "z-50",
+          monthHeader: "sticky top-(--ec-sticky-offset) z-40 bg-surface-canvas",
+          timeGrid: "overflow-clip",
+          timeGridHeader: "sticky top-(--ec-sticky-offset) z-40 bg-surface-canvas",
           event: "items-start p-0",
           allDaySection: "max-h-[40%] shrink-0 overflow-y-auto",
         }}
