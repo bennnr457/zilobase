@@ -130,7 +130,7 @@ function SelectItem({
           <CheckIcon className="pointer-events-none" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemText data-slot="menu-item-content">{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );
 }

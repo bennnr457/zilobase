@@ -12,7 +12,11 @@ import {
 } from "@/components/ui/dialog";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { SearchIcon, CheckIcon } from "@/components/icons";
-import { menuItemVariants, menuSeparatorClassName } from "@/components/ui/menu-styles";
+import {
+  menuItemVariants,
+  menuLeadingIconClassName,
+  menuSeparatorClassName,
+} from "@/components/ui/menu-styles";
 
 const commandVariants = cva(
   "flex size-full flex-col overflow-hidden bg-surface-overlay text-content-primary",
@@ -177,6 +181,7 @@ function CommandItem({
           ? menuItemVariants({ size, variant: itemVariant })
           : "relative flex min-h-7 cursor-default items-center gap-2 rounded-md px-2.5 py-1.5 text-xs/relaxed outline-hidden select-none in-data-[slot=dialog-content]:rounded-md data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 data-selected:bg-surface-muted data-selected:text-content-primary [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 data-selected:*:[svg]:text-content-primary",
         "group/command-item",
+        commandVariant !== "menu" && menuLeadingIconClassName,
         className,
       )}
       {...props}

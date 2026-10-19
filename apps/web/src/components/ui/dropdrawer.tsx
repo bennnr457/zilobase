@@ -466,7 +466,9 @@ function DropDrawerItem({
         aria-disabled={disabled}
         {...props}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+        <div data-slot="menu-item-content" className="flex min-w-0 flex-1 items-center gap-2">
+          {children}
+        </div>
         {icon && <div className="shrink-0 text-content-secondary">{icon}</div>}
       </div>
     );
@@ -795,7 +797,9 @@ function DropDrawerSubTrigger({
         onClick={handleClick}
         {...restProps}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+        <div data-slot="menu-item-content" className="flex min-w-0 flex-1 items-center gap-2">
+          {children}
+        </div>
         <ChevronRightIcon className="size-4 text-content-secondary" />
       </div>
     );

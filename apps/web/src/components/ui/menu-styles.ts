@@ -41,8 +41,13 @@ export const menuContentVariants = cva("", {
   },
 });
 
+// Anchor leading icons to the first text line, including wrapped labels and
+// descriptions. The percentage follows the icon's own height at either density.
+export const menuLeadingIconClassName =
+  "[&>svg:first-child]:self-start [&>svg:first-child]:translate-y-[calc((1lh-100%)/2)] [&>[data-slot=menu-item-content]>svg:first-child]:self-start [&>[data-slot=menu-item-content]>svg:first-child]:translate-y-[calc((1lh-100%)/2)]";
+
 export const menuItemVariants = cva(
-  "relative my-0.5 flex cursor-default items-center gap-2 rounded-md outline-hidden select-none focus:bg-action-neutral-hover focus:text-action-on-neutral data-selected:bg-action-neutral-hover data-selected:text-action-on-neutral data-disabled:pointer-events-none data-disabled:opacity-50 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+  `relative my-0.5 flex cursor-default items-center gap-2 rounded-md outline-hidden select-none focus:bg-action-neutral-hover focus:text-action-on-neutral data-selected:bg-action-neutral-hover data-selected:text-action-on-neutral data-disabled:pointer-events-none data-disabled:opacity-50 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 ${menuLeadingIconClassName}`,
   {
     variants: {
       size: {
