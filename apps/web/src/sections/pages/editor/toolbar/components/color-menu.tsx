@@ -12,12 +12,20 @@ import {
 } from "@/lib/color-tokens";
 import type { ColorToken, EditorControlProps } from "../lib/toolbar";
 
-function ColorSwatch({ token, variant }: { token: ColorToken; variant: "text" | "background" }) {
+function ColorSwatch({
+  token,
+  variant,
+  backgroundClassName,
+}: {
+  token: ColorToken;
+  variant: "text" | "background";
+  backgroundClassName?: string;
+}) {
   const textClass = token.textClass;
 
   return (
     <span
-      className={`flex size-6 shrink-0 items-center justify-center rounded-md border ${variant === "text" ? "bg-surface-card" : token.backgroundClass}`}
+      className={`flex size-6 shrink-0 items-center justify-center rounded-md border ${variant === "text" ? "bg-surface-card" : (backgroundClassName ?? token.backgroundClass)}`}
     >
       {variant === "text" ? (
         <span className={`text-base font-semibold ${textClass}`}>A</span>
@@ -27,6 +35,7 @@ function ColorSwatch({ token, variant }: { token: ColorToken; variant: "text" | 
 }
 
 type ColorPickerProps = {
+  grayBackgroundClassName?: string;
   backgroundColor: string | null | undefined;
   onBackgroundColorSelect: (color: string | null) => void;
   onTextColorSelect: (color: string | null) => void;
@@ -50,6 +59,7 @@ function isTextColorActive(stored: string | null | undefined, tokenValue: string
 }
 
 export function ColorPicker({
+  grayBackgroundClassName,
   backgroundColor,
   onBackgroundColorSelect,
   onTextColorSelect,
@@ -86,7 +96,11 @@ export function ColorPicker({
             onClick={() => onBackgroundColorSelect(token.value)}
             type="button"
           >
-            <ColorSwatch token={token} variant="background" />
+            <ColorSwatch
+              token={token}
+              variant="background"
+              backgroundClassName={token.value === "gray" ? grayBackgroundClassName : undefined}
+            />
             <span>{token.name} background</span>
             {isBackgroundColorActive(backgroundColor, token.value) ? (
               <span className="ml-auto text-xs text-content-secondary">Selected</span>

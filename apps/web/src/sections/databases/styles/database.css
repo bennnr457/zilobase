@@ -132,7 +132,7 @@
   }
 
   .tiptap-editor pre {
-    @apply overflow-x-auto rounded-md bg-surface-muted p-4;
+    @apply overflow-x-auto rounded-md bg-surface-navigation p-4;
   }
 
   .tiptap-editor pre code {

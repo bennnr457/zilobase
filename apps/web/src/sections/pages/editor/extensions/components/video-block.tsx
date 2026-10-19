@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
@@ -52,11 +53,15 @@ function VideoBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
   };
 
   return (
-    <NodeViewWrapper className="video-block" data-src={src ? "true" : "false"}>
+    <NodeViewWrapper
+      className="video-block"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+      data-src={src ? "true" : "false"}
+    >
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
           <button
-            className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
+            className="flex h-10 w-full items-center gap-2 rounded-md bg-(--editor-block-background) px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:text-action-on-neutral active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
             disabled={!isEditable || Boolean(src)}
             type="button"
@@ -123,7 +128,7 @@ function VideoBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
       </Popover>
       {src ? (
         <div
-          className="overflow-hidden rounded-md border bg-surface-muted [&_video]:block [&_video]:max-h-[520px] [&_video]:w-full [&_video]:bg-data-media"
+          className="overflow-hidden rounded-md bg-(--editor-block-background) [&_video]:block [&_video]:max-h-[520px] [&_video]:w-full [&_video]:bg-data-media"
           contentEditable={false}
         >
           <video controls src={src} title={title} />

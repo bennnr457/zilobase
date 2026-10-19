@@ -103,6 +103,71 @@ test("callouts retain mixed nested blocks and icons across HTML and JSON reloads
     .screenshot({ path: test.info().outputPath("callout-dark.png") });
 });
 
+test("callout handle colors fill the container, default to Gray, and preserve Default as no fill", async ({
+  page,
+}) => {
+  await setDocument(page, [callout([paragraph("Colored callout")])]);
+  const block = main(page).locator(".editor-callout");
+  const openColors = async () => {
+    await main(page)
+      .getByText("Colored callout", { exact: true })
+      .hover({ position: { x: 8, y: 10 } });
+    await main(page).getByRole("button", { name: "Open block actions", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Color", exact: true }).hover();
+  };
+  const matchesToken = (variable) =>
+    block.evaluate((el, variable) => {
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = `var(${variable})`;
+      document.body.append(probe);
+      const matches =
+        getComputedStyle(el).backgroundColor === getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return matches;
+    }, variable);
+  await expect(block).toHaveAttribute("data-background-color", "gray");
+  await expect.poll(() => matchesToken("--zb-color-surface-background-navigation")).toBe(true);
+  await openColors();
+  await expect(page.getByRole("button", { name: /^Gray background/ })).toContainText("Selected");
+  await expect(page.getByRole("button", { name: /^Default background/ })).not.toContainText(
+    "Selected",
+  );
+  await page.getByRole("button", { name: /^Blue background/ }).click();
+  await expect(block).toHaveAttribute("data-background-color", "blue");
+  await expect.poll(() => matchesToken("--zb-color-palette-background-blue-subtle")).toBe(true);
+  expect(
+    await page.evaluate(
+      () => window.readyEditors.main.getJSON().content[0].content[0].content[0].marks ?? [],
+    ),
+  ).toEqual([]);
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await expect.poll(() => matchesToken("--zb-color-palette-background-blue-subtle")).toBe(true);
+  await openColors();
+  await expect(page.getByRole("button", { name: /^Blue background/ })).toContainText("Selected");
+  await page.getByRole("button", { name: /^Default background/ }).click();
+  await expect(block).toHaveAttribute("data-background-color", "default");
+  await expect(block).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const roundTrip = await page.evaluate(() => {
+    const editor = window.readyEditors.main;
+    const html = editor.getHTML();
+    editor.commands.setContent(html);
+    const fromHtml = editor.state.doc.firstChild.attrs.backgroundColor;
+    editor.commands.setContent(editor.getJSON());
+    return { html, fromHtml, fromJson: editor.state.doc.firstChild.attrs.backgroundColor };
+  });
+  expect(roundTrip.html).toContain('data-background-color="default"');
+  expect(roundTrip.fromHtml).toBe("default");
+  expect(roundTrip.fromJson).toBe("default");
+  await openColors();
+  await expect(page.getByRole("button", { name: /^Default background/ })).toContainText("Selected");
+  await page.getByRole("button", { name: /^Gray background/ }).click();
+  await expect.poll(() => matchesToken("--zb-color-surface-background-navigation")).toBe(true);
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(block).toHaveAttribute("data-background-color", "default");
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect(block).toHaveAttribute("data-background-color", "gray");
+});
+
 test("callouts use the shared icon picker and respect read-only changes", async ({ page }) => {
   await setDocument(page, [callout([paragraph("Keep content")])]);
   const icon = main(page).getByRole("button", { name: "Change callout icon" });

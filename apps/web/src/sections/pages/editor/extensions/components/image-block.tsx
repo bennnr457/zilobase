@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
@@ -79,11 +80,15 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
   };
 
   return (
-    <NodeViewWrapper className="image-block" data-src={src ? "true" : "false"}>
+    <NodeViewWrapper
+      className="image-block"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+      data-src={src ? "true" : "false"}
+    >
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
           <button
-            className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
+            className="flex h-10 w-full items-center gap-2 rounded-md bg-(--editor-block-background) px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:text-action-on-neutral active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
             disabled={!isEditable || Boolean(src)}
             type="button"
@@ -115,7 +120,7 @@ function ImageBlockView({ editor, extension, node, updateAttributes }: ReactNode
       {src ? (
         <button
           aria-label="Image"
-          className="group/image-preview relative mx-auto block max-w-full overflow-hidden rounded-md border bg-surface-muted p-0 focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&>img]:block [&>img]:w-full"
+          className="group/image-preview relative mx-auto block max-w-full overflow-hidden rounded-md bg-(--editor-block-background) p-0 focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&>img]:block [&>img]:w-full"
           contentEditable={false}
           data-image-block-preview
           style={width ? { width: `${width}px` } : undefined}

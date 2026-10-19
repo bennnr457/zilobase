@@ -1,4 +1,5 @@
 import { StructuralCommands } from "./structural-commands";
+import { BlockBackground } from "./block-background";
 import { PendingPageEmbeds } from "./pending-page-embed";
 import { EditorIntegration } from "./editor-integration";
 import type { EditorWorkspace } from "../../runtime/lib/editor-workspace";
@@ -109,6 +110,7 @@ export const createBaseExtensions = ({
     : []),
   PendingPageEmbeds,
   StructuralCommands,
+  BlockBackground,
   CommentExtension.configure({
     HTMLAttributes: { class: "editor-comment-anchor" },
   }),

@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { useEffect, useMemo, useState } from "react";
 import { BlockMath } from "@tiptap/extension-mathematics";
 import {
@@ -65,7 +66,12 @@ function TexBlockView({ editor, getPos, node }: ReactNodeViewProps) {
   };
 
   return (
-    <NodeViewWrapper className="tex-block" data-type="block-math" data-latex={latex}>
+    <NodeViewWrapper
+      className="tex-block"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+      data-type="block-math"
+      data-latex={latex}
+    >
       <Popover
         open={open && isEditable}
         onOpenChange={(next) => {
@@ -83,7 +89,7 @@ function TexBlockView({ editor, getPos, node }: ReactNodeViewProps) {
             contentEditable={false}
             disabled={!isEditable}
             aria-label={latex.trim() ? "Edit TeX equation" : "Add a TeX equation"}
-            className="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:cursor-default disabled:hover:bg-transparent data-[empty=true]:h-10 data-[empty=true]:bg-surface-subtle data-[empty=true]:py-0"
+            className="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-md bg-(--editor-block-background) px-3 py-2 text-left text-sm font-medium text-content-secondary transition-colors focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:cursor-default data-[empty=true]:h-10 data-[empty=true]:py-0"
             data-empty={!latex.trim()}
             onMouseDown={(event) => {
               event.preventDefault();

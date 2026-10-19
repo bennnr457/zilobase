@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
@@ -477,12 +478,16 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
   };
 
   return (
-    <NodeViewWrapper className="embed-block" data-src={src ? "true" : "false"}>
+    <NodeViewWrapper
+      className="embed-block"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+      data-src={src ? "true" : "false"}
+    >
       <Popover onOpenChange={setOpen} open={open}>
         {!src ? (
           <PopoverTrigger asChild>
             <button
-              className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="flex h-10 w-full items-center gap-2 rounded-md bg-(--editor-block-background) px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:text-action-on-neutral active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&_svg]:size-4 [&_svg]:shrink-0"
               contentEditable={false}
               disabled={!isEditable}
               type="button"
@@ -569,7 +574,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
         </PopoverContent>
         {src ? (
           <div
-            className="group/embed-preview relative mx-auto max-w-full overflow-hidden rounded-md border bg-surface-muted [&_iframe]:block [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:bg-surface-canvas"
+            className="group/embed-preview relative mx-auto max-w-full overflow-hidden rounded-md bg-(--editor-block-background) [&_iframe]:block [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:bg-surface-canvas"
             contentEditable={false}
             data-embed-block-preview
             style={width ? { width: `${width}px` } : undefined}
@@ -596,7 +601,7 @@ function EmbedBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) 
                 title={title}
               />
             ) : (
-              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-surface-subtle px-6 text-center text-content-secondary [&_a]:text-xs [&_a]:font-medium [&_a]:text-action-link [&_a]:underline-offset-4 hover:[&_a]:underline [&_svg]:size-8 [&_svg]:opacity-70">
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 bg-transparent px-6 text-center text-content-secondary [&_a]:text-xs [&_a]:font-medium [&_a]:text-action-link [&_a]:underline-offset-4 hover:[&_a]:underline [&_svg]:size-8 [&_svg]:opacity-70">
                 <FileWarning />
                 <span className="text-sm font-medium text-content-primary">
                   Failed to load embed

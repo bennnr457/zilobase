@@ -43,7 +43,7 @@ import {
   type StructuralInsertionPendingChange,
 } from "../../commands/lib/block-insert";
 import { useEditorWorkspace } from "../../runtime/components/page-editor-registry";
-import { colorWithAlpha, getPaletteColor } from "@/lib/color-tokens";
+import { colorWithAlpha, getColorToken, getPaletteColor } from "@/lib/color-tokens";
 import type { DragHandleTarget } from "../../toolbar/lib/toolbar";
 import type {
   StructuralBlockDeleteAction,
@@ -54,6 +54,7 @@ import { toast } from "sonner";
 import { ColorPicker } from "../../toolbar/components/color-menu";
 import { createResourceHistoryAction } from "../../operations/lib/resource-history";
 import { blockMenuSelectionPluginKey } from "../../extensions/lib/block-selection";
+import { hasBlockBackground } from "../../extensions/lib/block-background";
 
 type PendingStructuralBlockDelete = StructuralBlockDeleteRequest & {
   action: StructuralBlockDeleteAction;
@@ -171,7 +172,11 @@ export function DragBlockMenu({
     });
 
     return {
-      backgroundColor: backgroundColors.size < 2 ? ([...backgroundColors][0] ?? null) : undefined,
+      backgroundColor: hasBlockBackground(target.node.type.name)
+        ? getColorToken(target.node.attrs.backgroundColor).value
+        : backgroundColors.size < 2
+          ? ([...backgroundColors][0] ?? null)
+          : undefined,
       textColor: textColors.size < 2 ? ([...textColors][0] ?? null) : undefined,
     };
   }, [target]);
@@ -380,6 +385,16 @@ export function DragBlockMenu({
             backgroundColor: variant === "background" ? color : null,
             textColor: variant === "text" ? color : null,
           })
+          .run();
+        return;
+      }
+
+      if (hasBlockBackground(target.node.type.name) && variant === "background") {
+        editor
+          .chain()
+          .focus()
+          .setNodeSelection(target.pos)
+          .updateAttributes(target.node.type.name, { backgroundColor: color ?? "default" })
           .run();
         return;
       }
@@ -712,6 +727,11 @@ export function DragBlockMenu({
             </DropDrawerSubTrigger>
             <DropDrawerSubContent className="w-64 p-2">
               <ColorPicker
+                grayBackgroundClassName={
+                  target && hasBlockBackground(target.node.type.name)
+                    ? "bg-surface-navigation"
+                    : undefined
+                }
                 backgroundColor={targetColors.backgroundColor}
                 onBackgroundColorSelect={(color) => applyColor(color, "background")}
                 onTextColorSelect={(color) => applyColor(color, "text")}

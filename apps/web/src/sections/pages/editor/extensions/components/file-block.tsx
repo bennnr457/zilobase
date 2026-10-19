@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { useEditorState } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
@@ -54,11 +55,15 @@ function FileBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) {
   };
 
   return (
-    <NodeViewWrapper className="file-block" data-src={href ? "true" : "false"}>
+    <NodeViewWrapper
+      className="file-block"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+      data-src={href ? "true" : "false"}
+    >
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
           <button
-            className="flex h-10 w-full items-center gap-2 rounded-md bg-surface-subtle px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
+            className="flex h-10 w-full items-center gap-2 rounded-md bg-(--editor-block-background) px-3 text-left text-sm font-medium text-content-secondary transition-colors hover:text-action-on-neutral active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:hidden [&_svg]:size-4 [&_svg]:shrink-0"
             contentEditable={false}
             disabled={!isEditable || Boolean(href)}
             type="button"
@@ -124,7 +129,7 @@ function FileBlockView({ editor, node, updateAttributes }: ReactNodeViewProps) {
       </Popover>
       {href ? (
         <a
-          className="flex items-center gap-3 rounded-md border bg-surface-subtle px-3 py-2 text-sm text-content-primary no-underline transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-content-secondary"
+          className="flex items-center gap-3 rounded-md bg-(--editor-block-background) px-3 py-2 text-sm text-content-primary no-underline transition-colors focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-content-secondary"
           contentEditable={false}
           download
           href={href}

@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { mergeAttributes, Node } from "@tiptap/core";
 import {
   NodeViewContent,
@@ -162,7 +163,11 @@ function TabsBlockView({ editor, node, getPos }: ReactNodeViewProps) {
   };
 
   return (
-    <NodeViewWrapper className="editor-tabs" data-type="tabsBlock">
+    <NodeViewWrapper
+      className="editor-tabs"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+      data-type="tabsBlock"
+    >
       <div
         className="editor-tabs-header"
         contentEditable={false}

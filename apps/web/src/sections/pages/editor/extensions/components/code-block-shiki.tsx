@@ -1,3 +1,4 @@
+import { blockBackgroundProps } from "../lib/block-background";
 import { lazy, Suspense, useState } from "react";
 import { Effect } from "effect";
 import { toast } from "sonner";
@@ -170,7 +171,11 @@ function CodeBlockShikiView({ editor, node, updateAttributes }: ReactNodeViewPro
     codeBlockLanguages.find((option) => option.value === language) ?? codeBlockLanguages[0];
 
   return (
-    <NodeViewWrapper as="div" className="code-block-shiki">
+    <NodeViewWrapper
+      as="div"
+      className="code-block-shiki"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+    >
       <CodeBlock code={node.textContent} language={codeLanguage} highlight={false}>
         <CodeBlockHeader
           className="justify-end border-b-0 px-2 py-1"

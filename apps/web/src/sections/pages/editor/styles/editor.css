@@ -51,7 +51,7 @@
   }
 
   .editor-mermaid-preview {
-    --pele-bg: var(--color-surface-card);
+    --pele-bg: var(--editor-block-background, var(--color-surface-navigation));
     --pele-fg: var(--color-content-primary);
     --pele-muted: var(--color-content-secondary);
     --pele-line: var(--color-content-secondary);
@@ -212,6 +212,22 @@
 
   .tiptap-editor > * + .node-databaseBlock .database-toolbar-section {
     @apply pt-2;
+  }
+
+  /* Keep breathing room around block surfaces inside their selectable wrapper. */
+  .tiptap-editor
+    :is(
+      .node-callout,
+      .node-codeBlock,
+      .node-blockMath,
+      .node-bookmarkBlock,
+      .node-fileBlock,
+      .node-embedBlock,
+      .node-imageBlock,
+      .node-videoBlock,
+      .node-tabsBlock
+    ) {
+    @apply py-1;
   }
 
   /* Tighter spacing for stacked link-only paragraphs. */
@@ -375,7 +391,14 @@
 
 @layer components {
   .tiptap-editor .editor-callout {
-    @apply grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg bg-surface-muted p-4;
+    @apply grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg p-4;
+  }
+
+  .tiptap-editor :is(.editor-callout, .editor-tabs),
+  .tiptap-editor
+    :is(.tex-block, .bookmark-block, .file-block, .embed-block, .image-block, .video-block)
+    > :is(button, a, div) {
+    background-color: var(--editor-block-background, var(--zb-color-surface-background-navigation));
   }
 
   .editor-callout-icon {

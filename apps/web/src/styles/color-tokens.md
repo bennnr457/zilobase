@@ -23,6 +23,10 @@ Canonical names use `--zb-color-{concept}-{property}-{variant}-{state}`. Tailwin
 
 ## Actions
 
+Framed editor blocks use `surface-background-navigation` for their Gray fill,
+matching the side panel. Their Default background choice is transparent;
+explicit color choices use the corresponding palette background token.
+
 | Canonical token suffix                       | Alias                                        | Allowed use                              | Replaces                                     |
 | -------------------------------------------- | -------------------------------------------- | ---------------------------------------- | -------------------------------------------- |
 | `action-background-primary[-hover]`          | `action-primary[-hover]`                     | Primary calls to action                  | `action-primary`, primary button literals    |
@@ -30,7 +34,7 @@ Canonical names use `--zb-color-{concept}-{property}-{variant}-{state}`. Tailwin
 | `action-text-link`                           | `action-link`                                | Links only                               | link uses of `primary`                       |
 | `action-background-secondary[-hover]`        | `action-secondary[-hover]`                   | Secondary buttons                        | action uses of `secondary`                   |
 | `action-text-on-secondary`                   | `action-on-secondary`                        | Content on secondary actions             | `secondary-foreground`                       |
-| `action-background-neutral-hover`            | `action-neutral-hover`                       | Neutral hover/open state                 | `accent`, sidebar control hover              |
+| `action-background-neutral-hover`            | `action-neutral-hover`                       | Neutral hover/open state and active tabs | `accent`, sidebar control hover              |
 | `action-background-neutral-pressed`          | `action-neutral-pressed`                     | Neutral pressed state                    | `active`                                     |
 | `action-text-on-neutral`                     | `action-on-neutral`                          | Content on neutral interaction states    | `accent-foreground`, `active-foreground`     |
 | `action-background-selected[-subtle]`        | `action-selected[-subtle]`                   | Checked, selected, and highlighted state | selected uses of `primary`, `primary-subtle` |

@@ -12,6 +12,7 @@ import { useState } from "react";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
+import { blockBackgroundProps } from "../lib/block-background";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -33,7 +34,12 @@ function CalloutView({ editor, node, updateAttributes }: ReactNodeViewProps) {
   };
 
   return (
-    <NodeViewWrapper as="aside" className="editor-callout" data-type="callout">
+    <NodeViewWrapper
+      as="aside"
+      className="editor-callout"
+      data-type="callout"
+      {...blockBackgroundProps(node.attrs.backgroundColor)}
+    >
       <div className="editor-callout-icon" contentEditable={false}>
         <Popover open={editable && pickerOpen} onOpenChange={setPickerOpen}>
           <PopoverTrigger asChild>

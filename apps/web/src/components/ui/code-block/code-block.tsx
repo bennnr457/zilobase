@@ -179,7 +179,7 @@ const ROOT_TOKEN_CLASS = [
   "[--code-block-expand-clearance:--spacing(9)]",
   /* What sits behind a sticky line number while the code scrolls under it.
      `ghost` blanks it, because there the surface belongs to the wrapper. */
-  "[--code-block-bg:var(--zb-color-surface-background-card)]",
+  "[--code-block-bg:var(--editor-block-background,var(--zb-color-surface-background-navigation))]",
   "[--code-block-highlight-bg:var(--zb-color-action-background-selected-subtle)]",
   "[--code-block-highlight-bar:var(--zb-color-action-border-selected)]",
   "[--code-block-diff-add-bg:var(--zb-color-feedback-background-success-subtle)]",
@@ -194,7 +194,7 @@ const ROOT_BASE_CLASS =
   "group/code-block relative flex min-w-0 flex-col rounded-(--code-block-radius) text-left";
 
 const ROOT_SURFACE_CLASS =
-  "border border-stroke-default bg-surface-card text-content-primary bg-clip-padding";
+  "border border-stroke-default bg-(--code-block-bg) text-content-primary bg-clip-padding";
 
 /**
  * The token colour switch: tokens carry only `--cb-c` / `--cb-cd`, and these
@@ -1864,7 +1864,7 @@ function CodeBlockExpandButton({
            state only. Expanded, the surface already reserves a clear row for
            this control, and keeping the gradient just dimmed the last real
            line of code. */
-        !expanded && "from-surface-card via-surface-card bg-gradient-to-t to-transparent",
+        !expanded && "from-(--code-block-bg) via-(--code-block-bg) bg-gradient-to-t to-transparent",
         className,
       )}
     >
