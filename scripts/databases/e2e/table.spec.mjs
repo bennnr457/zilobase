@@ -96,6 +96,41 @@ test("Add property fills the available width while record columns keep their siz
   expect(measured.tables[0].columns[1]).toBe(200);
 });
 
+test("Add property fills only the database width inside a narrow editor", async ({ page }) => {
+  await options(page, { embedded: true, narrow: true, columns: [] });
+  const widths = () =>
+    page.locator(".database-table").evaluateAll((tables) =>
+      tables.map((table) => ({
+        table: table.getBoundingClientRect().width,
+        addProperty: table.querySelector("col:last-child").getBoundingClientRect().width,
+      })),
+    );
+  await expect(page.locator(".database-table-wrap")).toHaveAttribute("data-inline-scroll", "true");
+  const databaseWidth = () =>
+    page.locator(".database-table-wrap").evaluate((node) => node.getBoundingClientRect().width);
+  const initialWidth = await databaseWidth();
+  await expect.poll(widths).toEqual([{ table: initialWidth, addProperty: initialWidth - 250 }]);
+
+  await options(page, { columns: ["text", "number", "status"] });
+  await expect.poll(widths).toEqual([{ table: 1050, addProperty: 200 }]);
+  await grid(page).evaluate((node) => (node.scrollLeft = node.scrollWidth));
+  await expect.poll(widths).toEqual([{ table: 1050, addProperty: 200 }]);
+
+  await options(page, { grouped: true });
+  await expect(page.locator(".database-table-group")).toHaveCount(3);
+  await expect.poll(widths).toEqual(Array(4).fill({ table: 1050, addProperty: 200 }));
+
+  await options(page, { columns: [] });
+  await expect
+    .poll(widths)
+    .toEqual(Array(4).fill({ table: initialWidth, addProperty: initialWidth - 250 }));
+  await page.setViewportSize({ width: 700, height: 900 });
+  const resizedWidth = Math.max(450, await databaseWidth());
+  await expect
+    .poll(widths)
+    .toEqual(Array(4).fill({ table: resizedWidth, addProperty: resizedWidth - 250 }));
+});
+
 test("keyboard edits and multi-cell paste use existing saves and one undo", async ({ page }) => {
   await select(page, 0, "text");
   await page.keyboard.press("F2");

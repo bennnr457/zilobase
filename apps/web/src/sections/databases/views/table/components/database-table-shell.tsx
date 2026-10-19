@@ -49,7 +49,10 @@ export function DatabaseTable({
         role: "presentation",
         style: {
           ...getTableMinWidthStyle(tableMinWidth),
-          width: columnKeys.includes(ADD_PROPERTY_COLUMN_ID) ? "100%" : tableMinWidth,
+          // Inline scrolling includes the page gutters; only fill the database view itself.
+          width: columnKeys.includes(ADD_PROPERTY_COLUMN_ID)
+            ? "var(--database-inline-scroll-view-width, 100%)"
+            : tableMinWidth,
           minWidth: tableMinWidth,
           borderCollapse: "collapse",
         },

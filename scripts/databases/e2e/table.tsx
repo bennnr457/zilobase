@@ -182,6 +182,7 @@ function Proof() {
     editable: true,
     readOnlyProperties: false,
     embedded: false,
+    narrow: false,
     filtered: false,
     sorted: false,
     failSave: false,
@@ -398,13 +399,22 @@ function Proof() {
     <ZilobaseFeaturesProvider value={features}>
       <ShortcutProvider>
         <Toaster />
-        <div data-page-scroll-viewport style={{ height: "100vh", overflow: "auto" }}>
+        <div
+          data-page-scroll-viewport
+          data-editor-surface={options.narrow ? "" : undefined}
+          style={{ height: "100vh", overflow: "auto" }}
+        >
           <main
             className="tiptap-editor"
             contentEditable={options.embedded ? true : undefined}
             suppressContentEditableWarning
-            data-editor-surface={options.embedded ? "" : undefined}
-            style={{ margin: "100px 80px", maxWidth: options.embedded ? 780 : 1100 }}
+            data-editor-surface={options.embedded && !options.narrow ? "" : undefined}
+            data-editor-page-content={options.narrow ? "narrow" : undefined}
+            style={{
+              margin: options.narrow ? "100px auto" : "100px 80px",
+              width: options.narrow ? "min(780px, calc(100% - 160px))" : undefined,
+              maxWidth: options.embedded ? 780 : 1100,
+            }}
           >
             <div className="database-scroll-section relative" contentEditable={false}>
               <DatabaseViewProvider value={value}>
