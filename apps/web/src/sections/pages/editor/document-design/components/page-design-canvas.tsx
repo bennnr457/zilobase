@@ -1,5 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { GripVertical, Plus } from "@/components/icons";
 import {
   closestCenter,
   DndContext,
@@ -12,12 +11,12 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { GripVertical, Plus } from "@/components/icons";
+import { Fragment, useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useOptionalPageDesignSidebar } from "@/sections/pages/design/components/page-design-sidebar";
-import type { PageLayoutPanelMode } from "../../lib/editor-types";
 import {
   canMovePageLayoutModuleToRegion,
   movePageLayoutModule,
@@ -26,6 +25,7 @@ import {
   type PageLayoutModuleDestination,
   type PageLayoutRegion,
 } from "@zilobase/features/pages";
+import type { PageLayoutPanelMode } from "../../lib/editor-types";
 
 type PageDesignCanvasProps = {
   config: PageLayoutConfig;
@@ -202,7 +202,10 @@ function LayoutRegion({
       )}
     >
       <div
-        className={cn("flex min-h-full flex-col p-3", constrained && "mx-auto w-full max-w-3xl")}
+        className={cn(
+          "flex min-h-full flex-col p-3",
+          constrained && "mx-auto w-full max-w-[var(--page-content-width)]",
+        )}
       >
         {children}
       </div>

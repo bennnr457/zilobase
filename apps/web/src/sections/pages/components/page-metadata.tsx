@@ -777,7 +777,7 @@ export function PageMetadata({
 
       <div
         data-page-metadata-content
-        className={`${contentClassName ?? ""} relative ${compact ? (compactSpacing === "comfortable" ? "px-8 py-5" : "px-4 py-4") : `px-5 ${showHeading && !cover ? "pt-8" : "pt-1"} pb-0 sm:px-8 md:px-20 lg:px-24`}`}
+        className={`page-content-column ${contentClassName ?? ""} relative ${compact ? (compactSpacing === "comfortable" ? "py-5 [--page-content-gutter:2rem]" : "py-4 [--page-content-gutter:1rem]") : `${showHeading && !cover ? "pt-8" : "pt-1"} pb-0`}`}
       >
         {/* Cancel the covered icon's 40px visual lift in flow, retaining the usual 4px gap. */}
         {showHeading && iconPosition === "top" && pageIcon ? (
@@ -796,7 +796,7 @@ export function PageMetadata({
           <div className="relative mb-1 min-h-8">
             {showMetadataActions ? (
               <div
-                className={`absolute inset-0 flex flex-wrap items-center gap-2 px-3 ${metadataActionVisibilityClassName}`}
+                className={`absolute inset-0 flex flex-wrap items-center gap-2 ${metadataActionVisibilityClassName}`}
               >
                 {!icon ? iconPicker : null}
                 {canToggleDescription && (
@@ -870,7 +870,7 @@ export function PageMetadata({
             ) : null}
             <textarea
               aria-label={headingLabel ? `${headingLabel} title` : "Page title"}
-              className={`min-h-10 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent ${iconPosition === "inline" && pageIcon ? "pl-0 pr-3" : "px-3"} py-0 text-4xl font-semibold leading-tight tracking-normal whitespace-pre-wrap text-balance text-content-primary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent`}
+              className="min-h-10 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-4xl font-semibold leading-tight tracking-normal whitespace-pre-wrap text-balance text-content-primary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent"
               onBlur={onTitleBlur}
               onChange={(event) => updateTitle(event.target.value)}
               onKeyDown={(event) => {
@@ -895,7 +895,7 @@ export function PageMetadata({
           <div className="mt-3 flex" ref={descriptionRowRef}>
             <textarea
               aria-label={headingLabel ? `${headingLabel} description` : "Page description"}
-              className="min-h-6 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent px-3 py-0 text-base leading-relaxed text-content-secondary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent"
+              className="min-h-6 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-base leading-relaxed text-content-secondary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent"
               onBlur={onDescriptionBlur}
               onChange={(event) => updateDescription(event.target.value)}
               placeholder={descriptionPlaceholder}
@@ -908,7 +908,7 @@ export function PageMetadata({
         ) : null}
 
         {showHeading && layoutConfig?.pinnedPropertyIds.length ? (
-          <div className="mt-3 flex flex-wrap gap-2 pl-3">
+          <div className="mt-3 flex flex-wrap gap-2">
             {layoutConfig.pinnedPropertyIds.flatMap((propertyId) => {
               const property = propertyPayload?.properties.find((item) => item.id === propertyId);
               if (!property) return [];
@@ -931,7 +931,7 @@ export function PageMetadata({
         ) : null}
 
         {showDiscussions && commentsEnabled && showCommentsSection ? (
-          <div className="mt-6 space-y-0 px-3 pb-3">
+          <div className="mt-6 space-y-0 pb-3">
             {unresolvedThreads.length > 0 ? (
               unresolvedThreads.map((thread, index) => (
                 <div

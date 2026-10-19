@@ -1,32 +1,4 @@
 export function register({ readSource, assert, test }) {
-  test("top-level content blocks share the text inset", async () => {
-    const editorCss = await readSource("/src/sections/pages/editor/styles/editor.css");
-    const insetRule = editorCss.match(
-      /\/\* Keep top-level content blocks on the same horizontal content line\. \*\/[\s\S]*?@apply px-3;\s*\}/,
-    )?.[0];
-
-    assert.ok(insetRule);
-
-    for (const selector of [
-      "p",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      ".node-imageBlock",
-      ".node-videoBlock",
-      ".node-embedBlock",
-      ".node-fileBlock",
-      ".node-bookmarkBlock",
-      ".node-askAiBlock",
-      ".node-pageBlock",
-    ]) {
-      assert.match(insetRule, new RegExp(`(^|\\s)${selector.replace(".", "\\.")},?(\\s|$)`));
-    }
-  });
-
   test("block and dragged text selection use one transparent tint", async () => {
     const [editorCss, editorChromeCss, editorChrome, databaseCss, tokens] = await Promise.all([
       readSource("/src/sections/pages/editor/styles/editor.css"),

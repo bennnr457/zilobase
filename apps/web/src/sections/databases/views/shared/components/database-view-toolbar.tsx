@@ -785,37 +785,6 @@ export function DatabaseViewToolbar({
               {viewTabs.length} more…
             </span>
           </div>
-          {(activeDatabaseFilters.length > 0 && showFilterPill) ||
-          (activeDatabaseSorts.length > 0 && showSortPill) ? (
-            <div className="mt-2 flex min-w-0 flex-col items-start gap-2">
-              {activeDatabaseFilters.length > 0 && showFilterPill ? (
-                <DatabaseFilterBar
-                  activeDatabaseFilters={activeDatabaseFilters}
-                  addableFilterFieldOptions={addableFilterFieldOptions}
-                  canAddDatabaseFilter={canAddDatabaseFilter}
-                  filterFieldOptions={filterFieldOptions}
-                  filterValueOptionsByField={filterValueOptionsByField}
-                  onClearDatabaseFilter={clearDatabaseFilter}
-                  onCreateDatabaseFilter={createDatabaseFilter}
-                  onRemoveDatabaseFilter={removeDatabaseFilter}
-                  onReorderDatabaseFilters={reorderDatabaseFilters}
-                  onUpdateDatabaseFilter={updateDatabaseFilter}
-                />
-              ) : null}
-              {activeDatabaseSorts.length > 0 && showSortPill ? (
-                <DatabaseSortBar
-                  activeDatabaseSorts={activeDatabaseSorts}
-                  addableSortFieldOptions={addableSortFieldOptions}
-                  canAddDatabaseSort={canAddDatabaseSort}
-                  onClearDatabaseSort={clearDatabaseSort}
-                  onCreateDatabaseSort={createDatabaseSort}
-                  onRemoveDatabaseSort={removeDatabaseSort}
-                  onUpdateDatabaseSort={updateDatabaseSort}
-                  sortFieldOptions={sortFieldOptions}
-                />
-              ) : null}
-            </div>
-          ) : null}
         </div>
         <DatabaseToolbarActions
           canRestoreDeleted={canRestoreDeleted}
@@ -825,6 +794,37 @@ export function DatabaseViewToolbar({
           onPreviewForm={() => setFormPreviewOpen(true)}
         />
       </div>
+      {(activeDatabaseFilters.length > 0 && showFilterPill) ||
+      (activeDatabaseSorts.length > 0 && showSortPill) ? (
+        <div className="flex min-w-0 flex-col gap-2">
+          {activeDatabaseFilters.length > 0 && showFilterPill ? (
+            <DatabaseFilterBar
+              activeDatabaseFilters={activeDatabaseFilters}
+              addableFilterFieldOptions={addableFilterFieldOptions}
+              canAddDatabaseFilter={canAddDatabaseFilter}
+              filterFieldOptions={filterFieldOptions}
+              filterValueOptionsByField={filterValueOptionsByField}
+              onClearDatabaseFilter={clearDatabaseFilter}
+              onCreateDatabaseFilter={createDatabaseFilter}
+              onRemoveDatabaseFilter={removeDatabaseFilter}
+              onReorderDatabaseFilters={reorderDatabaseFilters}
+              onUpdateDatabaseFilter={updateDatabaseFilter}
+            />
+          ) : null}
+          {activeDatabaseSorts.length > 0 && showSortPill ? (
+            <DatabaseSortBar
+              activeDatabaseSorts={activeDatabaseSorts}
+              addableSortFieldOptions={addableSortFieldOptions}
+              canAddDatabaseSort={canAddDatabaseSort}
+              onClearDatabaseSort={clearDatabaseSort}
+              onCreateDatabaseSort={createDatabaseSort}
+              onRemoveDatabaseSort={removeDatabaseSort}
+              onUpdateDatabaseSort={updateDatabaseSort}
+              sortFieldOptions={sortFieldOptions}
+            />
+          ) : null}
+        </div>
+      ) : null}
       <DatabaseViewToolbarDialogs
         formDialogOpen={formDialogOpen}
         formPreviewOpen={formPreviewOpen}

@@ -1,32 +1,32 @@
-import { Effect } from "effect";
-import { commitDatabaseBlockDrop } from "./drag-drop/lib/block-drop";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { EditorContent } from "@tiptap/react";
-import { TextSelection } from "@tiptap/pm/state";
-import { MobileActionBar } from "./toolbar/components/mobile-action-bar";
+import { cn } from "@/lib/utils";
+import { DatabaseView } from "@/sections/databases/views/shared/components/database-view";
 import { PageMetadata, type PageMetadataHandle } from "@/sections/pages/components/page-metadata";
-import { PageDesignCanvas } from "./document-design/components/page-design-canvas";
-import { PageDesignTabs } from "./document-design/components/page-design-tabs";
-import { EditorChrome } from "./components/editor-chrome";
-import type { EditorProps, PasteChoiceState } from "./lib/editor-types";
+import { TextSelection } from "@tiptap/pm/state";
+import { EditorContent } from "@tiptap/react";
+import { Effect } from "effect";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { hasPendingCollaborationChanges } from "./collaboration/lib/page-document-session";
 import {
   useEditorResourceActions,
   useMobileNodeActions,
 } from "./commands/hooks/use-editor-actions";
-import { resolveBlockDragTargetFromPoint } from "./drag-drop/lib/block-drag-geometry";
-import { useEditorWorkspace } from "./runtime/components/page-editor-registry";
-import { createPositionAnchor } from "./operations/lib/position-anchor";
-import { useEditorMenuEffects } from "./runtime/hooks/use-editor-menu-effects";
-import { useEditorRuntime } from "./runtime/hooks/use-editor-runtime";
-import { DatabaseView } from "@/sections/databases/views/shared/components/database-view";
-import { canMoveDatabaseBlockToPage, getBlockDragDatabaseId } from "./drag-drop/lib/block-drag";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { EditorChrome } from "./components/editor-chrome";
+import { PageDesignCanvas } from "./document-design/components/page-design-canvas";
+import { PageDesignTabs } from "./document-design/components/page-design-tabs";
 import {
   DatabaseBlockDropDialog,
   type PendingDatabaseBlockDrop,
 } from "./drag-drop/components/database-block-drop-dialog";
-import { hasPendingCollaborationChanges } from "./collaboration/lib/page-document-session";
+import { canMoveDatabaseBlockToPage, getBlockDragDatabaseId } from "./drag-drop/lib/block-drag";
+import { resolveBlockDragTargetFromPoint } from "./drag-drop/lib/block-drag-geometry";
+import { commitDatabaseBlockDrop } from "./drag-drop/lib/block-drop";
+import type { EditorProps, PasteChoiceState } from "./lib/editor-types";
+import { createPositionAnchor } from "./operations/lib/position-anchor";
+import { useEditorWorkspace } from "./runtime/components/page-editor-registry";
+import { useEditorMenuEffects } from "./runtime/hooks/use-editor-menu-effects";
+import { useEditorRuntime } from "./runtime/hooks/use-editor-runtime";
+import { MobileActionBar } from "./toolbar/components/mobile-action-bar";
 
 const starterContent = `
   <h1>Draft your next page doc</h1>
@@ -125,9 +125,10 @@ export function Editor({
     },
     [],
   );
-  const pageContentLayout = fullWidth
-    ? { className: "", mode: "full" as const }
-    : { className: "mx-auto max-w-[900px]", mode: "narrow" as const };
+  const pageContentLayout = {
+    className: "page-content-column",
+    mode: fullWidth ? ("full" as const) : ("narrow" as const),
+  };
   const activeLinkedTab = layoutConfig?.linkedTabs.find((tab) => tab.id === activeLayoutTab);
   const collaborationHasPendingChanges = hasPendingCollaborationChanges(collaboration);
 
@@ -292,12 +293,13 @@ export function Editor({
       return (
         <div
           className={cn(
-            "relative min-w-0 max-w-full",
-            module.region === "panel" ? "px-4 py-4" : pageContentLayout.className,
+            "page-content-column relative",
+            module.region === "panel" &&
+              "py-4 [--page-content-gutter:1rem] [--page-content-max-width:none]",
             layoutPreview && "h-[32rem] overflow-hidden",
             onLayoutChange &&
               module.region === "main" &&
-              "[&_.tiptap-editor]:px-8 [&_.tiptap-editor]:py-5",
+              "[--page-content-gutter:2rem] [&_.tiptap-editor]:py-5",
           )}
           data-editor-page-content={pageContentLayout.mode}
           data-layout-content-preview={layoutPreview ? "true" : undefined}
@@ -335,7 +337,7 @@ export function Editor({
         compact={module.region === "panel" || Boolean(onLayoutChange)}
         compactSpacing={onLayoutChange ? "comfortable" : "default"}
         collaborationUsers={module.type === "heading" ? collaboration?.users : undefined}
-        contentClassName={module.region === "panel" ? undefined : pageContentLayout.className}
+        contentClassName={module.region === "panel" ? "[--page-content-max-width:none]" : undefined}
         cover={cover}
         databaseId={databaseId}
         editable={metadataEditable}
@@ -364,13 +366,14 @@ export function Editor({
   const editorBody = (
     <div
       className={cn(
-        "flex w-full flex-col text-content-primary",
+        "page-editor flex w-full min-w-0 flex-col text-content-primary",
         layoutPreview
           ? "h-full min-h-0"
           : hideMetadata
             ? "min-h-[16rem]"
             : "min-h-[calc(100svh-3rem)]",
       )}
+      data-page-width={pageContentLayout.mode}
     >
       <section
         className={cn("relative min-h-0 flex-1", layoutPreview && "flex flex-col overflow-hidden")}
@@ -410,7 +413,10 @@ export function Editor({
           tocItems={layoutPreview ? [] : tocItems}
         />
         {hideMetadata ? (
-          <div className="min-w-0" data-editor-page-content={pageContentLayout.mode}>
+          <div
+            className={pageContentLayout.className}
+            data-editor-page-content={pageContentLayout.mode}
+          >
             <EditorContent editor={editor} />
           </div>
         ) : layoutConfig ? (
@@ -432,7 +438,8 @@ export function Editor({
               activeLinkedTab ? (
                 <div
                   className={cn(
-                    "relative min-w-0 p-5 md:px-12",
+                    "page-content-column relative py-5",
+                    onLayoutChange && "[--page-content-gutter:2rem]",
                     layoutPreview ? "h-[32rem] overflow-hidden" : "min-h-[calc(100svh-6rem)]",
                   )}
                 >

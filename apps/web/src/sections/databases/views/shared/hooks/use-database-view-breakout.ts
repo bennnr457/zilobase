@@ -53,7 +53,9 @@ export function useDatabaseViewBreakout(
 
     const surfaceRect = editorSurface.getBoundingClientRect();
     const anchorRect = anchor.getBoundingClientRect();
-    const editorStyle = getComputedStyle(editor);
+    const editorStyle = getComputedStyle(
+      editor.closest<HTMLElement>(".page-content-column") ?? editor,
+    );
     const paddingLeft = Number.parseFloat(editorStyle.paddingLeft) || 0;
     const paddingRight = Number.parseFloat(editorStyle.paddingRight) || 0;
     const left = surfaceRect.left + paddingLeft;

@@ -1,6 +1,47 @@
 @reference "../../../../styles/global.css";
 
 @layer components {
+  :root {
+    /* One page width and responsive gutter for metadata and every body block. */
+    --page-content-width: 900px;
+    --page-content-gutter: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      --page-content-gutter: 2rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --page-content-gutter: 5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --page-content-gutter: 6rem;
+    }
+  }
+
+  .page-editor[data-page-width="narrow"] {
+    --page-content-max-width: var(--page-content-width);
+  }
+
+  .page-editor[data-page-width="full"] {
+    --page-content-max-width: none;
+  }
+
+  .page-content-column {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: var(--page-content-max-width, none);
+    margin-inline: auto;
+    padding-inline: var(--page-content-gutter);
+  }
+
   .tiptap-editor .code-block-shiki code span[data-mermaid-token] {
     color: var(--editor-mermaid-light) !important;
   }
@@ -23,13 +64,22 @@
     --pele-font-mono: var(--font-mono);
   }
 
-
   .tex-block-render .katex-display {
     margin: 0;
   }
 
   .tiptap-editor {
-    @apply min-h-[520px] px-5 pt-4 pb-5 text-base leading-7 text-content-primary outline-none sm:px-8 md:px-20 md:pt-4 md:pb-6 lg:px-24;
+    @apply min-h-[520px] pt-4 pb-5 text-base leading-7 text-content-primary outline-none md:pb-6;
+    padding-inline: var(--page-content-gutter);
+  }
+
+  .page-content-column .tiptap-editor {
+    padding-inline: 0;
+  }
+
+  .tiptap-editor > * {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .collaboration-carets__caret {
@@ -85,27 +135,6 @@
 
   .tiptap-editor p {
     @apply leading-7 text-content-primary;
-  }
-
-  /* Keep top-level content blocks on the same horizontal content line. */
-  .tiptap-editor
-    > :is(
-      p,
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6,
-      .node-imageBlock,
-      .node-videoBlock,
-      .node-embedBlock,
-      .node-fileBlock,
-      .node-bookmarkBlock,
-      .node-askAiBlock,
-      .node-pageBlock
-    ) {
-    @apply px-3;
   }
 
   /* Spacing hierarchy via padding inside each block (included in selection). */
@@ -323,11 +352,6 @@
     ).editor-block-selection {
     display: block;
     width: 100%;
-  }
-
-  .tiptap-editor
-    :is(p, h1, h2, h3, h4, h5, h6, blockquote, .editor-details).editor-block-selection {
-    @apply px-3;
   }
 
   .tiptap-editor :is(ul, ol):not([data-type="taskList"]) > li.editor-block-selection::after {

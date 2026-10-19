@@ -2,7 +2,7 @@
 
 @layer components {
   .tiptap-editor .node-databaseBlock .database-toolbar-section {
-    @apply box-border px-3 pb-0.5;
+    @apply box-border px-0 pb-0.5;
   }
 
   .tiptap-editor .node-databaseBlock .database-scroll-section {

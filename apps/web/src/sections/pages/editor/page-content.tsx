@@ -1,23 +1,27 @@
-import { changedPageReferences } from "@/sections/pages/editor/operations/lib/changed-page-references";
-import { resolvePageEditability } from "@zilobase/features/pages";
-import {
-  recoverMissingPlacedDatabaseBlocks,
-  recoverPageEditorContent,
-} from "./operations/lib/page-content-recovery";
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { isHostedDemoRuntime } from "@/app/demo/runtime";
 import { Button } from "@/components/ui/button";
-import { TrashedItemBanner } from "../components/trashed-item-banner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { ApiError } from "@/platform/network/api";
+import { usePageCollaboration } from "@/sections/pages/editor/collaboration/hooks/use-page-collaboration";
 import {
-  getPageCover,
-  getPageEmoji,
-  getPageIconPosition,
-  isPageLocked,
-  resolvePageFullWidth,
-  type PageIconPosition,
-} from "@zilobase/features/pages";
+  blockCachedPage,
+  exportCachedPageState,
+  flushCachedPage,
+} from "@/sections/pages/editor/collaboration/lib/page-document-cache";
+import { setPageConnectionIndicator } from "@/sections/pages/editor/collaboration/lib/page-document-session";
+import { usePageCommentsRegistry } from "@/sections/pages/editor/comments/components/comments-context";
+import { createPageCommentController } from "@/sections/pages/editor/comments/lib/yjs-comments";
+import { Editor } from "@/sections/pages/editor/editor";
+import { scrollToMeetingBlock } from "@/sections/pages/editor/extensions/meeting/lib/meeting-block-navigation";
+import type {
+  PageLayoutPanelMode,
+  StructuralBlockDeleteRequest,
+} from "@/sections/pages/editor/lib/editor-types";
+import { changedPageReferences } from "@/sections/pages/editor/operations/lib/changed-page-references";
+import { usePageEditorRegistry } from "@/sections/pages/editor/runtime/components/page-editor-registry";
+import { createPageEditorHandle } from "@/sections/pages/editor/runtime/lib/page-editor-handle";
+import { useSession } from "@zilobase/features/auth/react";
 import {
   useDeleteDatabase,
   useRestoreDatabase,
@@ -25,47 +29,41 @@ import {
 } from "@zilobase/features/databases/react";
 import { useDeleteMeeting, useWorkspaceMeetings } from "@zilobase/features/meetings/react";
 import {
-  useUpdatePage,
-  useRestorePage,
+  getMissingHostedMeetingIds,
+  getPageCover,
+  getPageEmoji,
+  getPageIconPosition,
+  getPlacedDatabaseIds,
+  insertMeetingBlockInContent,
+  isPageLocked,
+  resolvePageEditability,
+  resolvePageFullWidth,
+  type PageIconPosition,
+} from "@zilobase/features/pages";
+import {
   useCreatePage,
   useEmbedPageItem,
-  useRemovePageEmbed,
   usePage,
   usePageAccessLevel,
   usePageDatabaseIds,
   usePageNavigation,
+  useRemovePageEmbed,
   useResolvedPageLayout,
+  useRestorePage,
+  useUpdatePage,
 } from "@zilobase/features/pages/react";
-import { extractDatabaseIds } from "@zilobase/page-context";
-import { useSession } from "@zilobase/features/auth/react";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
-import { usePageEditorRegistry } from "@/sections/pages/editor/runtime/components/page-editor-registry";
-import { createPageEditorHandle } from "@/sections/pages/editor/runtime/lib/page-editor-handle";
-import { Editor } from "@/sections/pages/editor/editor";
-import type {
-  PageLayoutPanelMode,
-  StructuralBlockDeleteRequest,
-} from "@/sections/pages/editor/lib/editor-types";
+import { extractDatabaseIds } from "@zilobase/page-context";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { TrashedItemBanner } from "../components/trashed-item-banner";
 import type { OpenPageOptions } from "../navigation/hooks/page-navigation";
-import { usePageCollaboration } from "@/sections/pages/editor/collaboration/hooks/use-page-collaboration";
-import { setPageConnectionIndicator } from "@/sections/pages/editor/collaboration/lib/page-document-session";
-import {
-  blockCachedPage,
-  exportCachedPageState,
-  flushCachedPage,
-} from "@/sections/pages/editor/collaboration/lib/page-document-cache";
-import { ApiError } from "@/platform/network/api";
-import { isHostedDemoRuntime } from "@/app/demo/runtime";
-import { createPageCommentController } from "@/sections/pages/editor/comments/lib/yjs-comments";
-import { usePageCommentsRegistry } from "@/sections/pages/editor/comments/components/comments-context";
-import { usePageTitleDraft } from "./hooks/use-page-title-draft";
-import { scrollToMeetingBlock } from "@/sections/pages/editor/extensions/meeting/lib/meeting-block-navigation";
 import { consumePageNavigationStart } from "../navigation/lib/page-navigation-timing";
+import { usePageTitleDraft } from "./hooks/use-page-title-draft";
 import {
-  getMissingHostedMeetingIds,
-  getPlacedDatabaseIds,
-  insertMeetingBlockInContent,
-} from "@zilobase/features/pages";
+  recoverMissingPlacedDatabaseBlocks,
+  recoverPageEditorContent,
+} from "./operations/lib/page-content-recovery";
 
 type PageEditorPaneProps = {
   afterMetadata?: ReactNode;
@@ -962,13 +960,11 @@ export function PageContent({
 
 function PageEditorSkeleton({ fullWidth }: { fullWidth: boolean }) {
   return (
-    <div className="flex min-h-full w-full flex-col">
-      <div
-        className={cn(
-          "w-full px-5 py-6 sm:px-8 md:px-20 md:py-8 lg:px-24",
-          fullWidth ? "" : "mx-auto max-w-[900px]",
-        )}
-      >
+    <div
+      className="page-editor flex min-h-full w-full flex-col"
+      data-page-width={fullWidth ? "full" : "narrow"}
+    >
+      <div className="page-content-column py-6 md:py-8">
         <div className="space-y-8">
           <div className="space-y-5">
             <Skeleton className="size-12 rounded-xl" />

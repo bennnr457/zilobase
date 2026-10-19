@@ -10,8 +10,9 @@ import {
   Trash2,
 } from "@/components/icons";
 
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { LinkedDataSourcePicker } from "@/sections/databases/views/shared/components/linked-data-source-picker";
 import type { PageLayoutConfig, PageLayoutLinkedTab } from "@zilobase/features/pages";
 
@@ -40,7 +41,12 @@ export function PageDesignTabs({ config, onChange, onValueChange, value }: PageD
   };
 
   return (
-    <div className="shrink-0 py-2">
+    <div
+      className={cn(
+        "page-content-column shrink-0 py-2",
+        onChange && "[--page-content-gutter:2rem]",
+      )}
+    >
       <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
         <Tabs className="min-w-0" onValueChange={onValueChange} value={value}>
           <TabsList overflow="scroll">
