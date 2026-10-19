@@ -42,6 +42,22 @@ for (const [type, key, label] of [
   });
 }
 
+test("TeX equations retain their source in page markdown", () => {
+  const latex = String.raw`\frac{a}{b} = \sqrt{c}`;
+  expect(
+    prosemirrorToMarkdown({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "An equation:" }] },
+        { type: "blockMath", attrs: { latex } },
+      ],
+    }),
+  ).toBe(`An equation:\n\n$$\n${latex}\n$$`);
+  expect(isEffectivelyEmptyPageContent({ type: "doc", content: [{ type: "blockMath" }] })).toBe(
+    false,
+  );
+});
+
 test("table of contents placement survives page markdown conversion", () => {
   const node = { type: "tableOfContentsBlock" };
   const marker = prosemirrorToMarkdown(node);

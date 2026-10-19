@@ -25,6 +25,7 @@ import { BookmarkBlock } from "../components/bookmark-block";
 import { TabsBlock, TabPanel } from "../components/tabs-block";
 import { Callout } from "../components/callout";
 import { CodeBlockShiki } from "../components/code-block-shiki";
+import { TexBlock } from "../components/tex-block";
 import { TableOfContentsBlock } from "../components/table-of-contents-block";
 import { ColumnsExtension } from "./columns";
 import { CommentExtension } from "./comment-extension";
@@ -138,6 +139,7 @@ export const createBaseExtensions = ({
   EmbedBlock,
   FileBlock,
   BookmarkBlock,
+  TexBlock,
   LinkMention,
   DatabaseBlock.configure({
     currentPageId: pageId,

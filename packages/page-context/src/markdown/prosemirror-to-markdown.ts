@@ -141,6 +141,7 @@ function serializeDefaultBlock(node: PageDocumentNode) {
 }
 
 const BLOCK_SERIALIZERS: Record<string, BlockSerializer> = {
+  blockMath: (node) => `$$\n${stringAttr(node.attrs, "latex")}\n$$`,
   blockquote: serializeBlockquote,
   bookmarkBlock: serializeBookmarkBlock,
   bulletList: (node) => serializeList(node.content ?? [], "- "),

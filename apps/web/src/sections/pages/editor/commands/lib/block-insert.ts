@@ -26,6 +26,7 @@ export type BlockCommandId =
   | "callout"
   | "tabsBlock"
   | "codeBlock"
+  | "blockMath"
   | "tableOfContentsBlock"
   | "details"
   | "columns2"
@@ -368,6 +369,8 @@ function blockContentForItem(
       };
     case "codeBlock":
       return { type: "codeBlock" };
+    case "blockMath":
+      return { type: "blockMath", attrs: { latex: "" } };
     case "tableOfContentsBlock":
       return { type: "tableOfContentsBlock" };
     case "imageBlock":
@@ -440,7 +443,7 @@ function blockContentForItem(
 }
 
 function selectInsertedBlock(editor: Editor, pos: number, item: SlashCommandItem) {
-  if (item.id === "tableOfContentsBlock") {
+  if (item.id === "blockMath" || item.id === "tableOfContentsBlock") {
     editor.chain().focus().setNodeSelection(pos).run();
     return;
   }

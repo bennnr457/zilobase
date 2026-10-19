@@ -1,6 +1,10 @@
 @reference "../../../../styles/global.css";
 
 @layer components {
+  .tex-block-render .katex-display {
+    margin: 0;
+  }
+
   .tiptap-editor {
     @apply min-h-[520px] px-5 pt-4 pb-5 text-base leading-7 text-content-primary outline-none sm:px-8 md:px-20 md:pt-4 md:pb-6 lg:px-24;
   }
@@ -146,6 +150,7 @@
       .embed-block,
       .file-block,
       .bookmark-block,
+      .tex-block,
       .table-of-contents-block,
       .ask-ai-block,
       .page-block
@@ -285,6 +290,7 @@
       .embed-block,
       .file-block,
       .bookmark-block,
+      .tex-block,
       .table-of-contents-block,
       .page-block,
       .ask-ai-block,
