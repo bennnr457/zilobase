@@ -39,7 +39,7 @@ export function DatabasePageLink({
   onEditRequestHandled?: (id: number) => void;
   onActiveChange?: (active: boolean) => void;
   onOpen?: (pageId: string) => void;
-  openMode?: "button" | "title";
+  openMode?: "button" | "title" | "static";
   pageId: string;
   pageSummary?: DatabasePageSummary | null;
   showPageIcon?: boolean;

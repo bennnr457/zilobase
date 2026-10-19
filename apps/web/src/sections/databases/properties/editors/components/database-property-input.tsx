@@ -19,6 +19,7 @@ import {
 } from "@zilobase/features/databases";
 
 function DatabaseInputCell({
+  preview = false,
   editable = true,
   emptyLabel,
   label,
@@ -32,6 +33,7 @@ function DatabaseInputCell({
   type,
   value,
 }: {
+  preview?: boolean;
   editable?: boolean;
   emptyLabel?: string;
   label: string;
@@ -72,7 +74,7 @@ function DatabaseInputCell({
   }, [isOpen, value]);
 
   if (!editable) {
-    return actionHref ? (
+    return actionHref && !preview ? (
       <a
         className="database-input-cell-link"
         href={actionHref}

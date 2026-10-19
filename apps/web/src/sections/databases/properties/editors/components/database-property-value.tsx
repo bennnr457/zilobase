@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, type FormEvent } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check } from "@/components/icons";
 import { type DatabasePropertyEntity } from "@zilobase/features/databases";
 
 import { defaultStatusOption, defaultStatusOptions } from "@zilobase/features/databases";
@@ -54,6 +55,7 @@ type PersonOption = {
 };
 
 type DatabasePropertyValueProps = {
+  preview?: boolean;
   disabledSelect?: boolean;
   editable: boolean;
   properties: DatabasePropertyEntity[];
@@ -88,6 +90,7 @@ function handleCellInput(event: FormEvent<HTMLTextAreaElement>) {
 }
 
 export function DatabasePropertyValue({
+  preview = false,
   disabledSelect = false,
   editable,
   properties,
@@ -206,6 +209,13 @@ export function DatabasePropertyValue({
           <span className="text-content-secondary">Empty</span>
         )}
       </span>
+    ) : cellKind === "checkbox" && preview ? (
+      <span
+        aria-label={value === "true" ? "Checked" : "Unchecked"}
+        className="flex size-4 items-center justify-center rounded-sm border border-stroke-default"
+      >
+        {value === "true" && <Check className="size-3" />}
+      </span>
     ) : cellKind === "checkbox" ? (
       <div className="database-checkbox-cell">
         <Checkbox
@@ -217,6 +227,10 @@ export function DatabasePropertyValue({
           onFocus={() => onActiveValueChange(key)}
         />
       </div>
+    ) : cellKind === "button" && preview ? (
+      <span className="truncate rounded-sm border border-stroke-default px-1">
+        {(Array.isArray(value) ? value.find((item) => item.trim()) : value) || pageProperty.name}
+      </span>
     ) : cellKind === "button" ? (
       <DatabasePropertyButton
         className="px-3 py-1"
@@ -266,6 +280,7 @@ export function DatabasePropertyValue({
       />
     ) : cellKind === "files" ? (
       <DatabasePropertyFiles
+        preview={preview}
         databaseId={databaseId}
         editable={editable}
         label={pageProperty.name}
@@ -278,6 +293,7 @@ export function DatabasePropertyValue({
       />
     ) : cellKind === "relation" ? (
       <DatabaseRelationPropertyValue
+        preview={preview}
         editable={editable}
         label={pageProperty.name}
         onOpen={onOpenPage}
@@ -291,6 +307,7 @@ export function DatabasePropertyValue({
       />
     ) : cellKind === "rollup" ? (
       <DatabaseRollupPropertyValue
+        preview={preview}
         databaseId={databaseId}
         editable={editable}
         onOpen={onOpenPage}
@@ -304,6 +321,7 @@ export function DatabasePropertyValue({
       />
     ) : (
       <DatabasePropertyInput
+        preview={preview}
         editable={editable}
         label={pageProperty.name}
         onActivate={(element) => {

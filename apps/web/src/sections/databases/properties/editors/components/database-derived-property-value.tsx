@@ -44,6 +44,7 @@ type DatabaseRow = {
 };
 
 export function DatabaseRollupPropertyValue({
+  preview = false,
   databaseId,
   editable,
   onOpen,
@@ -55,6 +56,7 @@ export function DatabaseRollupPropertyValue({
   row,
   wrapContent,
 }: {
+  preview?: boolean;
   databaseId: string | null | undefined;
   editable: boolean;
   onOpen?: (pageId: string) => void;
@@ -105,7 +107,7 @@ export function DatabaseRollupPropertyValue({
   const pageLinks = shouldShowRelationLinks
     ? getRollupPageLinks({
         onOpen,
-        openMode: wrapContent ? "button" : "title",
+        openMode: preview ? "static" : wrapContent ? "button" : "title",
         pageIds: toStringArray(
           relationProperty
             ? propertyValuesByKey[`${row.pageId}:${relationProperty.property.id}`]
@@ -172,7 +174,7 @@ function getRollupPageLinks({
   relatedRows,
 }: {
   onOpen?: (pageId: string) => void;
-  openMode: "button" | "title";
+  openMode: "button" | "title" | "static";
   pageIds: string[];
   relatedRows: DatabaseRecordEntity[] | null | undefined;
 }) {
@@ -208,6 +210,7 @@ function getRollupPageLinks({
 }
 
 export function DatabaseRelationPropertyValue({
+  preview = false,
   editable,
   emptyLabel,
   label,
@@ -220,6 +223,7 @@ export function DatabaseRelationPropertyValue({
   value,
   wrapContent,
 }: {
+  preview?: boolean;
   editable: boolean;
   emptyLabel?: string;
   label: string;
@@ -307,7 +311,7 @@ export function DatabaseRelationPropertyValue({
         editable={false}
         key={pageId}
         onOpen={onOpen}
-        openMode={wrapContent ? "button" : "title"}
+        openMode={preview ? "static" : wrapContent ? "button" : "title"}
         pageId={pageId}
         pageSummary={relatedPage ?? getRelationPageSummary(propertyConfig, pageId)}
         showPageIcon

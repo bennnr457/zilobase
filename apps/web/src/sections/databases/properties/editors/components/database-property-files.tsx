@@ -18,6 +18,7 @@ import { getApiErrorMessage } from "@/platform/network/api";
 import { uploadPageImage } from "@/platform/network/image-upload";
 
 export function DatabasePropertyFiles({
+  preview = false,
   editable = true,
   emptyLabel,
   label,
@@ -29,6 +30,7 @@ export function DatabasePropertyFiles({
   pageId,
   databaseId,
 }: {
+  preview?: boolean;
   databaseId?: string | null;
   editable?: boolean;
   emptyLabel?: string;
@@ -138,6 +140,10 @@ export function DatabasePropertyFiles({
     ) : (
       <span aria-hidden="true" className="block min-h-5 w-full" />
     );
+
+  if (!editable && preview) {
+    return <span className="database-select-cell-trigger">{triggerContent}</span>;
+  }
 
   if (!editable) {
     return files.length > 0 ? (
