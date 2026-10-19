@@ -1,6 +1,9 @@
 export function register({ assert, loadModule, test }) {
   test("image upload client uses S3 PUT without app credentials", async () => {
-    const { uploadPageImage } = await loadModule("/src/platform/network/image-upload.ts");
+    const { uploadPageImage, createImageUploadRuntime } = await loadModule(
+      "/apps/web/test/support/fixtures/image-upload.ts",
+    );
+    const runtime = createImageUploadRuntime();
     const calls = mockFetch([
       jsonResponse({
         asset: createAsset("asset-s3"),
@@ -17,7 +20,7 @@ export function register({ assert, loadModule, test }) {
     ]);
 
     try {
-      const result = await uploadPageImage({
+      const result = await uploadPageImage(runtime.context, {
         file: createImageFile(),
         workspaceId: "org-1",
         pageId: "page-1",
@@ -30,11 +33,15 @@ export function register({ assert, loadModule, test }) {
       assert.equal(calls[1].headers.has("x-mobile-auth-cookie"), false);
     } finally {
       restoreFetch();
+      runtime.dispose();
     }
   });
 
   test("image upload client uses app auth headers for binding uploads", async () => {
-    const { uploadPageImage } = await loadModule("/src/platform/network/image-upload.ts");
+    const { uploadPageImage, createImageUploadRuntime } = await loadModule(
+      "/apps/web/test/support/fixtures/image-upload.ts",
+    );
+    const runtime = createImageUploadRuntime();
     const previousWindow = globalThis.window;
     globalThis.window = {
       __ZILOBASE_MOBILE_AUTH_COOKIE__: "session=mobile",
@@ -55,7 +62,7 @@ export function register({ assert, loadModule, test }) {
     ]);
 
     try {
-      const result = await uploadPageImage({
+      const result = await uploadPageImage(runtime.context, {
         databaseId: "database-1",
         file: createImageFile(),
         workspaceId: "org-1",
@@ -69,13 +76,15 @@ export function register({ assert, loadModule, test }) {
     } finally {
       globalThis.window = previousWindow;
       restoreFetch();
+      runtime.dispose();
     }
   });
 
   test("profile image uploads complete and resolve account image URLs", async () => {
-    const { getUserImageUrl, uploadProfileImage } = await loadModule(
-      "/src/platform/network/image-upload.ts",
+    const { getUserImageUrl, uploadProfileImage, createImageUploadRuntime } = await loadModule(
+      "/apps/web/test/support/fixtures/image-upload.ts",
     );
+    const runtime = createImageUploadRuntime();
     const imagePath = "/user-settings/profile/images/user-1/image-1/avatar.png";
     const calls = mockFetch([
       jsonResponse({
@@ -98,7 +107,7 @@ export function register({ assert, loadModule, test }) {
     ]);
 
     try {
-      assert.deepEqual(await uploadProfileImage(createImageFile()), {
+      assert.deepEqual(await uploadProfileImage(runtime.context, createImageFile()), {
         image: imagePath,
       });
       assert.equal(calls[0].url, "https://api.zilobase.test/user-settings/profile/image/uploads");
@@ -114,6 +123,59 @@ export function register({ assert, loadModule, test }) {
       );
     } finally {
       restoreFetch();
+      runtime.dispose();
+    }
+  });
+  test("desktop server replacement aborts byte transfer before upload completion", async () => {
+    const {
+      uploadPageImage,
+      createImageUploadRuntime,
+      beginDesktopServerNetworkShutdown,
+      resetDesktopServerNetworkForTests,
+    } = await loadModule("/apps/web/test/support/fixtures/image-upload.ts");
+    const runtime = createImageUploadRuntime();
+    let calls = 0;
+    globalThis.fetch = async (_url, init = {}) => {
+      calls++;
+      if (calls === 1)
+        return jsonResponse({
+          asset: createAsset("pending"),
+          upload: {
+            expiresAt: "2099-01-01",
+            headers: {},
+            method: "PUT",
+            storageMode: "s3",
+            url: "https://objects.example/upload",
+          },
+        });
+      return new Promise((_resolve, reject) =>
+        init.signal.addEventListener(
+          "abort",
+          () => reject(new DOMException("Server changed", "AbortError")),
+          { once: true },
+        ),
+      );
+    };
+    try {
+      const request = uploadPageImage(runtime.context, {
+        file: createImageFile(),
+        workspaceId: "workspace",
+        pageId: "page",
+      });
+      const rejected = assert.rejects(request, (error) => error.name === "AbortError");
+      await new Promise((resolve) => setImmediate(resolve));
+      assert.equal(calls, 2);
+      beginDesktopServerNetworkShutdown();
+      await rejected;
+      assert.equal(
+        calls,
+        2,
+        "an interrupted transfer must not be completed on the replacement server",
+      );
+    } finally {
+      resetDesktopServerNetworkForTests();
+      restoreFetch();
+      runtime.dispose();
     }
   });
 }

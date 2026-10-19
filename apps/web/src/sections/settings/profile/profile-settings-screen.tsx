@@ -1,11 +1,12 @@
-import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { CameraIcon, LogOutIcon, Trash2Icon } from "@/components/icons";
+import { useNavigate } from "@tanstack/react-router";
+import { useZilobaseFeatures } from "@zilobase/features";
+import * as React from "react";
 import { toast } from "sonner";
 
-import { SettingsHeader } from "../shell/components/settings-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { SettingsHeader } from "../shell/components/settings-header";
 
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,6 @@ import {
 } from "@/platform/network/image-upload";
 import { clearAllIndexedData } from "@/platform/storage/indexed-data-cleanup";
 import { useQueryClient } from "@tanstack/react-query";
-import { updateSessionImage } from "@zilobase/features/auth";
 import { useSession, useSignOut, useUpdateUserProfile } from "@zilobase/features/auth/react";
 
 export default function ProfileSettingsScreen() {
@@ -82,7 +82,7 @@ function ProfileDetailsCard({
   initialName: string;
   isReady: boolean;
 }) {
-  const queryClient = useQueryClient();
+  const operationContext = useZilobaseFeatures();
   const updateUserProfile = useUpdateUserProfile();
   const imageInputRef = React.useRef<HTMLInputElement | null>(null);
   const [name, setName] = React.useState(initialName);
@@ -108,9 +108,8 @@ function ProfileDetailsCard({
     setImageAction("upload");
 
     try {
-      const result = await uploadProfileImage(file);
+      const result = await uploadProfileImage(operationContext, file);
       setProfileImage(result.image);
-      updateSessionImage(queryClient, result.image);
       toast.success("Profile picture updated.");
     } catch (uploadError) {
       setProfileImage(previousImage);
@@ -125,9 +124,8 @@ function ProfileDetailsCard({
     setImageAction("remove");
 
     try {
-      await removeProfileImage();
+      await removeProfileImage(operationContext);
       setProfileImage(null);
-      updateSessionImage(queryClient, null);
       toast.success("Profile picture removed.");
     } catch (removeError) {
       toast.error(getApiErrorMessage(removeError));

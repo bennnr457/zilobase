@@ -7,12 +7,13 @@ import {
   Search,
   Upload,
 } from "@/components/icons";
+import { useZilobaseFeatures } from "@zilobase/features";
 import { useRef, useState } from "react";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { uploadPageImage } from "@/platform/network/image-upload";
 import { PageCoverPicker } from "./page-cover-picker";
@@ -40,6 +41,7 @@ export function ImageSourcePicker({
   workspaceId,
   pageId,
 }: ImageSourcePickerProps) {
+  const operationContext = useZilobaseFeatures();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [linkUrl, setLinkUrl] = useState(initialLinkUrl);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export function ImageSourcePicker({
       setIsUploading(true);
 
       try {
-        const uploaded = await uploadPageImage({
+        const uploaded = await uploadPageImage(operationContext, {
           databaseId,
           file,
           workspaceId,

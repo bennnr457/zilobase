@@ -1,20 +1,21 @@
+import { File as FileIcon, Link as LinkIcon, Loader2, Plus, X } from "@/components/icons";
+import { useZilobaseFeatures } from "@zilobase/features";
 import {
-  getFilesLimit,
-  serializeDatabaseFiles,
   addDatabaseFile,
-  getFilesValue,
   getFileHref,
   getFileLabel,
+  getFilesLimit,
+  getFilesValue,
+  serializeDatabaseFiles,
 } from "@zilobase/features/databases";
-import { File as FileIcon, Link as LinkIcon, Loader2, Plus, X } from "@/components/icons";
 import { useRef, useState } from "react";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getApiErrorMessage } from "@/platform/network/api";
 import { uploadPageImage } from "@/platform/network/image-upload";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/app-tabs";
 
 export function DatabasePropertyFiles({
   editable = true,
@@ -39,6 +40,7 @@ export function DatabasePropertyFiles({
   value: string | string[];
   pageId?: string | null;
 }) {
+  const operationContext = useZilobaseFeatures();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -85,7 +87,7 @@ export function DatabasePropertyFiles({
       setIsUploading(true);
 
       try {
-        const uploaded = await uploadPageImage({
+        const uploaded = await uploadPageImage(operationContext, {
           databaseId,
           file,
           workspaceId,

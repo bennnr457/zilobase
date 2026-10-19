@@ -12,7 +12,8 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "postinstall": "wxt prepare",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@zilobase/features": "file:../../packages/features",
@@ -27,6 +28,7 @@
     "react-dom": "19.2.3",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
-    "wxt": "^0.20.11"
+    "wxt": "^0.20.11",
+    "esbuild": "0.27.7"
   }
 }

@@ -176,6 +176,10 @@
     "./runtime": {
       "types": "./src/runtime/index.ts",
       "default": "./src/runtime/index.ts"
+    },
+    "./uploads": {
+      "types": "./src/uploads/index.ts",
+      "default": "./src/uploads/index.ts"
     }
   }
 }
