@@ -17,6 +17,6 @@ export function register({ readSource, assert, test }) {
     );
 
     assert.match(source, /classList\.contains\("dragging"\)/);
-    assert.match(source, /selection instanceof NodeSelection/);
+    assert.match(source, /!isTextSelection\(selection\)/);
   });
 }

@@ -1,17 +1,17 @@
+import { isTextSelection } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/react/menus";
-import { AllSelection, NodeSelection } from "@tiptap/pm/state";
 import { useEffect } from "react";
 
 import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
 
 import { blockSelectionPluginKey } from "../../extensions/lib/block-selection";
 
+import { isFeatureEnabled } from "@/platform/environment";
 import { ColorMenu } from "../../toolbar/components/color-menu";
-import { SelectionAiMenu } from "./selection-ai-menu";
-import { toolbarGroups } from "../../toolbar/lib/toolbar";
 import { ToolbarButton } from "../../toolbar/components/toolbar-button";
 import type { EditorControlProps, RunToolbarCommand } from "../../toolbar/lib/toolbar";
-import { isFeatureEnabled } from "@/platform/environment";
+import { toolbarGroups } from "../../toolbar/lib/toolbar";
+import { SelectionAiMenu } from "./selection-ai-menu";
 
 const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";
 
@@ -91,19 +91,33 @@ export function SelectionBubbleMenu({
         offset: 8,
         strategy: "fixed",
       }}
-      shouldShow={({ editor, state, from, to }) => {
+      shouldShow={({ editor, element, view, state, from, to }) => {
         const { selection } = state;
         const blockSelectionMode = blockSelectionPluginKey.getState(state)?.mode ?? "none";
 
-        return (
-          editor.isEditable &&
-          !editor.view.dom.classList.contains("dragging") &&
-          blockSelectionMode !== "all" &&
-          !(selection instanceof AllSelection) &&
-          !(selection instanceof NodeSelection) &&
-          !selection.empty &&
-          state.doc.textBetween(from, to).trim().length > 0
-        );
+        if (
+          !editor.isEditable ||
+          !(view.hasFocus() || element.contains(element.ownerDocument.activeElement)) ||
+          view.dom.classList.contains("dragging") ||
+          blockSelectionMode === "all" ||
+          !isTextSelection(selection) ||
+          selection.empty ||
+          state.doc.textBetween(from, to).trim().length === 0
+        ) {
+          return false;
+        }
+
+        // Check the whole range: a selection can cross code even when both
+        // endpoints are in ordinary text. Code blocks do not support these marks.
+        let containsCode = false;
+        state.doc.nodesBetween(from, to, (node) => {
+          if (node.type.spec.code) {
+            containsCode = true;
+            return false;
+          }
+        });
+
+        return !containsCode;
       }}
     >
       <ButtonGroup aria-label="Text selection actions" role="toolbar" variant="floating">
