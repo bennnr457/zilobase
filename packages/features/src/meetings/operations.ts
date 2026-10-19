@@ -182,55 +182,51 @@ export function recordMeetingConsent(
   });
 }
 
-function defineClaimMeetingRecorder(context: ClientOperationContext, meetingId: string) {
-  const { apiFetch, queryClient } = context;
-  return clientMutation({
-    mutationFn: () =>
-      apiFetch<MeetingRecorderClaim>(`/meetings/${meetingId}/recorder/claim`, {
-        body: "{}",
-        method: "POST",
-      }),
-    onSuccess: (payload) => {
-      queryClient.setQueryData(meetingKeys.detail(meetingId), {
-        meeting: payload.meeting,
-      });
-      return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
-    },
-  });
-}
 export type ClaimMeetingRecorderOperationInput = { meetingId: string };
 export function claimMeetingRecorder(
   context: ClientOperationContext,
   input: ClaimMeetingRecorderOperationInput,
-) {
-  return runClientMutation(context, undefined, (context) =>
-    defineClaimMeetingRecorder(context, input.meetingId),
-  );
-}
-
-function defineReleaseMeetingRecorder(context: ClientOperationContext, meetingId: string) {
-  const { apiFetch, queryClient } = context;
-  return clientMutation({
-    mutationFn: (leaseId: string) =>
-      apiFetch<MeetingResponse>(`/meetings/${meetingId}/recorder/release`, {
-        body: JSON.stringify({ leaseId }),
-        method: "POST",
-      }),
-    onSuccess: (payload) => {
-      queryClient.setQueryData(meetingKeys.detail(meetingId), payload);
-      return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
-    },
+): Promise<ClaimMeetingRecorderResult> {
+  return runClientMutation(context, undefined, (context) => {
+    const meetingId = input.meetingId;
+    const { apiFetch, queryClient } = context;
+    return clientMutation({
+      mutationFn: () =>
+        apiFetch<MeetingRecorderClaim>(`/meetings/${meetingId}/recorder/claim`, {
+          body: "{}",
+          method: "POST",
+        }),
+      onSuccess: (payload) => {
+        queryClient.setQueryData(meetingKeys.detail(meetingId), {
+          meeting: payload.meeting,
+        });
+        return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
+      },
+    });
   });
 }
+
 export type ReleaseMeetingRecorderOperationInput = { meetingId: string; leaseId: string };
 export function releaseMeetingRecorder(
   context: ClientOperationContext,
   input: ReleaseMeetingRecorderOperationInput,
-) {
-  return runClientMutation(context, input.leaseId, (context) =>
-    defineReleaseMeetingRecorder(context, input.meetingId),
-  );
+): Promise<ReleaseMeetingRecorderResult> {
+  return runClientMutation(context, input.leaseId, (context) => {
+    const meetingId = input.meetingId;
+    const { apiFetch, queryClient } = context;
+    return clientMutation({
+      mutationFn: (leaseId: string) =>
+        apiFetch<MeetingResponse>(`/meetings/${meetingId}/recorder/release`, {
+          body: JSON.stringify({ leaseId }),
+          method: "POST",
+        }),
+      onSuccess: (payload) => {
+        queryClient.setQueryData(meetingKeys.detail(meetingId), payload);
+        return queryClient.invalidateQueries({ queryKey: meetingKeys.lists() });
+      },
+    });
+  });
 }
 
-export type ClaimMeetingRecorderResult = Awaited<ReturnType<typeof claimMeetingRecorder>>;
-export type ReleaseMeetingRecorderResult = Awaited<ReturnType<typeof releaseMeetingRecorder>>;
+export type ClaimMeetingRecorderResult = MeetingRecorderClaim;
+export type ReleaseMeetingRecorderResult = MeetingResponse;
