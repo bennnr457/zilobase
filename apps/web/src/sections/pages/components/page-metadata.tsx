@@ -671,7 +671,7 @@ export function PageMetadata({
 
   const pageIcon = icon ? (
     <div
-      className={`flex shrink-0 items-center justify-center ${iconPosition === "top" ? "size-20" : "size-12"}`}
+      className={`flex w-fit shrink-0 items-center justify-center ${iconPosition === "top" ? "h-20" : "h-12"}`}
     >
       {editable ? iconPicker : iconDisplay}
     </div>

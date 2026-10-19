@@ -2215,9 +2215,9 @@ function DataGridTableBodyRowCell<TData extends object>({
         selection["data-cell-edge-right"] && (
           <span
             data-slot="data-grid-cell-fill-handle"
-            /* "dot" stays fully inside the cell corner; "ring" rides the
-               corner point the way Sheets draws it. Either way the handle
-               clamps where straddling would break: at the grid's own
+            /* The dot's center follows the selection overlay's corner,
+               including its boundary offsets. The ring clamps where
+               straddling would break: at the grid's own
                boundary (last row, last cell, a last cell followed only by
                the filler strip), where an overhang would extend the scroll
                content and clip the selection chrome, and beside a PINNED
@@ -2234,7 +2234,7 @@ function DataGridTableBodyRowCell<TData extends object>({
                        into a wider-than-tall blob, and it can never leave
                        the grid, which is why it needs no boundary clamps. */
                     "bg-action-selected-border end-0 bottom-0 size-[5px]"
-                  : "bg-action-selected-border end-0 bottom-0 size-[7px] rounded-full",
+                  : "bg-action-selected-border end-[calc(var(--data-grid-overlay-end,-1px)-3px)] bottom-[calc(var(--data-grid-overlay-bottom,-1px)-3px)] size-[7px] rounded-full",
               props.tableClassNames?.cellFillHandle,
             )}
           />

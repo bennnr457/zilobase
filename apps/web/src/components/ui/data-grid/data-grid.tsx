@@ -897,8 +897,8 @@ export interface DataGridProps<TFeatures extends TableFeatures, TData extends ob
      */
     cellEditEnterAdvance?: boolean;
     /**
-     * The handle's look: "dot" is a solid primary dot kept inside the
-     * cell corner; "ring" is the Sheets-style hollow circle riding the
+     * The handle's look: "dot" is a solid primary dot centered on the
+     * selection corner; "ring" is the Sheets-style hollow circle riding the
      * corner point, clamped at the grid's own boundary; "square" is the
      * Excel-style solid square inside the corner. Default "dot".
      */
