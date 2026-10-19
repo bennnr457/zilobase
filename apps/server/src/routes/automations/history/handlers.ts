@@ -1,56 +1,44 @@
 import type { Handler } from "hono";
-import { exportDatabaseAutomationAudit } from "../../../services/automations/history/audit-export";
 import {
-  getDatabaseAutomationRun,
-  listDatabaseAutomationRuns,
-} from "../../../services/automations/history/run-history";
+  exportAutomationAuditOperation,
+  listAutomationRunsOperation,
+  readAutomationRunOperation,
+} from "../../../services/automations/history/operations";
 import type { AppBindings } from "../../../shared/contracts/http";
-import { requireDatabaseRouteUser } from "../../databases/support";
-import { handle, requireAutomationSource } from "../support";
+import { serverOperationContext } from "../../http/operation-context";
 export const exportAutomationAudit: Handler<AppBindings, "/:databaseId/automations/audit"> = async (
   c,
-) => {
-  const source = requireAutomationSource(c);
-  if (!source.ok) return source.response;
-  const { user, dataSourceId } = source;
-  return handle(c, () =>
-    exportDatabaseAutomationAudit({
-      databaseId: c.req.param("databaseId"),
-      dataSourceId,
-      userId: user.id,
+) =>
+  c.json(
+    await exportAutomationAuditOperation(serverOperationContext(c), {
+      databaseId: c.req.param("databaseId")!,
+      dataSourceId: c.req.query("dataSourceId"),
     }),
+    200,
   );
-};
 
 export const listAutomationRuns: Handler<
   AppBindings,
   "/:databaseId/automations/:automationId/runs"
-> = async (c) => {
-  const user = requireDatabaseRouteUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  const requestedLimit = Number(c.req.query("limit") ?? 50);
-  return handle(c, () =>
-    listDatabaseAutomationRuns({
-      automationId: c.req.param("automationId"),
-      databaseId: c.req.param("databaseId"),
-      limit: Number.isFinite(requestedLimit) ? requestedLimit : 50,
-      userId: user.id,
+> = async (c) =>
+  c.json(
+    await listAutomationRunsOperation(serverOperationContext(c), {
+      databaseId: c.req.param("databaseId")!,
+      limit: c.req.query("limit"),
+      automationId: c.req.param("automationId")!,
     }),
+    200,
   );
-};
 
 export const readAutomationRun: Handler<
   AppBindings,
   "/:databaseId/automations/:automationId/runs/:runId"
-> = async (c) => {
-  const user = requireDatabaseRouteUser(c);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  return handle(c, () =>
-    getDatabaseAutomationRun({
-      automationId: c.req.param("automationId"),
-      databaseId: c.req.param("databaseId"),
-      runId: c.req.param("runId"),
-      userId: user.id,
+> = async (c) =>
+  c.json(
+    await readAutomationRunOperation(serverOperationContext(c), {
+      databaseId: c.req.param("databaseId")!,
+      automationId: c.req.param("automationId")!,
+      runId: c.req.param("runId")!,
     }),
+    200,
   );
-};

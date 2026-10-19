@@ -1,123 +1,69 @@
-import { Hono, type Context } from "hono";
+import { Hono } from "hono";
 import {
-  findOwnedSlackConnection,
-  revokeSlackConnection,
-} from "../../services/automations/actions/slack/connections";
+  disconnectAutomationSlackOperation,
+  listAutomationSlackChannelsOperation,
+  startAutomationSlackConnectionOperation,
+} from "../../services/automations/slack-operations";
 import { getDatabaseRecord } from "../../services/databases/access/database-access";
 import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
+import { serverOperationContext } from "../http/operation-context";
+import { attachServiceErrorHandler } from "../http/route-error";
 
 import {
-  beginSlackOauth,
   completeSlackOauth,
-  listSlackChannels,
   SlackProviderError,
 } from "../../services/automations/actions/slack/slack-provider";
-import { isAutomationSlackEnabled } from "../../services/automations/configuration";
-import { getDatabaseAutomationCatalog } from "../../services/automations/definition/definition-catalog";
-import { requireDataSourceAccess } from "../../services/databases/access/data-source-access";
 import { getCanonicalWebOrigin } from "../../shared/config/config";
 import type { AppBindings } from "../../shared/contracts/http";
-import { requireDatabaseRouteUser } from "../databases/support";
-import { readJsonBody } from "../http/request";
 
-export const automationSlackRoutes = new Hono<AppBindings>();
+export const automationSlackRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 const resourceWorkspace = pinnedResourceMiddleware(
   (id) => getDatabaseRecord(id, { includeDeleted: true }),
   "databaseId",
 );
 
-export const automationSlackProviderRoutes = new Hono<AppBindings>();
+export const automationSlackProviderRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 
 automationSlackRoutes.post(
   "/:databaseId/automation-slack/oauth/start",
   resourceWorkspace,
-  async (c) => {
-    const user = requireDatabaseRouteUser(c);
-    if (!user) return c.json({ error: "Unauthorized" }, 401);
-    const body = (await readJsonBody(c.req)) as { dataSourceId?: unknown } | null;
-    if (!body || typeof body.dataSourceId !== "string")
-      return c.json({ error: "dataSourceId is required" }, 400);
-    try {
-      const catalog = await getDatabaseAutomationCatalog({
-        databaseId: c.req.param("databaseId"),
-        dataSourceId: body.dataSourceId,
-        slackEnabled: isAutomationSlackEnabled(c.env ?? {}),
-        userId: user.id,
-      });
-      if (!catalog.canManage)
-        return c.json({ error: catalog.manageUnavailableReason ?? "Forbidden" }, 403);
-      const workspaceId = await connectionWorkspace(
-        c.req.param("databaseId"),
-        body.dataSourceId,
-        user.id,
-      );
-      return c.json({
-        authorizationUrl: await beginSlackOauth(c.env ?? {}, { userId: user.id, workspaceId }),
-      });
-    } catch (error) {
-      return slackError(c, error);
-    }
-  },
+  async (c) =>
+    c.json(
+      await startAutomationSlackConnectionOperation(
+        serverOperationContext(c),
+        { databaseId: c.req.param("databaseId")! },
+        () => c.req.json(),
+      ),
+      200,
+    ),
 );
 
 automationSlackRoutes.get(
   "/:databaseId/automation-slack/connections/:connectionId/channels",
   resourceWorkspace,
-  async (c) => {
-    const user = requireDatabaseRouteUser(c);
-    if (!user) return c.json({ error: "Unauthorized" }, 401);
-    const dataSourceId = c.req.query("dataSourceId");
-    if (!dataSourceId) return c.json({ error: "dataSourceId is required" }, 400);
-    try {
-      const catalog = await getDatabaseAutomationCatalog({
-        databaseId: c.req.param("databaseId"),
-        dataSourceId,
-        slackEnabled: isAutomationSlackEnabled(c.env ?? {}),
-        userId: user.id,
-      });
-      const allowed = catalog.slackConnections.find(({ id }) => id === c.req.param("connectionId"));
-      if (!allowed) return c.json({ error: "Slack connection not found" }, 404);
-      const connection = await findOwnedSlackConnection(allowed.id, user.id);
-      if (!connection) return c.json({ error: "Slack connection not found" }, 404);
-      return c.json({ channels: await listSlackChannels(c.env ?? {}, connection) });
-    } catch (error) {
-      if (error instanceof SlackProviderError && error.code === "SLACK_CONNECTION_REVOKED") {
-        await revokeSlackConnection(
-          c.req.param("connectionId"),
-          user.id,
-          error.code,
-          "The automation owner's Slack connection was revoked",
-        );
-      }
-      return slackError(c, error);
-    }
-  },
+  async (c) =>
+    c.json(
+      await listAutomationSlackChannelsOperation(serverOperationContext(c), {
+        databaseId: c.req.param("databaseId")!,
+        dataSourceId: c.req.query("dataSourceId"),
+        connectionId: c.req.param("connectionId")!,
+      }),
+      200,
+    ),
 );
 
 automationSlackRoutes.delete(
   "/:databaseId/automation-slack/connections/:connectionId",
   resourceWorkspace,
-  async (c) => {
-    const user = requireDatabaseRouteUser(c);
-    if (!user) return c.json({ error: "Unauthorized" }, 401);
-    const dataSourceId = c.req.query("dataSourceId");
-    if (!dataSourceId) return c.json({ error: "dataSourceId is required" }, 400);
-    const catalog = await getDatabaseAutomationCatalog({
-      databaseId: c.req.param("databaseId"),
-      dataSourceId,
-      slackEnabled: isAutomationSlackEnabled(c.env ?? {}),
-      userId: user.id,
-    });
-    if (!catalog.slackConnections.some(({ id }) => id === c.req.param("connectionId")))
-      return c.json({ error: "Slack connection not found" }, 404);
-    await revokeSlackConnection(
-      c.req.param("connectionId"),
-      user.id,
-      "disconnected",
-      "The automation owner's Slack connection was disconnected",
-    );
-    return c.json({ disconnected: true });
-  },
+  async (c) =>
+    c.json(
+      await disconnectAutomationSlackOperation(serverOperationContext(c), {
+        databaseId: c.req.param("databaseId")!,
+        dataSourceId: c.req.query("dataSourceId"),
+        connectionId: c.req.param("connectionId")!,
+      }),
+      200,
+    ),
 );
 
 automationSlackProviderRoutes.get("/automation-slack/oauth/callback", async (c) => {
@@ -143,22 +89,6 @@ automationSlackProviderRoutes.get("/automation-slack/oauth/callback", async (c) 
     );
   }
 });
-
-async function connectionWorkspace(databaseId: string, dataSourceId: string, userId: string) {
-  const source = await requireDataSourceAccess(dataSourceId, userId, "full");
-  if (source.parentDatabaseId !== databaseId)
-    throw new SlackProviderError("Database source not found", "SOURCE_NOT_FOUND", 404);
-  return source.workspaceId;
-}
-
-function slackError(c: Context<AppBindings>, error: unknown) {
-  if (error instanceof SlackProviderError)
-    return c.json(
-      { error: error.message, code: error.code },
-      error.status as 400 | 401 | 404 | 409 | 429 | 500 | 502 | 503 | 504,
-    );
-  return c.json({ error: error instanceof Error ? error.message : "Slack request failed" }, 500);
-}
 
 function resultPage(message: string) {
   const escaped = message.replace(

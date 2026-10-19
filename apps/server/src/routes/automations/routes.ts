@@ -1,6 +1,9 @@
 import { Hono } from "hono";
+import { setAutomationPausedOperation } from "../../services/automations/lifecycle-operations";
 import { getDatabaseRecord } from "../../services/databases/access/database-access";
 import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
+import { serverOperationContext } from "../http/operation-context";
+import { attachServiceErrorHandler } from "../http/route-error";
 import {
   createAutomation,
   createAutomationSecret,
@@ -14,17 +17,10 @@ import {
   validateAutomation,
 } from "./definition/handlers";
 import { exportAutomationAudit, listAutomationRuns, readAutomationRun } from "./history/handlers";
-import { handle, webhookHttpDomains } from "./support";
 
-import {
-  isAutomationSlackEnabled,
-  isAutomationWebhooksEnabled,
-} from "../../services/automations/configuration";
-import { setDatabaseAutomationPaused } from "../../services/automations/definition/definition-lifecycle";
 import type { AppBindings } from "../../shared/contracts/http";
-import { requireDatabaseRouteUser } from "../databases/support";
 
-export const databaseAutomationRoutes = new Hono<AppBindings>();
+export const databaseAutomationRoutes = attachServiceErrorHandler(new Hono<AppBindings>());
 const resourceWorkspace = pinnedResourceMiddleware(
   (id) => getDatabaseRecord(id, { includeDeleted: true }),
   "databaseId",
@@ -89,22 +85,15 @@ for (const [path, paused] of [
   databaseAutomationRoutes.post(
     `/:databaseId/automations/:automationId/${path}`,
     resourceWorkspace,
-    async (c) => {
-      const user = requireDatabaseRouteUser(c);
-      if (!user) return c.json({ error: "Unauthorized" }, 401);
-      return handle(c, () =>
-        setDatabaseAutomationPaused({
-          allowHttpWebhookDomains: webhookHttpDomains(c),
-          automationId: c.req.param("automationId"),
-          databaseId: c.req.param("databaseId"),
-          editionExtension: c.get("editionExtension") ?? undefined,
-          slackEnabled: isAutomationSlackEnabled(c.env ?? {}),
-          webhooksEnabled: isAutomationWebhooksEnabled(c.env ?? {}),
-          paused,
-          userId: user.id,
+    async (c) =>
+      c.json(
+        await setAutomationPausedOperation(serverOperationContext(c), {
+          databaseId: c.req.param("databaseId")!,
+          paused: paused,
+          automationId: c.req.param("automationId")!,
         }),
-      );
-    },
+        200,
+      ),
   );
 }
 
