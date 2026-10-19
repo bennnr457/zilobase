@@ -1,5 +1,5 @@
-import { and, eq, inArray } from "drizzle-orm";
 import { type DatabaseAutomationDependency } from "@zilobase/features/runtime";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, type Database } from "../../../infrastructure/database";
 import {
   databaseAutomation,
@@ -8,12 +8,12 @@ import {
 import { operatorsForPropertyType } from "../compilation/compiler";
 import {
   DatabaseAutomationError,
-  requireManagementContext,
-  loadProperties,
   loadAutomationTargetCatalog,
   loadOwnedSlackConnections,
+  loadProperties,
   loadViews,
   loadWorkspaceUsers,
+  requireManagementContext,
 } from "./definition-context";
 
 export async function getDatabaseAutomationCatalog(input: {

@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 
-import type { AppBindings } from "../../shared/types";
+import type { AppBindings } from "../../shared/contracts/http";
 
 export const DEMO_READ_ONLY_CODE = "DEMO_READ_ONLY";
 export const DEMO_READ_ONLY_ERROR = "Changes are disabled in the hosted demo.";

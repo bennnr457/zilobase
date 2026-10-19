@@ -1,4 +1,9 @@
 import { and, eq, isNull, lte } from "drizzle-orm";
+import {
+  createBackgroundTask,
+  type BackgroundTaskResult,
+} from "../../infrastructure/background/contracts";
+import { dispatchBackgroundTasks } from "../../infrastructure/background/dispatch";
 import { db } from "../../infrastructure/database";
 import {
   calendarAccount,
@@ -6,16 +11,11 @@ import {
   calendarProviderCalendar,
   calendarWatchChannel,
 } from "../../infrastructure/database/schema";
-import {
-  createBackgroundTask,
-  type BackgroundTaskResult,
-} from "../../infrastructure/background/contracts";
-import { dispatchBackgroundTasks } from "../../infrastructure/background/dispatch";
 import { getStringEnv, type RuntimeEnv } from "../../shared/config/config";
-import { advanceCalendarSync, refreshCalendarList } from "./sync/sync";
 import { createCalendarGateway } from "./provider/oauth";
-import { maintainAccountWatches } from "./realtime/watches";
 import { drainCalendarOutbox } from "./realtime/outbox";
+import { maintainAccountWatches } from "./realtime/watches";
+import { advanceCalendarSync, refreshCalendarList } from "./sync/sync";
 
 export async function dispatchCalendarWebhook(
   env: RuntimeEnv,

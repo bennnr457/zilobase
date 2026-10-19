@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import {
-  readString,
-  readPositiveInteger,
-  normalizeContentType,
-  sanitizeFilename,
   getImageObjectKey,
+  normalizeContentType,
+  readPositiveInteger,
+  readString,
+  sanitizeFilename,
 } from "./image-upload-input";
 
 test("image upload inputs retain numeric, MIME and object-key normalization", () => {

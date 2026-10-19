@@ -1,7 +1,6 @@
 import type { DataSourceCommand, HostDatabaseCommand } from "@zilobase/features/runtime";
 
 import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "../framework";
-import { databaseUpdate } from "./databases";
 import {
   dataSourceCreate,
   dataSourceLink,
@@ -9,6 +8,7 @@ import {
   dataSourceUpdate,
   viewSetDataSource,
 } from "./data-sources";
+import { databaseUpdate } from "./databases";
 import {
   propertyCreate,
   propertyDuplicate,

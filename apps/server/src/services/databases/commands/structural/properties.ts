@@ -1,11 +1,13 @@
-import { and, asc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/runtime";
 import type {
   DataSourceCommand,
   DatabasePropertyEntity,
   DatabaseRecordEntity,
 } from "@zilobase/features/runtime";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
+import { and, asc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 
+import { normalizeDatabasePropertyType } from "@zilobase/features/runtime";
+import type { Database } from "../../../../infrastructure/database";
 import {
   databaseProperty,
   databaseRow,
@@ -13,17 +15,15 @@ import {
   pagePropertyValue,
 } from "../../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../../shared/errors/service-mutation-error";
-import { updateDatabasePropertyPositions } from "../../core/position-service";
+import { invalidateDatabaseAutomationDependencies } from "../../../automations/definition/definition-catalog";
+import { updateDatabasePropertyPositions } from "../../navigation/position-service";
 import { normalizePropertyConfig } from "../../schema/config";
-import { normalizeDatabasePropertyType } from "../../schema/types";
 import { getDuplicatePropertyName } from "../../schema/import";
 import type { DatabaseCommandContext } from "../framework";
 import { getDatabasePropertyEntity } from "../metadata-entities";
 import { getDatabaseRecordEntity } from "../record-entity";
 import { sourceMutations, sourceRecord } from "../source-command-state";
 import { resolveNeighborIndex } from "./ordering";
-import type { Database } from "../../../../infrastructure/database";
-import { invalidateDatabaseAutomationDependencies } from "../../../automations/definition/definition-catalog";
 
 async function orderedProperties(context: DatabaseCommandContext) {
   return context.transaction

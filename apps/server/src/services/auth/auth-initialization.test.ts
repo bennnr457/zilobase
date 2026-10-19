@@ -1,9 +1,9 @@
-import { expect, test, vi } from "vitest";
-import { Client } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { createAuth } from "./auth";
+import { Client } from "pg";
+import { expect, test, vi } from "vitest";
 import * as schema from "../../infrastructure/database/schema";
-import type { ZilobaseEditionExtension } from "../../shared/types";
+import type { ZilobaseEditionExtension } from "../../shared/contracts/edition";
+import { createAuth } from "./auth";
 
 const env = {
   BETTER_AUTH_SECRET: "isolated-auth-initialization-test-secret",

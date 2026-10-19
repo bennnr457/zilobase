@@ -2,8 +2,8 @@ import { and, asc, eq, gt, isNull, notInArray, or, sql } from "drizzle-orm";
 
 import type { Database } from "../../infrastructure/database";
 import { invitation, member, session, user } from "../../infrastructure/database/schema";
-import type { ZilobaseEditionExtension } from "../../shared/types";
-import { ensureDefaultTeamspaceMembership } from "../teamspaces";
+import type { ZilobaseEditionExtension } from "../../shared/contracts/edition";
+import { ensureDefaultTeamspaceMembership } from "../teamspaces/teamspace-membership";
 import { activeMembershipCondition, parseMembershipAccessExpiry } from "./temporary-membership";
 
 export type TransactionalAdmissionCode = "INVITATION_CONFLICT" | "INVITATION_REQUIRED";

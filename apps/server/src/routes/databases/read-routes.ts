@@ -1,37 +1,39 @@
-import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
 import { Hono, type Context } from "hono";
+import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
 
+import { getDatabaseRealtimeWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
 import {
   canAccessDatabaseRecord,
   getEffectiveDatabaseAccessForRecord,
+  isDatabasePublishedInWorkspace,
+} from "../../services/access/effective-access";
+import {
   getMembership,
   getWorkspacePrincipalKind,
   getWorkspaceRealtimeAccessExpiration,
-  isDatabasePublishedInWorkspace,
-} from "../../services/access";
+} from "../../services/access/principal-access";
+import { getDatabaseRecord } from "../../services/databases/access/database-access";
+import {
+  DATABASE_MUTATION_FEED_LIMIT,
+  getDatabaseMutationFeed,
+} from "../../services/databases/history/service";
+import {
+  DatabaseViewQueryChangedError,
+  DatabaseWindowStaleError,
+  getAuthorizedDatabaseSourceIds,
+  getDatabaseBootstrapService,
+  getDatabaseExportService,
+  getDatabaseRecordWindowService,
+  MAX_DATABASE_RECORD_WINDOW_LIMIT,
+} from "../../services/databases/read/service";
 import {
   createDatabaseRealtimeTicket,
   DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX,
   DATABASE_REALTIME_PROTOCOL,
   verifyDatabaseRealtimeTicket,
-} from "../../shared/security/database-realtime-ticket";
-import { getDatabaseRealtimeWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
-import { getDatabaseRecord } from "../../services/databases/access/database-access";
-import type { AppBindings } from "../../shared/types";
-import { readJsonBody } from "../../shared/http/request";
-import {
-  DatabaseWindowStaleError,
-  DatabaseViewQueryChangedError,
-  MAX_DATABASE_RECORD_WINDOW_LIMIT,
-  getDatabaseBootstrapService,
-  getAuthorizedDatabaseSourceIds,
-  getDatabaseExportService,
-  getDatabaseRecordWindowService,
-} from "../../services/databases/read/service";
-import {
-  DATABASE_MUTATION_FEED_LIMIT,
-  getDatabaseMutationFeed,
-} from "../../services/databases/history/service";
+} from "../../services/databases/realtime/tickets";
+import type { AppBindings } from "../../shared/contracts/http";
+import { readJsonBody } from "../http/request";
 
 export const databaseReadRoutes = new Hono<AppBindings>();
 const resourceWorkspace = pinnedResourceMiddleware((id) =>

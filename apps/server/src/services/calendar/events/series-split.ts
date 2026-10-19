@@ -1,9 +1,9 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   dayInstant,
   type CalendarEventTime,
   type CalendarMutationResponse,
 } from "@zilobase/features/runtime";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import { calendarBinding, calendarMutationReceipt } from "../../../infrastructure/database/schema";
 import { sha256Hex } from "../../../shared/crypto/sha256";
@@ -14,15 +14,15 @@ import {
   normalizeEvent,
   type GoogleCalendarEvent,
 } from "../provider/gateway";
-import { splitRecurrence } from "./recurrence";
+import { providerEventPatch, validateEventInterval, type CalendarWrite } from "./input";
+import type { CalendarMutationInput } from "./mutations";
 import {
   markOperation,
   operationMarker,
-  writableCalendar,
   requireEventCapability,
+  writableCalendar,
 } from "./provider-writes";
-import { providerEventPatch, validateEventInterval, type CalendarWrite } from "./input";
-import type { CalendarMutationInput } from "./mutations";
+import { splitRecurrence } from "./recurrence";
 type SplitSteps = {
   action: "split";
   headId: string;

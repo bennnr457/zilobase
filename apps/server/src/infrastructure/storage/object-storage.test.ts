@@ -9,7 +9,7 @@ vi.mock("./image-storage", () => ({
   createImageStorage: mocks.createImageStorage,
 }));
 
-import { createAppRuntime } from "../effect";
+import { createAppRuntime } from "../effect/runtime";
 import { ObjectStorage, ObjectStorageUnavailable } from "./object-storage";
 
 beforeEach(() => {

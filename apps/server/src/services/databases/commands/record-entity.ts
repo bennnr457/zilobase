@@ -1,7 +1,6 @@
-import { and, eq } from "drizzle-orm";
 import { databaseRecordEntitySchema, type DatabaseRecordEntity } from "@zilobase/features/runtime";
+import { and, eq } from "drizzle-orm";
 
-import type { DatabaseCommandContext } from "./framework";
 import {
   databaseProperty,
   databaseRow,
@@ -9,6 +8,7 @@ import {
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import type { DatabaseCommandContext } from "./framework";
 
 const timestamp = (value: Date | string) => (value instanceof Date ? value.toISOString() : value);
 const nullableTimestamp = (value: Date | string | null) =>

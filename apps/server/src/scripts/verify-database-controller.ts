@@ -1,13 +1,14 @@
-import assert from "node:assert/strict";
-import { Hono } from "hono";
-import { asc, eq } from "drizzle-orm";
-import { runMigrationSets } from "@zilobase/runtime-adapter/node";
-import { databaseViewQueryHash } from "@zilobase/features/runtime";
 import type {
   DatabaseCommand,
   DatabaseCommandRequest,
   DatabasePropertyEntity,
+  PageNavigationPayload,
 } from "@zilobase/features/runtime";
+import { databaseViewQueryHash } from "@zilobase/features/runtime";
+import { runMigrationSets } from "@zilobase/runtime-adapter/node";
+import { asc, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import assert from "node:assert/strict";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
 import {
   database,
@@ -16,27 +17,26 @@ import {
   databaseCommandReceipt,
   databaseDataSource,
   databaseMutationEvent,
+  databaseProperty,
   databaseRealtimeOutbox,
   databaseRow,
-  databaseProperty,
-  pageProperty,
   databaseView,
   dataSource,
   member,
   page,
+  pageProperty,
   user,
   workspace,
 } from "../infrastructure/database/schema";
 import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
-import { executeDatabaseCommand } from "../services/databases/commands/framework";
+import { pageBrowseRoutes } from "../routes/pages/read/routes";
 import { dispatchDatabaseCommand } from "../services/databases/commands/dispatcher";
+import { executeDatabaseCommand } from "../services/databases/commands/framework";
 import {
   DatabaseViewQueryChangedError,
   getDatabaseRecordWindowService,
 } from "../services/databases/read/service";
-import { pageBrowseRoutes } from "../routes/pages/page-browse-routes";
-import type { AppBindings } from "../shared/types";
-import type { PageNavigationPayload } from "@zilobase/features/runtime";
+import type { AppBindings } from "../shared/contracts/http";
 
 const connection = process.env.ZILOBASE_CONTROLLER_VERIFY_URL;
 assert.ok(connection, "Use the isolated controller test runner; no default database is allowed");

@@ -1,34 +1,33 @@
+import { type DatabaseAutomationAction, type FormulaValue } from "@zilobase/features/runtime";
 import { eq } from "drizzle-orm";
-import { type DatabaseAutomationAction } from "@zilobase/features/runtime";
-import { type FormulaValue } from "@zilobase/features/runtime";
-import { type RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import { databaseRow } from "../../../infrastructure/database/schema";
-import { getEffectivePageAccessForUsers } from "../../access";
+import { type RuntimeEnv } from "../../../shared/config/config";
+import { getEffectivePageAccessForUsers } from "../../access/effective-access";
 import { createDatabaseRowService } from "../../databases/records/service";
-import { applyDatabaseAutomationRowOperations } from "../actions/internal-mutations";
 import {
   accessibleNotificationPageId,
   activeNotificationRecipientIds,
   createAutomationNotifications,
-} from "../../notifications/notification-operations";
-import { AutomationActionError } from "./action-error";
-import { type ExecutionContext } from "./execution-context";
+} from "../../notifications/inbox/notification-operations";
 import {
-  resolveRichText,
-  scalarString,
-  userIds,
+  assertBoundedValue,
+  requireOwner,
+  requireTriggerRow,
+  resolveEditTarget,
   resolveExpression,
   resolveOperations,
-  resolveEditTarget,
-  requireTriggerRow,
-  assertBoundedValue,
+  resolveRichText,
+  scalarString,
   stableActionSuffix,
-  requireOwner,
   stringList,
+  userIds,
 } from "../actions/action-values";
-import { executeWebhookAction } from "../actions/webhook-action";
-import { executeSlackAction } from "../actions/slack-action";
+import { applyDatabaseAutomationRowOperations } from "../actions/internal-mutations";
+import { executeSlackAction } from "../actions/slack/slack-action";
+import { executeWebhookAction } from "../actions/webhook/webhook-action";
+import { AutomationActionError } from "./action-error";
+import { type ExecutionContext } from "./execution-context";
 export async function executeAction(
   context: ExecutionContext,
   action: DatabaseAutomationAction,

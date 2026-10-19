@@ -1,6 +1,6 @@
 import { index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { timestampColumns, tsvector } from "./columns";
 import { workspace } from "./workspaces";
-import { tsvector, timestampColumns } from "./columns";
 
 export const searchDocument = pgTable(
   "search_document",

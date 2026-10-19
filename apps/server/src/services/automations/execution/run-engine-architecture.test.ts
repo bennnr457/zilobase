@@ -1,7 +1,7 @@
-import { expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { expect, test } from "vitest";
 
 const require = createRequire(import.meta.url);
 const adapterNodeDir = path.dirname(require.resolve("@zilobase/runtime-adapter/node"));
@@ -20,13 +20,12 @@ const readRunEngine = () =>
     "./execution-context.ts",
     "./action-executor.ts",
     "../actions/action-values.ts",
-    "../actions/slack-action.ts",
-    "../actions/webhook-action.ts",
+    "../actions/slack/slack-action.ts",
+    "../actions/webhook/webhook-action.ts",
   );
 
 const readAutomationService = () =>
   readSources(
-    "../service.ts",
     "../definition/definition-read.ts",
     "../history/audit-export.ts",
     "../definition/definition-validation.ts",
@@ -66,7 +65,7 @@ test("scheduled runs use the pinned occurrence without requiring a trigger page"
 test("webhook delivery encrypts headers, pins egress, and reuses stable retry IDs", async () => {
   const [engine, egress, nodeTransport, service] = await Promise.all([
     readRunEngine(),
-    readFile(new URL("../actions/webhook-egress.ts", import.meta.url), "utf8"),
+    readFile(new URL("../actions/webhook/webhook-egress.ts", import.meta.url), "utf8"),
     readFile(path.join(adapterNodeDir, "pinned-webhook.ts"), "utf8"),
     readAutomationService(),
   ]);
@@ -85,7 +84,7 @@ test("webhook delivery encrypts headers, pins egress, and reuses stable retry ID
 test("Slack delivery is owner-scoped, channel-authorized, receipt-backed, and revocation-aware", async () => {
   const [engine, provider] = await Promise.all([
     readRunEngine(),
-    readFile(new URL("../actions/slack-provider.ts", import.meta.url), "utf8"),
+    readFile(new URL("../actions/slack/slack-provider.ts", import.meta.url), "utf8"),
   ]);
   expect(engine).toContain("const authorizedChannels = await measureBackgroundProvider(");
   expect(engine).toMatch(/\(\) =>\s+listSlackChannels\(env, connection\)/);

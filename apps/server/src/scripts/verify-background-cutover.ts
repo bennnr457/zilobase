@@ -1,8 +1,8 @@
-import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
+import assert from "node:assert/strict";
+import { backgroundTransaction } from "../infrastructure/background/publication";
 import { db } from "../infrastructure/database";
 import * as t from "../infrastructure/database/schema";
-import { backgroundTransaction } from "../infrastructure/background/publication";
 export async function seedCutoverAcceptance(env: Record<string, unknown>) {
   const old = new Date(0);
   await db.insert(t.member).values({

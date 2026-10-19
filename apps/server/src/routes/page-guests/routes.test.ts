@@ -1,10 +1,10 @@
-import assert from "node:assert/strict";
 import { Hono } from "hono";
+import assert from "node:assert/strict";
 import { test } from "vitest";
 
+import type { AppBindings } from "../../shared/contracts/http";
+import { jsonContentTypeHeaders } from "../http/json";
 import { pageGuestRoutes } from "./routes";
-import type { AppBindings } from "../../shared/types";
-import { jsonContentTypeHeaders } from "../../shared/http/json";
 
 function app(authenticated = true) {
   return new Hono<AppBindings>()

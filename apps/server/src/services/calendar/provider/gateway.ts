@@ -1,11 +1,11 @@
-import { recordCalendarMetric } from "../metrics";
-import { Effect, Schema } from "effect";
 import type {
   CalendarEvent,
   CalendarEventTime,
   CalendarIdentity,
   CalendarRecord,
 } from "@zilobase/features/runtime";
+import { Effect, Schema } from "effect";
+import { recordCalendarMetric } from "../metrics";
 export class CalendarProviderError extends Error {
   constructor(
     public status: number,

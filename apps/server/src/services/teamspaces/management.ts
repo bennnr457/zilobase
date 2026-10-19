@@ -1,54 +1,35 @@
 import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { TeamspaceManagementError, TeamspaceUpdateInput } from "./contracts";
+import { getDatabaseErrorCode } from "./errors";
+import { acceptInvite, updateInviteLink } from "./invitations/invitations";
+import { join, leave } from "./membership/membership";
+import {
+  addPrincipal,
+  listPrincipals,
+  removePrincipal,
+  updatePrincipal,
+} from "./principals/principals";
+import { getWorkspaceSettings, updateDefaults, updateWorkspaceSettings } from "./settings/settings";
 
-import { getMembership } from "../access";
 import { db, type Database } from "../../infrastructure/database";
 import {
-  member,
-  team,
   teamMember,
   teamspace,
   teamspacePrincipal,
-  user,
   workspace,
 } from "../../infrastructure/database/schema";
-import type { ZilobaseEditionExtension } from "../../shared/types";
 import type { RuntimeEnv } from "../../shared/config/config";
+import type { ZilobaseEditionExtension } from "../../shared/contracts/edition";
+import { getMembership } from "../access/principal-access";
 
-import { activeMembershipCondition } from "../memberships";
 import {
   canCreateTeamspace,
   canDiscoverTeamspace,
-  canInviteTeamspaceMembers,
-  canJoinTeamspace,
   canManageTeamspace,
   type TeamspaceAccessMode,
   type TeamspaceCreationPolicy,
-  type TeamspaceInvitePolicy,
   type TeamspaceRole,
 } from "./policy";
-
-export class TeamspaceManagementError extends Error {
-  constructor(
-    message: string,
-    readonly status: 400 | 403 | 404 | 409 = 400,
-  ) {
-    super(message);
-    this.name = "TeamspaceManagementError";
-  }
-}
-
-export type TeamspaceUpdateInput = {
-  accessMode?: TeamspaceAccessMode;
-  description?: string | null;
-  icon?: unknown;
-  invitePolicy?: TeamspaceInvitePolicy;
-  memberAccessLevel?: "view" | "comment" | "edit" | "full";
-  name?: string;
-  exportEnabled?: boolean;
-  guestsEnabled?: boolean;
-  publicSharingEnabled?: boolean;
-  sidebarEditPolicy?: TeamspaceInvitePolicy;
-};
 
 export class TeamspaceManagementService {
   constructor(
@@ -325,56 +306,11 @@ export class TeamspaceManagementService {
     userId: string;
     workspaceId: string;
   }) {
-    const { record } = await this.requireManage(input);
-    const token = input.enabled ? createInviteToken() : null;
-    await this.database
-      .update(teamspace)
-      .set({
-        inviteLinkEnabled: input.enabled,
-        inviteLinkTokenHash: token ? await hashInviteToken(token) : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(teamspace.id, record.id));
-    await this.audit("teamspace.invite_link_changed", input, {
-      enabled: input.enabled,
-      teamspaceId: record.id,
-    });
-    return { enabled: input.enabled, token };
+    return updateInviteLink(this.operationContext(), input);
   }
 
   async acceptInvite(input: { token: string; userId: string; workspaceId: string }) {
-    const membership = await getMembership(input.workspaceId, input.userId);
-    if (!membership) throw new TeamspaceManagementError("Forbidden", 403);
-    const [record] = await this.database
-      .select()
-      .from(teamspace)
-      .where(
-        and(
-          eq(teamspace.workspaceId, input.workspaceId),
-          eq(teamspace.inviteLinkEnabled, true),
-          eq(teamspace.inviteLinkTokenHash, await hashInviteToken(input.token)),
-          isNull(teamspace.archivedAt),
-        ),
-      )
-      .limit(1);
-    if (!record) throw new TeamspaceManagementError("Invite link is invalid.", 404);
-    const [principal] = await this.database
-      .insert(teamspacePrincipal)
-      .values({
-        addedById: input.userId,
-        id: crypto.randomUUID(),
-        membershipSource: "invite_link",
-        principalId: input.userId,
-        principalType: "user",
-        role: "member",
-        teamspaceId: record.id,
-      })
-      .onConflictDoNothing()
-      .returning();
-    return {
-      principal: principal ?? (await this.getDirectPrincipal(record.id, input.userId)),
-      teamspaceId: record.id,
-    };
+    return acceptInvite(this.operationContext(), input);
   }
 
   async updateDefaults(input: {
@@ -382,158 +318,19 @@ export class TeamspaceManagementService {
     userId: string;
     workspaceId: string;
   }) {
-    const membership = await getMembership(input.workspaceId, input.userId);
-    if (membership?.role !== "owner") {
-      throw new TeamspaceManagementError("Only workspace owners can change defaults.", 403);
-    }
-    const ids = [...new Set(input.defaultTeamspaceIds)];
-    if (ids.length === 0) {
-      throw new TeamspaceManagementError("At least one default teamspace is required.", 409);
-    }
-    const records = await this.database
-      .select({ id: teamspace.id })
-      .from(teamspace)
-      .where(
-        and(
-          eq(teamspace.workspaceId, input.workspaceId),
-          inArray(teamspace.id, ids),
-          isNull(teamspace.archivedAt),
-        ),
-      );
-    if (records.length !== ids.length) {
-      throw new TeamspaceManagementError("A default teamspace was not found.", 404);
-    }
-    const members = await this.database
-      .select({ userId: member.userId })
-      .from(member)
-      .where(and(eq(member.organizationId, input.workspaceId), activeMembershipCondition()));
-    await this.database.transaction(async (transaction) => {
-      await transaction
-        .update(teamspace)
-        .set({ isDefault: false, updatedAt: new Date() })
-        .where(eq(teamspace.workspaceId, input.workspaceId));
-      await transaction
-        .update(teamspace)
-        .set({ isDefault: true, updatedAt: new Date() })
-        .where(inArray(teamspace.id, ids));
-      for (const defaultId of ids) {
-        for (const workspaceMember of members) {
-          await transaction
-            .insert(teamspacePrincipal)
-            .values({
-              addedById: input.userId,
-              id: crypto.randomUUID(),
-              membershipSource: "default",
-              principalId: workspaceMember.userId,
-              principalType: "user",
-              role: "member",
-              teamspaceId: defaultId,
-            })
-            .onConflictDoNothing();
-        }
-      }
-    });
-    await this.audit("teamspace.defaults_changed", input, {
-      defaultCount: ids.length,
-    });
-    return { defaultTeamspaceIds: ids };
+    return updateDefaults(this.operationContext(), input);
   }
 
   async join(input: { teamspaceId: string; userId: string; workspaceId: string }) {
-    const [membership, record] = await Promise.all([
-      getMembership(input.workspaceId, input.userId),
-      this.getRecord(input.workspaceId, input.teamspaceId),
-    ]);
-    if (!membership) throw new TeamspaceManagementError("Forbidden", 403);
-    if (!record) throw new TeamspaceManagementError("Teamspace not found.", 404);
-    if (
-      !canJoinTeamspace({
-        accessMode: record.accessMode as TeamspaceAccessMode,
-        archived: Boolean(record.archivedAt),
-        isActiveWorkspaceMember: true,
-      })
-    ) {
-      throw new TeamspaceManagementError("This teamspace cannot be joined.", 403);
-    }
-    const [created] = await this.database
-      .insert(teamspacePrincipal)
-      .values({
-        addedById: input.userId,
-        id: crypto.randomUUID(),
-        membershipSource: "self_join",
-        principalId: input.userId,
-        principalType: "user",
-        role: "member",
-        teamspaceId: record.id,
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (created) {
-      await this.audit("teamspace.joined", input, { teamspaceId: record.id });
-    }
-    return created ?? (await this.getDirectPrincipal(record.id, input.userId));
+    return join(this.operationContext(), input);
   }
 
   async leave(input: { teamspaceId: string; userId: string; workspaceId: string }) {
-    const record = await this.getRecord(input.workspaceId, input.teamspaceId);
-    if (!record) throw new TeamspaceManagementError("Teamspace not found.", 404);
-    if (record.isDefault) {
-      throw new TeamspaceManagementError("Default teamspaces cannot be left.", 409);
-    }
-    const principal = await this.getDirectPrincipal(record.id, input.userId);
-    if (!principal) throw new TeamspaceManagementError("Membership not found.", 404);
-    if (principal.role === "owner") {
-      const [{ count }] = await this.database
-        .select({ count: sql<number>`count(*)::integer` })
-        .from(teamspacePrincipal)
-        .where(
-          and(eq(teamspacePrincipal.teamspaceId, record.id), eq(teamspacePrincipal.role, "owner")),
-        );
-      if ((count ?? 0) <= 1) {
-        throw new TeamspaceManagementError("Assign another owner before leaving.", 409);
-      }
-    }
-    await this.database.delete(teamspacePrincipal).where(eq(teamspacePrincipal.id, principal.id));
-    await this.audit("teamspace.left", input, { teamspaceId: record.id });
-    return { removed: true };
+    return leave(this.operationContext(), input);
   }
 
   async listPrincipals(input: { teamspaceId: string; userId: string; workspaceId: string }) {
-    await this.get(input);
-    const rows = await this.database
-      .select({
-        accessLevelOverride: teamspacePrincipal.accessLevelOverride,
-        createdAt: teamspacePrincipal.createdAt,
-        email: user.email,
-        id: teamspacePrincipal.id,
-        membershipSource: teamspacePrincipal.membershipSource,
-        name: user.name,
-        teamName: team.name,
-        principalId: teamspacePrincipal.principalId,
-        principalType: teamspacePrincipal.principalType,
-        role: teamspacePrincipal.role,
-      })
-      .from(teamspacePrincipal)
-      .leftJoin(
-        user,
-        and(
-          eq(teamspacePrincipal.principalType, "user"),
-          eq(teamspacePrincipal.principalId, user.id),
-        ),
-      )
-      .leftJoin(
-        team,
-        and(
-          eq(teamspacePrincipal.principalType, "team"),
-          eq(teamspacePrincipal.principalId, team.id),
-        ),
-      )
-      .where(eq(teamspacePrincipal.teamspaceId, input.teamspaceId))
-      .orderBy(asc(user.name), asc(user.email));
-    return rows.map(({ teamName, ...row }) => ({
-      ...row,
-      name: row.name ?? teamName,
-    }));
+    return listPrincipals(this.operationContext(), input);
   }
 
   async addPrincipal(input: {
@@ -545,67 +342,7 @@ export class TeamspaceManagementService {
     userId: string;
     workspaceId: string;
   }) {
-    const { record, role } = await this.requireVisible(input);
-    if (
-      !canInviteTeamspaceMembers({
-        invitePolicy: record.invitePolicy as TeamspaceInvitePolicy,
-        teamspaceRole: role,
-      })
-    ) {
-      throw new TeamspaceManagementError("Forbidden", 403);
-    }
-    if (input.role === "owner" && role !== "owner") {
-      throw new TeamspaceManagementError("Only owners can add owners.", 403);
-    }
-    const principalType = input.principalType ?? "user";
-    const [target] =
-      principalType === "user"
-        ? await this.database
-            .select({ id: member.id })
-            .from(member)
-            .where(
-              and(
-                eq(member.organizationId, input.workspaceId),
-                eq(member.userId, input.targetUserId),
-                activeMembershipCondition(),
-              ),
-            )
-            .limit(1)
-        : await this.database
-            .select({ id: team.id })
-            .from(team)
-            .where(and(eq(team.organizationId, input.workspaceId), eq(team.id, input.targetUserId)))
-            .limit(1);
-    if (!target) {
-      throw new TeamspaceManagementError(
-        principalType === "user"
-          ? "Only active workspace members can join a teamspace."
-          : "The sharing group was not found in this workspace.",
-        409,
-      );
-    }
-    const [created] = await this.database
-      .insert(teamspacePrincipal)
-      .values({
-        addedById: input.userId,
-        accessLevelOverride: input.accessLevelOverride ?? null,
-        id: crypto.randomUUID(),
-        membershipSource: "explicit",
-        principalId: input.targetUserId,
-        principalType,
-        role: input.role,
-        teamspaceId: input.teamspaceId,
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (!created) {
-      throw new TeamspaceManagementError("This member or group is already in the teamspace.", 409);
-    }
-    await this.audit("teamspace.principal_added", input, {
-      role: input.role,
-      teamspaceId: input.teamspaceId,
-    });
-    return created;
+    return addPrincipal(this.operationContext(), input);
   }
 
   async updatePrincipal(input: {
@@ -616,26 +353,7 @@ export class TeamspaceManagementService {
     userId: string;
     workspaceId: string;
   }) {
-    await this.requireManage(input);
-    const principal = await this.getPrincipal(input.teamspaceId, input.principalId);
-    if (!principal) throw new TeamspaceManagementError("Member not found.", 404);
-    await this.assertOwnerRemains(input.teamspaceId, principal, input.role);
-    const [updated] = await this.database
-      .update(teamspacePrincipal)
-      .set({
-        role: input.role,
-        ...(input.accessLevelOverride !== undefined
-          ? { accessLevelOverride: input.accessLevelOverride }
-          : {}),
-        updatedAt: new Date(),
-      })
-      .where(eq(teamspacePrincipal.id, principal.id))
-      .returning();
-    await this.audit("teamspace.role_changed", input, {
-      role: input.role,
-      teamspaceId: input.teamspaceId,
-    });
-    return updated!;
+    return updatePrincipal(this.operationContext(), input);
   }
 
   async removePrincipal(input: {
@@ -644,29 +362,11 @@ export class TeamspaceManagementService {
     userId: string;
     workspaceId: string;
   }) {
-    await this.requireManage(input);
-    const principal = await this.getPrincipal(input.teamspaceId, input.principalId);
-    if (!principal) throw new TeamspaceManagementError("Member not found.", 404);
-    await this.assertOwnerRemains(input.teamspaceId, principal, "member");
-    await this.database.delete(teamspacePrincipal).where(eq(teamspacePrincipal.id, principal.id));
-    await this.audit("teamspace.principal_removed", input, {
-      teamspaceId: input.teamspaceId,
-    });
-    return { removed: true };
+    return removePrincipal(this.operationContext(), input);
   }
 
   async getWorkspaceSettings(workspaceId: string, userId: string) {
-    const membership = await getMembership(workspaceId, userId);
-    if (!membership) throw new TeamspaceManagementError("Forbidden", 403);
-    const [record] = await this.database
-      .select({ creationPolicy: workspace.teamspaceCreationPolicy })
-      .from(workspace)
-      .where(eq(workspace.id, workspaceId))
-      .limit(1);
-    return {
-      canManage: membership.role === "owner",
-      creationPolicy: record?.creationPolicy ?? "workspace_members",
-    };
+    return getWorkspaceSettings(this.operationContext(), workspaceId, userId);
   }
 
   async updateWorkspaceSettings(input: {
@@ -674,22 +374,7 @@ export class TeamspaceManagementService {
     userId: string;
     workspaceId: string;
   }) {
-    const membership = await getMembership(input.workspaceId, input.userId);
-    if (membership?.role !== "owner") {
-      throw new TeamspaceManagementError("Only workspace owners can change teamspace policy.", 403);
-    }
-    const [updated] = await this.database
-      .update(workspace)
-      .set({
-        teamspaceCreationPolicy: input.creationPolicy,
-        updatedAt: new Date(),
-      })
-      .where(eq(workspace.id, input.workspaceId))
-      .returning({ creationPolicy: workspace.teamspaceCreationPolicy });
-    await this.audit("teamspace.creation_policy_changed", input, {
-      creationPolicy: input.creationPolicy,
-    });
-    return { canManage: true, ...updated! };
+    return updateWorkspaceSettings(this.operationContext(), input);
   }
 
   async getRole(teamspaceId: string, userId: string): Promise<TeamspaceRole | null> {
@@ -710,6 +395,24 @@ export class TeamspaceManagementService {
         ),
       );
     return getEffectiveRole(principals, teamspaceId, userId, teamIds);
+  }
+
+  private operationContext() {
+    return {
+      database: this.database,
+      get: this.get.bind(this),
+      editionExtension: this.editionExtension,
+      env: this.env,
+      requireManage: this.requireManage.bind(this),
+      requireVisible: this.requireVisible.bind(this),
+      getRecord: this.getRecord.bind(this),
+      getDirectPrincipal: this.getDirectPrincipal.bind(this),
+      getPrincipal: this.getPrincipal.bind(this),
+      assertOwnerRemains: this.assertOwnerRemains.bind(this),
+      audit: this.audit.bind(this),
+      getRole: this.getRole.bind(this),
+      updateRecord: this.updateRecord.bind(this),
+    };
   }
 
   private getRecord(workspaceId: string, teamspaceId: string) {
@@ -853,17 +556,4 @@ function getEffectiveRole(
   return roles.length > 0 ? "member" : null;
 }
 
-function getDatabaseErrorCode(error: unknown) {
-  return typeof error === "object" && error !== null && "code" in error ? String(error.code) : null;
-}
-
-function createInviteToken() {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Buffer.from(bytes).toString("base64url");
-}
-
-async function hashInviteToken(token: string) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
-  return Buffer.from(digest).toString("hex");
-}
+export type TeamspaceOperationContext = ReturnType<TeamspaceManagementService["operationContext"]>;

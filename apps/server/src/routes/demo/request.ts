@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 
-import type { AppBindings } from "../../shared/types";
 import { DEMO_HEADER, DEMO_HEADER_VALUE } from "../../services/demo/constants";
+import type { AppBindings } from "../../shared/contracts/http";
 
 export function isHostedDemoEnabled(env?: AppBindings["Bindings"]) {
   return env?.ZILOBASE_DEMO_ENABLED?.trim().toLowerCase() === "true";

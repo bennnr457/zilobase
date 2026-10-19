@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
 
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
   getDatabaseRecord,
   requireDatabaseAccess,
   requireDatabaseEditAccess,
 } from "./database-access";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 
 function executor(records: unknown[]) {
   const builder = {

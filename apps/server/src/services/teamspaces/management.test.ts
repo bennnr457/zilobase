@@ -4,8 +4,7 @@ import { beforeEach, test, vi } from "vitest";
 const accessMocks = vi.hoisted(() => ({
   getMembership: vi.fn(),
 }));
-
-vi.mock("../access", () => ({
+vi.mock("../access/principal-access", () => ({
   getMembership: accessMocks.getMembership,
 }));
 

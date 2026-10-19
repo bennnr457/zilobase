@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { isRetryableAutomationDatabaseError, AutomationActionError } from "./action-error";
+import { AutomationActionError, isRetryableAutomationDatabaseError } from "./action-error";
 
 it.each(["ECONNRESET", "ECONNREFUSED", "57P03", "40001", "40P01"])(
   "recognizes nested retryable database error %s",

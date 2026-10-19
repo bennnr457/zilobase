@@ -15,7 +15,7 @@ vi.mock("../access/database-access", () => ({
 vi.mock("../access/data-source-access", () => ({
   requireDataSourceEditAccess: mocks.access,
 }));
-vi.mock("../core/commit", () => ({
+vi.mock("../mutations/commit", () => ({
   commitDatabaseMutation: mocks.commit,
   commitDataSourceMutation: mocks.commit,
 }));
@@ -48,8 +48,8 @@ vi.mock("../../../infrastructure/database", () => ({
   },
 }));
 
-import { setDatabaseCellValueService } from "./cells";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { setDatabaseCellValueService } from "./cells";
 
 beforeEach(() => {
   mocks.access.mockReset();

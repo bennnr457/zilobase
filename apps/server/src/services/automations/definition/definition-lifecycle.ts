@@ -1,46 +1,46 @@
-import { createHash } from "node:crypto";
-import { and, count, eq, isNull } from "drizzle-orm";
 import {
   DATABASE_AUTOMATION_LIMITS,
   type CreateDatabaseAutomationRequest,
   type CreateDatabaseAutomationSecretRequest,
   type UpdateDatabaseAutomationRequest,
 } from "@zilobase/features/runtime";
+import { and, count, eq, isNull } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import { db } from "../../../infrastructure/database";
 import {
+  automationSecret,
   databaseAutomation,
   databaseAutomationRevision,
   dataSource,
-  automationSecret,
 } from "../../../infrastructure/database/schema";
-import type { ZilobaseEditionExtension } from "../../../shared/types";
 import type { RuntimeEnv } from "../../../shared/config/config";
-import { compileDatabaseAutomationDefinition } from "../compilation/compiler";
+import type { ZilobaseEditionExtension } from "../../../shared/contracts/edition";
 import { encryptAutomationSecret } from "../actions/secret-crypto";
-import { getDatabaseAutomation } from "./definition-read";
-import { validateDatabaseAutomation } from "./definition-validation";
+import { compileDatabaseAutomationDefinition } from "../compilation/compiler";
 import {
-  DatabaseAutomationError,
-  requireManagementContext,
-  loadCompilationContext,
-  getLifecycleAutomation,
-  containsProtectedConnectorAction,
-  definitionForDuplicate,
-  protectedLifecycleResponse,
-  protectedConfigurationError,
-  getAutomationWithRevision,
-  findIdempotentAutomation,
-  insertDependencies,
   assertValidCompilation,
-  nextScheduleRunAt,
-  toDetail,
-  notFound,
   audit,
+  containsProtectedConnectorAction,
+  DatabaseAutomationError,
+  definitionForDuplicate,
+  findIdempotentAutomation,
+  getAutomationWithRevision,
+  getLifecycleAutomation,
+  insertDependencies,
   isIdempotencyConflict,
+  loadCompilationContext,
+  nextScheduleRunAt,
+  notFound,
+  protectedConfigurationError,
+  protectedLifecycleResponse,
+  requireManagementContext,
+  toDetail,
   type AutomationRecord,
   type Executor,
   type RevisionRecord,
 } from "./definition-context";
+import { getDatabaseAutomation } from "./definition-read";
+import { validateDatabaseAutomation } from "./definition-validation";
 
 export async function createDatabaseAutomation(input: {
   allowHttpWebhookDomains?: Set<string>;

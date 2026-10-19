@@ -9,9 +9,9 @@ loadEnv({
 });
 
 import { createApp } from "../app";
-import { createAuth } from "../services/auth";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
 import { verification } from "../infrastructure/database/schema";
+import { createAuth } from "../services/auth/auth";
 
 const apiBase = getRequiredEnv("BETTER_AUTH_URL");
 const clientUrl = getRequiredEnv("CLIENT_URL");

@@ -1,11 +1,11 @@
+import { Hono } from "hono";
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
-import { Hono } from "hono";
 
-import { appErrorHandler, createApp, createAppErrorHandler } from "./";
 import { isNodeApiPath } from "@zilobase/runtime-adapter/node";
-import type { AppBindings } from "../shared/types";
-import type { ZilobaseEditionExtension } from "../shared/types";
+import type { ZilobaseEditionExtension } from "../shared/contracts/edition";
+import type { AppBindings } from "../shared/contracts/http";
+import { appErrorHandler, createApp, createAppErrorHandler } from "./";
 
 test("createApp registers every public feature route group", () => {
   const routes = createApp({ ports: {} }).routes.map(({ method, path }) => `${method} ${path}`);

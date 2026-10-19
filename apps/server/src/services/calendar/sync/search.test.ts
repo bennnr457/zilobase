@@ -1,6 +1,6 @@
-import { test, expect, vi } from "vitest";
-import { calendarSearchSchema, searchCalendarEvents } from "./search";
 import type { CalendarRecord } from "@zilobase/features/runtime";
+import { expect, test, vi } from "vitest";
+import { calendarSearchSchema, searchCalendarEvents } from "./search";
 const calendar: CalendarRecord = {
   id: "c",
   bindingId: "b",

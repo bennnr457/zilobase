@@ -1,10 +1,10 @@
+import { publishCalendarNotification } from "@zilobase/runtime-adapter/capabilities";
 import { and, eq, lte } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import {
   calendarBinding,
   calendarNotificationOutbox,
 } from "../../../infrastructure/database/schema";
-import { publishCalendarNotification } from "@zilobase/runtime-adapter/capabilities";
 export async function drainCalendarOutbox() {
   const rows = await db
     .select()

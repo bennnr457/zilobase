@@ -1,8 +1,8 @@
-import assert from "node:assert/strict";
 import { Hono } from "hono";
+import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
 
-import type { AppBindings } from "../../shared/types";
+import type { AppBindings } from "../../shared/contracts/http";
 import { responseJson } from "../../test-support/response";
 
 const mocks = vi.hoisted(() => ({
@@ -17,16 +17,17 @@ const mocks = vi.hoisted(() => ({
   realtimeExpiration: vi.fn(),
   verifyTicket: vi.fn(),
 }));
-
-vi.mock("../../services/access", () => ({
+vi.mock("../../services/access/effective-access", () => ({
   canAccessDatabaseRecord: mocks.access,
   getEffectiveDatabaseAccessForRecord: mocks.accessLevel,
+  isDatabasePublishedInWorkspace: mocks.published,
+}));
+vi.mock("../../services/access/principal-access", () => ({
   getMembership: mocks.membership,
   getWorkspacePrincipalKind: mocks.principal,
   getWorkspaceRealtimeAccessExpiration: mocks.realtimeExpiration,
-  isDatabasePublishedInWorkspace: mocks.published,
 }));
-vi.mock("../../shared/security/database-realtime-ticket", () => ({
+vi.mock("../../services/databases/realtime/tickets", () => ({
   createDatabaseRealtimeTicket: mocks.createTicket,
   DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX: "zilobase-auth.",
   DATABASE_REALTIME_PROTOCOL: "zilobase.database.v2",
@@ -72,7 +73,7 @@ vi.mock("../../services/databases/access/database-access", async (original) => (
   ...(await original<typeof import("../../services/databases/access/database-access")>()),
   getDatabaseRecord: mocks.getRecord,
 }));
-vi.mock("../../services/databases/core/payload", () => ({
+vi.mock("../../services/databases/mutations/payload", () => ({
   getDatabaseExportPayload: mocks.payload,
 }));
 

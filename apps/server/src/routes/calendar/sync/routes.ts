@@ -1,14 +1,16 @@
-import { calendarSearchSchema, searchCalendarEvents } from "../../../services/calendar/sync/search";
 import { Hono } from "hono";
-import { and, eq } from "drizzle-orm";
-import type { AppBindings } from "../../../shared/types";
-import { db } from "../../../infrastructure/database";
-import { calendarProviderCalendar } from "../../../infrastructure/database/schema";
 import { requireCalendarBinding } from "../../../services/calendar/connections/ownership";
+import { normalizeEvent } from "../../../services/calendar/provider/gateway";
 import { createCalendarGateway } from "../../../services/calendar/provider/oauth";
-import { CalendarProviderError, normalizeEvent } from "../../../services/calendar/provider/gateway";
-import { refreshCalendarList } from "../../../services/calendar/sync/sync";
-import { calendarRangeSchema, readCalendarRange } from "../../../services/calendar/sync/ranges";
+import {
+  readOwnedCalendarRange,
+  searchOwnedCalendar,
+  syncCalendarConnection,
+} from "../../../services/calendar/sync/operations";
+import { readProviderCalendarStates } from "../../../services/calendar/sync/provider-state";
+import { calendarRangeSchema } from "../../../services/calendar/sync/ranges";
+import { calendarSearchSchema } from "../../../services/calendar/sync/search";
+import type { AppBindings } from "../../../shared/contracts/http";
 export const calendarSyncRoutes = new Hono<AppBindings>();
 calendarSyncRoutes.post("/connections/:bindingId/sync", async (c) => {
   const { account, binding } = await requireCalendarBinding(
@@ -16,17 +18,7 @@ calendarSyncRoutes.post("/connections/:bindingId/sync", async (c) => {
     c.req.param("workspaceId")!,
     c.req.param("bindingId"),
   );
-  const gateway = await createCalendarGateway(c.env, account),
-    calendars = await refreshCalendarList(account.id, binding.id, gateway, c.env);
-  const states = await db
-    .select()
-    .from(calendarProviderCalendar)
-    .where(eq(calendarProviderCalendar.accountId, account.id));
-  return c.json({
-    calendars,
-    revisions: Object.fromEntries(states.map((s) => [s.calendarId, s.revision])),
-    pending: true,
-  });
+  return c.json(await syncCalendarConnection(account, binding, c.env));
 });
 calendarSyncRoutes.get("/connections/:bindingId/ranges", async (c) => {
   const { account, binding } = await requireCalendarBinding(
@@ -35,32 +27,7 @@ calendarSyncRoutes.get("/connections/:bindingId/ranges", async (c) => {
     c.req.param("bindingId"),
   );
   const range = calendarRangeSchema.parse(c.req.query());
-  const [state] = await db
-    .select()
-    .from(calendarProviderCalendar)
-    .where(
-      and(
-        eq(calendarProviderCalendar.accountId, account.id),
-        eq(calendarProviderCalendar.calendarId, range.calendarId),
-      ),
-    );
-  if (!state || state.data.permissions.freeBusyOnly)
-    throw new CalendarProviderError(403, "calendar_unavailable");
-  return c.json(
-    await readCalendarRange(
-      {
-        ...range,
-        accountId: account.id,
-        bindingId: binding.id,
-        workspaceId: binding.workspaceId,
-        timeZone: state.data.timeZone,
-        generation: state.generation,
-        revision: state.revision,
-      },
-      await createCalendarGateway(c.env, account),
-      c.req.raw.signal,
-    ),
-  );
+  return c.json(await readOwnedCalendarRange(account, binding, range, c.env, c.req.raw.signal));
 });
 calendarSyncRoutes.get("/connections/:bindingId/search", async (c) => {
   const { account, binding } = await requireCalendarBinding(
@@ -69,25 +36,7 @@ calendarSyncRoutes.get("/connections/:bindingId/search", async (c) => {
     c.req.param("bindingId"),
   );
   const input = calendarSearchSchema.parse(c.req.query());
-  const [state] = await db
-    .select()
-    .from(calendarProviderCalendar)
-    .where(
-      and(
-        eq(calendarProviderCalendar.accountId, account.id),
-        eq(calendarProviderCalendar.calendarId, input.calendarId),
-      ),
-    );
-  if (!state?.data.permissions.read || state.data.permissions.freeBusyOnly)
-    throw new CalendarProviderError(403, "calendar_unavailable");
-  return c.json(
-    await searchCalendarEvents(
-      input,
-      { workspaceId: binding.workspaceId, bindingId: binding.id },
-      state.data,
-      await createCalendarGateway(c.env, account),
-    ),
-  );
+  return c.json(await searchOwnedCalendar(account, binding, input, c.env, c.req.raw.signal));
 });
 calendarSyncRoutes.get(
   "/connections/:bindingId/calendars/:calendarId/events/:eventId",
@@ -119,9 +68,6 @@ calendarSyncRoutes.get("/connections/:bindingId/catalog", async (c) => {
     c.req.param("workspaceId")!,
     c.req.param("bindingId"),
   );
-  const states = await db
-    .select()
-    .from(calendarProviderCalendar)
-    .where(eq(calendarProviderCalendar.accountId, account.id));
+  const states = await readProviderCalendarStates(account.id);
   return c.json({ calendars: states.map((state) => ({ ...state.data, bindingId: binding.id })) });
 });

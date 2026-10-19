@@ -56,11 +56,9 @@ describe("database automation operations", () => {
   it("uses bounded terminal-history cleanup and emits redacted aggregate health", async () => {
     const [operations, health, service] = await Promise.all([
       readFile(new URL("./history-maintenance.ts", import.meta.url), "utf8"),
-      readFile(new URL("../../../routes/health.ts", import.meta.url), "utf8"),
+      readFile(new URL("../../../routes/health/routes.ts", import.meta.url), "utf8"),
       Promise.all(
-        ["../service.ts", "audit-export.ts"].map((name) =>
-          readFile(new URL(`./${name}`, import.meta.url), "utf8"),
-        ),
+        ["audit-export.ts"].map((name) => readFile(new URL(`./${name}`, import.meta.url), "utf8")),
       ).then((sources) => sources.join("\n")),
     ]);
     expect(operations).toContain("CLEANUP_BATCH = 1_000");

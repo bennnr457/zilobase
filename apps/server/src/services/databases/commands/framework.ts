@@ -1,4 +1,3 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   databaseCommandAckSchema,
   databaseMutationChangesSchema,
@@ -9,34 +8,34 @@ import {
   type DatabaseMutationChanges,
   type DatabaseMutationEventV2,
 } from "@zilobase/features/runtime";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
+import { createBackgroundTask } from "../../../infrastructure/background/contracts";
+import {
+  persistBackgroundTasks,
+  publishBackgroundDispatches,
+} from "../../../infrastructure/background/dispatch";
 import { db, runWithDb, type Database } from "../../../infrastructure/database";
 import type { AfterCommit } from "../../../infrastructure/database/after-commit";
 import {
   dataSource,
   database,
-  databaseCommandReceipt,
   databaseActorState,
+  databaseCommandReceipt,
   databaseDataSource,
-  databaseView,
   databaseMutationEvent,
   databaseRealtimeOutbox,
+  databaseView,
 } from "../../../infrastructure/database/schema";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import type { RuntimeEnv } from "../../../shared/config/config";
-import { createBackgroundTask } from "../../../infrastructure/background/contracts";
-import {
-  backgroundTransaction,
-  persistBackgroundTasks,
-  publishBackgroundDispatches,
-} from "../../../infrastructure/background/dispatch";
-import { measureDatabaseOperation } from "../observability";
-import { lockDatabaseRowOrdering } from "../core/position-service";
-import { mutationSourceIds, withSourceClocks } from "../core/source-clocks";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
   captureDatabaseAutomationMutationFacts,
   type DatabaseAutomationMutationFactCandidate,
 } from "../../automations/triggers/event-capture";
+import { mutationSourceIds, withSourceClocks } from "../mutations/source-clocks";
+import { lockDatabaseRowOrdering } from "../navigation/position-service";
+import { measureDatabaseOperation } from "../observability";
 
 const COMMAND_RECEIPT_RETENTION_MS = 7 * 24 * 60 * 60 * 1_000;
 const MAX_DATABASE_MUTATION_CHANGES_BYTES = 64 * 1_024;

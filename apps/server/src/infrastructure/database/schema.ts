@@ -1,89 +1,89 @@
 // Stable schema aggregate for Drizzle, feature persistence and external adapters.
 export {
-  user,
-  session,
-  desktopAuthorizationCode,
   account,
-  verification,
   apikey,
-  rateLimit,
+  desktopAuthorizationCode,
   jwks,
+  rateLimit,
+  session,
+  user,
+  verification,
 } from "./schema/authentication";
 export {
-  oauthClient,
-  oauthResource,
-  oauthClientResource,
-  oauthRefreshToken,
-  oauthAccessToken,
-  oauthConsent,
-  oauthClientAssertion,
-} from "./schema/oauth";
+  automationSecret,
+  databaseAutomation,
+  databaseAutomationDelivery,
+  databaseAutomationDependency,
+  databaseAutomationEventWindow,
+  databaseAutomationRevision,
+  databaseAutomationRun,
+  databaseAutomationStepRun,
+} from "./schema/automations";
+export { backgroundDispatch, backgroundMaintenanceTask } from "./schema/background";
 export {
-  workspace,
-  member,
+  calendarAccount,
+  calendarBinding,
+  calendarEventRecord,
+  calendarMutationReceipt,
+  calendarNotificationOutbox,
+  calendarOauthAttempt,
+  calendarPreference,
+  calendarProviderCalendar,
+  calendarRangeSnapshot,
+  calendarWatchChannel,
+} from "./schema/calendar";
+export {
+  dataSource,
+  database,
+  databaseAccess,
+  databaseActorState,
+  databaseCommandReceipt,
+  databaseDataSource,
+  databaseMutationEvent,
+  databaseProperty,
+  databaseRealtimeOutbox,
+  databaseRow,
+  databaseView,
+} from "./schema/databases";
+export { imageAsset } from "./schema/images";
+export { instanceSettings } from "./schema/instance";
+export {
+  meeting,
+  meetingCollaborationDocument,
+  meetingConsentEvent,
+  meetingTranscriptSegment,
+} from "./schema/meetings";
+export { favorite, itemVisit, navigationRealtimeOutbox } from "./schema/navigation";
+export { inProductNotification, inProductNotificationOutbox } from "./schema/notifications";
+export {
+  oauthAccessToken,
+  oauthClient,
+  oauthClientAssertion,
+  oauthClientResource,
+  oauthConsent,
+  oauthRefreshToken,
+  oauthResource,
+} from "./schema/oauth";
+export { pageProperty, pagePropertyValue } from "./schema/page-properties";
+export {
+  page,
+  pageAccess,
+  pageCollaborationDocument,
+  pageGuestInvitation,
+  pageGuestRequest,
+  pageLayout,
+} from "./schema/pages";
+export { pageItemPlacement } from "./schema/placements";
+export { searchChunk, searchDocument } from "./schema/search";
+export { slackConnection, slackOauthAttempt } from "./schema/slack-connections";
+export { pageSettings } from "./schema/user-settings";
+export {
   invitation,
+  member,
   team,
   teamMember,
   teamspace,
   teamspacePrincipal,
+  workspace,
   workspaceGuest,
 } from "./schema/workspaces";
-export { pageSettings } from "./schema/user-settings";
-export { instanceSettings } from "./schema/instance";
-export { slackOauthAttempt, slackConnection } from "./schema/slack-connections";
-export {
-  page,
-  pageLayout,
-  pageCollaborationDocument,
-  pageAccess,
-  pageGuestInvitation,
-  pageGuestRequest,
-} from "./schema/pages";
-export {
-  meeting,
-  meetingCollaborationDocument,
-  meetingTranscriptSegment,
-  meetingConsentEvent,
-} from "./schema/meetings";
-export { pageProperty, pagePropertyValue } from "./schema/page-properties";
-export {
-  database,
-  dataSource,
-  databaseDataSource,
-  databaseCommandReceipt,
-  databaseActorState,
-  databaseMutationEvent,
-  databaseRealtimeOutbox,
-  databaseAccess,
-  databaseProperty,
-  databaseView,
-  databaseRow,
-} from "./schema/databases";
-export {
-  databaseAutomation,
-  databaseAutomationRevision,
-  databaseAutomationDependency,
-  databaseAutomationEventWindow,
-  databaseAutomationRun,
-  databaseAutomationStepRun,
-  databaseAutomationDelivery,
-  automationSecret,
-} from "./schema/automations";
-export { inProductNotification, inProductNotificationOutbox } from "./schema/notifications";
-export { pageItemPlacement } from "./schema/placements";
-export { favorite, itemVisit, navigationRealtimeOutbox } from "./schema/navigation";
-export { imageAsset } from "./schema/images";
-export { searchDocument, searchChunk } from "./schema/search";
-export { backgroundMaintenanceTask, backgroundDispatch } from "./schema/background";
-export {
-  calendarAccount,
-  calendarBinding,
-  calendarOauthAttempt,
-  calendarProviderCalendar,
-  calendarEventRecord,
-  calendarRangeSnapshot,
-  calendarWatchChannel,
-  calendarMutationReceipt,
-  calendarNotificationOutbox,
-  calendarPreference,
-} from "./schema/calendar";

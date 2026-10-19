@@ -1,15 +1,15 @@
-import { recordCalendarMetric } from "../metrics";
 import { and, eq, gt, isNull, lte, or, sql } from "drizzle-orm";
 import { backgroundTransaction } from "../../../infrastructure/background/dispatch";
 import { db } from "../../../infrastructure/database";
 import {
   calendarAccount,
   calendarBinding,
-  calendarWatchChannel,
   calendarProviderCalendar,
+  calendarWatchChannel,
 } from "../../../infrastructure/database/schema";
 import { getStringEnv, type RuntimeEnv } from "../../../shared/config/config";
 import { sha256Hex } from "../../../shared/crypto/sha256";
+import { recordCalendarMetric } from "../metrics";
 import { CalendarGateway, CalendarProviderError } from "../provider/gateway";
 import { createCalendarGateway } from "../provider/oauth";
 import { refreshCalendarList } from "../sync/sync";

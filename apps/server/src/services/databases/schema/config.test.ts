@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
+import { databasePropertyTypes, normalizeDatabasePropertyType } from "@zilobase/features/runtime";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
   formatDatePropertyValueAsText,
   getStatusDefaultValue,
   normalizePropertyConfig,
   validateCellValue,
 } from "./config";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
-import { databasePropertyTypes, normalizeDatabasePropertyType } from "./types";
 
 test("formatDatePropertyValueAsText preserves date ranges", () => {
   assert.equal(

@@ -1,16 +1,16 @@
 import { getPropertyNameKey, normalizeValueForPropertyType } from "@zilobase/features/runtime";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 
+import { isReadOnlyPropertyType, normalizeDatabasePropertyType } from "@zilobase/features/runtime";
 import type { Database } from "../../../infrastructure/database";
 import {
   databaseProperty,
   pageProperty,
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
-import { mergeSelectOptionsForValue, shouldInsertUnmatchedSourceProperty } from "../schema/import";
-import { isReadOnlyPropertyType, normalizeDatabasePropertyType } from "../schema/types";
-import { validateCellValue } from "../schema/config";
 import { upsertPagePropertyValues } from "../../pages/properties/upsert";
+import { validateCellValue } from "../schema/config";
+import { mergeSelectOptionsForValue, shouldInsertUnmatchedSourceProperty } from "../schema/import";
 
 type DatabaseTransaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 

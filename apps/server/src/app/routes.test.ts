@@ -1,11 +1,11 @@
-import assert from "node:assert/strict";
-import { Hono } from "hono";
-import { PgDialect } from "drizzle-orm/pg-core";
-import type { SQL } from "drizzle-orm";
-import { beforeEach, test, vi } from "vitest";
 import { defaultSidebarConfig, normalizeSidebarConfig } from "@zilobase/features/runtime";
+import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
+import { Hono } from "hono";
+import assert from "node:assert/strict";
+import { beforeEach, test, vi } from "vitest";
 
-import type { AppBindings } from "../shared/types";
+import type { AppBindings } from "../shared/contracts/http";
 import { responseJson } from "../test-support/response";
 
 const mocks = vi.hoisted(() => ({
@@ -15,8 +15,7 @@ const mocks = vi.hoisted(() => ({
   selectResults: [] as unknown[][],
   whereQueries: [] as SQL[],
 }));
-
-vi.mock("../services/access", () => ({
+vi.mock("../services/access/principal-access", () => ({
   getMembership: mocks.membership,
   isPrivilegedOrgRole: mocks.privileged,
 }));
@@ -24,9 +23,8 @@ vi.mock("../services/api-keys/api-keys", () => ({
   API_KEY_DEFAULT_EXPIRES_IN_SECONDS: 2_592_000,
   API_KEY_PREFIX: "zilo",
   readApiKeyWorkspaceId: (metadata: any) => metadata?.workspaceId ?? null,
-  rejectMismatchedApiKeyWorkspace: () => null,
 }));
-vi.mock("../services/auth", () => ({ createAuth: vi.fn() }));
+vi.mock("../services/auth/auth", () => ({ createAuth: vi.fn() }));
 vi.mock("../infrastructure/database", () => ({
   db: {
     select() {
@@ -76,10 +74,10 @@ vi.mock("../infrastructure/database", () => ({
   runWithDbEnv: async (_env: unknown, operation: () => unknown) => operation(),
 }));
 
-import { apiKeyRoutes } from "../routes/api-keys";
-import { sessionRoutes } from "../routes/auth/session-routes";
-import { pageSettingsRoutes } from "../routes/user-settings";
-import { profileImageRoutes } from "../routes/user-settings/profile-image-routes";
+import { apiKeyRoutes } from "../routes/api-keys/routes";
+import { sessionRoutes } from "../routes/auth/sessions/session-routes";
+import { profileImageRoutes } from "../routes/user-settings/profile/images/routes";
+import { pageSettingsRoutes } from "../routes/user-settings/routes";
 import { workspaceRoutes } from "../routes/workspaces/routes";
 
 const user = {

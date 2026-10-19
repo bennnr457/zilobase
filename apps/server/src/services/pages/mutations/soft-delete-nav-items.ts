@@ -3,8 +3,8 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import { type AfterCommit } from "../../../infrastructure/database/after-commit";
 import { dataSource, database, databaseRow, page } from "../../../infrastructure/database/schema";
-import { loadWorkspacePageGraph } from "../graph/loader";
 import type { RuntimeEnv } from "../../../shared/config/config";
+import { loadWorkspacePageGraph } from "../graph/loader";
 
 type SoftDeleteResult = {
   deletedAt: Date;

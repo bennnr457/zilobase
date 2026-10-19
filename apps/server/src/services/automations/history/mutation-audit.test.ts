@@ -11,7 +11,7 @@ describe("database automation mutation-path audit", () => {
       read("databases/records/service.ts"),
       read("databases/commands/records.ts"),
       read("databases/commands/template-apply-handler.ts"),
-      read("../routes/pages/page-content-routes.ts"),
+      read("pages/content/update-page.ts"),
     ]);
 
     expect(cell).toMatch(/automationFacts:[\s\S]*before: previous\?\.value/);
@@ -21,7 +21,7 @@ describe("database automation mutation-path audit", () => {
     );
     expect(template).toMatch(/origin: "import" as const/);
     expect(pages).toMatch(/propertyId: "name"/);
-    expect(pages).toMatch(/c\.get\("authMethod"\) === "apiKey"/);
+    expect(pages).toMatch(/origin: apiKey/);
   });
 
   it("keeps every remaining direct write under an explicit system suppression", async () => {
@@ -39,7 +39,7 @@ describe("database automation mutation-path audit", () => {
 
   it("captures facts within the canonical transaction and keeps realtime independent", async () => {
     const [commit, capture] = await Promise.all([
-      read("databases/core/commit.ts"),
+      read("databases/mutations/commit.ts"),
       read("automations/triggers/event-capture.ts"),
     ]);
 

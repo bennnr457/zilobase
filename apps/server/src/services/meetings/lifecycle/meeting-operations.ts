@@ -1,16 +1,17 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
 import { hasPageBodyContent } from "@zilobase/features/runtime";
-import { canAccessPageInWorkspace, getAccessiblePageIds, getMembership } from "../../access";
+import { and, desc, eq, isNull } from "drizzle-orm";
+import { canAccessPageInWorkspace, getAccessiblePageIds } from "../../access/effective-access";
+import { getMembership } from "../../access/principal-access";
 
-import type { RuntimeEnv } from "../../../shared/config/config";
+import { getRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import { db } from "../../../infrastructure/database";
 import { meeting, page } from "../../../infrastructure/database/schema";
-import { upsertPageItemPlacement } from "../../pages/placements";
+import type { RuntimeEnv } from "../../../shared/config/config";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
-import { getRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
-import { isMeetingRecordingActive } from "./meeting-state";
+import { upsertPageItemPlacement } from "../../pages/placements/page-item-placements";
 import type { MeetingPatch, MeetingStatus } from "../contracts/meeting-types";
 import { getMeetingForUser } from "./meeting-access";
+import { isMeetingRecordingActive } from "./meeting-state";
 
 const EMPTY_NOTES_CONTENT = {
   content: [{ type: "paragraph" }],

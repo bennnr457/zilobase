@@ -3,7 +3,7 @@ import { test } from "vitest";
 
 import type { Database } from "../../infrastructure/database";
 import { teamspace, teamspacePrincipal } from "../../infrastructure/database/schema";
-import type { ZilobaseEditionExtension } from "../../shared/types";
+import type { ZilobaseEditionExtension } from "../../shared/contracts/edition";
 import { TeamspaceService } from "./teamspace-membership";
 
 test("first default membership creates a General teamspace and owner", async () => {

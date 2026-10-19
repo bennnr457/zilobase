@@ -1,6 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import type { RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import {
   databaseProperty,
@@ -9,15 +8,16 @@ import {
   pageProperty,
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
-import { requireDataSourceEditAccess } from "../access/data-source-access";
-import { commitDataSourceMutation } from "../core/commit";
+import type { RuntimeEnv } from "../../../shared/config/config";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
   lockDatabaseAutomationFactRows,
   type DatabaseMutationOrigin,
 } from "../../automations/triggers/event-capture";
+import { requireDataSourceEditAccess } from "../access/data-source-access";
 import { getDatabaseRecordEntity } from "../commands/record-entity";
+import { commitDataSourceMutation } from "../mutations/commit";
 import { validateCellValue } from "./config";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 
 export async function setDatabaseCellValueService(input: {
   databaseId: string;

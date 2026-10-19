@@ -3,20 +3,21 @@ import {
   oauthProviderOpenIdConfigMetadata,
 } from "@better-auth/oauth-provider";
 import { Hono, type Context } from "hono";
-import { getAuthHeaders } from "../../shared/security/auth-headers";
 import { createAuth, type Auth } from "../../services/auth/auth";
-import { db, runWithDbEnv } from "../../infrastructure/database";
-import { getPrimaryClientOrigin } from "../../shared/config/config";
-import { ensureOfficialClipperClient } from "../../services/auth/oauth-clients";
+import { getAuthHeaders } from "../../services/auth/sessions/headers";
 import {
-  getInstanceAdministrationSettings,
-  SELF_HOSTED_INVITATION_COOKIE,
-  validateSelfHostedInvitationCandidate,
-} from "../../services/instance/registration";
-import { isCommunityRegistration } from "../../shared/app-policy";
-import type { AppBindings } from "../../shared/types";
-import { readJsonBody } from "../../shared/http/request";
-import { expireTemporaryMemberships } from "../../services/memberships";
+  ensureRequestClipperClient,
+  withAuthDatabase,
+} from "../../services/auth/sessions/session-resolution";
+import {
+  isBlockedSelfHostedWorkspaceCreate,
+  prepareSocialRegistration,
+} from "../../services/instance/registration/auth-policy";
+import { SELF_HOSTED_INVITATION_COOKIE } from "../../services/instance/registration/registration";
+import { expireTemporaryMemberships } from "../../services/memberships/temporary-membership";
+import { isCommunityRegistration } from "../../shared/config/app-policy";
+import type { AppBindings } from "../../shared/contracts/http";
+import { readJsonBody } from "../http/request";
 
 export const authRoutes = new Hono<AppBindings>();
 
@@ -155,7 +156,7 @@ authRoutes.get("/.well-known/openid-configuration/*", (c) =>
 
 authRoutes.post("/api/auth/set-password", async (c) => {
   const body = await readJsonBody(c.req);
-  return runWithDbEnv(c.env, async () => {
+  return withAuthDatabase(c.env, async () => {
     const auth = await createAuth(c.env, c.req.raw, undefined, {
       editionExtension: c.get("editionExtension") ?? undefined,
       policy: c.get("appPolicy"),
@@ -176,7 +177,7 @@ authRoutes.on(["GET", "POST"], "/api/auth/*", async (c) => {
 
   const { request, rewritten } = await getWorkspaceAuthRequest(c.req.raw);
 
-  return runWithDbEnv(c.env, async () => {
+  return withAuthDatabase(c.env, async () => {
     if (
       await isBlockedSelfHostedWorkspaceCreate(
         c.env,
@@ -222,46 +223,12 @@ authRoutes.on(["GET", "POST"], "/api/auth/*", async (c) => {
   });
 });
 
-async function prepareSocialRegistration(
-  env: Record<string, unknown>,
-  request: Request,
-  communityRegistration: boolean,
-) {
-  const url = new URL(request.url);
-
-  if (
-    !communityRegistration ||
-    request.method !== "POST" ||
-    url.pathname !== "/api/auth/sign-in/social"
-  ) {
-    return { allowed: true as const, invitationId: null };
-  }
-
-  const body = await request
-    .clone()
-    .json()
-    .catch(() => null);
-  const invitationId =
-    body &&
-    typeof body === "object" &&
-    !Array.isArray(body) &&
-    typeof (body as Record<string, unknown>).invitationId === "string"
-      ? (body as Record<string, string>).invitationId
-      : null;
-
-  if (!invitationId) {
-    return { allowed: true as const, invitationId: null };
-  }
-
-  return validateSelfHostedInvitationCandidate(env, invitationId);
-}
-
 function serveOAuthMetadata(
   c: Context<AppBindings>,
   createHandler: (auth: Auth) => (request: Request) => Promise<Response>,
 ) {
-  return runWithDbEnv(c.env, async () => {
-    await ensureOfficialClipperClient(db, getPrimaryClientOrigin(c.env));
+  return withAuthDatabase(c.env, async () => {
+    await ensureRequestClipperClient(c.env);
     const auth = await createAuth(c.env, c.req.raw, undefined, {
       editionExtension: c.get("editionExtension") ?? undefined,
       policy: c.get("appPolicy"),
@@ -306,19 +273,4 @@ function applySocialInvitationCookie(
     status: response.status,
     statusText: response.statusText,
   });
-}
-
-async function isBlockedSelfHostedWorkspaceCreate(
-  env: Record<string, unknown>,
-  request: Request,
-  communityRegistration: boolean,
-) {
-  const url = new URL(request.url);
-
-  return (
-    communityRegistration &&
-    request.method === "POST" &&
-    url.pathname === "/api/auth/organization/create" &&
-    Boolean((await getInstanceAdministrationSettings(env)).pinnedWorkspaceId)
-  );
 }

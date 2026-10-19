@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 
-import { getMembership } from "../../../services/access";
-import type { AppBindings } from "../../../shared/types";
+import { getMembership } from "../../../services/access/principal-access";
+import type { AppBindings } from "../../../shared/contracts/http";
 
 export async function requireActiveWorkspace(c: Context<AppBindings>) {
   const user = c.get("user");

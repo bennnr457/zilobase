@@ -1,4 +1,3 @@
-import { and, asc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import {
   databaseAutomationDefinitionSchema,
   getNextDatabaseAutomationOccurrence,
@@ -8,9 +7,10 @@ import {
   type DatabaseAutomationSummary,
   type DatabaseAutomationValidationResult,
 } from "@zilobase/features/runtime";
-import { canAccessDatabaseRecord, getMembership } from "../../access";
+import { and, asc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { db, type Database } from "../../../infrastructure/database";
 import {
+  automationSecret,
   database,
   databaseAutomation,
   databaseAutomationDependency,
@@ -19,21 +19,22 @@ import {
   databaseProperty,
   databaseView,
   dataSource,
-  automationSecret,
+  member,
   pageProperty,
   slackConnection,
-  member,
   user,
 } from "../../../infrastructure/database/schema";
-import type { ZilobaseEditionExtension } from "../../../shared/types";
+import type { ZilobaseEditionExtension } from "../../../shared/contracts/edition";
+import { canAccessDatabaseRecord } from "../../access/effective-access";
+import { getMembership } from "../../access/principal-access";
 import { requireDataSourceAccess } from "../../databases/access/data-source-access";
 import { requireDatabaseAccess } from "../../databases/access/database-access";
+import { resolvePublicWebhookTarget } from "../actions/webhook/webhook-egress";
 import {
   operatorsForPropertyType,
   type AutomationPropertyMetadata,
   type DatabaseAutomationCompilationContext,
 } from "../compilation/compiler";
-import { resolvePublicWebhookTarget } from "../actions/webhook-egress";
 
 export type Executor = Database;
 export type AutomationRecord = typeof databaseAutomation.$inferSelect;

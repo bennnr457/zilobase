@@ -1,5 +1,5 @@
-import { PgDialect } from "drizzle-orm/pg-core";
 import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
 
@@ -43,7 +43,7 @@ vi.mock("../../infrastructure/database", () => ({
     },
   },
 }));
-vi.mock("../pages/graph", () => ({
+vi.mock("../pages/graph/loader", () => ({
   async loadWorkspacePageGraph() {
     return {
       getAncestorIds: () => mocks.ancestorIds,
@@ -52,14 +52,13 @@ vi.mock("../pages/graph", () => ({
     };
   },
 }));
-vi.mock("../teamspaces", () => ({
+vi.mock("../teamspaces/security", () => ({
   getDatabaseTeamspaceSecurityPolicy: vi.fn(),
   getPageTeamspaceSecurityPolicy: mocks.pageSecurityPolicy,
 }));
 
+import { hasAccess, normalizeAccessLevel } from "./access-level";
 import {
-  isPagePublishedInWorkspace,
-  getWorkspacePrincipalKind,
   canAccessDatabaseInWorkspace,
   canAccessDatabaseRecord,
   canAccessPageInWorkspace,
@@ -67,11 +66,13 @@ import {
   getEffectiveDatabaseAccessInWorkspace,
   getEffectivePageAccessInWorkspace,
   getEffectiveTeamspaceAccessInWorkspace,
-  hasAccess,
+  isPagePublishedInWorkspace,
+} from "./effective-access";
+import {
+  getWorkspacePrincipalKind,
   isPrivilegedOrgRole,
   isWorkspaceMember,
-  normalizeAccessLevel,
-} from ".";
+} from "./principal-access";
 
 beforeEach(() => {
   mocks.ancestorIds = ["page-1"];

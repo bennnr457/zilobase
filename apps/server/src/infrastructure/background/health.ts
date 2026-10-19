@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
 import { requireRuntimePort } from "@zilobase/runtime-adapter/capabilities";
+import { sql } from "drizzle-orm";
 
 import type { RuntimeEnv } from "../../shared/config/config";
 import { db } from "../database";

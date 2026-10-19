@@ -1,8 +1,8 @@
 import { index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { workspace } from "./workspaces";
-import { page } from "./pages";
-import { database } from "./databases";
 import { user } from "./authentication";
+import { database } from "./databases";
+import { page } from "./pages";
+import { workspace } from "./workspaces";
 
 export const imageAsset = pgTable(
   "image_asset",

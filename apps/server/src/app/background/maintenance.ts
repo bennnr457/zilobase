@@ -1,19 +1,19 @@
-import { maintainCalendarWatches } from "../../services/calendar/realtime/watches";
-import { drainCalendarOutbox } from "../../services/calendar/realtime/outbox";
-import { recoverCalendarDispatches } from "../../services/calendar/sync/sync";
 import { and, asc, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { drainCalendarOutbox } from "../../services/calendar/realtime/outbox";
+import { maintainCalendarWatches } from "../../services/calendar/realtime/watches";
+import { recoverCalendarDispatches } from "../../services/calendar/sync/sync";
 
 import { cleanupDatabaseAutomationHistory } from "../../services/automations/history/history-maintenance";
 import { scanDueDatabaseAutomationSchedules } from "../../services/automations/triggers/scheduler";
-import { expireTemporaryMemberships } from "../../services/memberships";
+import { expireTemporaryMemberships } from "../../services/memberships/temporary-membership";
 
-import type { RuntimeEnv } from "../../shared/config/config";
 import { boundedErrorCode } from "../../infrastructure/background/dispatch";
 import { getBackgroundOperationalSnapshot } from "../../infrastructure/background/health";
-import { db } from "../../infrastructure/database";
 import { publishBackgroundDispatches } from "../../infrastructure/background/publication";
-import { reconcileBackgroundFailures } from "./failures";
+import { db } from "../../infrastructure/database";
 import { backgroundMaintenanceTask } from "../../infrastructure/database/schema";
+import type { RuntimeEnv } from "../../shared/config/config";
+import { reconcileBackgroundFailures } from "./failures";
 
 export const BACKGROUND_MAINTENANCE_TASKS = {
   "automation.retention": 60 * 60_000,

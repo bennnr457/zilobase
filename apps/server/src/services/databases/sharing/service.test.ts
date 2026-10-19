@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../access/database-access", () => ({
   requireDatabaseAccess: mocks.requireAccess,
 }));
-vi.mock("../../teamspaces", () => ({
+vi.mock("../../teamspaces/security", () => ({
   getDatabaseTeamspaceSecurityPolicy: mocks.securityPolicy,
 }));
 vi.mock("../../../infrastructure/database", () => ({
@@ -77,13 +77,13 @@ vi.mock("../../../infrastructure/database", () => ({
   })(),
 }));
 
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
   deleteDatabaseAccessRuleService,
   deletePublicDatabaseAccessService,
   listDatabaseAccessRulesService,
   upsertDatabaseAccessRuleService,
 } from "./service";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 
 beforeEach(() => {
   mocks.conflict.mockReset();

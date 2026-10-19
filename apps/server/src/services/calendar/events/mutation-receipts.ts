@@ -1,3 +1,4 @@
+import type { CalendarMutationResponse } from "@zilobase/features/runtime";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import {
@@ -6,10 +7,9 @@ import {
   calendarNotificationOutbox,
   calendarProviderCalendar,
 } from "../../../infrastructure/database/schema";
-import type { CalendarMutationResponse } from "@zilobase/features/runtime";
+import { recordCalendarMetric } from "../metrics";
 import { CalendarProviderError } from "../provider/gateway";
 import type { CalendarMutationInput } from "./mutations";
-import { recordCalendarMetric } from "../metrics";
 export async function existingCalendarMutation(input: CalendarMutationInput, hash: string) {
   const [receipt] = await db
     .select()

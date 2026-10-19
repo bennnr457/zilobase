@@ -1,6 +1,6 @@
-import { test, expect } from "vitest";
+import { expect, test } from "vitest";
+import { decryptCalendarSecret, encryptCalendarSecret } from "./credentials";
 import { CalendarGateway, googleEventSchema, normalizeEvent } from "./gateway";
-import { encryptCalendarSecret, decryptCalendarSecret } from "./credentials";
 test("default event color can be cleared through the provider write schema", () => {
   const event = googleEventSchema.parse({
     id: "default-color",

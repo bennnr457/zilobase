@@ -10,12 +10,12 @@ vi.mock("nodemailer", () => ({
   default: { createTransport: mail.createTransport },
 }));
 
-import { sendEmail } from "./email";
 import {
   runWithRuntimePorts,
   type OutboundEmailMessage,
 } from "@zilobase/runtime-adapter/capabilities";
 import { createNodeMailer } from "@zilobase/runtime-adapter/node";
+import { sendEmail } from "./email";
 
 const message = {
   subject: "Welcome",

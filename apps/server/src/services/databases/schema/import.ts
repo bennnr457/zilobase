@@ -1,5 +1,5 @@
+import { isSelectLikePropertyType } from "@zilobase/features/runtime";
 import { defaultStatusOptions, normalizePropertyConfig } from "./config";
-import { isSelectLikePropertyType } from "./types";
 
 export const shouldInsertUnmatchedSourceProperty = (mode: "duplicate" | "match") =>
   mode === "duplicate";

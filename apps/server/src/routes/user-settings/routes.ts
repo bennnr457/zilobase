@@ -1,22 +1,15 @@
-import { Hono } from "hono";
-import { and, eq, isNotNull } from "drizzle-orm";
 import { Schema, SchemaTransformation } from "effect";
-import { normalizeSidebarConfig, type SidebarConfig } from "@zilobase/features/runtime";
-import { db } from "../../infrastructure/database";
-import { account, user, pageSettings } from "../../infrastructure/database/schema";
-import type { AppBindings } from "../../shared/types";
-import { readJsonBody } from "../../shared/http/request";
-import { parseJsonBody, parseUnknown } from "../../shared/http/schema-json";
+import { Hono } from "hono";
+import {
+  getOrCreateUserSettings,
+  updateUserPreferences,
+} from "../../services/user-settings/preferences/preferences";
+import { updateUserProfile } from "../../services/user-settings/profile/profile";
+import type { AppBindings } from "../../shared/contracts/http";
+import { readJsonBody } from "../http/request";
+import { parseJsonBody, parseUnknown } from "../http/schema-json";
 
 export const pageSettingsRoutes = new Hono<AppBindings>();
-
-type EmbeddedItemsOpenAs = "dialog" | "sidepanel";
-
-type UserSettingsPayload = {
-  embeddedItemsOpenAs: EmbeddedItemsOpenAs;
-  pageFullWidth: boolean;
-  sidebarConfig: SidebarConfig;
-};
 
 const UpdateProfile = Schema.Struct({
   email: Schema.optionalKey(
@@ -85,39 +78,7 @@ pageSettingsRoutes.patch("/", async (c) => {
     return c.json({ error: parsed.message }, 400);
   }
 
-  const patch = parsed.data;
-  const values: Partial<typeof pageSettings.$inferInsert> = {
-    updatedAt: new Date(),
-  };
-
-  if (patch.pageFullWidth !== undefined) {
-    values.pageFullWidth = patch.pageFullWidth;
-  }
-
-  if (patch.embeddedItemsOpenAs !== undefined) {
-    values.embeddedItemsOpenAs = patch.embeddedItemsOpenAs;
-  }
-
-  if (patch.sidebarConfig !== undefined) {
-    values.sidebarConfig = normalizeSidebarConfig(patch.sidebarConfig);
-  }
-
-  const [settings] = await db
-    .insert(pageSettings)
-    .values({
-      id: crypto.randomUUID(),
-      userId: user.id,
-      embeddedItemsOpenAs: values.embeddedItemsOpenAs ?? "sidepanel",
-      pageFullWidth: values.pageFullWidth ?? false,
-      sidebarConfig: values.sidebarConfig ?? {},
-    })
-    .onConflictDoUpdate({
-      target: pageSettings.userId,
-      set: values,
-    })
-    .returning();
-
-  return c.json({ settings: toUserSettingsPayload(settings) });
+  return c.json({ settings: await updateUserPreferences(user.id, parsed.data) });
 });
 
 pageSettingsRoutes.patch("/profile", async (c) => {
@@ -133,102 +94,7 @@ pageSettingsRoutes.patch("/profile", async (c) => {
     return c.json({ error: parsed.message || "Invalid request." }, 400);
   }
 
-  const nextName = parsed.data.name;
-  const nextEmail = parsed.data.email;
-
-  if (nextEmail && nextEmail !== currentUser.email) {
-    const [existingUser] = await db
-      .select({ id: user.id })
-      .from(user)
-      .where(eq(user.email, nextEmail))
-      .limit(1);
-
-    if (existingUser && existingUser.id !== currentUser.id) {
-      return c.json({ error: "That email address is already in use." }, 409);
-    }
-  }
-
-  const [updatedUser] = await db
-    .update(user)
-    .set({
-      email: nextEmail ?? currentUser.email,
-      name: nextName ?? currentUser.name,
-      updatedAt: new Date(),
-    })
-    .where(eq(user.id, currentUser.id))
-    .returning({
-      email: user.email,
-      emailVerified: user.emailVerified,
-      id: user.id,
-      image: user.image,
-      name: user.name,
-    });
-
-  return c.json({
-    user: {
-      ...updatedUser,
-      hasPassword: await getUserHasPassword(currentUser.id),
-    },
-  });
+  const result = await updateUserProfile(currentUser, parsed.data);
+  if ("conflict" in result) return c.json({ error: "That email address is already in use." }, 409);
+  return c.json(result);
 });
-
-async function getOrCreateUserSettings(userId: string) {
-  const [existing] = await db
-    .select()
-    .from(pageSettings)
-    .where(eq(pageSettings.userId, userId))
-    .limit(1);
-
-  if (existing) {
-    return toUserSettingsPayload(existing);
-  }
-
-  const [created] = await db
-    .insert(pageSettings)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-    })
-    .onConflictDoNothing({ target: pageSettings.userId })
-    .returning();
-
-  if (created) {
-    return toUserSettingsPayload(created);
-  }
-
-  const [concurrent] = await db
-    .select()
-    .from(pageSettings)
-    .where(eq(pageSettings.userId, userId))
-    .limit(1);
-
-  if (!concurrent) {
-    throw new Error("Failed to load user settings");
-  }
-
-  return toUserSettingsPayload(concurrent);
-}
-
-function toUserSettingsPayload(settings: typeof pageSettings.$inferSelect): UserSettingsPayload {
-  return {
-    embeddedItemsOpenAs: settings.embeddedItemsOpenAs === "dialog" ? "dialog" : "sidepanel",
-    pageFullWidth: settings.pageFullWidth,
-    sidebarConfig: normalizeSidebarConfig(settings.sidebarConfig),
-  };
-}
-
-async function getUserHasPassword(userId: string) {
-  const [credentialAccount] = await db
-    .select({ id: account.id })
-    .from(account)
-    .where(
-      and(
-        eq(account.userId, userId),
-        eq(account.providerId, "credential"),
-        isNotNull(account.password),
-      ),
-    )
-    .limit(1);
-
-  return Boolean(credentialAccount);
-}

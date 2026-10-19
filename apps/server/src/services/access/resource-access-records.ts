@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
-import { page, database, databaseRow, dataSource } from "../../infrastructure/database/schema";
+import { database, databaseRow, dataSource, page } from "../../infrastructure/database/schema";
 
 export async function getPageRecord(id: string) {
   const [record] = await db

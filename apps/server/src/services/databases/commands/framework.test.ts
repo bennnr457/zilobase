@@ -1,6 +1,6 @@
+import type { DatabaseCommandAck, DatabaseCommandRequest } from "@zilobase/features/runtime";
 import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
-import type { DatabaseCommandAck, DatabaseCommandRequest } from "@zilobase/features/runtime";
 
 const background = vi.hoisted(() => ({ dispatch: vi.fn() }));
 vi.mock("../../../infrastructure/background/dispatch", () => ({
@@ -15,8 +15,8 @@ vi.mock("../../../infrastructure/background/dispatch", () => ({
 import {
   dataSource,
   database,
-  databaseCommandReceipt,
   databaseActorState,
+  databaseCommandReceipt,
   databaseDataSource,
   databaseMutationEvent,
   databaseRealtimeOutbox,

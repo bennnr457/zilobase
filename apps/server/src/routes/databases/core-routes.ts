@@ -1,8 +1,8 @@
-import { getDatabaseRecord } from "../../services/databases/access/database-access";
-import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
 import { Hono } from "hono";
-import type { AppBindings } from "../../shared/types";
+import { getDatabaseRecord } from "../../services/databases/access/database-access";
 import { listDatabaseAccessRulesService } from "../../services/databases/sharing/service";
+import type { AppBindings } from "../../shared/contracts/http";
+import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
 import { requireDatabaseRouteUser as requireUser } from "./support";
 
 export const databaseCoreRoutes = new Hono<AppBindings>();

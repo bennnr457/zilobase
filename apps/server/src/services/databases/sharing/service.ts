@@ -1,17 +1,14 @@
 import { and, asc, eq } from "drizzle-orm";
 
-import { normalizeAccessLevel } from "../../access";
 import { db } from "../../../infrastructure/database";
-import {
-  deliverAfterCommit,
-  type AfterCommit,
-} from "../../../infrastructure/database/after-commit";
+import { type AfterCommit } from "../../../infrastructure/database/after-commit";
 import { databaseAccess, member, team } from "../../../infrastructure/database/schema";
-import { activeMembershipCondition } from "../../memberships";
-import { requireDatabaseAccess } from "../access/database-access";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
-import { getDatabaseTeamspaceSecurityPolicy } from "../../teamspaces";
 import type { RuntimeEnv } from "../../../shared/config/config";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { normalizeAccessLevel } from "../../access/access-level";
+import { activeMembershipCondition } from "../../memberships/temporary-membership";
+import { getDatabaseTeamspaceSecurityPolicy } from "../../teamspaces/security";
+import { requireDatabaseAccess } from "../access/database-access";
 
 export async function listDatabaseAccessRulesService(input: {
   databaseId: string;

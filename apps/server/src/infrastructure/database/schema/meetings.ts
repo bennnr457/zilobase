@@ -10,10 +10,10 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { workspace } from "./workspaces";
-import { page } from "./pages";
 import { user } from "./authentication";
-import { timestampColumns, bytea } from "./columns";
+import { bytea, timestampColumns } from "./columns";
+import { page } from "./pages";
+import { workspace } from "./workspaces";
 
 export const meeting = pgTable(
   "meeting",

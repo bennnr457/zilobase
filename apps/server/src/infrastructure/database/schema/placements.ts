@@ -1,7 +1,7 @@
 import { index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { workspace } from "./workspaces";
-import { databaseRow } from "./databases";
 import { timestampColumns } from "./columns";
+import { databaseRow } from "./databases";
+import { workspace } from "./workspaces";
 
 export const pageItemPlacement = pgTable(
   "page_item_placement",

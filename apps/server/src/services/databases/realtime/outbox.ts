@@ -1,13 +1,13 @@
 import { and, asc, eq, inArray, isNull, lte, sql } from "drizzle-orm";
 
-import type { RuntimeEnv } from "../../../shared/config/config";
-import { recordDatabaseGauge } from "../observability";
+import { requireRuntimePort } from "@zilobase/runtime-adapter/capabilities";
 import { db } from "../../../infrastructure/database";
 import {
   databaseMutationEvent,
   databaseRealtimeOutbox,
 } from "../../../infrastructure/database/schema";
-import { requireRuntimePort } from "@zilobase/runtime-adapter/capabilities";
+import type { RuntimeEnv } from "../../../shared/config/config";
+import { recordDatabaseGauge } from "../observability";
 import { databaseMutationEventFromJournalRow } from "./journal-event";
 
 const DELIVERY_LEASE_MS = 2 * 60 * 1000;

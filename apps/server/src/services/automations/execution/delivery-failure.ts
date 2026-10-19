@@ -1,8 +1,8 @@
 import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import {
-  databaseAutomationRun,
   databaseAutomationEventWindow,
+  databaseAutomationRun,
 } from "../../../infrastructure/database/schema";
 
 export async function failAutomationDelivery(resourceId: string, window: boolean) {

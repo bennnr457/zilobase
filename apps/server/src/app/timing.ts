@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 
-import type { AppBindings } from "../shared/types";
+import type { AppBindings } from "../shared/contracts/http";
 
 export const REQUEST_ID_HEADER = "x-zilobase-request-id";
 

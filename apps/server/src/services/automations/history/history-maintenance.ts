@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
+import { and, asc, inArray, isNotNull, lt, sql } from "drizzle-orm";
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core";
 
 import { db } from "../../../infrastructure/database";
@@ -9,7 +9,8 @@ import {
   databaseAutomationRun,
   databaseAutomationStepRun,
 } from "../../../infrastructure/database/schema";
-import { getDatabaseAutomationRetention, type RuntimeEnv } from "../../../shared/config/config";
+import { type RuntimeEnv } from "../../../shared/config/config";
+import { getDatabaseAutomationRetention } from "../configuration";
 
 const CLEANUP_BATCH = 1_000;
 

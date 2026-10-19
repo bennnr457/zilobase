@@ -1,1 +1,0 @@
-export { pageSettingsRoutes } from "./routes";

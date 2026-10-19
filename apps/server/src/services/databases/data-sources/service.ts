@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
 
-import type { RuntimeEnv } from "../../../shared/config/config";
 import { dataSource } from "../../../infrastructure/database/schema";
-import { commitDataSourceMutation } from "../core/commit";
+import type { RuntimeEnv } from "../../../shared/config/config";
 import { requireDataSourceEditAccess } from "../access/data-source-access";
 import { getDataSourceEntity } from "../commands/metadata-entities";
+import { commitDataSourceMutation } from "../mutations/commit";
 
 export async function updateDataSourceService(input: {
   config?: unknown;

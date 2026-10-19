@@ -1,5 +1,5 @@
-import assert from "node:assert/strict";
 import { PgDialect } from "drizzle-orm/pg-core";
+import assert from "node:assert/strict";
 import { test } from "vitest";
 
 import { upsertPagePropertyValues } from "./upsert";

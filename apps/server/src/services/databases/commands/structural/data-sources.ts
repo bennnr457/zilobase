@@ -1,10 +1,10 @@
-import { and, asc, eq, sql } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/runtime";
 import type { DataSourceCommand, HostDatabaseCommand } from "@zilobase/features/runtime";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
+import { and, asc, eq, sql } from "drizzle-orm";
 
 import {
-  database,
   dataSource,
+  database,
   databaseDataSource,
   databaseView,
 } from "../../../../infrastructure/database/schema";

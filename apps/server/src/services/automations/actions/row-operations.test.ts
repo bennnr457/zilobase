@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
+import { applyDatabaseAutomationRowOperations } from "./internal-mutations";
 const state = vi.hoisted(() => ({
   rows: [] as unknown[][],
   writes: [] as unknown[],
@@ -44,7 +45,7 @@ vi.mock("../../databases/access/data-source-access", () => ({
     return { id: "source" };
   },
 }));
-vi.mock("../../databases/core/commit", async () => {
+vi.mock("../../databases/mutations/commit", async () => {
   const { db } = await import("../../../infrastructure/database");
   return {
     commitDataSourceMutation: async (input: unknown, run: (tx: unknown) => unknown) => {
@@ -73,7 +74,6 @@ vi.mock("../triggers/event-capture", () => ({
     state.events.push("lock");
   },
 }));
-import { applyDatabaseAutomationRowOperations } from "./internal-mutations";
 const input = {
   actorId: "actor",
   dataSourceId: "source",

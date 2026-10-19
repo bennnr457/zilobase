@@ -1,6 +1,6 @@
 import type { Context } from "hono";
-import type { AppBindings } from "../../shared/types";
 import { getMembership } from "../../services/access/principal-access";
+import type { AppBindings } from "../../shared/contracts/http";
 
 const ACTIVE_ORGANIZATION_MISMATCH_CODE = "ACTIVE_ORGANIZATION_MISMATCH";
 

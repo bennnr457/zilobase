@@ -1,9 +1,9 @@
+import { Hono } from "hono";
 import assert from "node:assert/strict";
 import { test } from "vitest";
-import { Hono } from "hono";
 
+import type { AppBindings } from "../shared/contracts/http";
 import { createCorsMiddleware } from "./cors";
-import type { AppBindings } from "../shared/types";
 
 function corsApp() {
   const app = new Hono<AppBindings>();

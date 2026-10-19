@@ -1,6 +1,5 @@
-import { Hono } from "hono";
 import { Schema } from "effect";
-import type { AppBindings } from "../../../shared/types";
+import { Hono } from "hono";
 import {
   calendarWriteSchema,
   type CalendarMutationAction,
@@ -9,6 +8,7 @@ import {
   mutateCalendarEvent,
   reconcileCalendarOperation,
 } from "../../../services/calendar/events/mutations";
+import type { AppBindings } from "../../../shared/contracts/http";
 
 const CalendarMutationActionSchema = Schema.Literals([
   "update",

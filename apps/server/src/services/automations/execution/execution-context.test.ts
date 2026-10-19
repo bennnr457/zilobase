@@ -1,6 +1,7 @@
-import { beforeEach, expect, it, vi } from "vitest";
-import { PgDialect } from "drizzle-orm/pg-core";
 import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
+import { beforeEach, expect, it, vi } from "vitest";
+import { loadExecutionContext } from "./execution-context";
 
 const mocks = vi.hoisted(() => ({
   rows: [] as unknown[][],
@@ -38,7 +39,6 @@ vi.mock("../../../infrastructure/database", () => ({
     },
   },
 }));
-import { loadExecutionContext } from "./execution-context";
 
 const definition = {
   definitionVersion: 1,

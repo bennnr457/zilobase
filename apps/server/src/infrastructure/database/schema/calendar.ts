@@ -1,23 +1,23 @@
+import type {
+  CalendarEvent,
+  CalendarMutationResponse,
+  CalendarPreferences,
+  CalendarRecord,
+} from "@zilobase/features/runtime";
 import { sql } from "drizzle-orm";
 import {
-  pgTable,
-  text,
-  timestamp,
+  check,
+  foreignKey,
   integer,
   jsonb,
-  uniqueIndex,
-  foreignKey,
+  pgTable,
   primaryKey,
-  check,
+  text,
+  timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "./authentication";
 import { member } from "./workspaces";
-import type {
-  CalendarEvent,
-  CalendarRecord,
-  CalendarPreferences,
-  CalendarMutationResponse,
-} from "../../../shared/contracts/calendar";
 
 export const calendarAccount = pgTable(
   "calendar_account",

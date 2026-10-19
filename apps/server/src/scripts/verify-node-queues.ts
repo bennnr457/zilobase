@@ -1,16 +1,16 @@
-import assert from "node:assert/strict";
-import { setTimeout as sleep } from "node:timers/promises";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import Redis from "ioredis";
 import { createNodeQueueRuntime, purgeNodeCellQueues } from "@zilobase/runtime-adapter/node";
+import Redis from "ioredis";
+import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { setTimeout as sleep } from "node:timers/promises";
+import { promisify } from "node:util";
+import { backgroundTaskLane } from "../infrastructure/background/contracts";
 import {
   BACKGROUND_LANE_POLICY,
+  BACKGROUND_TASK_KINDS,
   createBackgroundTaskV2,
   decodeBackgroundTaskV2,
-  BACKGROUND_TASK_KINDS,
 } from "../infrastructure/background/task-v2";
-import { backgroundTaskLane } from "../infrastructure/background/contracts";
 
 const url = process.env.ZILOBASE_QUEUE_VERIFY_URL;
 assert.ok(url && new URL(url).hostname === "127.0.0.1", "Disposable queue Redis is required");

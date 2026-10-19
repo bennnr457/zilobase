@@ -1,6 +1,5 @@
+import { databaseOrderKeyAtPosition, hasPageBodyContent } from "@zilobase/features/runtime";
 import { and, eq, inArray } from "drizzle-orm";
-import { hasPageBodyContent } from "@zilobase/features/runtime";
-import { databaseOrderKeyAtPosition } from "@zilobase/features/runtime";
 
 import type { Database } from "../../infrastructure/database";
 import {
@@ -24,7 +23,7 @@ import {
   user,
   workspace,
 } from "../../infrastructure/database/schema";
-import { markdownToPageContent } from "../pages/markdown-to-page-content";
+import { markdownToPageContent } from "../pages/content/markdown-to-page-content";
 import { DEMO_IDS, DEMO_SEED_VERSION } from "./constants";
 
 const FIXED_DATE = new Date("2026-08-31T08:00:00.000Z");

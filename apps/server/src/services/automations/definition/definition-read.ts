@@ -5,12 +5,12 @@ import {
   databaseAutomationRevision,
 } from "../../../infrastructure/database/schema";
 import {
-  requireManagementContext,
   assertProtectedDefinitionOwner,
   getAutomationWithRevision,
-  toSummary,
-  toDetail,
   notFound,
+  requireManagementContext,
+  toDetail,
+  toSummary,
 } from "./definition-context";
 
 export async function listDatabaseAutomations(input: {

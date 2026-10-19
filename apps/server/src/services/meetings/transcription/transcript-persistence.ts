@@ -1,13 +1,13 @@
 import { and, eq, isNull, ne } from "drizzle-orm";
 
-import { appendMeetingTranscript } from "../../collaboration/service";
-import type { RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import {
   meeting,
   meetingCollaborationDocument,
   meetingTranscriptSegment,
 } from "../../../infrastructure/database/schema";
+import type { RuntimeEnv } from "../../../shared/config/config";
+import { appendMeetingTranscript } from "../../collaboration/mutations/document-mutations";
 
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 

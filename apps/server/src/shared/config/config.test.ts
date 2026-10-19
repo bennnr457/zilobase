@@ -2,6 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "vitest";
 
 import {
+  getAutomationWebhookHttpDomains,
+  getDatabaseAutomationRetention,
+  isAutomationSlackEnabled,
+  isAutomationWebhooksEnabled,
+  isDatabaseAutomationExecutionEnabled,
+} from "../../services/automations/configuration";
+import {
   getCanonicalApiOrigin,
   getCanonicalHttpOrigin,
   getCanonicalWebOrigin,
@@ -14,11 +21,6 @@ import {
   isLocalDevelopmentHost,
   isLocalRequestOrigin,
   isLoopbackHost,
-  isAutomationWebhooksEnabled,
-  isAutomationSlackEnabled,
-  getAutomationWebhookHttpDomains,
-  getDatabaseAutomationRetention,
-  isDatabaseAutomationExecutionEnabled,
   resolvePublicRequestUrl,
 } from "./config";
 

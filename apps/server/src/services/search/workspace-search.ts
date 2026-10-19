@@ -1,8 +1,9 @@
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
-import { canAccessDatabaseInWorkspace, getAccessiblePageIds, getMembership } from "../access";
 import { db } from "../../infrastructure/database";
 import { database, databaseView, page, searchDocument } from "../../infrastructure/database/schema";
+import { canAccessDatabaseInWorkspace, getAccessiblePageIds } from "../access/effective-access";
+import { getMembership } from "../access/principal-access";
 
 export type WorkspaceSearchResult = {
   emoji: string | null;

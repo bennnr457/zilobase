@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   selectResults: [] as unknown[][],
 }));
 
-vi.mock("../../automations/service", () => ({
+vi.mock("../../automations/definition/definition-catalog", () => ({
   invalidateDatabaseAutomationDependencies: mocks.invalidateAutomationDependencies,
 }));
 
@@ -20,7 +20,7 @@ vi.mock("../access/database-access", () => ({
 vi.mock("../access/data-source-access", () => ({
   requireDataSourceEditAccess: mocks.access,
 }));
-vi.mock("../core/commit", () => ({
+vi.mock("../mutations/commit", () => ({
   commitDatabaseMutation: mocks.commit,
   commitDataSourceMutation: mocks.commit,
 }));
@@ -56,8 +56,8 @@ vi.mock("../../../infrastructure/database", () => ({
   },
 }));
 
-import { createDatabasePropertyService, updateDatabasePropertyService } from "./properties";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { createDatabasePropertyService, updateDatabasePropertyService } from "./properties";
 
 beforeEach(() => {
   mocks.access.mockReset();

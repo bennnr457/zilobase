@@ -1,9 +1,9 @@
-import assert from "node:assert/strict";
-import { test } from "vitest";
 import {
   databaseMutationEventV2Fixture,
   databaseMutationEventV2Schema,
 } from "@zilobase/features/runtime";
+import assert from "node:assert/strict";
+import { test } from "vitest";
 
 import { databaseMutationEventFromJournalRow } from "../../services/databases/realtime/journal-event";
 

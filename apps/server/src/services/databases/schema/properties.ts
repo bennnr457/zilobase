@@ -1,6 +1,10 @@
 import { and, asc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 
-import type { RuntimeEnv } from "../../../shared/config/config";
+import {
+  normalizeDatabasePropertyType,
+  shouldClearValuesForPropertyTypeChange,
+} from "@zilobase/features/runtime";
+import type { Database } from "../../../infrastructure/database";
 import { db } from "../../../infrastructure/database";
 import {
   databaseProperty,
@@ -8,15 +12,14 @@ import {
   pageProperty,
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
+import type { RuntimeEnv } from "../../../shared/config/config";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { invalidateDatabaseAutomationDependencies } from "../../automations/definition/definition-catalog";
 import { requireDataSourceEditAccess } from "../access/data-source-access";
-import { commitDataSourceMutation } from "../core/commit";
 import { getDatabasePropertyEntity } from "../commands/metadata-entities";
 import { getDatabaseRecordEntity } from "../commands/record-entity";
+import { commitDataSourceMutation } from "../mutations/commit";
 import { formatDatePropertyValueAsText, normalizePropertyConfig } from "./config";
-import { normalizeDatabasePropertyType, shouldClearValuesForPropertyTypeChange } from "./types";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
-import { invalidateDatabaseAutomationDependencies } from "../../automations/service";
-import type { Database } from "../../../infrastructure/database";
 
 export async function createDatabasePropertyService(input: {
   config?: unknown;

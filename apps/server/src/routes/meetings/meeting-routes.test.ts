@@ -1,11 +1,12 @@
-import assert from "node:assert/strict";
-import { Hono } from "hono";
-import { beforeEach, test, vi } from "vitest";
 import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import { createRuntimeEnv } from "@zilobase/runtime-adapter/env";
 import { createUrlResolver } from "@zilobase/runtime-adapter/url-resolver";
+import { Hono } from "hono";
+import assert from "node:assert/strict";
+import { beforeEach, test, vi } from "vitest";
 
-import type { AppBindings } from "../../shared/types";
+import type { AppBindings } from "../../shared/contracts/http";
+import { meetingRoutes } from "./meeting-routes";
 
 const mocks = vi.hoisted(() => ({
   claimRecorder: vi.fn(),
@@ -18,22 +19,23 @@ const mocks = vi.hoisted(() => ({
   transition: vi.fn(),
   update: vi.fn(),
 }));
-
-vi.mock("../../services/api-keys", () => ({
-  rejectMismatchedApiKeyWorkspace: () => null,
+vi.mock("../../services/meetings/lifecycle/meeting-access", () => ({
+  getMeetingForUser: mocks.get,
 }));
-vi.mock("../../services/meetings/lifecycle/meeting-service", () => ({
-  claimMeetingRecorder: mocks.claimRecorder,
+vi.mock("../../services/meetings/lifecycle/meeting-operations", () => ({
   createMeeting: mocks.create,
   deleteMeeting: mocks.delete,
-  getMeetingForUser: mocks.get,
   listMeetingsForUser: mocks.list,
-  releaseMeetingRecorder: mocks.releaseRecorder,
-  recordMeetingConsent: mocks.recordConsent,
-  transitionMeeting: mocks.transition,
   updateMeeting: mocks.update,
 }));
-import { meetingRoutes } from "./meeting-routes";
+vi.mock("../../services/meetings/lifecycle/meeting-transitions", () => ({
+  transitionMeeting: mocks.transition,
+}));
+vi.mock("../../services/meetings/lifecycle/recorder-session", () => ({
+  claimMeetingRecorder: mocks.claimRecorder,
+  releaseMeetingRecorder: mocks.releaseRecorder,
+  recordMeetingConsent: mocks.recordConsent,
+}));
 
 const user = { id: "user-1" };
 const runtimeEnv = createRuntimeEnv({});

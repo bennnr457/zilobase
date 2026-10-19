@@ -1,9 +1,3 @@
-import { processCalendarSyncTask } from "../../services/calendar/background";
-import { processDatabaseAutomationEventWindow } from "../../services/automations/triggers/event-evaluator";
-import { processDatabaseAutomationRun } from "../../services/automations/execution/run-engine";
-import { processDatabaseRealtimeTask } from "../../services/databases/realtime/background";
-import { processNotificationTask } from "../../services/notifications/background";
-import type { RuntimeEnv } from "../../shared/config/config";
 import {
   backgroundTaskLane,
   getBackgroundCellId,
@@ -16,6 +10,12 @@ import {
   recordBackgroundHistogram,
   runBackgroundTaskSpan,
 } from "../../infrastructure/background/telemetry";
+import { processDatabaseAutomationRun } from "../../services/automations/execution/run-engine";
+import { processDatabaseAutomationEventWindow } from "../../services/automations/triggers/event-evaluator";
+import { processCalendarSyncTask } from "../../services/calendar/background";
+import { processDatabaseRealtimeTask } from "../../services/databases/realtime/background";
+import { processNotificationTask } from "../../services/notifications/delivery/background";
+import type { RuntimeEnv } from "../../shared/config/config";
 export async function processBackgroundTask(input: {
   env: RuntimeEnv;
   task: BackgroundTaskV2;

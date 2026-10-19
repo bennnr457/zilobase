@@ -1,4 +1,4 @@
-import { isDatabaseUnavailableError } from "../../../shared/errors/database-errors";
+import { isDatabaseUnavailableError } from "../../../infrastructure/database/errors";
 
 export function isRetryableAutomationDatabaseError(error: unknown): boolean {
   if (isDatabaseUnavailableError(error)) return true;

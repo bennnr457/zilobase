@@ -10,10 +10,10 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { workspace } from "./workspaces";
-import { dataSource } from "./databases";
 import { user } from "./authentication";
 import { timestampColumns } from "./columns";
+import { dataSource } from "./databases";
+import { workspace } from "./workspaces";
 
 export const databaseAutomation = pgTable(
   "database_automation",

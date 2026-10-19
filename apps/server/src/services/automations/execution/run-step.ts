@@ -1,10 +1,16 @@
 import { eq } from "drizzle-orm";
-import { type RuntimeEnv } from "../../../shared/config/config";
+import { createBackgroundTask } from "../../../infrastructure/background/contracts";
+import {
+  backgroundTransaction,
+  dispatchBackgroundTasks,
+} from "../../../infrastructure/background/dispatch";
 import { db } from "../../../infrastructure/database";
 import {
   databaseAutomationRun,
   databaseAutomationStepRun,
 } from "../../../infrastructure/database/schema";
+import { type RuntimeEnv } from "../../../shared/config/config";
+import { restoreStepOutput, toJson } from "../actions/action-values";
 import {
   AutomationActionError,
   RetryableAutomationActionError,
@@ -12,19 +18,13 @@ import {
   isAutomationLeaseLost,
   isRetryableAutomationDatabaseError,
 } from "./action-error";
-import { type ExecutionContext } from "./execution-context";
-import { restoreStepOutput, toJson } from "../actions/action-values";
 import { executeAction } from "./action-executor";
+import { type ExecutionContext } from "./execution-context";
 import {
   lockOwnedAutomationRun,
   ownedRunPredicate,
   type AutomationTransaction,
 } from "./run-claims";
-import { createBackgroundTask } from "../../../infrastructure/background/contracts";
-import {
-  dispatchBackgroundTasks,
-  backgroundTransaction,
-} from "../../../infrastructure/background/dispatch";
 
 export async function executeClaimedStep(
   context: ExecutionContext,

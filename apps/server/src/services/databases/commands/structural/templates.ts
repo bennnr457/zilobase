@@ -1,5 +1,5 @@
-import { eq, sql } from "drizzle-orm";
 import type { DataSourceCommand } from "@zilobase/features/runtime";
+import { eq, sql } from "drizzle-orm";
 
 import { dataSource } from "../../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../../shared/errors/service-mutation-error";

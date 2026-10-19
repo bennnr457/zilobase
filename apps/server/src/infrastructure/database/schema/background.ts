@@ -9,8 +9,8 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { timestampColumns } from "./columns";
 import type { BackgroundTaskV2 } from "../../background/task-v2";
+import { timestampColumns } from "./columns";
 
 export const backgroundDispatch = pgTable(
   "background_dispatch",

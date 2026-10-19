@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
@@ -10,13 +11,12 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { workspace, teamspace } from "./workspaces";
 import { user } from "./authentication";
-import { page } from "./pages";
-import { softDeleteColumns } from "./soft-delete-columns";
 import { timestampColumns } from "./columns";
 import { pageProperty } from "./page-properties";
+import { page } from "./pages";
+import { softDeleteColumns } from "./soft-delete-columns";
+import { teamspace, workspace } from "./workspaces";
 
 export const database = pgTable(
   "database",

@@ -1,0 +1,88 @@
+import { Hono } from "hono";
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import type { AppBindings } from "../shared/contracts/http";
+import { registerRoutes } from "./routes";
+
+import { databaseRoutes } from "../routes/databases/routes";
+import { pageRoutes } from "../routes/pages/routes";
+
+const inventory = (routes: typeof pageRoutes) => [
+  ...new Set(
+    routes.routes
+      .filter(({ method }) => method !== "ALL")
+      .map(({ method, path }) => `${method} ${path}`),
+  ),
+];
+
+describe("feature route composition", () => {
+  it("preserves every page endpoint and its registration order", () => {
+    expect(inventory(pageRoutes)).toEqual([
+      "GET /",
+      "POST /item-visits",
+      "POST /",
+      "POST /:id/move-teamspace",
+      "POST /:id/convert-to-teamspace",
+      "POST /:id/embed-item",
+      "DELETE /:id/embed-item",
+      "GET /:id",
+      "GET /:id/published",
+      "PUT /:id/favorite",
+      "DELETE /:id/favorite",
+      "GET /:id/access",
+      "GET /:id/access-targets",
+      "PUT /:id/access",
+      "DELETE /:id/access/public",
+      "DELETE /:id/access/:ruleId",
+      "GET /:id/properties",
+      "PUT /:id/properties/:propertyId/value",
+      "POST /:id/collaboration-bootstrap",
+      "PATCH /:id/content",
+      "PATCH /:id",
+      "POST /:id/restore",
+      "DELETE /:id",
+    ]);
+  });
+
+  it("preserves every database endpoint and its registration order", () => {
+    expect(inventory(databaseRoutes)).toEqual([
+      "GET /:id/bootstrap",
+      "GET /:id/export",
+      "GET /:id/data-sources/:dataSourceId/records",
+      "GET /:id/mutations",
+      "POST /:id/realtime-ticket",
+      "GET /:id/published",
+      "POST /:id/commands",
+      "POST /:id/data-sources/:dataSourceId/commands",
+      "POST /commands",
+      "GET /:databaseId/automation-capability",
+      "GET /:databaseId/automations",
+      "POST /:databaseId/automations/validate",
+      "POST /:databaseId/automation-secrets",
+      "POST /:databaseId/automations",
+      "GET /:databaseId/automations/audit",
+      "GET /:databaseId/automations/:automationId",
+      "GET /:databaseId/automations/:automationId/runs",
+      "GET /:databaseId/automations/:automationId/runs/:runId",
+      "PATCH /:databaseId/automations/:automationId",
+      "POST /:databaseId/automations/:automationId/pause",
+      "POST /:databaseId/automations/:automationId/resume",
+      "POST /:databaseId/automations/:automationId/duplicate",
+      "DELETE /:databaseId/automations/:automationId",
+      "GET /:databaseId/automation-catalog",
+      "POST /:databaseId/automation-slack/oauth/start",
+      "GET /:databaseId/automation-slack/connections/:connectionId/channels",
+      "DELETE /:databaseId/automation-slack/connections/:connectionId",
+      "GET /:id/access",
+    ]);
+  });
+});
+
+it("preserves the complete HTTP method/path and middleware registration order", () => {
+  const app = new Hono<AppBindings>();
+  registerRoutes(app);
+  const expected = JSON.parse(
+    readFileSync(new URL("./http-route-inventory.json", import.meta.url), "utf8"),
+  );
+  expect(app.routes.map(({ method, path }) => `${method} ${path}`)).toEqual(expected);
+});

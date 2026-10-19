@@ -1,24 +1,25 @@
-import { and, eq, isNull } from "drizzle-orm";
 import { hasPageBodyContent } from "@zilobase/features/runtime";
 import {
   insertDatabaseBlockInContent,
   shouldShowInlineDatabaseTitle,
 } from "@zilobase/page-context/insert-database-block";
+import { and, eq, isNull } from "drizzle-orm";
 
-import { canAccessDatabaseInWorkspace, canAccessPage, getMembership } from "../../access";
 import { db } from "../../../infrastructure/database";
 import { database, page, pageCollaborationDocument } from "../../../infrastructure/database/schema";
+import type { RuntimeEnv } from "../../../shared/config/config";
+import { canAccessDatabaseInWorkspace, canAccessPage } from "../../access/effective-access";
+import { getMembership } from "../../access/principal-access";
 import {
   encodePageContentAsYjs,
-  getOrCreateCollaborationDocumentState,
-  isEmptyPageContent,
   materializePageContentFromYjs,
-  replacePageContent,
-} from "../../collaboration/service";
-import type { RuntimeEnv } from "../../../shared/config/config";
+} from "../../collaboration/documents/document-codec";
+import { isEmptyPageContent } from "../../collaboration/documents/documents";
+import { replacePageContent } from "../../collaboration/mutations/document-mutations";
+import { getOrCreateCollaborationDocumentState } from "../../collaboration/persistence/document-persistence";
 
-import { upsertPageItemPlacement } from "../placements/page-item-placements";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { upsertPageItemPlacement } from "../placements/page-item-placements";
 
 export async function createPageService(input: {
   content?: unknown;

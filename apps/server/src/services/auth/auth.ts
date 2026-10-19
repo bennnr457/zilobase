@@ -1,21 +1,21 @@
 import { apiKey } from "@better-auth/api-key";
 import { expo } from "@better-auth/expo";
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
-import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { jwt } from "better-auth/plugins/jwt";
+import { APIError } from "better-auth/api";
 import {
   bearer,
   emailOTP,
   magicLink,
   organization as organizationPlugin,
 } from "better-auth/plugins";
+import { jwt } from "better-auth/plugins/jwt";
 import { defaultRoles, memberAc } from "better-auth/plugins/organization/access";
 import { and, eq, ne } from "drizzle-orm";
-import { API_KEY_PREFIX } from "../api-keys";
 import { createAuthTransactionDatabase, db, type Database } from "../../infrastructure/database";
 import * as schema from "../../infrastructure/database/schema";
 import { sendEmail } from "../../infrastructure/email/email";
+import { communityAppPolicy, isCommunityRegistration } from "../../shared/config/app-policy";
 import {
   getPrimaryClientOrigin,
   getRequiredStringEnv,
@@ -24,15 +24,18 @@ import {
   isLocalDevelopmentHost,
   resolvePublicRequestUrl,
 } from "../../shared/config/config";
+import type { EditionExtensionOptions } from "../../shared/contracts/edition";
+import { API_KEY_PREFIX } from "../api-keys/api-keys";
 import {
   evaluateSelfHostedRegistration,
   readInvitationIdFromCookieHeader,
-} from "../instance/registration";
-import type { EditionExtensionOptions } from "../../shared/types";
-import { communityAppPolicy, isCommunityRegistration } from "../../shared/app-policy";
-import { parseMembershipAccessExpiry, TemporaryMembershipValidationError } from "../memberships";
-import { TeamspaceService } from "../teamspaces";
-import { createOAuthProviderPlugin } from "./oauth";
+} from "../instance/registration/registration";
+import {
+  parseMembershipAccessExpiry,
+  TemporaryMembershipValidationError,
+} from "../memberships/temporary-membership";
+import { TeamspaceService } from "../teamspaces/teamspace-membership";
+import { createOAuthProviderPlugin } from "./oauth/oauth";
 
 type AuthEnv = Record<string, unknown>;
 

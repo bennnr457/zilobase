@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+import { recoverCalendarDispatches } from "./sync";
 const fixture = vi.hoisted(() => ({
   dispatch: vi.fn(),
   provider: vi.fn(),
@@ -18,7 +19,6 @@ vi.mock("../../../infrastructure/background/dispatch", () => ({
   dispatchBackgroundTasks: fixture.dispatch,
 }));
 vi.mock("../provider/oauth", () => ({ createCalendarGateway: fixture.provider }));
-import { recoverCalendarDispatches } from "./sync";
 it("recovery publishes stable references without contacting the calendar provider", async () => {
   const env = { ZILOBASE_CELL_ID: "fixture" };
   await recoverCalendarDispatches(env);

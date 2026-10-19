@@ -1,5 +1,8 @@
 import { config as loadEnv } from "@dotenvx/dotenvx";
 import { desc, eq, like } from "drizzle-orm";
+import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
+import { verification } from "../infrastructure/database/schema";
+import { createAuth } from "../services/auth/auth";
 
 loadEnv({
   path: process.env.ZILOBASE_ENV_FILE ?? "../../.env.development",
@@ -7,9 +10,6 @@ loadEnv({
   ignore: ["MISSING_ENV_FILE"],
   noOps: true,
 });
-import { createAuth } from "../services/auth";
-import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
-import { verification } from "../infrastructure/database/schema";
 
 const apiBase = getRequiredEnv("BETTER_AUTH_URL");
 const clientUrl = getRequiredEnv("CLIENT_URL");

@@ -1,36 +1,36 @@
-import { Hono } from "hono";
-import type { Context } from "hono";
 import { Schema } from "effect";
-import { getAuthenticatedUser as requireUser } from "../../shared/http/auth";
+import type { Context } from "hono";
+import { Hono } from "hono";
+import { getAuthenticatedUser as requireUser } from "../http/auth";
 
 import {
-  getEffectivePageAccessInWorkspace,
-  getWorkspaceRealtimeAccessExpiration,
-  hasAccess,
-} from "../../services/access";
-import { rejectMismatchedApiKeyWorkspace } from "../../services/api-keys";
-import {
-  createCollaborationTicket,
-  documentNameForMeeting,
-} from "../../services/collaboration/service";
-import { getMeetingCollaborationWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
-import { getMeetingAudioWebSocketUrl } from "@zilobase/runtime-adapter/capabilities";
-import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
-import type { AppBindings } from "../../shared/types";
-import { parseJsonBody } from "../../shared/http/schema-json";
-import {
-  claimMeetingRecorder,
-  createMeeting,
-  deleteMeeting,
-  getMeetingForUser,
-  listMeetingsForUser,
-  recordMeetingConsent,
-  releaseMeetingRecorder,
-  transitionMeeting,
-  updateMeeting,
-} from "../../services/meetings/lifecycle/meeting-service";
+  getMeetingAudioWebSocketUrl,
+  getMeetingCollaborationWebSocketUrl,
+} from "@zilobase/runtime-adapter/capabilities";
+import { hasAccess } from "../../services/access/access-level";
+import { getEffectivePageAccessInWorkspace } from "../../services/access/effective-access";
+import { getWorkspaceRealtimeAccessExpiration } from "../../services/access/principal-access";
+import { documentNameForMeeting } from "../../services/collaboration/documents/documents";
+import { createCollaborationTicket } from "../../services/collaboration/tickets/ticket-security";
 import { createMeetingAudioTicket } from "../../services/meetings/audio/meeting-audio-ticket";
 import { meetingLifecycleActions } from "../../services/meetings/contracts/meeting-types";
+import { getMeetingForUser } from "../../services/meetings/lifecycle/meeting-access";
+import {
+  createMeeting,
+  deleteMeeting,
+  listMeetingsForUser,
+  updateMeeting,
+} from "../../services/meetings/lifecycle/meeting-operations";
+import { transitionMeeting } from "../../services/meetings/lifecycle/meeting-transitions";
+import {
+  claimMeetingRecorder,
+  recordMeetingConsent,
+  releaseMeetingRecorder,
+} from "../../services/meetings/lifecycle/recorder-session";
+import type { AppBindings } from "../../shared/contracts/http";
+import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
+import { rejectMismatchedApiKeyWorkspace } from "../api-keys/access";
+import { parseJsonBody } from "../http/schema-json";
 
 const strictJson = { onExcessProperty: "error" as const };
 

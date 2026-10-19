@@ -1,9 +1,9 @@
+import { drizzle } from "drizzle-orm/node-postgres";
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { beforeAll, afterAll, test, expect, vi } from "vitest";
-import * as schema from "../../infrastructure/database/schema";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { runWithDb } from "../../infrastructure/database";
+import * as schema from "../../infrastructure/database/schema";
 import { disconnectCalendarBinding, requireCalendarBinding } from "./connections/ownership";
 const enabled = Boolean(process.env.CALENDAR_TEST_DATABASE_URL);
 const pool = enabled
@@ -78,13 +78,13 @@ test.skipIf(!enabled)("disconnect removes only its own binding and last account"
   expect(rows.some((row) => row.id === secondAccount)).toBe(true);
 });
 
+import * as identityVerifier from "../auth/identity/google-id-token";
 import {
   beginCalendarOAuth,
-  consumeCalendarOAuthAttempt,
-  completeCalendarOAuth,
   CALENDAR_SCOPES,
+  completeCalendarOAuth,
+  consumeCalendarOAuthAttempt,
 } from "./provider/oauth";
-import * as identityVerifier from "../../shared/security/google-id-token";
 test.skipIf(!enabled)(
   "OAuth commits verified accounts, rejects replay and missing scopes",
   async () => {
@@ -183,8 +183,8 @@ test.skipIf(!enabled)(
 );
 
 import { CalendarGateway } from "./provider/gateway";
-import { advanceCalendarSync, refreshCalendarList } from "./sync/sync";
 import { readCalendarRange } from "./sync/ranges";
+import { advanceCalendarSync, refreshCalendarList } from "./sync/sync";
 test.skipIf(!enabled)(
   "sync advances only final checkpoints and range cursors isolate accounts",
   async () => {
@@ -558,7 +558,7 @@ test.skipIf(!enabled)("catalog refresh is mounted, scoped, and provider-independ
   );
   const users = await database!.select().from(schema.user);
   let identity = userId;
-  const app = new Hono<import("../../shared/types").AppBindings>();
+  const app = new Hono<import("../../shared/contracts/http").AppBindings>();
   app.use("*", async (c, next) => {
     c.set(
       "user",

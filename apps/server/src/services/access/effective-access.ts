@@ -1,9 +1,3 @@
-import { getPageRecord, loadStandaloneDatabaseForPage } from "./resource-access-records";
-import {
-  strongestExplicitAccess,
-  principalGrantTargets,
-  teamspacePrincipalAccess,
-} from "./access-decisions";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
 import {
@@ -17,9 +11,17 @@ import {
   teamspacePrincipal,
   workspaceGuest,
 } from "../../infrastructure/database/schema";
-import { loadWorkspacePageGraph } from "../pages/graph";
-import { activeMembershipCondition } from "../memberships";
-import { getDatabaseTeamspaceSecurityPolicy, getPageTeamspaceSecurityPolicy } from "../teamspaces";
+import { activeMembershipCondition } from "../memberships/temporary-membership";
+import { loadWorkspacePageGraph } from "../pages/graph/loader";
+import {
+  getDatabaseTeamspaceSecurityPolicy,
+  getPageTeamspaceSecurityPolicy,
+} from "../teamspaces/security";
+import {
+  principalGrantTargets,
+  strongestExplicitAccess,
+  teamspacePrincipalAccess,
+} from "./access-decisions";
 import {
   accessRank,
   hasAccess,
@@ -28,6 +30,7 @@ import {
   type AccessLevel,
 } from "./access-level";
 import { getMembership, getWorkspaceGuest } from "./principal-access";
+import { getPageRecord, loadStandaloneDatabaseForPage } from "./resource-access-records";
 
 async function getEffectivePageAccess(pageId: string, userId: string): Promise<AccessLevel> {
   const [context] = await db

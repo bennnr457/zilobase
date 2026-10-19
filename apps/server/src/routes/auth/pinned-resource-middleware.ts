@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
-import type { AppBindings } from "../../shared/types";
-import { getPinnedWorkspaceId, rejectMismatchedPinnedWorkspace } from "./oauth-access";
+import type { AppBindings } from "../../shared/contracts/http";
+import { getPinnedWorkspaceId, rejectMismatchedPinnedWorkspace } from "./oauth/oauth-access";
 
 /** Bind resource IDs to a token's workspace before the route's existing ACL checks. */
 export function pinnedResourceMiddleware(

@@ -1,7 +1,7 @@
 import type { OutboundEmailMessage } from "@zilobase/runtime-ports";
 
-import { getStringEnv, type RuntimeEnv } from "../../shared/config/config";
 import { requireRuntimePort } from "@zilobase/runtime-adapter/capabilities";
+import { getStringEnv, type RuntimeEnv } from "../../shared/config/config";
 
 type EmailMessage = {
   to: string;

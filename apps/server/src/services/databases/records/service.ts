@@ -1,9 +1,6 @@
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { databaseOrderKeyAtPosition, databaseOrderKeyBetween } from "@zilobase/features/runtime";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 
-import { canAccessPage } from "../../access";
-import { encodePageContentAsYjs } from "../../collaboration/service";
-import type { RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
 import {
   databaseProperty,
@@ -14,30 +11,33 @@ import {
   pageProperty,
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
-import { upsertPageItemPlacement } from "../../pages/placements";
-import { requireDataSourceAccess, requireDataSourceEditAccess } from "../access/data-source-access";
-import {
-  commitDataSourceMutation,
-  commitDataSourceMutationBatch,
-  type DatabaseMutationCommitResult,
-} from "../core/commit";
+import type { RuntimeEnv } from "../../../shared/config/config";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { canAccessPage } from "../../access/effective-access";
 import {
   lockDatabaseAutomationFactRows,
   type DatabaseMutationOrigin,
 } from "../../automations/triggers/event-capture";
+import { encodePageContentAsYjs } from "../../collaboration/documents/document-codec";
+import { upsertPageItemPlacement } from "../../pages/placements/page-item-placements";
+import { requireDataSourceAccess, requireDataSourceEditAccess } from "../access/data-source-access";
 import { getDatabasePropertyEntity } from "../commands/metadata-entities";
 import { getDatabaseRecordEntity } from "../commands/record-entity";
-import { isDatabaseHostPageId } from "../core/host-page";
-import { getStatusDefaultValue, validateCellValue } from "../schema/config";
+import {
+  commitDataSourceMutation,
+  commitDataSourceMutationBatch,
+  type DatabaseMutationCommitResult,
+} from "../mutations/commit";
+import { isDatabaseHostPageId } from "../mutations/host-page";
 import {
   incrementDatabaseRowPlacementPositions,
   lockDatabaseRowOrdering,
   lockDatabaseRowOrderingSources,
   rebalanceDatabaseRowOrderKeys,
   updateDatabaseRowPlacementPositions,
-} from "../core/position-service";
+} from "../navigation/position-service";
+import { getStatusDefaultValue, validateCellValue } from "../schema/config";
 import { inheritDatabaseRowProperties } from "./import";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 
 export async function createDatabaseRowService(input: {
   databaseId: string;

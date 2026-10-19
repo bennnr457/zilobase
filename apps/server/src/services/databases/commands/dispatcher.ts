@@ -1,10 +1,10 @@
-import type { DatabaseCommandDispatcher } from "./framework";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import type { DatabaseCommandDispatcher } from "./framework";
+import { dispatchLifecycleCommand } from "./lifecycle";
+import { dispatchRecordActionCommand } from "./record-actions";
 import { dispatchRecordCommand } from "./records";
 import { dispatchStructuralCommand } from "./structural/dispatch";
-import { dispatchLifecycleCommand } from "./lifecycle";
 import { clearViewSort } from "./structural/views";
-import { dispatchRecordActionCommand } from "./record-actions";
 
 /** The sole host/source command dispatch boundary. */
 export const dispatchDatabaseCommand = (async (context, command) => {

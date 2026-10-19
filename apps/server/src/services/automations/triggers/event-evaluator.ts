@@ -1,14 +1,17 @@
-import { and, asc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
-import { evaluateDatabaseFilters, normalizeDatabaseFilters } from "@zilobase/features/runtime";
 import {
   databaseAutomationDefinitionSchema,
+  evaluateDatabaseFilters,
+  normalizeDatabaseFilters,
   type DatabaseAutomationDefinition,
 } from "@zilobase/features/runtime";
+import { and, asc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 
+import { createBackgroundTask } from "../../../infrastructure/background/contracts";
 import {
-  isDatabaseAutomationExecutionEnabled,
-  type RuntimeEnv,
-} from "../../../shared/config/config";
+  backgroundTransaction,
+  dispatchBackgroundTasks,
+} from "../../../infrastructure/background/dispatch";
+import { recordRecoveredBackgroundLease } from "../../../infrastructure/background/telemetry";
 import { db } from "../../../infrastructure/database";
 import {
   database,
@@ -24,16 +27,12 @@ import {
   pageProperty,
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
-import { createBackgroundTask } from "../../../infrastructure/background/contracts";
-import {
-  dispatchBackgroundTasks,
-  backgroundTransaction,
-} from "../../../infrastructure/background/dispatch";
-import { recordRecoveredBackgroundLease } from "../../../infrastructure/background/telemetry";
+import { type RuntimeEnv } from "../../../shared/config/config";
 import { requireDataSourceAccess } from "../../databases/access/data-source-access";
+import { isDatabaseAutomationExecutionEnabled } from "../configuration";
+import { isRetryableAutomationDatabaseError } from "../execution/action-error";
 import { promoteClosedDatabaseAutomationEventWindows } from "./event-capture";
 import { matchesDatabaseAutomationEvent } from "./trigger-evaluator";
-import { isRetryableAutomationDatabaseError } from "../execution/action-error";
 
 const EVENT_LEASE_MS = 60_000;
 

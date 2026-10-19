@@ -1,8 +1,8 @@
 import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
-import { workspace } from "./workspaces";
-import { softDeleteColumns } from "./soft-delete-columns";
-import { page } from "./pages";
 import { timestampColumns } from "./columns";
+import { page } from "./pages";
+import { softDeleteColumns } from "./soft-delete-columns";
+import { workspace } from "./workspaces";
 
 export const pageProperty = pgTable(
   "page_property",

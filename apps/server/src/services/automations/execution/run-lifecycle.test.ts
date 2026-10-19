@@ -1,6 +1,6 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { getTableName, type SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   selectRows: [] as unknown[][],
@@ -126,9 +126,9 @@ vi.mock("../../../infrastructure/background/telemetry", () => ({
   recordRecoveredBackgroundLease: mocks.recovered,
 }));
 
-import { drainDatabaseAutomationRuns, AutomationRunCapacityError } from "./run-engine";
-import { AutomationActionError, RetryableAutomationActionError } from "./action-error";
 import type { RuntimeEnv } from "../../../shared/config/config";
+import { AutomationActionError, RetryableAutomationActionError } from "./action-error";
+import { AutomationRunCapacityError, drainDatabaseAutomationRuns } from "./run-engine";
 
 const env = { DATABASE_AUTOMATIONS_ENABLED: "true" } as RuntimeEnv;
 const dialect = new PgDialect();

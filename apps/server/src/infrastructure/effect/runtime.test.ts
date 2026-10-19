@@ -1,6 +1,6 @@
+import { Context, Effect, Layer } from "effect";
 import assert from "node:assert/strict";
 import { test } from "vitest";
-import { Context, Effect, Layer } from "effect";
 
 import { createAppRuntime } from "./runtime";
 

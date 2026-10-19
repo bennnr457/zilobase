@@ -2,7 +2,7 @@ import {
   isReadOnlyPropertyType,
   isSelectLikePropertyType,
   normalizeDatabasePropertyType,
-} from "./types";
+} from "@zilobase/features/runtime";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 
 export const defaultStatusOptions = [

@@ -7,9 +7,10 @@ const mocks = vi.hoisted(() => ({
   selectResults: [] as unknown[][],
   sourceAccess: vi.fn(),
 }));
-
-vi.mock("../../access", () => ({
+vi.mock("../../access/effective-access", () => ({
   canAccessDatabaseRecord: mocks.canAccessDatabase,
+}));
+vi.mock("../../access/principal-access", () => ({
   getMembership: mocks.membership,
 }));
 vi.mock("../../databases/access/data-source-access", () => ({
@@ -47,11 +48,9 @@ vi.mock("../../../infrastructure/database", () => ({
   },
 }));
 
-import {
-  DatabaseAutomationError,
-  getDatabaseAutomationCatalog,
-  listDatabaseAutomations,
-} from "../service";
+import { getDatabaseAutomationCatalog } from "./definition-catalog";
+import { DatabaseAutomationError } from "./definition-context";
+import { listDatabaseAutomations } from "./definition-read";
 
 const source = {
   config: {},

@@ -1,26 +1,23 @@
-import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
 import {
   databaseAutomationDefinitionSchema,
   getLatestDatabaseAutomationOccurrence,
   getNextDatabaseAutomationOccurrence,
   type DatabaseAutomationSchedule,
 } from "@zilobase/features/runtime";
+import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
 
+import { createBackgroundTask } from "../../../infrastructure/background/contracts";
 import {
-  isDatabaseAutomationExecutionEnabled,
-  type RuntimeEnv,
-} from "../../../shared/config/config";
-import { db } from "../../../infrastructure/database";
+  backgroundTransaction,
+  dispatchBackgroundTasks,
+} from "../../../infrastructure/background/dispatch";
 import {
   databaseAutomation,
   databaseAutomationRevision,
   databaseAutomationRun,
 } from "../../../infrastructure/database/schema";
-import { createBackgroundTask } from "../../../infrastructure/background/contracts";
-import {
-  dispatchBackgroundTasks,
-  backgroundTransaction,
-} from "../../../infrastructure/background/dispatch";
+import { type RuntimeEnv } from "../../../shared/config/config";
+import { isDatabaseAutomationExecutionEnabled } from "../configuration";
 
 export type DatabaseAutomationScheduleClaimPlan = {
   nextRunAt: Date | null;

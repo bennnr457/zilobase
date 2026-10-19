@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { databaseUpdate } from "./databases";
 const mocks = vi.hoisted(() => ({
   host: vi.fn(),
   access: vi.fn(),
@@ -6,12 +7,11 @@ const mocks = vi.hoisted(() => ({
   placement: vi.fn(),
 }));
 vi.mock("../metadata-entities", () => ({ getDatabaseHostEntity: mocks.host }));
-vi.mock("../../../access", () => ({ canAccessPageInWorkspace: mocks.access }));
+vi.mock("../../../access/effective-access", () => ({ canAccessPageInWorkspace: mocks.access }));
 vi.mock("../../../pages/graph/loader", () => ({ loadWorkspacePageGraph: mocks.graph }));
 vi.mock("../../../pages/placements/page-item-placements", () => ({
   upsertPageItemPlacement: mocks.placement,
 }));
-import { databaseUpdate } from "./databases";
 function fixture() {
   const where = vi.fn().mockResolvedValue(undefined);
   const set = vi.fn((_patch: Record<string, unknown>) => ({ where }));

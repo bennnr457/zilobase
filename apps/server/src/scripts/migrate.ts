@@ -1,6 +1,6 @@
+import { runMigrationSets, type MigrationSet } from "@zilobase/runtime-adapter/node";
 import { fileURLToPath } from "node:url";
 import { createDbClientForUrl } from "../infrastructure/database";
-import { runMigrationSets, type MigrationSet } from "@zilobase/runtime-adapter/node";
 import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
 
 const databaseUrl = readRequiredEnv("DATABASE_URL");

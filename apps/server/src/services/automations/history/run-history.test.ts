@@ -4,8 +4,7 @@ const mocks = vi.hoisted(() => ({
   access: vi.fn(),
   results: [] as unknown[][],
 }));
-
-vi.mock("../service", () => ({
+vi.mock("../definition/definition-context", () => ({
   DatabaseAutomationError: class DatabaseAutomationError extends Error {
     constructor(
       message: string,
@@ -15,6 +14,8 @@ vi.mock("../service", () => ({
       super(message);
     }
   },
+}));
+vi.mock("../definition/definition-read", () => ({
   getDatabaseAutomation: mocks.access,
 }));
 

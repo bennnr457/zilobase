@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { dispatchCalendarWebhook, processCalendarSyncTask } from "./background";
 const mocks = vi.hoisted(() => ({
   where: vi.fn(),
   update: vi.fn(),
@@ -26,7 +27,6 @@ vi.mock("./sync/sync", () => ({
 vi.mock("./realtime/outbox", () => ({ drainCalendarOutbox: mocks.drain }));
 vi.mock("./realtime/watches", () => ({ maintainAccountWatches: mocks.watches }));
 vi.mock("./provider/oauth", () => ({ createCalendarGateway: async () => ({}) }));
-import { dispatchCalendarWebhook, processCalendarSyncTask } from "./background";
 const env = { CALENDAR_WEBHOOK_URL: "https://api.example.test/calendar/google/webhook" };
 beforeEach(() => {
   vi.clearAllMocks();

@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AppBindings } from "../../shared/types";
-import { attachHttpRouteErrorHandler } from "../../shared/http/route-error";
+import type { AppBindings } from "../../shared/contracts/http";
 import { responseJson } from "../../test-support/response";
+import { attachHttpRouteErrorHandler } from "../http/route-error";
 
 const mocks = vi.hoisted(() => ({
   audit: vi.fn(),
@@ -19,10 +19,139 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   validate: vi.fn(),
 }));
+vi.mock("../../services/access/principal-access", () => ({ getMembership: mocks.membership }));
 
-vi.mock("../../services/access", () => ({ getMembership: mocks.membership }));
-
-vi.mock("../../services/automations/service", () => {
+vi.mock("../../services/automations/definition/definition-catalog", () => {
+  class DatabaseAutomationError extends Error {
+    constructor(
+      message: string,
+      readonly status = 400,
+      readonly code = "AUTOMATION_ERROR",
+      readonly validation?: unknown,
+    ) {
+      super(message);
+    }
+  }
+  return {
+    createDatabaseAutomation: mocks.create,
+    createDatabaseAutomationSecret: mocks.createSecret,
+    DatabaseAutomationError,
+    deleteDatabaseAutomation: mocks.delete,
+    duplicateDatabaseAutomation: mocks.duplicate,
+    exportDatabaseAutomationAudit: mocks.audit,
+    getDatabaseAutomation: mocks.detail,
+    getDatabaseAutomationCatalog: mocks.catalog,
+    listDatabaseAutomations: mocks.list,
+    setDatabaseAutomationPaused: mocks.pause,
+    updateDatabaseAutomation: mocks.update,
+    validateDatabaseAutomation: mocks.validate,
+  };
+});
+vi.mock("../../services/automations/definition/definition-context", () => {
+  class DatabaseAutomationError extends Error {
+    constructor(
+      message: string,
+      readonly status = 400,
+      readonly code = "AUTOMATION_ERROR",
+      readonly validation?: unknown,
+    ) {
+      super(message);
+    }
+  }
+  return {
+    createDatabaseAutomation: mocks.create,
+    createDatabaseAutomationSecret: mocks.createSecret,
+    DatabaseAutomationError,
+    deleteDatabaseAutomation: mocks.delete,
+    duplicateDatabaseAutomation: mocks.duplicate,
+    exportDatabaseAutomationAudit: mocks.audit,
+    getDatabaseAutomation: mocks.detail,
+    getDatabaseAutomationCatalog: mocks.catalog,
+    listDatabaseAutomations: mocks.list,
+    setDatabaseAutomationPaused: mocks.pause,
+    updateDatabaseAutomation: mocks.update,
+    validateDatabaseAutomation: mocks.validate,
+  };
+});
+vi.mock("../../services/automations/definition/definition-lifecycle", () => {
+  class DatabaseAutomationError extends Error {
+    constructor(
+      message: string,
+      readonly status = 400,
+      readonly code = "AUTOMATION_ERROR",
+      readonly validation?: unknown,
+    ) {
+      super(message);
+    }
+  }
+  return {
+    createDatabaseAutomation: mocks.create,
+    createDatabaseAutomationSecret: mocks.createSecret,
+    DatabaseAutomationError,
+    deleteDatabaseAutomation: mocks.delete,
+    duplicateDatabaseAutomation: mocks.duplicate,
+    exportDatabaseAutomationAudit: mocks.audit,
+    getDatabaseAutomation: mocks.detail,
+    getDatabaseAutomationCatalog: mocks.catalog,
+    listDatabaseAutomations: mocks.list,
+    setDatabaseAutomationPaused: mocks.pause,
+    updateDatabaseAutomation: mocks.update,
+    validateDatabaseAutomation: mocks.validate,
+  };
+});
+vi.mock("../../services/automations/definition/definition-read", () => {
+  class DatabaseAutomationError extends Error {
+    constructor(
+      message: string,
+      readonly status = 400,
+      readonly code = "AUTOMATION_ERROR",
+      readonly validation?: unknown,
+    ) {
+      super(message);
+    }
+  }
+  return {
+    createDatabaseAutomation: mocks.create,
+    createDatabaseAutomationSecret: mocks.createSecret,
+    DatabaseAutomationError,
+    deleteDatabaseAutomation: mocks.delete,
+    duplicateDatabaseAutomation: mocks.duplicate,
+    exportDatabaseAutomationAudit: mocks.audit,
+    getDatabaseAutomation: mocks.detail,
+    getDatabaseAutomationCatalog: mocks.catalog,
+    listDatabaseAutomations: mocks.list,
+    setDatabaseAutomationPaused: mocks.pause,
+    updateDatabaseAutomation: mocks.update,
+    validateDatabaseAutomation: mocks.validate,
+  };
+});
+vi.mock("../../services/automations/definition/definition-validation", () => {
+  class DatabaseAutomationError extends Error {
+    constructor(
+      message: string,
+      readonly status = 400,
+      readonly code = "AUTOMATION_ERROR",
+      readonly validation?: unknown,
+    ) {
+      super(message);
+    }
+  }
+  return {
+    createDatabaseAutomation: mocks.create,
+    createDatabaseAutomationSecret: mocks.createSecret,
+    DatabaseAutomationError,
+    deleteDatabaseAutomation: mocks.delete,
+    duplicateDatabaseAutomation: mocks.duplicate,
+    exportDatabaseAutomationAudit: mocks.audit,
+    getDatabaseAutomation: mocks.detail,
+    getDatabaseAutomationCatalog: mocks.catalog,
+    listDatabaseAutomations: mocks.list,
+    setDatabaseAutomationPaused: mocks.pause,
+    updateDatabaseAutomation: mocks.update,
+    validateDatabaseAutomation: mocks.validate,
+  };
+});
+vi.mock("../../services/automations/history/audit-export", () => {
   class DatabaseAutomationError extends Error {
     constructor(
       message: string,

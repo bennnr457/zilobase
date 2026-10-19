@@ -1,26 +1,24 @@
-import assert from "node:assert/strict";
-import { test } from "vitest";
-import * as Y from "yjs";
-import {
-  assertCommentOnlyCollaborationUpdate,
-  appendMeetingTranscriptToDocument,
-  createCollaborationTicket,
-  documentNameForPage,
-  documentNameForMeeting,
-  encodePageContentAsYjs,
-  isEmptyPageContent,
-  isPlaceholderCollaborationState,
-  materializePageContentFromYjs,
-  pageIdFromDocumentName,
-  meetingIdFromDocumentName,
-  verifyCollaborationTicket,
-} from "./service";
 import {
   getCollaborationWebSocketUrl,
   runWithRuntimePorts,
 } from "@zilobase/runtime-adapter/capabilities";
 import { createRuntimeEnv } from "@zilobase/runtime-adapter/env";
 import { createUrlResolver } from "@zilobase/runtime-adapter/url-resolver";
+import assert from "node:assert/strict";
+import { test } from "vitest";
+import * as Y from "yjs";
+import { encodePageContentAsYjs, materializePageContentFromYjs } from "./documents/document-codec";
+import {
+  documentNameForMeeting,
+  documentNameForPage,
+  isEmptyPageContent,
+  isPlaceholderCollaborationState,
+  meetingIdFromDocumentName,
+  pageIdFromDocumentName,
+} from "./documents/documents";
+import { assertCommentOnlyCollaborationUpdate } from "./documents/update-policy";
+import { appendMeetingTranscriptToDocument } from "./mutations/document-mutations";
+import { createCollaborationTicket, verifyCollaborationTicket } from "./tickets/ticket-security";
 
 const env = { BETTER_AUTH_SECRET: "test-collaboration-secret" };
 

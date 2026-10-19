@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
 import { member, workspace, workspaceGuest } from "../../infrastructure/database/schema";
-import { activeMembershipCondition } from "../memberships";
+import { activeMembershipCondition } from "../memberships/temporary-membership";
 
 export async function getMembership(workspaceId: string, userId: string) {
   const [record] = await db

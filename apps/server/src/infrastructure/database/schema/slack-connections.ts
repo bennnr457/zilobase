@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
 import { check, index, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./authentication";
-import { workspace } from "./workspaces";
 import { timestampColumns } from "./columns";
+import { workspace } from "./workspaces";
 
 export const slackOauthAttempt = pgTable(
   "slack_oauth_attempt",

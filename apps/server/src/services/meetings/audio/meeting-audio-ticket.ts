@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import type { MeetingAudioSource } from "../contracts/meeting-contracts";
+import type { MeetingAudioSource } from "../contracts/lifecycle";
 
 import type { RuntimeEnv } from "../../../shared/config/config";
 
@@ -8,7 +8,7 @@ const TICKET_TTL_MS = 15 * 60 * 1000;
 export const MEETING_AUDIO_PROTOCOL = "zilobase.meeting-audio.v2";
 export const MEETING_AUDIO_AUTH_PROTOCOL_PREFIX = "zilobase.meeting-audio.auth.";
 
-export type { MeetingAudioSource } from "../contracts/meeting-contracts";
+export type { MeetingAudioSource } from "../contracts/lifecycle";
 
 export const MEETING_AUDIO_SOURCES = [
   "microphone",

@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
-import { workspace } from "./workspaces";
 import { user } from "./authentication";
 import { databaseAutomation, databaseAutomationRun } from "./automations";
-import { page } from "./pages";
 import { timestampColumns } from "./columns";
+import { page } from "./pages";
+import { workspace } from "./workspaces";
 
 export const inProductNotification = pgTable(
   "in_product_notification",

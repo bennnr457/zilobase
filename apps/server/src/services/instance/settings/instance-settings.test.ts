@@ -1,0 +1,134 @@
+import assert from "node:assert/strict";
+import { test } from "vitest";
+
+import { SERVER_VERSION } from "../../../shared/version";
+import { type InstanceSettingsRecord } from "../contracts";
+import { isDesktopVersionCompatible } from "../discovery/desktop-version";
+import { getZilobaseDiscoveryDocument } from "../discovery/discovery";
+import { getOrCreateInstanceSettings } from "./instance-settings";
+
+const productionEnv = {
+  BETTER_AUTH_URL: "https://api.example.com/",
+  CLIENT_URL: "https://app.example.com/,zilo-desktop://app",
+  ZILOBASE_BOOTSTRAP_TOKEN: "never-published-bootstrap-secret",
+  ZILOBASE_MINIMUM_DESKTOP_VERSION: "0.0.29",
+};
+
+test("discovery publishes canonical identity, versions, and desktop endpoints", async () => {
+  const document = await getZilobaseDiscoveryDocument(productionEnv, {
+    async getInstanceSettings() {
+      return {
+        displayName: "Example Workspace",
+        instanceId: "instance-1",
+      };
+    },
+  });
+
+  assert.deepEqual(document, {
+    instanceId: "instance-1",
+    displayName: "Example Workspace",
+    issuer: "https://api.example.com",
+    webOrigin: "https://app.example.com",
+    apiOrigin: "https://api.example.com",
+    protocolVersion: 1,
+    serverVersion: SERVER_VERSION,
+    minimumDesktopVersion: "0.0.29",
+    desktopAuthorization: {
+      authorizationEndpoint: "https://api.example.com/desktop/authorize",
+      tokenEndpoint: "https://api.example.com/api/auth/desktop/token",
+    },
+    oauthAuthorization: {
+      authorizationEndpoint: "https://api.example.com/api/auth/oauth2/authorize",
+      introspectionEndpoint: "https://api.example.com/api/auth/oauth2/introspect",
+      issuer: "https://api.example.com",
+      jwksUri: "https://api.example.com/api/auth/jwks",
+      revocationEndpoint: "https://api.example.com/api/auth/oauth2/revoke",
+      tokenEndpoint: "https://api.example.com/api/auth/oauth2/token",
+    },
+  });
+});
+
+test("edition discovery adds only the edition and declared capabilities", async () => {
+  const document = await getZilobaseDiscoveryDocument(
+    productionEnv,
+    {
+      async getInstanceSettings() {
+        return { displayName: "Example", instanceId: "instance-1" };
+      },
+    },
+    {
+      editionExtension: {
+        id: "test-edition",
+        capabilities: ["custom-auth", "audit"],
+        async createAuthPlugins() {
+          return [];
+        },
+        async beforeMembershipGrant() {},
+        async recordSecurityEvent() {},
+        registerRoutes() {},
+      },
+    },
+  );
+
+  assert.equal(document.edition, "test-edition");
+  assert.deepEqual(document.capabilities, ["custom-auth", "audit"]);
+  assert.equal("license" in document, false);
+});
+
+test("instance initialization keeps the winning database identity under concurrency", async () => {
+  let persisted: InstanceSettingsRecord | null = null;
+  const repository = {
+    async create(candidate: InstanceSettingsRecord) {
+      await Promise.resolve();
+      persisted ??= candidate;
+    },
+    async find() {
+      await Promise.resolve();
+      return persisted;
+    },
+  };
+
+  const [first, second] = await Promise.all([
+    getOrCreateInstanceSettings("First", repository),
+    getOrCreateInstanceSettings("Second", repository),
+  ]);
+  const afterRestart = await getOrCreateInstanceSettings("Changed", repository);
+
+  assert.equal(first.instanceId, second.instanceId);
+  assert.deepEqual(afterRestart, first);
+});
+
+test("desktop compatibility requires protocol 1 and a sufficient semantic version", () => {
+  const discovery = { minimumDesktopVersion: "1.4.0", protocolVersion: 1 as const };
+
+  assert.equal(isDesktopVersionCompatible(discovery, "1.4.0"), true);
+  assert.equal(isDesktopVersionCompatible(discovery, "1.5.0"), true);
+  assert.equal(isDesktopVersionCompatible(discovery, "1.4.0-beta.1"), false);
+  assert.equal(isDesktopVersionCompatible(discovery, "1.3.9"), false);
+  assert.equal(isDesktopVersionCompatible(discovery, "invalid"), false);
+  assert.equal(
+    isDesktopVersionCompatible(
+      { minimumDesktopVersion: "1.4.0-beta.2", protocolVersion: 1 },
+      "1.4.0-beta.10",
+    ),
+    true,
+  );
+  assert.equal(
+    isDesktopVersionCompatible({ ...discovery, protocolVersion: 2 as never }, "2.0.0"),
+    false,
+  );
+});
+
+test("discovery rejects malformed compatibility versions", async () => {
+  await assert.rejects(
+    getZilobaseDiscoveryDocument(
+      { ...productionEnv, ZILOBASE_MINIMUM_DESKTOP_VERSION: "latest" },
+      {
+        async getInstanceSettings() {
+          return { displayName: "Example", instanceId: "instance-1" };
+        },
+      },
+    ),
+    /minimum desktop version must be a semantic version/,
+  );
+});

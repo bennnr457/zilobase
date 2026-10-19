@@ -1,12 +1,12 @@
-import { runWithIndependentDbEnv } from "../../infrastructure/database";
-import { createBackgroundDeliveryStore } from "../../infrastructure/background/publication";
 import {
   getBackgroundCellId,
   type BackgroundLane,
 } from "../../infrastructure/background/contracts";
-import { processBackgroundTask } from "./processor";
-import { runBackgroundDelivery } from "./delivery";
+import { createBackgroundDeliveryStore } from "../../infrastructure/background/publication";
+import { runWithIndependentDbEnv } from "../../infrastructure/database";
 import type { RuntimeEnv } from "../../shared/config/config";
+import { runBackgroundDelivery } from "./delivery";
+import { processBackgroundTask } from "./processor";
 
 /** Both runtime composition roots enter through this durable delivery boundary. */
 export async function deliverBackgroundTask(
@@ -46,4 +46,4 @@ export async function deliverBackgroundTask(
   });
 }
 
-export { recordBackgroundExhaustion, reconcileBackgroundFailures } from "./failures";
+export { reconcileBackgroundFailures, recordBackgroundExhaustion } from "./failures";

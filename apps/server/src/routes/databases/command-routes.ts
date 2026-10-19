@@ -1,4 +1,3 @@
-import { authorizeRecordAction } from "../../services/databases/commands/record-actions";
 import {
   databaseCommandRequestSchema,
   databaseCreationCommandSchema,
@@ -7,31 +6,32 @@ import {
   hostDatabaseCommandSchema,
 } from "@zilobase/features/runtime";
 import { Hono, type Context } from "hono";
+import { authorizeRecordAction } from "../../services/databases/commands/record-actions";
 
-import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
-import type { AppBindings } from "../../shared/types";
-import { readAuthenticatedJson } from "../../shared/http/auth";
-import {
-  getDatabaseRecord,
-  requireDatabaseEditAccess,
-} from "../../services/databases/access/database-access";
+import { canAccessPageInWorkspace } from "../../services/access/effective-access";
 import {
   requireDataSourceAccess,
   requireDataSourceEditAccess,
 } from "../../services/databases/access/data-source-access";
+import {
+  getDatabaseRecord,
+  requireDatabaseEditAccess,
+} from "../../services/databases/access/database-access";
 import { dispatchDatabaseCommand } from "../../services/databases/commands/dispatcher";
 import {
   CommandIdReusedError,
   executeDatabaseCommand,
   RowMoveConflictError,
 } from "../../services/databases/commands/framework";
-import { rejectMismatchedPinnedWorkspace } from "../auth/oauth-access";
 import {
   recordDatabaseCounter,
   recordDatabaseHistogram,
 } from "../../services/databases/observability";
-import { canAccessPageInWorkspace } from "../../services/access";
+import type { AppBindings } from "../../shared/contracts/http";
 import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
+import { rejectMismatchedPinnedWorkspace } from "../auth/oauth/oauth-access";
+import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
+import { readAuthenticatedJson } from "../http/auth";
 
 export const databaseCommandRoutes = new Hono<AppBindings>();
 const databaseWorkspace = pinnedResourceMiddleware((id) =>

@@ -1,21 +1,21 @@
-import { recordCalendarMetric } from "../metrics";
-import { and, eq, isNull, lt, or, sql, notInArray } from "drizzle-orm";
+import { and, eq, isNull, lt, notInArray, or, sql } from "drizzle-orm";
+import { createBackgroundTask } from "../../../infrastructure/background/contracts";
+import {
+  backgroundTransaction,
+  dispatchBackgroundTasks,
+} from "../../../infrastructure/background/dispatch";
 import { db } from "../../../infrastructure/database";
 import {
   calendarAccount,
   calendarBinding,
   calendarEventRecord,
-  calendarProviderCalendar,
   calendarNotificationOutbox,
+  calendarProviderCalendar,
 } from "../../../infrastructure/database/schema";
 import { type RuntimeEnv } from "../../../shared/config/config";
+import { recordCalendarMetric } from "../metrics";
 import { CalendarGateway, CalendarProviderError, normalizeEvent } from "../provider/gateway";
 import { createCalendarGateway } from "../provider/oauth";
-import { createBackgroundTask } from "../../../infrastructure/background/contracts";
-import {
-  dispatchBackgroundTasks,
-  backgroundTransaction,
-} from "../../../infrastructure/background/dispatch";
 export async function refreshCalendarList(
   accountId: string,
   bindingId: string,

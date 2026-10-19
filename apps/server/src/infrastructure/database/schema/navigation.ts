@@ -1,9 +1,9 @@
 import { index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./authentication";
-import { page } from "./pages";
-import { database } from "./databases";
-import { workspace } from "./workspaces";
 import { timestampColumns } from "./columns";
+import { database } from "./databases";
+import { page } from "./pages";
+import { workspace } from "./workspaces";
 
 export const favorite = pgTable(
   "favorites",

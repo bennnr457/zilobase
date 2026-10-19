@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { beforeEach, expect, test, vi } from "vitest";
+import { beforeEach, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   invalidateAutomationDependencies: vi.fn(),
@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   viewEntity: vi.fn(),
 }));
 
-vi.mock("../../automations/service", () => ({
+vi.mock("../../automations/definition/definition-catalog", () => ({
   invalidateDatabaseAutomationDependencies: mocks.invalidateAutomationDependencies,
 }));
 
@@ -23,7 +23,7 @@ vi.mock("../access/data-source-access", () => ({
   requireDataSourceAccess: mocks.access,
   requireDataSourceEditAccess: mocks.access,
 }));
-vi.mock("../core/commit", () => ({
+vi.mock("../mutations/commit", () => ({
   commitDatabaseMutation: mocks.commit,
 }));
 vi.mock("../commands/metadata-entities", () => ({
@@ -65,8 +65,8 @@ vi.mock("../../../infrastructure/database", () => ({
   },
 }));
 
-import { createDatabaseViewService, updateDatabaseViewService } from "./service";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { createDatabaseViewService, updateDatabaseViewService } from "./service";
 
 beforeEach(() => {
   mocks.access.mockReset();

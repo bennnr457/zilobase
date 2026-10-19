@@ -1,13 +1,14 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
 import type { CreateClipRequest, CreateClipResponse } from "@zilobase/features/runtime";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
-import { canAccessDatabaseInWorkspace, canAccessPage, getMembership } from "../access";
-import { createDatabaseRowService } from "../databases/records/service";
-import { getDataSourceRecord } from "../databases/access/data-source-access";
 import { db } from "../../infrastructure/database";
 import { dataSource, page } from "../../infrastructure/database/schema";
-import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
 import type { RuntimeEnv } from "../../shared/config/config";
+import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
+import { canAccessDatabaseInWorkspace, canAccessPage } from "../access/effective-access";
+import { getMembership } from "../access/principal-access";
+import { getDataSourceRecord } from "../databases/access/data-source-access";
+import { createDatabaseRowService } from "../databases/records/service";
 import { createPageService } from "../pages/mutations/page-mutations";
 import { buildClipContent } from "./build-clip-content";
 

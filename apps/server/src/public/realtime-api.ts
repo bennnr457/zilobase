@@ -1,13 +1,11 @@
+export type { DatabaseMutationEventV2 } from "../services/databases/realtime/outbox";
 export {
   createDatabaseRealtimeTicket,
   DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX,
   DATABASE_REALTIME_PROTOCOL,
   verifyDatabaseRealtimeTicket,
   type DatabaseRealtimeTicketClaims,
-} from "../shared/security/database-realtime-ticket";
-export type { DatabaseMutationEventV2 } from "../services/databases/realtime/outbox";
-export type { MeetingLifecycleAction } from "../services/meetings/contracts/meeting-types";
-export type { MeetingStatus };
+} from "../services/databases/realtime/tickets";
 export {
   createMeetingAudioTicket,
   MEETING_AUDIO_AUTH_PROTOCOL_PREFIX,
@@ -20,14 +18,16 @@ export {
   type MeetingAudioSource,
   type MeetingAudioTicketClaims,
 } from "../services/meetings/audio/meeting-audio-ticket";
+export type { MeetingLifecycleAction } from "../services/meetings/contracts/meeting-types";
+export type { MeetingStatus };
 
 import type { MeetingStatus } from "../services/meetings/contracts/meeting-types";
 
+export type { CalendarNotificationEvent } from "@zilobase/runtime-adapter/capabilities";
 export {
+  CALENDAR_REALTIME_AUTH_PROTOCOL_PREFIX,
+  CALENDAR_REALTIME_PROTOCOL,
   createCalendarRealtimeTicket,
   verifyCalendarRealtimeTicket,
-  CALENDAR_REALTIME_PROTOCOL,
-  CALENDAR_REALTIME_AUTH_PROTOCOL_PREFIX,
   type CalendarRealtimeTicketClaims,
 } from "../services/calendar/realtime/calendar-realtime-ticket";
-export type { CalendarNotificationEvent } from "@zilobase/runtime-adapter/capabilities";

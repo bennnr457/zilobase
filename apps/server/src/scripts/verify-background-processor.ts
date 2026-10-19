@@ -1,20 +1,16 @@
 /** Real SQL/BullMQ and production processor; only external provider HTTP is a fixture. */
-import assert from "node:assert/strict";
-import { fork, execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { fileURLToPath } from "node:url";
-import { setTimeout as sleep } from "node:timers/promises";
-import { eq } from "drizzle-orm";
-import { createNodeQueueRuntime } from "@zilobase/runtime-adapter/node";
 import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
-import { createDbClient, runWithDbEnv, db } from "../infrastructure/database";
-import * as tables from "../infrastructure/database/schema";
+import { createNodeQueueRuntime } from "@zilobase/runtime-adapter/node";
+import { eq } from "drizzle-orm";
+import assert from "node:assert/strict";
+import { execFile, fork } from "node:child_process";
+import { setTimeout as sleep } from "node:timers/promises";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import {
-  BACKGROUND_LANE_POLICY,
-  BACKGROUND_TASK_KINDS,
-  createBackgroundTaskV2,
-  decodeBackgroundTaskV2,
-} from "../infrastructure/background/task-v2";
+  deliverBackgroundTask,
+  recordBackgroundExhaustion,
+} from "../app/background/runtime-delivery";
 import { backgroundTaskLane } from "../infrastructure/background/contracts";
 import {
   backgroundTransaction,
@@ -22,9 +18,13 @@ import {
   publishBackgroundDispatches,
 } from "../infrastructure/background/publication";
 import {
-  deliverBackgroundTask,
-  recordBackgroundExhaustion,
-} from "../app/background/runtime-delivery";
+  BACKGROUND_LANE_POLICY,
+  BACKGROUND_TASK_KINDS,
+  createBackgroundTaskV2,
+  decodeBackgroundTaskV2,
+} from "../infrastructure/background/task-v2";
+import { createDbClient, db, runWithDbEnv } from "../infrastructure/database";
+import * as tables from "../infrastructure/database/schema";
 import { encryptCalendarSecret } from "../services/calendar/provider/credentials";
 
 const connection = process.env.ZILOBASE_BACKGROUND_VERIFY_URL!;

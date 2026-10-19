@@ -1,11 +1,11 @@
+import { databaseViewQueryHash } from "@zilobase/features/runtime";
 import assert from "node:assert/strict";
 import { test, vi } from "vitest";
-import { databaseViewQueryHash } from "@zilobase/features/runtime";
 
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
-  DatabaseWindowStaleError,
   DatabaseViewQueryChangedError,
+  DatabaseWindowStaleError,
   getDatabaseBootstrapService,
   getDatabaseExportService,
   getDatabaseRecordWindowService,

@@ -1,13 +1,12 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
-import { hasPageBodyContent } from "@zilobase/features/runtime";
-import { databaseOrderKeyAtPosition } from "@zilobase/features/runtime";
 import type { DataSourceCommand } from "@zilobase/features/runtime";
+import { databaseOrderKeyAtPosition, hasPageBodyContent } from "@zilobase/features/runtime";
+import { and, asc, eq, isNull } from "drizzle-orm";
 
-import { encodePageContentAsYjs } from "../../collaboration/service";
+import { normalizeDatabasePropertyType } from "@zilobase/features/runtime";
 import {
-  dataSource,
   databaseProperty,
   databaseRow,
+  dataSource,
   favorite,
   page,
   pageCollaborationDocument,
@@ -16,13 +15,13 @@ import {
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { lockDatabaseAutomationFactRows } from "../../automations/triggers/event-capture";
+import { encodePageContentAsYjs } from "../../collaboration/documents/document-codec";
 import {
   getStatusDefaultValue,
   normalizePropertyConfig,
   validateCellValue,
 } from "../schema/config";
-import { normalizeDatabasePropertyType } from "../schema/types";
-import { lockDatabaseAutomationFactRows } from "../../automations/triggers/event-capture";
 import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "./framework";
 import { getDatabasePropertyEntity, getDataSourceEntity } from "./metadata-entities";
 import { getDatabaseRecordEntity } from "./record-entity";

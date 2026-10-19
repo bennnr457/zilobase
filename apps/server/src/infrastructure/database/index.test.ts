@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { test, vi } from "vitest";
 import { Client } from "pg";
+import { test, vi } from "vitest";
 
 import {
   createAuthTransactionDatabase,

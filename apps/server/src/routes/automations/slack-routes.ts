@@ -1,25 +1,24 @@
-import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
-import { getDatabaseRecord } from "../../services/databases/access/database-access";
-import { and, eq } from "drizzle-orm";
 import { Hono, type Context } from "hono";
-
-import { db } from "../../infrastructure/database";
-import { slackConnection } from "../../infrastructure/database/schema";
-import { getCanonicalWebOrigin, isAutomationSlackEnabled } from "../../shared/config/config";
-import type { AppBindings } from "../../shared/types";
-import { readJsonBody } from "../../shared/http/request";
-import { requireDatabaseRouteUser } from "../databases/support";
-import { requireDataSourceAccess } from "../../services/databases/access/data-source-access";
 import {
-  getDatabaseAutomationCatalog,
-  invalidateDatabaseAutomationDependencies,
-} from "../../services/automations/service";
+  findOwnedSlackConnection,
+  revokeSlackConnection,
+} from "../../services/automations/actions/slack/connections";
+import { getDatabaseRecord } from "../../services/databases/access/database-access";
+import { pinnedResourceMiddleware } from "../auth/pinned-resource-middleware";
+
 import {
   beginSlackOauth,
   completeSlackOauth,
   listSlackChannels,
   SlackProviderError,
-} from "../../services/automations/actions/slack-provider";
+} from "../../services/automations/actions/slack/slack-provider";
+import { isAutomationSlackEnabled } from "../../services/automations/configuration";
+import { getDatabaseAutomationCatalog } from "../../services/automations/definition/definition-catalog";
+import { requireDataSourceAccess } from "../../services/databases/access/data-source-access";
+import { getCanonicalWebOrigin } from "../../shared/config/config";
+import type { AppBindings } from "../../shared/contracts/http";
+import { requireDatabaseRouteUser } from "../databases/support";
+import { readJsonBody } from "../http/request";
 
 export const automationSlackRoutes = new Hono<AppBindings>();
 const resourceWorkspace = pinnedResourceMiddleware(
@@ -78,29 +77,17 @@ automationSlackRoutes.get(
       });
       const allowed = catalog.slackConnections.find(({ id }) => id === c.req.param("connectionId"));
       if (!allowed) return c.json({ error: "Slack connection not found" }, 404);
-      const [connection] = await db
-        .select()
-        .from(slackConnection)
-        .where(and(eq(slackConnection.id, allowed.id), eq(slackConnection.ownerUserId, user.id)))
-        .limit(1);
+      const connection = await findOwnedSlackConnection(allowed.id, user.id);
       if (!connection) return c.json({ error: "Slack connection not found" }, 404);
       return c.json({ channels: await listSlackChannels(c.env ?? {}, connection) });
     } catch (error) {
       if (error instanceof SlackProviderError && error.code === "SLACK_CONNECTION_REVOKED") {
-        await db
-          .update(slackConnection)
-          .set({ lastErrorCode: error.code, status: "revoked", updatedAt: new Date() })
-          .where(
-            and(
-              eq(slackConnection.id, c.req.param("connectionId")),
-              eq(slackConnection.ownerUserId, user.id),
-            ),
-          );
-        await invalidateDatabaseAutomationDependencies({
-          dependencyId: c.req.param("connectionId"),
-          dependencyType: "slack_connection",
-          reason: "The automation owner's Slack connection was revoked",
-        });
+        await revokeSlackConnection(
+          c.req.param("connectionId"),
+          user.id,
+          error.code,
+          "The automation owner's Slack connection was revoked",
+        );
       }
       return slackError(c, error);
     }
@@ -123,20 +110,12 @@ automationSlackRoutes.delete(
     });
     if (!catalog.slackConnections.some(({ id }) => id === c.req.param("connectionId")))
       return c.json({ error: "Slack connection not found" }, 404);
-    await db
-      .update(slackConnection)
-      .set({ lastErrorCode: "disconnected", status: "revoked", updatedAt: new Date() })
-      .where(
-        and(
-          eq(slackConnection.id, c.req.param("connectionId")),
-          eq(slackConnection.ownerUserId, user.id),
-        ),
-      );
-    await invalidateDatabaseAutomationDependencies({
-      dependencyId: c.req.param("connectionId"),
-      dependencyType: "slack_connection",
-      reason: "The automation owner's Slack connection was disconnected",
-    });
+    await revokeSlackConnection(
+      c.req.param("connectionId"),
+      user.id,
+      "disconnected",
+      "The automation owner's Slack connection was disconnected",
+    );
     return c.json({ disconnected: true });
   },
 );

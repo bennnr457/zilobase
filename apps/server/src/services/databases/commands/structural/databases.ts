@@ -1,10 +1,10 @@
-import { canAccessPageInWorkspace } from "../../../access";
+import type { HostDatabaseCommand } from "@zilobase/features/runtime";
+import { applyConfigurationChanges } from "@zilobase/features/runtime";
+import { and, eq, isNull } from "drizzle-orm";
+import { ServiceMutationError } from "../../../../shared/errors/service-mutation-error";
+import { canAccessPageInWorkspace } from "../../../access/effective-access";
 import { loadWorkspacePageGraph } from "../../../pages/graph/loader";
 import { upsertPageItemPlacement } from "../../../pages/placements/page-item-placements";
-import { ServiceMutationError } from "../../../../shared/errors/service-mutation-error";
-import { and, eq, isNull } from "drizzle-orm";
-import { applyConfigurationChanges } from "@zilobase/features/runtime";
-import type { HostDatabaseCommand } from "@zilobase/features/runtime";
 
 import { database, pageItemPlacement } from "../../../../infrastructure/database/schema";
 import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "../framework";

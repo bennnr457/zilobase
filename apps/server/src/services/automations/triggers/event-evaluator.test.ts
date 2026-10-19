@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
+import { drainDatabaseAutomationEventWindows } from "./event-evaluator";
 const state = vi.hoisted(() => ({
   rows: [] as unknown[][],
   window: {} as Record<string, unknown>,
@@ -72,7 +73,6 @@ vi.mock("../../../infrastructure/background/dispatch", () => ({
     state.dispatched.push(tasks);
   },
 }));
-import { drainDatabaseAutomationEventWindows } from "./event-evaluator";
 const definition = {
   definitionVersion: 1,
   timezone: "UTC",

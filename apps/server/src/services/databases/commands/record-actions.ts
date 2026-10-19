@@ -1,4 +1,3 @@
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   clonePageContent,
   getDuplicatePageName,
@@ -6,6 +5,7 @@ import {
   isReadOnlyPropertyType,
   type DatabaseCommand,
 } from "@zilobase/features/runtime";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import {
   database,
@@ -16,14 +16,14 @@ import {
   pageItemPlacement,
   pageProperty,
 } from "../../../infrastructure/database/schema";
-import { canAccessPageInWorkspace } from "../../access";
-import { encodePageContentAsYjs } from "../../collaboration/service";
-import { upsertPageItemPlacement } from "../../pages/placements";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
-import { lockDatabaseRowOrdering } from "../core/position-service";
+import { canAccessPageInWorkspace } from "../../access/effective-access";
+import { encodePageContentAsYjs } from "../../collaboration/documents/document-codec";
+import { upsertPageItemPlacement } from "../../pages/placements/page-item-placements";
+import { lockDatabaseRowOrdering } from "../navigation/position-service";
+import type { DatabaseCommandContext } from "./framework";
 import { getDatabaseRecordEntity } from "./record-entity";
 import { createRow, setRowArchived } from "./records";
-import type { DatabaseCommandContext } from "./framework";
 
 export async function authorizeRecordAction(
   command: DatabaseCommand,

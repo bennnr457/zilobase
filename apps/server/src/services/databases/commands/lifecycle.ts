@@ -1,19 +1,19 @@
 import type { DatabaseCommand } from "@zilobase/features/runtime";
-import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "./framework";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
   createDatabaseService,
   deleteDatabaseService,
   restoreDatabaseService,
-} from "../core/service";
-import { updateDatabaseFavoriteService } from "../core/favorite-service";
-import { getDatabaseExportPayload } from "../core/payload";
-import { getDatabaseHostEntity } from "./metadata-entities";
+} from "../lifecycle/service";
+import { getDatabaseExportPayload } from "../mutations/payload";
+import { updateDatabaseFavoriteService } from "../navigation/favorite-service";
 import {
   deleteDatabaseAccessRuleService,
   deletePublicDatabaseAccessService,
   upsertDatabaseAccessRuleService,
 } from "../sharing/service";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import type { DatabaseCommandContext, DatabaseCommandDispatchResult } from "./framework";
+import { getDatabaseHostEntity } from "./metadata-entities";
 
 /** Domain services run inside the command transaction, including their reads/savepoints. */
 export async function dispatchLifecycleCommand(

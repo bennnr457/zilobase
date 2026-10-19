@@ -1,6 +1,6 @@
+import { Effect } from "effect";
 import assert from "node:assert/strict";
 import { test } from "vitest";
-import { Effect } from "effect";
 
 import { decodeBookmarkUrl } from "./bookmark-metadata";
 

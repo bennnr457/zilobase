@@ -29,12 +29,12 @@ vi.mock("../../services/databases/realtime/outbox", () => ({
   drainDatabaseRealtimeOutbox: fake.database,
 }));
 
-vi.mock("../../services/notifications/outbox", () => ({
+vi.mock("../../services/notifications/delivery/outbox", () => ({
   drainInProductNotificationOutbox: fake.notification,
 }));
 
-import { processBackgroundTask } from "./processor";
 import type { BackgroundTaskKind } from "../../infrastructure/background/contracts";
+import { processBackgroundTask } from "./processor";
 
 const run = (kind: BackgroundTaskKind) =>
   processBackgroundTask({

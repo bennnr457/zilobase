@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "vitest";
 
+import { canAcceptPageGuestInvitation } from "./invitations/invitations";
 import {
-  canAcceptPageGuestInvitation,
   normalizeGuestEmail,
   PageGuestServiceError,
   parseGuestAccessLevel,
   resolveGuestInviteSubmission,
-} from "./service";
+} from "./policy";
 
 test("page guest inputs normalize email and validate access levels", () => {
   assert.equal(normalizeGuestEmail(" Guest@Example.COM "), "guest@example.com");

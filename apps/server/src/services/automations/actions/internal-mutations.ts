@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import type { RuntimeEnv } from "../../../shared/config/config";
 import { db } from "../../../infrastructure/database";
+import type { RuntimeEnv } from "../../../shared/config/config";
 
 import {
   databaseProperty,
@@ -9,12 +9,12 @@ import {
   pageProperty,
   pagePropertyValue,
 } from "../../../infrastructure/database/schema";
+import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import { requireDataSourceAccess } from "../../databases/access/data-source-access";
-import { commitDataSourceMutation } from "../../databases/core/commit";
+import { getDatabaseRecordEntity } from "../../databases/commands/record-entity";
+import { commitDataSourceMutation } from "../../databases/mutations/commit";
 import { validateCellValue } from "../../databases/schema/config";
 import { lockDatabaseAutomationFactRows } from "../triggers/event-capture";
-import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
-import { getDatabaseRecordEntity } from "../../databases/commands/record-entity";
 
 export type ResolvedAutomationPropertyOperation = {
   mode: "add" | "clear" | "remove" | "set";

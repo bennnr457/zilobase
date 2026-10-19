@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { canAccessPageInWorkspace } from "../../access";
+import { canAccessPageInWorkspace } from "../../access/effective-access";
 
 import { db } from "../../../infrastructure/database";
 import { meeting } from "../../../infrastructure/database/schema";

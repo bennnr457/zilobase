@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
+import { MEETING_MAX_DURATION_MS } from "../contracts/meeting-types";
 import {
   clampMeetingDuration,
   getNextMeetingStatus,
   isMeetingRecordingActive,
 } from "./meeting-state";
-import { MEETING_MAX_DURATION_MS } from "../contracts/meeting-types";
 
 test("meeting lifecycle only allows explicit transitions", () => {
   assert.equal(getNextMeetingStatus("idle", "start"), "recording");

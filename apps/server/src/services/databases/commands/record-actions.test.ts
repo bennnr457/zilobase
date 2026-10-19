@@ -1,4 +1,13 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { runWithDb } from "../../../infrastructure/database";
+import {
+  databaseProperty,
+  databaseRow,
+  page,
+  pageItemPlacement,
+} from "../../../infrastructure/database/schema";
+import type { DatabaseCommandContext } from "./framework";
+import { authorizeRecordAction, dispatchRecordActionCommand } from "./record-actions";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   archive: vi.fn(),
@@ -6,23 +15,16 @@ const mocks = vi.hoisted(() => ({
   placement: vi.fn(),
   access: vi.fn(),
 }));
-vi.mock("../../access", () => ({ canAccessPageInWorkspace: mocks.access }));
+vi.mock("../../access/effective-access", () => ({ canAccessPageInWorkspace: mocks.access }));
 vi.mock("./records", () => ({ createRow: mocks.create, setRowArchived: mocks.archive }));
 vi.mock("./record-entity", () => ({ getDatabaseRecordEntity: mocks.record }));
-vi.mock("../core/position-service", () => ({ lockDatabaseRowOrdering: vi.fn() }));
-vi.mock("../../pages/placements", () => ({ upsertPageItemPlacement: mocks.placement }));
-vi.mock("../../collaboration/service", () => ({
+vi.mock("../navigation/position-service", () => ({ lockDatabaseRowOrdering: vi.fn() }));
+vi.mock("../../pages/placements/page-item-placements", () => ({
+  upsertPageItemPlacement: mocks.placement,
+}));
+vi.mock("../../collaboration/documents/document-codec", () => ({
   encodePageContentAsYjs: (value: unknown) => new TextEncoder().encode(JSON.stringify(value)),
 }));
-import {
-  databaseProperty,
-  databaseRow,
-  page,
-  pageItemPlacement,
-} from "../../../infrastructure/database/schema";
-import { authorizeRecordAction, dispatchRecordActionCommand } from "./record-actions";
-import { runWithDb } from "../../../infrastructure/database";
-import type { DatabaseCommandContext } from "./framework";
 
 function harness(destination = "destination", placements: Array<Record<string, unknown>> = []) {
   const inserted: Array<{ table: unknown; values: Record<string, unknown> }> = [];

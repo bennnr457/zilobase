@@ -1,29 +1,30 @@
-import { Hono, type ErrorHandler } from "hono";
+import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import type { Ports } from "@zilobase/runtime-ports";
+import { Hono, type ErrorHandler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { compress } from "hono/compress";
 import { methodNotAllowed } from "hono/method-not-allowed";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
-import { createCorsMiddleware } from "./cors";
-import { registerRoutes } from "./routes";
-import { authenticatedSessionMiddleware } from "../routes/auth/session-guard";
-import { REQUEST_ID_HEADER, serverTimingMiddleware } from "./timing";
+import { runWithBackgroundTraceContext } from "../infrastructure/background/contracts";
 import {
   DATABASE_UNAVAILABLE_CODE,
   DATABASE_UNAVAILABLE_MESSAGE,
   getDatabaseErrorCode,
   isDatabaseUnavailableError,
-} from "../shared/errors/database-errors";
-import { JSON_BODY_LIMIT_BYTES } from "../shared/http/json";
-import { httpRouteErrorResponse } from "../shared/http/route-error";
-import { registerAppEditionExtension } from "../shared/edition-extension-registry";
-import type { AppBindings, AppErrorReporter } from "../shared/types";
-import type { EditionExtensionOptions } from "../shared/types";
+} from "../infrastructure/database/errors";
+import { authenticatedSessionMiddleware } from "../routes/auth/sessions/session-guard";
 import { demoWriteGuard } from "../routes/demo/write-guard";
-import { runWithBackgroundTraceContext } from "../infrastructure/background/contracts";
-import { communityAppPolicy } from "../shared/app-policy";
-import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
+import { JSON_BODY_LIMIT_BYTES } from "../routes/http/json";
+import { httpRouteErrorResponse } from "../routes/http/route-error";
+import { communityAppPolicy } from "../shared/config/app-policy";
+import type { EditionExtensionOptions } from "../shared/contracts/edition";
+import type { AppErrorReporter } from "../shared/contracts/error-reporting";
+import type { AppBindings } from "../shared/contracts/http";
+import { createCorsMiddleware } from "./cors";
+import { registerAppEditionExtension } from "./extensions/registry";
+import { registerRoutes } from "./routes";
+import { REQUEST_ID_HEADER, serverTimingMiddleware } from "./timing";
 
 export function createApp(options: EditionExtensionOptions & { ports: Partial<Ports<any>> }) {
   const app = new Hono<AppBindings>();

@@ -1,183 +1,23 @@
-export { getMembership, getWorkspaceMemberships } from "../services/access";
-export { createApp } from "../app";
-export type {
-  AppErrorReport,
-  AppErrorReporter,
-  EditionExtensionOptions,
-  MembershipGrantInput,
-  MembershipGrantSource,
-  SecurityEvent,
-  ZilobaseEditionExtension,
-} from "../shared/types";
-export { createAuth } from "../services/auth";
-export {
-  appendMeetingTranscriptSegment,
-  heartbeatMeetingRecorder,
-  MEETING_RECORDER_LEASE_HEARTBEAT_MS,
-  persistMeetingTranscriptSession,
-  validateMeetingRecorderLease,
-  type MeetingTranscriptSessionSegment,
-} from "../services/meetings/lifecycle/meeting-service";
-export {
-  createMeetingRealtimeTranscriptSink,
-  getMeetingOpenAiSafetyIdentifier,
-  getMeetingRealtimeTranscriptionConfig,
-  getMeetingRealtimeTranscriptionUrl,
-  getMeetingTranscriptionFailureCloseCode,
-  MEETING_TRANSCRIPTION_FATAL_CLOSE_CODE,
-  MeetingRealtimeTranscriptionError,
-  MeetingRealtimeTranscriber,
-  trimAcceptedMeetingAudio,
-  type MeetingRealtimeTranscriberCallbacks,
-  type RealtimeTranscriptionSocket,
-  type RealtimeTranscriptionTurn,
-} from "../services/meetings/transcription/meeting-realtime-transcription";
-export {
-  COLLABORATION_WEBSOCKET_PROTOCOL,
-  getAuthHeaders,
-  readWebSocketSessionToken,
-  SESSION_AUTH_WEBSOCKET_PROTOCOL_PREFIX,
-} from "../shared/security/auth-headers";
-export {
-  getCanonicalApiOrigin,
-  getCanonicalHttpOrigin,
-  getCanonicalWebOrigin,
-  isAllowedClientOrigin,
-  isLocalDevelopmentHost,
-  isLoopbackHost,
-  type RuntimeEnv,
-} from "../shared/config/config";
-export {
-  createAuthTransactionDatabase,
-  createDbClient,
-  getCurrentExtensionTransactionDatabase,
-  runWithDbClient,
-  runWithDbEnv,
-} from "../infrastructure/database";
-export type { Database, DatabaseClient } from "../infrastructure/database";
-export {
-  editionPersistencePort,
-  type EditionDatabase,
-  type EditionInstance,
-  type EditionMembership,
-  type EditionPersistencePort,
-} from "../shared/edition-persistence";
-export {
-  DATABASE_UNAVAILABLE_CODE,
-  DATABASE_UNAVAILABLE_MESSAGE,
-  getDatabaseErrorCode,
-  isDatabaseUnavailableError,
-} from "../shared/errors/database-errors";
-export {
-  DESKTOP_PROTOCOL_VERSION,
-  getZilobaseDiscoveryDocument,
-  isDesktopVersionCompatible,
-  type DesktopServer,
-  type ZilobaseDiscoveryDocument,
-} from "../services/instance/service";
-export {
-  createImageStorage,
-  resolveImageStorageMode,
-  type ImageStorage,
-  type ImageStorageMode,
-  type ImageUploadTarget,
-  type PutObjectOptions,
-  type StoredImageMetadata,
-} from "../infrastructure/storage/image-storage";
 export {
   getCollaborationWebSocketUrl,
   getDatabaseRealtimeWebSocketUrl,
+  getDatabaseUrl,
   getMeetingAudioWebSocketUrl,
   getMeetingCollaborationWebSocketUrl,
-  getDatabaseUrl,
   runWithRuntimePorts,
-  type OutboundEmailMessage,
   type MeetingRecorderRuntimeInput,
   type MeetingRecorderRuntimeState,
+  type OutboundEmailMessage,
 } from "@zilobase/runtime-adapter/capabilities";
-export {
-  createDatabaseRealtimeTicket,
-  DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX,
-  DATABASE_REALTIME_PROTOCOL,
-  verifyDatabaseRealtimeTicket,
-  type DatabaseRealtimeTicketClaims,
-} from "../shared/security/database-realtime-ticket";
-export {
-  createMeetingAudioTicket,
-  MEETING_AUDIO_AUTH_PROTOCOL_PREFIX,
-  MEETING_AUDIO_PROTOCOL,
-  MEETING_AUDIO_SOURCES,
-  meetingAudioSourceFromCode,
-  verifyMeetingAudioTicket,
-  type MeetingAudioTicketClaims,
-} from "../services/meetings/audio/meeting-audio-ticket";
-export { type DatabaseMutationEventV2 } from "../services/databases/realtime/outbox";
-export { expireTemporaryMemberships } from "../services/memberships";
-export {
-  getDatabaseAutomationEventCaptureMetrics,
-  promoteClosedDatabaseAutomationEventWindows,
-} from "../services/automations/triggers/event-capture";
-export { processDatabaseAutomationEventWindow } from "../services/automations/triggers/event-evaluator";
-export { processDatabaseAutomationRun } from "../services/automations/execution/run-engine";
-export { scanDueDatabaseAutomationSchedules } from "../services/automations/triggers/scheduler";
-export {
-  cleanupDatabaseAutomationHistory,
-  getDatabaseAutomationOperationalSnapshot,
-} from "../services/automations/history/history-maintenance";
-export {
-  MembershipService,
-  TransactionalAdmissionError,
-  admitTransactionalMembership,
-  findActiveMembershipForAdmission,
-  listWorkspaceReadinessMembers,
-  lockWorkspaceAdmission,
-  revokeWorkspaceSessions,
-  type GrantMembershipInput,
-  type GrantMembershipResult,
-  type TransactionalAdmissionCode,
-  type TransactionalAdmissionResult,
-  type ReadinessMember,
-} from "../services/memberships";
-export {
-  TeamspaceService,
-  ensureDefaultTeamspaceMembership,
-  removeUserTeamspacePrincipals,
-  type EnsureDefaultTeamspaceMembershipInput,
-  type EnsureDefaultTeamspaceMembershipResult,
-} from "../services/teamspaces";
-export {
-  inspectTeamspaceIntegrity,
-  findTeamspaceIntegrityIssues,
-  type TeamspaceIntegrityIssue,
-  type TeamspaceIntegritySnapshot,
-} from "../services/teamspaces";
-export {
-  appendMeetingTranscript,
-  appendMeetingTranscriptInHocuspocus,
-  appendMeetingTranscriptToDocument,
-  createCollaborationHocuspocus,
-  createCollaborationTicket,
-  documentNameForMeeting,
-  documentNameForPage,
-  encodePageContentAsYjs,
-  getOrCreateCollaborationDocumentState,
-  getOrCreateMeetingCollaborationDocumentState,
-  meetingIdFromDocumentName,
-  materializePageContentFromYjs,
-  pageIdFromDocumentName,
-  replacePageContent,
-  replacePageContentInHocuspocus,
-  appendPageCommentInHocuspocus,
-  replaceMeetingSummary,
-  replaceMeetingSummaryInHocuspocus,
-  verifyCollaborationTicket,
-  type CollaborationContext,
-  type CollaborationDocumentPersistence,
-  type CollaborationTicketClaims,
-  type MeetingCollaborationTicketClaims,
-  type PageCollaborationTicketClaims,
-} from "../services/collaboration/service";
 export type { MeetingTranscriptYjsSegment } from "@zilobase/runtime-adapter/capabilities";
+export { createApp } from "../app";
+export { runBackgroundDelivery } from "../app/background/delivery";
+export {
+  BACKGROUND_MAINTENANCE_TASKS,
+  ensureBackgroundMaintenanceTasks,
+  runDueBackgroundMaintenance,
+} from "../app/background/maintenance";
+export { processBackgroundTask } from "../app/background/processor";
 export {
   BACKGROUND_TASK_KINDS,
   backgroundTaskLane,
@@ -190,20 +30,193 @@ export {
   type BackgroundTaskResult,
   type BackgroundTaskV2,
 } from "../infrastructure/background/contracts";
-export { processBackgroundTask } from "../app/background/processor";
-export { runBackgroundDelivery } from "../app/background/delivery";
+export { getBackgroundOperationalSnapshot } from "../infrastructure/background/health";
 export {
-  publishBackgroundDispatches,
   createBackgroundDeliveryStore,
+  publishBackgroundDispatches,
 } from "../infrastructure/background/publication";
 export { BACKGROUND_LANE_POLICY } from "../infrastructure/background/task-v2";
 export {
-  BACKGROUND_MAINTENANCE_TASKS,
-  ensureBackgroundMaintenanceTasks,
-  runDueBackgroundMaintenance,
-} from "../app/background/maintenance";
-export { getBackgroundOperationalSnapshot } from "../infrastructure/background/health";
-export type { AppBindings } from "../shared/types";
+  createAuthTransactionDatabase,
+  createDbClient,
+  getCurrentExtensionTransactionDatabase,
+  runWithDbClient,
+  runWithDbEnv,
+} from "../infrastructure/database";
+export type { Database, DatabaseClient } from "../infrastructure/database";
+export { editionPersistencePort } from "../infrastructure/database/edition-persistence";
+export {
+  DATABASE_UNAVAILABLE_CODE,
+  DATABASE_UNAVAILABLE_MESSAGE,
+  getDatabaseErrorCode,
+  isDatabaseUnavailableError,
+} from "../infrastructure/database/errors";
+export {
+  createImageStorage,
+  resolveImageStorageMode,
+  type ImageStorage,
+  type ImageStorageMode,
+  type ImageUploadTarget,
+  type PutObjectOptions,
+  type StoredImageMetadata,
+} from "../infrastructure/storage/image-storage";
+export { getMembership, getWorkspaceMemberships } from "../services/access/principal-access";
+export { createAuth } from "../services/auth/auth";
+export {
+  COLLABORATION_WEBSOCKET_PROTOCOL,
+  SESSION_AUTH_WEBSOCKET_PROTOCOL_PREFIX,
+  getAuthHeaders,
+  readWebSocketSessionToken,
+} from "../services/auth/sessions/headers";
+export { processDatabaseAutomationRun } from "../services/automations/execution/run-engine";
+export {
+  cleanupDatabaseAutomationHistory,
+  getDatabaseAutomationOperationalSnapshot,
+} from "../services/automations/history/history-maintenance";
+export {
+  getDatabaseAutomationEventCaptureMetrics,
+  promoteClosedDatabaseAutomationEventWindows,
+} from "../services/automations/triggers/event-capture";
+export { processDatabaseAutomationEventWindow } from "../services/automations/triggers/event-evaluator";
+export { scanDueDatabaseAutomationSchedules } from "../services/automations/triggers/scheduler";
+export {
+  encodePageContentAsYjs,
+  materializePageContentFromYjs,
+} from "../services/collaboration/documents/document-codec";
+export {
+  documentNameForMeeting,
+  documentNameForPage,
+  meetingIdFromDocumentName,
+  pageIdFromDocumentName,
+} from "../services/collaboration/documents/documents";
+export {
+  appendMeetingTranscript,
+  appendMeetingTranscriptInHocuspocus,
+  appendMeetingTranscriptToDocument,
+  appendPageCommentInHocuspocus,
+  replaceMeetingSummary,
+  replaceMeetingSummaryInHocuspocus,
+  replacePageContent,
+  replacePageContentInHocuspocus,
+} from "../services/collaboration/mutations/document-mutations";
+export {
+  getOrCreateCollaborationDocumentState,
+  getOrCreateMeetingCollaborationDocumentState,
+  type CollaborationDocumentPersistence,
+} from "../services/collaboration/persistence/document-persistence";
+export {
+  createCollaborationHocuspocus,
+  type CollaborationContext,
+} from "../services/collaboration/runtime/hocuspocus";
+export {
+  createCollaborationTicket,
+  verifyCollaborationTicket,
+  type CollaborationTicketClaims,
+  type MeetingCollaborationTicketClaims,
+  type PageCollaborationTicketClaims,
+} from "../services/collaboration/tickets/ticket-security";
+export { type DatabaseMutationEventV2 } from "../services/databases/realtime/outbox";
+export {
+  DATABASE_REALTIME_AUTH_PROTOCOL_PREFIX,
+  DATABASE_REALTIME_PROTOCOL,
+  createDatabaseRealtimeTicket,
+  verifyDatabaseRealtimeTicket,
+  type DatabaseRealtimeTicketClaims,
+} from "../services/databases/realtime/tickets";
+export {
+  DESKTOP_PROTOCOL_VERSION,
+  type DesktopServer,
+  type ZilobaseDiscoveryDocument,
+} from "../services/instance/contracts";
+export { isDesktopVersionCompatible } from "../services/instance/discovery/desktop-version";
+export { getZilobaseDiscoveryDocument } from "../services/instance/discovery/discovery";
+export {
+  MEETING_AUDIO_AUTH_PROTOCOL_PREFIX,
+  MEETING_AUDIO_PROTOCOL,
+  MEETING_AUDIO_SOURCES,
+  createMeetingAudioTicket,
+  meetingAudioSourceFromCode,
+  verifyMeetingAudioTicket,
+  type MeetingAudioTicketClaims,
+} from "../services/meetings/audio/meeting-audio-ticket";
+export {
+  MEETING_RECORDER_LEASE_HEARTBEAT_MS,
+  heartbeatMeetingRecorder,
+  validateMeetingRecorderLease,
+} from "../services/meetings/lifecycle/recorder-session";
+export {
+  MEETING_TRANSCRIPTION_FATAL_CLOSE_CODE,
+  MeetingRealtimeTranscriber,
+  MeetingRealtimeTranscriptionError,
+  createMeetingRealtimeTranscriptSink,
+  getMeetingOpenAiSafetyIdentifier,
+  getMeetingRealtimeTranscriptionConfig,
+  getMeetingRealtimeTranscriptionUrl,
+  getMeetingTranscriptionFailureCloseCode,
+  trimAcceptedMeetingAudio,
+  type MeetingRealtimeTranscriberCallbacks,
+  type RealtimeTranscriptionSocket,
+  type RealtimeTranscriptionTurn,
+} from "../services/meetings/transcription/meeting-realtime-transcription";
+export {
+  appendMeetingTranscriptSegment,
+  persistMeetingTranscriptSession,
+  type MeetingTranscriptSessionSegment,
+} from "../services/meetings/transcription/transcript-persistence";
+export {
+  MembershipService,
+  type GrantMembershipInput,
+  type GrantMembershipResult,
+} from "../services/memberships/membership-grants";
+export { expireTemporaryMemberships } from "../services/memberships/temporary-membership";
+export {
+  TransactionalAdmissionError,
+  admitTransactionalMembership,
+  findActiveMembershipForAdmission,
+  listWorkspaceReadinessMembers,
+  lockWorkspaceAdmission,
+  revokeWorkspaceSessions,
+  type ReadinessMember,
+  type TransactionalAdmissionCode,
+  type TransactionalAdmissionResult,
+} from "../services/memberships/transactional-admission";
+export {
+  findTeamspaceIntegrityIssues,
+  inspectTeamspaceIntegrity,
+  type TeamspaceIntegrityIssue,
+  type TeamspaceIntegritySnapshot,
+} from "../services/teamspaces/integrity";
+export {
+  TeamspaceService,
+  ensureDefaultTeamspaceMembership,
+  removeUserTeamspacePrincipals,
+  type EnsureDefaultTeamspaceMembershipInput,
+  type EnsureDefaultTeamspaceMembershipResult,
+} from "../services/teamspaces/teamspace-membership";
+export {
+  getCanonicalApiOrigin,
+  getCanonicalHttpOrigin,
+  getCanonicalWebOrigin,
+  isAllowedClientOrigin,
+  isLocalDevelopmentHost,
+  isLoopbackHost,
+  type RuntimeEnv,
+} from "../shared/config/config";
+export {
+  type EditionDatabase,
+  type EditionInstance,
+  type EditionMembership,
+  type EditionPersistencePort,
+} from "../shared/contracts/edition";
+export type {
+  EditionExtensionOptions,
+  MembershipGrantInput,
+  MembershipGrantSource,
+  SecurityEvent,
+  ZilobaseEditionExtension,
+} from "../shared/contracts/edition";
+export type { AppErrorReport, AppErrorReporter } from "../shared/contracts/error-reporting";
+export type { AppBindings } from "../shared/contracts/http";
 
 export {
   getCalendarRealtimeWebSocketUrl,
@@ -211,11 +224,11 @@ export {
   type CalendarNotificationEvent,
 } from "@zilobase/runtime-adapter/capabilities";
 
-export { maintainCalendarWatches } from "../services/calendar/realtime/watches";
 export { drainCalendarOutbox } from "../services/calendar/realtime/outbox";
+export { maintainCalendarWatches } from "../services/calendar/realtime/watches";
 
 export {
   deliverBackgroundTask,
-  recordBackgroundExhaustion,
   reconcileBackgroundFailures,
+  recordBackgroundExhaustion,
 } from "../app/background/runtime-delivery";

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { shiftSeriesTime, splitRecurrence } from "./recurrence";
 describe("recurrence boundaries", () => {
   it("splits count and exclusive all-day cutoff", () => {

@@ -1,10 +1,10 @@
-import assert from "node:assert/strict";
-import { test } from "vitest";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
+import assert from "node:assert/strict";
+import { test } from "vitest";
 
+import type { AppBindings } from "../shared/contracts/http";
 import { REQUEST_ID_HEADER, serverTimingMiddleware } from "./timing";
-import type { AppBindings } from "../shared/types";
 
 function timedApp() {
   const app = new Hono<AppBindings>();

@@ -5,14 +5,16 @@ import path from "node:path";
 import { startNodeServer } from "@zilobase/runtime-adapter/node";
 import {
   CORE_MIGRATION_SET,
+  DATABASE_REALTIME_PROTOCOL,
   assertSelfHostedProductionConfiguration,
   createApp,
   getAppEditionExtension,
-  DATABASE_REALTIME_PROTOCOL,
 } from "@zilobase/server/node-adapter-api";
-import { startNodeTelemetry } from "../infrastructure/background/node-telemetry";
-import { shutdownNodeTelemetry } from "../infrastructure/background/node-telemetry";
-import { disposeProcessRuntimes } from "../infrastructure/effect";
+import {
+  shutdownNodeTelemetry,
+  startNodeTelemetry,
+} from "../infrastructure/background/node-telemetry";
+import { disposeProcessRuntimes } from "../infrastructure/effect/runtime";
 
 const CORE_SCHEMA_TARGET = "0092_database_v2_constraints";
 

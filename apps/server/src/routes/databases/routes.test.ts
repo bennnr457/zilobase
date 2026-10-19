@@ -1,8 +1,8 @@
-import assert from "node:assert/strict";
 import { Hono } from "hono";
+import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
 
-import type { AppBindings } from "../../shared/types";
+import type { AppBindings } from "../../shared/contracts/http";
 
 const mocks = vi.hoisted(() => ({
   executeCommand: vi.fn(),
@@ -24,23 +24,26 @@ vi.mock("../../services/databases/commands/framework", async (original) => ({
   ...(await original<typeof import("../../services/databases/commands/framework")>()),
   executeDatabaseCommand: mocks.executeCommand,
 }));
-vi.mock("../../services/access", async (original) => ({
-  ...(await original<typeof import("../../services/access")>()),
+vi.mock("../../services/access/effective-access", async (original) => ({
+  ...(await original<typeof import("../../services/access/effective-access")>()),
   canAccessDatabaseRecord: mocks.canAccessDatabase,
   getEffectiveDatabaseAccessForRecord: mocks.effectiveDatabaseAccess,
+  isDatabasePublishedInWorkspace: mocks.publishedDatabase,
+}));
+vi.mock("../../services/access/principal-access", async (original) => ({
+  ...(await original<typeof import("../../services/access/principal-access")>()),
   getMembership: mocks.membership,
   getWorkspacePrincipalKind: mocks.principalKind,
-  isDatabasePublishedInWorkspace: mocks.publishedDatabase,
 }));
 
 vi.mock("../../services/databases/access/database-access", async (original) => ({
   ...(await original<typeof import("../../services/databases/access/database-access")>()),
   getDatabaseRecord: mocks.databaseRecord,
 }));
-vi.mock("../../services/databases/core/payload", () => ({
+vi.mock("../../services/databases/mutations/payload", () => ({
   getDatabaseExportPayload: mocks.databasePayload,
 }));
-vi.mock("../../services/databases/core/service", () => ({
+vi.mock("../../services/databases/lifecycle/service", () => ({
   createDatabaseService: mocks.createDatabase,
   deleteDatabaseService: mocks.deleteDatabase,
   restoreDatabaseService: mocks.restoreDatabase,
@@ -55,9 +58,9 @@ vi.mock("../../services/databases/history/service", async (original) => ({
   getDatabaseMutationFeed: mocks.mutationFeed,
 }));
 
-import { databaseRoutes } from "./routes";
 import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
-import { attachHttpRouteErrorHandler } from "../../shared/http/route-error";
+import { attachHttpRouteErrorHandler } from "../http/route-error";
+import { databaseRoutes } from "./routes";
 
 const user = {
   email: "user@example.com",

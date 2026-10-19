@@ -1,6 +1,6 @@
+import { calendarMetric } from "@zilobase/features/runtime";
 import { expect, test } from "vitest";
 import { inspectCalendarConfiguration } from "./configuration";
-import { calendarMetric } from "@zilobase/features/runtime";
 test("rollout configuration validates isolated credentials and runtime capabilities without exposing secrets", () => {
   const env = {
     CALENDAR_GOOGLE_CLIENT_ID: "client",

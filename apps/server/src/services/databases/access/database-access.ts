@@ -1,9 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { canAccessDatabaseRecord, type AccessLevel } from "../../access";
 import { db, type Database } from "../../../infrastructure/database";
 import { database } from "../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { type AccessLevel } from "../../access/access-level";
+import { canAccessDatabaseRecord } from "../../access/effective-access";
 
 type DatabaseReader = Pick<Database, "select">;
 type GetDatabaseRecordOptions = {

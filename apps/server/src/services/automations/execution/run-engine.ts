@@ -1,13 +1,11 @@
+import { eq } from "drizzle-orm";
+import { db } from "../../../infrastructure/database";
+import { databaseAutomationRun } from "../../../infrastructure/database/schema";
+import { type RuntimeEnv } from "../../../shared/config/config";
+import { isDatabaseAutomationExecutionEnabled } from "../configuration";
 import { claimAutomationRuns } from "./run-claims";
 import { executeClaimedRun } from "./run-lifecycle";
 export { selectWorkspaceRunClaims } from "./run-claims";
-import { eq } from "drizzle-orm";
-import {
-  isDatabaseAutomationExecutionEnabled,
-  type RuntimeEnv,
-} from "../../../shared/config/config";
-import { db } from "../../../infrastructure/database";
-import { databaseAutomationRun } from "../../../infrastructure/database/schema";
 
 import { recordRecoveredBackgroundLease } from "../../../infrastructure/background/telemetry";
 

@@ -6,14 +6,14 @@ import {
   calendarOauthAttempt,
 } from "../../../infrastructure/database/schema";
 import {
-  getRequiredStringEnv,
   getCanonicalApiOrigin,
+  getRequiredStringEnv,
   type RuntimeEnv,
 } from "../../../shared/config/config";
 import { sha256Hex } from "../../../shared/crypto/sha256";
-import { verifyGoogleIdToken } from "../../../shared/security/google-id-token";
-import { encryptCalendarSecret, decryptCalendarSecret } from "./credentials";
+import { verifyGoogleIdToken } from "../../auth/identity/google-id-token";
 import { requireCalendarMembership } from "../connections/ownership";
+import { decryptCalendarSecret, encryptCalendarSecret } from "./credentials";
 import { CalendarGateway, CalendarProviderError } from "./gateway";
 export const CALENDAR_SCOPES = [
   "openid",

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getTableName } from "drizzle-orm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   meeting: {} as Record<string, unknown>,
@@ -14,7 +14,7 @@ const state = vi.hoisted(() => ({
   documents: [] as Record<string, unknown>[],
   failDocument: false,
 }));
-vi.mock("../../access", () => ({
+vi.mock("../../access/effective-access", () => ({
   canAccessPageInWorkspace: async () => state.allowed,
 }));
 vi.mock("@zilobase/runtime-adapter/capabilities", () => ({
@@ -26,7 +26,7 @@ vi.mock("@zilobase/runtime-adapter/capabilities", () => ({
     },
   }),
 }));
-vi.mock("../../collaboration/service", () => ({
+vi.mock("../../collaboration/mutations/document-mutations", () => ({
   appendMeetingTranscript: state.append,
 }));
 vi.mock("../../../infrastructure/database", () => {
@@ -115,12 +115,14 @@ vi.mock("../../../infrastructure/database", () => {
 
 import {
   appendMeetingTranscriptSegment,
+  persistMeetingTranscriptSession,
+} from "../transcription/transcript-persistence";
+import { transitionMeeting } from "./meeting-transitions";
+import {
   claimMeetingRecorder,
   heartbeatMeetingRecorder,
-  persistMeetingTranscriptSession,
   releaseMeetingRecorder,
-  transitionMeeting,
-} from "./meeting-service";
+} from "./recorder-session";
 
 const actor = { meetingId: "meeting", userId: "user", leaseId: "lease" };
 beforeEach(() => {

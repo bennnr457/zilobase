@@ -1,6 +1,6 @@
+import { getTableColumns, getTableName } from "drizzle-orm";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { getTableColumns, getTableName } from "drizzle-orm";
 import { test } from "vitest";
 
 import {

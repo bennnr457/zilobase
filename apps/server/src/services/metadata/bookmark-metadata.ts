@@ -1,5 +1,5 @@
-import { isIP } from "node:net";
 import { Effect, Schema, SchemaIssue, SchemaTransformation } from "effect";
+import { isIP } from "node:net";
 
 export class InvalidBookmarkUrl extends Schema.TaggedError<InvalidBookmarkUrl>()(
   "InvalidBookmarkUrl",

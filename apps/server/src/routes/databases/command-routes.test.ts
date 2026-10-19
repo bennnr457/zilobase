@@ -1,9 +1,9 @@
-import assert from "node:assert/strict";
 import { Hono } from "hono";
+import assert from "node:assert/strict";
 import { beforeEach, test, vi } from "vitest";
 
-import type { AppBindings } from "../../shared/types";
-import { attachHttpRouteErrorHandler } from "../../shared/http/route-error";
+import type { AppBindings } from "../../shared/contracts/http";
+import { attachHttpRouteErrorHandler } from "../http/route-error";
 
 const mocks = vi.hoisted(() => ({
   authorized: vi.fn(),
@@ -14,9 +14,8 @@ const mocks = vi.hoisted(() => ({
   requireSourceView: vi.fn(),
   canEditPage: vi.fn(),
 }));
-
-vi.mock("../../services/access", async (original) => ({
-  ...(await original<typeof import("../../services/access")>()),
+vi.mock("../../services/access/effective-access", async (original) => ({
+  ...(await original<typeof import("../../services/access/effective-access")>()),
   canAccessPageInWorkspace: mocks.canEditPage,
 }));
 
@@ -33,11 +32,11 @@ vi.mock("../../services/databases/commands/framework", async (original) => ({
   executeDatabaseCommand: mocks.execute,
 }));
 
-import { databaseCommandRoutes } from "./command-routes";
 import {
   CommandIdReusedError,
   RowMoveConflictError,
 } from "../../services/databases/commands/framework";
+import { databaseCommandRoutes } from "./command-routes";
 
 const user = {
   email: "user@example.com",

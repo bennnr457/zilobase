@@ -1,8 +1,8 @@
 import { context, propagation, SpanStatusCode, trace } from "@opentelemetry/api";
 
+import type { RuntimeEnv } from "../../shared/config/config";
 import type { BackgroundLane, BackgroundTaskKind } from "./contracts";
 import { backgroundTaskLane, getBackgroundCellId, type BackgroundTaskV2 } from "./contracts";
-import type { RuntimeEnv } from "../../shared/config/config";
 
 export type BackgroundTelemetryAttributes = {
   cell: string;

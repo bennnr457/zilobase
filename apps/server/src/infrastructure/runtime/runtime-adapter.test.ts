@@ -1,7 +1,3 @@
-import assert from "node:assert/strict";
-import { test } from "vitest";
-import { createRuntimeEnv } from "@zilobase/runtime-adapter/env";
-import { createUrlResolver } from "@zilobase/runtime-adapter/url-resolver";
 import {
   getCollaborationWebSocketUrl,
   getDatabaseRealtimeWebSocketUrl,
@@ -9,6 +5,10 @@ import {
   getRuntimePorts,
   runWithRuntimePorts,
 } from "@zilobase/runtime-adapter/capabilities";
+import { createRuntimeEnv } from "@zilobase/runtime-adapter/env";
+import { createUrlResolver } from "@zilobase/runtime-adapter/url-resolver";
+import assert from "node:assert/strict";
+import { test } from "vitest";
 
 test("runtime URLs honor provider configuration and request-derived values", () => {
   const request = new Request("https://api.example.com/path?secret=value#fragment");

@@ -1,32 +1,36 @@
-import { Hono } from "hono";
-import type { Context } from "hono";
 import { Schema, SchemaTransformation } from "effect";
+import type { Context } from "hono";
+import { Hono } from "hono";
 
-import { getMembership, isPrivilegedOrgRole } from "../../services/access";
-import { rejectMismatchedApiKeyWorkspace } from "../../services/api-keys";
-import { getPrimaryClientOrigin } from "../../shared/config/config";
 import { sendEmail } from "../../infrastructure/email/email";
+import { getMembership, isPrivilegedOrgRole } from "../../services/access/principal-access";
 import {
   acceptPageGuestInvitation,
-  approvePageGuestRequest,
   cancelPageGuestInvitation,
-  getWorkspaceGuestInvitePolicy,
   getPageGuestInvitation,
-  listPageGuestRequests,
   listPageGuestInvitations,
-  listWorkspaceGuestRequests,
-  listWorkspaceGuests,
-  PageGuestServiceError,
-  promoteWorkspaceGuest,
-  rejectPageGuestRequest,
   revokePageGuestAccess,
-  revokeWorkspaceGuest,
   submitPageGuestInvitation,
+} from "../../services/page-guests/invitations/invitations";
+import { PageGuestServiceError } from "../../services/page-guests/policy";
+import {
+  approvePageGuestRequest,
+  listPageGuestRequests,
+  listWorkspaceGuestRequests,
+  rejectPageGuestRequest,
+} from "../../services/page-guests/requests/requests";
+import {
+  getWorkspaceGuestInvitePolicy,
+  listWorkspaceGuests,
+  promoteWorkspaceGuest,
+  revokeWorkspaceGuest,
   updateWorkspaceGuestInvitePolicy,
-} from "../../services/page-guests/service";
-import type { AppBindings } from "../../shared/types";
-import { parseJsonBody } from "../../shared/http/schema-json";
-import { getPageTeamspaceSecurityPolicy } from "../../services/teamspaces";
+} from "../../services/page-guests/workspace/workspace-guests";
+import { getPageTeamspaceSecurityPolicy } from "../../services/teamspaces/security";
+import { getPrimaryClientOrigin } from "../../shared/config/config";
+import type { AppBindings } from "../../shared/contracts/http";
+import { rejectMismatchedApiKeyWorkspace } from "../api-keys/access";
+import { parseJsonBody } from "../http/schema-json";
 
 export const pageGuestRoutes = new Hono<AppBindings>();
 

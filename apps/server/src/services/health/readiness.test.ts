@@ -1,6 +1,6 @@
+import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import assert from "node:assert/strict";
 import { test } from "vitest";
-import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 
 import { checkReadiness } from "./readiness";
 

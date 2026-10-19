@@ -1,11 +1,11 @@
 import { beforeEach, expect, test, vi } from "vitest";
+import { dispatchDatabaseCommand } from "./dispatcher";
 import type { DatabaseCommandContext } from "./framework";
 const mocks = vi.hoisted(() => ({ records: vi.fn(), clearSort: vi.fn() }));
 vi.mock("./records", () => ({ dispatchRecordCommand: mocks.records }));
 vi.mock("./lifecycle", () => ({ dispatchLifecycleCommand: async () => null }));
 vi.mock("./structural/dispatch", () => ({ dispatchStructuralCommand: async () => null }));
 vi.mock("./structural/views", () => ({ clearViewSort: mocks.clearSort }));
-import { dispatchDatabaseCommand } from "./dispatcher";
 const context = {
   databaseId: "host",
   dataSourceId: "source",

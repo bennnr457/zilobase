@@ -32,7 +32,7 @@ await run(
     "src/services/databases/commands/records.test.ts",
     "src/services/databases/commands/record-actions.test.ts",
     "src/routes/databases/command-routes.test.ts",
-    "src/services/databases/core/position-service.test.ts",
+    "src/services/databases/navigation/position-service.test.ts",
     "src/services/databases/read/service.test.ts",
     "src/routes/databases/read-routes.test.ts",
     "src/services/databases/history/service.test.ts",

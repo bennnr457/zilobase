@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 
-import { oauthScopeMiddleware, scopeForReadWrite } from "../auth/oauth-access";
-import type { AppBindings } from "../../shared/types";
+import type { AppBindings } from "../../shared/contracts/http";
+import { oauthScopeMiddleware, scopeForReadWrite } from "../auth/oauth/oauth-access";
 import { databaseAutomationRoutes } from "../automations/routes";
 import { automationSlackRoutes } from "../automations/slack-routes";
+import { databaseCommandRoutes } from "./command-routes";
 import { databaseCoreRoutes } from "./core-routes";
 import { databaseReadRoutes } from "./read-routes";
-import { databaseCommandRoutes } from "./command-routes";
 
 export const databaseRoutes = new Hono<AppBindings>();
 

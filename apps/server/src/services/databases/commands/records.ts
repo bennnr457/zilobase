@@ -1,13 +1,12 @@
-import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import type { DataSourceCommand, DatabaseRecordEntity } from "@zilobase/features/runtime";
 import {
   databaseOrderKeyAtPosition,
   databaseOrderKeyBetween,
   parseDatabaseOrderKey,
 } from "@zilobase/features/runtime";
+import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 
-import { encodePageContentAsYjs } from "../../collaboration/service";
-import { upsertPageItemPlacement } from "../../pages/placements";
+import { changeRecordHierarchy } from "@zilobase/features/runtime";
 import {
   dataSource,
   databaseDataSource,
@@ -21,24 +20,25 @@ import {
 } from "../../../infrastructure/database/schema";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
 import {
-  lockDatabaseRowOrdering,
-  rebalanceDatabaseRowOrderKeys,
-  updateDatabaseRowPlacementPositions,
-} from "../core/position-service";
-import { validateCellValue } from "../schema/config";
-import {
-  type DatabaseCommandContext,
-  type DatabaseCommandDispatchResult,
-  type DatabaseCommandMutation,
-  RowMoveConflictError,
-} from "./framework";
-import { inheritDatabaseRowProperties } from "../records/import";
-import { changeRecordHierarchy } from "@zilobase/features/runtime";
-import { getDatabaseRecordEntity } from "./record-entity";
-import {
   lockDatabaseAutomationFactRows,
   type DatabaseAutomationMutationFactCandidate,
 } from "../../automations/triggers/event-capture";
+import { encodePageContentAsYjs } from "../../collaboration/documents/document-codec";
+import { upsertPageItemPlacement } from "../../pages/placements/page-item-placements";
+import {
+  lockDatabaseRowOrdering,
+  rebalanceDatabaseRowOrderKeys,
+  updateDatabaseRowPlacementPositions,
+} from "../navigation/position-service";
+import { inheritDatabaseRowProperties } from "../records/import";
+import { validateCellValue } from "../schema/config";
+import {
+  RowMoveConflictError,
+  type DatabaseCommandContext,
+  type DatabaseCommandDispatchResult,
+  type DatabaseCommandMutation,
+} from "./framework";
+import { getDatabaseRecordEntity } from "./record-entity";
 
 function automationFact(
   context: DatabaseCommandContext,

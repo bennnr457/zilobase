@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 
-import { createAppRuntime } from "../effect";
-import { runWithDb } from "./index";
+import { createAppRuntime } from "../effect/runtime";
 import { DatabaseUnavailable, Db } from "./db";
+import { runWithDb } from "./index";
 
 test("Db.withEnv reuses an active database context", async () => {
   const runtime = createAppRuntime(Db.layer);

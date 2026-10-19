@@ -1,8 +1,8 @@
-import type { RuntimeEnv } from "../../../shared/config/config";
 import { runWithDbEnv } from "../../../infrastructure/database";
+import type { RuntimeEnv } from "../../../shared/config/config";
 import type { MeetingAudioTicketClaims } from "../audio/meeting-audio-ticket";
 import { meetingTranscriptSequence, type MeetingAudioSource } from "../audio/meeting-audio-ticket";
-import { appendMeetingTranscriptSegment } from "../lifecycle/meeting-service";
+import { appendMeetingTranscriptSegment } from "./transcript-persistence";
 
 const AUDIO_PACKET_BYTES = (24_000 * 2) / 10;
 const FRAME_BYTES = 480 * 2;

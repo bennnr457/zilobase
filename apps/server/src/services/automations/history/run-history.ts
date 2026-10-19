@@ -1,13 +1,13 @@
-import { and, desc, eq } from "drizzle-orm";
 import type { DatabaseAutomationRun, DatabaseAutomationStepRun } from "@zilobase/features/runtime";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../../../infrastructure/database";
 import {
   databaseAutomationRun,
   databaseAutomationStepRun,
 } from "../../../infrastructure/database/schema";
-import { getDatabaseAutomation } from "../service";
-import { DatabaseAutomationError } from "../service";
+import { DatabaseAutomationError } from "../definition/definition-context";
+import { getDatabaseAutomation } from "../definition/definition-read";
 
 export async function listDatabaseAutomationRuns(input: {
   automationId: string;

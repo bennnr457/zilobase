@@ -1,11 +1,11 @@
-import assert from "node:assert/strict";
 import { Hono } from "hono";
+import assert from "node:assert/strict";
 import { test } from "vitest";
 
-import type { AppBindings } from "../../shared/types";
-import { getHostedDemoSeedDefinition } from "./seed";
 import { isHostedDemoEnabled, isHostedDemoRequest } from "../../routes/demo/request";
 import { demoWriteGuard } from "../../routes/demo/write-guard";
+import type { AppBindings } from "../../shared/contracts/http";
+import { getHostedDemoSeedDefinition } from "./seed";
 
 test("hosted demo identity is disabled unless explicitly enabled and marked", () => {
   const marked = new Headers({ "x-zilobase-demo": "1" });

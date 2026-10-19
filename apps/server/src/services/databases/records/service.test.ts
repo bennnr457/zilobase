@@ -19,12 +19,11 @@ const mocks = vi.hoisted(() => ({
   sourceAccess: vi.fn(),
   inherit: vi.fn(),
 }));
-
-vi.mock("../../access", () => ({ canAccessPage: mocks.canAccessPage }));
-vi.mock("../../collaboration/service", () => ({
+vi.mock("../../access/effective-access", () => ({ canAccessPage: mocks.canAccessPage }));
+vi.mock("../../collaboration/documents/document-codec", () => ({
   encodePageContentAsYjs: mocks.encode,
 }));
-vi.mock("../../pages/placements", () => ({
+vi.mock("../../pages/placements/page-item-placements", () => ({
   upsertPageItemPlacement: mocks.placement,
 }));
 vi.mock("../access/database-access", () => ({
@@ -35,7 +34,7 @@ vi.mock("../access/data-source-access", () => ({
   requireDataSourceAccess: mocks.sourceAccess,
   requireDataSourceEditAccess: mocks.access,
 }));
-vi.mock("../core/commit", () => ({
+vi.mock("../mutations/commit", () => ({
   commitDatabaseMutation: mocks.commit,
   commitDatabaseMutationBatch: mocks.batch,
   commitDataSourceMutation: mocks.commit,
@@ -47,7 +46,7 @@ vi.mock("../commands/metadata-entities", () => ({
 vi.mock("../commands/record-entity", () => ({
   getDatabaseRecordEntity: mocks.recordEntity,
 }));
-vi.mock("../core/position-service", () => ({
+vi.mock("../navigation/position-service", () => ({
   incrementDatabaseRowPlacementPositions: mocks.incrementPlacements,
   lockDatabaseRowOrdering: mocks.orderLock,
   lockDatabaseRowOrderingSources: mocks.orderLocks,
@@ -86,8 +85,8 @@ vi.mock("../../../infrastructure/database", () => ({
   },
 }));
 
-import { createDatabaseRowService } from "./service";
 import { ServiceMutationError } from "../../../shared/errors/service-mutation-error";
+import { createDatabaseRowService } from "./service";
 
 beforeEach(() => {
   mocks.access.mockReset();

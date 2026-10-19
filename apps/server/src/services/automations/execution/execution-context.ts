@@ -1,6 +1,5 @@
+import { databaseAutomationDefinitionSchema, type FormulaValue } from "@zilobase/features/runtime";
 import { and, asc, eq, isNull } from "drizzle-orm";
-import { databaseAutomationDefinitionSchema } from "@zilobase/features/runtime";
-import { type FormulaValue } from "@zilobase/features/runtime";
 import { db } from "../../../infrastructure/database";
 import {
   databaseAutomation,

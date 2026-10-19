@@ -9,10 +9,10 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { workspace, teamspace } from "./workspaces";
 import { user } from "./authentication";
+import { bytea, timestampColumns } from "./columns";
 import { softDeleteColumns } from "./soft-delete-columns";
-import { timestampColumns, bytea } from "./columns";
+import { teamspace, workspace } from "./workspaces";
 
 export const page = pgTable(
   "page",

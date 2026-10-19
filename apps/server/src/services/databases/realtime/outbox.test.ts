@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { afterEach, test, vi } from "vitest";
 
 import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
-import { drainDatabaseRealtimeOutbox } from "./outbox";
 import {
   databaseMutationEvent,
   databaseRealtimeOutbox,
 } from "../../../infrastructure/database/schema";
+import { drainDatabaseRealtimeOutbox } from "./outbox";
 
 const event = {
   actorId: "user-1",

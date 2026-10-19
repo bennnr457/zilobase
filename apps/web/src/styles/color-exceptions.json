@@ -30,7 +30,7 @@
     "reason": "Packaged operating-system app icons are fixed Zilobase artwork."
   },
   {
-    "path": "apps/server/src/routes/desktop-auth.ts#COLOR_TOKENS",
+    "path": "apps/server/src/routes/desktop-auth/pages/authorization-pages.ts#COLOR_TOKENS",
     "owner": "Authentication",
     "reason": "Generated default light/dark fragment; edit color-tokens.css and run tokens:sync."
   }

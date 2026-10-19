@@ -1,23 +1,21 @@
-import { createHash } from "node:crypto";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import {
-  type AutomationJsonValue,
   type AutomationFilterDefinition,
+  type AutomationJsonValue,
   type AutomationValueExpression,
   type DatabaseAutomationAction,
   type DatabaseAutomationDefinition,
-} from "@zilobase/features/runtime";
-import {
-  evaluateDatabaseFormula,
   type DatabaseFormulaProperty,
+  evaluateDatabaseFormula,
   getZonedDateParts,
 } from "@zilobase/features/runtime";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import { db } from "../../../infrastructure/database";
 import { databaseRow, page, pagePropertyValue } from "../../../infrastructure/database/schema";
-import { type ResolvedAutomationPropertyOperation } from "./internal-mutations";
-import { matchesAutomationFilterDefinition } from "../triggers/trigger-evaluator";
 import { AutomationActionError } from "../execution/action-error";
 import { type ExecutionContext, loadProperties } from "../execution/execution-context";
+import { matchesAutomationFilterDefinition } from "../triggers/trigger-evaluator";
+import { type ResolvedAutomationPropertyOperation } from "./internal-mutations";
 export function resolveRichText(
   context: ExecutionContext,
   richText: Extract<DatabaseAutomationAction, { type: "send_notification" }>["message"],
