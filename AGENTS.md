@@ -185,6 +185,36 @@ Electron, DOM geometry, CSS, routers, React DOM, Tiptap, or Yjs into features.
 Accept search strings, callback URLs, deployment identity, and platform-dependent
 values as arguments. React hooks are allowed in the domain's React entrypoint.
 
+## Backend ownership
+
+Organize backend HTTP adapters under `apps/server/src/routes/<domain>` and
+backend operations under `services/<domain>`, with substantial subdomains nested
+by functionality. Route modules parse and validate HTTP inputs, call services,
+and serialize responses. They must not import Drizzle or database clients/schema.
+Services own authorization decisions, transactions, persistence workflows, and
+post-commit effects; they must not import routes or Hono adapters. Pass actors,
+resource IDs, validated payloads, environment, and extension context explicitly.
+
+Keep inbound HTTP support in `routes/http`; generic cancellation in
+`shared/async`; and named HTTP, edition, and error-reporting types in
+`shared/contracts`. Edition contracts retain their existing type-only Hono
+integration. Shared runtime support must not import application/domain operations.
+Infrastructure must not import services, routes, or app composition.
+
+Keep domain outboxes and background handlers with their services; application
+background orchestration stays in `app/background`, and delivery machinery stays
+in `infrastructure/background`. Physical Node/Worker providers remain in
+`packages/runtime-adapter`. Keep database schemas and migration history together.
+
+Import implementation owners directly. Do not add forwarding-only internal
+modules; supported public package entrypoints and the database schema aggregator
+are intentional export surfaces. Keep tests beside implementations, and application
+composition tests in `app`. `npm run test:architecture` enforces backend ownership.
+Preserve HTTP registration and middleware order, public export signatures,
+authorization/validation ordering, locks, transaction scope, extension callbacks,
+and post-commit publication when extracting operations. See
+[the server guide](apps/server/README.md#backend-organization) for domain owners.
+
 ## Initialization and platform ports
 
 Reuse `createZilobaseClient`, `ZilobaseFeaturesProvider`, `ApiFetcher`,

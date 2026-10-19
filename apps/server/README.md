@@ -62,3 +62,84 @@ helpers, Yjs conversion helpers, and collaboration runtime callbacks for
 alternate runtimes. Node-only migration and server runtime helpers are exported
 separately from `@zilobase/server/node-adapter-api` so alternate runtime bundles
 do not load filesystem-dependent modules.
+
+## Backend organization
+
+The server separates HTTP adapters, backend operations, infrastructure, and
+application composition. Both HTTP routes and services group code by domain;
+only substantial subsystems get nested folders.
+
+| Folder                  | Responsibility                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `src/entrypoints`       | Process startup and shutdown                                                                           |
+| `src/app`               | Application factory, middleware installation, route registration, extensions, background orchestration |
+| `src/routes/<domain>`   | HTTP input validation, request middleware, headers/cookies, response serialization                     |
+| `src/services/<domain>` | Domain rules, authorization decisions, database operations, transactions, ordered workflows            |
+| `src/infrastructure`    | Database/schema, storage, email, Effect runtime, generic background delivery                           |
+| `src/shared`            | Generic configuration, cancellation/crypto utilities, named cross-domain contracts and errors          |
+| `src/public`            | Supported runtime-neutral, Node, and realtime package exports                                          |
+| `src/scripts`           | Operational and verification commands                                                                  |
+| `src/test-support`      | Shared test fixtures and helpers                                                                       |
+
+Routes call services with explicit actors, IDs, validated data, environment, and
+extension context. Services never accept Hono contexts or format Hono responses.
+Native Request/Headers/Response remain supported at authentication and provider
+boundaries. Services may use Drizzle directly; there is no extra repository layer.
+
+### Functional owners
+
+- **Auth:** factory at the domain root; session resolution, password inspection,
+  and pinned membership in `sessions`; delegated tokens and clients in `oauth`;
+  Google token verification in `identity`.
+- **Desktop auth:** authorization and session/token operations in services;
+  server-rendered HTML, styles, escaping, and CSP in route-local `pages`.
+- **Workspaces:** reads/deletion at the root, invitation workflows in
+  `invitations`, member changes in `members`, settings updates in `settings`.
+  Cross-domain grants/admission/expiry remain in `memberships`.
+- **Teamspaces:** lifecycle/management and policy at the root, with
+  `membership`, `principals`, `invitations`, and `settings` operation owners.
+- **Access:** effective permissions, principal membership, resource lookups,
+  and access-level decisions shared by domains. HTTP mismatch responses stay
+  in routes.
+- **Pages:** `read`, `content`, `hierarchy`, `lifecycle`, `sharing`, `navigation`,
+  and `layouts`, plus the existing `graph`, `placements`, `properties`, and
+  reusable page mutations. Layout routes retain the `/page-layouts` mount.
+- **Page guests:** invitations, approval requests, workspace guest management,
+  and common guest policy, independent from workspace member invitations.
+- **Databases:** `lifecycle`, `mutations`, `navigation`, `access`, `commands`,
+  `data-sources`, `history`, `read`, `realtime`, `records`, `schema`, `setup`,
+  and `views`. Mutation payloads and source clocks stay with mutations.
+- **Calendar:** connections, events, sync, realtime, preferences, and provider
+  operations. Provider callbacks, webhooks, and configuration HTTP adapters
+  have separate owners.
+- **Automations:** definition, compilation, triggers, execution, history,
+  domain configuration, and actions. Slack and webhook actions have their own
+  connector folders.
+- **Meetings:** lifecycle, audio, transcription, summary, and contracts.
+- **Collaboration:** documents/codecs/update policy, tickets, document
+  persistence, mutations, and Hocuspocus runtime composition.
+- **Images:** access lookups, uploads/completion/deletion, reads, and domain
+  configuration; physical object storage stays in infrastructure.
+- **User settings:** preferences and profile operations, with profile images
+  under `profile/images`.
+- **Instance:** bootstrap/admission policy in `registration`, administration
+  in `settings`, discovery/version compatibility in `discovery`.
+- **Notifications:** inbox reads/read-state changes versus domain delivery and
+  outbox processing.
+- **API keys, clips, search, metadata, health, and demo:** independent small
+  domains with descriptive implementation files.
+
+### Boundaries and verification
+
+Import owners directly instead of adding forwarding-only internal barrels.
+Keep local helpers/tests beside their owner and promote only genuinely shared
+support. Database schemas remain centralized and existing migrations are unchanged.
+Domain outboxes stay with their services; app background orchestration and
+infrastructure delivery remain separate. Runtime implementations stay in the
+runtime-adapter package.
+
+`npm run test:architecture` checks backend ownership, cross-layer runtime cycles,
+runtime-provider boundaries, and public export compatibility. Server tests also
+lock HTTP method/path and middleware registration order. `npm run test:server`
+runs coverage, query regressions, and the server build; existing isolated database,
+calendar, background, and automation harnesses exercise persistence and delivery.
