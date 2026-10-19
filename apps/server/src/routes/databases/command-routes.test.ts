@@ -36,6 +36,12 @@ import {
   CommandIdReusedError,
   RowMoveConflictError,
 } from "../../services/databases/commands/framework";
+import { executeDatabaseApplicationCommand } from "../../services/databases/commands/operations";
+import {
+  ServerOperationError,
+  type ServerOperationContext,
+} from "../../services/operations/context";
+import { communityAppPolicy } from "../../shared/config/app-policy";
 import { databaseCommandRoutes } from "./command-routes";
 
 const user = {
@@ -273,4 +279,78 @@ test("placing an existing page requires page edit permission", async () => {
   mocks.canEditPage.mockResolvedValue(false);
   assert.equal((await postTransfer()).status, 403);
   assert.equal(mocks.authorized.mock.calls.length, 0);
+});
+
+function operationContext(overrides: Partial<ServerOperationContext> = {}): ServerOperationContext {
+  return {
+    authentication: {
+      user: user as never,
+      session: null,
+      apiKey: null,
+      authMethod: "session",
+      oauthScopes: null,
+    },
+    activeWorkspaceId: null,
+    pinnedWorkspaceId: null,
+    env: {},
+    policy: communityAppPolicy,
+    editionExtension: null,
+    runtimePorts: {},
+    requestId: "direct-test",
+    ...overrides,
+  };
+}
+
+test("direct command calls bind their actor and retain source/transfer authorization", async () => {
+  await executeDatabaseApplicationCommand(operationContext(), {
+    databaseId: "database-1",
+    dataSourceId: "source-1",
+    request: {
+      commandId: "direct-1",
+      protocolVersion: 2,
+      command: {
+        type: "row.place",
+        pageId: "page-1",
+        parentRowId: null,
+        afterRowId: null,
+        beforeRowId: null,
+      },
+    },
+    actorId: "untrusted-actor",
+  } as never);
+  assert.equal(mocks.execute.mock.calls[0][0].actorId, user.id);
+  assert.equal(mocks.requireDatabase.mock.calls[0][1], user.id);
+  assert.equal(mocks.requireSource.mock.calls[0][1], user.id);
+  assert.equal(mocks.canEditPage.mock.calls[0][2], user.id);
+});
+
+test("direct calls deny demo writes and missing OAuth scopes before command disclosure", async () => {
+  const base = operationContext();
+  for (const authentication of [
+    { ...base.authentication, authMethod: "demo" as const },
+    { ...base.authentication, authMethod: "oauth" as const, oauthScopes: [] },
+  ]) {
+    await assert.rejects(
+      executeDatabaseApplicationCommand(operationContext({ authentication }), { request: {} }),
+      (error: unknown) => error instanceof ServerOperationError && error.status === 403,
+    );
+  }
+  assert.equal(mocks.execute.mock.calls.length, 0);
+  assert.equal(mocks.requireDatabase.mock.calls.length, 0);
+});
+
+test("direct pinned tokens resolve resource workspace before payload validation", async () => {
+  mocks.getDatabase.mockResolvedValue({ workspaceId: "other-workspace" });
+  const base = operationContext();
+  await assert.rejects(
+    executeDatabaseApplicationCommand(
+      operationContext({
+        pinnedWorkspaceId: "pinned",
+        authentication: { ...base.authentication, authMethod: "apiKey" },
+      }),
+      { databaseId: "database-1", request: {} },
+    ),
+    (error: unknown) => error instanceof ServerOperationError && error.status === 403,
+  );
+  assert.equal(mocks.execute.mock.calls.length, 0);
 });

@@ -226,6 +226,7 @@ test("OAuth database workspace binding retains the existing ACL", async () => {
   app.use("*", async (c, next) => {
     c.set("user", user as never);
     c.set("authMethod", "oauth");
+    c.set("oauthScopes", ["databases.read"]);
     c.set("session", { activeWorkspaceId: record.workspaceId } as never);
     await next();
   });
