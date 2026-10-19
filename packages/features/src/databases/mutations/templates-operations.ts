@@ -14,112 +14,73 @@ export type DatabaseTemplateScope = {
   databaseId: string;
   hostDatabaseId?: string;
 };
-function defineCreateDatabaseTemplateMutation(context: ClientOperationContext) {
-  return databaseTemplateMutation(
-    context,
-    (
-      input: DatabaseTemplateScope & {
-        name: string;
-        template: unknown;
-      },
-    ) => ({
-      name: input.name,
-      template: input.template,
-      type: "template.create" as const,
-    }),
-  );
-}
-export type CreateDatabaseTemplateInput = Parameters<
-  NonNullable<ReturnType<typeof defineCreateDatabaseTemplateMutation>["mutationFn"]>
->[0];
-export type CreateDatabaseTemplateResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineCreateDatabaseTemplateMutation>["mutationFn"]>>
->;
+
+export type CreateDatabaseTemplateInput = DatabaseTemplateScope & {
+  name: string;
+  template: unknown;
+};
+export type CreateDatabaseTemplateResult = DatabaseStoredTemplate;
 export function createDatabaseTemplate(
   context: ClientOperationContext,
   input: CreateDatabaseTemplateInput,
 ): Promise<CreateDatabaseTemplateResult> {
-  return runClientMutation(context, input, defineCreateDatabaseTemplateMutation);
-}
-
-function defineUpdateDatabaseTemplateMutation(context: ClientOperationContext) {
-  return databaseTemplateMutation(
-    context,
-    (
-      input: DatabaseTemplateScope & {
-        patch: unknown;
-        templateId: string;
-      },
-    ) => ({
-      patch: input.patch,
-      templateId: input.templateId,
-      type: "template.update" as const,
-    }),
+  return runClientMutation(context, input, (context) =>
+    databaseTemplateMutation(context, (input: CreateDatabaseTemplateInput) => ({
+      name: input.name,
+      template: input.template,
+      type: "template.create" as const,
+    })),
   );
 }
-export type UpdateDatabaseTemplateInput = Parameters<
-  NonNullable<ReturnType<typeof defineUpdateDatabaseTemplateMutation>["mutationFn"]>
->[0];
-export type UpdateDatabaseTemplateResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineUpdateDatabaseTemplateMutation>["mutationFn"]>>
->;
+
+export type UpdateDatabaseTemplateInput = DatabaseTemplateScope & {
+  patch: unknown;
+  templateId: string;
+};
+export type UpdateDatabaseTemplateResult = DatabaseStoredTemplate;
 export function updateDatabaseTemplate(
   context: ClientOperationContext,
   input: UpdateDatabaseTemplateInput,
 ): Promise<UpdateDatabaseTemplateResult> {
-  return runClientMutation(context, input, defineUpdateDatabaseTemplateMutation);
-}
-
-function defineArchiveDatabaseTemplateMutation(context: ClientOperationContext) {
-  return databaseTemplateMutation(
-    context,
-    (
-      input: DatabaseTemplateScope & {
-        templateId: string;
-      },
-    ) => ({
+  return runClientMutation(context, input, (context) =>
+    databaseTemplateMutation(context, (input: UpdateDatabaseTemplateInput) => ({
+      patch: input.patch,
       templateId: input.templateId,
-      type: "template.archive" as const,
-    }),
+      type: "template.update" as const,
+    })),
   );
 }
-export type ArchiveDatabaseTemplateInput = Parameters<
-  NonNullable<ReturnType<typeof defineArchiveDatabaseTemplateMutation>["mutationFn"]>
->[0];
-export type ArchiveDatabaseTemplateResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineArchiveDatabaseTemplateMutation>["mutationFn"]>>
->;
+
+export type ArchiveDatabaseTemplateInput = DatabaseTemplateScope & {
+  templateId: string;
+};
+export type ArchiveDatabaseTemplateResult = DatabaseStoredTemplate;
 export function archiveDatabaseTemplate(
   context: ClientOperationContext,
   input: ArchiveDatabaseTemplateInput,
 ): Promise<ArchiveDatabaseTemplateResult> {
-  return runClientMutation(context, input, defineArchiveDatabaseTemplateMutation);
-}
-
-function defineRestoreDatabaseTemplateMutation(context: ClientOperationContext) {
-  return databaseTemplateMutation(
-    context,
-    (
-      input: DatabaseTemplateScope & {
-        templateId: string;
-      },
-    ) => ({
+  return runClientMutation(context, input, (context) =>
+    databaseTemplateMutation(context, (input: ArchiveDatabaseTemplateInput) => ({
       templateId: input.templateId,
-      type: "template.restore" as const,
-    }),
+      type: "template.archive" as const,
+    })),
   );
 }
-export type RestoreDatabaseTemplateInput = Parameters<
-  NonNullable<ReturnType<typeof defineRestoreDatabaseTemplateMutation>["mutationFn"]>
->[0];
-export type RestoreDatabaseTemplateResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineRestoreDatabaseTemplateMutation>["mutationFn"]>>
->;
+
+export type RestoreDatabaseTemplateInput = DatabaseTemplateScope & {
+  templateId: string;
+};
+export type RestoreDatabaseTemplateResult = DatabaseStoredTemplate;
 export function restoreDatabaseTemplate(
   context: ClientOperationContext,
   input: RestoreDatabaseTemplateInput,
 ): Promise<RestoreDatabaseTemplateResult> {
-  return runClientMutation(context, input, defineRestoreDatabaseTemplateMutation);
+  return runClientMutation(context, input, (context) =>
+    databaseTemplateMutation(context, (input: RestoreDatabaseTemplateInput) => ({
+      templateId: input.templateId,
+      type: "template.restore" as const,
+    })),
+  );
 }
 
 function databaseTemplateMutation<

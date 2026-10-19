@@ -17,172 +17,165 @@ export type RecordItemVisitInput = {
   workspaceId: string;
 };
 
-function defineSetPageFavoriteMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({ isFavorite, pageId }: SetPageFavoriteInput) => {
-      const cache = sharedClient(queryClient);
-      const detail = queryClient.getQueryData<PageDetailReference>(["page", pageId]);
-      const owner = detail
-        ? cache.get(detail.page.cacheId)
-        : cache
-            .all()
-            .find(
-              (entity) =>
-                entity.session.scope.viewer.kind === "account" &&
-                entity.pages.collection.base.has(pageId),
-            );
-      const read = await cache.captureRead(owner?.session.id);
-      const send = async () => {
-        const result = await apiFetch<{ page: Page }>(`/pages/${pageId}/favorite`, {
-          method: isFavorite ? "PUT" : "DELETE",
-        });
-        setPageDetailCache(queryClient, result.page, read);
-        updatePageContexts(queryClient, pageId, { isFavorite: result.page.isFavorite }, read);
-        return result.page;
-      };
-      return owner?.navigation.pagePreferences.get(pageId)
-        ? owner.session.commands.run(
-            owner.navigation.pagePreferences,
-            pageId,
-            (draft) => {
-              draft.isFavorite = isFavorite;
-            },
-            send,
-          )
-        : send();
-    },
-  });
-}
-export type SetPageFavoriteResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSetPageFavoriteMutation>["mutationFn"]>>
->;
+export type SetPageFavoriteResult = Page;
 export function setPageFavorite(
   context: ClientOperationContext,
   input: SetPageFavoriteInput,
 ): Promise<SetPageFavoriteResult> {
-  return runClientMutation(context, input, defineSetPageFavoriteMutation);
-}
-
-function defineRecordItemVisitMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: async (input: RecordItemVisitInput) => {
-      const read = await sharedClient(queryClient).captureRead();
-      const result = await apiFetch<{
-        itemId: string;
-        itemKind: RecordItemVisitInput["itemKind"];
-        lastVisitedAt: string;
-      }>("/pages/item-visits", { method: "POST", body: JSON.stringify(input) });
-      if (!sharedClient(queryClient).isCurrent(read)) throw new Error("Expired visit confirmation");
-      const variables = input;
-      if (result.itemKind === "page")
-        updatePageContexts(
-          queryClient,
-          result.itemId,
-          { lastVisitedAt: result.lastVisitedAt },
-          read,
-        );
-      else
-        for (const owner of sharedClient(queryClient).all()) {
-          if (
-            owner.session.scope.viewer.kind !== "account" ||
-            owner.session.scope.workspaceId !== variables.workspaceId ||
-            !owner.databases.hosts.collection.base.has(result.itemId)
-          )
-            continue;
-          owner.session.ingest([
-            owner.navigation.databaseContexts.stage([
-              {
-                id: result.itemId,
-                readSequence: read.sequence,
-                context: { lastVisitedAt: result.lastVisitedAt },
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({ isFavorite, pageId }: SetPageFavoriteInput) => {
+        const cache = sharedClient(queryClient);
+        const detail = queryClient.getQueryData<PageDetailReference>(["page", pageId]);
+        const owner = detail
+          ? cache.get(detail.page.cacheId)
+          : cache
+              .all()
+              .find(
+                (entity) =>
+                  entity.session.scope.viewer.kind === "account" &&
+                  entity.pages.collection.base.has(pageId),
+              );
+        const read = await cache.captureRead(owner?.session.id);
+        const send = async () => {
+          const result = await apiFetch<{ page: Page }>(`/pages/${pageId}/favorite`, {
+            method: isFavorite ? "PUT" : "DELETE",
+          });
+          setPageDetailCache(queryClient, result.page, read);
+          updatePageContexts(queryClient, pageId, { isFavorite: result.page.isFavorite }, read);
+          return result.page;
+        };
+        return owner?.navigation.pagePreferences.get(pageId)
+          ? owner.session.commands.run(
+              owner.navigation.pagePreferences,
+              pageId,
+              (draft) => {
+                draft.isFavorite = isFavorite;
               },
-            ]),
-          ]);
-        }
-      return result;
-    },
+              send,
+            )
+          : send();
+      },
+    });
   });
 }
-export type RecordItemVisitResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineRecordItemVisitMutation>["mutationFn"]>>
->;
+
+export type RecordItemVisitResult = {
+  itemId: string;
+  itemKind: RecordItemVisitInput["itemKind"];
+  lastVisitedAt: string;
+};
 export function recordItemVisit(
   context: ClientOperationContext,
   input: RecordItemVisitInput,
 ): Promise<RecordItemVisitResult> {
-  return runClientMutation(context, input, defineRecordItemVisitMutation);
-}
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
 
-function defineMovePageToTeamspaceMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: { pageId: string; teamspaceId: string | null; workspaceId: string }) =>
-      apiFetch<{ movedPageIds: string[]; teamspaceId: string | null }>(
-        `/pages/${encodeURIComponent(input.pageId)}/move-teamspace`,
-        {
-          body: JSON.stringify({ teamspaceId: input.teamspaceId }),
-          method: "POST",
-        },
-      ),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({
-        queryKey: pagesQueryKey(input.workspaceId),
-      });
-    },
+    return clientMutation({
+      mutationFn: async (input: RecordItemVisitInput) => {
+        const read = await sharedClient(queryClient).captureRead();
+        const result = await apiFetch<{
+          itemId: string;
+          itemKind: RecordItemVisitInput["itemKind"];
+          lastVisitedAt: string;
+        }>("/pages/item-visits", { method: "POST", body: JSON.stringify(input) });
+        if (!sharedClient(queryClient).isCurrent(read))
+          throw new Error("Expired visit confirmation");
+        const variables = input;
+        if (result.itemKind === "page")
+          updatePageContexts(
+            queryClient,
+            result.itemId,
+            { lastVisitedAt: result.lastVisitedAt },
+            read,
+          );
+        else
+          for (const owner of sharedClient(queryClient).all()) {
+            if (
+              owner.session.scope.viewer.kind !== "account" ||
+              owner.session.scope.workspaceId !== variables.workspaceId ||
+              !owner.databases.hosts.collection.base.has(result.itemId)
+            )
+              continue;
+            owner.session.ingest([
+              owner.navigation.databaseContexts.stage([
+                {
+                  id: result.itemId,
+                  readSequence: read.sequence,
+                  context: { lastVisitedAt: result.lastVisitedAt },
+                },
+              ]),
+            ]);
+          }
+        return result;
+      },
+    });
   });
 }
-export type MovePageToTeamspaceInput = Parameters<
-  NonNullable<ReturnType<typeof defineMovePageToTeamspaceMutation>["mutationFn"]>
->[0];
-export type MovePageToTeamspaceResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineMovePageToTeamspaceMutation>["mutationFn"]>>
->;
+
+export type MovePageToTeamspaceInput = {
+  pageId: string;
+  teamspaceId: string | null;
+  workspaceId: string;
+};
+export type MovePageToTeamspaceResult = { movedPageIds: string[]; teamspaceId: string | null };
 export function movePageToTeamspace(
   context: ClientOperationContext,
   input: MovePageToTeamspaceInput,
 ): Promise<MovePageToTeamspaceResult> {
-  return runClientMutation(context, input, defineMovePageToTeamspaceMutation);
-}
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
 
-function defineConvertPageToTeamspaceMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-  return clientMutation({
-    mutationFn: (input: {
-      accessMode?: "open" | "closed" | "private";
-      name?: string;
-      pageId: string;
-      workspaceId: string;
-    }) =>
-      apiFetch<{ teamspace: { id: string; name: string } }>(
-        `/pages/${encodeURIComponent(input.pageId)}/convert-to-teamspace`,
-        {
-          body: JSON.stringify({ accessMode: input.accessMode, name: input.name }),
-          method: "POST",
-        },
-      ),
-    onSuccess: async (_result, input) => {
-      await queryClient.invalidateQueries({ queryKey: pagesQueryKey(input.workspaceId) });
-      await queryClient.invalidateQueries({
-        queryKey: ["workspace", input.workspaceId, "teamspaces"],
-      });
-    },
+    return clientMutation({
+      mutationFn: (input: MovePageToTeamspaceInput) =>
+        apiFetch<{ movedPageIds: string[]; teamspaceId: string | null }>(
+          `/pages/${encodeURIComponent(input.pageId)}/move-teamspace`,
+          {
+            body: JSON.stringify({ teamspaceId: input.teamspaceId }),
+            method: "POST",
+          },
+        ),
+      onSuccess: async (_result, input) => {
+        await queryClient.invalidateQueries({
+          queryKey: pagesQueryKey(input.workspaceId),
+        });
+      },
+    });
   });
 }
-export type ConvertPageToTeamspaceInput = Parameters<
-  NonNullable<ReturnType<typeof defineConvertPageToTeamspaceMutation>["mutationFn"]>
->[0];
-export type ConvertPageToTeamspaceResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineConvertPageToTeamspaceMutation>["mutationFn"]>>
->;
+
+export type ConvertPageToTeamspaceInput = {
+  accessMode?: "open" | "closed" | "private";
+  name?: string;
+  pageId: string;
+  workspaceId: string;
+};
+export type ConvertPageToTeamspaceResult = { teamspace: { id: string; name: string } };
 export function convertPageToTeamspace(
   context: ClientOperationContext,
   input: ConvertPageToTeamspaceInput,
 ): Promise<ConvertPageToTeamspaceResult> {
-  return runClientMutation(context, input, defineConvertPageToTeamspaceMutation);
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
+    return clientMutation({
+      mutationFn: (input: ConvertPageToTeamspaceInput) =>
+        apiFetch<{ teamspace: { id: string; name: string } }>(
+          `/pages/${encodeURIComponent(input.pageId)}/convert-to-teamspace`,
+          {
+            body: JSON.stringify({ accessMode: input.accessMode, name: input.name }),
+            method: "POST",
+          },
+        ),
+      onSuccess: async (_result, input) => {
+        await queryClient.invalidateQueries({ queryKey: pagesQueryKey(input.workspaceId) });
+        await queryClient.invalidateQueries({
+          queryKey: ["workspace", input.workspaceId, "teamspaces"],
+        });
+      },
+    });
+  });
 }
 
 export type EmbedPageItemInput = {
@@ -192,69 +185,61 @@ export type EmbedPageItemInput = {
   placementId?: string;
 };
 
-function defineEmbedPageItemMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: async ({ hostPageId, itemId, kind }: EmbedPageItemInput) =>
-      apiFetch<{ action: string; host: Page; placementId: string | null }>(
-        `/pages/${hostPageId}/embed-item`,
-        {
-          method: "POST",
-          body: JSON.stringify({ itemId, kind }),
-        },
-      ),
-    onSuccess: (result) => {
-      // The embed is saved. Refresh navigation without delaying editor updates.
-      void queryClient
-        .invalidateQueries({
-          queryKey: pagesQueryKey(result.host.workspaceId),
-        })
-        .catch(() => {
-          // A failed refresh must not turn a committed embed into a failed mutation.
-        });
-    },
-  });
-}
-export type EmbedPageItemResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineEmbedPageItemMutation>["mutationFn"]>>
->;
+export type EmbedPageItemResult = { action: string; host: Page; placementId: string | null };
 export function embedPageItem(
   context: ClientOperationContext,
   input: EmbedPageItemInput,
 ): Promise<EmbedPageItemResult> {
-  return runClientMutation(context, input, defineEmbedPageItemMutation);
-}
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
 
-function defineRemovePageEmbedMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: async ({ hostPageId, itemId, kind, placementId }: EmbedPageItemInput) =>
-      apiFetch<{ action: string }>(`/pages/${hostPageId}/embed-item`, {
-        method: "DELETE",
-        body: JSON.stringify({ itemId, kind, placementId }),
-      }),
-    onSuccess: async (_result, variables) => {
-      const host = readCachedPage(queryClient, variables.hostPageId);
-
-      if (host) {
-        await queryClient.invalidateQueries({
-          queryKey: pagesQueryKey(host.workspaceId),
-        });
-      }
-    },
+    return clientMutation({
+      mutationFn: async ({ hostPageId, itemId, kind }: EmbedPageItemInput) =>
+        apiFetch<{ action: string; host: Page; placementId: string | null }>(
+          `/pages/${hostPageId}/embed-item`,
+          {
+            method: "POST",
+            body: JSON.stringify({ itemId, kind }),
+          },
+        ),
+      onSuccess: (result) => {
+        // The embed is saved. Refresh navigation without delaying editor updates.
+        void queryClient
+          .invalidateQueries({
+            queryKey: pagesQueryKey(result.host.workspaceId),
+          })
+          .catch(() => {
+            // A failed refresh must not turn a committed embed into a failed mutation.
+          });
+      },
+    });
   });
 }
-export type RemovePageEmbedInput = Parameters<
-  NonNullable<ReturnType<typeof defineRemovePageEmbedMutation>["mutationFn"]>
->[0];
-export type RemovePageEmbedResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineRemovePageEmbedMutation>["mutationFn"]>>
->;
+
+export type RemovePageEmbedInput = EmbedPageItemInput;
+export type RemovePageEmbedResult = { action: string };
 export function removePageEmbed(
   context: ClientOperationContext,
   input: RemovePageEmbedInput,
 ): Promise<RemovePageEmbedResult> {
-  return runClientMutation(context, input, defineRemovePageEmbedMutation);
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
+
+    return clientMutation({
+      mutationFn: async ({ hostPageId, itemId, kind, placementId }: RemovePageEmbedInput) =>
+        apiFetch<{ action: string }>(`/pages/${hostPageId}/embed-item`, {
+          method: "DELETE",
+          body: JSON.stringify({ itemId, kind, placementId }),
+        }),
+      onSuccess: async (_result, variables) => {
+        const host = readCachedPage(queryClient, variables.hostPageId);
+
+        if (host) {
+          await queryClient.invalidateQueries({
+            queryKey: pagesQueryKey(host.workspaceId),
+          });
+        }
+      },
+    });
+  });
 }

@@ -41,64 +41,56 @@ export function resolvedPageLayoutQueryOptions(apiFetch: ApiFetcher, target: Pag
   });
 }
 
-function defineSavePageLayoutMutation(context: ClientOperationContext) {
-  const scope = captureClientOperation(context);
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: SavePageLayoutInput) =>
-      apiFetch(`/page-layouts/${input.scope}/${encodeURIComponent(input.scopeId)}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          config: input.config,
-          clearPageOverrides: input.clearPageOverrides,
-        }),
-      }),
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: pageLayoutKeys.all });
-      scope.assertCurrent();
-      const previous = queryClient.getQueriesData({ queryKey: pageLayoutKeys.all });
-      queryClient.setQueryData(pageLayoutKeys.scope(input.scope, input.scopeId), input.config);
-      return { previous };
-    },
-    onError: (_error, _input, context) => {
-      for (const [key, value] of context?.previous ?? []) {
-        queryClient.setQueryData(key, value);
-      }
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: pageLayoutKeys.all }),
-  });
-}
-export type SavePageLayoutResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSavePageLayoutMutation>["mutationFn"]>>
->;
+export type SavePageLayoutResult = unknown;
 export function savePageLayout(
   context: ClientOperationContext,
   input: SavePageLayoutInput,
 ): Promise<SavePageLayoutResult> {
-  return runClientMutation(context, input, defineSavePageLayoutMutation);
-}
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const scope = captureClientOperation(context);
+    const { apiFetch, queryClient } = context;
 
-function defineResetPageLayoutMutation(context: ClientOperationContext) {
-  const { apiFetch, queryClient } = context;
-
-  return clientMutation({
-    mutationFn: (input: { scope: PageLayoutScope; scopeId: string }) =>
-      apiFetch(`/page-layouts/${input.scope}/${encodeURIComponent(input.scopeId)}`, {
-        method: "DELETE",
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pageLayoutKeys.all }),
+    return clientMutation({
+      mutationFn: (input: SavePageLayoutInput) =>
+        apiFetch(`/page-layouts/${input.scope}/${encodeURIComponent(input.scopeId)}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            config: input.config,
+            clearPageOverrides: input.clearPageOverrides,
+          }),
+        }),
+      onMutate: async (input) => {
+        await queryClient.cancelQueries({ queryKey: pageLayoutKeys.all });
+        scope.assertCurrent();
+        const previous = queryClient.getQueriesData({ queryKey: pageLayoutKeys.all });
+        queryClient.setQueryData(pageLayoutKeys.scope(input.scope, input.scopeId), input.config);
+        return { previous };
+      },
+      onError: (_error, _input, context) => {
+        for (const [key, value] of context?.previous ?? []) {
+          queryClient.setQueryData(key, value);
+        }
+      },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: pageLayoutKeys.all }),
+    });
   });
 }
-export type ResetPageLayoutInput = Parameters<
-  NonNullable<ReturnType<typeof defineResetPageLayoutMutation>["mutationFn"]>
->[0];
-export type ResetPageLayoutResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineResetPageLayoutMutation>["mutationFn"]>>
->;
+
+export type ResetPageLayoutInput = { scope: PageLayoutScope; scopeId: string };
+export type ResetPageLayoutResult = unknown;
 export function resetPageLayout(
   context: ClientOperationContext,
   input: ResetPageLayoutInput,
 ): Promise<ResetPageLayoutResult> {
-  return runClientMutation(context, input, defineResetPageLayoutMutation);
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const { apiFetch, queryClient } = context;
+
+    return clientMutation({
+      mutationFn: (input: ResetPageLayoutInput) =>
+        apiFetch(`/page-layouts/${input.scope}/${encodeURIComponent(input.scopeId)}`, {
+          method: "DELETE",
+        }),
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: pageLayoutKeys.all }),
+    });
+  });
 }

@@ -35,62 +35,57 @@ export type SetDatabaseFavoriteResponse = {
   isFavorite: boolean;
   workspaceId: string;
 };
-function defineCreateDatabaseMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  return clientMutation({
-    mutationFn: async (input: CreateDatabaseInput) => {
-      const ack = await controller.execute({
-        databaseId: input.workspaceId,
-        command: {
-          ...input,
-          type: "database.create",
-          name: input.name ?? "New database",
-          standalone: input.standalone ?? false,
-        },
-      });
-      return ack.result as CreateDatabaseResponse;
-    },
-  });
-}
-export type CreateDatabaseResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineCreateDatabaseMutation>["mutationFn"]>>
->;
+
+export type CreateDatabaseResult = CreateDatabaseResponse;
 export function createDatabase(
   context: ClientOperationContext,
   input: CreateDatabaseInput,
 ): Promise<CreateDatabaseResult> {
-  return runClientMutation(context, input, defineCreateDatabaseMutation);
-}
-
-function defineUpdateDatabaseMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  const { queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({ databaseId, ...patch }: UpdateDatabaseInput) => {
-      const ack = await controller.execute({
-        command: { patch, type: "database.update" },
-        databaseId,
-      });
-      return ack.result as DatabaseHostEntity;
-    },
-    onSuccess: async (result, input) => {
-      if (input.pageId !== undefined) {
-        // Placement membership changes on relocation; ordinary metadata edits stay sparse.
-        await queryClient
-          .invalidateQueries({ queryKey: pagesQueryKey(result.workspaceId) })
-          .catch(() => {});
-      }
-    },
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    return clientMutation({
+      mutationFn: async (input: CreateDatabaseInput) => {
+        const ack = await controller.execute({
+          databaseId: input.workspaceId,
+          command: {
+            ...input,
+            type: "database.create",
+            name: input.name ?? "New database",
+            standalone: input.standalone ?? false,
+          },
+        });
+        return ack.result as CreateDatabaseResponse;
+      },
+    });
   });
 }
-export type UpdateDatabaseResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineUpdateDatabaseMutation>["mutationFn"]>>
->;
+
+export type UpdateDatabaseResult = DatabaseHostEntity;
 export function updateDatabase(
   context: ClientOperationContext,
   input: UpdateDatabaseInput,
 ): Promise<UpdateDatabaseResult> {
-  return runClientMutation(context, input, defineUpdateDatabaseMutation);
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    const { queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({ databaseId, ...patch }: UpdateDatabaseInput) => {
+        const ack = await controller.execute({
+          command: { patch, type: "database.update" },
+          databaseId,
+        });
+        return ack.result as DatabaseHostEntity;
+      },
+      onSuccess: async (result, input) => {
+        if (input.pageId !== undefined) {
+          // Placement membership changes on relocation; ordinary metadata edits stay sparse.
+          await queryClient
+            .invalidateQueries({ queryKey: pagesQueryKey(result.workspaceId) })
+            .catch(() => {});
+        }
+      },
+    });
+  });
 }
 
 export type DeleteDatabaseResult = {
@@ -103,60 +98,52 @@ export type RestoreDatabaseResult = {
   restoredDatabaseIds: string[];
   restoredPageIds: string[];
 };
-function defineDeleteDatabaseMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  return clientMutation({
-    mutationFn: async (databaseId: string) =>
-      (await controller.execute({ databaseId, command: { type: "database.archive" } }))
-        .result as DeleteDatabaseResult,
-  });
-}
-export type DeleteDatabaseInput = Parameters<
-  NonNullable<ReturnType<typeof defineDeleteDatabaseMutation>["mutationFn"]>
->[0];
+
+export type DeleteDatabaseInput = string;
 export function deleteDatabase(
   context: ClientOperationContext,
   input: DeleteDatabaseInput,
 ): Promise<DeleteDatabaseResult> {
-  return runClientMutation(context, input, defineDeleteDatabaseMutation);
-}
-
-function defineRestoreDatabaseMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  return clientMutation({
-    mutationFn: async (databaseId: string) =>
-      (await controller.execute({ databaseId, command: { type: "database.restore" } }))
-        .result as RestoreDatabaseResult,
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    return clientMutation({
+      mutationFn: async (databaseId: DeleteDatabaseInput) =>
+        (await controller.execute({ databaseId, command: { type: "database.archive" } }))
+          .result as DeleteDatabaseResult,
+    });
   });
 }
-export type RestoreDatabaseInput = Parameters<
-  NonNullable<ReturnType<typeof defineRestoreDatabaseMutation>["mutationFn"]>
->[0];
+
+export type RestoreDatabaseInput = string;
 export function restoreDatabase(
   context: ClientOperationContext,
   input: RestoreDatabaseInput,
 ): Promise<RestoreDatabaseResult> {
-  return runClientMutation(context, input, defineRestoreDatabaseMutation);
-}
-
-function defineSetDatabaseFavoriteMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  return clientMutation({
-    mutationFn: async ({ databaseId, isFavorite }: SetDatabaseFavoriteInput) =>
-      (
-        await controller.execute({
-          databaseId,
-          command: { type: "database.favorite", favorite: isFavorite },
-        })
-      ).result as SetDatabaseFavoriteResponse,
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    return clientMutation({
+      mutationFn: async (databaseId: RestoreDatabaseInput) =>
+        (await controller.execute({ databaseId, command: { type: "database.restore" } }))
+          .result as RestoreDatabaseResult,
+    });
   });
 }
-export type SetDatabaseFavoriteResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineSetDatabaseFavoriteMutation>["mutationFn"]>>
->;
+
+export type SetDatabaseFavoriteResult = SetDatabaseFavoriteResponse;
 export function setDatabaseFavorite(
   context: ClientOperationContext,
   input: SetDatabaseFavoriteInput,
 ): Promise<SetDatabaseFavoriteResult> {
-  return runClientMutation(context, input, defineSetDatabaseFavoriteMutation);
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    return clientMutation({
+      mutationFn: async ({ databaseId, isFavorite }: SetDatabaseFavoriteInput) =>
+        (
+          await controller.execute({
+            databaseId,
+            command: { type: "database.favorite", favorite: isFavorite },
+          })
+        ).result as SetDatabaseFavoriteResponse,
+    });
+  });
 }

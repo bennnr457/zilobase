@@ -51,175 +51,165 @@ export type DuplicatePropertyInput = {
   databasePropertyId: string;
   includeValues?: boolean;
 };
-function defineAddDatabasePropertyMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  const { queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({ config, databaseId, name, position, type }: AddPropertyInput) => {
-      const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
-      const anchors = resolvePropertyCreateAnchors(
-        controller.bootstrap(scope.hostDatabaseId)?.properties ?? [],
-        scope.dataSourceId,
-        position,
-      );
-      const ack = await controller.execute({
-        command: {
-          ...anchors,
-          config: config ?? null,
-          name: name?.trim() || "Property",
-          propertyType: type?.trim() || "text",
-          type: "property.create",
-        },
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      return ack.result as DatabasePropertyEntity;
-    },
-  });
-}
-export type AddDatabasePropertyInput = Parameters<
-  NonNullable<ReturnType<typeof defineAddDatabasePropertyMutation>["mutationFn"]>
->[0];
-export type AddDatabasePropertyResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineAddDatabasePropertyMutation>["mutationFn"]>>
->;
+
+export type AddDatabasePropertyInput = AddPropertyInput;
+export type AddDatabasePropertyResult = DatabasePropertyEntity;
 export function addDatabaseProperty(
   context: ClientOperationContext,
   input: AddDatabasePropertyInput,
 ): Promise<AddDatabasePropertyResult> {
-  return runClientMutation(context, input, defineAddDatabasePropertyMutation);
-}
-
-function defineApplyDatabaseTemplateMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  const { queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({ databaseId, hostDatabaseId, ...input }: ApplyDatabaseTemplateInput) => {
-      const scope = resolveDataSourceCommandScope(
-        queryClient,
-        controller.sessionId,
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    const { queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({
+        config,
         databaseId,
-        hostDatabaseId,
-      );
-      const ack = await controller.execute({
-        command: { ...input, type: "template.apply" },
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      const result = ack.result as {
-        dataSource: import("../core/entities").DataSourceEntity;
-      };
-      return result;
-    },
+        name,
+        position,
+        type,
+      }: AddDatabasePropertyInput) => {
+        const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
+        const anchors = resolvePropertyCreateAnchors(
+          controller.bootstrap(scope.hostDatabaseId)?.properties ?? [],
+          scope.dataSourceId,
+          position,
+        );
+        const ack = await controller.execute({
+          command: {
+            ...anchors,
+            config: config ?? null,
+            name: name?.trim() || "Property",
+            propertyType: type?.trim() || "text",
+            type: "property.create",
+          },
+          databaseId: scope.hostDatabaseId,
+          dataSourceId: scope.dataSourceId,
+        });
+        return ack.result as DatabasePropertyEntity;
+      },
+    });
   });
 }
-export type ApplyDatabaseTemplateResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineApplyDatabaseTemplateMutation>["mutationFn"]>>
->;
+
+export type ApplyDatabaseTemplateResult = {
+  dataSource: import("../core/entities").DataSourceEntity;
+};
 export function applyDatabaseTemplate(
   context: ClientOperationContext,
   input: ApplyDatabaseTemplateInput,
 ): Promise<ApplyDatabaseTemplateResult> {
-  return runClientMutation(context, input, defineApplyDatabaseTemplateMutation);
-}
-
-function defineUpdateDatabasePropertyMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  const { queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({ databaseId, databasePropertyId, ...patch }: UpdatePropertyInput) => {
-      const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
-      const ack = await controller.execute({
-        command: {
-          patch,
-          propertyId: databasePropertyId,
-          type: "property.update",
-        },
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      return ack.result as DatabasePropertyEntity;
-    },
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    const { queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({ databaseId, hostDatabaseId, ...input }: ApplyDatabaseTemplateInput) => {
+        const scope = resolveDataSourceCommandScope(
+          queryClient,
+          controller.sessionId,
+          databaseId,
+          hostDatabaseId,
+        );
+        const ack = await controller.execute({
+          command: { ...input, type: "template.apply" },
+          databaseId: scope.hostDatabaseId,
+          dataSourceId: scope.dataSourceId,
+        });
+        const result = ack.result as {
+          dataSource: import("../core/entities").DataSourceEntity;
+        };
+        return result;
+      },
+    });
   });
 }
-export type UpdateDatabasePropertyInput = Parameters<
-  NonNullable<ReturnType<typeof defineUpdateDatabasePropertyMutation>["mutationFn"]>
->[0];
-export type UpdateDatabasePropertyResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineUpdateDatabasePropertyMutation>["mutationFn"]>>
->;
+
+export type UpdateDatabasePropertyInput = UpdatePropertyInput;
+export type UpdateDatabasePropertyResult = DatabasePropertyEntity;
 export function updateDatabaseProperty(
   context: ClientOperationContext,
   input: UpdateDatabasePropertyInput,
 ): Promise<UpdateDatabasePropertyResult> {
-  return runClientMutation(context, input, defineUpdateDatabasePropertyMutation);
-}
-
-function defineDeleteDatabasePropertyMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  const { queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({ databaseId, databasePropertyId }: DeletePropertyInput) => {
-      const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
-      const ack = await controller.execute({
-        command: {
-          propertyId: databasePropertyId,
-          type: "property.archive",
-        },
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      return ack.result as DatabasePropertyEntity;
-    },
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    const { queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({
+        databaseId,
+        databasePropertyId,
+        ...patch
+      }: UpdateDatabasePropertyInput) => {
+        const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
+        const ack = await controller.execute({
+          command: {
+            patch,
+            propertyId: databasePropertyId,
+            type: "property.update",
+          },
+          databaseId: scope.hostDatabaseId,
+          dataSourceId: scope.dataSourceId,
+        });
+        return ack.result as DatabasePropertyEntity;
+      },
+    });
   });
 }
-export type DeleteDatabasePropertyInput = Parameters<
-  NonNullable<ReturnType<typeof defineDeleteDatabasePropertyMutation>["mutationFn"]>
->[0];
-export type DeleteDatabasePropertyResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineDeleteDatabasePropertyMutation>["mutationFn"]>>
->;
+
+export type DeleteDatabasePropertyInput = DeletePropertyInput;
+export type DeleteDatabasePropertyResult = DatabasePropertyEntity;
 export function deleteDatabaseProperty(
   context: ClientOperationContext,
   input: DeleteDatabasePropertyInput,
 ): Promise<DeleteDatabasePropertyResult> {
-  return runClientMutation(context, input, defineDeleteDatabasePropertyMutation);
-}
-
-function defineDuplicateDatabasePropertyMutation(context: ClientOperationContext) {
-  const controller = clientDatabaseController(context);
-  const { queryClient } = context;
-  return clientMutation({
-    mutationFn: async ({
-      databaseId,
-      databasePropertyId,
-      includeValues = false,
-    }: DuplicatePropertyInput) => {
-      const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
-      const ack = await controller.execute({
-        command: {
-          includeValues,
-          propertyId: databasePropertyId,
-          type: "property.duplicate",
-        },
-        databaseId: scope.hostDatabaseId,
-        dataSourceId: scope.dataSourceId,
-      });
-      return ack.result as DatabasePropertyEntity;
-    },
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    const { queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({ databaseId, databasePropertyId }: DeleteDatabasePropertyInput) => {
+        const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
+        const ack = await controller.execute({
+          command: {
+            propertyId: databasePropertyId,
+            type: "property.archive",
+          },
+          databaseId: scope.hostDatabaseId,
+          dataSourceId: scope.dataSourceId,
+        });
+        return ack.result as DatabasePropertyEntity;
+      },
+    });
   });
 }
-export type DuplicateDatabasePropertyInput = Parameters<
-  NonNullable<ReturnType<typeof defineDuplicateDatabasePropertyMutation>["mutationFn"]>
->[0];
-export type DuplicateDatabasePropertyResult = Awaited<
-  ReturnType<NonNullable<ReturnType<typeof defineDuplicateDatabasePropertyMutation>["mutationFn"]>>
->;
+
+export type DuplicateDatabasePropertyInput = DuplicatePropertyInput;
+export type DuplicateDatabasePropertyResult = DatabasePropertyEntity;
 export function duplicateDatabaseProperty(
   context: ClientOperationContext,
   input: DuplicateDatabasePropertyInput,
 ): Promise<DuplicateDatabasePropertyResult> {
-  return runClientMutation(context, input, defineDuplicateDatabasePropertyMutation);
+  return runClientMutation(context, input, (context: ClientOperationContext) => {
+    const controller = clientDatabaseController(context);
+    const { queryClient } = context;
+    return clientMutation({
+      mutationFn: async ({
+        databaseId,
+        databasePropertyId,
+        includeValues = false,
+      }: DuplicateDatabasePropertyInput) => {
+        const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
+        const ack = await controller.execute({
+          command: {
+            includeValues,
+            propertyId: databasePropertyId,
+            type: "property.duplicate",
+          },
+          databaseId: scope.hostDatabaseId,
+          dataSourceId: scope.dataSourceId,
+        });
+        return ack.result as DatabasePropertyEntity;
+      },
+    });
+  });
 }
 
 function resolvePropertyCreateAnchors(
