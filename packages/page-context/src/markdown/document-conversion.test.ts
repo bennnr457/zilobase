@@ -73,3 +73,38 @@ test("table of contents placement survives page markdown conversion", () => {
   ).toEqual([node]);
   expect(isEffectivelyEmptyPageContent({ type: "doc", content: [node] })).toBe(false);
 });
+
+test("code fences, multiline tables, callouts and unsupported blocks retain content", () => {
+  const result = prosemirrorToMarkdown({
+    type: "doc",
+    content: [
+      { type: "codeBlock", content: [{ type: "text", text: "```\ncode" }] },
+      {
+        type: "callout",
+        content: [{ type: "paragraph", content: [{ type: "text", text: "Remember" }] }],
+      },
+      {
+        type: "table",
+        content: [
+          {
+            type: "tableRow",
+            content: [
+              {
+                type: "tableCell",
+                content: [
+                  { type: "paragraph", content: [{ type: "text", text: "one" }] },
+                  { type: "paragraph", content: [{ type: "text", text: "two" }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { type: "futureBlock" },
+    ],
+  });
+  expect(result).toContain("````\n```\ncode\n````");
+  expect(result).toContain("> Remember");
+  expect(result).toContain("one<br><br>two");
+  expect(result).toContain("[Unsupported block: futureBlock]");
+});

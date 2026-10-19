@@ -1,109 +1,178 @@
-import { buildDatabaseMarkdown } from "../database/build-database-markdown";
+import { renderDatabaseHost, renderDataSource } from "../database/build-database-markdown";
 import { prosemirrorToMarkdown } from "../markdown/prosemirror-to-markdown";
-import type {
-  BuildContextInput,
-  BuildContextResult,
-  ContextSection,
-  DatabaseContextSection,
-  PageContextSection,
+import type { PageDocumentNode } from "../document/page-document";
+import {
+  CONTEXT_VERSION,
+  type BuildContextInput,
+  type BuildContextResult,
+  type ContextCoverage,
+  type ContextManifestEntry,
 } from "./contracts";
 
-const DEFAULT_MAX_CHARS = 16_000;
-
-export function buildContextMarkdown(input: BuildContextInput): BuildContextResult {
-  const maxChars = input.maxChars ?? DEFAULT_MAX_CHARS;
-  const trimmedAttachmentIds: string[] = [];
-  const sectionMarkdown = input.sections.map((section) => buildSection(section));
-  let markdown = ["# Zilobase page context", "", ...sectionMarkdown]
-    .filter(Boolean)
-    .join("\n\n")
-    .trim();
-
-  if (markdown.length <= maxChars) {
-    return {
-      markdown,
-      charCount: markdown.length,
-      trimmedAttachmentIds,
-    };
-  }
-
-  const primarySection = input.sections.find((section) => section.role === "primary");
-  const attachedSections = input.sections.filter((section) => section.role === "attached");
-  const keptAttached: ContextSection[] = [];
-
-  for (let index = attachedSections.length - 1; index >= 0; index -= 1) {
-    const candidate = [primarySection, ...attachedSections.slice(0, index + 1)].filter(
-      (section): section is ContextSection => Boolean(section),
-    );
-    const candidateMarkdown = [
-      "# Zilobase page context",
-      "",
-      ...candidate.map((section) => buildSection(section)),
-    ]
-      .filter(Boolean)
-      .join("\n\n")
-      .trim();
-
-    if (candidateMarkdown.length <= maxChars) {
-      keptAttached.push(...attachedSections.slice(0, index + 1));
-      markdown = candidateMarkdown;
-      break;
-    }
-  }
-
-  if (keptAttached.length < attachedSections.length) {
-    for (let index = keptAttached.length; index < attachedSections.length; index += 1) {
-      trimmedAttachmentIds.push(getSectionId(attachedSections[index]!));
-    }
-  }
-
-  if (!primarySection) {
-    markdown = markdown.slice(0, maxChars);
-  }
-
-  return {
-    markdown,
-    charCount: markdown.length,
-    trimmedAttachmentIds,
-  };
-}
-
-function buildSection(section: ContextSection) {
-  if (section.kind === "page") {
-    return buildPageSection(section);
-  }
-
-  return buildDatabaseSection(section);
-}
-
-function buildPageSection(section: PageContextSection) {
-  const roleLabel = section.role === "primary" ? "Primary" : "Attached";
-  const pageMarkdown = prosemirrorToMarkdown(section.content);
-  const databaseSections = section.databases.map((database) =>
-    buildDatabaseMarkdown(database.schema, database.dataSourceSchemas),
+export function buildContextMarkdown({
+  context,
+  maxChars = 48_000,
+}: BuildContextInput): BuildContextResult {
+  const unique = <T extends { id: string }>(items: T[]) => [
+    ...new Map(items.map((item) => [item.id, item])).values(),
+  ];
+  const pages = unique(context.pages);
+  const databases = unique(context.databases);
+  const sources = unique(context.sources);
+  const blocks = pages.map((page) => {
+    const doc = page.content as PageDocumentNode | null;
+    return (doc?.type === "doc" ? (doc.content ?? []) : [doc])
+      .map(prosemirrorToMarkdown)
+      .filter(Boolean);
+  });
+  const pageCounts = pages.map(() => 0);
+  const rowCounts = sources.map(() => 0);
+  const sourceRows = sources.map((source) =>
+    [...source.rows].sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)),
   );
-
-  return [
-    `## [${roleLabel}] ${section.title} (page)`,
-    `Page ID: ${section.id}`,
-    `Path: ${section.path}`,
-    pageMarkdown || "_Empty page_",
-    databaseSections.length > 0 ? "### Databases on this page" : "",
-    ...databaseSections,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-function buildDatabaseSection(section: DatabaseContextSection) {
-  const roleLabel = section.role === "primary" ? "Primary" : "Attached";
-
-  return [
-    `## [${roleLabel}] ${section.schema.database.name} (database)`,
-    buildDatabaseMarkdown(section.schema, section.dataSourceSchemas),
-  ].join("\n\n");
-}
-
-function getSectionId(section: ContextSection) {
-  return section.kind === "page" ? section.id : section.schema.database.id;
+  const coverage = (base: ContextCoverage, reason?: string): ContextCoverage => ({
+    ...base,
+    complete: base.complete && !reason,
+    reasons: [...base.reasons, ...(reason ? [reason] : [])],
+  });
+  const render = () => {
+    const manifest: ContextManifestEntry[] = [];
+    const omissions = context.unavailable.map(
+      ({ parent, reason }) => `${parent.type} ${parent.id}: ${reason}`,
+    );
+    const sections = pages.map((page, index) => {
+      const reason =
+        pageCounts[index]! < blocks[index]!.length
+          ? "Page body blocks omitted by context budget"
+          : undefined;
+      const pageCoverage = coverage(page.coverage, reason);
+      omissions.push(...pageCoverage.reasons.map((r) => `Page ${page.id}: ${r}`));
+      manifest.push({
+        key: `page:${page.id}`,
+        type: "page",
+        id: page.id,
+        title: page.title,
+        pageId: page.id,
+        provenance: page.provenance,
+        coverage: pageCoverage,
+      });
+      return [
+        `## [Attached] ${page.title.replace(/\r?\n/g, " ")} (page)`,
+        `Page ID: ${page.id}`,
+        `Captured: ${page.provenance.capturedAt}; Origin: ${page.provenance.origin}; Revision: ${page.provenance.revision ?? "unknown"}`,
+        `Database IDs: ${page.databaseIds.join(", ") || "none"}`,
+        `Path: ${page.path}`,
+        ...blocks[index]!.slice(0, pageCounts[index]),
+        "<!-- end-page -->",
+      ].join("\n\n");
+    });
+    for (const database of databases) {
+      manifest.push({
+        key: `database:${database.id}`,
+        type: "database",
+        id: database.id,
+        title: database.name,
+        databaseId: database.id,
+        provenance: database.provenance,
+        coverage: database.coverage,
+      });
+      omissions.push(...database.coverage.reasons.map((r) => `Database ${database.id}: ${r}`));
+      sections.push(renderDatabaseHost(database));
+    }
+    sources.forEach((source, index) => {
+      const rows = sourceRows[index]!.slice(0, rowCounts[index]);
+      const total = source.coverage.totalRows;
+      const omitted = Math.max(0, (total ?? source.rows.length) - rows.length);
+      const sourceCoverage = {
+        ...coverage(
+          source.coverage,
+          rows.length < source.rows.length ? "Records omitted by context budget" : undefined,
+        ),
+        includedRows: rows.length,
+        omittedRows: omitted,
+      };
+      manifest.push({
+        key: `source:${source.id}`,
+        type: "source",
+        id: source.id,
+        title: source.name,
+        sourceId: source.id,
+        databaseId: source.hostDatabaseIds[0],
+        provenance: source.provenance,
+        coverage: sourceCoverage,
+      });
+      for (const row of rows)
+        manifest.push({
+          key: `record:${source.id}:${row.id}`,
+          type: "record",
+          id: row.id,
+          title: row.name,
+          sourceId: source.id,
+          pageId: row.pageId,
+          databaseId: source.hostDatabaseIds[0],
+          provenance: source.provenance,
+        });
+      omissions.push(...sourceCoverage.reasons.map((r) => `Source ${source.id}: ${r}`));
+      sections.push(renderDataSource({ ...source, rows, coverage: sourceCoverage }));
+      sections.push(
+        `Source ${source.id} coverage: ${rows.length}/${total ?? "unknown"} rows included; ${omitted} omitted; ${sourceCoverage.complete ? "complete" : "partial"}.`,
+      );
+    });
+    const markdown = [
+      "# Zilobase workspace context",
+      ...sections,
+      ...(omissions.length
+        ? ["## Context limitations", ...omissions.map((reason) => `- ${reason}`)]
+        : []),
+    ].join("\n\n");
+    return { markdown, manifest, omissions };
+  };
+  // Metadata and omission notices are mandatory. Never silently slice them or a table row.
+  if (!Number.isFinite(maxChars) || maxChars < 0 || render().markdown.length > maxChars)
+    return {
+      version: CONTEXT_VERSION,
+      markdown: "",
+      charCount: 0,
+      manifest: [],
+      status: "blocked",
+      omissions: ["Selected resource metadata exceeds the context budget. Remove an attachment."],
+      trimmedAttachmentIds: context.roots.map((root) => root.id),
+    };
+  for (let i = 0; i < pages.length; i++) {
+    for (let j = 0; j < blocks[i]!.length; j++) {
+      pageCounts[i]!++;
+      if (render().markdown.length > maxChars) {
+        pageCounts[i]!--;
+        break;
+      }
+    }
+  }
+  // Allocate rows across sources so one large source cannot consume every record slot.
+  const exhausted = new Set<number>();
+  while (exhausted.size < sources.length)
+    for (let i = 0; i < sources.length; i++) {
+      if (exhausted.has(i)) continue;
+      if (rowCounts[i]! >= sourceRows[i]!.length) {
+        exhausted.add(i);
+        continue;
+      }
+      rowCounts[i]!++;
+      if (render().markdown.length > maxChars) {
+        rowCounts[i]!--;
+        exhausted.add(i);
+      }
+    }
+  const result = render();
+  return {
+    ...result,
+    version: CONTEXT_VERSION,
+    charCount: result.markdown.length,
+    status:
+      result.omissions.length || result.manifest.some((e) => e.coverage?.complete === false)
+        ? "partial"
+        : "complete",
+    trimmedAttachmentIds: pages
+      .filter((_, index) => pageCounts[index]! < blocks[index]!.length)
+      .map((page) => page.id),
+  };
 }

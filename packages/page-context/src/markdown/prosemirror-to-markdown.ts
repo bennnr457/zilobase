@@ -59,13 +59,23 @@ function serializeHeading(node: PageDocumentNode) {
 }
 
 function serializeBlockquote(node: PageDocumentNode) {
-  return (node.content ?? []).map((child) => `> ${serializeBlock(child)}`).join("\n");
+  return (node.content ?? [])
+    .map((child) =>
+      serializeBlock(child)
+        .split("\n")
+        .map((line) => `> ${line}`)
+        .join("\n"),
+    )
+    .join("\n");
 }
 
 function serializeCodeBlock(node: PageDocumentNode) {
   const language = stringAttr(node.attrs, "language");
-  const code = serializeInline(node.content ?? []);
-  return `\`\`\`${language}\n${code}\n\`\`\``.trim();
+  const code = (node.content ?? []).map((child) => child.text ?? "").join("");
+  const fence = "`".repeat(
+    Math.max(3, ...[...code.matchAll(/`+/g)].map(([run]) => run.length + 1)),
+  );
+  return `${fence}${language}\n${code}\n${fence}`;
 }
 
 function serializeDatabaseBlock(node: PageDocumentNode) {
@@ -122,10 +132,7 @@ function serializeLinkMention(node: PageDocumentNode) {
 
 function serializeDetailsSummary(node: PageDocumentNode) {
   const summary = serializeInline(node.content ?? []);
-  const body = serializeBlocks(
-    (node as PageDocumentNode & { parentContent?: PageDocumentNode[] }).content ?? [],
-  );
-  return summary ? `**${summary}**\n${body}`.trim() : body;
+  return summary ? `**${summary}**` : "";
 }
 
 function serializeNestedBlocks(node: PageDocumentNode) {
@@ -134,13 +141,19 @@ function serializeNestedBlocks(node: PageDocumentNode) {
 
 function serializeDefaultBlock(node: PageDocumentNode) {
   if (node.content?.length) {
-    return serializeBlocks(node.content);
+    return `[Unsupported block: ${node.type ?? "unknown"}]\n${serializeBlocks(node.content)}`;
   }
 
-  return serializeInline(node.content ?? []);
+  return `[Unsupported block: ${node.type ?? "unknown"}]`;
 }
 
 const BLOCK_SERIALIZERS: Record<string, BlockSerializer> = {
+  callout: serializeBlockquote,
+  tabsBlock: serializeNestedBlocks,
+  tabPanel: (node) =>
+    `${stringAttr(node.attrs, "title") || "Tab"}\n\n${serializeNestedBlocks(node)}`,
+  askAiBlock: (node) => `[Ask AI: ${stringAttr(node.attrs, "prompt")}]`,
+  inlineMath: (node) => `$${stringAttr(node.attrs, "latex")}$`,
   blockMath: (node) => `$$\n${stringAttr(node.attrs, "latex")}\n$$`,
   blockquote: serializeBlockquote,
   bookmarkBlock: serializeBookmarkBlock,
@@ -183,7 +196,7 @@ function serializeList(nodes: PageDocumentNode[], marker: string) {
       }
 
       const content = serializeBlocks(node.content ?? []);
-      return `${marker}${content}`;
+      return `${marker}${content.replace(/\n/g, "\n  ")}`;
     })
     .join("\n");
 }
@@ -196,7 +209,7 @@ function serializeOrderedList(nodes: PageDocumentNode[]) {
       }
 
       const content = serializeBlocks(node.content ?? []);
-      return `${index + 1}. ${content}`;
+      return `${index + 1}. ${content.replace(/\n/g, "\n   ")}`;
     })
     .join("\n");
 }
@@ -217,7 +230,11 @@ function serializeTable(rows: PageDocumentNode[]) {
     .map((row) =>
       (row.content ?? [])
         .filter((cell) => cell.type === "tableCell" || cell.type === "tableHeader")
-        .map((cell) => serializeInline(cell.content ?? []).replace(/\|/g, "\\|")),
+        .map((cell) =>
+          serializeBlocks(cell.content ?? [])
+            .replace(/\|/g, "\\|")
+            .replace(/\n/g, "<br>"),
+        ),
     );
 
   if (tableRows.length === 0) {

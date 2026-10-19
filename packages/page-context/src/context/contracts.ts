@@ -166,7 +166,7 @@ export type DatabaseContextSection = {
 export type ContextSection = PageContextSection | DatabaseContextSection;
 
 export type BuildContextInput = {
-  sections: ContextSection[];
+  context: WorkspaceContext;
   maxChars?: number;
 };
 
@@ -174,4 +174,8 @@ export type BuildContextResult = {
   markdown: string;
   charCount: number;
   trimmedAttachmentIds: string[];
+  status: "complete" | "partial" | "blocked";
+  manifest: ContextManifestEntry[];
+  omissions: string[];
+  version: typeof CONTEXT_VERSION;
 };

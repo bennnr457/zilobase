@@ -12,7 +12,7 @@ export function extractPageMarkdownFromContext(contextMarkdown: string, pageId: 
     const end = matches[index + 1]?.index ?? contextMarkdown.length;
     const section = contextMarkdown.slice(start, end).trim();
 
-    if (!section.includes(`Page ID: ${pageId}`)) {
+    if (!section.split("\n").includes(`Page ID: ${pageId}`)) {
       continue;
     }
 
@@ -26,7 +26,13 @@ export function extractPageMarkdownFromContext(contextMarkdown: string, pageId: 
     const databaseHeaderIndex = lines.findIndex((line) =>
       line.startsWith("### Databases on this page"),
     );
-    const bodyEnd = databaseHeaderIndex === -1 ? lines.length : databaseHeaderIndex;
+    const markerIndex = lines.indexOf("<!-- end-page -->");
+    const bodyEnd =
+      markerIndex >= 0
+        ? markerIndex
+        : databaseHeaderIndex === -1
+          ? lines.length
+          : databaseHeaderIndex;
     const body = lines
       .slice(pathLineIndex + 1, bodyEnd)
       .join("\n")
