@@ -2234,7 +2234,7 @@ function DataGridTableBodyRowCell<TData extends object>({
                        into a wider-than-tall blob, and it can never leave
                        the grid, which is why it needs no boundary clamps. */
                     "bg-action-selected-border end-0 bottom-0 size-[5px]"
-                  : "bg-action-selected-border border-surface-canvas end-0 bottom-0 size-[9px] rounded-full border",
+                  : "bg-action-selected-border end-0 bottom-0 size-[7px] rounded-full",
               props.tableClassNames?.cellFillHandle,
             )}
           />

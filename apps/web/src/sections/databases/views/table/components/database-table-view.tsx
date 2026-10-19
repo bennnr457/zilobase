@@ -1376,7 +1376,7 @@ export function DatabaseTableView() {
           cellSelection: true,
           cellEditMode: "click",
           cellFillHandle: editable,
-          cellFillHandleVariant: "ring",
+          cellFillHandleVariant: "dot",
         }}
       >
         <DatabaseGridScrollContext.Provider value={grid.scrollContext}>
