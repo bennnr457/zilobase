@@ -129,3 +129,22 @@ Validated on 2026-10-19 in the shared working tree:
 - A focused authentication regression verifies successful sign-in with an observed session query and later session invalidation/refetch. Upload adapter coverage verifies that changing the desktop server during byte transfer prevents completion against the replacement server.
 
 The desktop check covers the shared networking adapter; it is not a packaged native application launch. The unsupported legacy meeting-summary hook described above remains unchanged.
+
+## Cleanup passes
+
+The behavior-preserving cleanup keeps operation definitions beside their exported functions and uses named input/result contracts. Hooks reuse those inputs, while `runClientMutation` retains identity guards and mutation/cache execution. Shared principal, template and row-state factories remain domain-owned. Existing Effect workflows retain their current owners.
+
+The passes cover small client mutations; authentication, membership and integration operations; page/database operations; server management wrappers and meeting guards; OAuth compatibility types; architecture coverage; and recorder operations. Server helpers preserve the order of policy, actor, workspace and payload checks. Context-based and legacy transport-only OAuth signatures remain supported.
+
+Across the 63 reviewed operation implementation files, the cleanup removes 98 one-use mutation-definition wrappers and renames the retained shared principal factory. Their combined length changes from 10,217 to 9,699 lines. No source modules are moved or deleted.
+
+Cleanup validation on 2026-10-19:
+
+- 520 features tests and 597 web checks passed, including identity transitions, optimistic overlap, authentication refresh, uploads and existing React consumers.
+- 759 server tests passed with 13 existing skips, plus 260 query regressions; coverage gates and server build passed. New direct-call tests verify meeting denial ordering before payload access.
+- Workspace typechecks, lint, formatting and architecture checks passed. Existing lint warnings remain.
+- Operation graph tests follow dynamic imports and erased type exports correctly, discover all 16 published React entrypoints, reject transport/auth aliases in hook owners and check the server API's transitive HTTP boundary.
+- The web production build and bundle budget passed. Existing platform transport and storage implementations retain their behavior.
+- One existing route-error profile test missed its 10 ms settling window under parallel validation; its focused run and subsequent full web runs passed.
+
+Offline session-policy ownership and the unsupported legacy meeting-summary UI remain separate follow-ups.
