@@ -152,3 +152,14 @@ runtime-provider boundaries, and public export compatibility. Server tests also
 lock HTTP method/path and middleware registration order. `npm run test:server`
 runs coverage, query regressions, and the server build; existing isolated database,
 calendar, background, and automation harnesses exercise persistence and delivery.
+
+### Ask AI
+
+Configure `OPENAI_API_KEY` and `AI_MODEL` in the server environment. `AI_MODEL` is
+an OpenAI Responses API model ID available to that key; it has no hard-coded
+default. Credentials stay on the server. Ask AI uses the same authenticated API
+origin for web and desktop, and streams responses from `POST /ai/chat`.
+
+Users attach authorized workspace pages and databases with `@`. Open editor
+content is captured for the current turn. Each database source is included once,
+with all accessible view configurations. The context inspector reports omissions.

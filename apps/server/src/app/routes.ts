@@ -1,3 +1,4 @@
+import { aiRoutes } from "../routes/ai/routes";
 import type { Hono } from "hono";
 import { calendarProviderRoutes, calendarRoutes } from "../routes/calendar/routes";
 
@@ -44,6 +45,7 @@ export function registerRoutes(app: Hono<AppBindings>) {
   app.route("/workspaces", notificationRoutes);
   app.route("/workspaces", teamspaceRoutes);
   app.route("/search", searchRoutes);
+  app.route("/ai", aiRoutes);
   app.route("/session", sessionRoutes);
   app.route("/user-settings", pageSettingsRoutes);
   app.route("/user-settings/profile", profileImageRoutes);

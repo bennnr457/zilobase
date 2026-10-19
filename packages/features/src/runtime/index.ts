@@ -158,3 +158,5 @@ export { timedLayout } from "../calendar/context";
 
 export { collectWorkspaceContext, parsePageDocument } from "../ai/context";
 export type { ContextReadPorts, ContextDatabaseRead, LocalPageSnapshot } from "../ai/context";
+export { chatRequestSchema } from "../ai/contracts";
+export type { ChatRequest, ChatEvent, ChatMessage } from "../ai/contracts";

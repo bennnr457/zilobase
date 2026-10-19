@@ -93,6 +93,34 @@ export async function apiFetch<T>(
   return policy.transformResponse(path, resolveRuntimeResponse(path, data)) as T;
 }
 
+/** Same deployment, authentication and request policy as JSON reads; leaves the body streaming. */
+export async function apiStreamFetch(path: string, init: RequestInit) {
+  const policy = getRequestPolicy();
+  const intercepted = policy.intercept(path, (init.method ?? "GET").toUpperCase(), init.body);
+  if (intercepted.handled) throw new Error("Streaming chat is unavailable in this workspace");
+  const headers = getApiRequestHeaders(init.headers);
+  if (init.body && !headers.has("content-type")) headers.set("content-type", "application/json");
+  let response: Response;
+  try {
+    response = await desktopNetworkFetch(toApiUrl(path), {
+      ...init,
+      headers,
+      credentials: getHostedEditorAuthToken() ? "omit" : "include",
+    });
+  } catch (error) {
+    if (!isRequestAbort(error)) policy.observe({ type: "network-error", error });
+    throw error;
+  }
+  policy.observe({ type: "response", status: response.status });
+  const token = response.headers.get("set-auth-token");
+  if (token) await setDesktopAuthToken(token);
+  if (!response.ok) {
+    const data = parseJson(await response.text());
+    throw new ApiError(readErrorMessage(data, response.status), response.status, data);
+  }
+  return response;
+}
+
 function resolveRuntimeResponse(path: string, data: unknown) {
   const server = getSelectedDesktopServer();
   if (!server || !data || typeof data !== "object") return data;

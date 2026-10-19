@@ -8,6 +8,7 @@ import type { ClientLifecycle } from "./lifecycle";
 /** The same ports are supplied by React composition and imperative callers. */
 export type ClientOperationContext = {
   apiFetch: ApiFetcher;
+  streamFetch?: (path: string, init: RequestInit) => Promise<Response>;
   queryClient: QueryClient;
   lifecycle?: ClientLifecycle;
   preferredActiveWorkspaceId?: string | null;

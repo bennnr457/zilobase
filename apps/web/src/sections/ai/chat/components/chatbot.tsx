@@ -1,3 +1,4 @@
+import { useSendChat } from "@zilobase/features/ai/react";
 import { useChatAttachments } from "../../attachments/hooks/use-chat-attachments";
 import { ContextInspector } from "../../attachments/components/context-inspector";
 import type { BuildContextResult } from "@zilobase/page-context";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ChatbotComposer } from "../../composer/components/chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PromptInputMessage } from "../../composer/components/prompt-input";
 
 export default function Chatbot({
@@ -28,19 +29,83 @@ export default function Chatbot({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const attachmentState = useChatAttachments(workspaceId);
   const [sentContext, setSentContext] = useState<BuildContextResult | null>(null);
+  const send = useSendChat();
+  const [streaming, setStreaming] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const streamController = useRef<AbortController | null>(null);
+  useEffect(() => () => streamController.current?.abort(), []);
   const onSubmit = async (message: PromptInputMessage) => {
     const nextText = message.text.trim();
-    if (!nextText || attachmentState.busy) return;
+    if (!nextText || attachmentState.busy || streaming || !workspaceId) return;
+    setChatError(null);
+    const controller = new AbortController();
+    streamController.current = controller;
+    const assistantId = crypto.randomUUID();
+    let accepted = false;
     try {
       const prepared = await attachmentState.build();
-      setSentContext(prepared.result);
-      setMessages((current) => [
-        ...current,
-        { id: crypto.randomUUID(), role: "user", text: nextText },
-      ]);
-      setText("");
-    } catch {
-      /* The attachment panel retains the draft and displays the failure. */
+      controller.signal.throwIfAborted();
+      setStreaming(true);
+      await send(
+        {
+          workspaceId,
+          requestId: crypto.randomUUID(),
+          text: nextText,
+          roots: prepared.roots,
+          snapshots: prepared.snapshots,
+          history: messages
+            .slice(-30)
+            .map((entry) => ({ role: entry.role, text: entry.text, roots: entry.roots ?? [] })),
+        },
+        controller.signal,
+        (event) => {
+          if (event.type === "context") {
+            accepted = true;
+            setSentContext(event.context);
+            setText("");
+            setMessages((current) => [
+              ...current,
+              { id: crypto.randomUUID(), role: "user", text: nextText, roots: prepared.roots },
+              {
+                id: assistantId,
+                role: "assistant",
+                text: "",
+                roots: prepared.roots,
+                context: event.context,
+                status: "streaming",
+              },
+            ]);
+          } else if (event.type === "delta")
+            setMessages((current) =>
+              current.map((entry) =>
+                entry.id === assistantId ? { ...entry, text: entry.text + event.text } : entry,
+              ),
+            );
+          else if (event.type === "done")
+            setMessages((current) =>
+              current.map((entry) =>
+                entry.id === assistantId ? { ...entry, status: event.status } : entry,
+              ),
+            );
+        },
+      );
+    } catch (cause) {
+      if (!controller.signal.aborted)
+        setChatError(cause instanceof Error ? cause.message : "Could not send message");
+      if (accepted)
+        setMessages((current) =>
+          current.map((entry) =>
+            entry.id === assistantId
+              ? { ...entry, status: controller.signal.aborted ? "stopped" : "failed" }
+              : entry,
+          ),
+        );
+      if (!controller.signal.aborted) setText(nextText);
+    } finally {
+      if (streamController.current === controller) {
+        streamController.current = null;
+        setStreaming(false);
+      }
     }
   };
   const hasMessages = messages.length > 0;
@@ -88,20 +153,26 @@ export default function Chatbot({
       </div>
       <ChatLayout sidebar={isSidebar}>
         {beforeComposer}
-        {sentContext && (
-          <ContextInspector context={sentContext} label="Last prepared message context" />
-        )}
-
         <ChatbotComposer
           isSidebar={isSidebar}
           onSubmit={onSubmit}
           onTextChange={setText}
           workspaceId={workspaceId}
           onAttach={attachmentState.add}
-          disabled={attachmentState.busy}
+          disabled={attachmentState.busy || streaming}
           rootRef={rootRef}
+          onStop={
+            streaming || attachmentState.busy
+              ? () => {
+                  attachmentState.cancel();
+                  streamController.current?.abort();
+                }
+              : undefined
+          }
           text={text}
         >
+          {sentContext && <ContextInspector context={sentContext} label="Last sent context" />}
+
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {attachmentState.attachments.map((item) => (
               <Button
@@ -138,7 +209,7 @@ export default function Chatbot({
                 type="button"
                 size="sm"
                 variant="ghost"
-                disabled={attachmentState.busy}
+                disabled={attachmentState.busy || streaming}
                 onClick={() => {
                   void attachmentState.build().catch(() => {});
                 }}
@@ -147,6 +218,16 @@ export default function Chatbot({
               </Button>
             )}
           </div>
+          {chatError && (
+            <p role="alert" className="mb-2 text-sm text-destructive">
+              {chatError}
+            </p>
+          )}
+          {streaming && (
+            <p role="status" className="mb-2 text-xs">
+              Writing answer…
+            </p>
+          )}
           {attachmentState.busy && (
             <p role="status" className="mb-2 text-xs">
               Preparing context…
@@ -174,7 +255,7 @@ function getGreeting(name?: string | null) {
 }
 
 const starterPrompts = [
-  "Summarize my workspace",
-  "Find relevant information",
+  "Summarize the attached pages",
+  "What needs attention in these records?",
   "Create a project plan",
 ];

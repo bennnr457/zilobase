@@ -6,7 +6,7 @@ import {
 } from "@zilobase/features";
 import type { Workspace } from "@zilobase/features/workspaces";
 import { createApiAuthClient, type SessionResponse } from "@zilobase/features/auth";
-import { apiFetch, clearApiAuthToken } from "@/platform/network/api";
+import { apiFetch, apiStreamFetch, clearApiAuthToken } from "@/platform/network/api";
 import {
   describeDesktopError,
   recordDesktopDiagnostic,
@@ -165,6 +165,7 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
         deployment: clientDeployment,
         cacheStorage: webClientCacheStorage,
         apiFetch,
+        streamFetch: apiStreamFetch,
         lifecycle: webClientLifecycle,
         databasePresenceColor,
         auth: webAuthClient,

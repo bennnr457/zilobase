@@ -3,7 +3,9 @@
 import { MessageList, MessageListContent } from "./message-list";
 import { Message, MessageContent, MessageResponse } from "./message";
 
-export type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
+import type { ChatMessage } from "@zilobase/features/ai";
+export type { ChatMessage } from "@zilobase/features/ai";
+import { ContextInspector } from "../../attachments/components/context-inspector";
 
 export function ChatbotMessages({
   isSidebar,
@@ -21,6 +23,12 @@ export function ChatbotMessages({
           <Message from={message.role} key={message.id}>
             <MessageContent>
               <MessageResponse>{message.text}</MessageResponse>
+              {message.status && message.status !== "completed" && (
+                <p className="mt-2 text-xs text-content-secondary">{message.status}</p>
+              )}
+              {message.context && (
+                <ContextInspector context={message.context} label="Sources for this answer" />
+              )}
             </MessageContent>
           </Message>
         ))}

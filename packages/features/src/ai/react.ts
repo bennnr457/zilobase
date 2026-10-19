@@ -9,3 +9,13 @@ export function usePrepareChatContext() {
     [context],
   );
 }
+
+import { sendChat } from "./stream";
+export function useSendChat() {
+  const context = useZilobaseFeatures();
+  return useCallback(
+    (...args: Parameters<typeof sendChat> extends [unknown, ...infer Rest] ? Rest : never) =>
+      sendChat(context, ...args),
+    [context],
+  );
+}

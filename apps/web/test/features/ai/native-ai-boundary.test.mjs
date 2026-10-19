@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { readChatbotSource } from "./ai-chatbot-source.mjs";
 
 export function register({ readSource, assert, test }) {
-  test("Ask AI has UI state without a conversation runtime or client SDK", async () => {
+  test("Ask AI uses shared chat operations and keeps provider code off the web", async () => {
     const sources = await Promise.all([
       readChatbotSource(readSource),
       readSource("/src/sections/ai/workspace/components/ask-ai-workspace.tsx"),
@@ -12,8 +12,9 @@ export function register({ readSource, assert, test }) {
     ]);
     assert.doesNotMatch(
       sources.join("\n"),
-      /@zilobase\/features\/ai-chat|useAiChatThreadState|useChatbotConversation|apiFetch|authFetch|useMutation|from ["'](?:ai|@ai-sdk\/[^"']+|agents)["']/,
+      /apiFetch|authFetch|OPENAI_API_KEY|from ["'](?:ai|@ai-sdk\/[^"']+|agents)["']/,
     );
+    assert.match(sources[0], /useSendChat/);
     const editorSources = await Promise.all([
       readSource("/src/sections/pages/editor/editor.tsx"),
       readSource("/src/sections/pages/editor/runtime/components/page-editor-registry.tsx"),

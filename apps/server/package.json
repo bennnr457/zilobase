@@ -52,6 +52,7 @@
     "db:studio": "drizzle-kit studio --host 127.0.0.1 --port 4983"
   },
   "dependencies": {
+    "@ai-sdk/openai": "4.0.97",
     "@better-auth/api-key": "1.7.3",
     "@better-auth/expo": "1.7.3",
     "@better-auth/oauth-provider": "1.7.3",
@@ -69,6 +70,7 @@
     "@zilobase/page-context": "file:../../packages/page-context",
     "@zilobase/runtime-adapter": "file:../../packages/runtime-adapter",
     "@zilobase/runtime-ports": "file:../../packages/runtime-ports",
+    "ai": "7.0.145",
     "better-auth": "1.7.3",
     "bullmq": "6.3.11",
     "crossws": "^0.4.9",
