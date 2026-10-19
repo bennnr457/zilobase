@@ -107,6 +107,12 @@ extraction, authorization, retries, cache ownership and unsupported legacy calls
 - **Pages:** `read`, `content`, `hierarchy`, `lifecycle`, `sharing`, `navigation`,
   and `layouts`, plus the existing `graph`, `placements`, `properties`, and
   reusable page mutations. Layout routes retain the `/page-layouts` mount.
+  Member page-detail responses include optional `propertyContext`: property IDs,
+  accessible row/source targets, and host/source revisions read before the
+  property bindings. This lets a client reuse complete authorized database reads
+  without returning definitions or values again. Guest/published reads omit this
+  context. `/pages/:id/properties` remains the fallback for missing or stale data,
+  with its existing page access and workspace checks.
 - **Page guests:** invitations, approval requests, workspace guest management,
   and common guest policy, independent from workspace member invitations.
 - **Databases:** `lifecycle`, `mutations`, `navigation`, `access`, `commands`,

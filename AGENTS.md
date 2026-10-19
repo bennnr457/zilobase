@@ -256,6 +256,35 @@ Do not duplicate the web API client, query keys, collections, or mutation logic.
   new online domain behavior depend on a durable storage implementation. Persist
   supported payloads, not live collection references or transient UI previews.
 
+Page metadata property reads belong to `packages/features/src/pages/property-cache.ts`
+and `query-hooks.ts`. A database row can supply an immediate partial projection
+from authorized bootstrap/window references and the canonical definitions/values.
+That projection does not prove the page's complete database membership. Member
+page-detail reads supply property IDs, row/source presence targets, and host/source
+versions; reuse them only when every target has a fresh, authorized loaded row in
+the same data scope. Cold, incomplete, stale, guest, and public reads retain the
+existing property endpoint and its access checks. Never copy database values into
+page-local state or seed partial data as a fresh complete query result.
+
+Derived property references retain the oldest supporting read timestamp within
+the existing 30-second freshness window. Admitted value edits and definition
+renames publish through the shared collections without refreshing read age.
+Property membership changes, removed rows/sources, and delivery gaps invalidate
+the affected page context and property query. Cached values can remain visible
+during recovery, but invalidated presence targets cannot authorize edits. Access
+denials suppress the projection, and session/capability disposal prevents late
+responses from restoring it. Query-cache notifications use TanStack Query's
+scheduler so sibling renders cannot synchronously update page metadata.
+After database result references are released, page-only realtime receipts
+update retained page/definition/value collections without recreating source
+record or binding collections.
+
+Keep property coverage/lifecycle tests beside `property-cache.ts`; focused browser
+checks live in `scripts/databases/e2e/page-properties.spec.mjs`. The isolated signed-in
+`npm run test:databases:app-browser` checks actual side panes, full-page promotion,
+dialogs, mobile navigation, embedded databases, and shared edits. Complete loaded
+items must open without a `GET /pages/:id/properties` request.
+
 ## Hosted editor and future native integration
 
 The editor remains web code. Document design rendering belongs in
