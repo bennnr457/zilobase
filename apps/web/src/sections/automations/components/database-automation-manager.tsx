@@ -149,7 +149,7 @@ export function DatabaseAutomationManager({
           onOpenAutoFocus={(event) => event.preventDefault()}
           showCloseButton={false}
         >
-          <DialogHeader className="shrink-0 border-b px-4 py-3 pr-12">
+          <DialogHeader className="shrink-0 flex-row items-center gap-2 border-b px-4 py-2.5">
             <DialogTitle className="sr-only">
               {selectedAutomationId ? "Edit automation" : "New automation"}
             </DialogTitle>
@@ -158,7 +158,7 @@ export function DatabaseAutomationManager({
             </DialogDescription>
             <Input
               aria-label="Automation name"
-              className="h-7 border-transparent bg-transparent px-0 font-heading text-sm font-medium focus-visible:px-2"
+              className="h-7 min-w-0 flex-1 border-transparent bg-transparent px-0 font-heading text-sm font-medium focus-visible:px-2"
               onChange={(event) =>
                 setDraft({
                   ...draft,
@@ -171,9 +171,9 @@ export function DatabaseAutomationManager({
             />
             <Button
               aria-label="Close automation editor"
-              className="absolute right-3 top-3 text-content-secondary"
+              className="text-content-secondary"
               onClick={requestEditorClose}
-              size="icon-sm"
+              size="icon"
               type="button"
               variant="ghost"
             >
