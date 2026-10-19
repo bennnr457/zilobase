@@ -2,12 +2,15 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../../../infrastructure/database/index";
 import {
   database,
+  databaseProperty,
   databaseRow,
   dataSource,
   favorite,
   pageItemPlacement,
   pageSettings,
+  pageProperty,
 } from "../../../infrastructure/database/schema";
+import type { PagePropertyContext } from "@zilobase/features/runtime";
 import { hasAccess, type AccessLevel } from "../../access/access-level";
 import { canAccessDatabaseInWorkspace } from "../../access/effective-access";
 import { getWorkspacePrincipalKind } from "../../access/principal-access";
@@ -49,7 +52,13 @@ export async function getPageDetail(
         : Promise.resolve([]),
       user && hasAccess(accessLevel, "view")
         ? db
-            .selectDistinct({ databaseId: dataSource.parentDatabaseId })
+            .selectDistinct({
+              databaseId: dataSource.parentDatabaseId,
+              dataSourceId: dataSource.id,
+              rowId: databaseRow.id,
+              databaseVersion: database.version,
+              sourceVersion: dataSource.version,
+            })
             .from(databaseRow)
             .innerJoin(dataSource, eq(databaseRow.dataSourceId, dataSource.id))
             .innerJoin(database, eq(dataSource.parentDatabaseId, database.id))
@@ -65,27 +74,88 @@ export async function getPageDetail(
   const [favoriteRecord] = favoriteRecords;
   const [parentPlacement] = parentPlacements;
   const [ownerSettings] = ownerSettingsRecords;
-  const databaseIds = user
+  const accessibleMemberships = user
     ? (
         await Promise.all(
-          databaseMemberships.map(async ({ databaseId }) =>
-            (await canAccessDatabaseInWorkspace(databaseId, record.workspaceId, user.id, "view"))
-              ? databaseId
+          databaseMemberships.map(async (membership) =>
+            (await canAccessDatabaseInWorkspace(
+              membership.databaseId,
+              record.workspaceId,
+              user.id,
+              "view",
+            ))
+              ? membership
               : null,
           ),
         )
-      ).filter((databaseId): databaseId is string => Boolean(databaseId))
+      ).filter((membership): membership is (typeof databaseMemberships)[number] =>
+        Boolean(membership),
+      )
     : [];
+  const databaseIds = [
+    ...new Set(accessibleMemberships.map((membership) => membership.databaseId)),
+  ];
   const viewerType = usesPublishedFallback
     ? "public"
     : user && hasAccess(accessLevel, "view")
       ? await getWorkspacePrincipalKind(record.workspaceId, user.id)
       : "public";
 
+  // Page access proves the metadata membership. This receipt contains no property
+  // definitions or values; the client can reuse its already-authorized row reads.
+  let propertyContext: PagePropertyContext | undefined;
+  if (viewerType === "member") {
+    const bindings = await db
+      .select({ propertyId: pageProperty.id, dataSourceId: databaseRow.dataSourceId })
+      .from(databaseRow)
+      .innerJoin(databaseProperty, eq(databaseRow.dataSourceId, databaseProperty.dataSourceId))
+      .innerJoin(pageProperty, eq(databaseProperty.propertyId, pageProperty.id))
+      .where(
+        and(
+          eq(databaseRow.pageId, record.id),
+          eq(pageProperty.workspaceId, record.workspaceId),
+          isNull(databaseRow.deletedAt),
+          isNull(pageProperty.deletedAt),
+        ),
+      )
+      .orderBy(pageProperty.createdAt);
+    propertyContext = {
+      pageId: record.id,
+      workspaceId: record.workspaceId,
+      propertyIds: [...new Set(bindings.map((binding) => binding.propertyId))],
+      databaseIds,
+      databaseVersions: Object.fromEntries(
+        accessibleMemberships.map((membership) => [
+          membership.databaseId,
+          membership.databaseVersion,
+        ]),
+      ),
+      sourceVersions: Object.fromEntries(
+        accessibleMemberships.map((membership) => [
+          membership.dataSourceId,
+          membership.sourceVersion,
+        ]),
+      ),
+      presenceTargets: accessibleMemberships.map((membership) => ({
+        databaseId: membership.databaseId,
+        dataSourceId: membership.dataSourceId,
+        rowId: membership.rowId,
+        propertyIds: [
+          ...new Set(
+            bindings
+              .filter((binding) => binding.dataSourceId === membership.dataSourceId)
+              .map((binding) => binding.propertyId),
+          ),
+        ],
+      })),
+    };
+  }
+
   return {
     accessLevel: hasAccess(accessLevel, "view") ? accessLevel : "view",
     databaseIds,
     viewerType,
+    ...(propertyContext ? { propertyContext } : {}),
     page: {
       ...record,
       publishedOwnerPreferences: usesPublishedFallback

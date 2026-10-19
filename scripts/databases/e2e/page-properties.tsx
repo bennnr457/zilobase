@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient } from "@tanstack/react-query";
 import { initializeZilobaseClient } from "@zilobase/features";
 import { usePageProperties } from "@zilobase/features/pages/react";
+import { pageQueryOptions, type PagePropertyContext } from "@zilobase/features/pages";
 import {
   ZilobaseFeaturesProvider,
   type ZilobaseFeaturesConfig,
@@ -34,6 +35,40 @@ const apiFetch = (async (path: string) => {
 const proof = {
   requests,
   queryClient,
+  async authorize(patch: Partial<PagePropertyContext> = {}) {
+    const page = {
+      id: "page-1",
+      workspaceId: "org-1",
+      name: "Alpha",
+      type: "pageblock",
+      url: "#",
+      createdAt: "2026-06-01T00:00:00.000Z",
+      updatedAt: "2026-06-01T00:00:00.000Z",
+    };
+    const propertyIds = payload.properties.map((binding) => binding.propertyId);
+    const propertyContext: PagePropertyContext = {
+      pageId: page.id,
+      workspaceId: page.workspaceId,
+      propertyIds,
+      databaseIds: ["database-1"],
+      databaseVersions: { "database-1": 0 },
+      sourceVersions: { "data-source-1": 0 },
+      presenceTargets: [
+        { databaseId: "database-1", dataSourceId: "data-source-1", rowId: "row-1", propertyIds },
+      ],
+      ...patch,
+    };
+    await queryClient.fetchQuery(
+      pageQueryOptions(
+        (async () => ({
+          page,
+          viewerType: "member",
+          propertyContext,
+        })) as ZilobaseFeaturesConfig["apiFetch"],
+        page.id,
+      ),
+    );
+  },
   resolve() {
     finish?.({
       workspaceId: "org-1",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { QueryClient } from "@tanstack/react-query";
 import { sharedClient, type SharedClient } from "../data/client";
-import type { PagePropertiesPayload } from "./contracts";
+import type { PagePropertiesPayload, PagePropertyContext } from "./contracts";
 import { propertyCacheEntitySchema } from "../databases/schema/cache-entities";
 import { valueIdentity, valueCacheEntitySchema } from "../databases/schema/cache-entities";
 import { pagePropertyValueEntitySchema } from "../databases/core/entities";
@@ -39,7 +39,24 @@ export type PagePropertiesReference = Omit<PagePropertiesPayload, "properties" |
   propertyIds: string[];
   pageId: string;
   valuePropertyIds: string[];
+  /** Present only when a page-detail receipt supplied complete membership. */
+  propertyContext?: PagePropertyContext;
+  verifiedAt?: number;
 };
+
+export const pagePropertyContextSchema = z
+  .object({
+    pageId: z.string().min(1),
+    workspaceId: z.string().min(1),
+    propertyIds: z.array(z.string()),
+    databaseIds: z.array(z.string()),
+    databaseVersions: z.record(z.string(), z.number().int().nonnegative()),
+    sourceVersions: z.record(z.string(), z.number().int().nonnegative()),
+    presenceTargets: payloadSchema.shape.presenceTargets.unwrap(),
+  })
+  .strict();
+
+export const PAGE_PROPERTY_STALE_TIME = 30_000;
 
 export type PagePropertyCoverage = {
   state: "missing" | "partial" | "complete";
@@ -47,6 +64,134 @@ export type PagePropertyCoverage = {
   reference?: PagePropertiesReference;
   updatedAt: number;
 };
+
+/** Every supporting read must be current; a source version alone cannot prove a row was read. */
+export function readPageDetailPropertyCoverage(
+  client: QueryClient,
+  pageId: string,
+): PagePropertyCoverage {
+  const missing: PagePropertyCoverage = { state: "missing", updatedAt: 0 };
+  const state = client.getQueryState<PageDetailReference | null>(["page", pageId]);
+  const detail = state?.data;
+  const context = detail?.propertyContext;
+  if (
+    !detail ||
+    !context ||
+    detail.viewerType !== "member" ||
+    state?.status === "error" ||
+    state?.isInvalidated
+  )
+    return missing;
+  const owner = sharedClient(client).get(detail.page.cacheId);
+  if (
+    !owner ||
+    owner.session.scope.viewer.kind !== "account" ||
+    context.pageId !== pageId ||
+    context.workspaceId !== owner.session.scope.workspaceId
+  )
+    return missing;
+  let updatedAt = state.dataUpdatedAt;
+  const stale = (stamp: number) => Date.now() - stamp >= PAGE_PROPERTY_STALE_TIME;
+  if (stale(updatedAt)) return missing;
+  const covered = new Set<string>();
+  for (const target of context.presenceTargets) {
+    const bootstraps = client
+      .getQueryCache()
+      .findAll({ queryKey: ["db"] })
+      .filter((q) => q.queryKey[2] === target.databaseId && q.queryKey[3] === "bootstrap");
+    const bootstrap = bootstraps.find((q) => {
+      const parsed = databaseBootstrapReferenceSchema.safeParse(q.state.data);
+      if (
+        !parsed.success ||
+        parsed.data.cacheId !== owner.session.id ||
+        q.state.isInvalidated ||
+        q.state.status === "error" ||
+        stale(q.state.dataUpdatedAt)
+      )
+        return false;
+      return target.propertyIds.every((id) =>
+        parsed.data.bindingIds.some((bindingId) => {
+          const binding = owner.databases.bindings.get(bindingId);
+          return binding?.dataSourceId === target.dataSourceId && binding.propertyId === id;
+        }),
+      );
+    });
+    const host = owner.databases.hosts.collection.base.get(target.databaseId);
+    const source = owner.databases.sources.collection.base.get(target.dataSourceId);
+    if (
+      !bootstrap ||
+      !host ||
+      host.deletedAt ||
+      host.version !== context.databaseVersions[target.databaseId] ||
+      source?.version !== context.sourceVersions[target.dataSourceId]
+    )
+      return missing;
+    const record = owner.databases.resolveRecord(target.rowId);
+    if (
+      !record ||
+      record.pageId !== pageId ||
+      record.dataSourceId !== target.dataSourceId ||
+      record.page.deletedAt
+    )
+      return missing;
+    const window = client
+      .getQueryCache()
+      .findAll({ queryKey: bootstrap.queryKey.slice(0, 3) })
+      .find((q) => {
+        if (
+          q.queryKey[3] !== "window" ||
+          q.state.status === "error" ||
+          q.state.isInvalidated ||
+          stale(q.state.dataUpdatedAt)
+        )
+          return false;
+        return ((q.state.data as { pages?: unknown[] } | undefined)?.pages ?? []).some((input) => {
+          const parsed = databaseWindowReferenceSchema.safeParse(input);
+          return (
+            parsed.success &&
+            parsed.data.cacheId === owner.session.id &&
+            parsed.data.dataSourceId === target.dataSourceId &&
+            parsed.data.dataSourceVersion === context.sourceVersions[target.dataSourceId] &&
+            parsed.data.recordIds.includes(target.rowId)
+          );
+        });
+      });
+    if (!window) return missing;
+    target.propertyIds.forEach((id) => covered.add(id));
+    updatedAt = Math.min(updatedAt, bootstrap.state.dataUpdatedAt, window.state.dataUpdatedAt);
+  }
+  if (
+    context.databaseIds.some(
+      (id) => !context.presenceTargets.some((target) => target.databaseId === id),
+    )
+  )
+    return missing;
+  if (
+    context.propertyIds.some(
+      (id) =>
+        !covered.has(id) ||
+        !owner.databases.definitions.get(id) ||
+        owner.databases.definitions.get(id)?.deletedAt,
+    )
+  )
+    return missing;
+  const { sourceVersions: _versions, propertyIds, ...payload } = context;
+  const reference: PagePropertiesReference = {
+    ...payload,
+    cacheId: owner.session.id,
+    viewerType: "member",
+    propertyIds,
+    valuePropertyIds: propertyIds,
+    propertyContext: context,
+    verifiedAt: updatedAt,
+  };
+  return {
+    state: "complete",
+    reference,
+    data: resolvePageProperties(client, reference),
+    updatedAt,
+  };
+}
 
 /** A loaded result proves its own rows, never the page's entire membership. */
 export function readCachedPagePropertyCoverage(
@@ -94,9 +239,11 @@ export function readCachedPagePropertyCoverage(
       for (const input of windows?.pages ?? []) {
         const window = databaseWindowReferenceSchema.safeParse(input);
         if (!window.success || window.data.cacheId !== ref.cacheId) continue;
-        const record = window.data.recordIds
-          .map((id) => owner.databases.resolveRecord(id))
-          .find((row) => row?.pageId === pageId && row.dataSourceId === window.data.dataSourceId);
+        const recordId = window.data.recordIds.find((id) => {
+          const row = owner.databases.records.get(id);
+          return row?.pageId === pageId && row.dataSourceId === window.data.dataSourceId;
+        });
+        const record = recordId ? owner.databases.resolveRecord(recordId) : undefined;
         if (!record || record.page.deletedAt) continue;
         const propertyIds = [
           ...new Set(
@@ -185,7 +332,15 @@ export function resolvePageProperties(
   if (!reference) return undefined;
   const owner = sharedClient(client).get(reference.cacheId);
   if (!owner) return undefined;
-  const { cacheId: _cacheId, propertyIds, pageId, valuePropertyIds, ...context } = reference;
+  const {
+    cacheId: _cacheId,
+    propertyIds,
+    pageId,
+    valuePropertyIds,
+    propertyContext: _coverage,
+    verifiedAt: _verifiedAt,
+    ...context
+  } = reference;
   return {
     ...context,
     values: [...new Set([...propertyIds, ...valuePropertyIds])].flatMap((propertyId) => {

@@ -1,7 +1,14 @@
 export { getPrimaryPageParentId } from "./navigation-model";
 import { normalizeAccessReferences, revokeAccessReferences } from "./access-references";
 import { normalizeNavigationReference } from "./navigation-references";
-import { normalizePageProperties } from "./property-cache";
+import {
+  normalizePageProperties,
+  pagePropertyContextSchema,
+  readPageDetailPropertyCoverage,
+  readCachedPagePropertyCoverage,
+  PAGE_PROPERTY_STALE_TIME,
+  type PagePropertiesReference,
+} from "./property-cache";
 import type {
   PageDatabase,
   PageItemPlacement,
@@ -179,6 +186,7 @@ export const pageQueryOptions = (apiFetch: ApiFetcher, pageId: string | null | u
         const result = await apiFetch<{
           accessLevel?: AccessLevel;
           databaseIds?: string[];
+          propertyContext?: PageDetail["propertyContext"];
           page: Page;
           viewerType?: PageDetail["viewerType"];
         }>(`/pages/${pageId}`, { method: "GET" });
@@ -194,6 +202,9 @@ export const pageQueryOptions = (apiFetch: ApiFetcher, pageId: string | null | u
         return {
           accessLevel: result.accessLevel ?? null,
           databaseIds: result.databaseIds ?? [],
+          ...(result.propertyContext
+            ? { propertyContext: pagePropertyContextSchema.parse(result.propertyContext) }
+            : {}),
           page: stageAuthorizedPages(
             client,
             read,
@@ -394,15 +405,39 @@ export const pageGuestInvitationQueryOptions = (
 export const pagePropertiesQueryOptions = (
   apiFetch: ApiFetcher,
   pageId: string | null | undefined,
+  options?: { databaseId?: string | null },
 ) =>
-  queryOptions({
+  queryOptions<PagePropertiesReference>({
     queryKey: pagePropertiesQueryKey(pageId),
+    staleTime: (query) =>
+      query.state.data?.verifiedAt === undefined
+        ? PAGE_PROPERTY_STALE_TIME
+        : Math.max(
+            0,
+            query.state.data.verifiedAt + PAGE_PROPERTY_STALE_TIME - query.state.dataUpdatedAt,
+          ),
     enabled: Boolean(pageId),
     queryFn: async ({ client, signal }) => {
       if (!pageId) {
         throw new Error("pageId is required");
       }
 
+      const detailQuery = client
+        .getQueryCache()
+        .find({ queryKey: pageQueryKey(pageId), exact: true });
+      if (
+        detailQuery?.state.fetchStatus === "fetching" &&
+        readCachedPagePropertyCoverage(client, pageId, options?.databaseId).data
+      ) {
+        await detailQuery.promise;
+      }
+      signal.throwIfAborted();
+      const coverage = readPageDetailPropertyCoverage(client, pageId);
+      if (
+        coverage.state === "complete" &&
+        !client.getQueryState(pagePropertiesQueryKey(pageId))?.isInvalidated
+      )
+        return coverage.reference!;
       const previous = client.getQueryData<PageDetailReference>(pageQueryKey(pageId));
       const read = await sharedClient(client).captureRead(previous?.page.cacheId);
       const payload = await apiFetch<PagePropertiesPayload>(`/pages/${pageId}/properties`, {

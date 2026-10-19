@@ -193,7 +193,7 @@ export function usePageProperties(
   const { apiFetch, queryClient } = useZilobaseFeatures();
   const readRevision = usePagePropertyReadRevision(queryClient, pageId);
   const query = useQuery({
-    ...pagePropertiesQueryOptions(apiFetch, pageId),
+    ...pagePropertiesQueryOptions(apiFetch, pageId, options),
     enabled: Boolean(pageId),
   });
   const revision = useSharedDataRevision(queryClient);

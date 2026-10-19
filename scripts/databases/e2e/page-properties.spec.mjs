@@ -32,3 +32,22 @@ test("a direct link with no loaded row retains the cold loading state", async ({
     "/pages/cold-page/properties",
   ]);
 });
+
+test("a fresh complete loaded item opens without a properties request", async ({ page }) => {
+  await page.evaluate(() => window.propertyProof.authorize());
+  await page.getByRole("button", { name: "Open loaded item" }).click();
+  await expect
+    .poll(() => state(page))
+    .toMatchObject({
+      coverage: "complete",
+      names: ["Status", "Name"],
+      values: ["Not started"],
+      loading: false,
+      refreshing: false,
+    });
+  expect(await page.evaluate(() => window.propertyProof.requests)).toEqual([]);
+  await page.getByRole("button", { name: "Close item" }).click();
+  await page.getByRole("button", { name: "Open loaded item" }).click();
+  await expect.poll(() => state(page)).toMatchObject({ coverage: "complete" });
+  expect(await page.evaluate(() => window.propertyProof.requests)).toEqual([]);
+});

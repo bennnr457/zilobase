@@ -139,7 +139,7 @@ export type { FormulaValue } from "../databases/schema/formula/types";
 export { evaluateDatabaseFormula } from "../databases/schema/formula/evaluator";
 export type { DatabaseFormulaProperty } from "../databases/schema/formula/evaluator";
 export { databaseMutationEventV2Fixture } from "../databases/core/fixtures";
-export type { PageNavigationPayload } from "../pages/contracts";
+export type { PageNavigationPayload, PagePropertyContext } from "../pages/contracts";
 export { createNotificationRoom } from "./notification-room";
 export {
   MAX_DATABASE_REALTIME_MESSAGE_BYTES,

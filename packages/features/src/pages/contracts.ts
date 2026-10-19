@@ -126,6 +126,17 @@ export type PagePropertyPresenceTarget = {
   rowId: string;
 };
 
+/** Authorized membership only; definitions and values remain canonical entities. */
+export type PagePropertyContext = {
+  pageId: string;
+  workspaceId: string;
+  propertyIds: string[];
+  databaseIds: string[];
+  databaseVersions: Record<string, number>;
+  sourceVersions: Record<string, number>;
+  presenceTargets: PagePropertyPresenceTarget[];
+};
+
 export type AccessLevel = "view" | "comment" | "edit" | "full";
 
 export type AccessTargetType = "public" | "user" | "team";
@@ -216,6 +227,7 @@ export type PagesDeletedFilter = "active" | "only";
 export type PageDetail = {
   accessLevel?: AccessLevel | null;
   databaseIds?: string[];
+  propertyContext?: PagePropertyContext;
   page: Page;
   viewerType?: "member" | "guest" | "public" | null;
 };
