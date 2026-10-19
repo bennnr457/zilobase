@@ -1,0 +1,89 @@
+import { createElement, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClient } from "@tanstack/react-query";
+import { initializeZilobaseClient } from "@zilobase/features";
+import { usePageProperties } from "@zilobase/features/pages/react";
+import {
+  ZilobaseFeaturesProvider,
+  type ZilobaseFeaturesConfig,
+} from "../../../packages/features/src/shared/context";
+import {
+  createTestDatabasePayload,
+  setTestDatabaseClientState,
+} from "../../../packages/features/src/databases/mutations/test-helpers";
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
+});
+const session = {
+  user: { id: "actor" },
+  session: { id: "session", userId: "actor", expiresAt: "2099-01-01" },
+};
+queryClient.setQueryData(["session"], session);
+initializeZilobaseClient(queryClient, "property-test");
+const payload = createTestDatabasePayload();
+setTestDatabaseClientState(queryClient, payload);
+const requests: string[] = [];
+let finish: ((value: unknown) => void) | undefined;
+const apiFetch = (async (path: string) => {
+  requests.push(path);
+  return new Promise((resolve) => {
+    finish = resolve;
+  });
+}) as ZilobaseFeaturesConfig["apiFetch"];
+const proof = {
+  requests,
+  queryClient,
+  resolve() {
+    finish?.({
+      workspaceId: "org-1",
+      properties: payload.properties.map((p) => p.property),
+      values: payload.values,
+      databaseIds: ["database-1"],
+    });
+  },
+  open: (_pageId: string, _databaseId?: string | null) => {},
+};
+Object.assign(window, { propertyProof: proof });
+function Metadata({ pageId, databaseId }: { pageId: string; databaseId?: string | null }) {
+  const result = usePageProperties(pageId, { databaseId });
+  return (
+    <output data-testid="metadata">
+      {JSON.stringify({
+        names: result.data?.properties.map((p) => p.name),
+        values: result.data?.values.map((v) => v.value),
+        coverage: result.coverage,
+        loading: result.isLoading,
+        refreshing: result.isRefreshing,
+      })}
+    </output>
+  );
+}
+function Proof() {
+  const [opened, setOpened] = useState<{ pageId: string; databaseId?: string | null } | null>(null);
+  proof.open = (pageId, databaseId) => setOpened({ pageId, databaseId });
+  return (
+    <>
+      <button onClick={() => setOpened({ pageId: "page-1", databaseId: "database-1" })}>
+        Open loaded item
+      </button>
+      <button onClick={() => setOpened(null)}>Close item</button>
+      {opened && <Metadata {...opened} />}
+    </>
+  );
+}
+createRoot(document.getElementById("root")!).render(
+  createElement(
+    ZilobaseFeaturesProvider,
+    {
+      value: {
+        queryClient,
+        apiFetch,
+        deployment: "property-test",
+        databaseRealtimeEnabled: false,
+        auth: { getSession: async () => session, signOut: async () => undefined },
+      } as unknown as ZilobaseFeaturesConfig,
+    },
+    createElement(Proof),
+  ),
+);

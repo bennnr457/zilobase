@@ -1,7 +1,8 @@
 import { parseActiveWorkspaceMismatchError } from "../shared/api-errors";
 import { resolvePageAccessReferences } from "./access-references";
-import { resolvePageProperties } from "./property-cache";
-import { useMemo } from "react";
+import { readCachedPagePropertyCoverage } from "./property-cache";
+import { useMemo, useSyncExternalStore } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import { useSharedDataRevision } from "../data/react";
 import { resolveNavigationReference, resolvePageDetailReference } from "./cache";
 import { useQuery } from "@tanstack/react-query";
@@ -166,24 +167,49 @@ type PagePropertiesOptions = {
   databaseId?: string | null;
 };
 
+function usePagePropertyReadRevision(client: QueryClient, pageId: string | null | undefined) {
+  const store = useMemo(() => {
+    let revision = 0;
+    return {
+      read: () => revision,
+      subscribe: (notify: () => void) =>
+        client.getQueryCache().subscribe((event) => {
+          if (event.type !== "updated" && event.type !== "removed" && event.type !== "added")
+            return;
+          const key = event.query.queryKey;
+          if (key[0] !== "db" && !(key[0] === "page" && key[1] === pageId)) return;
+          revision++;
+          notify();
+        }),
+    };
+  }, [client, pageId]);
+  return useSyncExternalStore(store.subscribe, store.read, store.read);
+}
+
 export function usePageProperties(
   pageId: string | null | undefined,
-  _options?: PagePropertiesOptions,
+  options?: PagePropertiesOptions,
 ) {
   const { apiFetch, queryClient } = useZilobaseFeatures();
+  const readRevision = usePagePropertyReadRevision(queryClient, pageId);
   const query = useQuery({
     ...pagePropertiesQueryOptions(apiFetch, pageId),
     enabled: Boolean(pageId),
   });
   const revision = useSharedDataRevision(queryClient);
-  const data = useMemo(
-    () => resolvePageProperties(queryClient, query.data),
-    [queryClient, query.data, revision],
+  const coverage = useMemo(
+    () =>
+      pageId ? readCachedPagePropertyCoverage(queryClient, pageId, options?.databaseId) : undefined,
+    [queryClient, pageId, options?.databaseId, query.data, query.error, revision, readRevision],
   );
+  const data = coverage?.data;
   return {
     data,
+    coverage: coverage?.state ?? "missing",
+    isRefreshing: Boolean(data) && query.isFetching,
+    refreshError: data ? query.error : null,
     error: query.error,
-    isLoading: query.isLoading,
+    isLoading: !data && query.isLoading,
     isPending: query.isPending,
     isFetching: query.isFetching,
     isError: query.isError,
