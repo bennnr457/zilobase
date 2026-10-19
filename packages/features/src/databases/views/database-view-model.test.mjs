@@ -1,6 +1,38 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+test("calendar defaults to name only and honors saved visibility choices", async () => {
+  const { deriveDatabaseViewModel } = await import("./model.ts");
+  const properties = [
+    createProperty("date-column", "date", "Date", "date"),
+    createProperty("status-column", "status", "Status", "status"),
+  ];
+  const derive = (type, config) =>
+    deriveDatabaseViewModel({
+      activeViewId: "view",
+      viewData: createViewData({
+        database: { id: "database-1", name: "Tasks", config: {} },
+        properties,
+        views: [{ id: "view", name: "View", type, config }],
+      }),
+    });
+  const initial = derive("calendar", { datePropertyId: "date" });
+  assert.deepEqual(initial.visibleProperties, []);
+  assert.equal(initial.visiblePropertyCount, 1);
+  assert.deepEqual(initial.activeVisibilityConfig.hiddenPropertyIds, [
+    "date-column",
+    "status-column",
+  ]);
+  assert.deepEqual(
+    derive("calendar", { hiddenPropertyIds: ["date-column"] }).visibleProperties.map(
+      (property) => property.id,
+    ),
+    ["status-column"],
+  );
+  assert.equal(derive("calendar", { hiddenPropertyIds: [] }).visibleProperties.length, 2);
+  assert.equal(derive("table", {}).visibleProperties.length, 2);
+});
+
 test("database view model derives kanban visibility, sorts, and rows", async () => {
   const { deriveDatabaseViewModel: getDatabaseViewModel } = await import("./model.ts");
   const statusProperty = createProperty(

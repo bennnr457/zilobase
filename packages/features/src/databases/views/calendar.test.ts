@@ -2,6 +2,7 @@ import { addDays } from "date-fns";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createDatabaseViewCommands } from "../records/view-commands";
+import { applyConfigurationChanges } from "../interactions/configuration";
 import {
   calendarClickSchedule,
   calendarScheduleToValue,
@@ -62,6 +63,37 @@ test("calendar configuration reuses a compatible date when the configured proper
   assert.equal(getCalendarDateProperty([date], {}), date);
   assert.equal(getDatabaseCalendarMode({ calendarView: "week" }), "week");
   assert.equal(getDatabaseCalendarMode({ calendarView: "unknown" }), "month");
+});
+
+test("the first calendar visibility toggle shows only the chosen property and subsequent toggles compose", () => {
+  let config: unknown = { datePropertyId: "date" };
+  const commands = createDatabaseViewCommands({
+    editable: true,
+    databaseId: "source",
+    activeView: { id: "view", type: "calendar", config },
+    properties: [
+      { id: "date-column", property: { id: "date", type: "date", config: {} } },
+      { id: "status-column", property: { id: "status", type: "status", config: {} } },
+    ],
+    activeDatabaseFilters: [],
+    activeDatabaseSorts: [],
+    items: [],
+    getLatestViewConfig: () => config,
+    mutations: {
+      updateDatabaseView: async (input: {
+        configuration: Parameters<typeof applyConfigurationChanges>[1];
+      }) => {
+        config = applyConfigurationChanges(config, input.configuration);
+      },
+    },
+    notify: { error() {}, success() {} },
+  } as unknown as Parameters<typeof createDatabaseViewCommands>[0]);
+  commands.togglePropertyVisibility("status-column");
+  assert.deepEqual(config, { datePropertyId: "date", hiddenPropertyIds: ["date-column"] });
+  commands.togglePropertyVisibility("date-column");
+  assert.deepEqual(config, { datePropertyId: "date", hiddenPropertyIds: [] });
+  commands.togglePropertyVisibility("status-column");
+  assert.deepEqual(config, { datePropertyId: "date", hiddenPropertyIds: ["status-column"] });
 });
 
 test("calendar commands create blank-title dated records, preserve configuration and reject read-only writes", async () => {

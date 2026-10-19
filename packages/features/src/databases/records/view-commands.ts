@@ -1213,14 +1213,16 @@ export function createDatabaseViewCommands({
       const hiddenPropertyIds = new Set(
         hasViewHiddenPropertyIds(currentConfig)
           ? getViewHiddenPropertyIds(currentConfig)
-          : isKanbanView
-            ? getDefaultKanbanHiddenPropertyIds(
-                properties,
-                getGroupPropertyId(currentConfig) ?? kanbanGroupProperty?.property.id ?? null,
-              )
-            : properties
-                .filter((property) => getPropertyHidden(property.property.config))
-                .map((property) => property.id),
+          : activeView.type === "calendar"
+            ? properties.map((property) => property.id)
+            : isKanbanView
+              ? getDefaultKanbanHiddenPropertyIds(
+                  properties,
+                  getGroupPropertyId(currentConfig) ?? kanbanGroupProperty?.property.id ?? null,
+                )
+              : properties
+                  .filter((property) => getPropertyHidden(property.property.config))
+                  .map((property) => property.id),
       );
 
       if (hiddenPropertyIds.has(propertyId)) {

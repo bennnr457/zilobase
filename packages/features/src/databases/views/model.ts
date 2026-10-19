@@ -97,6 +97,7 @@ export function deriveDatabaseViewModel({
   const layoutSettings = getDatabaseLayoutSettings(activeViewConfig);
   const activeVisibilityConfig = getActiveVisibilityConfig({
     activeViewConfig,
+    isCalendarView: activeView?.type === "calendar",
     isKanbanView,
     properties,
   });
@@ -342,16 +343,26 @@ function getSortFieldOptions(
 
 function getActiveVisibilityConfig({
   activeViewConfig,
+  isCalendarView,
   isKanbanView,
   properties,
 }: {
   activeViewConfig: unknown;
+  isCalendarView: boolean;
   isKanbanView: boolean;
   properties: DatabasePropertyEntity[];
 }) {
-  if (!isKanbanView || hasViewHiddenPropertyIds(activeViewConfig)) {
+  if (hasViewHiddenPropertyIds(activeViewConfig)) {
     return activeViewConfig;
   }
+
+  if (isCalendarView) {
+    return getMergedDatabaseConfig(activeViewConfig, {
+      hiddenPropertyIds: properties.map((property) => property.id),
+    });
+  }
+
+  if (!isKanbanView) return activeViewConfig;
 
   return getMergedDatabaseConfig(activeViewConfig, {
     hiddenPropertyIds: getDefaultKanbanHiddenPropertyIds(
