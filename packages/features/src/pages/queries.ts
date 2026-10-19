@@ -405,7 +405,6 @@ export const pageGuestInvitationQueryOptions = (
 export const pagePropertiesQueryOptions = (
   apiFetch: ApiFetcher,
   pageId: string | null | undefined,
-  options?: { databaseId?: string | null },
 ) =>
   queryOptions<PagePropertiesReference>({
     queryKey: pagePropertiesQueryKey(pageId),
@@ -427,7 +426,7 @@ export const pagePropertiesQueryOptions = (
         .find({ queryKey: pageQueryKey(pageId), exact: true });
       if (
         detailQuery?.state.fetchStatus === "fetching" &&
-        readCachedPagePropertyCoverage(client, pageId, options?.databaseId).data
+        readCachedPagePropertyCoverage(client, pageId).data
       ) {
         await detailQuery.promise;
       }

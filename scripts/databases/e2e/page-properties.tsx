@@ -26,15 +26,35 @@ const payload = createTestDatabasePayload();
 setTestDatabaseClientState(queryClient, payload);
 const requests: string[] = [];
 let finish: ((value: unknown) => void) | undefined;
+let fail: ((reason: unknown) => void) | undefined;
+const pending: Array<(value: unknown) => void> = [];
 const apiFetch = (async (path: string) => {
   requests.push(path);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     finish = resolve;
+    fail = reject;
+    pending.push(resolve);
   });
 }) as ZilobaseFeaturesConfig["apiFetch"];
 const proof = {
   requests,
   queryClient,
+  fail(status: number) {
+    fail?.(Object.assign(new Error("Property read failed"), { status }));
+  },
+  changeAccount() {
+    queryClient.setQueryData(["session"], {
+      user: { id: "second" },
+      session: { id: "second-session", userId: "second", expiresAt: "2099-01-01" },
+    });
+  },
+  resolveOriginal() {
+    pending[0]?.({
+      workspaceId: "org-1",
+      properties: payload.properties.map((p) => p.property),
+      values: payload.values,
+    });
+  },
   async authorize(patch: Partial<PagePropertyContext> = {}) {
     const page = {
       id: "page-1",
@@ -90,6 +110,7 @@ function Metadata({ pageId, databaseId }: { pageId: string; databaseId?: string 
         coverage: result.coverage,
         loading: result.isLoading,
         refreshing: result.isRefreshing,
+        refreshError: Boolean(result.refreshError),
       })}
     </output>
   );

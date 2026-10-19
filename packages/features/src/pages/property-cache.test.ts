@@ -99,7 +99,7 @@ import { readPageDetailPropertyCoverage } from "./property-cache";
 import type { ApiFetcher } from "../shared/api-fetcher";
 import type { PagePropertyContext } from "./contracts";
 
-export function contextForFixture(): PagePropertyContext {
+function contextForFixture(): PagePropertyContext {
   return {
     pageId: "page-1",
     workspaceId: "org-1",
@@ -238,7 +238,6 @@ test("an in-flight page detail supplies membership before a duplicate properties
           throw new Error("unexpected request");
         }) as ApiFetcher,
         "page-1",
-        { databaseId: "database-1" },
       ),
     );
     ready.resolve();
@@ -440,6 +439,211 @@ test("metadata and database records share optimistic values and rollback", async
       readCachedPagePropertyCoverage(client, "page-1").data?.values[0]?.value,
       "Not started",
     );
+  } finally {
+    client.clear();
+  }
+});
+
+test("all memberships must have loaded rows before page detail can replace the endpoint", async () => {
+  for (const loaded of [true, false]) {
+    const { client, payload } = fixture();
+    try {
+      const source = {
+        ...payload.dataSources[0]!,
+        id: "data-source-2",
+        parentDatabaseId: "database-2",
+      };
+      const binding = {
+        ...payload.properties[0]!,
+        id: "other-binding",
+        dataSourceId: source.id,
+        propertyId: "other-property",
+        property: {
+          ...payload.properties[0]!.property,
+          id: "other-property",
+          name: "Other property",
+        },
+      };
+      setTestDatabaseClientState(
+        client,
+        createTestDatabasePayload({
+          database: { ...payload.database, id: "database-2" },
+          activeDataSource: source,
+          dataSources: [source],
+          properties: [binding],
+          views: [
+            {
+              ...payload.views[0]!,
+              id: "other-view",
+              databaseId: "database-2",
+              dataSourceId: source.id,
+            },
+          ],
+          rows: loaded ? [{ ...payload.rows[0]!, id: "other-row", dataSourceId: source.id }] : [],
+          values: [
+            {
+              ...payload.values[0]!,
+              id: "other-value",
+              propertyId: "other-property",
+              value: "Related",
+            },
+          ],
+        }),
+      );
+      const context = contextForFixture();
+      context.propertyIds.push("other-property");
+      context.databaseIds.push("database-2");
+      context.databaseVersions["database-2"] = 0;
+      context.sourceVersions[source.id] = 0;
+      context.presenceTargets.push({
+        databaseId: "database-2",
+        dataSourceId: source.id,
+        rowId: "other-row",
+        propertyIds: ["other-property"],
+      });
+      await authorizeFixture(client, context);
+      const coverage = readPageDetailPropertyCoverage(client, "page-1");
+      assert.equal(coverage.state, loaded ? "complete" : "missing");
+      if (loaded)
+        assert.deepEqual(
+          coverage.data?.values.map((v) => v.value),
+          ["Not started", "Related"],
+        );
+    } finally {
+      client.clear();
+    }
+  }
+});
+
+test("guest, public and other-workspace page details cannot borrow account database rows", async () => {
+  for (const viewerType of ["guest", "public", "member"] as const) {
+    const { client } = fixture();
+    try {
+      await client.fetchQuery(
+        pageQueryOptions(
+          (async () => ({
+            viewerType,
+            page: {
+              id: "page-1",
+              workspaceId: viewerType === "member" ? "other-workspace" : "org-1",
+              name: "Scoped page",
+              type: "pageblock",
+              url: "#",
+              createdAt: "2026-06-01T00:00:00.000Z",
+              updatedAt: "2026-06-01T00:00:00.000Z",
+            },
+          })) as ApiFetcher,
+          "page-1",
+        ),
+      );
+      assert.equal(
+        readCachedPagePropertyCoverage(client, "page-1", "database-1").state,
+        "missing",
+        viewerType,
+      );
+      assert.equal(readPageDetailPropertyCoverage(client, "page-1").state, "missing", viewerType);
+    } finally {
+      client.clear();
+    }
+  }
+});
+
+test("a late properties response cannot publish after the account changes", async () => {
+  const { client, payload } = fixture();
+  try {
+    const cache = sharedClient(client);
+    const identity = cache.capture().identity;
+    let changed = false;
+    cache.configure(() =>
+      changed
+        ? {
+            ...identity,
+            viewer: {
+              kind: "account",
+              accountId: "second",
+              actorId: "second",
+              sessionId: "second",
+            },
+          }
+        : identity,
+    );
+    const response = Promise.withResolvers<unknown>();
+    const request = client.fetchQuery({
+      ...pagePropertiesQueryOptions((async () => response.promise) as ApiFetcher, "page-1"),
+      retry: false,
+    });
+    const rejected = assert.rejects(request, /expired/i);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    changed = true;
+    cache.capture();
+    response.resolve({
+      workspaceId: "org-1",
+      properties: payload.properties.map((p) => p.property),
+      values: payload.values,
+    });
+    await rejected;
+    assert.equal(readCachedPagePropertyCoverage(client, "page-1", "database-1").state, "missing");
+    assert.equal(cache.all().length, 0);
+  } finally {
+    client.clear();
+  }
+});
+
+test("reopening derived metadata uses the oldest supporting read timestamp", async () => {
+  const { client } = fixture();
+  try {
+    const bootstrap = client
+      .getQueryCache()
+      .findAll({ queryKey: ["db"] })
+      .find((q) => q.queryKey[3] === "bootstrap")!;
+    const verifiedAt = Date.now() - 29_000;
+    bootstrap.setState({ dataUpdatedAt: verifiedAt });
+    await authorizeFixture(client);
+    const options = pagePropertiesQueryOptions(
+      (async () => {
+        throw new Error("unexpected request");
+      }) as ApiFetcher,
+      "page-1",
+    );
+    const reference = await client.fetchQuery(options);
+    assert.equal(reference.verifiedAt, verifiedAt);
+    const query = client
+      .getQueryCache()
+      .find({ queryKey: ["page", "page-1", "properties"], exact: true })!;
+    const staleTime = options.staleTime as (value: typeof query) => number;
+    assert(staleTime(query) <= 1000);
+  } finally {
+    client.clear();
+  }
+});
+
+test("page-only metadata retains admitted realtime updates after database queries are removed", async () => {
+  const { client, owner } = await completeFixture();
+  try {
+    const record = owner.databases.resolveRecord("row-1")!;
+    const value = record.valuesByPropertyId["property-status"]!;
+    client.removeQueries({ queryKey: ["db"] });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(owner.databases.hasHostInterest("database-1"), true);
+    const result = publishDatabaseEvent(
+      client,
+      owner,
+      event({
+        sourceVersions: { "data-source-1": 1 },
+        records: [
+          {
+            ...record,
+            updatedAt: "2026-06-02T00:00:00.000Z",
+            valuesByPropertyId: {
+              "property-status": { ...value, value: "Done", updatedAt: "2026-06-02T00:00:00.000Z" },
+            },
+          },
+        ],
+      }),
+    );
+    assert.equal(result, "published");
+    assert.equal(readCachedPagePropertyCoverage(client, "page-1").data?.values[0]?.value, "Done");
   } finally {
     client.clear();
   }

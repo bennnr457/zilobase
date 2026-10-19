@@ -227,13 +227,15 @@ export function readCachedPagePropertyCoverage(
       updatedAt: propertyState!.dataUpdatedAt,
     };
   }
-  if (!databaseId || (detail && detail.viewerType !== "member")) return missing;
+  if (detail && detail.viewerType !== "member") return missing;
   const cache = sharedClient(client);
   for (const query of client.getQueryCache().findAll({ queryKey: ["db"] })) {
-    if (query.queryKey[2] !== databaseId || query.queryKey[3] !== "bootstrap") continue;
+    if ((databaseId && query.queryKey[2] !== databaseId) || query.queryKey[3] !== "bootstrap")
+      continue;
     const parsed = databaseBootstrapReferenceSchema.safeParse(query.state.data);
     if (!parsed.success) continue;
     const ref = parsed.data;
+    const hostId = ref.databaseId;
     const owner = cache.get(ref.cacheId);
     if (!owner || owner.session.scope.viewer.kind !== "account") continue;
     if (detail && detail.page.cacheId !== ref.cacheId) continue;
@@ -267,10 +269,15 @@ export function readCachedPagePropertyCoverage(
           pageId,
           propertyIds,
           valuePropertyIds: propertyIds,
-          databaseIds: [databaseId],
-          databaseVersions: { [databaseId]: window.data.databaseVersion },
+          databaseIds: [hostId],
+          databaseVersions: { [hostId]: window.data.databaseVersion },
           presenceTargets: [
-            { databaseId, dataSourceId: record.dataSourceId, rowId: record.id, propertyIds },
+            {
+              databaseId: hostId,
+              dataSourceId: record.dataSourceId,
+              rowId: record.id,
+              propertyIds,
+            },
           ],
         };
         return {

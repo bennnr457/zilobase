@@ -51,3 +51,39 @@ test("a fresh complete loaded item opens without a properties request", async ({
   await expect.poll(() => state(page)).toMatchObject({ coverage: "complete" });
   expect(await page.evaluate(() => window.propertyProof.requests)).toEqual([]);
 });
+
+test("a failed background read keeps known properties visible", async ({ page }) => {
+  await page.getByRole("button", { name: "Open loaded item" }).click();
+  await expect.poll(() => state(page)).toMatchObject({ refreshing: true });
+  await page.evaluate(() => window.propertyProof.fail(500));
+  await expect
+    .poll(() => state(page))
+    .toMatchObject({
+      names: ["Status", "Name"],
+      values: ["Not started"],
+      coverage: "partial",
+      loading: false,
+      refreshing: false,
+      refreshError: true,
+    });
+});
+
+test("a permission denial immediately suppresses the cached projection", async ({ page }) => {
+  await page.getByRole("button", { name: "Open loaded item" }).click();
+  await expect.poll(() => state(page)).toMatchObject({ coverage: "partial" });
+  await page.evaluate(() => window.propertyProof.fail(403));
+  await expect.poll(() => state(page)).toMatchObject({ coverage: "missing", refreshing: false });
+  expect((await state(page)).values).toBeUndefined();
+});
+
+test("account switching clears visible properties and ignores the old response", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Open loaded item" }).click();
+  await expect.poll(() => state(page)).toMatchObject({ values: ["Not started"] });
+  await page.evaluate(() => window.propertyProof.changeAccount());
+  await expect.poll(() => state(page)).toMatchObject({ coverage: "missing" });
+  await page.evaluate(() => window.propertyProof.resolveOriginal());
+  await expect.poll(() => state(page)).toMatchObject({ coverage: "missing" });
+  expect((await state(page)).values).toBeUndefined();
+});

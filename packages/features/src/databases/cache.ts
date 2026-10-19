@@ -136,7 +136,11 @@ export class DatabaseCollections {
       throw new Error("Cross-workspace entity input");
   }
 
-  private stageProperties(properties: DatabasePropertyEntity[], versions: Record<string, number>) {
+  private stageProperties(
+    properties: DatabasePropertyEntity[],
+    versions: Record<string, number>,
+    includeBindings = true,
+  ) {
     const inputs: PreparedIngestion[] = [];
     for (const { property, ...binding } of properties) {
       this.assertWorkspace(property.workspaceId);
@@ -144,12 +148,17 @@ export class DatabaseCollections {
         throw new Error("Binding definition identity mismatch");
       const sourceVersion = versions[binding.dataSourceId];
       if (sourceVersion === undefined) throw new Error("Missing binding source clock");
-      inputs.push(this.definitions.stage([property]), this.bindings.stage([binding]));
+      inputs.push(this.definitions.stage([property]));
+      if (includeBindings) inputs.push(this.bindings.stage([binding]));
     }
     return inputs;
   }
 
-  prepareRecords(records: DatabaseRecordEntity[], versions: Record<string, number>) {
+  prepareRecords(
+    records: DatabaseRecordEntity[],
+    versions: Record<string, number>,
+    includeRecords = true,
+  ) {
     const inputs: PreparedIngestion[] = [];
     for (const { page, valuesByPropertyId, ...record } of records) {
       if (page.id !== record.pageId) throw new Error("Record page identity mismatch");
@@ -165,8 +174,9 @@ export class DatabaseCollections {
           pageCacheEntitySchema.parse({ ...page, workspaceId: this.session.scope.workspaceId }),
         ]),
         this.values.stage(values),
-        this.records.stage([{ ...record, valueIds: values.map((value) => value.id) }]),
       );
+      if (includeRecords)
+        inputs.push(this.records.stage([{ ...record, valueIds: values.map((value) => value.id) }]));
     }
     return inputs;
   }
@@ -373,8 +383,9 @@ export class DatabaseCollections {
     )
       return "authorized-read-required";
     this.session.ingest([
-      ...this.prepareRecords(records, sourceVersions),
-      ...this.stageProperties(properties, sourceVersions),
+      // Page-only readers retain metadata families, not source result membership.
+      ...this.prepareRecords(records, sourceVersions, false),
+      ...this.stageProperties(properties, sourceVersions, false),
     ]);
     return "published";
   }

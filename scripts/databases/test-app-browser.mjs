@@ -261,7 +261,9 @@ try {
   });
   const startupStart = performance.now();
   await page.goto(`${webOrigin}/d/${host}`);
-  await expect(page.getByText("Alpha browser row", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Alpha browser row", { exact: true }).first()).toBeVisible({
+    timeout: 20000,
+  });
   if (devtools) {
     await page.waitForLoadState("networkidle");
     measurements.startupMs = performance.now() - startupStart;
@@ -431,12 +433,28 @@ try {
   const alphaRow = page
     .locator("tr[data-database-row-id]")
     .filter({ hasText: "Alpha browser row" });
+  const initialPropertyReads = [];
+  const trackInitialProperties = (request) => {
+    if (
+      request.method() === "GET" &&
+      new URL(request.url()).pathname.endsWith(`/pages/${alphaPageId}/properties`)
+    )
+      initialPropertyReads.push(request.url());
+  };
+  page.on("request", trackInitialProperties);
   await alphaRow.locator(".database-page-link").hover();
   await alphaRow.getByRole("button", { name: "Open Alpha browser row", exact: true }).click();
   const paneTitle = page.getByRole("textbox", { name: "Page title", exact: true }).last();
   await expect(paneTitle).toHaveValue("Alpha browser row");
   await expect(paneTitle).toBeEditable();
   await page.waitForLoadState("networkidle");
+  page.off("request", trackInitialProperties);
+  assert.deepEqual(
+    initialPropertyReads,
+    [],
+    "Loaded row metadata must reuse the authorized page-detail context",
+  );
+  console.info("Opening a loaded database row renders page properties without a properties GET.");
   const metadataRequests = [];
   const trackMetadata = (request) => {
     const url = new URL(request.url());
@@ -626,6 +644,81 @@ try {
     .filter({ hasText: "Shared browser title" });
   await renamedRow.locator(".database-page-link").hover();
   await renamedRow.getByRole("button", { name: "Close Shared browser title", exact: true }).click();
+
+  measurementPhase = "cached-property-presentations";
+  const openLoadedMetadata = async (label) => {
+    const reads = [];
+    const capture = (request) => {
+      if (
+        request.method() === "GET" &&
+        new URL(request.url()).pathname.endsWith(`/pages/${alphaPageId}/properties`)
+      )
+        reads.push(request.url());
+    };
+    page.on("request", capture);
+    const row = page
+      .locator("tr[data-database-row-id]")
+      .filter({ hasText: "Shared browser title" });
+    await expect(row).toBeVisible();
+    await row.locator(".database-page-link").hover();
+    await row.getByRole("button", { name: "Open Shared browser title", exact: true }).click();
+    await expect(page.getByRole("textbox", { name: "Page title", exact: true }).last()).toHaveValue(
+      "Shared browser title",
+    );
+    await expect(page.getByText("Complete", { exact: true }).last()).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    page.off("request", capture);
+    assert.deepEqual(
+      reads,
+      [],
+      `${label}: complete cached rows must avoid the properties endpoint`,
+    );
+  };
+  await openLoadedMetadata("side pane reopen");
+  await page.getByRole("link", { name: "Open as full page", exact: true }).last().click();
+  await expect(page).toHaveURL(/\/p\//);
+  await expect(page.getByText("Complete", { exact: true }).last()).toBeVisible();
+  await page.goto(`${webOrigin}/d/${host}`);
+  const dialogSettings = await api.requestJson("/user-settings", {
+    jar,
+    method: "PATCH",
+    body: { embeddedItemsOpenAs: "dialog" },
+  });
+  assert.ok(dialogSettings.response.ok);
+  await page.reload();
+  await openLoadedMetadata("dialog");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  const sideSettings = await api.requestJson("/user-settings", {
+    jar,
+    method: "PATCH",
+    body: { embeddedItemsOpenAs: "sidepanel" },
+  });
+  assert.ok(sideSettings.response.ok);
+  await page.reload();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openLoadedMetadata("mobile navigation");
+  await expect(page).toHaveURL(/\/p\//);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const embeddedHost = await api.createPage(jar, {
+    workspaceId: setup.data.workspaceId,
+    name: "Embedded property verification",
+  });
+  const embedded = await api.requestJson(`/pages/${embeddedHost}/embed-item`, {
+    jar,
+    method: "POST",
+    body: { kind: "database", itemId: host },
+  });
+  assert.ok(embedded.response.ok, JSON.stringify(embedded.data));
+  await page.goto(`${webOrigin}/p/${embeddedHost}`);
+  await openLoadedMetadata("embedded database");
+  await page.goto(`${webOrigin}/d/${host}`);
+  await expect(
+    page.locator("tr[data-database-row-id]").filter({ hasText: "Shared browser title" }),
+  ).toBeVisible();
+  console.info(
+    "Side pane, promoted full page, dialog, mobile navigation and embedded database share cached property reads.",
+  );
   await page.getByRole("tab", { name: "Board", exact: true }).click();
   await mkdir(`${root}.dev/database-app-results`, { recursive: true });
   await page.screenshot({ path: `${root}.dev/database-app-results/kanban.png`, fullPage: true });

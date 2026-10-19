@@ -5,7 +5,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { useSharedDataRevision } from "../data/react";
 import { resolveNavigationReference, resolvePageDetailReference } from "./cache";
-import { useQuery } from "@tanstack/react-query";
+import { notifyManager, useQuery } from "@tanstack/react-query";
 
 import { useZilobaseFeatures } from "../shared/context";
 import {
@@ -172,15 +172,24 @@ function usePagePropertyReadRevision(client: QueryClient, pageId: string | null 
     let revision = 0;
     return {
       read: () => revision,
-      subscribe: (notify: () => void) =>
-        client.getQueryCache().subscribe((event) => {
+      subscribe: (notify: () => void) => {
+        let active = true;
+        const scheduleNotify = notifyManager.batchCalls(() => {
+          if (active) notify();
+        });
+        const stop = client.getQueryCache().subscribe((event) => {
           if (event.type !== "updated" && event.type !== "removed" && event.type !== "added")
             return;
           const key = event.query.queryKey;
           if (key[0] !== "db" && !(key[0] === "page" && key[1] === pageId)) return;
           revision++;
-          notify();
-        }),
+          scheduleNotify();
+        });
+        return () => {
+          active = false;
+          stop();
+        };
+      },
     };
   }, [client, pageId]);
   return useSyncExternalStore(store.subscribe, store.read, store.read);
@@ -193,7 +202,7 @@ export function usePageProperties(
   const { apiFetch, queryClient } = useZilobaseFeatures();
   const readRevision = usePagePropertyReadRevision(queryClient, pageId);
   const query = useQuery({
-    ...pagePropertiesQueryOptions(apiFetch, pageId, options),
+    ...pagePropertiesQueryOptions(apiFetch, pageId),
     enabled: Boolean(pageId),
   });
   const revision = useSharedDataRevision(queryClient);
