@@ -11,6 +11,7 @@ import {
   resolveDatabaseBootstrap,
 } from "../databases/cache-references";
 import type { PageDetailReference } from "./cache";
+import type { DatabaseMutationEventV2 } from "../databases/core/entities";
 
 const payloadSchema = z
   .object({
@@ -42,6 +43,7 @@ export type PagePropertiesReference = Omit<PagePropertiesPayload, "properties" |
   /** Present only when a page-detail receipt supplied complete membership. */
   propertyContext?: PagePropertyContext;
   verifiedAt?: number;
+  membershipInvalidated?: boolean;
 };
 
 export const pagePropertyContextSchema = z
@@ -122,8 +124,9 @@ export function readPageDetailPropertyCoverage(
       !bootstrap ||
       !host ||
       host.deletedAt ||
-      host.version !== context.databaseVersions[target.databaseId] ||
-      source?.version !== context.sourceVersions[target.dataSourceId]
+      host.version < context.databaseVersions[target.databaseId]! ||
+      !source ||
+      source.version < context.sourceVersions[target.dataSourceId]!
     )
       return missing;
     const record = owner.databases.resolveRecord(target.rowId);
@@ -151,7 +154,7 @@ export function readPageDetailPropertyCoverage(
             parsed.success &&
             parsed.data.cacheId === owner.session.id &&
             parsed.data.dataSourceId === target.dataSourceId &&
-            parsed.data.dataSourceVersion === context.sourceVersions[target.dataSourceId] &&
+            parsed.data.dataSourceVersion >= context.sourceVersions[target.dataSourceId]! &&
             parsed.data.recordIds.includes(target.rowId)
           );
         });
@@ -202,6 +205,7 @@ export function readCachedPagePropertyCoverage(
   const missing: PagePropertyCoverage = { state: "missing", updatedAt: 0 };
   const detailState = client.getQueryState<PageDetailReference | null>(["page", pageId]);
   const detail = detailState?.data;
+  if (detailState?.status === "success" && detail === null) return missing;
   if (detailState?.status === "error" && isDenied(detailState.error)) return missing;
   const propertyState = client.getQueryState<PagePropertiesReference>([
     "page",
@@ -213,8 +217,12 @@ export function readCachedPagePropertyCoverage(
   const cached = resolvePageProperties(client, existing);
   if (cached && (!detail || detail.page.cacheId === existing?.cacheId)) {
     return {
-      state: cached.properties.length === existing!.propertyIds.length ? "complete" : "partial",
-      data: cached,
+      state:
+        !existing!.membershipInvalidated &&
+        cached.properties.length === existing!.propertyIds.length
+          ? "complete"
+          : "partial",
+      data: existing!.membershipInvalidated ? { ...cached, presenceTargets: [] } : cached,
       reference: existing,
       updatedAt: propertyState!.dataUpdatedAt,
     };
@@ -339,6 +347,7 @@ export function resolvePageProperties(
     valuePropertyIds,
     propertyContext: _coverage,
     verifiedAt: _verifiedAt,
+    membershipInvalidated: _invalidated,
     ...context
   } = reference;
   return {
@@ -361,4 +370,103 @@ export function resolvePageProperties(
         : [];
     }),
   };
+}
+
+/** Membership recovery is scoped to affected pages and retains values while refreshing. */
+export function invalidatePagePropertyContexts(
+  client: QueryClient,
+  databaseId: string,
+  cacheId?: string,
+  pageId?: string,
+) {
+  for (const query of client.getQueryCache().findAll({ queryKey: ["page"] })) {
+    const data = query.state.data as PageDetailReference | PagePropertiesReference | undefined;
+    if (!data) continue;
+    const databaseIds =
+      "page" in data ? (data.propertyContext?.databaseIds ?? data.databaseIds) : data.databaseIds;
+    if (pageId ? query.queryKey[1] !== pageId : !databaseIds?.includes(databaseId)) continue;
+    const ownerId = "page" in data ? data.page.cacheId : data.cacheId;
+    if (cacheId && ownerId !== cacheId) continue;
+    if (query.queryKey.length === 2 && "page" in data) {
+      client.setQueryData(
+        query.queryKey,
+        { ...data, propertyContext: undefined },
+        { updatedAt: query.state.dataUpdatedAt },
+      );
+    } else if (query.queryKey[2] === "properties") {
+      client.setQueryData(
+        query.queryKey,
+        { ...data, membershipInvalidated: true },
+        { updatedAt: query.state.dataUpdatedAt },
+      );
+    } else continue;
+    void client.invalidateQueries({ queryKey: query.queryKey, exact: true }).catch(() => undefined);
+  }
+}
+
+export function reconcilePagePropertyReferences(
+  client: QueryClient,
+  event: DatabaseMutationEventV2,
+  cacheId: string,
+) {
+  const changes = event.changes;
+  for (const query of client.getQueryCache().findAll({ queryKey: ["page"] })) {
+    const data = query.state.data as PageDetailReference | PagePropertiesReference | undefined;
+    if (!data) continue;
+    const detail = query.queryKey.length === 2 && "page" in data ? data : undefined;
+    const properties = query.queryKey[2] === "properties" && "cacheId" in data ? data : undefined;
+    const context = detail?.propertyContext ?? properties;
+    if (!context || (detail?.page.cacheId ?? properties?.cacheId) !== cacheId) continue;
+    const pageId = String(query.queryKey[1]);
+    const records = (changes.records ?? []).filter((record) => record.pageId === pageId);
+    if (!context.databaseIds?.includes(event.databaseId) && !records.length) continue;
+    const version = context.databaseVersions?.[event.databaseId];
+    if (version !== undefined && event.version <= version) continue;
+    const targets = context.presenceTargets ?? [];
+    const membershipChanged =
+      event.requiresReset ||
+      version === undefined ||
+      event.version > version + 1 ||
+      !!(
+        changes.properties?.some(
+          (binding) =>
+            binding.property.deletedAt ||
+            targets.some(
+              (target) =>
+                target.dataSourceId === binding.dataSourceId &&
+                !target.propertyIds.includes(binding.propertyId),
+            ),
+        ) ||
+        changes.removedPropertyIds?.length ||
+        changes.dataSources?.length ||
+        changes.removedDataSourceIds?.length
+      ) ||
+      targets.some((target) => changes.removedRecordIds?.includes(target.rowId)) ||
+      records.some(
+        (record) =>
+          record.page.deletedAt ||
+          !targets.some(
+            (target) =>
+              target.databaseId === event.databaseId &&
+              target.dataSourceId === record.dataSourceId &&
+              target.rowId === record.id,
+          ),
+      );
+    if (membershipChanged) {
+      invalidatePagePropertyContexts(client, event.databaseId, cacheId, pageId);
+      continue;
+    }
+    const databaseVersions = { ...context.databaseVersions, [event.databaseId]: event.version };
+    const next = detail
+      ? { ...detail, propertyContext: { ...detail.propertyContext!, databaseVersions } }
+      : {
+          ...properties!,
+          databaseVersions,
+          ...(properties!.propertyContext
+            ? { propertyContext: { ...properties!.propertyContext, databaseVersions } }
+            : {}),
+        };
+    // An admitted delta advances membership proof, not the age of its supporting reads.
+    client.setQueryData(query.queryKey, next, { updatedAt: query.state.dataUpdatedAt });
+  }
 }

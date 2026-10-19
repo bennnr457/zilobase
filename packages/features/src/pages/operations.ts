@@ -101,11 +101,15 @@ export async function updatePagePropertyValue(
     pagePropertiesQueryKey(input.pageId),
   );
   const owner = reference ? sharedClient(context.queryClient).get(reference.cacheId) : undefined;
-  if (owner)
-    for (const event of result.events) publishDatabaseEvent(context.queryClient, owner, event);
-  else await context.queryClient.invalidateQueries({ queryKey: ["db"] });
+  let confirmed = Boolean(owner && result.events.length);
+  if (owner) {
+    for (const event of result.events)
+      if (publishDatabaseEvent(context.queryClient, owner, event) !== "published")
+        confirmed = false;
+  } else await context.queryClient.invalidateQueries({ queryKey: ["db"] });
   scope.assertCurrent();
-  await context.queryClient.invalidateQueries({ queryKey: pagePropertiesQueryKey(input.pageId) });
+  if (!confirmed)
+    await context.queryClient.invalidateQueries({ queryKey: pagePropertiesQueryKey(input.pageId) });
   return result;
 }
 

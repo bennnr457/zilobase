@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { sharedClient, type SessionEntities } from "../data/client";
 import { databaseMutationEventV2Schema, type DatabaseMutationEventV2 } from "./core/entities";
 import { reconcileBootstrapReferences } from "./cache-references";
+import { reconcilePagePropertyReferences } from "../pages/property-cache";
 
 /** Each existing capability independently proves admission; private receipts stay scoped. */
 export function publishDatabaseEvent(
@@ -27,8 +28,10 @@ export function publishDatabaseEvent(
       try {
         const result = owner.session.batch(() => {
           const admitted = owner.databases.ingestEvent(event);
-          if (admitted === "published")
+          if (admitted === "published") {
             reconcileBootstrapReferences(client, event, owner.session.id);
+            reconcilePagePropertyReferences(client, event, owner.session.id);
+          }
           return admitted;
         });
         if (owner === primary) primaryResult = result;

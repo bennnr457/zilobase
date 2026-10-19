@@ -436,8 +436,12 @@ export const pagePropertiesQueryOptions = (
       if (
         coverage.state === "complete" &&
         !client.getQueryState(pagePropertiesQueryKey(pageId))?.isInvalidated
-      )
+      ) {
+        sharedClient(client)
+          .get(coverage.reference!.cacheId)
+          ?.databases.admitPageProperties(pageId, coverage.reference!.presenceTargets ?? []);
         return coverage.reference!;
+      }
       const previous = client.getQueryData<PageDetailReference>(pageQueryKey(pageId));
       const read = await sharedClient(client).captureRead(previous?.page.cacheId);
       const payload = await apiFetch<PagePropertiesPayload>(`/pages/${pageId}/properties`, {

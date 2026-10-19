@@ -3,7 +3,7 @@ import { databaseWindowReferenceSchema, resolveDatabaseBootstrap } from "../cach
 import { sharedClient } from "../../data/client";
 import { dependentFields } from "./dependencies";
 import { normalizeDatabaseViewQuery, databaseViewQueryHash } from "../views/query-hash";
-import type { PagePropertiesPayload } from "../../pages/contracts";
+import { invalidatePagePropertyContexts } from "../../pages/property-cache";
 import { databaseQueryRoot } from "./keys";
 /** Server-owned membership/count/order recovery, restricted to affected source results. */
 export function refreshRecordResults(
@@ -107,10 +107,6 @@ export function refreshPropertyMembership(
   }
 }
 
-function isPagePropertiesQueryKey(queryKey: readonly unknown[]): boolean {
-  return queryKey[0] === "page" && queryKey[2] === "properties";
-}
-
 export function invalidateDatabaseQueries(
   queryClient: QueryClient,
   sessionId: string,
@@ -122,13 +118,7 @@ export function invalidateDatabaseQueries(
     })
     .catch(() => undefined);
 
-  for (const [queryKey, payload] of queryClient.getQueriesData<PagePropertiesPayload | undefined>({
-    queryKey: ["page"],
-  })) {
-    if (!isPagePropertiesQueryKey(queryKey as readonly unknown[])) continue;
-    if (!payload?.databaseIds?.includes(hostDatabaseId)) continue;
-    void queryClient.invalidateQueries({ exact: true, queryKey }).catch(() => undefined);
-  }
+  invalidatePagePropertyContexts(queryClient, hostDatabaseId);
 
   void queryClient
     .invalidateQueries({
