@@ -2,6 +2,7 @@ import type { Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import * as z from "zod";
+import { ServerOperationError } from "../../services/operations/context";
 import { ServiceMutationError } from "../../shared/errors/service-mutation-error";
 
 import type { AppBindings } from "../../shared/contracts/http";
@@ -20,6 +21,10 @@ export function isHttpRouteError(error: unknown): error is HttpRouteError {
 }
 
 export function httpRouteErrorResponse(c: Context<AppBindings>, error: unknown) {
+  if (error instanceof ServerOperationError) {
+    for (const [key, value] of Object.entries(error.headers)) c.header(key, value);
+    return applyContextHeaders(c, c.json(error.body, error.status as ContentfulStatusCode));
+  }
   if (error instanceof HTTPException) {
     return applyContextHeaders(c, error.getResponse());
   }
@@ -71,7 +76,8 @@ function applyContextHeaders(c: Context<AppBindings>, response: Response) {
 /** Preserve inline service denials while leaving unexpected failures to the app reporter. */
 export function attachServiceErrorHandler(app: Hono<AppBindings>) {
   app.onError((error, c) => {
-    if (error instanceof ServiceMutationError) return httpRouteErrorResponse(c, error)!;
+    if (error instanceof ServiceMutationError || error instanceof ServerOperationError)
+      return httpRouteErrorResponse(c, error)!;
     throw error;
   });
   return app;

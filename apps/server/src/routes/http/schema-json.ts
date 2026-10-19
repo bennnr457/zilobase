@@ -6,35 +6,8 @@ type JsonBodyRequest = {
   json(): Promise<unknown>;
 };
 
-type JsonSchema<S extends Schema.Top> = S & {
-  readonly DecodingServices: never;
-};
-
-export function decodeUnknown<S extends Schema.Top>(
-  schema: JsonSchema<S>,
-  input: unknown,
-  options?: SchemaAST.ParseOptions,
-) {
-  return Schema.decodeUnknownEffect(schema)(input, options);
-}
-
-export function parseUnknown<S extends Schema.Top>(
-  schema: JsonSchema<S>,
-  input: unknown,
-  options?: SchemaAST.ParseOptions,
-) {
-  return Effect.runPromise(
-    decodeUnknown(schema, input, options).pipe(
-      Effect.match({
-        onFailure: (error) => ({
-          ok: false as const,
-          message: error.message,
-        }),
-        onSuccess: (data) => ({ ok: true as const, data }),
-      }),
-    ),
-  );
-}
+import { decodeUnknown, type JsonSchema } from "../../shared/validation";
+export { decodeUnknown, parseUnknown } from "../../shared/validation";
 
 export function decodeJsonBody<S extends Schema.Top>(
   request: JsonBodyRequest,
