@@ -138,17 +138,18 @@ export function usePageCommentsSnapshot(pageId?: string | null) {
 const EMPTY_SNAPSHOT = { activeThreadId: null, threads: [] } as const;
 
 type PageEditorCommentsContextValue = {
-  editorCommentsOpenRequest: number;
-  requestEditorComments: () => void;
+  editorCommentsOpenRequest: { pageId: string; sequence: number } | null;
+  requestEditorComments: (pageId: string) => void;
 };
 
 const PageEditorCommentsContext = createContext<PageEditorCommentsContextValue | null>(null);
 
 export function PageEditorCommentsProvider({ children }: { children: ReactNode }) {
-  const [editorCommentsOpenRequest, setEditorCommentsOpenRequest] = useState(0);
+  const [editorCommentsOpenRequest, setEditorCommentsOpenRequest] =
+    useState<PageEditorCommentsContextValue["editorCommentsOpenRequest"]>(null);
 
-  const requestEditorComments = useCallback(() => {
-    setEditorCommentsOpenRequest((count) => count + 1);
+  const requestEditorComments = useCallback((pageId: string) => {
+    setEditorCommentsOpenRequest((current) => ({ pageId, sequence: (current?.sequence ?? 0) + 1 }));
   }, []);
   const value = useMemo(
     () => ({
@@ -178,3 +179,10 @@ export function usePageEditorComments() {
 export function useOptionalPageEditorComments() {
   return useContext(PageEditorCommentsContext);
 }
+
+// Page chrome controls visibility; the editor owns the card's placement in the document.
+export const PageCommentsViewContext = createContext<{
+  pageId: string | null;
+  open: boolean;
+  onClose: () => void;
+} | null>(null);

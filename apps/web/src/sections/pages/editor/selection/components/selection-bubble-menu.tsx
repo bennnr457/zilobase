@@ -1,6 +1,12 @@
 import { isTextSelection } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/react/menus";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { MessageSquarePlusIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PageCommentThread } from "../../comments/components/page-comments";
+import type { PageCommentController } from "../../comments/lib/yjs-comments";
+import { createPositionAnchor, type PositionAnchor } from "../../operations/lib/position-anchor";
 
 import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
 
@@ -18,9 +24,21 @@ const SELECTION_BUBBLE_MENU_PLUGIN_KEY = "selectionBubbleMenu";
 export function SelectionBubbleMenu({
   editor,
   runCommand,
+  pageId,
+  commentController,
 }: EditorControlProps & {
   runCommand: RunToolbarCommand;
+  pageId?: string | null;
+  commentController?: PageCommentController;
 }) {
+  const [commentOpen, setCommentOpen] = useState(false);
+  const anchors = useRef<{ from: PositionAnchor; to: PositionAnchor } | null>(null);
+  const clearAnchors = () => {
+    anchors.current?.from.dispose();
+    anchors.current?.to.dispose();
+    anchors.current = null;
+  };
+  useEffect(() => () => clearAnchors(), [editor]);
   useEffect(() => {
     if (!editor || !editor.isInitialized || editor.isDestroyed) {
       return;
@@ -92,6 +110,7 @@ export function SelectionBubbleMenu({
         strategy: "fixed",
       }}
       shouldShow={({ editor, element, view, state, from, to }) => {
+        if (commentOpen) return true;
         const { selection } = state;
         const blockSelectionMode = blockSelectionPluginKey.getState(state)?.mode ?? "none";
 
@@ -121,6 +140,52 @@ export function SelectionBubbleMenu({
       }}
     >
       <ButtonGroup aria-label="Text selection actions" role="toolbar" variant="floating">
+        {pageId && commentController?.canEdit ? (
+          <Popover
+            open={commentOpen}
+            onOpenChange={(open) => {
+              if (open) {
+                clearAnchors();
+                anchors.current = {
+                  from: createPositionAnchor(editor, editor.state.selection.from),
+                  to: createPositionAnchor(editor, editor.state.selection.to, "left"),
+                };
+              } else clearAnchors();
+              setCommentOpen(open);
+            }}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                aria-label="Comment on selection"
+                title="Comment"
+                size="icon-sm"
+                variant="ghost"
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                <MessageSquarePlusIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 max-w-[calc(100vw-2rem)] p-3" side="bottom">
+              <p className="mb-3 text-sm font-medium">Comment on selection</p>
+              <PageCommentThread
+                pageId={pageId}
+                compact
+                placeholder="Add a comment…"
+                onCreateThread={(body) => {
+                  const from = anchors.current?.from.resolve();
+                  const to = anchors.current?.to.resolve();
+                  if (from == null || to == null || from >= to) return null;
+                  return commentController.createInlineThread(body, { from, to });
+                }}
+                onThreadCreated={(id) => {
+                  setCommentOpen(false);
+                  clearAnchors();
+                  commentController.activateThread(id);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        ) : null}
         {toolbarGroups[0].map((item) => (
           <ToolbarButton
             editor={editor}

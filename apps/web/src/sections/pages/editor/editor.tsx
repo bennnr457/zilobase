@@ -1,3 +1,5 @@
+import { PageCover } from "../appearance/components/page-cover";
+import { EditorCommentContent } from "./comments/components/floating-comments";
 import { cn } from "@/lib/utils";
 import { DatabaseView } from "@/sections/databases/views/shared/components/database-view";
 import { PageMetadata, type PageMetadataHandle } from "@/sections/pages/components/page-metadata";
@@ -124,6 +126,16 @@ export function Editor({
       pendingDropRef.current?.anchor.dispose();
     },
     [],
+  );
+  const [localCover, setLocalCover] = useState("");
+  const displayCover = cover ?? localCover;
+  const coverOutside = !hideMetadata && !layoutPreview && !onLayoutChange;
+  const handleCoverChange = useCallback(
+    (nextCover: string) => {
+      if (cover === undefined) setLocalCover(nextCover);
+      onCoverChange?.(nextCover);
+    },
+    [cover, onCoverChange],
   );
   const pageContentLayout = {
     className: "page-content-column",
@@ -301,9 +313,9 @@ export function Editor({
               module.region === "main" &&
               "[--page-content-gutter:2rem] [&_.tiptap-editor]:py-5",
           )}
+          key={module.id}
           data-editor-page-content={pageContentLayout.mode}
           data-layout-content-preview={layoutPreview ? "true" : undefined}
-          key={module.id}
         >
           <EditorContent editor={editor} />
           {layoutPreview ? (
@@ -338,7 +350,8 @@ export function Editor({
         compactSpacing={onLayoutChange ? "comfortable" : "default"}
         collaborationUsers={module.type === "heading" ? collaboration?.users : undefined}
         contentClassName={module.region === "panel" ? "[--page-content-max-width:none]" : undefined}
-        cover={cover}
+        cover={displayCover}
+        coverOutside={coverOutside}
         databaseId={databaseId}
         editable={metadataEditable}
         enableComments={enableComments}
@@ -349,7 +362,7 @@ export function Editor({
         layoutConfig={layoutConfig}
         layoutPropertyId={module.type === "property" ? module.propertyId : undefined}
         layoutSection={layoutSection}
-        onCoverChange={onCoverChange}
+        onCoverChange={handleCoverChange}
         onIconChange={onEmojiChange}
         onIconPositionChange={onIconPositionChange}
         onOpenPage={onOpenPage}
@@ -412,95 +425,108 @@ export function Editor({
           setPlusMenuOpen={setPlusMenuOpen}
           tocItems={layoutPreview ? [] : tocItems}
         />
-        {hideMetadata ? (
-          <div
-            className={pageContentLayout.className}
-            data-editor-page-content={pageContentLayout.mode}
-          >
-            <EditorContent editor={editor} />
-          </div>
-        ) : layoutConfig ? (
-          <PageDesignCanvas
-            config={layoutConfig}
-            fixedAfterHeading={
-              layoutConfig.structure === "tabbed" ? (
-                <PageDesignTabs
-                  config={layoutConfig}
-                  onChange={onLayoutChange}
-                  onValueChange={setActiveLayoutTab}
-                  value={activeLayoutTab}
-                />
-              ) : undefined
-            }
-            fullWidth={fullWidth}
+        {coverOutside ? (
+          <PageCover
+            cover={displayCover}
+            editable={metadataEditable}
+            onChange={handleCoverChange}
             pageId={pageId}
-            mainContentOverride={
-              activeLinkedTab ? (
-                <div
-                  className={cn(
-                    "page-content-column relative py-5",
-                    onLayoutChange && "[--page-content-gutter:2rem]",
-                    layoutPreview ? "h-[32rem] overflow-hidden" : "min-h-[calc(100svh-6rem)]",
-                  )}
-                >
-                  <DatabaseView
-                    activeViewId={activeLinkedTab.viewId}
-                    databaseId={activeLinkedTab.databaseId}
-                    editable={databaseEditable}
-                    fullPage
-                    onOpenPage={onOpenPage}
-                    pageId={pageId}
-                    showExpandButton={false}
-                    workspaceId={workspaceId}
-                  />
-                  {layoutPreview ? (
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-surface-canvas via-effect-backdrop to-transparent"
-                    />
-                  ) : null}
-                </div>
-              ) : undefined
-            }
-            onChange={onLayoutChange}
-            panelMode={layoutPanelMode}
-            renderModule={renderLayoutModule}
+            databaseId={databaseId}
+            workspaceId={workspaceId}
           />
-        ) : (
-          <>
-            <PageMetadata
-              afterHeading={
-                afterMetadata ? (
-                  <div className={cn("pt-4", hideEditorContent && "pb-10")}>{afterMetadata}</div>
-                ) : null
-              }
-              collaborationUsers={collaboration?.users}
-              contentClassName={pageContentLayout.className}
-              cover={cover}
-              databaseId={databaseId}
-              editable={metadataEditable}
-              enableComments={enableComments}
-              icon={emoji}
-              iconPosition={iconPosition}
-              onCoverChange={onCoverChange}
-              onIconChange={onEmojiChange}
-              onIconPositionChange={onIconPositionChange}
-              onOpenPage={onOpenPage}
-              onTitleEnter={focusPageBodyFromTitle}
-              onTitleChange={onTitleChange}
-              workspaceId={workspaceId}
-              title={title}
-              pageId={pageId}
-              ref={pageMetadataRef}
-            />
+        ) : null}
+        <EditorCommentContent pageId={pageId} disabled={layoutPreview || Boolean(onLayoutChange)}>
+          {hideMetadata ? (
             <div
               className={pageContentLayout.className}
               data-editor-page-content={pageContentLayout.mode}
             >
-              {hideEditorContent ? null : <EditorContent editor={editor} />}
+              <EditorContent editor={editor} />
             </div>
-          </>
-        )}
+          ) : layoutConfig ? (
+            <PageDesignCanvas
+              config={layoutConfig}
+              fixedAfterHeading={
+                layoutConfig.structure === "tabbed" ? (
+                  <PageDesignTabs
+                    config={layoutConfig}
+                    onChange={onLayoutChange}
+                    onValueChange={setActiveLayoutTab}
+                    value={activeLayoutTab}
+                  />
+                ) : undefined
+              }
+              fullWidth={fullWidth}
+              pageId={pageId}
+              mainContentOverride={
+                activeLinkedTab ? (
+                  <div
+                    className={cn(
+                      "page-content-column relative py-5",
+                      onLayoutChange && "[--page-content-gutter:2rem]",
+                      layoutPreview ? "h-[32rem] overflow-hidden" : "min-h-[calc(100svh-6rem)]",
+                    )}
+                  >
+                    <DatabaseView
+                      activeViewId={activeLinkedTab.viewId}
+                      databaseId={activeLinkedTab.databaseId}
+                      editable={databaseEditable}
+                      fullPage
+                      onOpenPage={onOpenPage}
+                      pageId={pageId}
+                      showExpandButton={false}
+                      workspaceId={workspaceId}
+                    />
+                    {layoutPreview ? (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-surface-canvas via-effect-backdrop to-transparent"
+                      />
+                    ) : null}
+                  </div>
+                ) : undefined
+              }
+              onChange={onLayoutChange}
+              panelMode={layoutPanelMode}
+              renderModule={renderLayoutModule}
+            />
+          ) : (
+            <>
+              <PageMetadata
+                afterHeading={
+                  afterMetadata ? (
+                    <div className={cn("pt-4", hideEditorContent && "pb-10")}>{afterMetadata}</div>
+                  ) : null
+                }
+                collaborationUsers={collaboration?.users}
+                contentClassName={pageContentLayout.className}
+                cover={displayCover}
+                coverOutside={coverOutside}
+                databaseId={databaseId}
+                editable={metadataEditable}
+                enableComments={enableComments}
+                icon={emoji}
+                iconPosition={iconPosition}
+                onCoverChange={handleCoverChange}
+                onIconChange={onEmojiChange}
+                onIconPositionChange={onIconPositionChange}
+                onOpenPage={onOpenPage}
+                onTitleEnter={focusPageBodyFromTitle}
+                onTitleChange={onTitleChange}
+                workspaceId={workspaceId}
+                title={title}
+                pageId={pageId}
+                ref={pageMetadataRef}
+              />
+              <div
+                className={pageContentLayout.className}
+                data-editor-page-content={pageContentLayout.mode}
+              >
+                {hideEditorContent ? null : <EditorContent editor={editor} />}
+              </div>
+            </>
+          )}
+        </EditorCommentContent>
         {contentEditable && structuralEditingEnabled && mobileNodeTarget ? (
           <MobileActionBar
             canMoveDown={canMoveMobileTarget("down")}

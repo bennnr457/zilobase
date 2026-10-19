@@ -18,7 +18,6 @@ import {
   usePromotedFullPagePath,
 } from "@/sections/pages/presentation/components/page-presentation";
 import { PageSidePaneShell } from "@/sections/pages/presentation/components/page-side-pane";
-import { DiscussionsSidebarPanel } from "@/sections/pages/editor/comments/components/discussions-sidebar";
 import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/components/tool-panels";
 import {
   getRightSidebarEditorDefaultSize,
@@ -57,10 +56,6 @@ import { defaultUserSettings } from "@zilobase/features/user-settings";
 import { useUserSettings } from "@zilobase/features/user-settings/react";
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { PageDesignEditorProvider } from "@/sections/pages/design/components/page-design-editor";
-import {
-  usePageEditorComments,
-  usePageCommentController,
-} from "@/sections/pages/editor/comments/components/comments-context";
 
 import {
   PageDesignSidebarProvider,
@@ -274,7 +269,6 @@ function AppShellContent({
       : null;
   const recordItemVisit = useRecordItemVisit();
   const recordedVisitKeyRef = useRef<string | null>(null);
-  const discussionsEnabled = Boolean(pageId && !databaseId);
   const { data: userSettings = defaultUserSettings } = useUserSettings();
   const sidePaneState = usePageSidePaneState(pageId, userSettings.embeddedItemsOpenAs);
   const {
@@ -292,48 +286,10 @@ function AppShellContent({
   const [chatSidebarOpen, setChatSidebarOpen] = useState(false);
   const [chatPresentationMode, setChatPresentationMode] =
     useState<ChatPresentationMode>(readChatPresentationMode);
-  const [discussionsSidebarOpen, setDiscussionsSidebarOpen] = useState(false);
   const pageLayoutSidebar = useOptionalPageDesignSidebar();
   const pageLayoutSidebarOpen = Boolean(pageLayoutSidebar?.hasSidebar && pageLayoutSidebar.open);
-  const { editorCommentsOpenRequest } = usePageEditorComments();
-  const commentController = usePageCommentController(pageId);
-
-  const openDiscussionsSidebar = useCallback(() => {
-    if (!discussionsEnabled) return;
-    if (appSidebarOpen) closeSidePane();
-    pageLayoutSidebar?.setOpen(false);
-    setDiscussionsSidebarOpen(true);
-  }, [appSidebarOpen, closeSidePane, discussionsEnabled, pageLayoutSidebar]);
-  const toggleDiscussionsSidebar = useCallback(() => {
-    if (!discussionsEnabled) return;
-
-    if (discussionsSidebarOpen) {
-      setDiscussionsSidebarOpen(false);
-      return;
-    }
-
-    openDiscussionsSidebar();
-  }, [discussionsEnabled, discussionsSidebarOpen, openDiscussionsSidebar]);
-
-  useEffect(() => {
-    if (!discussionsEnabled) setDiscussionsSidebarOpen(false);
-  }, [discussionsEnabled]);
-
-  useEffect(() => {
-    if (!commentController) return;
-    commentController.setOpenThreadHandler(() => openDiscussionsSidebar());
-    return () => commentController.setOpenThreadHandler(null);
-  }, [commentController, openDiscussionsSidebar]);
-
-  useEffect(() => {
-    if (editorCommentsOpenRequest > 0) {
-      openDiscussionsSidebar();
-    }
-  }, [editorCommentsOpenRequest, openDiscussionsSidebar]);
   const primaryRightPanelOpen = Boolean(
-    (utilitySidebarOpen && utilitySidebar) ||
-    pageLayoutSidebarOpen ||
-    (discussionsEnabled && discussionsSidebarOpen),
+    (utilitySidebarOpen && utilitySidebar) || pageLayoutSidebarOpen,
   );
   const desktopRightPanelCount = isMobile
     ? 0
@@ -350,7 +306,6 @@ function AppShellContent({
     (nextPageId: string, options?: { databaseId?: string | null }) => {
       if (appSidebarOpen) {
         setChatSidebarOpen(false);
-        setDiscussionsSidebarOpen(false);
       }
 
       pageLayoutSidebar?.setOpen(false);
@@ -363,7 +318,6 @@ function AppShellContent({
     (nextDatabaseId: string) => {
       if (appSidebarOpen) {
         setChatSidebarOpen(false);
-        setDiscussionsSidebarOpen(false);
       }
 
       pageLayoutSidebar?.setOpen(false);
@@ -403,7 +357,6 @@ function AppShellContent({
     const nextOpen = !pageLayoutSidebar.open;
     if (nextOpen) {
       closeSidePane();
-      setDiscussionsSidebarOpen(false);
     }
     pageLayoutSidebar.setOpen(nextOpen);
   }, [closeSidePane, pageLayoutSidebar]);
@@ -441,12 +394,6 @@ function AppShellContent({
       sidePaneState,
     ],
   );
-
-  useEffect(() => {
-    if (databaseId) {
-      setDiscussionsSidebarOpen(false);
-    }
-  }, [databaseId]);
 
   useEffect(() => {
     const itemKind = databaseId ? "database" : pageId ? "page" : null;
@@ -499,12 +446,6 @@ function AppShellContent({
     sidePanePageId,
   ]);
 
-  useEffect(() => {
-    if (appSidebarOpen && (sidePanePageId || sidePaneDatabaseId) && discussionsSidebarOpen) {
-      setDiscussionsSidebarOpen(false);
-    }
-  }, [appSidebarOpen, discussionsSidebarOpen, sidePaneDatabaseId, sidePanePageId]);
-
   const showEmbeddedSidePaneLayout =
     !utilitySidebarOpen &&
     !pageLayoutSidebarOpen &&
@@ -550,21 +491,11 @@ function AppShellContent({
     </Suspense>
   ) : null;
   const dockedChatOpen = chatSidebarOpen && (isMobile || chatPresentationMode === "sidebar");
-  const discussionsPanel = discussionsEnabled ? (
-    <DiscussionsSidebarPanel
-      onClose={() => setDiscussionsSidebarOpen(false)}
-      open={discussionsSidebarOpen}
-      pageId={pageId}
-    />
-  ) : undefined;
 
   return (
     <PageHeaderControlsContext.Provider
       value={{
         pageId,
-        discussionsOpen: discussionsSidebarOpen,
-        onToggleDiscussions:
-          discussionsEnabled && commentController ? toggleDiscussionsSidebar : undefined,
         onTogglePageSidebar: pageLayoutSidebar?.hasSidebar ? togglePageLayoutSidebar : undefined,
         pageSidebarOpen: pageLayoutSidebarOpen,
       }}
@@ -642,9 +573,6 @@ function AppShellContent({
           <RightSidebars
             chatOpen={askAiEnabled && dockedChatOpen}
             chatPanel={askAiEnabled && dockedChatOpen ? chatPanel : null}
-            discussionsEnabled={discussionsEnabled}
-            discussionsOpen={discussionsSidebarOpen}
-            discussionsPanel={discussionsPanel}
             isMobile={isMobile}
             navigationSidebarOpen={appSidebarOpen}
             pageSidebarOpen={pageLayoutSidebarOpen}
@@ -657,9 +585,6 @@ function AppShellContent({
         <RightSidebarMobilePanels
           chatOpen={askAiEnabled && chatSidebarOpen}
           chatPanel={askAiEnabled ? chatPanel : null}
-          discussionsEnabled={discussionsEnabled}
-          discussionsOpen={discussionsSidebarOpen}
-          discussionsPanel={discussionsPanel}
           isMobile={isMobile}
           pageSidebarOpen={pageLayoutSidebarOpen}
           pageSidebarPanel={pageSidebarPanel}
@@ -669,11 +594,7 @@ function AppShellContent({
         ) : null}
         {!askAiEnabled || chatSidebarOpen || isAiPage || isFullPanePage ? null : (
           <ChatSidebarTrigger
-            adjacentSidebarOpen={
-              utilitySidebarOpen ||
-              pageLayoutSidebarOpen ||
-              (discussionsEnabled && discussionsSidebarOpen)
-            }
+            adjacentSidebarOpen={utilitySidebarOpen || pageLayoutSidebarOpen}
             onOpen={openChatSidebar}
           />
         )}

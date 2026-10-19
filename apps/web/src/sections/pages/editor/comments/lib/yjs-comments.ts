@@ -64,6 +64,7 @@ export type PageCommentController = {
   canEdit: boolean;
   canModerate: boolean;
   createBlockThread: (body: string, range: { from: number; to: number }) => string | null;
+  createInlineThread: (body: string, range: { from: number; to: number }) => string | null;
   createPageThread: (body: string) => string;
   deleteMessage: (threadId: string, messageId: string) => void;
   destroy: () => void;
@@ -188,6 +189,37 @@ export function createPageCommentController({
     return threadId;
   };
 
+  const createAnchoredThread = (
+    kind: "block" | "inline",
+    body: string,
+    range: { from: number; to: number },
+  ) => {
+    if (!editor || editor.isDestroyed) return null;
+
+    const from = Math.max(0, Math.min(range.from, editor.state.doc.content.size));
+    const to = Math.max(from, Math.min(range.to, editor.state.doc.content.size));
+    const quote = editor.state.doc.textBetween(from, to, " ").trim();
+    const commentMark = editor.schema.marks.comment;
+    if (!quote || !commentMark) return null;
+
+    return createThread(
+      kind,
+      body,
+      quote,
+      (threadId) => {
+        if (!editor || editor.isDestroyed) return;
+        editor.view.dispatch(
+          editor.state.tr.addMark(
+            from,
+            to,
+            commentMark.create({ commentId: threadId, commentKind: kind }),
+          ),
+        );
+      },
+      { openSidebar: false },
+    );
+  };
+
   const controller: PageCommentController = {
     canEdit,
     canModerate,
@@ -223,32 +255,8 @@ export function createPageCommentController({
         thread.set("updatedAt", now);
       }, "comments");
     },
-    createBlockThread(body, range) {
-      if (!editor || editor.isDestroyed) return null;
-
-      const from = Math.max(0, Math.min(range.from, editor.state.doc.content.size));
-      const to = Math.max(from, Math.min(range.to, editor.state.doc.content.size));
-      const quote = editor.state.doc.textBetween(from, to, " ").trim();
-      const commentMark = editor.schema.marks.comment;
-      if (!quote || !commentMark) return null;
-
-      return createThread(
-        "block",
-        body,
-        quote,
-        (threadId) => {
-          if (!editor || editor.isDestroyed) return;
-          editor.view.dispatch(
-            editor.state.tr.addMark(
-              from,
-              to,
-              commentMark.create({ commentId: threadId, commentKind: "block" }),
-            ),
-          );
-        },
-        { openSidebar: false },
-      );
-    },
+    createBlockThread: (body, range) => createAnchoredThread("block", body, range),
+    createInlineThread: (body, range) => createAnchoredThread("inline", body, range),
     createPageThread(body) {
       return createThread("page", body, null) as string;
     },

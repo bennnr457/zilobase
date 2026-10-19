@@ -87,7 +87,7 @@ export function BlockCommentPopover({
             </p>
           </div>
           <Button
-            aria-label="Expand in discussions sidebar"
+            aria-label="Open in comments"
             className="shrink-0 text-content-secondary"
             onClick={() => {
               if (activeThread) {
@@ -96,10 +96,10 @@ export function BlockCommentPopover({
                 });
               }
               onOpenChange(false);
-              editorComments.requestEditorComments();
+              editorComments.requestEditorComments(pageId);
             }}
             size="icon-sm"
-            title="Expand in discussions"
+            title="Open in comments"
             type="button"
             variant="ghost"
           >

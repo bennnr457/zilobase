@@ -1,4 +1,9 @@
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  PageCommentsViewContext,
+  useOptionalPageEditorComments,
+  usePageCommentController,
+} from "../../editor/comments/components/comments-context";
 import { useOptionalPageDesignSidebar } from "../../design/components/page-design-sidebar";
 
 import {
@@ -64,14 +69,57 @@ export function PageLayout({
     ? Boolean(pageId && sidebar?.hasOverlaySidebar(pageId))
     : sidebar?.hasSidebar;
 
+  const controller = usePageCommentController(databaseId ? null : pageId);
+  const editorComments = useOptionalPageEditorComments();
+  const [commentsPageId, setCommentsPageId] = useState<string | null>(null);
+  const commentsOpen = Boolean(controller && pageId && commentsPageId === pageId);
+  const frameRef = useRef<HTMLElement>(null);
+  const openComments = useCallback(() => setCommentsPageId(pageId), [pageId]);
+  const closeComments = useCallback(() => {
+    setCommentsPageId(null);
+    controller?.activateThread(null, { openSidebar: false });
+    frameRef.current?.querySelector<HTMLButtonElement>('[aria-label="Close comments"]')?.focus();
+  }, [controller]);
+
+  useEffect(() => {
+    if (!controller) return;
+    controller.setOpenThreadHandler(openComments);
+    return () => controller.setOpenThreadHandler(null);
+  }, [controller, openComments]);
+
+  const request = editorComments?.editorCommentsOpenRequest;
+  const lastRequest = useRef(request);
+  useEffect(() => {
+    if (request === lastRequest.current) return;
+    lastRequest.current = request;
+    if (request?.pageId === pageId) openComments();
+  }, [request, pageId, openComments]);
+
   return (
     <section
       className={cn("flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden", className)}
       data-page-layout={effectivePlacement}
+      ref={frameRef}
+      onClick={(event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        const anchor = target?.closest<HTMLElement>("[data-comment-id]");
+        if (
+          anchor &&
+          anchor.closest("[data-page-layout]") === frameRef.current &&
+          anchor.dataset.commentId &&
+          anchor.dataset.commentResolved !== "true"
+        ) {
+          controller?.activateThread(anchor.dataset.commentId);
+        }
+      }}
     >
       {isEmbeddedMobileViewer() ? null : (
         <PageHeader
           databaseId={databaseId}
+          discussionsOpen={commentsOpen}
+          onToggleDiscussions={
+            controller ? () => (commentsOpen ? closeComments() : openComments()) : undefined
+          }
           leadingControl={
             effectivePlacement === "main" ? <MainPaneHeaderLeadingControl /> : undefined
           }
@@ -98,7 +146,11 @@ export function PageLayout({
         className="min-h-0 flex-1"
         edgeFadeClassName={placement === "dialog" ? "hidden" : undefined}
       >
-        {children}
+        <PageCommentsViewContext.Provider
+          value={{ pageId, open: commentsOpen, onClose: closeComments }}
+        >
+          {children}
+        </PageCommentsViewContext.Provider>
       </ScrollViewport>
     </section>
   );

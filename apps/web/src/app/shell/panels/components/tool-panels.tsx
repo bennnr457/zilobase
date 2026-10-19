@@ -280,7 +280,7 @@ function OverlayRightSidebarPanel({
   );
 }
 
-type SidebarPanelKey = "calendar" | "discussions" | "page" | "view-settings";
+type SidebarPanelKey = "calendar" | "page" | "view-settings";
 
 type SidebarPanelSelection = {
   ariaLabel: string;
@@ -312,9 +312,6 @@ function useRetainedSidebarPanel(
 type PrimarySidebarPanelOptions = {
   calendarOpen?: boolean;
   calendarPanel?: ReactNode;
-  discussionsEnabled: boolean;
-  discussionsOpen: boolean;
-  discussionsPanel?: ReactNode;
   pageSidebarOpen: boolean;
   pageSidebarPanel?: ReactNode;
   utilitySidebarOpen?: boolean;
@@ -344,9 +341,6 @@ function selectPrimarySidebarPanel(
 }
 
 function selectWorkspaceSidebarPanel({
-  discussionsEnabled,
-  discussionsOpen,
-  discussionsPanel,
   pageSidebarOpen,
   pageSidebarPanel,
   utilitySidebarOpen = false,
@@ -365,14 +359,6 @@ function selectWorkspaceSidebarPanel({
       ariaLabel: "Page sidebar",
       key: "page",
       panel: pageSidebarPanel,
-    };
-  }
-
-  if (discussionsEnabled && discussionsOpen && discussionsPanel != null) {
-    return {
-      ariaLabel: "Discussions sidebar",
-      key: "discussions",
-      panel: discussionsPanel,
     };
   }
 
@@ -410,9 +396,6 @@ function useAdjacentPanelWidth(enabled: boolean) {
 export function RightSidebars({
   chatOpen,
   chatPanel,
-  discussionsEnabled,
-  discussionsOpen,
-  discussionsPanel,
   isMobile,
   navigationSidebarOpen,
   onResizeIntent,
@@ -423,9 +406,6 @@ export function RightSidebars({
 }: {
   chatOpen: boolean;
   chatPanel: ReactNode;
-  discussionsEnabled: boolean;
-  discussionsOpen: boolean;
-  discussionsPanel?: ReactNode;
   isMobile: boolean;
   navigationSidebarOpen: boolean;
   onResizeIntent?: (intent: SidebarResizeIntent) => void;
@@ -438,9 +418,6 @@ export function RightSidebars({
   const primaryPanel = selectPrimarySidebarPanel({
     calendarOpen,
     calendarPanel,
-    discussionsEnabled,
-    discussionsOpen,
-    discussionsPanel,
     pageSidebarOpen,
     pageSidebarPanel,
     utilitySidebarOpen,
@@ -448,7 +425,6 @@ export function RightSidebars({
   });
   const renderedPrimaryPanel = useRetainedSidebarPanel(primaryPanel, {
     calendar: calendarPanel,
-    discussions: discussionsPanel,
     page: pageSidebarPanel,
     "view-settings": utilitySidebarPanel,
   });
@@ -517,18 +493,12 @@ export function RightSidebars({
 export function RightSidebarMobilePanels({
   chatOpen,
   chatPanel,
-  discussionsEnabled,
-  discussionsOpen,
-  discussionsPanel,
   isMobile,
   pageSidebarOpen = false,
   pageSidebarPanel,
 }: {
   chatOpen: boolean;
   chatPanel: ReactNode;
-  discussionsEnabled: boolean;
-  discussionsOpen: boolean;
-  discussionsPanel?: ReactNode;
   isMobile: boolean;
   pageSidebarOpen?: boolean;
   pageSidebarPanel?: ReactNode;
@@ -537,19 +507,14 @@ export function RightSidebarMobilePanels({
   const primaryPanel = selectPrimarySidebarPanel({
     calendarOpen,
     calendarPanel,
-    discussionsEnabled,
-    discussionsOpen,
-    discussionsPanel,
     pageSidebarOpen,
     pageSidebarPanel,
   });
   const renderedPrimaryPanel = useRetainedSidebarPanel(primaryPanel, {
     calendar: calendarPanel,
-    discussions: discussionsPanel,
     page: pageSidebarPanel,
   });
-  const primaryPanelAvailable =
-    calendarPanel != null || pageSidebarPanel != null || discussionsPanel != null;
+  const primaryPanelAvailable = calendarPanel != null || pageSidebarPanel != null;
 
   if (!isMobile) return null;
 

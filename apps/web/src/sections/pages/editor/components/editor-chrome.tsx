@@ -133,6 +133,8 @@ export function EditorChrome({
         <>
           <SelectionBubbleMenu
             editor={editor}
+            pageId={pageId}
+            commentController={commentController}
             runCommand={(action, attrs) => runToolbarCommand(editor, action, attrs)}
           />
           <ColumnControls editor={editor} />

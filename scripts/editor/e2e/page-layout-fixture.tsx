@@ -19,7 +19,7 @@ import {
 } from "@/sections/pages/header/components/public-page-header";
 import "@/styles/global.css";
 import "@/styles/app.css";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -52,8 +52,17 @@ import { PageEditorRegistryProvider } from "@/sections/pages/editor/runtime/comp
 import {
   PageCommentsRegistryProvider,
   PageEditorCommentsProvider,
+  usePageCommentsRegistry,
+  usePageEditorComments,
 } from "@/sections/pages/editor/comments/components/comments-context";
 
+import { Editor } from "@/sections/pages/editor/editor";
+import type { Editor as TiptapEditor } from "@tiptap/core";
+import {
+  createCommentDocument,
+  createPageCommentController,
+} from "@/sections/pages/editor/comments/lib/yjs-comments";
+import { Toaster } from "sonner";
 import { PageDesignEditorProvider } from "@/sections/pages/design/components/page-design-editor";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
@@ -234,6 +243,7 @@ function Body({ id }: { id: string }) {
   useEffect(() => {
     mounts[id] = (mounts[id] ?? 0) + 1;
   }, [id]);
+  if (new URLSearchParams(window.location.search).has("comments")) return <CommentsBody id={id} />;
   if (bodyState === "loading") return <p>Loading page...</p>;
   if (bodyState === "error") return <p role="alert">Page unavailable.</p>;
   return (
@@ -247,6 +257,81 @@ function Body({ id }: { id: string }) {
         />
       </label>
       <div style={{ height: 1100 }}>Page content {id}</div>
+    </div>
+  );
+}
+
+const commentControllers = new Map<string, ReturnType<typeof createPageCommentController>>();
+const commentEditors = new Map<string, TiptapEditor>();
+Object.assign(window, { commentControllers, commentEditors });
+function CommentsBody({ id }: { id: string }) {
+  const registry = usePageCommentsRegistry();
+  const { requestEditorComments } = usePageEditorComments();
+  const controller = useMemo(
+    () =>
+      createPageCommentController({
+        document: createCommentDocument(),
+        canEdit: true,
+        canModerate: true,
+        user: { id: "commenter", name: "Maya Chen", email: "maya@example.test", image: null },
+      }),
+    [id],
+  );
+  useEffect(() => {
+    commentControllers.set(id, controller);
+    const unregister = registry.register(id, controller);
+    return () => {
+      unregister();
+      controller.destroy();
+      commentControllers.delete(id);
+      commentEditors.delete(id);
+    };
+  }, [id, controller, registry]);
+  const onEditorReady = useCallback(
+    (editor: TiptapEditor | null) => {
+      if (!editor) return;
+      commentEditors.set(id, editor);
+      controller.setEditor(editor);
+      if (controller.getSnapshot().threads.length === 0) {
+        const thread = controller.createBlockThread("Can we make this clearer before launch?", {
+          from: 1,
+          to: 21,
+        });
+        if (thread) controller.reply(thread, "I will update the draft today.");
+        controller.activateThread(null, { openSidebar: false });
+      }
+    },
+    [id, controller],
+  );
+  return (
+    <div>
+      <button className="m-4" onClick={() => requestEditorComments(id)}>
+        Show comments
+      </button>
+      <Editor
+        session={{
+          kind: "local",
+          documentId: id,
+          pageId: id,
+          content:
+            "<p>Shared drafts let two agents write one customer reply together.</p><h2>Goals</h2><p>Keep the document readable while discussing changes with the team.</p>" +
+            "<p>Review the rollout plan and confirm the launch checklist.</p>".repeat(18),
+        }}
+        capabilities={{ comments: true }}
+        presentation={{
+          hideMetadata: !new URLSearchParams(window.location.search).has("cover"),
+          enableComments: false,
+          title: "Shared drafts",
+          fullWidth: !new URLSearchParams(window.location.search).has("narrow"),
+          cover:
+            "data:image/svg+xml," +
+            encodeURIComponent(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="280"><rect width="1400" height="280" fill="#dbeafe"/><circle cx="1050" cy="100" r="250" fill="#bfdbfe"/></svg>',
+            ),
+          commentController: controller,
+        }}
+        view={{ viewId: id, onEditorReady }}
+      />
     </div>
   );
 }
@@ -299,7 +384,10 @@ function Content({ id }: { id: string }) {
       <div className="flex min-w-0 w-full flex-col">
         <Commands id={id} />
         <div data-fixture-path>{location.href}</div>
-        <div style={{ height: 500 }} className="flex min-h-0 flex-col">
+        <div
+          style={{ height: new URLSearchParams(window.location.search).has("cover") ? 740 : 500 }}
+          className="flex min-h-0 flex-col"
+        >
           <PageSidePaneShell
             open={state.sidePaneAnimatedOpen}
             visible={Boolean(state.renderedSidePanePageId)}
@@ -453,6 +541,7 @@ createRoot(document.getElementById("root")!).render(
           <PageCommentsRegistryProvider>
             <PageEditorCommentsProvider>
               <PageDesignEditorProvider>
+                <Toaster />
                 <FixtureSidebar>
                   {new URLSearchParams(window.location.search).get("workspace") === "ai" ? (
                     <AiPresentationFixture />

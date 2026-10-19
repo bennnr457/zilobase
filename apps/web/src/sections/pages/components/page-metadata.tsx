@@ -1,4 +1,4 @@
-import { ImagePlus, MessageSquare, SmilePlus, X } from "@/components/icons";
+import { ImagePlus, MessageSquare, SmilePlus } from "@/components/icons";
 import {
   useCallback,
   useEffect,
@@ -16,10 +16,7 @@ import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
 
-import {
-  usePageCommentsSnapshot,
-  usePageEditorComments,
-} from "@/sections/pages/editor/comments/components/comments-context";
+import { usePageCommentsSnapshot } from "@/sections/pages/editor/comments/components/comments-context";
 import { useSession } from "@zilobase/features/auth/react";
 import { type DatabasePresenceCollaborator } from "@zilobase/features/databases";
 import { useChangeDatabaseRow, useDatabaseRealtime } from "@zilobase/features/databases/react";
@@ -35,7 +32,7 @@ import type {
   PagePropertyPresenceTarget,
 } from "@zilobase/features/pages";
 
-import { ImageSourcePicker } from "@/sections/pages/appearance/components/image-source-picker";
+import { PageCover } from "@/sections/pages/appearance/components/page-cover";
 import { buildRandomCoverGalleryDataUrl } from "@/sections/pages/appearance/lib/page-cover-gallery";
 
 import type { CollaborationPresenceUser } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
@@ -61,6 +58,7 @@ type PageMetadataProps = {
   contentClassName?: string;
   collaborationUsers?: CollaborationPresenceUser[];
   cover?: string;
+  coverOutside?: boolean;
   databaseId?: string | null;
   description?: string;
   descriptionInitiallyHidden?: boolean;
@@ -150,6 +148,7 @@ export function PageMetadata({
   collaborationUsers = [],
   contentClassName,
   cover: coverProp,
+  coverOutside = false,
   databaseId,
   description: descriptionProp,
   descriptionInitiallyHidden = false,
@@ -179,7 +178,6 @@ export function PageMetadata({
   pageId,
   ref,
 }: PageMetadataProps) {
-  const [coverOpen, setCoverOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
   const [localCover, setLocalCover] = useState("");
   const [localIcon, setLocalIcon] = useState("");
@@ -198,7 +196,6 @@ export function PageMetadata({
   const [descriptionExpanded, setDescriptionExpanded] = useState<boolean | null>(null);
   const descriptionRowRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
-  const { editorCommentsOpenRequest } = usePageEditorComments();
   const { data: propertyPayload } = usePageProperties(pageId, {
     databaseId,
   });
@@ -411,11 +408,6 @@ export function PageMetadata({
     setDescriptionExpanded(null);
   }, [pageId]);
 
-  useEffect(() => {
-    if (editorCommentsOpenRequest > 0) {
-      setCommentsOpen(true);
-    }
-  }, [editorCommentsOpenRequest]);
   useEffect(() => {
     if (commentFocus.requested) setCommentsOpen(true);
   }, [commentFocus.requested]);
@@ -675,31 +667,6 @@ export function PageMetadata({
     </div>
   ) : null;
 
-  const coverPickerContent = (
-    <PopoverContent
-      align="start"
-      className="max-h-[min(40rem,calc(100vh-6rem))] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto p-4"
-      onMouseDown={(event) => event.stopPropagation()}
-      onPointerDown={(event) => event.stopPropagation()}
-      side="bottom"
-      sideOffset={8}
-    >
-      <ImageSourcePicker
-        databaseId={databaseId}
-        enableCoverGallery
-        initialCover={cover}
-        initialLinkUrl={cover.startsWith("data:") ? "" : cover}
-        onGalleryChange={updateCover}
-        onSelect={(url) => {
-          updateCover(url);
-          setCoverOpen(false);
-        }}
-        pageId={pageId}
-        workspaceId={workspaceId}
-      />
-    </PopoverContent>
-  );
-
   const showMetadataActions =
     canToggleDescription ||
     (!icon && editable) ||
@@ -724,40 +691,16 @@ export function PageMetadata({
           target={target}
         />
       ))}
-      {showHeading && cover ? (
-        <div className="relative h-[280px] w-full overflow-hidden bg-surface-muted">
-          <img alt="Cover" className="size-full object-cover" src={cover} />
-          {editable ? (
-            <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-opacity group-focus-within/metadata:opacity-100 group-hover/metadata:opacity-100">
-              <Popover onOpenChange={setCoverOpen} open={coverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    className="bg-effect-backdrop shadow-sm backdrop-blur"
-                    disabled={!editable}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    <ImagePlus />
-                    Change cover
-                  </Button>
-                </PopoverTrigger>
-                {coverPickerContent}
-              </Popover>
-              <Button
-                aria-label={`Remove ${metadataSubjectLowercase} cover`}
-                className="bg-effect-backdrop shadow-sm backdrop-blur focus-visible:opacity-100"
-                disabled={!editable}
-                onClick={() => updateCover("")}
-                size="icon-sm"
-                type="button"
-                variant="outline"
-              >
-                <X />
-              </Button>
-            </div>
-          ) : null}
-        </div>
+      {showHeading && !coverOutside ? (
+        <PageCover
+          cover={cover}
+          editable={editable}
+          onChange={updateCover}
+          pageId={pageId}
+          databaseId={databaseId}
+          workspaceId={workspaceId}
+          subject={metadataSubjectLowercase}
+        />
       ) : null}
 
       {showHeading && collaborationUsers.length > 0 ? (
@@ -765,7 +708,7 @@ export function PageMetadata({
           className={
             compact
               ? "absolute right-4 top-4"
-              : cover
+              : cover && !coverOutside
                 ? "absolute right-5 top-[calc(17.5rem+1.5rem)] sm:right-8 md:top-[calc(17.5rem+2rem)]"
                 : "absolute right-5 top-6 sm:right-8 md:top-8"
           }

@@ -48,10 +48,11 @@ export function register({ assert, loadModule, readSource, test }) {
   });
 
   test("cover picker provides editable gallery controls without AI creation", async () => {
-    const [gallery, picker, metadata] = await Promise.all([
+    const [gallery, picker, metadata, cover] = await Promise.all([
       readSource("/src/sections/pages/appearance/components/page-cover-picker.tsx"),
       readSource("/src/sections/pages/appearance/components/image-source-picker.tsx"),
       readSource("/src/sections/pages/components/page-metadata.tsx"),
+      readSource("/src/sections/pages/appearance/components/page-cover.tsx"),
     ]);
 
     assert.match(picker, /<TabsTrigger value="gallery">/);
@@ -74,11 +75,11 @@ export function register({ assert, loadModule, readSource, test }) {
     assert.match(gallery, /Dot size/);
     assert.doesNotMatch(gallery, /Apply cover/);
     assert.match(gallery, /onChange\(buildCoverGalleryDataUrl\(nextConfig\)\)/);
-    assert.match(metadata, /Change cover/);
+    assert.match(cover, /Change cover/);
     assert.match(metadata, /updateCover\(buildRandomCoverGalleryDataUrl\(\)\)/);
-    assert.match(metadata, /enableCoverGallery/);
-    assert.match(metadata, /onGalleryChange=\{updateCover\}/);
+    assert.match(cover, /enableCoverGallery/);
+    assert.match(cover, /onGalleryChange=\{onChange\}/);
     assert.doesNotMatch(metadata, /galleryCoverDraftRef/);
-    assert.match(metadata, /initialCover=\{cover\}/);
+    assert.match(cover, /initialCover=\{cover\}/);
   });
 }

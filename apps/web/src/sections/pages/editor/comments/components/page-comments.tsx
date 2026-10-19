@@ -82,7 +82,7 @@ type CommentAvatarAuthor =
   | { email?: string | null; id?: string | null; image?: string | null; name?: string | null }
   | null;
 
-function CommentAvatar({
+export function CommentAvatar({
   author,
   authorId,
   className,
@@ -561,7 +561,7 @@ export function formatCommentButtonLabel(commentCount: number) {
   return `${commentCount} ${commentCount === 1 ? "comment" : "comments"}`;
 }
 
-function getCommentAuthorName(author: CommentAvatarAuthor) {
+export function getCommentAuthorName(author: CommentAvatarAuthor) {
   return author?.name?.trim() || author?.email?.trim() || "Unknown";
 }
 
@@ -589,7 +589,7 @@ function getCommentInitials(label: string) {
     .join("");
 }
 
-function formatCommentTime(value: string) {
+export function formatCommentTime(value: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -850,7 +850,7 @@ export function PageCommentThread({
     if (!controller || !thread) return;
     runCommentAction(() => {
       controller.unresolveThread(thread.id);
-      editorComments?.requestEditorComments();
+      if (pageId) editorComments?.requestEditorComments(pageId);
     });
   };
 

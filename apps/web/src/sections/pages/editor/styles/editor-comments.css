@@ -1,8 +1,79 @@
 @reference "../../../../styles/global.css";
 
 .tiptap-editor .editor-comment-anchor {
-  border-bottom: 2px solid transparent;
-  background: transparent;
+  border-bottom: 2px solid var(--color-palette-yellow);
+  background: var(--color-palette-yellow-subtle);
   border-radius: 0.125rem;
+  cursor: pointer;
+}
+
+.editor-comments-content {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+}
+
+.editor-comments-body {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 0px;
+  align-items: start;
+  transition: grid-template-columns 220ms ease;
+}
+
+.editor-comments-document {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.editor-comments-body[data-comments-open="true"] {
+  --page-content-max-width: none;
+  /* Keep the 320px card clear of the TOC's 36px trigger and right gutter. */
+  grid-template-columns: minmax(0, 1fr) 424px;
+}
+
+.editor-comments-window {
+  grid-area: 1 / 2;
+  position: sticky;
+  top: 1rem;
+  min-width: 0;
+  margin: 1rem 6rem 1.5rem 0.5rem;
+}
+
+.floating-comments {
+  @apply flex w-full min-h-0 flex-col overflow-hidden rounded-xl border border-stroke-default bg-surface-canvas shadow-lg;
+  max-height: min(32rem, 60svh);
+}
+
+@container (max-width: 799px) {
+  .editor-comments-body[data-comments-open="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-comments-body[data-comments-open="true"] .editor-comments-document {
+    grid-area: 2 / 1;
+  }
+
+  .editor-comments-window {
+    grid-area: 1 / 1;
+    position: static;
+    margin: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-comments-body {
+    transition: none;
+  }
+}
+
+.tiptap-editor .editor-comment-anchor[data-comment-resolved="true"] {
+  border-color: transparent;
+  background: transparent;
   cursor: text;
+}
+
+.tiptap-editor
+  .editor-comment-anchor[data-comment-active="true"]:not([data-comment-resolved="true"]) {
+  outline: 1px solid var(--color-palette-yellow);
 }

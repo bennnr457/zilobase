@@ -78,7 +78,7 @@ export function HeaderActions({
   const isMobile = useIsMobile();
   const comments = usePageCommentsSnapshot(pageId);
   const openDiscussionCount = comments.threads.filter((thread) => !thread.resolvedAt).length;
-  const discussionsActionLabel = discussionsOpen ? "Close discussions" : "Open discussions";
+  const discussionsActionLabel = discussionsOpen ? "Close comments" : "Open comments";
   return (
     <div className="flex items-center gap-2 text-sm">
       <div className="hidden text-sm font-medium text-content-secondary md:inline-block">

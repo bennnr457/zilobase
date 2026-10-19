@@ -32,19 +32,11 @@ export function register({ readSource, assert, test }) {
     assert.doesNotMatch(tabsSource, /TabsPrimitive\.Indicator|tab-indicator/);
   });
 
-  test("tab layout choices are shared props and discussions use the default surface", async () => {
-    const [tabsSource, discussionsSource] = await Promise.all([
-      readSource("/src/components/ui/app-tabs.tsx"),
-      readSource("/src/sections/pages/editor/comments/components/discussions-sidebar.tsx"),
-    ]);
-
+  test("tab layout choices are shared props", async () => {
+    const tabsSource = await readSource("/src/components/ui/app-tabs.tsx");
     assert.match(tabsSource, /const tabsVariants = cva/);
     assert.match(tabsSource, /const tabsListVariants = cva/);
     assert.match(tabsSource, /const tabsTriggerVariants = cva/);
     assert.match(tabsSource, /function TabsBadge/);
-    assert.match(discussionsSource, /<TabsList>/);
-    assert.match(discussionsSource, /<TabsBadge>\{openCount\}<\/TabsBadge>/);
-    assert.doesNotMatch(discussionsSource, /<Tabs[^>]*border-b/);
-    assert.doesNotMatch(discussionsSource, /<TabsTrigger[^>]*rounded-none/);
   });
 }
