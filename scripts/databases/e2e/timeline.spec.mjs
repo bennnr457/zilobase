@@ -150,19 +150,68 @@ test("compact rows and outside controls match the table through page scrolling a
   await assertAligned(page);
 });
 
-test("the app page viewport owns scrolling and the timeline fills it after resizing", async ({
+test("timeline controls, name header and date headers stay together during page and horizontal scrolling", async ({
+  page,
+}) => {
+  await options(page, { pageViewport: true });
+  const pageViewport = page.locator("[data-page-scroll-viewport]");
+  await pageViewport.evaluate((el) => (el.scrollTop = 500));
+  const nav = page.locator(`${timeline} [data-slot=gantt-nav]`);
+  const treeHeader = page.locator(`${timeline} [data-slot=gantt-tree-header]`);
+  const dateHeader = page.locator(`${timeline} [data-slot=gantt-timeline-header]`);
+  const geometry = async () => {
+    const v = await pageViewport.boundingBox(),
+      n = await nav.boundingBox(),
+      t = await treeHeader.boundingBox(),
+      d = await dateHeader.boundingBox();
+    return [Math.round(n.y - v.y), Math.round(t.y - n.y - n.height), Math.round(d.y - t.y)];
+  };
+  await expect.poll(geometry).toEqual([0, 0, 0]);
+  await pageViewport.evaluate((el) => (el.scrollTop += 100));
+  await page.locator(viewport).evaluate((el) => (el.scrollLeft += 200));
+  await expect.poll(geometry).toEqual([0, 0, 0]);
+  await pageViewport.evaluate((el) => (el.scrollTop -= 50));
+  await expect.poll(geometry).toEqual([0, 0, 0]);
+  await assertAligned(page);
+  await page.getByRole("button", { name: "Collapse sidebar", exact: true }).click();
+  await expect(treeHeader).toBeHidden();
+  const n = await nav.boundingBox(),
+    d = await dateHeader.boundingBox();
+  expect(Math.round(d.y - n.y - n.height)).toBe(0);
+});
+
+test("the timeline fits its content after resizing while the app page owns scrolling", async ({
   page,
 }) => {
   await options(page, { pageViewport: true, count: 3 });
   const pageViewport = page.locator("[data-page-scroll-viewport]");
-  const chartBottom = () =>
-    page.locator(timeline).evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
-  await expect.poll(chartBottom).toBe(900);
+  const trailingSpace = () =>
+    page.locator(timeline).evaluate((el) => {
+      const rows = el.querySelectorAll("[data-gantt-row]");
+      return Math.round(
+        el.getBoundingClientRect().bottom - rows[rows.length - 1].getBoundingClientRect().bottom,
+      );
+    });
+  // Only the horizontal scrollbar follows the final row, including New page.
+  await expect.poll(trailingSpace).toBe(16);
+  const compactHeight = (await page.locator(timeline).boundingBox()).height;
   await pageViewport.evaluate((el) => {
     el.style.height = "calc(100vh - 160px)";
   });
-  await expect.poll(chartBottom).toBe(804);
-  await options(page, { count: 40 });
+  await expect.poll(trailingSpace).toBe(16);
+  expect((await page.locator(timeline).boundingBox()).height).toBe(compactHeight);
+  await options(page, { count: 0 });
+  await expect.poll(trailingSpace).toBe(16);
+  await expect(
+    page.locator(timeline).getByRole("button", { name: "New page", exact: true }),
+  ).toBeVisible();
+  await options(page, { grouped: true, count: 3 });
+  await expect.poll(trailingSpace).toBe(16);
+  const groupedHeight = (await page.locator(timeline).boundingBox()).height;
+  await page.locator(`${timeline} .database-table-group-toggle`).first().click();
+  await expect.poll(trailingSpace).toBe(16);
+  expect((await page.locator(timeline).boundingBox()).height).toBeLessThan(groupedHeight);
+  await options(page, { grouped: false, count: 40 });
   await page
     .locator(`${timeline} [data-slot="gantt-timeline-pane"]`)
     .hover({ position: { x: 200, y: 150 } });
@@ -906,7 +955,7 @@ test("embedded tables retain the full inline horizontal scroll viewport", async 
   }
 });
 
-test("the timeline fills the remaining page without gaps or an internal vertical scroller", async ({
+test("the timeline fits its rows without gaps or an internal vertical scroller", async ({
   page,
 }) => {
   await options(page, { count: 3 });
@@ -917,11 +966,13 @@ test("the timeline fills the remaining page without gaps or an internal vertical
       const tabs = get('[data-proof="view-tabs"]');
       const header = get('[data-slot="gantt-timeline-header"]');
       const chart = get(".database-timeline-view");
+      const rows = document.querySelectorAll(".database-timeline-view [data-gantt-row]");
       return {
         navHeight: nav.height,
         gapAbove: nav.top - tabs.bottom,
         gapBelow: header.top - nav.bottom,
         pageBottom: chart.bottom,
+        trailingSpace: chart.bottom - rows[rows.length - 1].getBoundingClientRect().bottom,
         screenHeight: window.innerHeight,
         panes: [
           ...document.querySelectorAll(
@@ -930,12 +981,15 @@ test("the timeline fills the remaining page without gaps or an internal vertical
         ].map((el) => ({ client: el.clientHeight, content: el.scrollHeight })),
       };
     });
-  await expect.poll(async () => Math.round((await measure()).pageBottom)).toBe(900);
+  await expect.poll(async () => Math.round((await measure()).trailingSpace)).toBe(16);
   const layout = await measure();
   expect(layout.navHeight).toBe(40);
   expect(layout.gapAbove).toBeLessThanOrEqual(12);
   expect(layout.gapBelow).toBe(0);
+  expect(layout.pageBottom).toBeLessThan(layout.screenHeight);
   for (const pane of layout.panes) expect(pane.content).toBeLessThanOrEqual(pane.client + 1);
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  expect((await measure()).pageBottom).toBe(layout.pageBottom);
   await options(page, { count: 40 });
   const expanded = await measure();
   expect(expanded.pageBottom).toBeGreaterThan(expanded.screenHeight);

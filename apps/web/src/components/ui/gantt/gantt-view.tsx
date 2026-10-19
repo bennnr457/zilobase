@@ -1245,7 +1245,6 @@ function GanttView({
   const treeRowsRef = useRef<HTMLDivElement | null>(null);
 
   const pageLayout = viewConfig.verticalScroll === "page";
-  const [pageMinHeight, setPageMinHeight] = useState(0);
   const pageRowsHeight = useMemo(
     () =>
       rows.reduce(
@@ -1264,24 +1263,44 @@ function GanttView({
       if (/^(auto|scroll|overlay)$/.test(getComputedStyle(scrollParent).overflowY)) break;
       scrollParent = scrollParent.parentElement;
     }
-    const measure = () => {
+    const nav = viewConfig.stickyNav
+      ? body.closest('[data-slot="gantt"]')?.querySelector<HTMLElement>('[data-slot="gantt-nav"]')
+      : null;
+    // Horizontal overflow makes each pane its header's sticky scrollport.
+    // In page mode that scrollport never scrolls vertically, so move the
+    // original headers within it as the page scrolls. This preserves the
+    // shared time axis, header panning, and native horizontal alignment.
+    const positionHeaders = () => {
       const rect = body.getBoundingClientRect();
-      const height =
+      const top =
         scrollParent && scrollParent !== document.scrollingElement
-          ? scrollParent.getBoundingClientRect().bottom - rect.top - scrollParent.scrollTop
-          : window.innerHeight - rect.top - window.scrollY;
-      setPageMinHeight(Math.max(0, Math.floor(height)));
+          ? Math.max(0, scrollParent.getBoundingClientRect().top + scrollParent.clientTop)
+          : 0;
+      const headerHeight =
+        body.querySelector<HTMLElement>('[data-slot="gantt-timeline-header"]')?.offsetHeight ?? 65;
+      const offset = Math.max(
+        0,
+        Math.min(
+          rect.height - headerHeight,
+          top + (nav?.getBoundingClientRect().height ?? 0) - rect.top,
+        ),
+      );
+      body.style.setProperty("--gantt-page-header-offset", `${offset}px`);
     };
-    measure();
-    const observer = new ResizeObserver(measure);
+    positionHeaders();
+    const observer = new ResizeObserver(positionHeaders);
     observer.observe(body);
     if (scrollParent && scrollParent !== document.scrollingElement) observer.observe(scrollParent);
-    window.addEventListener("resize", measure);
+    if (nav) observer.observe(nav);
+    document.addEventListener("scroll", positionHeaders, true);
+    window.addEventListener("resize", positionHeaders);
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", measure);
+      document.removeEventListener("scroll", positionHeaders, true);
+      body.style.removeProperty("--gantt-page-header-offset");
+      window.removeEventListener("resize", positionHeaders);
     };
-  }, [pageLayout]);
+  }, [pageLayout, viewConfig.stickyNav]);
 
   // Track the body width so the tree pane can yield on narrow containers.
   // Layout effect, not effect: the first measure must flush BEFORE the first
@@ -2105,7 +2124,10 @@ function GanttView({
           65px height, matching the timeline. */}
       <div
         data-slot="gantt-tree-header"
-        className="bg-surface-canvas sticky top-0 z-30 box-content h-16 shrink-0 border-b border-b-transparent"
+        className={cn(
+          "bg-surface-canvas sticky top-0 z-30 box-content h-16 shrink-0 border-b border-b-transparent",
+          pageLayout && "translate-y-(--gantt-page-header-offset)",
+        )}
       >
         {viewConfig.renderTreeHeader ? (
           viewConfig.renderTreeHeader()
@@ -2222,7 +2244,10 @@ function GanttView({
       {/* Two-row grouped header; also the drag-to-pan surface */}
       <div
         data-slot="gantt-timeline-header"
-        className="bg-surface-canvas sticky top-0 z-30 shrink-0 border-b"
+        className={cn(
+          "bg-surface-canvas sticky top-0 z-30 shrink-0 border-b",
+          pageLayout && "translate-y-(--gantt-page-header-offset)",
+        )}
         style={{ minWidth: trackWidth }}
         onPointerDown={beginHeaderPan}
       >
@@ -2473,7 +2498,7 @@ function GanttView({
       style={
         pageLayout
           ? {
-              height: `max(calc(${pageRowsHeight}rem + ${81 + (showCreateTask ? 40 : 0)}px), ${pageMinHeight}px)`,
+              height: `calc(${pageRowsHeight}rem + ${81 + (showCreateTask ? 40 : 0)}px)`,
               flex: "none",
             }
           : undefined

@@ -201,6 +201,7 @@ export const DatabaseTimelineGrid = memo(function DatabaseTimelineGrid({
         dependencyLines={false}
         scrollbars="native"
         verticalScroll="page"
+        stickyNav
         timelineLines="both"
         metrics={{ minRowHeight: 2, laneHeight: 1.5, rowPadding: 0.25, ghostHeight: 1.5 }}
         treePanel={{
