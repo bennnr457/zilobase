@@ -26,6 +26,7 @@ export type BlockCommandId =
   | "callout"
   | "tabsBlock"
   | "codeBlock"
+  | "tableOfContentsBlock"
   | "details"
   | "columns2"
   | "columns3"
@@ -367,6 +368,8 @@ function blockContentForItem(
       };
     case "codeBlock":
       return { type: "codeBlock" };
+    case "tableOfContentsBlock":
+      return { type: "tableOfContentsBlock" };
     case "imageBlock":
       return { type: "imageBlock" };
     case "videoBlock":
@@ -437,6 +440,10 @@ function blockContentForItem(
 }
 
 function selectInsertedBlock(editor: Editor, pos: number, item: SlashCommandItem) {
+  if (item.id === "tableOfContentsBlock") {
+    editor.chain().focus().setNodeSelection(pos).run();
+    return;
+  }
   if (item.id === "tabsBlock") {
     editor
       .chain()

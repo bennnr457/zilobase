@@ -31,11 +31,12 @@ import {
 import { getDraggedEditorBlockPayload } from "@/sections/pages/editor/drag-drop/lib/block-drag-session";
 import { changedPageReferences } from "@/sections/pages/editor/operations/lib/changed-page-references";
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+const fixtureApiResponses = new Map<string, unknown>();
 const features = {
   deployment: "editor-test",
   queryClient,
   auth: { getSession: async () => ({ user: null, session: null }) } as ZilobaseAuthClient,
-  apiFetch: async () => ({}),
+  apiFetch: async (path: string) => fixtureApiResponses.get(path) ?? {},
 };
 const ready: Record<string, TiptapEditor> = {};
 let mountedWorkspace: ReturnType<typeof createEditorWorkspace>;
@@ -248,6 +249,8 @@ function documentCreate() {
   return element;
 }
 Object.assign(window, {
+  fixtureApiResponses,
+  invalidateFixtureQueries: () => queryClient.invalidateQueries(),
   editorReady: () =>
     Boolean(
       ready.main?.isInitialized && ready.side?.isInitialized && mountedWorkspace?.views.size >= 2,

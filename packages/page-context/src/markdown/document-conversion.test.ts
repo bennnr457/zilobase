@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import {
   isEffectivelyEmptyPageContent,
+  isStructuralBlockMarkerLine,
+  preprocessStructuralBlockMarkdown,
   prosemirrorToMarkdown,
   restoreStructuralBlocksInMarkdownContent,
 } from "../index";
@@ -39,3 +41,19 @@ for (const [type, key, label] of [
     expect(restored[0]?.attrs[key!]).toBe(id);
   });
 }
+
+test("table of contents placement survives page markdown conversion", () => {
+  const node = { type: "tableOfContentsBlock" };
+  const marker = prosemirrorToMarkdown(node);
+  expect(marker).toBe("[Table of contents]");
+  expect(isStructuralBlockMarkerLine(marker)).toBe(true);
+  expect(preprocessStructuralBlockMarkdown(marker)).toBe(
+    '<div data-type="tableOfContentsBlock"></div>',
+  );
+  expect(
+    restoreStructuralBlocksInMarkdownContent([
+      { type: "paragraph", content: [{ type: "text", text: marker }] },
+    ]),
+  ).toEqual([node]);
+  expect(isEffectivelyEmptyPageContent({ type: "doc", content: [node] })).toBe(false);
+});

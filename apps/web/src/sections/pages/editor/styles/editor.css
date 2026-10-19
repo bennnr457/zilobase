@@ -146,6 +146,7 @@
       .embed-block,
       .file-block,
       .bookmark-block,
+      .table-of-contents-block,
       .ask-ai-block,
       .page-block
     ) {
@@ -284,6 +285,7 @@
       .embed-block,
       .file-block,
       .bookmark-block,
+      .table-of-contents-block,
       .page-block,
       .ask-ai-block,
       .editor-details,

@@ -91,6 +91,10 @@ function matchStructuralBlockText(text: string) {
     return null;
   }
 
+  if (trimmed.toLowerCase() === "[table of contents]") {
+    return { type: "tableOfContentsBlock" };
+  }
+
   const databaseMatch = DATABASE_MARKER.exec(trimmed);
 
   if (databaseMatch) {
@@ -232,6 +236,8 @@ function matchStructuralLinkParagraph<T extends PageDocumentNode>(node: T) {
 
 function structuralBlockToHtml(block: { attrs?: Record<string, unknown>; type: string }) {
   switch (block.type) {
+    case "tableOfContentsBlock":
+      return '<div data-type="tableOfContentsBlock"></div>';
     case "databaseBlock": {
       const databaseId = block.attrs?.databaseId;
       return typeof databaseId === "string" && databaseId

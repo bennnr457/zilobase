@@ -3,6 +3,61 @@ import type { TableOfContentDataItem } from "@tiptap/extension-table-of-contents
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import type { CSSProperties } from "react";
+import { useDatabaseMetadata } from "@zilobase/features/databases/react";
+import { useMeeting } from "@zilobase/features/meetings/react";
+import {
+  jumpToEditorOutlineItem,
+  useEditorOutline,
+  type EditorOutlineItem,
+} from "../hooks/use-editor-outline";
+
+function DatabaseOutlineTitle({ id }: { id: string | null }) {
+  const { data } = useDatabaseMetadata(id, { includeDeleted: true });
+  return data?.database.name.trim() || "Database";
+}
+
+function MeetingOutlineTitle({ id }: { id: string | null }) {
+  const { data } = useMeeting(id);
+  return data?.meeting.title.trim() || "Meeting";
+}
+
+export function EditorOutlineLink({
+  editor,
+  item,
+  className,
+  style,
+}: {
+  editor: TiptapEditor;
+  item: EditorOutlineItem;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <a
+      href={`#${item.id}`}
+      className={className}
+      style={style}
+      onMouseDownCapture={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        jumpToEditorOutlineItem(editor, item.id);
+      }}
+    >
+      {item.kind === "database" ? (
+        <DatabaseOutlineTitle id={item.resourceId} />
+      ) : item.kind === "meeting" ? (
+        <MeetingOutlineTitle id={item.resourceId} />
+      ) : (
+        item.textContent
+      )}
+    </a>
+  );
+}
 
 type EditorTableOfContentsProps = {
   editor: TiptapEditor | null;
@@ -10,15 +65,11 @@ type EditorTableOfContentsProps = {
 };
 
 export function EditorTableOfContents({ editor, items }: EditorTableOfContentsProps) {
-  const visibleItems = items.filter((item) => item.textContent.trim());
+  const visibleItems = useEditorOutline(editor).map((item) => ({
+    ...item,
+    isActive: items.some((heading) => heading.id === item.id && heading.isActive),
+  }));
   if (!editor || visibleItems.length === 0) return null;
-
-  const jumpToItem = (item: TableOfContentDataItem) => {
-    const selectionPosition = Math.min(item.pos + 1, editor.state.doc.content.size);
-    item.dom.scrollIntoView({ block: "center", behavior: "smooth" });
-    editor.commands.setTextSelection(selectionPosition);
-    editor.view.dom.focus({ preventScroll: true });
-  };
 
   return (
     <div className="pointer-events-none sticky top-1/2 z-40 hidden h-0 -translate-y-1/2 md:block">
@@ -51,7 +102,9 @@ export function EditorTableOfContents({ editor, items }: EditorTableOfContentsPr
           <HoverCardContent align="end" className="w-72 overflow-hidden p-1.5" side="left">
             <nav aria-label="Page headings" className="max-h-[min(28rem,70vh)] overflow-y-auto">
               {visibleItems.map((item) => (
-                <button
+                <EditorOutlineLink
+                  editor={editor}
+                  item={item}
                   className={cn(
                     "flex h-9 w-full items-center rounded-md px-2 text-left text-sm transition-colors hover:bg-action-neutral-hover focus-visible:bg-action-neutral-hover focus-visible:outline-none",
                     item.level === 2 && "pl-5",
@@ -59,12 +112,7 @@ export function EditorTableOfContents({ editor, items }: EditorTableOfContentsPr
                     item.isActive && "bg-action-neutral-pressed text-action-on-neutral",
                   )}
                   key={item.id}
-                  onClick={() => jumpToItem(item)}
-                  title={item.textContent}
-                  type="button"
-                >
-                  <span className="truncate">{item.textContent}</span>
-                </button>
+                />
               ))}
             </nav>
           </HoverCardContent>

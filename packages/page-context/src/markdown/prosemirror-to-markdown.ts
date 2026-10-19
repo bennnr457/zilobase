@@ -163,6 +163,7 @@ const BLOCK_SERIALIZERS: Record<string, BlockSerializer> = {
   pageBlock: serializePageBlock,
   paragraph: serializeParagraph,
   table: (node) => serializeTable(node.content ?? []),
+  tableOfContentsBlock: () => "[Table of contents]",
   taskList: (node) => serializeTaskList(node.content ?? []),
   text: (node) => applyMarks(node.text ?? "", node.marks ?? []),
   videoBlock: serializeVideoBlock,
