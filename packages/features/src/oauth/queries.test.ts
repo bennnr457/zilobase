@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ApiFetcher } from "../shared/api-fetcher";
+import type { ZilobaseAuthClient } from "../shared/auth-client";
 import { listOAuthApps, listOAuthConsents } from "./queries";
 import { requestGoogleAuthorization, submitOAuthConsent } from "./queries";
 import { readOAuthQuery } from "./model";
@@ -30,7 +31,7 @@ test("OAuth consent selects a workspace before allowing and never selects on den
     setActiveWorkspace: async (id: string) => {
       calls.push(id);
     },
-  } as Parameters<typeof submitOAuthConsent>[1];
+  } as ZilobaseAuthClient;
   const input = {
     accept: true,
     workspaceId: "workspace",

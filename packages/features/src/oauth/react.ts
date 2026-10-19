@@ -10,6 +10,7 @@ import {
   publicOAuthClient,
   revokeOAuthConsent,
   submitOAuthConsent,
+  type SubmitOAuthConsentInput,
 } from "./queries";
 
 // Keep the existing explicit loading policy: read once, then reload after writes.
@@ -78,7 +79,7 @@ export function useRevokeOAuthConsent() {
 export function useSubmitOAuthConsent() {
   const context = useZilobaseFeatures();
   return useCallback(
-    (input: Parameters<typeof submitOAuthConsent>[2]) => submitOAuthConsent(context, input),
+    (input: SubmitOAuthConsentInput) => submitOAuthConsent(context, input),
     [context],
   );
 }

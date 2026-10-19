@@ -11,6 +11,8 @@ import type {
   OAuthConsent,
   OAuthRedirect,
   PublicOAuthClient,
+  RequestGoogleAuthorizationInput,
+  RequestGoogleAuthorizationResult,
 } from "./contracts";
 function oauthApiFetch(context: ApiFetcher | ClientOperationContext): ApiFetcher {
   return typeof context === "function" ? context : captureClientOperation(context).context.apiFetch;
@@ -103,13 +105,8 @@ export async function submitOAuthConsent(
 }
 export async function requestGoogleAuthorization(
   context: ApiFetcher | ClientOperationContext,
-  input: {
-    callbackURL: string;
-    errorCallbackURL: string;
-    invitationId?: string | null;
-    oauthQuery: string | null;
-  },
-) {
+  input: RequestGoogleAuthorizationInput,
+): Promise<RequestGoogleAuthorizationResult> {
   const apiFetch = oauthApiFetch(context);
   const result = await apiFetch<OAuthRedirect>("/api/auth/sign-in/social", {
     method: "POST",

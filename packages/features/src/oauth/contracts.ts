@@ -15,6 +15,13 @@ export type OAuthConsent = {
 };
 export type PublicOAuthClient = Pick<OAuthApp, "client_id" | "client_name" | "name">;
 export type OAuthRedirect = { redirect?: boolean; url?: string };
+export type RequestGoogleAuthorizationInput = {
+  callbackURL: string;
+  errorCallbackURL: string;
+  invitationId?: string | null;
+  oauthQuery: string | null;
+};
+export type RequestGoogleAuthorizationResult = OAuthRedirect & { url: string };
 export type CreateOAuthAppInput = {
   application_type: "native" | "web";
   client_name: string;
