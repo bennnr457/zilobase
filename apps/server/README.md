@@ -184,3 +184,18 @@ Source citation markers resolve only against the answer's authorized manifest.
 Context logging is off by default; local `zilobaseDebugAiContext=1` enables
 metadata diagnostics, and `zilobaseDebugAiContextContent=1` additionally opts into
 raw content logging. Neither is needed for normal chat.
+
+Run `node scripts/ai/test-isolated.mjs` from the repository root to verify schema
+migration, fresh authorized context, bounded exports, request deduplication,
+private conversation access, interruption, revocation, and deletion in temporary
+PostgreSQL. `npm run test:editor:browser -- ai-presentation.spec.mjs` covers mentions,
+editor snapshots, citation navigation, retries, stop, reloads, presentation changes,
+and workspace switches with deterministic transport. Provider failures and HTTP
+stream cancellation have focused tests in `src/services/ai` and `src/routes/ai`.
+The `/ai` screen remains a web route; `/ai/chat` and `/ai/threads` are API routes
+in the combined Node server. Web and desktop share the authenticated fetch stream.
+
+For an optional live smoke check, supply `OPENAI_API_KEY` and set
+`ZILOBASE_AI_VERIFY_MODEL` to an available Responses model when running the isolated
+AI runner. It sends only the synthetic page created by that test, then verifies
+that the streamed answer persists and reloads. This does not set deployment defaults.

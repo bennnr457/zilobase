@@ -161,6 +161,9 @@ export function AppSidebar(sidebar: AppSidebarProps) {
   const hasOverlayTitleBar =
     isDesktopApp() &&
     (navigator.userAgent.includes("Mac") || navigator.userAgent.includes("Linux"));
+  const emptyAiChats =
+    navItems.some((model) => model.kind === "aiChats") &&
+    navItems.every((model) => model.kind === "aiChats" && model.items.length === 0);
 
   return (
     <Sidebar aria-label="Application sidebar" className={className} style={style}>
@@ -197,13 +200,16 @@ export function AppSidebar(sidebar: AppSidebarProps) {
         />
       ) : (
         <>
-          {activeTab.id !== "calendar" && (
+          {activeTab.id !== "calendar" && !emptyAiChats && (
             <div className="shrink-0 pt-3" data-sidebar="shortcuts">
               <SidebarShortcutList shortcuts={shortcuts} onActivate={activateShortcut} />
             </div>
           )}
           <SidebarContent
-            className="block overflow-x-hidden overflow-y-auto overscroll-y-contain"
+            className={cn(
+              "overflow-x-hidden overflow-y-auto overscroll-y-contain",
+              emptyAiChats ? "flex" : "block",
+            )}
             aria-label="Sidebar sections"
           >
             {activeTab.id === "calendar" ? (
@@ -212,6 +218,16 @@ export function AppSidebar(sidebar: AppSidebarProps) {
                   <CalendarAccountsSidebar key={workspaceId} workspaceId={workspaceId} />
                 </React.Suspense>
               ) : null
+            ) : emptyAiChats ? (
+              <div className="flex flex-1 items-center justify-center px-6 py-8 text-center">
+                <div className="max-w-56 space-y-2">
+                  <p className="text-sm font-medium text-content-primary">No AI chats yet</p>
+                  <p className="text-xs leading-relaxed text-content-secondary">
+                    Start a new chat to ask questions, explore ideas, or work on your pages. Your
+                    conversations will appear here.
+                  </p>
+                </div>
+              </div>
             ) : (
               <>
                 <DndContext
@@ -1193,52 +1209,48 @@ function StaticSection({
         </>
       }
     >
-      {model.kind === "aiChats" ? (
-        <p className="text-xs text-content-secondary">No chats yet</p>
-      ) : (
-        <SidebarMenu
-          aria-label={
-            model.kind === "favorites"
-              ? "Favorite pages"
-              : model.kind === "meetings"
-                ? "Meetings"
-                : model.label + " pages"
+      <SidebarMenu
+        aria-label={
+          model.kind === "favorites"
+            ? "Favorite pages"
+            : model.kind === "meetings"
+              ? "Meetings"
+              : model.label + " pages"
+        }
+      >
+        <SidebarNavList
+          {...sidebar.activeNavigation}
+          items={model.items}
+          storageKey={model.treeKey}
+          depthOffset={model.teamspace ? 1 : 0}
+          getLinkProps={
+            model.kind === "favorites" || model.kind === "meetings" ? undefined : getLinkProps
           }
-        >
-          <SidebarNavList
-            {...sidebar.activeNavigation}
-            items={model.items}
-            storageKey={model.treeKey}
-            depthOffset={model.teamspace ? 1 : 0}
-            getLinkProps={
-              model.kind === "favorites" || model.kind === "meetings" ? undefined : getLinkProps
-            }
-            renderItemMenu={({ item }) =>
-              item.isMeeting || item.isDatabaseView ? null : (
-                <SidebarEntryMenu
-                  item={item}
-                  favoriteOnly={model.kind === "favorites"}
-                  onRemoveFavorite={sidebar.handleRemoveFavorite}
-                  onRemoveDatabaseFavorite={sidebar.handleRemoveDatabaseFavorite}
-                />
-              )
-            }
-          />
-          {model.items.length === 0 ? (
-            <li className="px-2 py-1.5 text-xs text-content-secondary">
-              {sidebar.navigationLoading && model.kind !== "meetings"
-                ? "Loading…"
-                : sidebar.navigationError && model.kind !== "meetings"
-                  ? "Source unavailable"
-                  : model.kind === "favorites"
-                    ? "No favorites"
-                    : model.kind === "meetings"
-                      ? "Meeting blocks on pages appear here."
-                      : "No pages"}
-            </li>
-          ) : null}
-        </SidebarMenu>
-      )}
+          renderItemMenu={({ item }) =>
+            item.isMeeting || item.isDatabaseView ? null : (
+              <SidebarEntryMenu
+                item={item}
+                favoriteOnly={model.kind === "favorites"}
+                onRemoveFavorite={sidebar.handleRemoveFavorite}
+                onRemoveDatabaseFavorite={sidebar.handleRemoveDatabaseFavorite}
+              />
+            )
+          }
+        />
+        {model.items.length === 0 ? (
+          <li className="px-2 py-1.5 text-xs text-content-secondary">
+            {sidebar.navigationLoading && model.kind !== "meetings"
+              ? "Loading…"
+              : sidebar.navigationError && model.kind !== "meetings"
+                ? "Source unavailable"
+                : model.kind === "favorites"
+                  ? "No favorites"
+                  : model.kind === "meetings"
+                    ? "Meeting blocks on pages appear here."
+                    : "No pages"}
+          </li>
+        ) : null}
+      </SidebarMenu>
     </SectionShell>
   );
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChatbotComposer } from "../../composer/components/chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { PromptInputMessage } from "../../composer/components/prompt-input";
 
 export default function Chatbot({
@@ -63,10 +63,11 @@ export default function Chatbot({
   const [chatError, setChatError] = useState<string | null>(null);
   const pendingRequest = useRef<ChatRequest | null>(null);
   const streamController = useRef<AbortController | null>(null);
-  useEffect(() => () => streamController.current?.abort(), []);
+  useLayoutEffect(() => () => streamController.current?.abort(), []);
   const onSubmit = async (message: PromptInputMessage) => {
     const nextText = message.text.trim();
-    if (!nextText || attachmentState.busy || streaming || !workspaceId) return;
+    if (!nextText || streamController.current || attachmentState.busy || streaming || !workspaceId)
+      return;
     setChatError(null);
     const controller = new AbortController();
     streamController.current = controller;
@@ -76,7 +77,7 @@ export default function Chatbot({
       const prepared = await attachmentState.build();
       controller.signal.throwIfAborted();
       setStreaming(true);
-      const nextRequest: ChatRequest = {
+      let nextRequest: ChatRequest = {
         workspaceId,
         requestId: crypto.randomUUID(),
         threadId: selection.id ?? undefined,
@@ -88,12 +89,13 @@ export default function Chatbot({
       const signature = (request: ChatRequest) =>
         JSON.stringify({
           workspaceId: request.workspaceId,
+          threadId: request.threadId,
           text: request.text,
           roots: request.roots,
           snapshots: request.snapshots.map(({ pageId, content }) => ({ pageId, content })),
         });
       if (pendingRequest.current && signature(pendingRequest.current) === signature(nextRequest))
-        nextRequest.requestId = pendingRequest.current.requestId;
+        nextRequest = pendingRequest.current;
       pendingRequest.current = nextRequest;
       await send(nextRequest, controller.signal, (event) => {
         if (event.type === "context") {
@@ -202,6 +204,7 @@ export default function Chatbot({
             disabled={streaming || attachmentState.busy}
             className="min-w-0 flex-1 rounded border bg-surface-canvas p-2 text-sm"
             onChange={(event) => {
+              pendingRequest.current = null;
               loadedThread.current = null;
               setMessages([]);
               setSentContext(null);
@@ -221,8 +224,9 @@ export default function Chatbot({
             type="button"
             size="sm"
             variant="ghost"
-            disabled={streaming}
+            disabled={streaming || attachmentState.busy}
             onClick={() => {
+              pendingRequest.current = null;
               loadedThread.current = null;
               selection.select(null);
               setMessages([]);
@@ -237,11 +241,13 @@ export default function Chatbot({
               type="button"
               size="sm"
               variant="ghost"
-              disabled={streaming || threads.remove.isPending}
+              disabled={streaming || attachmentState.busy || threads.remove.isPending}
               onClick={() => {
                 const id = selection.id!;
                 threads.remove.mutate(id, {
                   onSuccess: () => {
+                    pendingRequest.current = null;
+                    loadedThread.current = null;
                     selection.select(null);
                     setMessages([]);
                     setSentContext(null);
@@ -255,7 +261,7 @@ export default function Chatbot({
           )}
         </div>
         {threads.detail.isError && (
-          <p role="alert" className="mb-2 text-sm text-destructive">
+          <p role="alert" className="mb-2 text-sm text-action-danger-text">
             {threads.detail.error.message}
           </p>
         )}
@@ -326,7 +332,7 @@ export default function Chatbot({
             )}
           </div>
           {chatError && (
-            <p role="alert" className="mb-2 text-sm text-destructive">
+            <p role="alert" className="mb-2 text-sm text-action-danger-text">
               {chatError}
             </p>
           )}
@@ -341,7 +347,7 @@ export default function Chatbot({
             </p>
           )}
           {attachmentState.error && (
-            <p role="alert" className="mb-2 text-sm text-destructive">
+            <p role="alert" className="mb-2 text-sm text-action-danger-text">
               {attachmentState.error}. Retry or remove an attachment.
             </p>
           )}

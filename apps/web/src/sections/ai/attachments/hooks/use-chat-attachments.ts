@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { usePrepareChatContext } from "@zilobase/features/ai/react";
 import type { LocalPageSnapshot } from "@zilobase/features/ai";
 import type { BuildContextResult, ResourceRef } from "@zilobase/page-context";
@@ -13,7 +13,7 @@ export function useChatAttachments(workspaceId: string | null) {
   const active = useRef<AbortController | null>(null);
   const prepare = usePrepareChatContext();
   const registry = usePageEditorRegistry();
-  useEffect(() => () => active.current?.abort(), []);
+  useLayoutEffect(() => () => active.current?.abort(), []);
   const cancel = () => {
     active.current?.abort();
     active.current = null;
@@ -45,20 +45,20 @@ export function useChatAttachments(workspaceId: string | null) {
     setBusy(true);
     setError(null);
     const roots = attachments.map(({ id, type }) => ({ id, type }));
-    const snapshots: LocalPageSnapshot[] = roots.flatMap((root) => {
-      if (root.type !== "page") return [];
-      const content = registry.getEditorHandle(root.id)?.getContentJson();
-      return content == null
-        ? []
-        : [
-            {
-              pageId: root.id,
-              content: structuredClone(content),
-              capturedAt: new Date().toISOString(),
-            },
-          ];
-    });
     try {
+      const snapshots: LocalPageSnapshot[] = roots.flatMap((root) => {
+        if (root.type !== "page") return [];
+        const content = registry.getEditorHandle(root.id)?.getContentJson();
+        return content == null
+          ? []
+          : [
+              {
+                pageId: root.id,
+                content: structuredClone(content),
+                capturedAt: new Date().toISOString(),
+              },
+            ];
+      });
       const result = await prepare({ workspaceId, roots, snapshots, signal: controller.signal });
       controller.signal.throwIfAborted();
       setPreview(result);

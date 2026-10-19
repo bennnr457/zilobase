@@ -2,3 +2,9 @@
 .ask-ai-content {
   padding-inline: clamp(20px, calc(20% - 84px), 96px);
 }
+
+.ask-ai-empty {
+  justify-content: safe center;
+  overflow-y: auto;
+  padding-block: 24px;
+}

@@ -446,7 +446,10 @@ export async function getDatabaseExportService(
       input.userId,
       record,
       input.dataSourceId || input.rowLimit !== undefined
-        ? { dataSourceId: input.dataSourceId, rowLimit: input.rowLimit }
+        ? {
+            ...(input.dataSourceId ? { dataSourceId: input.dataSourceId } : {}),
+            ...(input.rowLimit === undefined ? {} : { rowLimit: input.rowLimit }),
+          }
         : undefined,
     );
     if (!payload) throw new ServiceMutationError("Database not found", 404);

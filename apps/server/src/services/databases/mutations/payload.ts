@@ -127,34 +127,34 @@ async function loadDatabasePayload(
     .innerJoin(pageProperty, eq(databaseProperty.propertyId, pageProperty.id))
     .where(and(eq(databaseProperty.dataSourceId, sourceId), isNull(pageProperty.deletedAt)))
     .orderBy(asc(databaseProperty.position));
-  const rowsQuery = db
-    .select({
-      row: databaseRow,
-      page: {
-        createdAt: page.createdAt,
-        deletedAt: page.deletedAt,
-        hasContent: page.hasContent,
-        id: page.id,
-        metadata: page.metadata,
-        name: page.name,
-        updatedAt: page.updatedAt,
-      },
-    })
-    .from(databaseRow)
-    .innerJoin(page, eq(databaseRow.pageId, page.id))
-    .where(
-      and(
-        eq(databaseRow.dataSourceId, sourceId),
-        options?.includeDeleted ? undefined : isNull(databaseRow.deletedAt),
-        options?.includeDeleted ? undefined : isNull(page.deletedAt),
-      ),
-    )
-    .orderBy(asc(databaseRow.orderKey), asc(databaseRow.id))
-    .$dynamic();
+  const rowsQuery = () =>
+    db
+      .select({
+        row: databaseRow,
+        page: {
+          createdAt: page.createdAt,
+          deletedAt: page.deletedAt,
+          hasContent: page.hasContent,
+          id: page.id,
+          metadata: page.metadata,
+          name: page.name,
+          updatedAt: page.updatedAt,
+        },
+      })
+      .from(databaseRow)
+      .innerJoin(page, eq(databaseRow.pageId, page.id))
+      .where(
+        and(
+          eq(databaseRow.dataSourceId, sourceId),
+          options?.includeDeleted ? undefined : isNull(databaseRow.deletedAt),
+          options?.includeDeleted ? undefined : isNull(page.deletedAt),
+        ),
+      )
+      .orderBy(asc(databaseRow.orderKey), asc(databaseRow.id));
   const limitedRows = includeRows
     ? options?.rowLimit === undefined
-      ? rowsQuery
-      : rowsQuery.limit(options.rowLimit)
+      ? rowsQuery()
+      : rowsQuery().limit(options.rowLimit)
     : Promise.resolve([]);
   const [properties, rows, totals] = await Promise.all([
     propertiesPromise,

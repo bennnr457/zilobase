@@ -21,7 +21,7 @@ export function register({ readSource, assert, test }) {
     assert.ok(source.indexOf("<WorkspaceSwitcher") < source.indexOf("<SidebarContent"));
     assert.ok(source.indexOf("<NotificationCenter") < source.indexOf("<SidebarContent"));
     assert.ok(source.indexOf("Customize sidebar") < source.indexOf("Open in desktop app"));
-    assert.match(source, /No chats yet/);
+    assert.match(source, /No AI chats yet/);
     assert.doesNotMatch(
       source,
       /NavFavorites|NavPageSection|NavMeetings|SidebarDatabaseViewSection/,

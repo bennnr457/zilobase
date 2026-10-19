@@ -5,18 +5,21 @@ import type { ChatThread, ChatThreadDetail } from "./contracts";
 export const chatThreadsKey = (workspaceId: string) => ["ai", workspaceId, "threads"] as const;
 export const chatThreadKey = (workspaceId: string, id: string) =>
   ["ai", workspaceId, "thread", id] as const;
-export const chatThreadsOptions = (context: ClientOperationContext, workspaceId: string) =>
+export const chatThreadsOptions = (
+  { apiFetch, queryClient }: ClientOperationContext,
+  workspaceId: string,
+) =>
   queryOptions({
     queryKey: chatThreadsKey(workspaceId),
     enabled: !!workspaceId,
     queryFn: ({ signal }) =>
-      captureClientOperation(context).context.apiFetch<ChatThread[]>(
+      captureClientOperation({ apiFetch, queryClient }).context.apiFetch<ChatThread[]>(
         `/ai/threads?workspaceId=${encodeURIComponent(workspaceId)}`,
         { signal },
       ),
   });
 export const chatThreadOptions = (
-  context: ClientOperationContext,
+  { apiFetch, queryClient }: ClientOperationContext,
   workspaceId: string,
   id: string,
 ) =>
@@ -24,7 +27,7 @@ export const chatThreadOptions = (
     queryKey: chatThreadKey(workspaceId, id),
     enabled: !!workspaceId && !!id,
     queryFn: ({ signal }) =>
-      captureClientOperation(context).context.apiFetch<ChatThreadDetail>(
+      captureClientOperation({ apiFetch, queryClient }).context.apiFetch<ChatThreadDetail>(
         `/ai/threads/${encodeURIComponent(id)}?workspaceId=${encodeURIComponent(workspaceId)}`,
         { signal },
       ),
@@ -43,3 +46,11 @@ export async function deleteChatConversation(
   context.queryClient.removeQueries({ queryKey: chatThreadKey(workspaceId, id) });
   await context.queryClient.invalidateQueries({ queryKey: chatThreadsKey(workspaceId) });
 }
+
+export const chatSelectionOptions = (workspaceId: string, sessionId?: string) =>
+  queryOptions({
+    queryKey: ["ai", workspaceId, "selection", sessionId] as const,
+    queryFn: async () => ({ id: null as string | null, initialized: false }),
+    staleTime: Infinity,
+    initialData: { id: null as string | null, initialized: false },
+  });

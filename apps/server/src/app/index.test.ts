@@ -49,13 +49,15 @@ test("createApp registers every public feature route group", () => {
   }
 });
 
-test("Ask AI and custom agents do not register runtime API routes", () => {
+test("Ask AI registers chat and history without enabling custom-agent routes", () => {
   const routes = createApp({ ports: {} }).routes;
   assert.equal(
-    routes.some(({ path }) => /^\/(?:api\/)?(?:ai|agents)(?:\/|$)/.test(path)),
+    routes.some(({ path }) => /^\/(?:api\/)?agents(?:\/|$)/.test(path)),
     false,
   );
   assert.equal(isNodeApiPath("/agents/chat/thread-1"), false);
+  assert.ok(routes.some(({ path, method }) => path === "/ai/chat" && method === "POST"));
+  assert.ok(routes.some(({ path, method }) => path === "/ai/threads" && method === "GET"));
 });
 
 test("every registered Hono route is a Node API path", () => {

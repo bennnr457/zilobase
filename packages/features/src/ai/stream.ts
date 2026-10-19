@@ -9,6 +9,11 @@ export async function consumeChatStream(
   if (!response.ok || !response.body) throw new Error("Chat stream unavailable");
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
+  const abort = () => {
+    void reader.cancel(signal.reason).catch(() => {});
+  };
+  signal.addEventListener("abort", abort, { once: true });
+  if (signal.aborted) abort();
   let buffer = "";
   let finished = false;
   const consume = (line: string) => {
@@ -39,6 +44,7 @@ export async function consumeChatStream(
     if (buffer) consume(buffer);
     if (!finished) throw new Error("Response interrupted. Your partial answer has been kept.");
   } finally {
+    signal.removeEventListener("abort", abort);
     await reader.cancel().catch(() => {});
     reader.releaseLock();
   }

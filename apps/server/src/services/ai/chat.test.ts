@@ -92,3 +92,77 @@ test("authorization failure prevents provider setup and streaming", async () => 
   ).rejects.toThrow("Forbidden");
   expect(model).not.toHaveBeenCalled();
 });
+
+test("aborting after a partial delta stops the provider and persists the partial answer", async () => {
+  const abort = new AbortController();
+  let providerSignal: AbortSignal | undefined;
+  const model = new MockLanguageModelV4({
+    doStream: async (options) => {
+      providerSignal = options.abortSignal;
+      return {
+        stream: new ReadableStream({
+          start(controller) {
+            controller.enqueue({ type: "stream-start", warnings: [] });
+            controller.enqueue({ type: "text-start", id: "text" });
+            controller.enqueue({ type: "text-delta", id: "text", delta: "Partial answer" });
+          },
+        }),
+      };
+    },
+  });
+  const finish = vi.fn(async () => {});
+  const prepared = await prepareChat(context, request, {
+    authorize: async () =>
+      ({}) as Awaited<ReturnType<typeof import("./context").authorizeChatWorkspace>>,
+    model: () => model,
+    assemble: async () => structuredClone(built),
+    begin: async () => ({ threadId: "thread", turns: [], replay: null }),
+    finish,
+  });
+  const events = [];
+  for await (const event of prepared.events(abort.signal)) {
+    events.push(event);
+    if (event.type === "delta") abort.abort();
+  }
+  expect(providerSignal?.aborted).toBe(true);
+  expect(events.at(-1)).toEqual({ type: "done", status: "stopped" });
+  expect(finish).toHaveBeenCalledWith(
+    request.requestId,
+    "Partial answer",
+    "stopped",
+    undefined,
+    expect.objectContaining({ status: "complete" }),
+  );
+});
+
+test("provider failure emits a useful error and finalizes the saved turn", async () => {
+  const model = new MockLanguageModelV4({
+    doStream: async () => ({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: "error", error: new Error("provider unavailable") });
+          controller.close();
+        },
+      }),
+    }),
+  });
+  const finish = vi.fn(async () => {});
+  const prepared = await prepareChat(context, request, {
+    authorize: async () =>
+      ({}) as Awaited<ReturnType<typeof import("./context").authorizeChatWorkspace>>,
+    model: () => model,
+    assemble: async () => structuredClone(built),
+    begin: async () => ({ threadId: "thread", turns: [], replay: null }),
+    finish,
+  });
+  const events = [];
+  for await (const event of prepared.events(new AbortController().signal)) events.push(event);
+  expect(events.at(-1)).toEqual({ type: "error", message: expect.stringContaining("Retry") });
+  expect(finish).toHaveBeenCalledWith(
+    request.requestId,
+    "",
+    "failed",
+    undefined,
+    expect.any(Object),
+  );
+});

@@ -26,3 +26,34 @@ test("stream handles split UTF-8 frames and detects interrupted responses", asyn
     /interrupted/,
   );
 });
+
+test("stop cancels a stalled body read without waiting for another provider chunk", async () => {
+  const controller = new AbortController();
+  let cancelled = false;
+  const response = new Response(
+    new ReadableStream({
+      cancel() {
+        cancelled = true;
+      },
+    }),
+  );
+  const reading = consumeChatStream(response, controller.signal, () => {});
+  controller.abort();
+  await assert.rejects(reading, { name: "AbortError" });
+  assert.equal(cancelled, true);
+});
+
+test("provider errors keep prior deltas and reject with a useful retry error", async () => {
+  const events: unknown[] = [];
+  await assert.rejects(
+    consumeChatStream(
+      new Response(
+        '{"type":"delta","text":"partial"}\n{"type":"error","message":"Retry your message"}\n',
+      ),
+      new AbortController().signal,
+      (event) => events.push(event),
+    ),
+    /Retry/,
+  );
+  assert.equal(events.length, 2);
+});

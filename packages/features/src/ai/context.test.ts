@@ -129,3 +129,38 @@ test("expired scope, workspace mismatch and malformed documents cannot produce c
   assert.throws(() => parsePageDocument({ type: "doc", content: "bad" }), /Invalid/);
   assert.throws(() => parsePageDocument({ type: "text", text: 123 }), /Invalid/);
 });
+
+test("computed properties use shared formula semantics and preserve relation IDs and false values", async () => {
+  const { ports } = fixture();
+  const database = await ports.database("db");
+  database.dataSources = database.dataSources.slice(0, 1);
+  database.properties = [
+    ["amount", "Amount", "number", {}],
+    ["twice", "Twice", "formula", { formula: 'prop("Amount") * 2' }],
+    ["broken", "Broken", "formula", { formula: "unknownFunction()" }],
+    ["done", "Done", "checkbox", {}],
+    ["related", "Related", "relation", {}],
+  ].map(([id, name, type, config], i) => ({
+    id: `binding-${id}`,
+    propertyId: String(id),
+    position: i,
+    property: { id: String(id), name: String(name), type: String(type), config },
+  }));
+  database.rows = [{ id: "r", pageId: "p", position: 0, page: { name: "Task" } }];
+  database.rowCount = 1;
+  database.values = [
+    { pageId: "p", propertyId: "amount", value: "12" },
+    { pageId: "p", propertyId: "done", value: false },
+    { pageId: "p", propertyId: "related", value: ["linked-page"] },
+  ];
+  ports.database = async () => database;
+  const result = await collectWorkspaceContext(
+    { workspaceId: "workspace", roots: [{ type: "database", id: "db" }] },
+    ports,
+  );
+  const values = new Map(result.sources[0]!.values.map((v) => [v.propertyId, v.value]));
+  assert.equal(values.get("twice"), 24);
+  assert.equal(values.get("done"), false);
+  assert.deepEqual(values.get("related"), ["linked-page"]);
+  assert.match(JSON.stringify(values.get("broken")), /unavailable/);
+});

@@ -68,7 +68,7 @@ export const ChatbotComposer = ({
     <div className="relative z-10 -mx-4 grid shrink-0 gap-3 bg-surface-canvas px-4 pt-3 pb-4 md:mx-0 md:px-0 md:pb-6">
       <ChatbotScrollButton targetRef={rootRef} />
       <div className="mx-auto w-full max-w-full">
-        {children}
+        <div className="max-h-[min(40vh,20rem)] overflow-y-auto overscroll-contain">{children}</div>
         <PromptInput onSubmit={onSubmit}>
           {mention && !disabled && (
             <div

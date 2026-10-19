@@ -24,6 +24,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useSession } from "../auth/react";
 import {
   chatThreadsOptions,
+  chatSelectionOptions,
   chatThreadOptions,
   chatThreadsKey,
   chatThreadKey,
@@ -52,15 +53,11 @@ export function useChatThreads(workspaceId: string, threadId: string | null, ena
 export function useChatSelection(workspaceId: string) {
   const { queryClient } = useZilobaseFeatures();
   const { data: session } = useSession();
-  const key = ["ai", workspaceId, "selection", session?.session?.id] as const;
-  const query = useQuery({
-    queryKey: key,
-    queryFn: async () => ({ id: null as string | null, initialized: false }),
-    staleTime: Infinity,
-    initialData: { id: null as string | null, initialized: false },
-  });
+  const options = chatSelectionOptions(workspaceId, session?.session?.id);
+  const query = useQuery(options);
   return {
     ...query.data,
-    select: (id: string | null) => queryClient.setQueryData(key, { id, initialized: true }),
+    select: (id: string | null) =>
+      queryClient.setQueryData(options.queryKey, { id, initialized: true }),
   };
 }

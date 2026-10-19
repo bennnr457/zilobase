@@ -24,8 +24,8 @@ vi.mock("../../../infrastructure/database", () => ({
         async limit() {
           return rows;
         },
-        async orderBy() {
-          return rows;
+        orderBy() {
+          return builder;
         },
         then(resolve: (value: unknown[]) => unknown) {
           return Promise.resolve(rows).then(resolve);

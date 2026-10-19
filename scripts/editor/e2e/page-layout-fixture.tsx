@@ -1,3 +1,5 @@
+import { createAiRuntimeFixture } from "./ai-runtime-fixture";
+import { AskAiWorkspace } from "@/sections/ai/workspace/components/ask-ai-workspace";
 import {
   sharingTarget,
   sharingLevel,
@@ -48,7 +50,10 @@ import {
 } from "@/sections/pages/presentation/components/page-side-pane";
 import { PageDialog } from "@/sections/pages/presentation/components/page-dialog";
 import { useOpenEmbeddedPage } from "@/sections/pages/navigation/hooks/page-navigation";
-import { PageEditorRegistryProvider } from "@/sections/pages/editor/runtime/components/page-editor-registry";
+import {
+  PageEditorRegistryProvider,
+  usePageEditorRegistry,
+} from "@/sections/pages/editor/runtime/components/page-editor-registry";
 import {
   PageCommentsRegistryProvider,
   PageEditorCommentsProvider,
@@ -112,8 +117,16 @@ const records = ["main", "child", "other"].map((id) => ({
   createdAt: "2026-10-15T00:00:00Z",
   updatedAt: "2026-10-15T00:00:00Z",
 }));
+const aiFixture =
+  new URLSearchParams(window.location.search).get("workspace") === "ai"
+    ? createAiRuntimeFixture(records)
+    : null;
 const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => {
   requests.push(path);
+  if (aiFixture) {
+    const response = await aiFixture.api(path, options);
+    if (response !== undefined) return response as T;
+  }
   if (meetingFixture && path === "/meetings/fixture")
     return {
       meeting: {
@@ -227,12 +240,14 @@ const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => 
   return {} as T;
 };
 const auth = {
-  ...(sharingTarget
-    ? sharingAuth
-    : {
-        getSession: async () => ({ user: null, session: null }),
-        listWorkspaces: async () => [],
-      }),
+  ...(aiFixture
+    ? aiFixture.auth
+    : sharingTarget
+      ? sharingAuth
+      : {
+          getSession: async () => ({ user: null, session: null }),
+          listWorkspaces: async () => [],
+        }),
 } as unknown as ZilobaseAuthClient;
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -494,22 +509,61 @@ function SettingsFixture() {
 function AiPresentationFixture() {
   const [mode, setMode] = useState<"sidebar" | "floating">("sidebar");
   const [open, setOpen] = useState(true);
+  const [full, setFull] = useState(false);
+  const state = usePageSidePaneState("main");
+  const registry = usePageEditorRegistry();
+  useEffect(
+    () =>
+      registry.registerEditor("main", {
+        getContentJson: () => ({
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: aiFixture!.controls.localText }] },
+            { type: "databaseBlock", attrs: { databaseId: "database" } },
+          ],
+        }),
+        isEditable: () => true,
+        isSynchronized: () => false,
+        setContentJson: () => false,
+      }),
+    [registry],
+  );
   return (
-    <div style={{ height: 600, maxWidth: 500 }}>
-      {open ? (
-        <ChatSidebarPanel
-          onClose={() => setOpen(false)}
-          onPresentationModeChange={setMode}
-          presentationMode={mode}
-        />
-      ) : (
-        <button onClick={() => setOpen(true)}>Reopen chat</button>
-      )}
-    </div>
+    <PageSidePaneContext.Provider value={state}>
+      <div className="flex w-full min-w-0 flex-col">
+        <button onClick={() => setFull(!full)}>Toggle full page</button>
+        <button
+          onClick={async () => {
+            aiFixture!.controls.workspaceId =
+              aiFixture!.controls.workspaceId === "workspace" ? "other" : "workspace";
+            queryClient.setQueryData(["session"], await aiFixture!.auth.getSession());
+          }}
+        >
+          Switch workspace
+        </button>
+        <div data-citation-destination>{state.sidePanePageId ?? state.dialogPageId}</div>
+        <div style={{ height: 680, maxWidth: full ? 1100 : 500 }}>
+          {open && full ? (
+            <AskAiWorkspace pageId="main" />
+          ) : open ? (
+            <ChatSidebarPanel
+              pageId="main"
+              onClose={() => setOpen(false)}
+              onPresentationModeChange={setMode}
+              presentationMode={mode}
+            />
+          ) : (
+            <button onClick={() => setOpen(true)}>Reopen chat</button>
+          )}
+        </div>
+      </div>
+    </PageSidePaneContext.Provider>
   );
 }
 
-const root = createRootRoute({ component: () => <Outlet /> });
+const root = createRootRoute({
+  component: () => (aiFixture ? <AiPresentationFixture /> : <Outlet />),
+});
 const routes = ["main", "child", "other"].map((id) =>
   createRoute({
     getParentRoute: () => root,
@@ -522,6 +576,7 @@ const history = createMemoryHistory({ initialEntries: [initial] });
 const router = createRouter({ routeTree: root.addChildren(routes), history });
 Object.assign(window, {
   pageLayoutFixture: {
+    ai: aiFixture?.controls,
     mounts,
     requests,
     writes,
@@ -534,7 +589,13 @@ Object.assign(window, {
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <ZilobaseFeaturesProvider
-      value={{ deployment: "page-layout-test", queryClient, apiFetch, auth }}
+      value={{
+        deployment: "page-layout-test",
+        queryClient,
+        apiFetch,
+        auth,
+        streamFetch: aiFixture?.streamFetch,
+      }}
     >
       <ShortcutProvider>
         <PageEditorRegistryProvider>
@@ -543,11 +604,7 @@ createRoot(document.getElementById("root")!).render(
               <PageDesignEditorProvider>
                 <Toaster />
                 <FixtureSidebar>
-                  {new URLSearchParams(window.location.search).get("workspace") === "ai" ? (
-                    <AiPresentationFixture />
-                  ) : (
-                    <RouterProvider router={router} />
-                  )}
+                  <RouterProvider router={router} />
                 </FixtureSidebar>
               </PageDesignEditorProvider>
             </PageEditorCommentsProvider>

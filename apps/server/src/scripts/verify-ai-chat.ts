@@ -24,6 +24,8 @@ import {
   getChatThread,
   deleteChatThread,
 } from "../services/ai/conversations";
+import { prepareChat } from "../services/ai/chat";
+import { assembleChatContext } from "../services/ai/context";
 import { readDatabaseExport } from "../services/databases/read/operations";
 import type { ChatRequest } from "@zilobase/features/runtime";
 import type { BuildContextResult } from "@zilobase/page-context";
@@ -124,6 +126,7 @@ try {
   );
   const bounded = await run(() => readDatabaseExport(context, { databaseId: "db", rowLimit: 200 }));
   assert.equal(bounded.rows.length, 200);
+  assert.ok("rowCount" in bounded && "rowsPagination" in bounded);
   assert.equal(bounded.rowCount, 204);
   assert.equal(bounded.rowsPagination?.hasMore, true);
   assert.equal(bounded.rows[0]?.id, "row-0");
@@ -132,6 +135,46 @@ try {
   await assert.rejects(
     run(() => readDatabaseExport(context, { databaseId: "db", rowLimit: 501 })),
     /rowLimit/,
+  );
+  const assembled = await run(() =>
+    assembleChatContext(context, {
+      workspaceId: "workspace",
+      roots: [
+        { type: "page", id: "page-0" },
+        { type: "database", id: "db" },
+      ],
+      snapshots: [
+        {
+          pageId: "page-0",
+          capturedAt: new Date().toISOString(),
+          content: {
+            type: "doc",
+            content: [
+              { type: "paragraph", content: [{ type: "text", text: "Unsynced before send" }] },
+              { type: "databaseBlock", attrs: { databaseId: "db" } },
+              { type: "databaseBlock", attrs: { databaseId: "inaccessible" } },
+            ],
+          },
+        },
+      ],
+    }),
+  );
+  assert.ok(assembled.markdown.includes("Unsynced before send"));
+  assert.equal(assembled.markdown.match(/## Data source: Tasks/g)?.length, 1);
+  assert.equal(assembled.status, "partial");
+  assert.ok(!assembled.manifest.some((entry) => entry.id === "inaccessible"));
+  assert.ok(assembled.omissions.some((reason) => reason.includes("could not be loaded")));
+  assert.ok(
+    assembled.manifest.find((entry) => entry.key === "source:source")?.coverage?.totalRows === 204,
+  );
+  await assert.rejects(
+    run(() =>
+      assembleChatContext(context, {
+        workspaceId: "workspace",
+        roots: [{ type: "page", id: "missing" }],
+        snapshots: [],
+      }),
+    ),
   );
   const claimed = await run(() => beginChatTurn(context, request, built));
   assert.ok(claimed.threadId);
@@ -203,6 +246,43 @@ try {
   await run(() => deleteChatThread(context, "workspace", claimed.threadId));
   assert.equal((await client.db.select().from(askAiThread)).length, 0);
   assert.equal((await client.db.select().from(askAiTurn)).length, 0);
+  // Explicit opt-in: use only the synthetic records created in this isolated DB.
+  if (process.env.ZILOBASE_AI_VERIFY_MODEL) {
+    assert.ok(process.env.OPENAI_API_KEY, "Live verification needs an API key");
+    const liveContext = {
+      ...context,
+      env: {
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+        AI_MODEL: process.env.ZILOBASE_AI_VERIFY_MODEL,
+        DATABASE_URL: connection,
+      },
+    };
+    await run(async () => {
+      const prepared = await prepareChat(liveContext, {
+        ...request,
+        requestId: randomUUID(),
+        text: "In one sentence, name the attached page and cite it.",
+        roots: [{ type: "page", id: "page-0" }],
+      });
+      let threadId = "",
+        answer = "",
+        completed = false;
+      for await (const event of prepared.events(AbortSignal.timeout(45_000))) {
+        if (event.type === "context") threadId = event.threadId ?? "";
+        if (event.type === "delta") answer += event.text;
+        if (event.type === "done") completed = event.status === "completed";
+        if (event.type === "error") throw new Error(event.message);
+      }
+      assert.ok(completed && answer.trim(), "Live model must complete a streamed answer");
+      const restored = await getChatThread(liveContext, "workspace", threadId);
+      assert.equal(restored.messages.at(-1)?.status, "completed");
+      assert.equal(restored.messages.at(-1)?.text, answer);
+      await deleteChatThread(liveContext, "workspace", threadId);
+    });
+    console.info(
+      "Live model completed attached-context streaming and persisted/reloaded its answer.",
+    );
+  }
   console.info(
     "AI migrations, idempotency, private threads, interrupted turns, source revocation and deletion passed.",
   );

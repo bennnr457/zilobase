@@ -1,3 +1,6 @@
+import { evaluateDatabaseFormula } from "../databases/schema/formula/evaluator";
+import { getFormulaExpression } from "../databases/schema/formula/config";
+import { parsePropertyValue } from "../databases/schema/property-values";
 import {
   CONTEXT_VERSION,
   extractDatabaseIds,
@@ -42,7 +45,9 @@ export type ContextDatabaseRead = {
     pageId: string;
     parentRowId?: string | null;
     position: number;
-    page: { name: string };
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
+    page: { name: string; createdAt?: string | Date; updatedAt?: string | Date };
   }>;
   values: Array<{ pageId: string; propertyId: string; value: unknown }>;
   rowCount?: number;
@@ -175,7 +180,7 @@ export async function collectWorkspaceContext(
             position: row.position,
             name: row.page.name,
           })),
-          values: payload.values,
+          values: contextValues(payload, provenance.capturedAt),
           coverage: {
             complete,
             totalRows: total,
@@ -239,4 +244,61 @@ export async function collectWorkspaceContext(
   ports.check();
   context.sources = [...sources.values()];
   return context;
+}
+
+// Formula values are derived in the UI and are not stored in the export. Reuse
+// its portable evaluator; retain relation IDs without fetching linked page bodies.
+function contextValues(payload: ContextDatabaseRead, capturedAt: string) {
+  const types = new Map(payload.properties.map((p) => [p.propertyId, p.property.type]));
+  const propertyValuesByKey = Object.fromEntries(
+    payload.values.map((value) => [
+      `${value.pageId}:${value.propertyId}`,
+      parsePropertyValue(value.value, types.get(value.propertyId)),
+    ]),
+  );
+  const derivedIds = new Set(
+    payload.properties
+      .filter((p) => ["formula", "created_time", "edited_time"].includes(p.property.type))
+      .map((p) => p.propertyId),
+  );
+  const values = payload.values.filter((value) => !derivedIds.has(value.propertyId));
+  const date = (value: string | Date | undefined) =>
+    value instanceof Date ? value.toISOString() : (value ?? "");
+  for (const row of payload.rows) {
+    const formulaRow = {
+      ...row,
+      createdAt: date(row.createdAt),
+      updatedAt: date(row.updatedAt),
+      page: {
+        ...row.page,
+        createdAt: date(row.page.createdAt) || undefined,
+        updatedAt: date(row.page.updatedAt) || undefined,
+      },
+    };
+    for (const binding of payload.properties) {
+      const property = binding.property;
+      if (!derivedIds.has(binding.propertyId)) continue;
+      let value: unknown;
+      if (property.type === "formula") {
+        const result = evaluateDatabaseFormula({
+          expression: getFormulaExpression(property.config),
+          properties: payload.properties,
+          propertyValuesByKey,
+          currentPropertyId: property.id,
+          row: formulaRow,
+          titlePropertyLabel: "Name",
+          now: new Date(capturedAt),
+        });
+        value = result.ok ? result.value : { unavailable: result.error };
+      } else {
+        value =
+          property.type === "created_time"
+            ? (formulaRow.page.createdAt ?? formulaRow.createdAt)
+            : (formulaRow.page.updatedAt ?? formulaRow.updatedAt);
+        if (!value) value = { unavailable: "Timestamp not supplied" };
+      }
+      values.push({ pageId: row.pageId, propertyId: binding.propertyId, value });
+    }
+  }
+  return values;
 }
