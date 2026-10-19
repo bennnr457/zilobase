@@ -87,3 +87,4 @@ export {
   workspace,
   workspaceGuest,
 } from "./schema/workspaces";
+export { askAiThread, askAiTurn } from "./schema/ai";

@@ -1,4 +1,8 @@
 import { expect, test, vi } from "vitest";
+vi.mock("../operations/context", async (original) => ({
+  ...(await original<typeof import("../operations/context")>()),
+  runServerOperation: async (_context: unknown, run: () => Promise<unknown>) => run(),
+}));
 import { MockLanguageModelV4 } from "ai/test";
 import { prepareChat } from "./chat";
 import type { ServerOperationContext } from "../operations/context";
@@ -53,6 +57,8 @@ test("chat sends authorized context to the SDK and emits text plus usage", async
     authorize,
     model: () => model,
     assemble: async () => built,
+    begin: async () => ({ threadId: "thread", turns: [], replay: null }),
+    finish: async () => {},
   });
   const events = [];
   for await (const event of prepared.events(new AbortController().signal)) events.push(event);
@@ -79,6 +85,8 @@ test("authorization failure prevents provider setup and streaming", async () => 
         throw new Error("Forbidden");
       },
       assemble: async () => built,
+      begin: async () => ({ threadId: "thread", turns: [], replay: null }),
+      finish: async () => {},
       model,
     }),
   ).rejects.toThrow("Forbidden");

@@ -163,3 +163,11 @@ origin for web and desktop, and streams responses from `POST /ai/chat`.
 Users attach authorized workspace pages and databases with `@`. Open editor
 content is captured for the current turn. Each database source is included once,
 with all accessible view configurations. The context inspector reports omissions.
+
+Chat history is private to its creator and workspace. Conversations persist until
+explicitly deleted, or until their workspace/account is deleted. Deleting a chat
+cascades to its turns. Full source markdown and local editor snapshots are not
+stored; historical inspection shows IDs, revisions and coverage. Source access is
+rechecked before history is displayed or sent to a model. Inaccessible history
+requires a new chat. Generation stops with the request; abandoned turns become
+interrupted after the three-minute generation deadline and a short grace period.

@@ -45,7 +45,7 @@ export function register({ readSource, assert, test }) {
     assert.match(personal, /data-ai-scroll-shell[\s\S]*?overflow-y-auto/);
     assert.match(
       personal,
-      /<\/ChatLayout>\s*<\/div>\s*<ChatLayout[^>]*>\s*\{beforeComposer\}\s*<ChatbotComposer/,
+      /<\/ChatLayout>\s*<\/div>\s*<ChatLayout[^>]*>\s*\{beforeComposer\}[\s\S]*?<ChatbotComposer/,
     );
   });
 }

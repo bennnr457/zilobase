@@ -1,3 +1,5 @@
+import { beginChatTurn, finishChatTurn } from "./conversations";
+import { runServerOperation } from "../operations/context";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, type LanguageModel, type ModelMessage } from "ai";
 import type { ChatEvent, ChatRequest } from "@zilobase/features/runtime";
@@ -25,19 +27,21 @@ export async function prepareChat(
     model: configuredChatModel,
     assemble: assembleChatContext,
     authorize: authorizeChatWorkspace,
+    begin: beginChatTurn,
+    finish: finishChatTurn,
   },
 ) {
   await dependencies.authorize(context, request.workspaceId);
   const model = dependencies.model(context);
   const built = await dependencies.assemble(context, request);
-  // Until persistent history is introduced, re-read every historical root before using an answer.
-  for (const message of request.history)
-    if (message.roots.length)
-      await dependencies.assemble(context, { ...request, roots: message.roots, snapshots: [] });
-  const history: ModelMessage[] = request.history.map(({ role, text }) => ({
-    role,
-    content: text,
-  }));
+  const claim = await dependencies.begin(context, request, built);
+  const history: ModelMessage[] = claim.turns
+    .filter((turn) => turn.status === "completed")
+    .slice(-15)
+    .flatMap((turn) => [
+      { role: "user" as const, content: turn.userText },
+      { role: "assistant" as const, content: turn.assistantText },
+    ]);
   const messages: ModelMessage[] = [
     ...history,
     {
@@ -47,8 +51,48 @@ export async function prepareChat(
   ];
   return {
     built,
+    cancel: () =>
+      claim.replay
+        ? Promise.resolve()
+        : runServerOperation(context, () => dependencies.finish(request.requestId, "", "stopped")),
     async *events(signal: AbortSignal): AsyncGenerator<ChatEvent> {
-      yield { type: "context", context: built };
+      yield {
+        type: "context",
+        context: claim.replay
+          ? {
+              ...claim.replay.context,
+              markdown: "",
+              omissions: [
+                ...claim.replay.context.omissions,
+                "Historical source content is not retained.",
+              ],
+            }
+          : built,
+        threadId: claim.threadId,
+      };
+      if (claim.replay) {
+        yield { type: "delta", text: claim.replay.assistantText };
+        if (claim.replay.status === "completed" || claim.replay.status === "stopped")
+          yield { type: "done", status: claim.replay.status };
+        else
+          yield {
+            type: "error",
+            message: "This attempt was interrupted or failed. Send again to start a new attempt.",
+          };
+        return;
+      }
+      let answer = "";
+      let outcome: "completed" | "stopped" | "failed" = "failed";
+      let usage: { inputTokens?: number; outputTokens?: number } | undefined;
+      const persist = () =>
+        runServerOperation(context, () =>
+          dependencies.finish(
+            request.requestId,
+            answer,
+            signal.aborted ? "stopped" : outcome,
+            usage,
+          ),
+        );
       let finished = false;
       try {
         const result = streamText({
@@ -60,10 +104,18 @@ export async function prepareChat(
           maxRetries: 1,
         });
         for await (const part of result.stream) {
-          if (part.type === "text-delta") yield { type: "delta", text: part.text };
-          else if (part.type === "error")
+          if (part.type === "text-delta") {
+            answer += part.text;
+            yield { type: "delta", text: part.text };
+          } else if (part.type === "error")
             throw new Error("The AI provider could not complete this answer. Retry your message.");
           else if (part.type === "finish") {
+            outcome = "completed";
+            usage = {
+              inputTokens: part.totalUsage.inputTokens,
+              outputTokens: part.totalUsage.outputTokens,
+            };
+            await persist();
             finished = true;
             yield {
               type: "done",
@@ -84,6 +136,8 @@ export async function prepareChat(
             type: "error",
             message: "The AI provider could not complete this answer. Retry your message.",
           };
+      } finally {
+        if (!finished) await persist();
       }
     },
   };

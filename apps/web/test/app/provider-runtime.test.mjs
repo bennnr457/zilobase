@@ -448,7 +448,7 @@ async function loadProviderRuntime(sourcePath) {
     "@zilobase/features/workspaces/react": `import { controls } from "provider-test-ports"; export const useActiveWorkspaceId = () => controls.workspace;`,
     "@zilobase/features/databases/react": `import { controls } from "provider-test-ports"; export const useDatabaseController = () => controls.controller;`,
 
-    "@/platform/network/api": `export { apiFetch } from "provider-test-ports"; import { controls } from "provider-test-ports"; export async function clearApiAuthToken() { controls.step("token.clear"); }`,
+    "@/platform/network/api": `export { apiFetch, apiFetch as apiStreamFetch } from "provider-test-ports"; import { controls } from "provider-test-ports"; export async function clearApiAuthToken() { controls.step("token.clear"); }`,
     "@/platform/storage/client-cache-storage": `export { webClientCacheStorage, readCachedSession, clearCachedSession } from "provider-test-ports";`,
     "@/platform/network/connectivity": `import { controls } from "provider-test-ports"; export const webClientLifecycle = {}; export const getConnectivityState = () => controls.offline ? "offline" : "online";`,
     "@/platform/diagnostics/desktop-diagnostics": `import { controls } from "provider-test-ports"; export const describeDesktopError = error => ({ message: error.message }); export function recordDesktopDiagnostic(name, data, level) { controls.diagnostics.push({ name, data, level }); if (controls.failures["diagnostic:" + data.status]) throw controls.failures["diagnostic:" + data.status]; }`,

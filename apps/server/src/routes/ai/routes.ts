@@ -1,3 +1,4 @@
+import { listChatThreads, getChatThread, deleteChatThread } from "../../services/ai/conversations";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { chatRequestSchema } from "@zilobase/features/runtime";
@@ -40,6 +41,7 @@ aiRoutes.post("/chat", jsonValidator(chatRequestSchema), async (c) => {
       async cancel() {
         cancellation.abort();
         await iterator.return(undefined);
+        await prepared.cancel();
       },
     }),
     {
@@ -51,3 +53,25 @@ aiRoutes.post("/chat", jsonValidator(chatRequestSchema), async (c) => {
     },
   );
 });
+
+aiRoutes.get("/threads", async (c) =>
+  c.json(await listChatThreads(serverOperationContext(c), c.req.query("workspaceId") ?? "")),
+);
+aiRoutes.get("/threads/:id", async (c) =>
+  c.json(
+    await getChatThread(
+      serverOperationContext(c),
+      c.req.query("workspaceId") ?? "",
+      c.req.param("id"),
+    ),
+  ),
+);
+aiRoutes.delete("/threads/:id", async (c) =>
+  c.json(
+    await deleteChatThread(
+      serverOperationContext(c),
+      c.req.query("workspaceId") ?? "",
+      c.req.param("id"),
+    ),
+  ),
+);

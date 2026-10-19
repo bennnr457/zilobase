@@ -1,4 +1,5 @@
-import { useSendChat } from "@zilobase/features/ai/react";
+import type { ChatRequest } from "@zilobase/features/ai";
+import { useSendChat, useChatThreads, useChatSelection } from "@zilobase/features/ai/react";
 import { useChatAttachments } from "../../attachments/hooks/use-chat-attachments";
 import { ContextInspector } from "../../attachments/components/context-inspector";
 import type { BuildContextResult } from "@zilobase/page-context";
@@ -31,7 +32,36 @@ export default function Chatbot({
   const [sentContext, setSentContext] = useState<BuildContextResult | null>(null);
   const send = useSendChat();
   const [streaming, setStreaming] = useState(false);
+  const selection = useChatSelection(workspaceId ?? "");
+  const threads = useChatThreads(
+    workspaceId ?? "",
+    selection.id,
+    !streaming && !attachmentState.busy,
+  );
+  const loadedThread = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selection.initialized && threads.list.isSuccess)
+      selection.select(threads.list.data[0]?.id ?? null);
+  }, [selection, threads.list.isSuccess, threads.list.data]);
+  useEffect(() => {
+    if (streaming || !threads.detail.data || loadedThread.current === selection.id) return;
+    const detail = threads.detail.data;
+    loadedThread.current = selection.id;
+    setMessages(detail.messages);
+    attachmentState.setAttachments(
+      detail.roots.map((ref) => ({
+        ...ref,
+        title:
+          detail.messages
+            .flatMap((message) => message.context?.manifest ?? [])
+            .find((entry) => entry.id === ref.id && entry.type === ref.type)?.title ?? ref.type,
+        path: "",
+        emoji: null,
+      })),
+    );
+  }, [threads.detail.data, selection.id, streaming, attachmentState]);
   const [chatError, setChatError] = useState<string | null>(null);
+  const pendingRequest = useRef<ChatRequest | null>(null);
   const streamController = useRef<AbortController | null>(null);
   useEffect(() => () => streamController.current?.abort(), []);
   const onSubmit = async (message: PromptInputMessage) => {
@@ -46,49 +76,60 @@ export default function Chatbot({
       const prepared = await attachmentState.build();
       controller.signal.throwIfAborted();
       setStreaming(true);
-      await send(
-        {
-          workspaceId,
-          requestId: crypto.randomUUID(),
-          text: nextText,
-          roots: prepared.roots,
-          snapshots: prepared.snapshots,
-          history: messages
-            .slice(-30)
-            .map((entry) => ({ role: entry.role, text: entry.text, roots: entry.roots ?? [] })),
-        },
-        controller.signal,
-        (event) => {
-          if (event.type === "context") {
-            accepted = true;
-            setSentContext(event.context);
-            setText("");
-            setMessages((current) => [
-              ...current,
-              { id: crypto.randomUUID(), role: "user", text: nextText, roots: prepared.roots },
-              {
-                id: assistantId,
-                role: "assistant",
-                text: "",
-                roots: prepared.roots,
-                context: event.context,
-                status: "streaming",
-              },
-            ]);
-          } else if (event.type === "delta")
-            setMessages((current) =>
-              current.map((entry) =>
-                entry.id === assistantId ? { ...entry, text: entry.text + event.text } : entry,
-              ),
-            );
-          else if (event.type === "done")
-            setMessages((current) =>
-              current.map((entry) =>
-                entry.id === assistantId ? { ...entry, status: event.status } : entry,
-              ),
-            );
-        },
-      );
+      const nextRequest: ChatRequest = {
+        workspaceId,
+        requestId: crypto.randomUUID(),
+        threadId: selection.id ?? undefined,
+        text: nextText,
+        roots: prepared.roots,
+        snapshots: prepared.snapshots,
+        history: [],
+      };
+      const signature = (request: ChatRequest) =>
+        JSON.stringify({
+          workspaceId: request.workspaceId,
+          text: request.text,
+          roots: request.roots,
+          snapshots: request.snapshots.map(({ pageId, content }) => ({ pageId, content })),
+        });
+      if (pendingRequest.current && signature(pendingRequest.current) === signature(nextRequest))
+        nextRequest.requestId = pendingRequest.current.requestId;
+      pendingRequest.current = nextRequest;
+      await send(nextRequest, controller.signal, (event) => {
+        if (event.type === "context") {
+          if (event.threadId) {
+            loadedThread.current = event.threadId;
+            selection.select(event.threadId);
+          }
+          accepted = true;
+          pendingRequest.current = null;
+          setSentContext(event.context);
+          setText("");
+          setMessages((current) => [
+            ...current,
+            { id: crypto.randomUUID(), role: "user", text: nextText, roots: prepared.roots },
+            {
+              id: assistantId,
+              role: "assistant",
+              text: "",
+              roots: prepared.roots,
+              context: event.context,
+              status: "streaming",
+            },
+          ]);
+        } else if (event.type === "delta")
+          setMessages((current) =>
+            current.map((entry) =>
+              entry.id === assistantId ? { ...entry, text: entry.text + event.text } : entry,
+            ),
+          );
+        else if (event.type === "done")
+          setMessages((current) =>
+            current.map((entry) =>
+              entry.id === assistantId ? { ...entry, status: event.status } : entry,
+            ),
+          );
+      });
     } catch (cause) {
       if (!controller.signal.aborted)
         setChatError(cause instanceof Error ? cause.message : "Could not send message");
@@ -105,6 +146,7 @@ export default function Chatbot({
       if (streamController.current === controller) {
         streamController.current = null;
         setStreaming(false);
+        if (!controller.signal.aborted) void threads.refresh();
       }
     }
   };
@@ -130,7 +172,7 @@ export default function Chatbot({
                   {getGreeting(session?.user?.name)}
                 </h1>
                 <p className="mt-1 text-sm text-content-secondary">
-                  Search, create, and work across your Zilobase workspace.
+                  Attach pages and databases to ask questions about your workspace.
                 </p>
               </div>
               <div className="flex max-w-2xl flex-wrap justify-center gap-2">
@@ -153,6 +195,71 @@ export default function Chatbot({
       </div>
       <ChatLayout sidebar={isSidebar}>
         {beforeComposer}
+        <div className="mb-2 flex items-center gap-2">
+          <select
+            aria-label="Conversation"
+            value={selection.id ?? ""}
+            disabled={streaming || attachmentState.busy}
+            className="min-w-0 flex-1 rounded border bg-surface-canvas p-2 text-sm"
+            onChange={(event) => {
+              loadedThread.current = null;
+              setMessages([]);
+              setSentContext(null);
+              setText("");
+              attachmentState.setAttachments([]);
+              selection.select(event.target.value || null);
+            }}
+          >
+            <option value="">New chat</option>
+            {(threads.list.data ?? []).map((thread) => (
+              <option key={thread.id} value={thread.id}>
+                {thread.title}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={streaming}
+            onClick={() => {
+              loadedThread.current = null;
+              selection.select(null);
+              setMessages([]);
+              setSentContext(null);
+              setText("");
+            }}
+          >
+            New chat
+          </Button>
+          {selection.id && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={streaming || threads.remove.isPending}
+              onClick={() => {
+                const id = selection.id!;
+                threads.remove.mutate(id, {
+                  onSuccess: () => {
+                    selection.select(null);
+                    setMessages([]);
+                    setSentContext(null);
+                  },
+                  onError: (error) => setChatError(error.message),
+                });
+              }}
+            >
+              Delete chat
+            </Button>
+          )}
+        </div>
+        {threads.detail.isError && (
+          <p role="alert" className="mb-2 text-sm text-destructive">
+            {threads.detail.error.message}
+          </p>
+        )}
+
         <ChatbotComposer
           isSidebar={isSidebar}
           onSubmit={onSubmit}

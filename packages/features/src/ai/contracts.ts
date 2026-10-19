@@ -55,3 +55,10 @@ export type ChatMessage = {
   context?: BuildContextResult;
   status?: "completed" | "stopped" | "failed" | "interrupted" | "streaming";
 };
+
+export type ChatThread = { id: string; workspaceId: string; title: string; updatedAt: string };
+export type ChatThreadDetail = {
+  thread: ChatThread;
+  messages: ChatMessage[];
+  roots: ResourceRef[];
+};
