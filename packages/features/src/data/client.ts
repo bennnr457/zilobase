@@ -1,11 +1,11 @@
-import { AccessCollections } from "../pages/access-references";
-import { NavigationCollections } from "../pages/navigation-references";
 import type { QueryClient } from "@tanstack/react-query";
+import { DatabaseCollections } from "../databases/cache";
+import { AccessCollections } from "../pages/access-references";
+import { createPageCollection } from "../pages/cache-registration";
+import { NavigationCollections } from "../pages/navigation-references";
 import { referenceInterests } from "./interests";
 import { DataPublication } from "./publication";
 import { DataSession, type DataSessionScope } from "./session";
-import { createPageCollection } from "../pages/cache-registration";
-import { DatabaseCollections } from "../databases/cache";
 
 export class SessionEntities {
   readonly session;
@@ -29,6 +29,7 @@ const clients = new WeakMap<QueryClient, SharedClient>();
 export class SharedClient {
   readonly publication = new DataPublication();
   private readSequence = 0;
+  private disposed = false;
   private authorizationEpoch = 0;
   private collectionScheduled = false;
   private readonly trackedFamilies = new Map<string, Set<string>>();
@@ -68,11 +69,13 @@ export class SharedClient {
   }
 
   dispose() {
+    this.disposed = true;
     this.unsubscribe?.();
     this.clear();
   }
 
   capture() {
+    if (this.disposed) throw new Error("Shared client is disposed");
     const identity = this.identity();
     const key = JSON.stringify(identity);
     if (this.identityKey !== key) {
@@ -207,6 +210,7 @@ export class SharedClient {
     this.collectionScheduled = true;
     queueMicrotask(() => {
       this.collectionScheduled = false;
+      if (this.disposed) return;
       const queries = this.queryClient!.getQueryCache().getAll();
       // Normalization publishes before Query installs its result references.
       if (queries.some((query) => query.state.fetchStatus === "fetching")) return;

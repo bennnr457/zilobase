@@ -1,15 +1,32 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { sessionQueryKey } from "../auth/queries";
 import type { SessionResponse } from "../auth/contracts";
-import { disposeSharedClient, installSharedClient } from "../data/client";
+import { sessionQueryKey } from "../auth/queries";
 import { disposeMemoryCalendarStorage } from "../calendar/memory-storage";
-import { disposeDatabaseControllers } from "../databases/interactions/store";
+import { disposeSharedClient, installSharedClient } from "../data/client";
+import {
+  disposeDatabaseControllers,
+  retainDatabaseController,
+} from "../databases/interactions/store";
+import type { ClientOperationContext } from "./operation-context";
 import { createZilobaseQueryClient } from "./query-client";
 
 export type ClientDeployment = string | (() => string);
+const runtimes = new WeakMap<
+  QueryClient,
+  {
+    ports?: ClientOperationContext;
+    release?: () => void;
+    unsubscribe?: () => void;
+    key?: string;
+  }
+>();
 
 /** Used by both pre-render reads and the React composition. */
-export function initializeZilobaseClient(queryClient: QueryClient, deployment: ClientDeployment) {
+export function initializeZilobaseClient(
+  queryClient: QueryClient,
+  deployment: ClientDeployment,
+  ports?: ClientOperationContext,
+) {
   const identity = () => {
     const session = queryClient.getQueryData<SessionResponse>(sessionQueryKey);
     return {
@@ -26,7 +43,37 @@ export function initializeZilobaseClient(queryClient: QueryClient, deployment: C
     };
   };
   const data = installSharedClient(queryClient, identity);
+  let runtime = runtimes.get(queryClient);
+  if (!runtime) {
+    runtime = {};
+    runtimes.set(queryClient, runtime);
+  }
+  const owner = runtime;
+  ports ??= owner.ports;
+  const retain = () => {
+    const current = identity();
+    const key = JSON.stringify(current);
+    if (
+      owner.key === key &&
+      owner.ports?.apiFetch === ports?.apiFetch &&
+      owner.ports?.lifecycle === ports?.lifecycle
+    )
+      return;
+    owner.release?.();
+    owner.key = key;
+    owner.ports = ports;
+    owner.release = ports
+      ? retainDatabaseController(
+          queryClient,
+          current.viewer.kind === "account" ? current.viewer.sessionId : "public",
+          ports.apiFetch,
+          ports.lifecycle,
+        )
+      : undefined;
+  };
   data.configure(identity, () => {
+    owner.release?.();
+    owner.key = undefined;
     disposeDatabaseControllers(queryClient);
     disposeMemoryCalendarStorage(queryClient);
     const predicate = (query: { queryKey: readonly unknown[] }) => query.queryKey[0] !== "session";
@@ -38,19 +85,40 @@ export function initializeZilobaseClient(queryClient: QueryClient, deployment: C
     void queryClient.resetQueries({ predicate }).catch(() => undefined);
     queryClient.removeQueries({ predicate: (query) => predicate(query) && !query.isActive() });
     queryClient.getMutationCache().clear();
+    retain();
   });
+  // Provider renders can refresh ports without adding subscriptions or owners.
+  owner.unsubscribe?.();
+  owner.unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+    if (event.query.queryKey[0] === "session") {
+      data.capture();
+      retain();
+    }
+  });
+  data.capture();
+  retain();
   return data;
 }
 
-export function createZilobaseClient(input: {
-  deployment: ClientDeployment;
-  queryClient?: QueryClient;
-}) {
+export function createZilobaseClient(
+  input: {
+    deployment: ClientDeployment;
+    queryClient?: QueryClient;
+  } & Partial<Omit<ClientOperationContext, "queryClient">>,
+) {
   const queryClient = input.queryClient ?? createZilobaseQueryClient();
-  initializeZilobaseClient(queryClient, input.deployment);
+  initializeZilobaseClient(
+    queryClient,
+    input.deployment,
+    input.apiFetch ? { ...input, apiFetch: input.apiFetch, queryClient } : undefined,
+  );
   return {
     queryClient,
     dispose() {
+      const owner = runtimes.get(queryClient);
+      owner?.unsubscribe?.();
+      owner?.release?.();
+      runtimes.delete(queryClient);
       disposeDatabaseControllers(queryClient);
       disposeMemoryCalendarStorage(queryClient);
       disposeSharedClient(queryClient);

@@ -1,28 +1,27 @@
 import {
+  focusManager,
+  onlineManager,
   QueryClientProvider,
   useQuery,
-  onlineManager,
-  focusManager,
   type QueryClient,
 } from "@tanstack/react-query";
-import { createContext, useContext } from "react";
-import { useEffect } from "react";
-import type { ClientCacheStorage } from "./cache-storage";
-import { subscribeClientReadCache } from "../pages/read-cache";
-import type { ApiFetcher } from "./api-fetcher";
-import { defaultClientLifecycle, type ClientLifecycle } from "./lifecycle";
-import { initializeZilobaseClient, type ClientDeployment } from "./client";
+import { createContext, useContext, useEffect } from "react";
 import { sessionQueryOptions } from "../auth/queries";
 import { DatabaseSessionContext } from "../databases/queries/session";
-import { retainDatabaseController } from "../databases/interactions/store";
+import { subscribeClientReadCache } from "../pages/read-cache";
+import type { ApiFetcher } from "./api-fetcher";
+import type { ClientCacheStorage } from "./cache-storage";
+import { initializeZilobaseClient, type ClientDeployment } from "./client";
+import { type ClientLifecycle } from "./lifecycle";
+import type { AuthenticatedClientOperationContext } from "./operation-context";
 export type { ClientLifecycle } from "./lifecycle";
 
 export type { ApiFetcher } from "./api-fetcher";
-
-import type { ZilobaseAuthClient } from "./auth-client";
 export type { ZilobaseAuthClient } from "./auth-client";
 
-export type ZilobaseFeaturesConfig = {
+import type { ZilobaseAuthClient } from "./auth-client";
+
+export type ZilobaseFeaturesConfig = AuthenticatedClientOperationContext & {
   deployment: ClientDeployment;
   cacheStorage?: ClientCacheStorage;
   apiFetch: ApiFetcher;
@@ -41,7 +40,7 @@ export function ZilobaseFeaturesProvider({
   children,
   value,
 }: React.PropsWithChildren<{ value: ZilobaseFeaturesConfig }>) {
-  initializeZilobaseClient(value.queryClient, value.deployment);
+  initializeZilobaseClient(value.queryClient, value.deployment, value);
   useEffect(() => {
     if (!value.lifecycle) return;
     const publish = () => {
@@ -54,12 +53,6 @@ export function ZilobaseFeaturesProvider({
   const { data: session } = useQuery(sessionQueryOptions(value.auth), value.queryClient);
   const userId = session?.user?.id;
   const sessionId = session?.session?.id;
-  const lifecycle = value.lifecycle ?? defaultClientLifecycle;
-  useEffect(
-    () =>
-      retainDatabaseController(value.queryClient, sessionId ?? "public", value.apiFetch, lifecycle),
-    [value.queryClient, sessionId, value.apiFetch, lifecycle],
-  );
   useEffect(() => {
     if (!value.cacheStorage || !userId || !sessionId) return;
     return subscribeClientReadCache(value.queryClient, value.cacheStorage, {

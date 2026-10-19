@@ -1,6 +1,6 @@
-import { TestQueryClient as QueryClient } from "../data/testing";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
+import { TestQueryClient as QueryClient } from "../data/testing";
 import { ZilobaseFeaturesProvider, type ZilobaseFeaturesConfig } from "./context";
 
 // Render the real hook once, then exercise its MutationObserver through mutateAsync.
@@ -10,7 +10,10 @@ export function createMutationTestRuntime<T>(
   apiFetch: ZilobaseFeaturesConfig["apiFetch"],
 ) {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  queryClient.setQueryData(["session"], { user: null, session: { id: "test-session" } });
+  queryClient.setQueryData(["session"], {
+    user: { id: "test-account" },
+    session: { id: "test-session" },
+  });
   let mutation: T | undefined;
   function Capture() {
     mutation = useHook();
