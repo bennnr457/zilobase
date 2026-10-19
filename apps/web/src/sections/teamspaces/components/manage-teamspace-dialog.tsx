@@ -261,20 +261,33 @@ function TeamspaceGeneralSettings({ teamspace, workspaceId, onOpenChange, state 
         <div className="flex items-center gap-2">
           <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
             <PopoverTrigger asChild>
-              <Button className="justify-start" type="button" variant="outline">
-                {icon ? <PageIconDisplay size="sm" value={icon} /> : <Layers3Icon />}
-                <span>{icon ? "Change icon" : "Add icon"}</span>
-              </Button>
+              <button
+                aria-label={icon ? "Change icon" : "Add icon"}
+                className="inline-flex items-center justify-center rounded-sm border-0 bg-transparent p-0 focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+                type="button"
+              >
+                {icon ? (
+                  <PageIconDisplay size="sm" value={icon} />
+                ) : (
+                  <Layers3Icon className="size-4" />
+                )}
+              </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-auto p-0">
-              <IconEmojiPicker onEmojiSelect={selectIcon} onIconSelect={selectIcon} />
+              <IconEmojiPicker
+                onEmojiSelect={selectIcon}
+                onIconSelect={selectIcon}
+                onRemove={
+                  icon
+                    ? () => {
+                        clearIcon();
+                        setIconPickerOpen(false);
+                      }
+                    : undefined
+                }
+              />
             </PopoverContent>
           </Popover>
-          {icon ? (
-            <Button onClick={clearIcon} type="button" variant="ghost">
-              Remove
-            </Button>
-          ) : null}
         </div>
       </div>
       <div className="grid gap-2">

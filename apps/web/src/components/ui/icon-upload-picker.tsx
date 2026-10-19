@@ -72,7 +72,7 @@ export function IconUploadPicker({ className, onIconSelect }: IconUploadPickerPr
         <>
           <button
             className={cn(
-              "mx-2 mt-2 flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-4 py-6 text-center transition-colors",
+              "m-2 flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-4 py-6 text-center transition-colors",
               dragActive
                 ? "border-action-focus-ring bg-surface-subtle"
                 : "border-stroke-default bg-surface-subtle hover:bg-action-neutral-hover",

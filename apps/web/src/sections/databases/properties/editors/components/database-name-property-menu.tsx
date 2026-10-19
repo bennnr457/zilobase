@@ -10,7 +10,6 @@ import {
   GripVertical,
   Sparkles,
   TextWrap,
-  X,
 } from "@/components/icons";
 import { useState, type ButtonHTMLAttributes } from "react";
 
@@ -145,22 +144,12 @@ export function DatabaseNamePropertyMenu({
               <PopoverTrigger asChild>
                 <button
                   aria-label="Change name column icon"
-                  className="flex size-7 items-center justify-center rounded-md border bg-surface-canvas text-content-secondary transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+                  className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 leading-none focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
                   type="button"
                 >
                   {renderNameColumnIcon()}
                 </button>
               </PopoverTrigger>
-              {customIcon ? (
-                <button
-                  aria-label="Reset name column icon"
-                  className="absolute -right-1 -top-1 hidden size-4 items-center justify-center rounded-full border bg-surface-canvas text-content-secondary shadow-sm hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral group-focus-within/name-column-icon:flex group-hover/name-column-icon:flex [&_svg]:size-2.5"
-                  onClick={() => updateNameColumnConfig({ icon: "" })}
-                  type="button"
-                >
-                  <X />
-                </button>
-              ) : null}
             </div>
             <PopoverContent
               align="start"
@@ -170,6 +159,14 @@ export function DatabaseNamePropertyMenu({
               sideOffset={6}
             >
               <IconEmojiPicker
+                onRemove={
+                  customIcon
+                    ? () => {
+                        updateNameColumnConfig({ icon: "" });
+                        setIconPickerOpen(false);
+                      }
+                    : undefined
+                }
                 onEmojiSelect={(icon) => {
                   updateNameColumnConfig({ icon });
                   setIconPickerOpen(false);

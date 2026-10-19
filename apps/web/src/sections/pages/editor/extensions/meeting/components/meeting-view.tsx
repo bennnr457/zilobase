@@ -20,7 +20,6 @@ import {
   Smile,
   Sparkles,
   Volume2,
-  X,
 } from "@/components/icons";
 import { meetingKeys, type MeetingLifecycleAction } from "@zilobase/features/meetings";
 import {
@@ -305,6 +304,14 @@ export function MeetingView({
   };
   const renderEmojiPicker = (onSelect?: () => void) => (
     <IconEmojiPicker
+      onRemove={
+        notesEmoji
+          ? () => {
+              saveMeetingEmoji("");
+              onSelect?.();
+            }
+          : undefined
+      }
       onEmojiSelect={(emoji) => {
         saveMeetingEmoji(emoji);
         onSelect?.();
@@ -377,10 +384,10 @@ export function MeetingView({
           <PopoverTrigger asChild>
             <button
               aria-label="Change meeting icon"
-              className="flex size-9 items-center justify-center rounded-md text-2xl leading-none transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+              className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 leading-none focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
               type="button"
             >
-              <PageIconDisplay size="lg" value={notesEmoji} />
+              <PageIconDisplay className="size-auto" size="lg" value={notesEmoji} />
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -393,21 +400,13 @@ export function MeetingView({
             {renderEmojiPicker()}
           </PopoverContent>
         </Popover>
-        <button
-          aria-label="Remove meeting icon"
-          className="absolute -right-1 -top-1 hidden size-5 items-center justify-center rounded-full border bg-surface-canvas text-content-secondary shadow-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none group-focus-within/icon:flex group-hover/icon:flex [&_svg]:size-3"
-          onClick={() => saveMeetingEmoji("")}
-          type="button"
-        >
-          <X />
-        </button>
       </div>
     ) : (
       <span
         aria-label="Meeting icon"
         className="flex size-9 shrink-0 items-center justify-center rounded-md text-2xl leading-none"
       >
-        <PageIconDisplay size="lg" value={notesEmoji} />
+        <PageIconDisplay className="size-auto" size="lg" value={notesEmoji} />
       </span>
     )
   ) : null;

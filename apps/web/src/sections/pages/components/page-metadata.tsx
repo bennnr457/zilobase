@@ -1,3 +1,4 @@
+import { ImagePlus, MessageSquare, SmilePlus, X } from "@/components/icons";
 import {
   useCallback,
   useEffect,
@@ -9,44 +10,43 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { ImagePlus, MessageSquare, SmilePlus, X } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
-import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
 
 import {
-  usePageEditorComments,
   usePageCommentsSnapshot,
+  usePageEditorComments,
 } from "@/sections/pages/editor/comments/components/comments-context";
 import { useSession } from "@zilobase/features/auth/react";
 import { type DatabasePresenceCollaborator } from "@zilobase/features/databases";
 import { useChangeDatabaseRow, useDatabaseRealtime } from "@zilobase/features/databases/react";
 import { usePagePersonAccessTargets, usePageProperties } from "@zilobase/features/pages/react";
 
+import {
+  formatCommentButtonLabel,
+  PageCommentThread,
+} from "@/sections/pages/editor/comments/components/page-comments";
 import type {
   PageIconPosition,
   PageLayoutConfig,
   PagePropertyPresenceTarget,
 } from "@zilobase/features/pages";
-import {
-  formatCommentButtonLabel,
-  PageCommentThread,
-} from "@/sections/pages/editor/comments/components/page-comments";
 
 import { ImageSourcePicker } from "@/sections/pages/appearance/components/image-source-picker";
 import { buildRandomCoverGalleryDataUrl } from "@/sections/pages/appearance/lib/page-cover-gallery";
 
-import { getDatabasePropertyType } from "../../databases/properties/lib/property-catalog";
+import type { CollaborationPresenceUser } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
+import { CollaborationPresence } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
 import {
-  type DatabasePropertyValue,
   parsePropertyValue,
   serializePropertyValue,
+  type DatabasePropertyValue,
 } from "@zilobase/features/databases";
-import { CollaborationPresence } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
-import type { CollaborationPresenceUser } from "@/sections/pages/editor/collaboration/components/collaboration-presence";
 import { PageMetadataProperties } from "../../databases/page-properties/components/page-metadata-properties";
+import { getDatabasePropertyType } from "../../databases/properties/lib/property-catalog";
 import { usePageCommentFocusRequest } from "../editor/comments/components/comments-context";
 
 export type PageMetadataHandle = {
@@ -582,7 +582,7 @@ export function PageMetadata({
 
   const iconDisplay = (
     <PageIconDisplay
-      className={iconPosition === "inline" ? "size-12 text-4xl [&_svg]:size-10" : undefined}
+      className={iconPosition === "inline" ? "size-auto text-4xl [&_svg]:size-10" : "size-auto"}
       size={iconPosition === "top" ? "2xl" : "xl"}
       value={icon}
     />
@@ -595,7 +595,7 @@ export function PageMetadata({
           <PopoverTrigger asChild>
             <button
               aria-label={`Change ${metadataSubjectLowercase} icon`}
-              className={`${iconPosition === "top" ? "size-20 text-6xl" : "size-12 text-4xl"} flex items-center justify-center rounded-md transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none`}
+              className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 leading-none focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
               disabled={!editable}
               type="button"
             >
@@ -610,6 +610,14 @@ export function PageMetadata({
             sideOffset={6}
           >
             <IconEmojiPicker
+              onRemove={
+                icon
+                  ? () => {
+                      updateIcon("");
+                      setIconOpen(false);
+                    }
+                  : undefined
+              }
               iconPosition={iconPosition}
               onEmojiSelect={(emoji) => {
                 updateIcon(emoji);
@@ -623,18 +631,6 @@ export function PageMetadata({
             />
           </PopoverContent>
         </Popover>
-        <button
-          aria-label={`Remove ${metadataSubjectLowercase} icon`}
-          className="absolute -right-1 -top-1 hidden size-5 items-center justify-center rounded-full border bg-surface-canvas text-content-secondary shadow-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:flex focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none group-focus-within/metadata:flex group-hover/icon:flex group-hover/metadata:flex [&_svg]:size-3"
-          onClick={() => {
-            updateIcon("");
-            setIconOpen(false);
-          }}
-          disabled={!editable}
-          type="button"
-        >
-          <X />
-        </button>
       </div>
     ) : !icon && editable ? (
       <Popover open={iconOpen} onOpenChange={setIconOpen}>
@@ -674,15 +670,11 @@ export function PageMetadata({
     ) : null;
 
   const pageIcon = icon ? (
-    editable ? (
-      iconPicker
-    ) : (
-      <div
-        className={`${iconPosition === "top" ? "size-20 text-6xl" : "size-12 text-4xl"} flex shrink-0 items-center justify-center rounded-md`}
-      >
-        {iconDisplay}
-      </div>
-    )
+    <div
+      className={`flex shrink-0 items-center justify-center ${iconPosition === "top" ? "size-20" : "size-12"}`}
+    >
+      {editable ? iconPicker : iconDisplay}
+    </div>
   ) : null;
 
   const coverPickerContent = (

@@ -278,6 +278,14 @@ function TabsBlockView({ editor, node, getPos }: ReactNodeViewProps) {
                         >
                           <IconEmojiPicker
                             allowUpload={false}
+                            onRemove={
+                              node.child(i).attrs.icon
+                                ? () => {
+                                    change("icon", "");
+                                    setMenuIndex(null);
+                                  }
+                                : undefined
+                            }
                             onEmojiSelect={(icon) => {
                               change("icon", icon);
                               setMenuIndex(null);
@@ -287,18 +295,6 @@ function TabsBlockView({ editor, node, getPos }: ReactNodeViewProps) {
                               setMenuIndex(null);
                             }}
                           />
-                          {node.child(i).attrs.icon ? (
-                            <Button
-                              variant="ghost"
-                              className="w-full"
-                              onClick={() => {
-                                change("icon", "");
-                                setMenuIndex(null);
-                              }}
-                            >
-                              Remove icon
-                            </Button>
-                          ) : null}
                         </DropDrawerSubContent>
                       </DropDrawerSub>
                       <DropDrawerItem

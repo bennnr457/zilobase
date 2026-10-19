@@ -20,7 +20,6 @@ import {
   Sparkles,
   TextWrap,
   Trash2,
-  X,
 } from "@/components/icons";
 import { useState, type ButtonHTMLAttributes } from "react";
 
@@ -273,22 +272,12 @@ export function DatabasePropertyMenu({
                 <PopoverTrigger asChild>
                   <button
                     aria-label="Change property icon"
-                    className="flex size-7 items-center justify-center rounded-md border bg-surface-canvas transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+                    className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 leading-none focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
                     type="button"
                   >
                     {renderPropertyIcon()}
                   </button>
                 </PopoverTrigger>
-                {customIcon ? (
-                  <button
-                    aria-label="Reset property icon"
-                    className="absolute -right-1 -top-1 hidden size-4 items-center justify-center rounded-full border bg-surface-canvas text-content-secondary shadow-sm hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral group-focus-within/property-icon:flex group-hover/property-icon:flex [&_svg]:size-2.5"
-                    onClick={() => updatePropertyConfig({ icon: "" })}
-                    type="button"
-                  >
-                    <X />
-                  </button>
-                ) : null}
               </div>
               <PopoverContent
                 align="start"
@@ -298,6 +287,14 @@ export function DatabasePropertyMenu({
                 sideOffset={6}
               >
                 <IconEmojiPicker
+                  onRemove={
+                    customIcon
+                      ? () => {
+                          updatePropertyConfig({ icon: "" });
+                          setIconPickerOpen(false);
+                        }
+                      : undefined
+                  }
                   onEmojiSelect={(icon) => {
                     updatePropertyConfig({ icon });
                     setIconPickerOpen(false);

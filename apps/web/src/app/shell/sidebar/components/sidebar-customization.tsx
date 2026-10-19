@@ -739,7 +739,7 @@ function EntryMenu({
               <PopoverTrigger asChild>
                 <button
                   aria-label="Change shortcut icon"
-                  className="flex size-7 shrink-0 items-center justify-center rounded-md border border-stroke-default bg-surface-canvas text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+                  className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 text-content-secondary focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   type="button"
                 >
                   <SidebarShortcutIcon shortcut={shortcut} />
@@ -1092,7 +1092,7 @@ function TabSettingsEditor({
           <PopoverTrigger asChild>
             <button
               aria-label="Change tab icon"
-              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-stroke-default bg-surface-canvas text-content-secondary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 text-content-secondary focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!editable}
               type="button"
             >

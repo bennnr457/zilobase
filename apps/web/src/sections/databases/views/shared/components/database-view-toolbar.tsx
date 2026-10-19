@@ -27,7 +27,6 @@ import {
   SlidersHorizontalIcon,
   Smile,
   Trash2,
-  X,
 } from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
@@ -296,6 +295,15 @@ export function DatabaseViewToolbar({
   };
   const renderDatabaseEmojiPicker = (onSelect?: () => void) => (
     <IconEmojiPicker
+      onRemove={
+        databaseEmoji
+          ? () => {
+              saveDatabaseEmoji("");
+              setEmojiPickerOpen(false);
+              onSelect?.();
+            }
+          : undefined
+      }
       onEmojiSelect={(emoji) => {
         saveDatabaseEmoji(emoji);
         setEmojiPickerOpen(false);
@@ -326,32 +334,21 @@ export function DatabaseViewToolbar({
           <PopoverTrigger asChild>
             <button
               aria-label="Change database icon"
-              className="flex size-9 items-center justify-center rounded-md text-2xl leading-none transition-colors hover:bg-action-neutral-hover focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+              className="inline-flex shrink-0 items-center justify-center rounded-sm border-0 bg-transparent p-0 leading-none focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
               type="button"
             >
-              <PageIconDisplay size="lg" value={databaseEmoji} />
+              <PageIconDisplay className="size-auto" size="lg" value={databaseEmoji} />
             </button>
           </PopoverTrigger>
           {databaseEmojiPopoverContent}
         </Popover>
-        <button
-          aria-label="Remove database icon"
-          className="absolute -right-1 -top-1 hidden size-5 items-center justify-center rounded-full border bg-surface-canvas text-content-secondary shadow-sm transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral active:bg-action-neutral-pressed active:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none group-focus-within/icon:flex group-hover/icon:flex [&_svg]:size-3"
-          onClick={() => {
-            saveDatabaseEmoji("");
-            setEmojiPickerOpen(false);
-          }}
-          type="button"
-        >
-          <X />
-        </button>
       </div>
     ) : (
       <span
         aria-label="Database icon"
         className="flex size-9 shrink-0 items-center justify-center rounded-md text-2xl leading-none"
       >
-        <PageIconDisplay size="lg" value={databaseEmoji} />
+        <PageIconDisplay className="size-auto" size="lg" value={databaseEmoji} />
       </span>
     )
   ) : null;

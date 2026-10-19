@@ -9,7 +9,6 @@ import {
 import { TextSelection } from "@tiptap/pm/state";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { IconEmojiPicker } from "@/components/ui/icon-emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
@@ -38,19 +37,18 @@ function CalloutView({ editor, node, updateAttributes }: ReactNodeViewProps) {
       <div className="editor-callout-icon" contentEditable={false}>
         <Popover open={editable && pickerOpen} onOpenChange={setPickerOpen}>
           <PopoverTrigger asChild>
-            <Button
+            <button
               aria-label="Change callout icon"
               disabled={!editable}
-              className="disabled:opacity-100"
-              size="icon"
-              variant="ghost"
+              className="inline-flex items-center justify-center rounded-sm border-0 bg-transparent p-0 focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none"
+              type="button"
               onMouseDown={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
             >
               <PageIconDisplay
                 value={typeof node.attrs.icon === "string" ? node.attrs.icon : "💡"}
               />
-            </Button>
+            </button>
           </PopoverTrigger>
           <PopoverContent
             align="start"
