@@ -1,21 +1,13 @@
 import { Hono } from "hono";
-import { getMembership } from "../../services/access/principal-access";
 import {
-  deleteWorkspace,
-  getWorkspace,
-  listWorkspaces,
-} from "../../services/workspaces/workspaces";
+  deleteWorkspaceOperation,
+  getWorkspaceOperation,
+  listWorkspacesOperation,
+} from "../../services/workspaces/operations";
 import type { AppBindings } from "../../shared/contracts/http";
-import { rejectMismatchedApiKeyWorkspace } from "../api-keys/access";
-import {
-  getPinnedWorkspaceId,
-  rejectMismatchedPinnedWorkspace,
-  requireOAuthScope,
-} from "../auth/oauth/oauth-access";
-import { getAuthenticatedUser as requireUser } from "../http/auth";
+import { requireOAuthScope } from "../auth/oauth/oauth-access";
+import { serverOperationContext } from "../http/operation-context";
 import { attachServiceErrorHandler } from "../http/route-error";
-import { parseJsonBody } from "../http/schema-json";
-import { DeleteWorkspaceInput, strictJson } from "./input";
 import { postMemberInvitation } from "./invitations/handlers";
 import { deleteMember, getAccessTargets, patchMember } from "./members/handlers";
 import { patchWorkspaceSettings } from "./settings/handlers";
@@ -46,28 +38,18 @@ workspaceRoutes.use("*", async (c, next) => {
   await next();
 });
 
-workspaceRoutes.get("/", async (c) => {
-  const requestUser = requireUser(c);
-  if (!requestUser) return c.json({ error: "Unauthorized" }, 401);
-  const pinnedWorkspaceId = getPinnedWorkspaceId(c);
-  const records = await listWorkspaces(requestUser.id, pinnedWorkspaceId);
+workspaceRoutes.get("/", async (c) =>
+  c.json(await listWorkspacesOperation(serverOperationContext(c), {}), 200),
+);
 
-  return c.json({ workspaces: records.map(({ workspace: record }) => record) });
-});
-
-workspaceRoutes.get("/:workspaceId", async (c) => {
-  const requestUser = requireUser(c);
-  if (!requestUser) return c.json({ error: "Unauthorized" }, 401);
-  const workspaceId = c.req.param("workspaceId");
-  const denied = rejectMismatchedPinnedWorkspace(c, workspaceId);
-  if (denied) return denied;
-  if (!(await getMembership(workspaceId, requestUser.id))) {
-    return c.json({ error: "Forbidden" }, 403);
-  }
-  const record = await getWorkspace(workspaceId);
-
-  return record ? c.json({ workspace: record }) : c.json({ error: "Workspace not found" }, 404);
-});
+workspaceRoutes.get("/:workspaceId", async (c) =>
+  c.json(
+    await getWorkspaceOperation(serverOperationContext(c), {
+      workspaceId: c.req.param("workspaceId")!,
+    }),
+    200,
+  ),
+);
 
 workspaceRoutes.get("/:workspaceId/access-targets", getAccessTargets);
 
@@ -79,33 +61,13 @@ workspaceRoutes.delete("/:workspaceId/members/:memberId", deleteMember);
 
 workspaceRoutes.patch("/:workspaceId", patchWorkspaceSettings);
 
-workspaceRoutes.delete("/:workspaceId", async (c) => {
-  const requestUser = requireUser(c);
-
-  if (!requestUser) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const workspaceId = c.req.param("workspaceId");
-  const mismatch = rejectMismatchedApiKeyWorkspace(c, workspaceId);
-
-  if (mismatch) {
-    return mismatch;
-  }
-
-  const membership = await getMembership(workspaceId, requestUser.id);
-
-  if (!membership || membership.role !== "owner") {
-    return c.json({ error: "Only the workspace owner can delete this workspace." }, 403);
-  }
-
-  const parsed = await parseJsonBody(c.req, DeleteWorkspaceInput, strictJson);
-
-  if (!parsed.ok) {
-    return c.json({ error: "Enter the workspace name to confirm deletion." }, 400);
-  }
-
-  await deleteWorkspace(workspaceId, parsed.data.confirmationName);
-
-  return c.json({ deleted: true, workspaceId });
-});
+workspaceRoutes.delete("/:workspaceId", async (c) =>
+  c.json(
+    await deleteWorkspaceOperation(
+      serverOperationContext(c),
+      { workspaceId: c.req.param("workspaceId")! },
+      () => c.req.json(),
+    ),
+    200,
+  ),
+);
