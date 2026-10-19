@@ -607,7 +607,11 @@
   }
 
   .database-page-open {
-    @apply invisible absolute right-2 top-1/2 z-20 flex h-6 -translate-y-1/2 items-center gap-1.5 rounded-md border bg-action-neutral-hover px-2 text-xs font-semibold uppercase tracking-wide text-action-on-neutral opacity-0 shadow-sm transition-[opacity,background-color,color] duration-75 hover:bg-action-neutral-pressed hover:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none active:bg-action-neutral-pressed active:text-action-on-neutral;
+    @apply invisible absolute right-2 top-1/2 z-20 flex h-6 -translate-y-1/2 items-center gap-1.5 rounded-md border bg-surface-canvas px-2 text-xs font-semibold uppercase tracking-wide text-action-on-neutral opacity-0 shadow-sm transition-[opacity,background-color,color] duration-75 hover:text-action-on-neutral focus-visible:ring-2 focus-visible:ring-action-focus-ring focus-visible:outline-none active:text-action-on-neutral;
+  }
+
+  :is([data-page-side-pane-panel], [data-page-dialog-panel]) .database-page-open {
+    @apply dark:bg-surface-navigation;
   }
 
   .database-page-link:hover .database-page-open,

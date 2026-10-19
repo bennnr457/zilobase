@@ -1947,14 +1947,10 @@ function DataGridTableBodyRow<TData extends object>({
       }}
       className={cn(
         "hover:bg-action-neutral-hover data-[state=selected]:bg-action-neutral-hover",
-        /* With the pin affordance on, pinned cells hide scrolled content
-           behind an OPAQUE background, which also hides the row's translucent
-           hover and selected tints; they get the same tints premixed over the
-           background instead, the row-status treatment. Pinning used only as
-           an ordering lock leaves cells transparent, so the premix would paint
-           a second, different hover colour: gate it on the same flag. */
+        /* Pinned cells need an opaque fill to hide scrolled content. Use
+           the row's same neutral token so pinning cannot change its color. */
         props.tableLayout?.columnsPinnable &&
-          "hover:[&>td[data-pinned]]:bg-selection-row data-[state=selected]:[&>td[data-pinned]]:bg-selection-row",
+          "hover:[&>td[data-pinned]]:bg-action-neutral-hover data-[state=selected]:[&>td[data-pinned]]:bg-action-neutral-hover",
         props.onRowClick && "cursor-pointer",
         // Optional CRUD indications, active only when getRowStatus is
         // wired; the warning-muted defaults yield to tableClassNames

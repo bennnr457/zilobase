@@ -459,7 +459,6 @@ export function DatabaseMainPane({
         onTitleChange={setTitle}
         workspaceId={headingRecord?.workspaceId}
         title={title}
-        titleRowClassName={emoji ? "px-3" : undefined}
         titlePrefix={
           !hasMultipleDataSources &&
           sourceParentDatabaseId &&

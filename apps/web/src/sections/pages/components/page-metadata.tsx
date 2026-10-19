@@ -86,7 +86,6 @@ type PageMetadataProps = {
   workspaceId?: string | null;
   title?: string;
   titlePrefix?: ReactNode;
-  titleRowClassName?: string;
   titlePlaceholder?: string;
   pageId?: string | null;
   ref?: Ref<PageMetadataHandle>;
@@ -176,7 +175,6 @@ export function PageMetadata({
   workspaceId,
   title: titleProp,
   titlePrefix,
-  titleRowClassName,
   titlePlaceholder,
   pageId,
   ref,
@@ -859,7 +857,7 @@ export function PageMetadata({
 
         {showHeading ? (
           <div
-            className={`flex items-start ${iconPosition === "inline" && pageIcon ? "gap-2" : "gap-3"} ${titleRowClassName ?? ""}`}
+            className={`flex items-start ${iconPosition === "inline" && pageIcon ? "gap-2" : "gap-3"}`}
             ref={titleRowRef}
           >
             {iconPosition === "inline" ? pageIcon : null}
