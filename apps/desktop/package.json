@@ -11,7 +11,7 @@
     "dev": "node electron/dev.mjs",
     "build": "npm run build:electron",
     "test:selfhost": "node e2e/electron-selfhost.mjs",
-    "dev:electron": "node electron/sidecar/build.mjs && electron .",
+    "dev:electron": "node electron/sidecar/build.mjs && node electron/launch-dev.mjs",
     "build:electron": "npm run build --prefix ../web && node electron/sidecar/build.mjs && electron-builder --config electron-builder.yml --publish never",
     "build:electron:sidecar": "node electron/sidecar/build.mjs",
     "pack:electron": "node electron/sidecar/build.mjs && electron-builder --dir --config electron-builder.yml",

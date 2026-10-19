@@ -14,6 +14,13 @@ Cloud is the local Cloudflare runtime at `http://localhost:3010`. Choose custom
 server lists self-hosted Community and the other local server runtimes.
 Packaged builds default to Zilobase Cloud.
 
+On macOS, the development launcher creates a separate **Zilobase Development**
+app in `.dev/electron` and registers it for `zilobase://` links. Start desktop
+development once before using **Open in desktop app** in the browser. Links
+then reopen the local app with its development renderer and server settings;
+the local web servers must still be running. The shared Electron installation
+in `node_modules` is left untouched.
+
 `npm run verify:desktop` runs the audio sidecar's Rust formatting, Clippy and
 unit tests. To build an unsigned local app, build the web bundle and run
 `CSC_IDENTITY_AUTO_DISCOVERY=false npm run pack:electron --workspace @zilobase/desktop`.

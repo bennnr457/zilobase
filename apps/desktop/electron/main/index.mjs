@@ -380,8 +380,14 @@ app
     if (!app.hasSingleInstanceLock()) return;
     const { registerUpdaterHandlers } = await import("./updater.mjs");
     if (!isDevelopment) await installAssetProtocol();
-    if (process.platform === "win32" || process.platform === "darwin")
+    if (process.platform === "win32" && process.defaultApp) {
+      app.setAsDefaultProtocolClient("zilobase", process.execPath, [app.getAppPath()]);
+    } else if (
+      process.platform === "win32" ||
+      (process.platform === "darwin" && !process.defaultApp)
+    ) {
       app.setAsDefaultProtocolClient("zilobase");
+    }
     registerCoreIpc(registerUpdaterHandlers);
     createWindow();
     installPermissions(session.defaultSession);
