@@ -155,3 +155,6 @@ export * from "./room-kernel";
 export * from "./notification-room";
 export { eventOverlaps } from "../calendar-layout/time";
 export { timedLayout } from "../calendar/context";
+
+export { collectWorkspaceContext, parsePageDocument } from "../ai/context";
+export type { ContextReadPorts, ContextDatabaseRead, LocalPageSnapshot } from "../ai/context";

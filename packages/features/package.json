@@ -180,6 +180,10 @@
     "./uploads": {
       "types": "./src/uploads/index.ts",
       "default": "./src/uploads/index.ts"
+    },
+    "./ai": {
+      "types": "./src/ai/index.ts",
+      "default": "./src/ai/index.ts"
     }
   }
 }

@@ -45,12 +45,17 @@ export async function getDatabaseRecordWindow(
 
 export async function getDatabaseExport(
   context: ClientOperationContext,
-  input: { databaseId: string; dataSourceId?: string },
+  input: { databaseId: string; dataSourceId?: string; fresh?: boolean },
 ) {
   const scope = captureClientOperation(context);
-  const result = await context.queryClient.fetchQuery(
-    databaseContextExportQueryOptions(scope.context.apiFetch, input.databaseId, input.dataSourceId),
-  );
+  const result = await context.queryClient.fetchQuery({
+    ...databaseContextExportQueryOptions(
+      scope.context.apiFetch,
+      input.databaseId,
+      input.dataSourceId,
+    ),
+    ...(input.fresh ? { staleTime: 0 } : {}),
+  });
   scope.assertCurrent();
   return resolveDatabaseExportReference(context.queryClient, result);
 }

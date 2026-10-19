@@ -16,11 +16,15 @@ import {
   pageQueryOptions,
 } from "./queries";
 
-export async function getPage(context: ClientOperationContext, input: { pageId: string }) {
+export async function getPage(
+  context: ClientOperationContext,
+  input: { pageId: string; fresh?: boolean },
+) {
   const scope = captureClientOperation(context);
-  const reference = await context.queryClient.fetchQuery(
-    pageQueryOptions(scope.context.apiFetch, input.pageId),
-  );
+  const reference = await context.queryClient.fetchQuery({
+    ...pageQueryOptions(scope.context.apiFetch, input.pageId),
+    ...(input.fresh ? { staleTime: 0 } : {}),
+  });
   scope.assertCurrent();
   return resolvePageDetailReference(context.queryClient, reference);
 }
