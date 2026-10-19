@@ -1,88 +1,26 @@
-import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
-
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useZilobaseFeatures } from "../shared/context";
 import {
-  type PageLayoutConfig,
-  type PageLayoutScope,
-  type PageLayoutTarget,
-  type ResolvedPageLayout,
-} from "./page-layouts";
-
-export const pageLayoutKeys = {
-  all: ["page-layouts"] as const,
-  resolved: (target: PageLayoutTarget) =>
-    ["page-layouts", "resolved", target.pageId ?? "none", target.databaseId ?? "none"] as const,
-  scope: (scope: PageLayoutScope, scopeId: string) =>
-    ["page-layouts", "scope", scope, scopeId] as const,
-};
-
-type SavePageLayoutInput = {
-  clearPageOverrides?: boolean;
-  config: PageLayoutConfig;
-  scope: PageLayoutScope;
-  scopeId: string;
-};
-
-function resolvedPageLayoutQueryOptions(
-  apiFetch: ReturnType<typeof useZilobaseFeatures>["apiFetch"],
-  target: PageLayoutTarget,
-) {
-  return queryOptions({
-    enabled: Boolean(target.pageId || target.databaseId),
-    queryFn: ({ signal }) => {
-      const params = new URLSearchParams();
-      if (target.pageId) params.set("pageId", target.pageId);
-      if (target.databaseId) params.set("databaseId", target.databaseId);
-      return apiFetch<ResolvedPageLayout>(`/page-layouts/resolve?${params}`, {
-        signal,
-      });
-    },
-    queryKey: pageLayoutKeys.resolved(target),
-    staleTime: 30_000,
-  });
-}
-
+  resetPageLayout,
+  resolvedPageLayoutQueryOptions,
+  savePageLayout,
+} from "./page-layout-operations";
+import type { PageLayoutTarget } from "./page-layouts";
 export function useResolvedPageLayout(target: PageLayoutTarget) {
   const { apiFetch } = useZilobaseFeatures();
 
   return useQuery(resolvedPageLayoutQueryOptions(apiFetch, target));
 }
-
 export function useSavePageLayout() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: SavePageLayoutInput) =>
-      apiFetch(`/page-layouts/${input.scope}/${encodeURIComponent(input.scopeId)}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          config: input.config,
-          clearPageOverrides: input.clearPageOverrides,
-        }),
-      }),
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: pageLayoutKeys.all });
-      const previous = queryClient.getQueriesData({ queryKey: pageLayoutKeys.all });
-      queryClient.setQueryData(pageLayoutKeys.scope(input.scope, input.scopeId), input.config);
-      return { previous };
-    },
-    onError: (_error, _input, context) => {
-      for (const [key, value] of context?.previous ?? []) {
-        queryClient.setQueryData(key, value);
-      }
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: pageLayoutKeys.all }),
+    mutationFn: (input: Parameters<typeof savePageLayout>[1]) => savePageLayout(context, input),
   });
 }
-
 export function useResetPageLayout() {
-  const { apiFetch, queryClient } = useZilobaseFeatures();
-
+  const context = useZilobaseFeatures();
   return useMutation({
-    mutationFn: (input: { scope: PageLayoutScope; scopeId: string }) =>
-      apiFetch(`/page-layouts/${input.scope}/${encodeURIComponent(input.scopeId)}`, {
-        method: "DELETE",
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pageLayoutKeys.all }),
+    mutationFn: (input: Parameters<typeof resetPageLayout>[1]) => resetPageLayout(context, input),
   });
 }
+export { pageLayoutKeys } from "./page-layout-operations";
