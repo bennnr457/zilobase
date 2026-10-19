@@ -249,6 +249,7 @@ export {
   TextB as Bold,
   Textbox as TextWrap,
   TextHOne as Heading1,
+  TextHFour as Heading4,
   TextHThree as Heading3,
   TextHTwo as Heading2,
   TextItalic as Italic,

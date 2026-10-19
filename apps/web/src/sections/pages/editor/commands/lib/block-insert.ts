@@ -18,6 +18,7 @@ export type BlockCommandId =
   | "heading1"
   | "heading2"
   | "heading3"
+  | "heading4"
   | "bulletList"
   | "orderedList"
   | "taskList"
@@ -52,6 +53,7 @@ export const convertibleBlockIds = new Set<BlockCommandId>([
   "heading1",
   "heading2",
   "heading3",
+  "heading4",
   "bulletList",
   "orderedList",
   "taskList",
@@ -337,6 +339,8 @@ function blockContentForItem(
       return { type: "heading", attrs: { level: 2 } };
     case "heading3":
       return { type: "heading", attrs: { level: 3 } };
+    case "heading4":
+      return { type: "heading", attrs: { level: 4 } };
     case "bulletList":
       return {
         type: "bulletList",
@@ -700,7 +704,8 @@ export function runBlockCommand(
     case "heading1":
     case "heading2":
     case "heading3":
-      chain.setHeading({ level: Number(id.at(-1)) as 1 | 2 | 3 }).run();
+    case "heading4":
+      chain.setHeading({ level: Number(id.at(-1)) as 1 | 2 | 3 | 4 }).run();
       return;
     case "bulletList":
       chain.toggleBulletList().run();

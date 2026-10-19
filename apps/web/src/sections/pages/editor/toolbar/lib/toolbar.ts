@@ -10,6 +10,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Heading4,
   Italic,
   ListCollapse,
   List,
@@ -41,7 +42,7 @@ export type ToolbarAction =
   | "setTextAlign";
 
 export type ToolbarAttrs = {
-  level?: 1 | 2 | 3;
+  level?: 1 | 2 | 3 | 4;
   align?: "left" | "center" | "right";
 };
 
@@ -120,6 +121,13 @@ export const toolbarGroups: ToolbarItem[][] = [
       isActive: () => ({ heading: { level: 3 } }),
       action: "toggleHeading",
       attrs: { level: 3 },
+    },
+    {
+      label: "Heading 4",
+      icon: Heading4,
+      isActive: () => ({ heading: { level: 4 } }),
+      action: "toggleHeading",
+      attrs: { level: 4 },
     },
     {
       label: "Bullet list",
