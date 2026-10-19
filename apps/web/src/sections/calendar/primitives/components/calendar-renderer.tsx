@@ -27,6 +27,7 @@ export type CalendarRendererProps<TData = unknown> = Omit<
 > & {
   actions?: ReactNode;
   leading?: ReactNode;
+  titleActions?: ReactNode;
   beforeContent?: ReactNode;
   content?: ReactNode;
 };
@@ -36,6 +37,7 @@ export function CalendarRenderer<TData = unknown>({
   className,
   actions,
   leading,
+  titleActions,
   beforeContent,
   content,
   ...props
@@ -65,7 +67,10 @@ export function CalendarRenderer<TData = unknown>({
       <TooltipProvider delayDuration={600}>
         <EventCalendarNav className="min-h-10 flex-none flex-wrap gap-1 border-0 px-0 py-0">
           {leading}
-          <EventCalendarTitle className="min-w-0 flex-1 truncate" />
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <EventCalendarTitle className="min-w-0 truncate" />
+            {titleActions}
+          </div>
           <ButtonGroup variant="plain" aria-label="Calendar period navigation">
             <EventCalendarNavToday />
             <EventCalendarNavPrev />

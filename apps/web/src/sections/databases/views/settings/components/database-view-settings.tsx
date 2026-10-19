@@ -112,6 +112,7 @@ export function DatabaseViewSettingsMenu({
 }: DatabaseViewSettingsMenuProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [propertySearch, setPropertySearch] = useState("");
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = (nextOpen: boolean) => {
     if (controlledOpen === undefined) {
@@ -125,6 +126,11 @@ export function DatabaseViewSettingsMenu({
   const activeGroupProperty = groupProperties.find(
     (property) => property.property.id === groupPropertyId,
   );
+  const propertyQuery = propertySearch.trim().toLowerCase();
+  const matchingProperties = properties.filter((property) =>
+    property.property.name.toLowerCase().includes(propertyQuery),
+  );
+  const titleMatches = titlePropertyLabel.toLowerCase().includes(propertyQuery);
 
   const handleOpenChange = (nextOpen: boolean) => setOpen(nextOpen);
 
@@ -236,12 +242,28 @@ export function DatabaseViewSettingsMenu({
           />
         </DropDrawerSubTrigger>
         <DropDrawerSubContent width="default">
-          <DropDrawerItem disabled>
-            <NameColumnGlyph />
-            <span>{titlePropertyLabel}</span>
-            <Eye className="ml-auto text-content-secondary" />
-          </DropDrawerItem>
-          {properties.map((property) => {
+          <div className="p-1">
+            <Input
+              aria-label="Search for a property"
+              placeholder="Search for a property..."
+              value={propertySearch}
+              onChange={(event) => setPropertySearch(event.target.value)}
+            />
+          </div>
+          {activeViewType === "calendar" && (
+            <div className="px-2 py-1.5 text-xs text-content-secondary">Calendar properties</div>
+          )}
+          {titleMatches && (
+            <DropDrawerItem disabled>
+              <NameColumnGlyph />
+              <span>{titlePropertyLabel}</span>
+              <Eye className="ml-auto text-content-secondary" />
+            </DropDrawerItem>
+          )}
+          {!titleMatches && matchingProperties.length === 0 && (
+            <div className="px-2 py-1.5 text-sm text-content-secondary">No properties found</div>
+          )}
+          {matchingProperties.map((property) => {
             const PropertyIcon = getDatabasePropertyType(property.property.type).icon;
             const visible = !getPropertyHiddenForView(
               property.id,
@@ -252,6 +274,7 @@ export function DatabaseViewSettingsMenu({
             return (
               <DropDrawerItem
                 aria-pressed={visible}
+                disabled={!editable}
                 key={property.id}
                 onSelect={(event) => {
                   event.preventDefault();
@@ -355,6 +378,7 @@ export function DatabaseViewSettingsMenu({
         </DropDrawerSubTrigger>
         <DropDrawerSubContent className="w-80">
           <ConditionalColorPanel
+            activeViewType={activeViewType}
             filterFieldOptions={filterFieldOptions}
             filterValueOptionsByField={filterValueOptionsByField}
             properties={properties}

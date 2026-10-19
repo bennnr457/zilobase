@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { databaseItemMatchesFilter } from "../interactions/item-utils";
 
 import {
   evaluateDatabaseFilter,
@@ -29,6 +30,29 @@ function filter(
 ): DatabasePropertyFilterConfig {
   return { id: `${propertyId}-${operator}`, operator, propertyId, values };
 }
+
+test("record filters match the displayed default status when no status is stored", () => {
+  const item = {
+    id: "row",
+    pageId: "page",
+    page: { name: "Task" },
+    position: 0,
+    createdAt: "",
+    updatedAt: "",
+  };
+  const properties = [{ id: "status-column", property: { id: "status", type: "status" } }];
+  const matches = (values: Record<string, string>) =>
+    databaseItemMatchesFilter({
+      filter: filter("is", "status-column", ["Not started"]),
+      item,
+      properties,
+      personOptionsById: new Map(),
+      propertyValuesByKey: values,
+    });
+  assert.equal(matches({}), true);
+  assert.equal(matches({ "page:status": "" }), true);
+  assert.equal(matches({ "page:status": "Done" }), false);
+});
 
 test("rejects obsolete title filters and bounds untrusted trees", () => {
   const nested = (depth: number): unknown => ({

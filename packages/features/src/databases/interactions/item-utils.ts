@@ -11,6 +11,7 @@ import {
   type DatabasePredicateContext,
 } from "../schema/filter";
 import { getReadOnlyTimePropertyRawValue } from "../schema/read-only-time";
+import { defaultStatusOption } from "../schema/property-defaults";
 import type {
   DatabaseFilterItemConfig,
   DatabaseSortConfig,
@@ -139,7 +140,8 @@ function getFilterPropertyValue(
     return getReadOnlyTimePropertyRawValue(item, property.property.type);
   }
 
-  return propertyValuesByKey[`${item.pageId}:${property.property.id}`] ?? "";
+  const value = propertyValuesByKey[`${item.pageId}:${property.property.id}`] ?? "";
+  return property.property.type === "status" && value === "" ? defaultStatusOption.name : value;
 }
 
 function createDatabasePredicateContext({

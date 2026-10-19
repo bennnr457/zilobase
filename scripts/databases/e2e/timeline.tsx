@@ -15,11 +15,16 @@ import {
   type DatabaseViewProviderValue,
 } from "../../../apps/web/src/sections/databases/views/state/components/database-view-context";
 import { DatabaseCalendarView } from "../../../apps/web/src/sections/databases/views/calendar/components/database-calendar-view";
+import { DatabaseViewSettingsMenu } from "../../../apps/web/src/sections/databases/views/settings/components/database-view-settings";
+import type { DatabaseViewSettingsMenuProps } from "../../../apps/web/src/sections/databases/views/settings/lib/view-settings-contracts";
 import {
   calendarScheduleToValue,
   getDatabaseLayoutSettings,
+  getDatabaseChartSettings,
+  getDatabaseFilterOperatorLabel,
   getDatabaseSubItemsSettings,
   type DatabaseCalendarSchedule,
+  type DatabaseConditionalColorConfig,
 } from "@zilobase/features/databases";
 import { DatabaseTableView } from "../../../apps/web/src/sections/databases/views/table/components/database-table-view";
 import { DatabaseTimelineView } from "../../../apps/web/src/sections/databases/views/timeline/components/database-timeline-view";
@@ -136,18 +141,24 @@ const proof = {
   setOptions: (_options: Record<string, unknown>) => {},
   setDates: (_dates: Record<string, DatabasePropertyValue>) => {},
   setStatuses: (_statuses: Record<string, string>) => {},
+  setConditionalColors: (_settings: DatabaseConditionalColorConfig[]) => {},
+  readConditionalColors: (): DatabaseConditionalColorConfig[] => [],
   rollback: () => {},
   readValues: (): Record<string, DatabasePropertyValue> => ({}),
   reset: () => {},
 };
 Object.assign(window, { timelineProof: proof });
 function Proof() {
+  const [conditionalColors, setConditionalColors] = useState<DatabaseConditionalColorConfig[]>([]);
   const [options, setOptions] = useState({
     editable: true,
     grouped: false,
     tablePreview: false,
     count: isCalendar ? 4 : 40,
     calendarView: "month",
+    columns: isCalendar ? [] : ["date-list", "status-list"],
+    showSettings: false,
+    previewControls: false,
     createDelay: 0,
     failCreate: false,
     viewScope: "",
@@ -166,11 +177,23 @@ function Proof() {
     ),
   );
   const [extraRows, setExtraRows] = useState<SortableDatabaseItem[]>([]);
+  const fixtureProperties = options.previewControls
+    ? [
+        dateProperty,
+        statusProperty,
+        ...["checkbox", "button", "url"].map((type) => ({
+          id: `${type}-list`,
+          property: { id: type, name: type, type, config: {} },
+        })),
+      ]
+    : [dateProperty, statusProperty];
   const rows = [
     ...Array.from({ length: options.count }, (_, index) => makeRow(index)),
     ...extraRows,
   ];
   proof.setOptions = (patch) => setOptions((current) => ({ ...current, ...patch }));
+  proof.setConditionalColors = setConditionalColors;
+  proof.readConditionalColors = () => conditionalColors;
   proof.setDates = (dates) =>
     setValues((current) => ({
       ...current,
@@ -216,7 +239,20 @@ function Proof() {
     activeDatabaseSorts: options.sorted
       ? [{ id: "sort", field: "name", direction: "ascending" }]
       : [],
-    activeConditionalColors: [],
+    activeConditionalColors: conditionalColors.map((setting) => {
+      const property = fixtureProperties.find(
+        (property) => property.id === setting.filter.propertyId,
+      );
+      return {
+        ...setting,
+        filter: {
+          ...setting.filter,
+          label: property?.property.name ?? "Name",
+          propertyType: property?.property.type ?? "text",
+          operatorLabel: getDatabaseFilterOperatorLabel(setting.filter.operator),
+        },
+      };
+    }),
     activeView: {
       id: (isCalendar ? "calendar" : "timeline") + options.viewScope,
       config: options.dateEnabled
@@ -230,8 +266,10 @@ function Proof() {
     items: rows,
     sortedItems: rows,
     personOptions: [],
-    properties: [dateProperty, statusProperty],
-    visibleProperties: [dateProperty, statusProperty],
+    properties: fixtureProperties,
+    visibleProperties: fixtureProperties.filter((property) =>
+      options.columns.includes(property.id),
+    ),
     propertyValuesByKey: values,
     timelineDateProperties: [dateProperty],
     timelineDateProperty: options.dateEnabled ? dateProperty : null,
@@ -450,6 +488,48 @@ function Proof() {
                 </div>
                 <section className="database-scroll-section" style={{ position: "relative" }}>
                   <DatabaseViewProvider value={value}>
+                    {isCalendar && options.showSettings && (
+                      <DatabaseViewSettingsMenu
+                        {...({
+                          ...value,
+                          activeViewType: "calendar",
+                          draftViewTitle: "Calendar",
+                          dateProperties: [dateProperty],
+                          datePropertyId: "date",
+                          groupProperties: [statusProperty],
+                          groupPropertyId: null,
+                          dataSources: [],
+                          addableFilterFieldOptions: [],
+                          addableSortFieldOptions: [],
+                          filterFieldOptions: [dateProperty, statusProperty].map((property) => ({
+                            value: property.id,
+                            label: property.property.name,
+                          })),
+                          sortFieldOptions: [],
+                          filterValueOptionsByField: {
+                            "status-list": ["Not started", "Open", "Done"].map((status) => ({
+                              value: status,
+                              label: status,
+                            })),
+                          },
+                          onSaveDatabaseConditionalColors: setConditionalColors,
+                          chartSettings: getDatabaseChartSettings({}),
+                          viewConfig: {
+                            hiddenPropertyIds: [dateProperty, statusProperty]
+                              .filter((property) => !options.columns.includes(property.id))
+                              .map((property) => property.id),
+                          },
+                          visiblePropertyCount: options.columns.length,
+                          onTogglePropertyVisibility: (id: string) =>
+                            setOptions((current) => ({
+                              ...current,
+                              columns: current.columns.includes(id)
+                                ? current.columns.filter((column) => column !== id)
+                                : [...current.columns, id],
+                            })),
+                        } as unknown as DatabaseViewSettingsMenuProps)}
+                      />
+                    )}
                     {options.tablePreview ? (
                       <DatabaseTableView />
                     ) : isCalendar ? (

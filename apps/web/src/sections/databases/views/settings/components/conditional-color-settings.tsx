@@ -50,7 +50,71 @@ function getConditionalColorLabel(value: string) {
   return getColorToken(value).name;
 }
 
-function ConditionalColorPreview() {
+function ConditionalColorPreview({ activeViewType }: { activeViewType?: string }) {
+  if (activeViewType === "calendar") {
+    return (
+      <div
+        aria-label="Calendar conditional color preview"
+        className="overflow-hidden rounded-lg border border-stroke-default p-3 pb-0 font-normal"
+      >
+        <div className="grid grid-cols-3 overflow-hidden rounded-t-md border border-b-0 border-stroke-default">
+          {[
+            {
+              day: "Wed 16",
+              cards: [{ title: "Weekly team meeting", tag: "Engineering", color: "blue" }],
+            },
+            {
+              day: "Thu 17",
+              cards: [
+                { title: "User research on the onboarding flow", tag: "Design", color: "yellow" },
+                {
+                  title: "Review and enhance the ticketing system",
+                  tag: "Support",
+                  color: "green",
+                },
+              ],
+            },
+            {
+              day: "Fri 18",
+              cards: [
+                { title: "Develop a pipeline forecasting model", tag: "Support", color: "green" },
+                { title: "Research tools for task automation", tag: "Engineering", color: "blue" },
+              ],
+            },
+          ].map(({ day, cards }) => (
+            <div className="min-w-0 border-r border-stroke-default p-1 last:border-r-0" key={day}>
+              <div className="mb-1 text-right text-[9px] text-content-secondary">{day}</div>
+              <div className="space-y-1">
+                {cards.map(({ title, tag, color }) => (
+                  <div
+                    className="relative rounded-md p-1.5 text-[9px] leading-3 text-content-primary"
+                    key={title}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute inset-0 rounded-md opacity-55",
+                        getColorToken(color).backgroundClass,
+                      )}
+                    />
+                    <div className="relative">{title}</div>
+                    <span
+                      className={cn(
+                        "relative mt-1 inline-block max-w-full truncate rounded-sm px-1",
+                        getColorToken(color).solidClass,
+                      )}
+                    >
+                      {tag}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="overflow-hidden rounded-md border">
       <div className="grid grid-cols-3 border-b text-[11px] text-content-secondary">
@@ -129,6 +193,7 @@ function ConditionalColorPropertyPicker({
 }
 
 function ConditionalColorRuleItem({
+  isCalendarView,
   filterFieldOptions,
   filterValueOptionsByField,
   isDragging,
@@ -140,6 +205,7 @@ function ConditionalColorRuleItem({
   onUpdateFilter,
   onUpdateSetting,
 }: {
+  isCalendarView: boolean;
   filterFieldOptions: DatabaseSearchableMenuOption[];
   filterValueOptionsByField: Record<string, DatabaseSearchableMenuOption[]>;
   isDragging: boolean;
@@ -152,7 +218,6 @@ function ConditionalColorRuleItem({
   onUpdateSetting: (patch: Partial<DatabaseConditionalColorConfig>) => void;
 }) {
   const filter = setting.filter;
-  const color = getColorToken(setting.color);
   const applyTarget =
     conditionalColorApplyTargetOptions.find((option) => option.value === setting.applyTo) ??
     conditionalColorApplyTargetOptions[0];
@@ -170,19 +235,19 @@ function ConditionalColorRuleItem({
       fieldOptions={filterFieldOptions}
       footer={
         <>
-          <div className="grid grid-cols-2 gap-2 pl-6">
+          <div className={cn("grid gap-2 pl-6", isCalendarView ? "grid-cols-1" : "grid-cols-2")}>
             <Select
               onValueChange={(value) => onUpdateSetting({ color: value })}
               value={setting.color}
             >
-              <SelectTrigger className="text-xs">
-                <span className={cn("size-3 rounded-sm border", color.swatchClass)} />
+              <SelectTrigger aria-label="Conditional color" className="w-full text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent align="start">
                 {cyclingColorTokens.map((option) => (
                   <SelectItem key={option.value} value={option.value ?? "default"}>
                     <span
+                      data-conditional-color-swatch
                       className={cn(
                         "mr-2 inline-flex size-3 rounded-sm border align-middle",
                         option.swatchClass,
@@ -193,28 +258,32 @@ function ConditionalColorRuleItem({
                 ))}
               </SelectContent>
             </Select>
-            <Select
-              onValueChange={(value) =>
-                onUpdateSetting({
-                  applyTo: value as DatabaseConditionalColorConfig["applyTo"],
-                })
-              }
-              value={setting.applyTo}
-            >
-              <SelectTrigger className="text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="start">
-                {conditionalColorApplyTargetOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!isCalendarView && (
+              <Select
+                onValueChange={(value) =>
+                  onUpdateSetting({
+                    applyTo: value as DatabaseConditionalColorConfig["applyTo"],
+                  })
+                }
+                value={setting.applyTo}
+              >
+                <SelectTrigger aria-label="Apply color to" className="text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="start">
+                  {conditionalColorApplyTargetOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="mt-1.5 pl-6 text-[11px] text-content-secondary">
-            {getConditionalColorLabel(setting.color)} - {applyTarget.label}
+            {isCalendarView
+              ? "Colors the event background."
+              : `${getConditionalColorLabel(setting.color)} - ${applyTarget.label}`}
           </div>
         </>
       }
@@ -238,12 +307,14 @@ function ConditionalColorRuleItem({
 }
 
 export function ConditionalColorPanel({
+  activeViewType,
   filterFieldOptions,
   filterValueOptionsByField,
   properties,
   settings,
   onSettingsChange,
 }: {
+  activeViewType?: string;
   filterFieldOptions: DatabaseSearchableMenuOption[];
   filterValueOptionsByField: Record<string, DatabaseSearchableMenuOption[]>;
   properties: DatabaseViewProperty[];
@@ -322,7 +393,13 @@ export function ConditionalColorPanel({
     <div className="w-80 max-w-[calc(100vw-2rem)] p-1">
       {settings.length === 0 && !isChoosingProperty ? (
         <div className="mb-2 px-1">
-          <ConditionalColorPreview />
+          <ConditionalColorPreview activeViewType={activeViewType} />
+          {activeViewType === "calendar" && (
+            <p className="mt-3 text-sm text-content-secondary">
+              Customize page colors to easily distinguish categories, highlight overdue events, and
+              bring clarity to your work.
+            </p>
+          )}
         </div>
       ) : null}
       <Reorder.Group
@@ -335,6 +412,7 @@ export function ConditionalColorPanel({
       >
         {settings.map((setting) => (
           <ConditionalColorRuleItem
+            isCalendarView={activeViewType === "calendar"}
             filterFieldOptions={filterFieldOptions}
             filterValueOptionsByField={filterValueOptionsByField}
             isDragging={draggingSettingId === setting.id}

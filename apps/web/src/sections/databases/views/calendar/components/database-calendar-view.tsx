@@ -1,6 +1,7 @@
 import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
-import { CalendarPlus, ChevronDown, ChevronRight, GripVertical } from "@/components/icons";
+import { CalendarPlus, ChevronDown, GripVertical } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type {
   CalendarEvent,
   CalendarView,
@@ -16,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getPaletteColor } from "@/lib/color-tokens";
+import { cn } from "@/lib/utils";
+import { DatabasePropertyValue } from "../../../properties/editors/components/database-property-value";
 import { CalendarRenderer } from "@/sections/calendar/primitives/components/calendar-renderer";
 import { DefaultPageIcon, PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
 import { useZilobaseFeatures } from "@zilobase/features";
@@ -24,6 +27,7 @@ import { useSharedDataRevision } from "@zilobase/features/data/react";
 import {
   calendarClickSchedule,
   calendarScheduleToValue,
+  databaseItemMatchesFilter,
   getDatabaseCalendarMode,
   getRawDatabaseGroupValue,
   getTimelineDatePropertyId,
@@ -70,19 +74,23 @@ export function DatabaseCalendarView() {
     setCalendarMode,
     setViewDateProperty,
     setupTimelineDateProperty,
+    updateDatabasePropertyConfig,
   } = useDatabaseActionsContext();
   const {
     databaseId,
     hostDatabaseId,
     editable,
+    activeConditionalColors,
     sortedItems,
     properties,
+    visibleProperties,
+    personOptions,
     propertyValuesByKey,
     calendarDateProperty,
     timelineDateProperties,
     hasNextPage,
   } = useDatabaseDataContext();
-  const { activeView, showPageIconInTitle } = useDatabaseUiContext();
+  const { activeView, showPageIconInTitle, titlePropertyLabel } = useDatabaseUiContext();
   const { data: session } = useSession();
   const root = useRef<HTMLDivElement>(null);
   const breakout = useDatabaseViewBreakout(root, true, activeView?.id);
@@ -91,7 +99,8 @@ export function DatabaseCalendarView() {
   );
   const savedMode = getDatabaseCalendarMode(activeView?.config);
   useEffect(() => setMode(savedMode), [activeView?.id, savedMode]);
-  const [unscheduledOpen, setUnscheduledOpen] = useState(true);
+  const [unscheduledOpen, setUnscheduledOpen] = useState(false);
+  const [draggingUnscheduled, setDraggingUnscheduled] = useState(false);
   const [height, setHeight] = useState(560);
   const [creating, setCreating] = useState(false);
   const request = useRef<symbol | null>(null);
@@ -108,6 +117,8 @@ export function DatabaseCalendarView() {
   useEffect(() => {
     request.current = null;
     setCreating(false);
+    setUnscheduledOpen(false);
+    setDraggingUnscheduled(false);
   }, [scope]);
   useLayoutEffect(() => {
     const measure = () => {
@@ -133,6 +144,7 @@ export function DatabaseCalendarView() {
     const rows = new Map(sortedItems.map((row) => [row.id, row]));
     const events: CalendarEvent[] = [];
     const unscheduled = [] as typeof sortedItems;
+    const personOptionsById = new Map(personOptions.map((person) => [person.id, person.name]));
     const statusProperty = properties.find((p) => p.property.type === "status");
     for (const row of sortedItems) {
       const value = calendarDateProperty
@@ -151,16 +163,34 @@ export function DatabaseCalendarView() {
           : "",
         statusProperty ?? null,
       );
+      // Calendar rules color the whole event, including rules saved with a table target.
+      const conditionalColor = activeConditionalColors.find((setting) =>
+        databaseItemMatchesFilter({
+          filter: setting.filter,
+          item: row,
+          personOptionsById,
+          properties,
+          propertyValuesByKey,
+        }),
+      );
       events.push({
         id: row.id,
         title: row.page.name?.trim() || "Untitled",
         ...schedule,
-        color: getPaletteColor(status.color) ?? undefined,
+        color: getPaletteColor(conditionalColor?.color ?? status.color) ?? undefined,
         readOnly: !editable,
       });
     }
     return { events, unscheduled, rows };
-  }, [sortedItems, properties, calendarDateProperty, propertyValuesByKey, editable]);
+  }, [
+    sortedItems,
+    properties,
+    calendarDateProperty,
+    propertyValuesByKey,
+    editable,
+    activeConditionalColors,
+    personOptions,
+  ]);
   const eventRanks = useMemo(
     () => new Map(sortedItems.map((row, index) => [row.id, index])),
     [sortedItems],
@@ -247,6 +277,8 @@ export function DatabaseCalendarView() {
     const row = unscheduled.find((row) => row.id === event.dataTransfer.getData(rowMime));
     const target = dropTarget(event);
     if (!row || !target) return;
+    setUnscheduledOpen(false);
+    setDraggingUnscheduled(false);
     const key = `${row.pageId}:${calendarDateProperty.property.id}`;
     savePropertyValue(
       row.id,
@@ -298,6 +330,50 @@ export function DatabaseCalendarView() {
     );
 
   const timed = mode === "day" || mode === "week";
+  // The same lane height positions multi-day bars, their spacers and drag previews.
+  const cardHeight = 32 + visibleProperties.length * 24;
+  const renderRecord = ({ occurrence }: { occurrence: EventCalendarOccurrence }) => {
+    const row = rows.get(String(occurrence.eventId));
+    return (
+      <span
+        data-calendar-record={occurrence.eventId}
+        className="flex w-full min-w-0 flex-col gap-1 overflow-hidden p-2"
+      >
+        <span className="flex min-w-0 items-center gap-1.5 font-medium leading-4">
+          {showPageIconInTitle && (
+            <span className="flex size-4 shrink-0 items-center justify-center">
+              {icon(String(occurrence.eventId))}
+            </span>
+          )}
+          <span className="truncate">{occurrence.event.title}</span>
+        </span>
+        {row &&
+          visibleProperties.map((property) => (
+            <span
+              key={property.id}
+              data-calendar-property={property.property.id}
+              title={property.property.name}
+              className="pointer-events-none flex h-5 min-w-0 shrink-0 items-center overflow-hidden text-xs font-normal [&>*]:min-h-0 [&>*]:w-auto [&>*]:max-w-full [&>*]:p-0"
+            >
+              <DatabasePropertyValue
+                preview
+                editable={false}
+                properties={properties}
+                propertyValuesByKey={propertyValuesByKey}
+                onPropertyConfigChange={updateDatabasePropertyConfig}
+                onSaveValue={savePropertyValue}
+                persistedValue={propertyValuesByKey[`${row.pageId}:${property.property.id}`] ?? ""}
+                personOptions={personOptions}
+                property={property}
+                row={row}
+                titlePropertyLabel={titlePropertyLabel}
+                wrapContent={false}
+              />
+            </span>
+          ))}
+      </span>
+    );
+  };
   return (
     <div
       ref={root}
@@ -317,7 +393,10 @@ export function DatabaseCalendarView() {
         if (!root.current?.contains(event.relatedTarget as Node)) clearDrop();
       }}
       onDropCapture={drop}
-      onDragEnd={clearDrop}
+      onDragEnd={() => {
+        clearDrop();
+        setDraggingUnscheduled(false);
+      }}
     >
       <CalendarRenderer
         className="database-event-calendar gap-0 border-0 bg-surface-canvas text-content-primary"
@@ -326,12 +405,81 @@ export function DatabaseCalendarView() {
             height: timed ? height : undefined,
             minHeight: height,
             "--ec-month-row-min-h": `${Math.max(100, (height - 80) / 6)}px`,
+            "--ec-month-bar-h": `${cardHeight + 2}px`,
           } as CSSProperties
         }
         events={events}
+        titleActions={
+          <Popover open={unscheduledOpen} onOpenChange={setUnscheduledOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 gap-1 text-content-secondary"
+                aria-label={`Unscheduled (${unscheduled.length})`}
+              >
+                Unscheduled <span className="tabular-nums">{unscheduled.length}</span>
+                <ChevronDown className="size-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              aria-label="Unscheduled records"
+              gap="compact"
+              padding="menu"
+              className={cn("w-72 max-w-[calc(100vw-2rem)]", draggingUnscheduled && "opacity-50")}
+              onInteractOutside={(event) => {
+                if (draggingUnscheduled) event.preventDefault();
+              }}
+              onCloseAutoFocus={(event) => event.preventDefault()}
+            >
+              <div className="px-2 py-1.5 text-sm font-medium">Unscheduled</div>
+              <div data-calendar-unscheduled className="max-h-64 overflow-y-auto">
+                {unscheduled.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    data-calendar-unscheduled-row={row.id}
+                    draggable={editable}
+                    onDragStart={(event) => {
+                      event.dataTransfer.setData(rowMime, row.id);
+                      event.dataTransfer.effectAllowed = "move";
+                      setDraggingUnscheduled(true);
+                    }}
+                    className="flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-action-neutral-hover"
+                    onClick={() => {
+                      setUnscheduledOpen(false);
+                      open(row.pageId);
+                    }}
+                  >
+                    {editable && (
+                      <GripVertical className="size-4 shrink-0 text-content-secondary" />
+                    )}
+                    {icon(row.id)}
+                    <span className="truncate">{row.page.name?.trim() || "Untitled"}</span>
+                  </button>
+                ))}
+                {!unscheduled.length && (
+                  <div className="px-2 py-2 text-sm text-content-secondary">
+                    All loaded records are scheduled.
+                  </div>
+                )}
+              </div>
+              {unscheduled.length > 0 && editable && (
+                <div className="border-t border-stroke-default px-2 py-2 text-xs text-content-secondary">
+                  Drag a page onto a date to schedule it.
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        }
         view={mode}
         onViewChange={setView}
         eventOrder={eventOrder}
+        classNames={{
+          event: "items-start p-0",
+          allDaySection: "max-h-[40%] shrink-0 overflow-y-auto",
+        }}
         weekStartsOn={1}
         slotDuration={60}
         snapDuration={30}
@@ -370,60 +518,9 @@ export function DatabaseCalendarView() {
           );
           return { start: update.start, end: update.end, allDay: update.allDay };
         }}
-        renderEvent={({ occurrence }) => (
-          <span
-            data-calendar-record={occurrence.eventId}
-            className="flex min-w-0 items-center gap-1.5"
-          >
-            <span className="flex size-4 shrink-0 items-center justify-center">
-              {icon(String(occurrence.eventId))}
-            </span>
-            <span className="truncate">{occurrence.event.title}</span>
-          </span>
-        )}
+        renderEvent={renderRecord}
+        renderAgendaEvent={renderRecord}
       />
-      <div className="mt-2 border-t border-stroke-default">
-        <button
-          type="button"
-          aria-expanded={unscheduledOpen}
-          className="flex h-8 w-full items-center gap-2 px-1 text-left text-sm text-content-secondary hover:bg-action-neutral-hover"
-          onClick={() => setUnscheduledOpen(!unscheduledOpen)}
-        >
-          {unscheduledOpen ? (
-            <ChevronDown className="size-4" />
-          ) : (
-            <ChevronRight className="size-4" />
-          )}
-          Unscheduled<span>{unscheduled.length}</span>
-        </button>
-        {unscheduledOpen && (
-          <div data-calendar-unscheduled>
-            {unscheduled.map((row) => (
-              <button
-                key={row.id}
-                type="button"
-                data-calendar-unscheduled-row={row.id}
-                draggable={editable}
-                onDragStart={(event) => {
-                  event.dataTransfer.setData(rowMime, row.id);
-                  event.dataTransfer.effectAllowed = "move";
-                }}
-                className="flex h-8 w-full items-center gap-2 border-b border-stroke-default px-3 text-left text-sm hover:bg-action-neutral-hover"
-                onClick={() => open(row.pageId)}
-              >
-                {editable && <GripVertical className="size-4 shrink-0 text-content-secondary" />}
-                {icon(row.id)}
-                <span className="truncate">{row.page.name?.trim() || "Untitled"}</span>
-              </button>
-            ))}
-            {!unscheduled.length && (
-              <div className="px-3 py-2 text-sm text-content-secondary">
-                All loaded records are scheduled.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
       {hasNextPage && (
         <div className="px-3 pt-2 text-sm text-content-secondary">
           More records are available. Load them to include their dates.

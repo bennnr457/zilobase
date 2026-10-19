@@ -27,6 +27,192 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator(cells)).toHaveCount(42);
 });
 
+test("calendars start with name only and properties appear when explicitly enabled", async ({
+  page,
+}) => {
+  await expect(page.locator(`${root} [data-calendar-property]`)).toHaveCount(0);
+  const card = page.locator(chip("row-0")).first();
+  const initialHeight = await card.evaluate((el) => el.getBoundingClientRect().height);
+  await options(page, { showSettings: true });
+  await page.getByRole("button", { name: "Open view settings" }).click();
+  await page.getByText("Property visibility", { exact: true }).click();
+  const status = page.getByRole("menuitem", { name: "Status", exact: true });
+  const date = page.getByRole("menuitem", { name: "Date", exact: true });
+  await expect(status).toHaveAttribute("aria-pressed", "false");
+  await expect(date).toHaveAttribute("aria-pressed", "false");
+  await status.click();
+  await expect(status).toHaveAttribute("aria-pressed", "true");
+  await expect(card.locator("[data-calendar-property=status]")).toHaveText("Open");
+  await expect(page.locator(`${root} [data-calendar-property=date]`)).toHaveCount(0);
+  await expect
+    .poll(() => card.evaluate((el) => el.getBoundingClientRect().height))
+    .toBeGreaterThan(initialHeight);
+});
+
+test("property visibility updates every multi-week card and grows or shrinks the week rows", async ({
+  page,
+}) => {
+  await options(page, { showSettings: true, columns: ["date-list", "status-list"] });
+  const cards = page.locator(chip("row-0"));
+  const heights = () =>
+    cards.evaluateAll((elements) =>
+      elements.map((el) => ({
+        card: el.getBoundingClientRect().height,
+        week: el.closest("[data-slot=event-calendar-month-row]").getBoundingClientRect().height,
+      })),
+    );
+  await expect(cards).toHaveCount(2);
+  const expanded = await heights();
+  await page.getByRole("button", { name: "Open view settings" }).click();
+  await page.getByText("Property visibility", { exact: true }).click();
+  const search = page.getByRole("textbox", { name: "Search for a property", exact: true });
+  await search.fill("status");
+  await expect(page.getByRole("menuitem", { name: "Date", exact: true })).toHaveCount(0);
+  await page.getByRole("menuitem", { name: "Status", exact: true }).click();
+  await expect(page.locator(`${root} [data-calendar-property=status]`)).toHaveCount(0);
+  await expect
+    .poll(async () =>
+      (await heights()).every(
+        (size, index) => size.card < expanded[index].card && size.week < expanded[index].week,
+      ),
+    )
+    .toBe(true);
+  await page.getByRole("menuitem", { name: "Status", exact: true }).click();
+  await expect(cards.first().locator("[data-calendar-property=status]")).toHaveText("Open");
+  await expect.poll(heights).toEqual(expanded);
+  await search.fill("");
+  await page.getByRole("menuitem", { name: "Status", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Date", exact: true }).click();
+  await expect(page.locator(`${root} [data-calendar-property]`)).toHaveCount(0);
+  await expect(cards).toHaveCount(2);
+});
+
+test("single-day cards, overflow and agenda use the visible properties", async ({ page }) => {
+  await options(page, { columns: ["date-list", "status-list"] });
+  const date = await dayValue(page.locator(cells).nth(2));
+  await page.evaluate((date) => window.timelineProof.setDates({ 0: date }), date);
+  const single = page.locator(chip("row-0"));
+  await expect(single).toHaveCount(1);
+  await expect(single.locator("[data-calendar-property]")).toHaveCount(2);
+  await expect(single.locator("button, a, input")).toHaveCount(0);
+  const tall = await single.evaluate((el) => el.getBoundingClientRect().height);
+  await options(page, { columns: [] });
+  await expect
+    .poll(() => single.evaluate((el) => el.getBoundingClientRect().height))
+    .toBeLessThan(tall);
+  await options(page, { columns: ["status-list"], count: 50 });
+  await page.locator(`${root} [data-slot=event-calendar-more]`).first().click();
+  await expect(
+    page.locator("[data-slot=event-calendar-more-popover] [data-calendar-property=status]").first(),
+  ).toHaveText("Open");
+  await page.keyboard.press("Escape");
+  await mode(page, "Agenda");
+  await expect(page.locator(`${root} [data-calendar-property=status]`).first()).toHaveText("Open");
+  await expect(page.locator(`${root} [data-calendar-property=date]`)).toHaveCount(0);
+});
+
+test("calendar conditional color settings show calendar sample cards", async ({ page }) => {
+  await options(page, { showSettings: true });
+  await page.getByRole("button", { name: "Open view settings" }).click();
+  await page.getByText("Conditional color", { exact: true }).click();
+  const preview = page.getByLabel("Calendar conditional color preview");
+  await expect(preview).toBeVisible();
+  await expect(preview.getByText("User research on the onboarding flow")).toBeVisible();
+  await expect(preview.getByText("Support", { exact: true })).toHaveCount(2);
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await expect(preview).toBeVisible();
+});
+
+test("calendar rules color matching events and show one color swatch without table targets", async ({
+  page,
+}) => {
+  await options(page, { showSettings: true });
+  const card = page.locator(chip("row-0")).first();
+  const background = () => card.evaluate((el) => getComputedStyle(el).backgroundColor);
+  const initialBackground = await background();
+  await page.evaluate(() =>
+    window.timelineProof.setConditionalColors([
+      {
+        id: "rule",
+        color: "red",
+        applyTo: "property",
+        filter: { id: "rule-filter", propertyId: "status-list", operator: "is", values: ["Open"] },
+      },
+    ]),
+  );
+  await expect(card).toHaveAttribute(
+    "style",
+    /--ec-event-color: var\(--zb-color-palette-text-red\)/,
+  );
+  await expect.poll(background).not.toBe(initialBackground);
+  await page.getByRole("button", { name: "Open view settings" }).click();
+  await page.getByText("Conditional color", { exact: true }).click();
+  const color = page.getByRole("combobox", { name: "Conditional color", exact: true });
+  await expect(color.locator("[data-conditional-color-swatch]")).toHaveCount(1);
+  await expect(page.getByRole("combobox", { name: "Apply color to" })).toHaveCount(0);
+  await expect(page.getByText("Entire row", { exact: true })).toHaveCount(0);
+  await color.click();
+  await page.getByRole("option", { name: "Purple", exact: true }).click();
+  await expect(color.locator("[data-conditional-color-swatch]")).toHaveCount(1);
+  await expect(card).toHaveAttribute(
+    "style",
+    /--ec-event-color: var\(--zb-color-palette-text-purple\)/,
+  );
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await page.evaluate(() => window.timelineProof.setStatuses({ 0: "Done" }));
+  await expect(card).not.toHaveAttribute("style", /--zb-color-palette-text-purple/);
+  await page.evaluate(() => {
+    window.timelineProof.setStatuses({ 0: "" });
+    window.timelineProof.setConditionalColors([
+      {
+        id: "default-status-rule",
+        color: "orange",
+        applyTo: "row",
+        filter: {
+          id: "default-status-filter",
+          propertyId: "status-list",
+          operator: "is",
+          values: ["Not started"],
+        },
+      },
+    ]);
+  });
+  await expect(card).toHaveAttribute(
+    "style",
+    /--ec-event-color: var\(--zb-color-palette-text-orange\)/,
+  );
+  for (const name of ["Week", "Day", "Agenda"]) {
+    await mode(page, name);
+    await expect(page.locator(chip("row-0")).first()).toHaveAttribute(
+      "style",
+      /--ec-event-color: var\(--zb-color-palette-text-orange\)/,
+    );
+  }
+});
+
+test("checkboxes, buttons and links are static previews and the card opens the record", async ({
+  page,
+}) => {
+  const errors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await options(page, {
+    previewControls: true,
+    columns: ["checkbox-list", "button-list", "url-list"],
+    count: 2,
+  });
+  const card = page.locator(chip("row-0")).first();
+  await expect(card.locator("[data-calendar-property]")).toHaveCount(3);
+  await expect(card.locator("button, input, a, [tabindex]")).toHaveCount(0);
+  await card.click();
+  expect(await page.evaluate(() => window.timelineProof.opened)).toEqual(["page-0"]);
+  expect(
+    errors.filter((error) => error.includes("cannot") || error.includes("descendant")),
+  ).toEqual([]);
+});
+
 test("date clicks create one dated record and request the existing page dialog with a blank focused title", async ({
   page,
 }) => {
@@ -88,6 +274,8 @@ test("cancel, failed creation, and late results do not open phantom pages", asyn
 
 test("Unscheduled drops update the existing record and open its dialog", async ({ page }) => {
   const source = page.locator('[data-calendar-unscheduled-row="row-1"]');
+  await expect(source).toHaveCount(0);
+  await page.getByRole("button", { name: "Unscheduled (1)", exact: true }).click();
   await expect(source).toBeVisible();
   const target = page.locator(cells).nth(4),
     date = await dayValue(target);
@@ -123,6 +311,8 @@ test("all four modes, navigation, themes and narrow layouts remain usable", asyn
     .locator(root)
     .getByRole("button", { name: /Unscheduled/ })
     .click();
+  await expect(page.getByRole("dialog", { name: "Unscheduled records" })).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(page.locator("[data-calendar-unscheduled]")).toHaveCount(0);
 });
 
@@ -177,6 +367,7 @@ test("read-only calendars open records but cannot create, move, resize or schedu
     presentation: "dialog",
   });
   await expect(page.locator(`${root} [data-slot=event-calendar-resize-handle]`)).toHaveCount(0);
+  await page.getByRole("button", { name: "Unscheduled (1)", exact: true }).click();
   await expect(page.locator('[data-calendar-unscheduled-row="row-1"]')).toHaveAttribute(
     "draggable",
     "false",
@@ -235,11 +426,11 @@ test("Week range creation spans day columns in either direction", async ({ page 
   await columns
     .first()
     .evaluate((el) => (el.closest("[data-slot=scroll-area-viewport]").scrollTop = 400));
-  const a = await columns.nth(1).boundingBox(),
-    b = await columns.nth(3).boundingBox();
-  const from = { x: a.x + a.width * 0.8, y: a.y + 600 },
-    to = { x: b.x + b.width * 0.8, y: b.y + 660 };
   for (const reverse of [false, true]) {
+    const a = await columns.nth(1).boundingBox(),
+      b = await columns.nth(3).boundingBox();
+    const from = { x: a.x + a.width * 0.8, y: a.y + 600 },
+      to = { x: b.x + b.width * 0.8, y: b.y + 660 };
     await page.mouse.move((reverse ? to : from).x, (reverse ? to : from).y);
     await page.mouse.down();
     await page.mouse.move((reverse ? from : to).x, (reverse ? from : to).y, { steps: 10 });
