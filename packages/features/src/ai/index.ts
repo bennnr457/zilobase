@@ -7,3 +7,4 @@ export type {
   ChatThread,
   ChatThreadDetail,
 } from "./contracts";
+export { chatCitations } from "./citations";

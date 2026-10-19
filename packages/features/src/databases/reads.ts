@@ -45,7 +45,7 @@ export async function getDatabaseRecordWindow(
 
 export async function getDatabaseExport(
   context: ClientOperationContext,
-  input: { databaseId: string; dataSourceId?: string; fresh?: boolean },
+  input: { databaseId: string; dataSourceId?: string; fresh?: boolean; rowLimit?: number },
 ) {
   const scope = captureClientOperation(context);
   const result = await context.queryClient.fetchQuery({
@@ -53,6 +53,7 @@ export async function getDatabaseExport(
       scope.context.apiFetch,
       input.databaseId,
       input.dataSourceId,
+      input.rowLimit,
     ),
     ...(input.fresh ? { staleTime: 0 } : {}),
   });

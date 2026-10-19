@@ -171,3 +171,16 @@ stored; historical inspection shows IDs, revisions and coverage. Source access i
 rechecked before history is displayed or sent to a model. Inaccessible history
 requires a new chat. Generation stops with the request; abandoned turns become
 interrupted after the three-minute generation deadline and a short grace period.
+
+Ask AI bounds each source export to 200 records before rendering; all authorized
+property definitions and view configurations remain available. The inspector
+shows acquired/included totals and any omitted page blocks, records, or history.
+Set `AI_CONTEXT_WINDOW_TOKENS` to the configured OpenAI model's context window
+(default 32768, minimum 8192). The input budget conservatively uses UTF-8 bytes as
+an upper bound for byte-level text tokens, reserves 4096 output tokens plus message
+overhead, and keeps the separate 2 MB request and 48000-character context limits.
+Metadata that cannot fit blocks the send with a remove-attachment message.
+Source citation markers resolve only against the answer's authorized manifest.
+Context logging is off by default; local `zilobaseDebugAiContext=1` enables
+metadata diagnostics, and `zilobaseDebugAiContextContent=1` additionally opts into
+raw content logging. Neither is needed for normal chat.

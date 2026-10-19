@@ -59,6 +59,7 @@ databaseReadRoutes.get("/:id/export", resourceWorkspace, async (c) =>
     await readDatabaseExport(serverOperationContext(c), {
       databaseId: c.req.param("id"),
       dataSourceId: c.req.query("dataSourceId") || undefined,
+      rowLimit: integerQuery(c.req.query("rowLimit")),
     }),
   ),
 );

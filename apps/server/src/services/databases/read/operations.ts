@@ -106,13 +106,19 @@ export async function readDatabaseBootstrap(
 }
 export async function readDatabaseExport(
   context: ServerOperationContext,
-  input: { databaseId: string; dataSourceId?: string },
+  input: { databaseId: string; dataSourceId?: string; rowLimit?: number },
 ) {
   const readable = await readableDatabase(context, input.databaseId, false);
   if (input.dataSourceId && input.dataSourceId.length > 128)
     throw new ServerOperationError({ error: "Invalid data source" }, 400);
+  if (
+    input.rowLimit !== undefined &&
+    (!Number.isSafeInteger(input.rowLimit) || input.rowLimit < 1 || input.rowLimit > 500)
+  )
+    throw new ServerOperationError({ error: "rowLimit must be between 1 and 500" }, 400);
   const payload = await getDatabaseExportService({
     dataSourceId: input.dataSourceId,
+    rowLimit: input.rowLimit,
     databaseId: readable.record.id,
     existingRecord: readable.record,
     userId: readable.user?.id,

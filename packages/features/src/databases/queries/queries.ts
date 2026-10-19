@@ -59,7 +59,14 @@ export const databaseAccessQueryOptions = (
 export const databaseContextExportQueryKey = (
   databaseId: string | null | undefined,
   dataSourceId?: string,
-) => ["database-context-export", databaseId ?? "none", dataSourceId ?? "primary-source"] as const;
+  rowLimit?: number,
+) =>
+  [
+    "database-context-export",
+    databaseId ?? "none",
+    dataSourceId ?? "primary-source",
+    ...(rowLimit === undefined ? [] : [rowLimit]),
+  ] as const;
 
 export const databaseContextExportRootQueryKey = (databaseId: string | null | undefined) =>
   ["database-context-export", databaseId ?? "none"] as const;
@@ -68,19 +75,23 @@ export const databaseContextExportQueryOptions = (
   apiFetch: ApiFetcher,
   databaseId: string,
   dataSourceId?: string,
+  rowLimit?: number,
 ) =>
   queryOptions({
-    queryKey: databaseContextExportQueryKey(databaseId, dataSourceId),
+    queryKey: databaseContextExportQueryKey(databaseId, dataSourceId, rowLimit),
     queryFn: async ({ client, signal }) => {
       const read = await sharedClient(client).captureRead();
-      const query = dataSourceId ? `?dataSourceId=${encodeURIComponent(dataSourceId)}` : "";
+      const params = new URLSearchParams();
+      if (dataSourceId) params.set("dataSourceId", dataSourceId);
+      if (rowLimit !== undefined) params.set("rowLimit", String(rowLimit));
+      const query = params.size ? `?${params}` : "";
       const payload = await apiFetch<DatabaseExportPayload>(
         `/databases/${encodeURIComponent(databaseId)}/export${query}`,
         { method: "GET", signal },
       );
       sharedClient(client).revalidateScope(
         read,
-        client.getQueryData(databaseContextExportQueryKey(databaseId, dataSourceId)),
+        client.getQueryData(databaseContextExportQueryKey(databaseId, dataSourceId, rowLimit)),
         payload.viewerType === "guest" || payload.viewerType === "public"
           ? payload.viewerType
           : "account",

@@ -26,6 +26,7 @@ export async function assembleChatContext(
   context: ServerOperationContext,
   request: Pick<ChatRequest, "workspaceId" | "roots" | "snapshots">,
   maxChars = 48_000,
+  maxBytes?: number,
 ) {
   const scoped = { ...context, pinnedWorkspaceId: request.workspaceId };
   const data = await collectWorkspaceContext(request, {
@@ -38,13 +39,13 @@ export async function assembleChatContext(
       return detail.page;
     },
     database: async (databaseId, dataSourceId) => {
-      const result = await readDatabaseExport(scoped, { databaseId, dataSourceId });
+      const result = await readDatabaseExport(scoped, { databaseId, dataSourceId, rowLimit: 200 });
       if (result.viewerType === "public")
         throw new ServerOperationError({ error: "Database is no longer accessible" }, 403);
       return result;
     },
   });
-  const result = buildContextMarkdown({ context: data, maxChars });
+  const result = buildContextMarkdown({ context: data, maxChars, maxBytes });
   if (result.status === "blocked")
     throw new ServerOperationError({ error: result.omissions.join(" ") }, 422);
   return result;

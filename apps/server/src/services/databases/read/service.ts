@@ -432,6 +432,7 @@ export async function getDatabaseBootstrapService(
 export async function getDatabaseExportService(
   input: {
     dataSourceId?: string;
+    rowLimit?: number;
     databaseId: string;
     existingRecord?: DatabaseRecord;
     userId?: string;
@@ -444,7 +445,9 @@ export async function getDatabaseExportService(
       record.id,
       input.userId,
       record,
-      input.dataSourceId ? { dataSourceId: input.dataSourceId } : undefined,
+      input.dataSourceId || input.rowLimit !== undefined
+        ? { dataSourceId: input.dataSourceId, rowLimit: input.rowLimit }
+        : undefined,
     );
     if (!payload) throw new ServiceMutationError("Database not found", 404);
     if (input.dataSourceId && payload.activeDataSource?.id !== input.dataSourceId) {

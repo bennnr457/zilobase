@@ -43,6 +43,7 @@ export async function prepareChatContext(
         databaseId: id,
         dataSourceId,
         fresh: true,
+        rowLimit: 200,
       });
       if (!result) throw new Error("Database unavailable");
       return result;

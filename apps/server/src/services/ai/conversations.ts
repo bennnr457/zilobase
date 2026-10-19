@@ -44,6 +44,7 @@ export async function assertHistoryAccess(
           const result = await readDatabaseExport(scoped, {
             databaseId: entry.databaseId,
             dataSourceId: entry.type === "source" ? entry.id : undefined,
+            rowLimit: 1,
           });
           if (
             result.viewerType === "public" ||
@@ -239,9 +240,16 @@ export async function finishChatTurn(
   text: string,
   status: "completed" | "stopped" | "failed" | "interrupted",
   usage?: { inputTokens?: number; outputTokens?: number },
+  context?: Omit<BuildContextResult, "markdown">,
 ) {
   await db
     .update(askAiTurn)
-    .set({ assistantText: text, status, usage, updatedAt: new Date() })
+    .set({
+      assistantText: text,
+      status,
+      usage,
+      ...(context ? { context } : {}),
+      updatedAt: new Date(),
+    })
     .where(and(eq(askAiTurn.id, id), eq(askAiTurn.status, "streaming")));
 }

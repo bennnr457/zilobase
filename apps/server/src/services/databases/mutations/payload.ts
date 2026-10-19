@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "../../../infrastructure/database";
 import {
@@ -21,6 +21,7 @@ type PayloadOptions = {
   dataSourceId?: string;
   includeDeleted?: boolean;
   viewId?: string;
+  rowLimit?: number;
 };
 
 async function loadDatabasePayload(
@@ -126,31 +127,52 @@ async function loadDatabasePayload(
     .innerJoin(pageProperty, eq(databaseProperty.propertyId, pageProperty.id))
     .where(and(eq(databaseProperty.dataSourceId, sourceId), isNull(pageProperty.deletedAt)))
     .orderBy(asc(databaseProperty.position));
-  const rowsPromise = includeRows
-    ? db
-        .select({
-          row: databaseRow,
-          page: {
-            createdAt: page.createdAt,
-            deletedAt: page.deletedAt,
-            hasContent: page.hasContent,
-            id: page.id,
-            metadata: page.metadata,
-            name: page.name,
-            updatedAt: page.updatedAt,
-          },
-        })
-        .from(databaseRow)
-        .innerJoin(page, eq(databaseRow.pageId, page.id))
-        .where(
-          and(
-            eq(databaseRow.dataSourceId, sourceId),
-            options?.includeDeleted ? undefined : isNull(databaseRow.deletedAt),
-          ),
-        )
-        .orderBy(asc(databaseRow.orderKey), asc(databaseRow.id))
+  const rowsQuery = db
+    .select({
+      row: databaseRow,
+      page: {
+        createdAt: page.createdAt,
+        deletedAt: page.deletedAt,
+        hasContent: page.hasContent,
+        id: page.id,
+        metadata: page.metadata,
+        name: page.name,
+        updatedAt: page.updatedAt,
+      },
+    })
+    .from(databaseRow)
+    .innerJoin(page, eq(databaseRow.pageId, page.id))
+    .where(
+      and(
+        eq(databaseRow.dataSourceId, sourceId),
+        options?.includeDeleted ? undefined : isNull(databaseRow.deletedAt),
+        options?.includeDeleted ? undefined : isNull(page.deletedAt),
+      ),
+    )
+    .orderBy(asc(databaseRow.orderKey), asc(databaseRow.id))
+    .$dynamic();
+  const limitedRows = includeRows
+    ? options?.rowLimit === undefined
+      ? rowsQuery
+      : rowsQuery.limit(options.rowLimit)
     : Promise.resolve([]);
-  const [properties, rows] = await Promise.all([propertiesPromise, rowsPromise]);
+  const [properties, rows, totals] = await Promise.all([
+    propertiesPromise,
+    limitedRows,
+    includeRows && options?.rowLimit !== undefined
+      ? db
+          .select({ count: count() })
+          .from(databaseRow)
+          .innerJoin(page, eq(databaseRow.pageId, page.id))
+          .where(
+            and(
+              eq(databaseRow.dataSourceId, sourceId),
+              options.includeDeleted ? undefined : isNull(databaseRow.deletedAt),
+              options.includeDeleted ? undefined : isNull(page.deletedAt),
+            ),
+          )
+      : Promise.resolve([]),
+  ]);
   const pageIds = rows.map(({ row }) => row.pageId);
   const propertyIds = properties.map(({ property }) => property.id);
   const values =
@@ -189,6 +211,15 @@ async function loadDatabasePayload(
     })),
     values,
     views,
+    ...(totals[0]
+      ? {
+          rowCount: totals[0].count,
+          rowsPagination: {
+            hasMore: totals[0].count > rows.length,
+            nextCursor: totals[0].count > rows.length ? rows.length : null,
+          },
+        }
+      : {}),
   };
 }
 

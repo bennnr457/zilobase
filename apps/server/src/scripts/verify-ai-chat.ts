@@ -3,7 +3,18 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { runMigrationSets } from "@zilobase/runtime-adapter/node";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
-import { askAiThread, askAiTurn, member, user, workspace } from "../infrastructure/database/schema";
+import {
+  askAiThread,
+  askAiTurn,
+  member,
+  user,
+  workspace,
+  database,
+  dataSource,
+  databaseDataSource,
+  databaseRow,
+  page,
+} from "../infrastructure/database/schema";
 import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
 import { managedAppPolicy } from "../shared/config/app-policy";
 import type { ServerOperationContext } from "../services/operations/context";
@@ -13,6 +24,7 @@ import {
   getChatThread,
   deleteChatThread,
 } from "../services/ai/conversations";
+import { readDatabaseExport } from "../services/databases/read/operations";
 import type { ChatRequest } from "@zilobase/features/runtime";
 import type { BuildContextResult } from "@zilobase/page-context";
 
@@ -85,6 +97,42 @@ try {
     trimmedAttachmentIds: [],
   };
   const run = <T>(fn: () => Promise<T>) => runWithDb(client.db, fn);
+  await client.db
+    .insert(database)
+    .values({ id: "db", workspaceId: "workspace", createdById: "actor", name: "Tasks" });
+  await client.db
+    .insert(dataSource)
+    .values({ id: "source", workspaceId: "workspace", parentDatabaseId: "db", name: "Tasks" });
+  await client.db.insert(databaseDataSource).values({ databaseId: "db", dataSourceId: "source" });
+  await client.db.insert(page).values(
+    Array.from({ length: 205 }, (_, i) => ({
+      id: `page-${i}`,
+      workspaceId: "workspace",
+      createdById: "actor",
+      name: `Task ${i}`,
+      deletedAt: i === 204 ? new Date() : null,
+    })),
+  );
+  await client.db.insert(databaseRow).values(
+    Array.from({ length: 205 }, (_, i) => ({
+      id: `row-${i}`,
+      dataSourceId: "source",
+      pageId: `page-${i}`,
+      position: i,
+      orderKey: String(i).padStart(4, "0"),
+    })),
+  );
+  const bounded = await run(() => readDatabaseExport(context, { databaseId: "db", rowLimit: 200 }));
+  assert.equal(bounded.rows.length, 200);
+  assert.equal(bounded.rowCount, 204);
+  assert.equal(bounded.rowsPagination?.hasMore, true);
+  assert.equal(bounded.rows[0]?.id, "row-0");
+  const complete = await run(() => readDatabaseExport(context, { databaseId: "db" }));
+  assert.equal(complete.rows.length, 204);
+  await assert.rejects(
+    run(() => readDatabaseExport(context, { databaseId: "db", rowLimit: 501 })),
+    /rowLimit/,
+  );
   const claimed = await run(() => beginChatTurn(context, request, built));
   assert.ok(claimed.threadId);
   await assert.rejects(

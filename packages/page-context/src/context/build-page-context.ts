@@ -12,6 +12,7 @@ import {
 export function buildContextMarkdown({
   context,
   maxChars = 48_000,
+  maxBytes = Infinity,
 }: BuildContextInput): BuildContextResult {
   const unique = <T extends { id: string }>(items: T[]) => [
     ...new Map(items.map((item) => [item.id, item])).values(),
@@ -127,8 +128,11 @@ export function buildContextMarkdown({
     ].join("\n\n");
     return { markdown, manifest, omissions };
   };
+  const encoder = new TextEncoder();
+  const fits = (markdown: string) =>
+    markdown.length <= maxChars && encoder.encode(markdown).length <= maxBytes;
   // Metadata and omission notices are mandatory. Never silently slice them or a table row.
-  if (!Number.isFinite(maxChars) || maxChars < 0 || render().markdown.length > maxChars)
+  if (!Number.isFinite(maxChars) || maxChars < 0 || !fits(render().markdown))
     return {
       version: CONTEXT_VERSION,
       markdown: "",
@@ -141,7 +145,7 @@ export function buildContextMarkdown({
   for (let i = 0; i < pages.length; i++) {
     for (let j = 0; j < blocks[i]!.length; j++) {
       pageCounts[i]!++;
-      if (render().markdown.length > maxChars) {
+      if (!fits(render().markdown)) {
         pageCounts[i]!--;
         break;
       }
@@ -157,7 +161,7 @@ export function buildContextMarkdown({
         continue;
       }
       rowCounts[i]!++;
-      if (render().markdown.length > maxChars) {
+      if (!fits(render().markdown)) {
         rowCounts[i]!--;
         exhausted.add(i);
       }

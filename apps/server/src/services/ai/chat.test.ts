@@ -26,7 +26,7 @@ const built: BuildContextResult = {
   omissions: [],
   trimmedAttachmentIds: [],
 };
-const context = {} as ServerOperationContext;
+const context = { env: {} } as ServerOperationContext;
 
 test("chat sends authorized context to the SDK and emits text plus usage", async () => {
   const model = new MockLanguageModelV4({

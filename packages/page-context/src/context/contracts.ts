@@ -168,6 +168,7 @@ export type ContextSection = PageContextSection | DatabaseContextSection;
 export type BuildContextInput = {
   context: WorkspaceContext;
   maxChars?: number;
+  maxBytes?: number;
 };
 
 export type BuildContextResult = {

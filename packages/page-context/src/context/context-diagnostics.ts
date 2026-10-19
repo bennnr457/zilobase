@@ -7,16 +7,15 @@ export type PageContextLogMeta = {
 };
 
 function shouldLogPageContext() {
-  const env = (import.meta as ImportMeta & { env?: { DEV?: boolean } }).env;
-  if (env?.DEV) {
-    return true;
-  }
-
   if (typeof localStorage === "undefined") {
     return false;
   }
 
-  return localStorage.getItem("zilobaseDebugAiContext") === "1";
+  try {
+    return localStorage.getItem("zilobaseDebugAiContext") === "1";
+  } catch {
+    return false;
+  }
 }
 
 export function logPageContext(markdown: string, meta: PageContextLogMeta) {
@@ -26,7 +25,12 @@ export function logPageContext(markdown: string, meta: PageContextLogMeta) {
 
   console.group("[Zilobase AI Context]");
   console.log("meta:", meta);
-  console.log(`markdown (${meta.charCount} chars):\n`, markdown);
+  try {
+    if (localStorage.getItem("zilobaseDebugAiContextContent") === "1")
+      console.log(`markdown (${meta.charCount} chars):\n`, markdown);
+  } catch {
+    /* Storage can be disabled by the browser. */
+  }
   console.groupEnd();
 }
 
