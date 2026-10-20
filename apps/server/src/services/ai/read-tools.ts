@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import type { AiDiagnostics } from "./diagnostics";
 import { tool } from "ai";
 import { z } from "zod";
 import {
@@ -113,6 +114,7 @@ export function createReadTools(
     maxResultBytes: number;
     changed?: () => Promise<void>;
     dependencies?: ReadToolDependencies;
+    diagnostics?: AiDiagnostics;
   },
 ) {
   const ports = options.dependencies ?? dependencies;
@@ -250,18 +252,33 @@ export function createReadTools(
       error: undefined as string | undefined,
     };
     state.progress.activities.push(activity);
+    const queuedAt = performance.now();
     while (active >= 3) {
       await new Promise<void>((resolve) => waiters.push(resolve));
       check();
     }
     active++;
+    const timing = options.diagnostics?.start("tool", {
+      tool: name,
+      toolCallId,
+      calls: state.calls,
+      waitMs: performance.now() - queuedAt,
+    });
     try {
       await options.changed?.();
-      const result = await runServerOperation(scoped, async () => {
-        check();
-        await ports.authorizeWorkspace(scoped, state.workspaceId);
-        return run();
-      });
+      const read = () =>
+        runServerOperation(
+          scoped,
+          async () => {
+            check();
+            await ports.authorizeWorkspace(scoped, state.workspaceId);
+            return run();
+          },
+          { onTiming: options.diagnostics?.databaseTiming("tool") },
+        );
+      const result = options.diagnostics
+        ? await options.diagnostics.measure("tool_read", read, { tool: name, toolCallId })
+        : await read();
       check();
       if (Buffer.byteLength(JSON.stringify(result)) > options.maxResultBytes)
         fail("RESULT_TOO_LARGE");
@@ -293,6 +310,7 @@ export function createReadTools(
         },
       };
     } finally {
+      timing?.({ outcome: activity.status, returned: activity.returned });
       active--;
       waiters.shift()?.();
     }

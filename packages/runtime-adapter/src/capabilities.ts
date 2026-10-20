@@ -33,6 +33,14 @@ export function getDatabaseUrl(env: RuntimeEnv) {
   return runtimeEnv.require("DATABASE_URL");
 }
 
+/** Provider-owned provenance, without exposing a database connection string to diagnostics. */
+export function getDatabaseConnectionRoute(env: RuntimeEnv) {
+  if (typeof env.DATABASE_URL === "string" && env.DATABASE_URL.length > 0) return "direct";
+  const runtimeEnv = requireRuntimePort("env");
+  runtimeEnv.require("DATABASE_URL");
+  return runtimeEnv.get("DATABASE_CONNECTION_ROUTE") ?? "runtime-port";
+}
+
 export async function fetchAutomationWebhook(input: {
   body: string;
   headers: Record<string, string>;

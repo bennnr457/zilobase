@@ -39,6 +39,7 @@ import { chatBudget, budgetHistory } from "./budget";
 import { assertAgentPromptFits } from "./agent";
 import { type ProviderChunk } from "./provider";
 import { openRunInput, sealRunInput } from "./run-input";
+import { createAiDiagnostics } from "./diagnostics";
 
 export const durableChatEnabled = (env: Record<string, unknown>) =>
   env.AI_DURABLE_STREAMING_ENABLED === "true";
@@ -62,6 +63,18 @@ export const snapshot = (
 });
 
 export async function admitChatRun(
+  context: ServerOperationContext,
+  request: ChatRequest,
+): Promise<ChatRunReceipt> {
+  const diagnostics = createAiDiagnostics(context.env, { requestId: request.requestId });
+  const receipt = await diagnostics.measure("admission", () =>
+    admitChatRunOperation(context, request),
+  );
+  diagnostics.event("admitted", { runId: receipt.runId, outcome: receipt.status });
+  return receipt;
+}
+
+async function admitChatRunOperation(
   context: ServerOperationContext,
   request: ChatRequest,
 ): Promise<ChatRunReceipt> {

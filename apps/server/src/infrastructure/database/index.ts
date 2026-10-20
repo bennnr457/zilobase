@@ -184,8 +184,12 @@ export function runWithDbEnv<T>(
 }
 
 /** Streaming responses outlive the request middleware and need their own scope. */
-export function runWithIndependentDbEnv<T>(env: DbEnv, callback: () => Promise<T>) {
-  return databaseStore.exit(() => runWithDbEnv(env, callback));
+export function runWithIndependentDbEnv<T>(
+  env: DbEnv,
+  callback: () => Promise<T>,
+  options?: { onTiming?: (name: string, durationMs: number) => void },
+) {
+  return databaseStore.exit(() => runWithDbEnv(env, callback, options));
 }
 
 function hasDatabaseContext() {

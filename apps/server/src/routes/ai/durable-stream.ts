@@ -6,6 +6,7 @@ import {
 import type { ChatRunReceipt } from "@zilobase/features/runtime";
 import type { ServerOperationContext } from "../../services/operations/context";
 import { readChatRunPageInScope, isRunTerminal } from "../../services/ai/runs";
+import { createAiDiagnostics } from "../../services/ai/diagnostics";
 
 /** Subscriber lifetime only. The producer is owned by a background dispatch. */
 export function chatRunResponse(
@@ -19,13 +20,24 @@ export function chatRunResponse(
   let cancelled = false;
   let firstPage = true;
   const subscribedAt = Date.now();
+  const diagnostics = createAiDiagnostics(context.env, {
+    runId: receipt.runId,
+    requestId: context.requestId,
+  });
+  const endSubscriber = diagnostics.start("subscriber");
+  let polls = 0;
+  let delivered = 0;
+  let readMs = 0;
   const attributes = backgroundAttributes(context.env, "ai.generate", "subscribed");
   recordBackgroundCounter("ai_subscriber_open", attributes);
   const deadline = Date.now() + lifetimeMs;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let wake: (() => void) | undefined;
   const stop = () => {
-    if (!cancelled) recordBackgroundCounter("ai_subscriber_close", attributes);
+    if (!cancelled) {
+      recordBackgroundCounter("ai_subscriber_close", attributes);
+      endSubscriber({ calls: polls, returned: delivered, waitMs: readMs });
+    }
     cancelled = true;
     context.request?.signal.removeEventListener("abort", stop);
     if (timer) clearTimeout(timer);
@@ -42,17 +54,22 @@ export function chatRunResponse(
             controller.close();
             return;
           }
+          const readStarted = performance.now();
           const page = await readChatRunPageInScope(
             context,
             receipt.runId,
             receipt.threadId,
             cursor,
           );
+          polls++;
+          delivered += page.events.length;
+          readMs += performance.now() - readStarted;
           if (cancelled) {
             controller.close();
             return;
           }
           if (firstPage) {
+            diagnostics.event("subscriber_first_page", { waitMs: Date.now() - subscribedAt });
             firstPage = false;
             recordBackgroundHistogram("ai_replay_ms", Date.now() - subscribedAt, attributes);
           }

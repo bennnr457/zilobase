@@ -26,25 +26,45 @@ import {
   readChatRun,
 } from "./runs";
 import { openRunInput } from "./run-input";
+import { createAiDiagnostics } from "./diagnostics";
 
 export async function processAiGeneration(
   env: RuntimeEnv,
   input: { runId: string; workerId: string; signal?: AbortSignal },
   provider = generateChatOutput,
 ) {
-  const scope = <T>(work: () => Promise<T>) => runWithIndependentDbEnv(env, work);
+  const diagnostics = createAiDiagnostics(env, { runId: input.runId });
+  const endRun = diagnostics.start("run");
+  const scope = <T>(work: () => Promise<T>, stage = "setup") =>
+    diagnostics.measureQuiet(stage, () =>
+      runWithIndependentDbEnv(env, work, { onTiming: diagnostics.databaseTiming(stage) }),
+    );
   let run;
   try {
-    run = await scope(() => claimChatRun(input.runId, input.workerId, getBackgroundCellId(env)));
+    run = await scope(
+      () => claimChatRun(input.runId, input.workerId, getBackgroundCellId(env)),
+      "claim",
+    );
   } catch (error) {
-    if (error instanceof Error && error.message === "CHAT_RUN_BUSY")
+    if (error instanceof Error && error.message === "CHAT_RUN_BUSY") {
+      endRun({ outcome: "busy" });
       return {
         outcome: "retry" as const,
         availableAt: new Date(Date.now() + 90_000).toISOString(),
       };
+    }
+    endRun({ outcome: "claim_failed" });
     throw error;
   }
-  if (!run) return { outcome: "completed" as const };
+  if (!run) {
+    endRun({ outcome: "already_terminal" });
+    return { outcome: "completed" as const };
+  }
+  diagnostics.event("claimed", {
+    requestId: run.turnId,
+    model: run.model,
+    queueWaitMs: Date.now() - run.createdAt.getTime(),
+  });
   const controller = new AbortController();
   const signal = AbortSignal.any([
     controller.signal,
@@ -73,14 +93,16 @@ export async function processAiGeneration(
     buffer = "";
     savedAt = Date.now();
     writing = writing.then(() =>
-      scope(() =>
-        checkpointChatRun(
-          run.id,
-          input.workerId,
-          run.fence,
-          chunk,
-          complete ? "completed" : undefined,
-        ),
+      scope(
+        () =>
+          checkpointChatRun(
+            run.id,
+            input.workerId,
+            run.fence,
+            chunk,
+            complete ? "completed" : undefined,
+          ),
+        "text_checkpoint",
       ),
     );
     try {
@@ -170,7 +192,7 @@ export async function processAiGeneration(
           authorizedAt = Date.now();
         }
         await checkpointChatRun(run.id, input.workerId, run.fence, {});
-      });
+      }, "control");
     };
     heartbeat = setInterval(() => {
       if (control) return;
@@ -188,17 +210,20 @@ export async function processAiGeneration(
     }, 200);
     recordBackgroundCounter("ai_provider_start", attributes);
     for await (const chunk of provider(activeContext, payload, signal, cursor, fetch, {
+      diagnostics,
       checkpoint: async (state) => {
         writing = writing.then(() =>
-          scope(() =>
-            checkpointChatRun(
-              run.id,
-              input.workerId,
-              run.fence,
-              { checkpoint: state, context: state.context, progress: state.progress },
-              undefined,
-              env,
-            ),
+          scope(
+            () =>
+              checkpointChatRun(
+                run.id,
+                input.workerId,
+                run.fence,
+                { checkpoint: state, context: state.context, progress: state.progress },
+                undefined,
+                env,
+              ),
+            "state_checkpoint",
           ),
         );
         await writing;
@@ -218,6 +243,7 @@ export async function processAiGeneration(
       if (chunk.text && !firstToken) {
         firstToken = true;
         recordBackgroundHistogram("ai_first_token_ms", Date.now() - startedAt, attributes);
+        diagnostics.event("first_text", { waitMs: Date.now() - startedAt });
       }
       buffer += chunk.text ?? "";
       const newResponse = chunk.responseId && !cursor.responseId;
@@ -304,6 +330,8 @@ export async function processAiGeneration(
     if (heartbeat) clearInterval(heartbeat);
     await writing.catch(() => {});
     await control;
+    endRun({ outcome: stopped ? "stopped" : finished ? "completed" : "interrupted" });
+    diagnostics.summary();
   }
   return { outcome: "completed" as const };
 }

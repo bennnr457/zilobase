@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 vi.mock("../operations/context", async (original) => ({
   ...(await original<typeof import("../operations/context")>()),
   runServerOperation: async (_: unknown, run: () => Promise<unknown>) => run(),
@@ -15,11 +15,13 @@ import { createAgentState, type AgentState } from "./agent-state";
 import type { ReadToolDependencies } from "./read-tools";
 
 const context = { env: {} } as ServerOperationContext;
+afterEach(() => vi.restoreAllMocks());
 const usage = {
   inputTokens: { total: 20, noCache: 20, cacheRead: 0, cacheWrite: 0 },
   outputTokens: { total: 5, text: 5, reasoning: 0 },
 };
 test("agent reads through tools and commits their transcript before the next model step", async () => {
+  const logs = vi.spyOn(console, "info").mockImplementation(() => {});
   const state = createAgentState(
     "workspace",
     [{ type: "page", id: "page" }],
@@ -105,6 +107,14 @@ test("agent reads through tools and commits their transcript before the next mod
   expect(state.progress.activities[0]).toMatchObject({ id: "read", status: "completed" });
   expect(state.context.manifest[0]?.key).toBe("page:page");
   expect(state.messages.at(-1)?.role).toBe("assistant");
+  const diagnostics = logs.mock.calls.map((call) => JSON.parse(call[0]));
+  expect(
+    diagnostics.filter((event) => event.stage === "model" && event.phase === "end"),
+  ).toHaveLength(2);
+  expect(diagnostics).toContainEqual(
+    expect.objectContaining({ stage: "tool_read", phase: "end", tool: "read_page", outcome: "ok" }),
+  );
+  expect(JSON.stringify(diagnostics)).not.toMatch(/Due Friday|What is due|Mentioned page/);
 });
 
 test("compaction removes whole tool exchanges and preserves the latest request", () => {

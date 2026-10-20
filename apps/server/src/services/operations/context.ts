@@ -85,6 +85,10 @@ export function requireOperationWorkspace(
   );
 }
 
-export function runServerOperation<T>(context: ServerOperationContext, run: () => Promise<T>) {
-  return runWithRuntimePorts(context.runtimePorts, () => runWithDbEnv(context.env, run));
+export function runServerOperation<T>(
+  context: ServerOperationContext,
+  run: () => Promise<T>,
+  options?: { onTiming?: (name: string, durationMs: number) => void },
+) {
+  return runWithRuntimePorts(context.runtimePorts, () => runWithDbEnv(context.env, run, options));
 }

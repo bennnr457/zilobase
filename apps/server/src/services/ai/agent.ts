@@ -6,8 +6,12 @@ import { createReadTools, readToolSchemaBytes, type ReadToolDependencies } from 
 import { updateReadCoverage, type AgentState } from "./agent-state";
 import { promptBytes } from "./budget";
 import type { ProviderChunk } from "./provider";
+import { createAiDiagnostics, type AiDiagnostics } from "./diagnostics";
 
-export type AgentPersistence = { checkpoint: (state: AgentState) => Promise<void> };
+export type AgentPersistence = {
+  checkpoint: (state: AgentState) => Promise<void>;
+  diagnostics?: AiDiagnostics;
+};
 export function readAgentLimits(env: Record<string, unknown>) {
   const integer = (name: string, fallback: number, min: number, max: number) => {
     const value = env[name] == null || env[name] === "" ? fallback : Number(env[name]);
@@ -79,12 +83,29 @@ export async function* generateReadAgent(
   } = {},
 ): AsyncGenerator<ProviderChunk> {
   const limits = readAgentLimits(context.env);
+  const diagnostics =
+    options.persistence?.diagnostics ??
+    createAiDiagnostics(context.env, {
+      requestId: context.requestId,
+      model:
+        typeof options.model === "object"
+          ? options.model.modelId
+          : String(context.env.AI_MODEL ?? "default"),
+    });
   const updates: ProviderChunk[] = [];
   let saving = Promise.resolve();
   const changed = async () => {
     updateReadCoverage(state);
     const copy = structuredClone(state);
-    saving = saving.then(() => options.persistence?.checkpoint(copy));
+    saving = saving.then(() =>
+      options.persistence
+        ? diagnostics.measure("agent_checkpoint", () => options.persistence!.checkpoint(copy), {
+            step: copy.steps,
+            calls: copy.calls,
+            bytes: Buffer.byteLength(JSON.stringify(copy)),
+          })
+        : undefined,
+    );
     await saving;
     if (!options.persistence) updates.push({ context: copy.context, progress: copy.progress });
   };
@@ -94,16 +115,41 @@ export async function* generateReadAgent(
     maxResultBytes: limits.maxResultBytes,
     changed,
     dependencies: options.dependencies,
+    diagnostics,
   });
   let preparedMessages = state.messages;
   let separator = "";
+  let endModelCall: ReturnType<AiDiagnostics["start"]> | undefined;
+  const transport: typeof fetch = async (input, init) => {
+    const end = diagnostics.start("provider_headers", { step: state.steps });
+    try {
+      const response = await (options.transport ?? fetch)(input, init);
+      end({ status: response.status, outcome: response.ok ? "ok" : "error" });
+      return response;
+    } catch (error) {
+      end({ outcome: "error" });
+      throw error;
+    }
+  };
   const agent = new ToolLoopAgent({
-    model: options.model ?? configuredChatModel(context, options.transport),
+    model: options.model ?? configuredChatModel(context, transport),
     instructions: CHAT_INSTRUCTIONS,
     tools,
     stopWhen: isStepCount(Math.max(1, limits.maxSteps - state.steps)),
     maxOutputTokens: limits.output,
     maxRetries: 0,
+    onLanguageModelCallStart: () => {
+      endModelCall = diagnostics.start("model", { step: state.steps, calls: state.calls });
+    },
+    onLanguageModelCallEnd: (event) => {
+      endModelCall?.({
+        outcome: event.finishReason,
+        inputTokens: event.usage.inputTokens,
+        outputTokens: event.usage.outputTokens,
+        reasoningTokens: event.usage.outputTokenDetails?.reasoningTokens,
+      });
+      endModelCall = undefined;
+    },
     prepareStep: async ({ messages }) => {
       signal.throwIfAborted();
       const final = state.steps >= limits.maxSteps - 1 || state.calls >= limits.maxCalls;
@@ -142,6 +188,13 @@ export async function* generateReadAgent(
       };
     },
     onStepEnd: async (step) => {
+      diagnostics.event("step", {
+        step: state.steps,
+        calls: state.calls,
+        pendingReads: Object.keys(state.pending).length,
+        inputTokens: step.usage.inputTokens,
+        outputTokens: step.usage.outputTokens,
+      });
       state.steps++;
       state.inputTokens +=
         step.usage.inputTokens ??
@@ -175,6 +228,8 @@ export async function* generateReadAgent(
       }
     }
   } catch (error) {
+    endModelCall?.({ outcome: "error" });
+    endModelCall = undefined;
     if (signal.aborted) throw error;
     if (
       !(error instanceof Error) ||

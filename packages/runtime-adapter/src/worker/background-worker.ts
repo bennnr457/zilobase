@@ -58,6 +58,8 @@ export function createBackgroundWorker<Env extends WorkerEnvBindings = WorkerEnv
   const portsFor = (env: Env): Partial<import("@zilobase/runtime-ports").Ports> => {
     const runtimeEnv = createRuntimeEnv(env, {
       DATABASE_URL: () => env.HYPERDRIVE?.connectionString,
+      DATABASE_CONNECTION_ROUTE: () =>
+        env.HYPERDRIVE?.connectionString ? "hyperdrive" : undefined,
       ZILOBASE_EDITION: () => "hosted",
     });
     return {
