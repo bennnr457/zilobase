@@ -11,23 +11,21 @@ export function ContextAttachment({
   item,
   workspaceId,
   onRemove,
+  disabled,
 }: {
   item: ResourceRef;
   workspaceId: string | null;
   onRemove: () => void;
+  disabled?: boolean;
 }) {
   const { title, emoji } = useChatAttachmentMetadata(workspaceId, item);
   return (
-    <Attachment className="contents" size="xs">
-      <AttachmentAction
-        type="button"
-        size="sm"
-        variant="outline"
-        className="max-w-full justify-start"
-        onClick={onRemove}
-        aria-label={`Remove ${title}`}
-        title={title}
-      >
+    <Attachment
+      asChild
+      className="inline-flex h-6 min-w-0 max-w-full flex-nowrap items-center gap-1 px-1.5 align-middle"
+      size="xs"
+    >
+      <span title={title}>
         <span aria-hidden="true" className="inline-flex shrink-0">
           <PageIconDisplay
             size="sm"
@@ -38,8 +36,19 @@ export function ContextAttachment({
           />
         </span>
         <AttachmentTitle>{title}</AttachmentTitle>
-        <span aria-hidden="true">×</span>
-      </AttachmentAction>
+        <AttachmentAction
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          className="size-4 shrink-0"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onRemove}
+          disabled={disabled}
+          aria-label={`Remove ${title}`}
+        >
+          <span aria-hidden="true">×</span>
+        </AttachmentAction>
+      </span>
     </Attachment>
   );
 }

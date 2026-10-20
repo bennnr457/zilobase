@@ -39,6 +39,11 @@ export function useChatAttachments(workspaceId: string | null) {
       items.filter((entry) => entry.id !== item.id || entry.type !== item.type),
     );
   };
+  const replace = (items: AppSearchResult[]) => {
+    cancel();
+    setError(null);
+    setAttachments(items);
+  };
   const build = async () => {
     if (!workspaceId) throw new Error("Select a workspace first");
     active.current?.abort();
@@ -76,5 +81,5 @@ export function useChatAttachments(workspaceId: string | null) {
       }
     }
   };
-  return { attachments, setAttachments, busy, error, add, remove, build, cancel, reset };
+  return { attachments, setAttachments, busy, error, add, remove, replace, build, cancel, reset };
 }

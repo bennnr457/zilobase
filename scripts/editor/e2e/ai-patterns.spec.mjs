@@ -1,3 +1,4 @@
+import { writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 const url = "/scripts/editor/e2e/ai-components.html?patterns=1";
@@ -135,7 +136,7 @@ test("current selected-source activity is transparent and never invents workspac
   const input = page.getByRole("textbox", { name: "Ask AI message" });
   await expect(input).toBeEnabled();
   await page.getByRole("button", { name: "Attach current page", exact: true }).click();
-  await input.fill("Summarize this page");
+  await writePrompt(page, "Summarize this page");
   await input.press("Enter");
   await expect(input).toBeEnabled();
   await page.getByRole("button", { name: /1 selected source/ }).click();

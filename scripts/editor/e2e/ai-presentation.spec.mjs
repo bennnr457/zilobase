@@ -1,3 +1,4 @@
+import { draft, writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai";
@@ -7,7 +8,7 @@ const open = async (page) => {
 };
 const composer = (page) => page.getByRole("textbox", { name: "Ask AI message" });
 const send = async (page, text) => {
-  await composer(page).fill(text);
+  await writePrompt(page, text);
   await page.getByRole("button", { name: "Submit", exact: true }).click();
 };
 const controls = (page, changes) =>
@@ -20,11 +21,11 @@ for (const width of [1400, 390]) {
     await send(page, "Keep this conversation");
     await expect(composer(page)).toBeEnabled();
     await expect(page.locator("[data-ai-scroll-shell]")).toContainText("Keep this conversation");
-    await composer(page).fill("Unsent follow-up");
+    await writePrompt(page, "Unsent follow-up");
     await page.getByRole("button", { name: "Switch to floating chat", exact: true }).click();
-    await expect(composer(page)).toHaveValue("Unsent follow-up");
+    await expect(draft(page)).toHaveValue("Unsent follow-up");
     await page.getByRole("button", { name: "Dock chat in sidebar", exact: true }).click();
-    await expect(composer(page)).toHaveValue("Unsent follow-up");
+    await expect(draft(page)).toHaveValue("Unsent follow-up");
     await page.getByRole("button", { name: "Toggle full page", exact: true }).click();
     await expect(page.locator("[data-ai-scroll-shell]")).toContainText("Keep this conversation");
     await page.reload();
@@ -43,7 +44,7 @@ for (const width of [1400, 390]) {
     await open(page);
     await controls(page, { extraSearchPages: 60 });
     const before = await composer(page).boundingBox();
-    await composer(page).fill("@");
+    await writePrompt(page, "@");
     const database = page.getByRole("option", { name: /Tasks database/i });
     await expect(database).toBeVisible();
     await expect(page.getByRole("group", { name: "Pages", exact: true })).toContainText("A page 0");
@@ -60,10 +61,10 @@ for (const width of [1400, 390]) {
     ).toBe(true);
     await composer(page).press("Enter");
     await expect(page.getByRole("button", { name: "Remove Tasks", exact: true })).toBeVisible();
-    await expect(composer(page)).toHaveValue("");
+    await expect(draft(page)).toHaveValue("");
     await expect(page.getByRole("listbox")).toHaveCount(0);
     await page.getByRole("button", { name: "Remove Tasks", exact: true }).click();
-    await composer(page).fill("@Task");
+    await writePrompt(page, "@Task");
     await database.click();
     await expect(page.getByRole("button", { name: "Remove Tasks", exact: true })).toBeVisible();
   });
@@ -73,11 +74,11 @@ test("mentions use current editor content and validate citations without debug U
   page,
 }) => {
   await open(page);
-  await composer(page).fill("@ma");
+  await writePrompt(page, "@ma");
   await expect(page.getByRole("option", { name: /main page/i })).toBeVisible();
   await composer(page).press("Enter");
   await expect(page.getByRole("button", { name: "Remove main" })).toBeVisible();
-  await composer(page).fill("@Task");
+  await writePrompt(page, "@Task");
   await page.getByRole("option", { name: /Tasks database/i }).click();
   await expect(page.getByRole("button", { name: "Refresh context preview" })).toHaveCount(0);
   await controls(page, { localText: "Edited just before sending" });
@@ -111,9 +112,9 @@ test("failed submission preserves draft and retries the identical captured reque
   await controls(page, { failNext: true });
   await send(page, "Retry this question");
   await expect(page.getByRole("alert")).toContainText("Connection lost");
-  await expect(composer(page)).toHaveValue("Retry this question");
+  await expect(draft(page)).toHaveValue("Retry this question");
   await page.getByRole("button", { name: "Submit", exact: true }).click();
-  await expect(composer(page)).toHaveValue("");
+  await expect(draft(page)).toHaveValue("");
   const requests = await page.evaluate(() => window.pageLayoutFixture.ai.requests);
   expect(requests).toHaveLength(2);
   expect(requests[1]).toEqual(requests[0]);
@@ -151,7 +152,7 @@ for (const phase of ["preparation", "streaming"]) {
     await expect(page.locator(".is-user")).toHaveCount(0);
     await expect(page.locator(".is-assistant")).toHaveCount(0);
     await expect(composer(page)).toBeEnabled();
-    await expect(composer(page)).toHaveValue("");
+    await expect(draft(page)).toHaveValue("");
     if (phase === "preparation")
       expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(0);
     else
@@ -165,6 +166,6 @@ test("unavailable explicit attachment blocks send and keeps the draft", async ({
   await controls(page, { forbidden: true });
   await send(page, "Keep my question");
   await expect(page.getByRole("alert").first()).toContainText("unavailable");
-  await expect(composer(page)).toHaveValue("Keep my question");
+  await expect(draft(page)).toHaveValue("Keep my question");
   expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(0);
 });

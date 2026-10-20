@@ -1,6 +1,5 @@
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatError, ChatLoading } from "./chat-feedback";
-import { ContextAttachment } from "../../attachments/components/context-attachment";
 import { terminalChatRun, type ChatRunReceipt } from "@zilobase/features/ai";
 import type { ChatRequest } from "@zilobase/features/ai";
 import {
@@ -353,11 +352,13 @@ export default function Chatbot({
           )}
 
           <ChatbotComposer
+            key={selection.revision}
             isSidebar={isSidebar}
             onSubmit={onSubmit}
             onTextChange={setText}
             workspaceId={workspaceId}
-            onAttach={attachmentState.add}
+            attachments={attachmentState.attachments}
+            onAttachmentsChange={attachmentState.replace}
             disabled={!threadReady || attachmentState.busy || streaming}
             onStop={
               streaming || attachmentState.busy
@@ -377,14 +378,6 @@ export default function Chatbot({
             text={text}
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              {attachmentState.attachments.map((item) => (
-                <ContextAttachment
-                  key={`${item.type}:${item.id}`}
-                  item={item}
-                  workspaceId={workspaceId}
-                  onRemove={() => attachmentState.remove(item)}
-                />
-              ))}
               {(pageId || databaseId) && (
                 <Button
                   type="button"

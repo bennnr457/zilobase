@@ -1,3 +1,4 @@
+import { draft, writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai";
@@ -10,18 +11,18 @@ test("Shift+Enter and IME retain the draft; Enter submits the completed text onc
   await page.goto(url);
   const input = composer(page);
   await expect(input).toBeEnabled();
-  await input.fill("Line one");
+  await writePrompt(page, "Line one");
   await input.press("End");
   await input.press("Shift+Enter");
-  await expect(input).toHaveValue("Line one\n");
+  await expect(draft(page)).toHaveValue("Line one\n");
   await input.dispatchEvent("compositionstart");
   await input.press("Enter");
   expect(await requests(page)).toHaveLength(0);
   await input.dispatchEvent("compositionend");
-  await input.fill("Line one\n日本語");
+  await writePrompt(page, "Line one\n日本語");
   await input.press("Enter");
   await expect(input).toBeEnabled();
-  await expect(input).toHaveValue("");
+  await expect(draft(page)).toHaveValue("");
   const sent = await requests(page);
   expect(sent).toHaveLength(1);
   expect(sent[0].text).toBe("Line one\n日本語");
@@ -37,15 +38,15 @@ test("repeated form submission is ignored during preparation and Stop stays avai
   await page.evaluate(() => {
     window.pageLayoutFixture.ai.holdReads = true;
   });
-  await input.fill("Prepare this question");
+  await writePrompt(page, "Prepare this question");
   await input.evaluate((node) => {
-    node.form.requestSubmit();
-    node.form.requestSubmit();
+    node.closest("form").requestSubmit();
+    node.closest("form").requestSubmit();
   });
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
   await expect(input).toBeEnabled();
-  await expect(input).toHaveValue("Prepare this question");
+  await expect(draft(page)).toHaveValue("Prepare this question");
   expect(await requests(page)).toHaveLength(0);
 });

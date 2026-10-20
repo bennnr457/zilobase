@@ -32,13 +32,16 @@ function Attachment({
   state = "done",
   size = "default",
   orientation = "horizontal",
+  asChild = false,
   ...props
 }: React.ComponentProps<"div"> &
   VariantProps<typeof attachmentVariants> & {
     state?: "idle" | "uploading" | "processing" | "error" | "done";
+    asChild?: boolean;
   }) {
+  const Comp = asChild ? Slot.Root : "div";
   return (
-    <div
+    <Comp
       data-slot="attachment"
       data-state={state}
       data-size={size}

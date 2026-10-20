@@ -4,7 +4,7 @@ import {
   useState,
   type ReactNode,
   type RefObject,
-  type ComponentProps,
+  type HTMLAttributes,
 } from "react";
 import { useAppSearchResults } from "@zilobase/features/search/react";
 import type { AppSearchResult } from "@zilobase/features/search";
@@ -14,7 +14,7 @@ import { DEFAULT_DATABASE_ITEM_ICON, DEFAULT_PAGE_ITEM_ICON } from "../lib/navig
 import { PageDatabasePicker } from "./page-database-picker";
 
 type SearchInputProps = Pick<
-  ComponentProps<"textarea">,
+  HTMLAttributes<HTMLElement>,
   "aria-controls" | "aria-expanded" | "aria-autocomplete" | "aria-activedescendant" | "onKeyDown"
 >;
 
@@ -27,7 +27,7 @@ type PageDatabaseSearchPopoverProps = {
   onOpenChange?: (open: boolean) => void;
   /** Supply a query and input ref for an inline mention picker. */
   query?: string;
-  inputRef?: RefObject<HTMLTextAreaElement | null>;
+  inputRef?: RefObject<HTMLElement | null>;
   children: ReactNode | ((inputProps: SearchInputProps) => ReactNode);
   side?: "top" | "bottom" | "left" | "right";
 };
@@ -171,7 +171,7 @@ export function PageDatabaseSearchPopover({
         onOpenAutoFocus={inline ? (event) => event.preventDefault() : undefined}
         onCloseAutoFocus={inline ? (event) => event.preventDefault() : undefined}
         onInteractOutside={(event) => {
-          if (inputRef?.current && event.target === inputRef.current) event.preventDefault();
+          if (inputRef?.current?.contains(event.target as Node)) event.preventDefault();
         }}
       >
         <PageDatabasePicker

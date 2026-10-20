@@ -1,3 +1,4 @@
+import { writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai";
@@ -37,7 +38,7 @@ test("narrow panels retain their width while the mention popup opens", async ({ 
   const input = composer(page);
   const before = await input.boundingBox();
   expect(before.width).toBeLessThan(320);
-  await input.fill("@");
+  await writePrompt(page, "@");
   await expect(page.getByRole("option", { name: /Tasks database/i })).toBeVisible();
   expect(await input.boundingBox()).toEqual(before);
   await input.press("Enter");
@@ -57,7 +58,7 @@ for (const motion of ["no-preference", "reduce"]) {
     await page.evaluate(() => {
       window.pageLayoutFixture.ai.holdStream = true;
     });
-    await input.fill("Keep streaming");
+    await writePrompt(page, "Keep streaming");
     await input.press("Enter");
     await expect(page.locator(".is-assistant")).toBeVisible();
     const append = (text) =>

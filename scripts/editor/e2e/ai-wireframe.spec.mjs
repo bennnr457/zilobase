@@ -1,9 +1,10 @@
+import { writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 test.use({ timezoneId: "Asia/Kolkata" });
 
 // Empty frames and geometry retain the pre-migration wireframe. Conversation
-// images additionally include the requested response actions and source activity.
+// images additionally include response actions, source activity, and inline context pills.
 // Do not update the geometry baselines to accept a layout change.
 for (const width of [1400, 390]) {
   for (const mode of ["sidebar", "floating", "page"]) {
@@ -29,12 +30,12 @@ for (const width of [1400, 390]) {
         await expect(shell).toHaveScreenshot(`${snapshot}-empty.png`, { animations: "disabled" });
 
         await page.getByRole("button", { name: "Attach current page", exact: true }).click();
-        await input.fill("Summarize the plan");
+        await writePrompt(page, "Summarize the plan");
         await page.getByRole("button", { name: "Submit", exact: true }).click();
         await expect(input).toBeEnabled();
         await expect(page.locator(".is-assistant")).toContainText("Attached records are partial");
         await expect(page.getByRole("link", { name: "main", exact: true })).toBeVisible();
-        await input.fill("A follow-up\nwith a second line");
+        await writePrompt(page, "A follow-up\nwith a second line");
         await expect(shell).toHaveScreenshot(`${snapshot}-conversation.png`, {
           animations: "disabled",
         });

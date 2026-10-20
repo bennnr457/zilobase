@@ -1,3 +1,4 @@
+import { draft, writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai&appSidebar=1";
@@ -16,7 +17,7 @@ const select = async (page, name) => {
   await history(page).getByRole("button", { name, exact: true }).click();
 };
 const send = async (page, text) => {
-  await composer(page).fill(text);
+  await writePrompt(page, text);
   await page.getByRole("button", { name: "Submit", exact: true }).click();
   await expect(page.locator(".is-user").last()).toHaveText(text);
   await expect(composer(page)).toBeEnabled();
@@ -39,7 +40,10 @@ for (const width of [1400, 390]) {
     ).toHaveAttribute("aria-current", "page");
     await newChat(page);
     await expect(page.locator(".is-user")).toHaveCount(0);
-    await expect(composer(page)).toHaveValue("");
+    await expect(draft(page)).toHaveValue("");
+    await composer(page).focus();
+    await composer(page).press("ControlOrMeta+z");
+    await expect(draft(page)).toHaveValue("");
     await expect(page.getByRole("button", { name: "Remove main", exact: true })).toHaveCount(0);
     await expect(page.locator("summary", { hasText: "Last sent context" })).toHaveCount(0);
     await send(page, "Second conversation");
@@ -78,9 +82,9 @@ test("late conversation loads cannot overwrite a new chat", async ({ page }) => 
   await expect(page.getByRole("status").filter({ hasText: "Loading conversation" })).toBeVisible();
   await newChat(page);
   await expect(composer(page)).toBeEnabled();
-  await composer(page).fill("Fresh draft");
+  await writePrompt(page, "Fresh draft");
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseThreadReads());
-  await expect(composer(page)).toHaveValue("Fresh draft");
+  await expect(draft(page)).toHaveValue("Fresh draft");
   await expect(page.locator(".is-user")).toHaveCount(0);
 });
 
@@ -92,7 +96,7 @@ test("new chat interrupts a stream and keeps the old conversation in sidebar his
   await page.evaluate(() => {
     window.pageLayoutFixture.ai.holdStream = true;
   });
-  await composer(page).fill("Interrupted conversation");
+  await writePrompt(page, "Interrupted conversation");
   await page.getByRole("button", { name: "Submit", exact: true }).click();
   await expect(page.locator(".is-assistant")).toBeVisible();
   await newChat(page);
@@ -112,14 +116,18 @@ test("new chat cancels context preparation before a thread exists", async ({ pag
   await page.evaluate(() => {
     window.pageLayoutFixture.ai.holdReads = true;
   });
-  await composer(page).fill("Old draft");
+  await writePrompt(page, "Old draft");
   await page.getByRole("button", { name: "Submit", exact: true }).click();
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
   await newChat(page);
   await expect(composer(page)).toBeEnabled();
-  await composer(page).fill("New draft");
+  await composer(page).focus();
+  await composer(page).press("ControlOrMeta+z");
+  await expect(draft(page)).toHaveValue("");
+  await expect(composer(page).locator("[data-ai-inline-mention]")).toHaveCount(0);
+  await writePrompt(page, "New draft");
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
-  await expect(composer(page)).toHaveValue("New draft");
+  await expect(draft(page)).toHaveValue("New draft");
   await expect(page.locator(".is-user")).toHaveCount(0);
   expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(0);
 });

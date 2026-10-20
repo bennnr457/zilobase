@@ -8,3 +8,15 @@
   overflow-y: auto;
   padding-block: 24px;
 }
+
+.ai-prompt-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-content-secondary);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ai-prompt-editor .react-renderer {
+  display: inline;
+}

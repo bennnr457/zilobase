@@ -1,3 +1,4 @@
+import { writePrompt } from "./ai-composer-helpers.mjs";
 import { test, expect } from "@playwright/test";
 
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai";
@@ -14,7 +15,7 @@ test("submitted turns show preparation immediately, then Thinking until the firs
     window.pageLayoutFixture.ai.holdFirstToken = true;
     window.pageLayoutFixture.ai.holdStream = true;
   });
-  await composer(page).fill("Show my selected sources");
+  await writePrompt(page, "Show my selected sources");
   await composer(page).press("Enter");
   await expect(page.locator(".is-user")).toHaveText("Show my selected sources");
   await expect(page.getByRole("status", { name: "Preparing selected sources" })).toBeVisible();
@@ -49,7 +50,7 @@ test("copy uses display text, reports failures, ratings toggle exclusively, and 
       },
     });
   });
-  await composer(page).fill("An answer please");
+  await writePrompt(page, "An answer please");
   await composer(page).press("Enter");
   const copy = page.getByRole("button", { name: "Copy response", exact: true });
   await copy.click();
@@ -86,7 +87,7 @@ test("Stop before the first token clears Thinking and ignores late tokens", asyn
   await page.evaluate(() => {
     window.pageLayoutFixture.ai.holdFirstToken = true;
   });
-  await composer(page).fill("Wait for the model");
+  await writePrompt(page, "Wait for the model");
   await composer(page).press("Enter");
   await expect(page.getByRole("status", { name: "Thinking", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Stop", exact: true }).click();
