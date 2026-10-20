@@ -34,7 +34,7 @@ export function register({ readSource, assert, test }) {
       layoutSource,
       /!askAiEnabled \|\| chatSidebarOpen \|\| isAiPage \|\| isFullPanePage \? null/,
     );
-    assert.match(chatbotSource, /\[data-ai-scroll-shell\], \[data-page-scroll-viewport\]/);
+    assert.match(chatbotSource, /MessageScrollerViewport/);
     assert.match(aiPageSource, /<AskAiWorkspace/);
     assert.match(workspaceSource, /mainScrollClassName="overscroll-y-none"/);
     assert.doesNotMatch(workspaceSource, /standalone/);
@@ -45,7 +45,7 @@ export function register({ readSource, assert, test }) {
     assert.match(personal, /data-ai-scroll-shell[\s\S]*?overflow-y-auto/);
     assert.match(
       personal,
-      /<\/ChatLayout>\s*<\/div>\s*<ChatLayout[^>]*>\s*\{beforeComposer\}[\s\S]*?<ChatbotComposer/,
+      /<\/ChatLayout>\s*<\/MessageScrollerViewport>\s*<ChatLayout[^>]*>\s*\{beforeComposer\}[\s\S]*?<ChatbotComposer/,
     );
   });
 }

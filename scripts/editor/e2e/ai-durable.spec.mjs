@@ -30,6 +30,11 @@ test("explicit Stop targets the persisted run and preserves its partial answer",
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await expect(composer(page)).toBeEnabled();
   await expect(page.locator(".is-assistant")).toContainText("Partial");
-  await expect(page.locator(".is-assistant")).toContainText("stopped");
+  await expect
+    .poll(() =>
+      page.evaluate(() => JSON.parse(sessionStorage.getItem("ai-fixture-threads"))[0].run.status),
+    )
+    .toBe("stopped");
+  await expect(page.getByText("stopped", { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => window.pageLayoutFixture.ai.cancelled)).toBe(1);
 });

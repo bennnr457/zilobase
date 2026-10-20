@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type RefObject, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { AppSearchResult } from "@zilobase/features/search";
 import { PageDatabaseSearchPopover } from "@/components/navigation/components/page-database-search-popover";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ type ChatbotComposerProps = {
   isSidebar: boolean;
   onSubmit: (message: PromptInputMessage) => void | Promise<void>;
   onTextChange: (text: string) => void;
-  rootRef: RefObject<HTMLDivElement | null>;
   text: string;
   workspaceId: string | null;
   onAttach: (item: AppSearchResult) => void;
@@ -31,7 +30,6 @@ type ChatbotComposerProps = {
 export const ChatbotComposer = ({
   onSubmit,
   onTextChange,
-  rootRef,
   text,
   workspaceId,
   onAttach,
@@ -58,7 +56,7 @@ export const ChatbotComposer = ({
   };
   return (
     <div className="relative z-10 -mx-4 grid shrink-0 gap-3 bg-surface-canvas px-4 pt-3 pb-4 md:mx-0 md:px-0 md:pb-6">
-      <ChatbotScrollButton targetRef={rootRef} />
+      <ChatbotScrollButton />
       <div className="mx-auto w-full max-w-full">
         <div className="max-h-[min(40vh,20rem)] overflow-y-auto overscroll-contain">{children}</div>
         <PageDatabaseSearchPopover

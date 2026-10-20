@@ -2,21 +2,19 @@
 
 import { cn } from "@/lib/utils";
 import type { ComponentProps } from "react";
-import { StickToBottom } from "use-stick-to-bottom";
+import { MessageScrollerContent } from "@/components/ui/message-scroller";
 
-export const MessageList = ({ className, ...props }: ComponentProps<typeof StickToBottom>) => (
-  <StickToBottom
-    className={cn("relative flex-1 overflow-y-hidden", className)}
-    initial="smooth"
-    resize="smooth"
-    role="log"
-    {...props}
-  />
+// The surrounding chat owns the sole viewport in every presentation.
+export const MessageList = ({ className, ...props }: ComponentProps<"div">) => (
+  <div className={cn("relative flex-1", className)} {...props} />
 );
 
 export const MessageListContent = ({
   className,
   ...props
-}: ComponentProps<typeof StickToBottom.Content>) => (
-  <StickToBottom.Content className={cn("flex flex-col gap-8 p-4", className)} {...props} />
+}: ComponentProps<typeof MessageScrollerContent>) => (
+  <MessageScrollerContent
+    className={cn("flex h-auto min-h-0 flex-col gap-8 p-4", className)}
+    {...props}
+  />
 );

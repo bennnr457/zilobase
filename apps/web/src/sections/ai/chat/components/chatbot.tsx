@@ -12,6 +12,11 @@ import {
 import { useChatAttachments } from "../../attachments/hooks/use-chat-attachments";
 import type { ResourceRef } from "@zilobase/page-context";
 import { ChatLayout } from "./chat-layout";
+import {
+  MessageScroller,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
 import { Button } from "@/components/ui/button";
 import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
 import {
@@ -288,169 +293,172 @@ export default function Chatbot({
   const hasMessages = messages.length > 0;
   const centerEmptyState = !isSidebar && !hasMessages && threadReady;
   return (
-    <div
-      className={`relative flex h-full min-h-0 flex-col ${centerEmptyState ? "ask-ai-empty" : ""}`}
-    >
-      <div
-        ref={rootRef}
-        data-ai-scroll-shell
-        className={centerEmptyState ? "shrink-0" : "min-h-0 flex-1 overflow-y-auto"}
+    <MessageScrollerProvider autoScroll defaultScrollPosition="end" scrollEdgeThreshold={160}>
+      <MessageScroller
+        className={`relative flex h-full min-h-0 flex-col ${centerEmptyState ? "ask-ai-empty overflow-y-auto" : "overflow-visible"}`}
       >
+        <MessageScrollerViewport
+          ref={rootRef}
+          data-ai-scroll-shell
+          className={`h-auto w-full [scrollbar-gutter:auto] [contain:none] ${centerEmptyState ? "shrink-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"}`}
+        >
+          <ChatLayout sidebar={isSidebar}>
+            {!threadReady && !threads.detail.isError && (
+              <p role="status" className="py-6 text-center text-sm text-content-secondary">
+                Loading conversation…
+              </p>
+            )}
+            {threadReady && !hasMessages && (
+              <div className="mx-auto mb-6 grid w-full max-w-3xl justify-items-center gap-3 px-4 text-center">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-surface-secondary text-lg font-semibold">
+                  AI
+                </div>
+                <div>
+                  <h1 className="font-heading text-2xl font-semibold tracking-tight">
+                    {getGreeting(session?.user?.name)}
+                  </h1>
+                  <p className="mt-1 text-sm text-content-secondary">
+                    Attach pages and databases to ask questions about your workspace.
+                  </p>
+                </div>
+                <div className="flex max-w-2xl flex-wrap justify-center gap-2">
+                  {starterPrompts.map((prompt) => (
+                    <Button
+                      key={prompt}
+                      onClick={() => setText(prompt)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {prompt}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {threadReady && hasMessages && (
+              <ChatbotMessages isSidebar={isSidebar} messages={messages} />
+            )}
+          </ChatLayout>
+        </MessageScrollerViewport>
         <ChatLayout sidebar={isSidebar}>
-          {!threadReady && !threads.detail.isError && (
-            <p role="status" className="py-6 text-center text-sm text-content-secondary">
-              Loading conversation…
-            </p>
-          )}
-          {threadReady && !hasMessages && (
-            <div className="mx-auto mb-6 grid w-full max-w-3xl justify-items-center gap-3 px-4 text-center">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-surface-secondary text-lg font-semibold">
-                AI
-              </div>
-              <div>
-                <h1 className="font-heading text-2xl font-semibold tracking-tight">
-                  {getGreeting(session?.user?.name)}
-                </h1>
-                <p className="mt-1 text-sm text-content-secondary">
-                  Attach pages and databases to ask questions about your workspace.
-                </p>
-              </div>
-              <div className="flex max-w-2xl flex-wrap justify-center gap-2">
-                {starterPrompts.map((prompt) => (
-                  <Button
-                    key={prompt}
-                    onClick={() => setText(prompt)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    {prompt}
-                  </Button>
-                ))}
-              </div>
+          {beforeComposer}
+          {threads.detail.isError && (
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p role="alert" className="text-sm text-action-danger-text">
+                {threads.detail.error.message}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void threads.detail.refetch();
+                }}
+              >
+                Retry
+              </Button>
             </div>
           )}
-          {threadReady && hasMessages && (
-            <ChatbotMessages isSidebar={isSidebar} messages={messages} />
-          )}
-        </ChatLayout>
-      </div>
-      <ChatLayout sidebar={isSidebar}>
-        {beforeComposer}
-        {threads.detail.isError && (
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p role="alert" className="text-sm text-action-danger-text">
-              {threads.detail.error.message}
-            </p>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                void threads.detail.refetch();
-              }}
-            >
-              Retry
-            </Button>
-          </div>
-        )}
 
-        <ChatbotComposer
-          isSidebar={isSidebar}
-          onSubmit={onSubmit}
-          onTextChange={setText}
-          workspaceId={workspaceId}
-          onAttach={attachmentState.add}
-          disabled={!threadReady || attachmentState.busy || streaming}
-          rootRef={rootRef}
-          onStop={
-            streaming || attachmentState.busy
-              ? () => {
-                  attachmentState.cancel();
-                  const run = activeRun.current;
-                  if (run && workspaceId) {
-                    void cancelRun(run.runId, workspaceId).catch((cause) =>
-                      setChatError(
-                        cause instanceof Error ? cause.message : "Could not stop answer",
-                      ),
-                    );
-                  } else streamController.current?.abort();
-                }
-              : undefined
-          }
-          text={text}
-        >
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            {attachmentState.attachments.map((item) => (
-              <AttachmentButton
-                key={`${item.type}:${item.id}`}
-                item={item}
-                workspaceId={workspaceId}
-                onRemove={() => attachmentState.remove(item)}
-              />
-            ))}
-            {(pageId || databaseId) && (
+          <ChatbotComposer
+            isSidebar={isSidebar}
+            onSubmit={onSubmit}
+            onTextChange={setText}
+            workspaceId={workspaceId}
+            onAttach={attachmentState.add}
+            disabled={!threadReady || attachmentState.busy || streaming}
+            onStop={
+              streaming || attachmentState.busy
+                ? () => {
+                    attachmentState.cancel();
+                    const run = activeRun.current;
+                    if (run && workspaceId) {
+                      void cancelRun(run.runId, workspaceId).catch((cause) =>
+                        setChatError(
+                          cause instanceof Error ? cause.message : "Could not stop answer",
+                        ),
+                      );
+                    } else streamController.current?.abort();
+                  }
+                : undefined
+            }
+            text={text}
+          >
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {attachmentState.attachments.map((item) => (
+                <AttachmentButton
+                  key={`${item.type}:${item.id}`}
+                  item={item}
+                  workspaceId={workspaceId}
+                  onRemove={() => attachmentState.remove(item)}
+                />
+              ))}
+              {(pageId || databaseId) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    attachmentState.add({
+                      id: databaseId || pageId!,
+                      type: databaseId ? "database" : "page",
+                      title: databaseId ? "Current database" : "Current page",
+                      path: "",
+                      emoji: null,
+                    })
+                  }
+                >
+                  Attach current {databaseId ? "database" : "page"}
+                </Button>
+              )}
+            </div>
+            {chatError && (
+              <p role="alert" className="mb-2 text-sm text-action-danger-text">
+                {chatError}
+                {activeRun.current && !terminalChatRun(activeRun.current.status) && !streaming && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      followedRun.current = null;
+                      loadedThread.current = null;
+                      setChatError(null);
+                      void threads.refresh();
+                    }}
+                  >
+                    Reconnect
+                  </Button>
+                )}
+              </p>
+            )}
+            {!streaming && ["failed", "interrupted"].includes(messages.at(-1)?.status ?? "") && (
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                onClick={() =>
-                  attachmentState.add({
-                    id: databaseId || pageId!,
-                    type: databaseId ? "database" : "page",
-                    title: databaseId ? "Current database" : "Current page",
-                    path: "",
-                    emoji: null,
-                  })
-                }
+                onClick={() => {
+                  const previous = [...messages]
+                    .reverse()
+                    .find((message) => message.role === "user");
+                  if (!previous) return;
+                  pendingRequest.current = null;
+                  void onSubmit({ text: previous.text, files: [] });
+                }}
               >
-                Attach current {databaseId ? "database" : "page"}
+                Retry answer
               </Button>
             )}
-          </div>
-          {chatError && (
-            <p role="alert" className="mb-2 text-sm text-action-danger-text">
-              {chatError}
-              {activeRun.current && !terminalChatRun(activeRun.current.status) && !streaming && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    followedRun.current = null;
-                    loadedThread.current = null;
-                    setChatError(null);
-                    void threads.refresh();
-                  }}
-                >
-                  Reconnect
-                </Button>
-              )}
-            </p>
-          )}
-          {!streaming && ["failed", "interrupted"].includes(messages.at(-1)?.status ?? "") && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const previous = [...messages].reverse().find((message) => message.role === "user");
-                if (!previous) return;
-                pendingRequest.current = null;
-                void onSubmit({ text: previous.text, files: [] });
-              }}
-            >
-              Retry answer
-            </Button>
-          )}
-          {attachmentState.error && (
-            <p role="alert" className="mb-2 text-sm text-action-danger-text">
-              {attachmentState.error}. Retry or remove an attachment.
-            </p>
-          )}
-        </ChatbotComposer>
-      </ChatLayout>
-    </div>
+            {attachmentState.error && (
+              <p role="alert" className="mb-2 text-sm text-action-danger-text">
+                {attachmentState.error}. Retry or remove an attachment.
+              </p>
+            )}
+          </ChatbotComposer>
+        </ChatLayout>
+      </MessageScroller>
+    </MessageScrollerProvider>
   );
 }
 
