@@ -1,6 +1,6 @@
 import "@/styles/global.css";
 import "@/styles/app.css";
-import { useState } from "react";
+import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Message, MessageContent, MessageResponse } from "@/sections/ai/chat/components/message";
 import { MessageScrollerProvider } from "@/components/ui/message-scroller";
@@ -33,7 +33,9 @@ function Fixture() {
 }
 createRoot(document.getElementById("root")!).render(
   new URLSearchParams(location.search).has("activity-message") ? (
-    <AiActivityMessageFixture />
+    <StrictMode>
+      <AiActivityMessageFixture />
+    </StrictMode>
   ) : new URLSearchParams(location.search).has("patterns") ? (
     <AiPatternsFixture />
   ) : (

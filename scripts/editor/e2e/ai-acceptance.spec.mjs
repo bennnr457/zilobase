@@ -46,43 +46,54 @@ test("narrow panels retain their width while the mention popup opens", async ({ 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test("streaming follows the live edge and preserves the reader's position after scrolling away", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto(url);
-  const input = composer(page);
-  await expect(input).toBeEnabled();
-  await page.evaluate(() => {
-    window.pageLayoutFixture.ai.holdStream = true;
+for (const motion of ["no-preference", "reduce"]) {
+  test(`${motion}: streaming follows the live edge and preserves the reader's position after scrolling away`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: motion });
+    await page.goto(url);
+    const input = composer(page);
+    await expect(input).toBeEnabled();
+    await page.evaluate(() => {
+      window.pageLayoutFixture.ai.holdStream = true;
+    });
+    await input.fill("Keep streaming");
+    await input.press("Enter");
+    await expect(page.locator(".is-assistant")).toBeVisible();
+    const append = (text) =>
+      page.evaluate((text) => window.pageLayoutFixture.ai.appendAnswer(text), text);
+    await append(
+      "\n\n" +
+        "A long streamed paragraph with readable history.\n\n".repeat(80) +
+        "End of initial output.",
+    );
+    await expect(page.locator(".is-assistant")).toContainText("End of initial output.");
+    const history = page.locator("[data-ai-scroll-shell]");
+    await expect
+      .poll(() =>
+        history.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight),
+      )
+      .toBeLessThan(2);
+    const liveTop = await history.evaluate((node) => node.scrollTop);
+    expect(liveTop).toBeGreaterThan(500);
+    await history.hover();
+    await page.mouse.wheel(0, -1500);
+    await expect(page.getByRole("button", { name: "Scroll to bottom", exact: true })).toBeVisible();
+    await expect.poll(() => history.evaluate((node) => node.scrollTop)).toBeLessThan(liveTop - 200);
+    const readingTop = await history.evaluate((node) => node.scrollTop);
+    await append("\n\n" + "More streamed output.\n\n".repeat(30) + "End of later output.");
+    await expect(page.locator(".is-assistant")).toContainText("End of later output.");
+    await expect
+      .poll(() => history.evaluate((node, top) => Math.abs(node.scrollTop - top), readingTop))
+      .toBeLessThan(2);
+    await page.getByRole("button", { name: "Scroll to bottom", exact: true }).click();
+    await expect
+      .poll(() =>
+        history.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight),
+      )
+      .toBeLessThan(2);
+    await page.getByRole("button", { name: "Stop", exact: true }).click();
+    await expect(input).toBeEnabled();
+    await expect(page.getByRole("log")).toHaveCount(1);
   });
-  await input.fill("Keep streaming");
-  await input.press("Enter");
-  await expect(page.locator(".is-assistant")).toBeVisible();
-  const append = (text) =>
-    page.evaluate((text) => window.pageLayoutFixture.ai.appendAnswer(text), text);
-  await append("\n\n" + "A long streamed paragraph with readable history.\n\n".repeat(80));
-  const history = page.locator("[data-ai-scroll-shell]");
-  await expect
-    .poll(() => history.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight))
-    .toBeLessThan(2);
-  const liveTop = await history.evaluate((node) => node.scrollTop);
-  expect(liveTop).toBeGreaterThan(500);
-  await history.hover();
-  await page.mouse.wheel(0, -1500);
-  await expect(page.getByRole("button", { name: "Scroll to bottom", exact: true })).toBeVisible();
-  await expect.poll(() => history.evaluate((node) => node.scrollTop)).toBeLessThan(liveTop - 200);
-  const readingTop = await history.evaluate((node) => node.scrollTop);
-  await append("\n\n" + "More streamed output.\n\n".repeat(30) + "End of later output.");
-  await expect(page.locator(".is-assistant")).toContainText("End of later output.");
-  await expect
-    .poll(() => history.evaluate((node, top) => Math.abs(node.scrollTop - top), readingTop))
-    .toBeLessThan(2);
-  await page.getByRole("button", { name: "Scroll to bottom", exact: true }).click();
-  await expect
-    .poll(() => history.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight))
-    .toBeLessThan(2);
-  await page.getByRole("button", { name: "Stop", exact: true }).click();
-  await expect(input).toBeEnabled();
-  await expect(page.getByRole("log")).toHaveCount(1);
-});
+}

@@ -12,6 +12,7 @@ export function AiActivityMessageFixture() {
   const [activities, setActivities] = useState<AgentActivity[]>([]);
   const [text, setText] = useState("");
   const [streaming, setStreaming] = useState(true);
+  const [stopped, setStopped] = useState(false);
   return (
     <div className="mx-auto max-w-2xl p-4">
       <div className="mb-4 flex flex-wrap gap-2">
@@ -50,8 +51,28 @@ export function AiActivityMessageFixture() {
         <Button onClick={() => setText((current) => current + "Streamed answer. ")}>
           Stream answer
         </Button>
+        <Button
+          onClick={() =>
+            setText((current) => current + "👩🏽‍💻 Cafe\u0301 日本語 smooth streaming. ".repeat(30))
+          }
+        >
+          Stream burst
+        </Button>
+        <Button onClick={() => setText("Corrected server snapshot.")}>Replace answer</Button>
+        <Button onClick={() => setText("")}>Reset answer</Button>
         <Button onClick={() => setStreaming(false)}>Finish answer</Button>
+        <Button
+          onClick={() => {
+            setStopped(true);
+            setStreaming(false);
+          }}
+        >
+          Stop answer
+        </Button>
       </div>
+      <output aria-label="Received response" className="sr-only">
+        {text}
+      </output>
       <div className="h-[500px]">
         <MessageScrollerProvider>
           <MessageScroller>
@@ -60,7 +81,12 @@ export function AiActivityMessageFixture() {
                 isSidebar
                 messages={[
                   { id: "user", role: "user", text: "Read the selected page" },
-                  { id: "assistant", role: "assistant", text },
+                  {
+                    id: "assistant",
+                    role: "assistant",
+                    text,
+                    status: streaming ? "streaming" : stopped ? "stopped" : "completed",
+                  },
                 ]}
                 streaming={streaming}
                 activityByMessage={{ assistant: activities }}
