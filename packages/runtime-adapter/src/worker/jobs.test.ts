@@ -25,3 +25,20 @@ describe("worker Jobs port", () => {
     vi.useRealTimers();
   });
 });
+
+it("isolates AI generation and rejects missing AI producer bindings", async () => {
+  const send = vi.fn(async () => {});
+  const task = {
+    availableAt: new Date().toISOString(),
+    cellId: "default",
+    kind: "ai.generate",
+    resourceId: "run",
+    taskId: "00000000-0000-4000-8000-000000000001",
+    version: 2,
+  };
+  await createWorkerJobs({ AI_RUNS: { send } }).dispatch([task]);
+  expect(send).toHaveBeenCalledWith(task);
+  await expect(createWorkerJobs({}).dispatch([task])).rejects.toThrow(
+    "BACKGROUND_AI_QUEUE_REQUIRED",
+  );
+});

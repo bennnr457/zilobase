@@ -46,7 +46,12 @@ export function createWorkerRuntimePorts<Env extends WorkerEnvBindings>(
     outbound: createWorkerOutboundFetch(),
     readiness: {
       background: () => ({
-        producerReady: !!(env.BACKGROUND_FAST && env.AUTOMATION_RUNS && env.CALENDAR_JOBS),
+        producerReady: !!(
+          env.BACKGROUND_FAST &&
+          env.AUTOMATION_RUNS &&
+          env.CALENDAR_JOBS &&
+          (env.AI_DURABLE_STREAMING_ENABLED !== "true" || env.AI_RUNS)
+        ),
         consumerReady: null,
         maintenanceFresh: null,
       }),
