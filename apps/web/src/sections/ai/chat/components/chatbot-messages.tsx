@@ -1,7 +1,6 @@
 import { chatCitations, chatDisplayText } from "@zilobase/features/ai";
 import { AnswerSources } from "./answer-sources";
-import { MessageScrollerItem } from "@/components/ui/message-scroller";
-import { MessageList, MessageListContent } from "./message-list";
+import { MessageScrollerItem, MessageScrollerContent } from "@/components/ui/message-scroller";
 import { Message, MessageContent, MessageResponse } from "./message";
 
 import type { ChatMessage } from "@zilobase/features/ai";
@@ -15,10 +14,10 @@ export function ChatbotMessages({
   messages: ChatMessage[];
 }) {
   return (
-    <MessageList
-      className={isSidebar ? undefined : "h-auto! overflow-visible! [scrollbar-gutter:auto]!"}
+    <div
+      className={`relative flex-1 ${isSidebar ? "" : "h-auto! overflow-visible! [scrollbar-gutter:auto]!"}`}
     >
-      <MessageListContent>
+      <MessageScrollerContent className="flex h-auto min-h-0 flex-col gap-8 p-4">
         {messages.map((message) => {
           const citations =
             message.role === "assistant" && message.context
@@ -43,7 +42,7 @@ export function ChatbotMessages({
             </MessageScrollerItem>
           );
         })}
-      </MessageListContent>
-    </MessageList>
+      </MessageScrollerContent>
+    </div>
   );
 }
