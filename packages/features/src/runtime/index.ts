@@ -159,6 +159,7 @@ export { timedLayout } from "../calendar/context";
 export { collectWorkspaceContext, parsePageDocument } from "../ai/context";
 export type { ContextReadPorts, ContextDatabaseRead, LocalPageSnapshot } from "../ai/context";
 export { chatRequestSchema } from "../ai/contracts";
+export { chatDisplayText } from "../ai/citations";
 export type { ChatRequest, ChatEvent, ChatMessage } from "../ai/contracts";
 
 export { getDatabaseTitleSource, getDatabaseEmoji } from "../databases/views/appearance";

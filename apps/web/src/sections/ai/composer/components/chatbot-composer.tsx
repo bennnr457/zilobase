@@ -23,6 +23,7 @@ import {
   promptExtensions,
   promptItems,
   promptText,
+  promptMessageText,
 } from "@/sections/pages/editor/extensions/components/ai-prompt-document";
 import {
   PromptInput,
@@ -210,7 +211,14 @@ export function ChatbotComposer(props: ChatbotComposerProps) {
           onSelect={choose}
         >
           {(inputProps) => (
-            <PromptInput onSubmit={onSubmit}>
+            <PromptInput
+              onSubmit={(message) =>
+                onSubmit({
+                  ...message,
+                  text: editor ? promptMessageText(editor) : message.text,
+                })
+              }
+            >
               <textarea name="message" hidden readOnly value={text} disabled={disabled} />
               <PromptEditableContext.Provider value={!disabled}>
                 <PromptEditor

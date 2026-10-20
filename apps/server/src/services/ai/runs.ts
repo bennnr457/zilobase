@@ -33,6 +33,7 @@ import {
 import { ServerOperationError, type ServerOperationContext } from "../operations/context";
 import { authorizeChatWorkspace } from "./context";
 import { createAgentState, emptyChatContext, type AgentState } from "./agent-state";
+import { chatDisplayText } from "@zilobase/features/runtime";
 import { assertHistoryAccess } from "./conversations";
 import { CHAT_INSTRUCTIONS, configuredChatModel, DEFAULT_CHAT_MODEL } from "./chat";
 import { chatBudget, budgetHistory } from "./budget";
@@ -175,7 +176,7 @@ async function admitChatRunOperation(
         id: threadId,
         workspaceId: request.workspaceId,
         userId: actor.id,
-        title: request.text.slice(0, 100),
+        title: chatDisplayText(request.text).trim().slice(0, 100) || "New AI chat",
       });
     const turns = await tx
       .select()

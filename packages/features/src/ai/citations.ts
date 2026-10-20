@@ -1,4 +1,39 @@
-import type { ContextManifestEntry } from "@zilobase/page-context";
+import type { ContextManifestEntry, ResourceRef } from "@zilobase/page-context";
+
+export type ChatMentionPart =
+  | { type: "text"; text: string }
+  | { type: "source"; source: ResourceRef };
+
+/** Inline markers describe placement; only attached roots can resolve as sources. */
+export function chatMentionParts(text: string, roots: ResourceRef[] = []): ChatMentionPart[] {
+  const allowed = new Map(roots.map((source) => [`${source.type}:${source.id}`, source]));
+  const parts: ChatMentionPart[] = [];
+  const used = new Set<string>();
+  let position = 0;
+  for (const match of text.matchAll(/\[\[(page|database):([^\]\n]{1,1152})\]\]/g)) {
+    let id: string;
+    try {
+      id = decodeURIComponent(match[2]!);
+    } catch {
+      continue;
+    }
+    const key = `${match[1]}:${id}`;
+    const source = allowed.get(key);
+    if (!source) continue;
+    if (match.index! > position)
+      parts.push({ type: "text", text: text.slice(position, match.index) });
+    parts.push({ type: "source", source });
+    used.add(key);
+    position = match.index! + match[0].length;
+  }
+  if (position < text.length) parts.push({ type: "text", text: text.slice(position) });
+  // Older messages and non-composer actions have roots but no saved placement.
+  for (const [key, source] of allowed) {
+    if (used.has(key)) continue;
+    parts.push({ type: "text", text: " " }, { type: "source", source });
+  }
+  return parts;
+}
 
 export function chatDisplayText(text: string) {
   // Citation identities belong to the source pills, including unresolved ones.

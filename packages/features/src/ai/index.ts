@@ -6,7 +6,7 @@ export type {
   ChatThread,
   ChatThreadDetail,
 } from "./contracts";
-export { chatCitations, chatDisplayText } from "./citations";
+export { chatCitations, chatDisplayText, chatMentionParts } from "./citations";
 
 export type {
   ChatRunStatus,

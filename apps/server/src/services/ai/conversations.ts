@@ -10,6 +10,7 @@ import { authorizeChatWorkspace } from "./context";
 import { readPageIdentity } from "../pages/read/document-window";
 import { authorizeSourceRead } from "../databases/read/source-query";
 import type { ChatReadProgress } from "@zilobase/features/runtime";
+import { chatDisplayText } from "@zilobase/features/runtime";
 
 type Turn = typeof askAiTurn.$inferSelect;
 const owner = (workspaceId: string, userId: string) =>
@@ -223,7 +224,7 @@ export async function beginChatTurn(
         id: threadId,
         workspaceId: request.workspaceId,
         userId: user.id,
-        title: request.text.slice(0, 100),
+        title: chatDisplayText(request.text).trim().slice(0, 100) || "New AI chat",
       });
     const turns = await tx
       .select()

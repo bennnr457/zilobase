@@ -1,6 +1,34 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chatCitations, chatDisplayText } from "./citations";
+import { chatCitations, chatDisplayText, chatMentionParts } from "./citations";
+
+test("sent mentions retain position and repeated references while resolving only attached roots", () => {
+  const page = { type: "page" as const, id: "page" };
+  const database = { type: "database" as const, id: "db/with]characters" };
+  assert.deepEqual(
+    chatMentionParts(
+      "Compare [[page:page]] with [[database:db%2Fwith%5Dcharacters]] then [[page:page]].",
+      [page, database],
+    ),
+    [
+      { type: "text", text: "Compare " },
+      { type: "source", source: page },
+      { type: "text", text: " with " },
+      { type: "source", source: database },
+      { type: "text", text: " then " },
+      { type: "source", source: page },
+      { type: "text", text: "." },
+    ],
+  );
+  assert.deepEqual(chatMentionParts("[[page:unknown]] [[page:%broken]]", []), [
+    { type: "text", text: "[[page:unknown]] [[page:%broken]]" },
+  ]);
+  assert.deepEqual(chatMentionParts("Old question", [page, page]), [
+    { type: "text", text: "Old question" },
+    { type: "text", text: " " },
+    { type: "source", source: page },
+  ]);
+});
 test("only exact supplied citation identities resolve and repeated citations collapse", () => {
   const entry = {
     key: "page:allowed",

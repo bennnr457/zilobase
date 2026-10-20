@@ -121,6 +121,16 @@ export function promptText(editor: Editor) {
   );
 }
 
+/** Preserve the caret position of each reference in the saved Ask AI message. */
+export function promptMessageText(editor: Editor) {
+  return editor.state.doc.textBetween(0, editor.state.doc.content.size, "\n", (node) => {
+    if (node.type.name === "hardBreak") return "\n";
+    if (node.type.name !== "promptContext") return "";
+    const item = node.attrs.item as AppSearchResult;
+    return `[[${item.type}:${encodeURIComponent(item.id)}]]`;
+  });
+}
+
 export function promptItems(editor: Editor) {
   const items = new Map<string, AppSearchResult>();
   editor.state.doc.descendants((node) => {
