@@ -753,6 +753,11 @@
     var(--zb-color-content-text-secondary) 40%,
     transparent
   );
+  --zb-color-selection-background-marquee: color-mix(
+    in srgb,
+    var(--zb-color-action-ring-focus) 12%,
+    transparent
+  );
   --zb-color-selection-background-editor: color-mix(
     in srgb,
     var(--zb-color-action-ring-focus) 14%,

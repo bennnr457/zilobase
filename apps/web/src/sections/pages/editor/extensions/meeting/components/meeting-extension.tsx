@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { MeetingView } from "./meeting-view";
+import { isBlockSelectionActive } from "../../lib/block-selection";
 
 type MeetingBlockOptions = {
   editable?: boolean;
@@ -40,6 +41,7 @@ function MeetingBlockView({ editor, extension, getPos, node }: ReactNodeViewProp
     const { doc, selection } = editor.state;
     const meetingIsSelected =
       selection instanceof AllSelection ||
+      isBlockSelectionActive(editor.state) ||
       isNodeRangeSelection(selection) ||
       (selection instanceof NodeSelection && selection.from === pos);
 

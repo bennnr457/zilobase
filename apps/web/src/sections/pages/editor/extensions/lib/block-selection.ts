@@ -11,20 +11,22 @@ import {
   type Selection,
 } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
+import { createBlockMarquee } from "../../selection/lib/block-marquee";
+import { BlockRangeSelection } from "../../selection/lib/block-range-selection";
 
 export const blockSelectionPluginKey = new PluginKey("blockSelection");
 export const blockMenuSelectionPluginKey = new PluginKey<DecorationSet>("blockMenuSelection");
 
 export type BlockRange = { from: number; to: number };
 
-type BlockSelectionMode = "none" | "all";
+type BlockSelectionMode = "none" | "all" | "range";
 
 type BlockSelectionPluginState = {
   decorations: DecorationSet;
   mode: BlockSelectionMode;
 };
 
-type BlockSelectionMeta = { type: "select-all" };
+type BlockSelectionMeta = { type: "select-all" | "select-range" | "clear" };
 
 const emptyPluginState = (): BlockSelectionPluginState => ({
   decorations: DecorationSet.empty,
@@ -48,7 +50,7 @@ const modifierKeys = new Set(["Alt", "Control", "Meta", "Shift"]);
 const dragInputTypes = new Set(["deleteByDrag", "insertFromDrop"]);
 
 export const isBlockSelectionActive = (state: EditorState) =>
-  blockSelectionPluginKey.getState(state)?.mode === "all";
+  (blockSelectionPluginKey.getState(state)?.mode ?? "none") !== "none";
 
 export const shouldBlockBlockSelectionKeydown = (
   event: Pick<KeyboardEvent, "altKey" | "ctrlKey" | "key" | "metaKey">,
@@ -233,11 +235,33 @@ export const BlockSelection = Extension.create({
 
   addKeyboardShortcuts() {
     return {
+      Escape: ({ editor }) => {
+        if (!isBlockSelectionActive(editor.state)) return false;
+        const { selection, doc } = editor.state;
+        editor.view.dispatch(
+          editor.state.tr.setSelection(TextSelection.near(doc.resolve(selection.from))),
+        );
+        return true;
+      },
       "Mod-a": ({ editor }) => {
         const { state } = editor;
         const { selection, doc } = state;
 
-        if (selection instanceof AllSelection || isBlockSelectionActive(state)) {
+        if (
+          selection instanceof AllSelection ||
+          blockSelectionPluginKey.getState(state)?.mode === "all"
+        ) {
+          return true;
+        }
+
+        if (isBlockSelectionActive(state)) {
+          editor.view.dispatch(
+            state.tr
+              .setSelection(NodeRangeSelection.create(doc, 0, doc.content.size, 0))
+              .setMeta(blockSelectionPluginKey, {
+                type: "select-all",
+              } satisfies BlockSelectionMeta),
+          );
           return true;
         }
 
@@ -312,14 +336,14 @@ export const BlockSelection = Extension.create({
           apply(tr, previous, _oldState, newState) {
             const meta = tr.getMeta(blockSelectionPluginKey) as BlockSelectionMeta | undefined;
 
-            if (meta?.type === "select-all") {
+            if (meta?.type === "select-all" || meta?.type === "select-range") {
               return {
-                mode: "all",
+                mode: meta.type === "select-all" ? "all" : "range",
                 decorations: buildAllBlockDecorations(newState.doc, newState.selection),
               };
             }
 
-            if (tr.selectionSet) {
+            if (tr.selectionSet || meta?.type === "clear" || newState.selection.empty) {
               return emptyPluginState();
             }
 
@@ -339,9 +363,37 @@ export const BlockSelection = Extension.create({
           },
         },
         view(view) {
+          const marquee = createBlockMarquee(view, {
+            getRanges: () =>
+              getBlockSelectionRanges(view.state.doc, 0, view.state.doc.content.size),
+            select(range) {
+              const { state } = view;
+              const selection = range
+                ? new BlockRangeSelection(
+                    state.doc.resolve(range.from),
+                    state.doc.resolve(range.to),
+                  )
+                : TextSelection.near(state.selection.$anchor);
+              view.dispatch(
+                state.tr.setSelection(selection).setMeta(blockSelectionPluginKey, {
+                  type: range ? "select-range" : "clear",
+                } satisfies BlockSelectionMeta),
+              );
+            },
+            captureSelection() {
+              const { selection } = view.state;
+              const mode = blockSelectionPluginKey.getState(view.state)?.mode ?? "none";
+              return () =>
+                view.dispatch(
+                  view.state.tr.setSelection(selection).setMeta(blockSelectionPluginKey, {
+                    type:
+                      mode === "all" ? "select-all" : mode === "range" ? "select-range" : "clear",
+                  } satisfies BlockSelectionMeta),
+                );
+            },
+          });
           const syncNativeSelectionVisibility = () => {
-            const pluginState = blockSelectionPluginKey.getState(view.state);
-            const useBlockHighlight = pluginState?.mode === "all";
+            const useBlockHighlight = isBlockSelectionActive(view.state);
 
             view.dom.classList.toggle(
               "ProseMirror-hideselection",
@@ -353,9 +405,11 @@ export const BlockSelection = Extension.create({
 
           return {
             update() {
+              marquee.update();
               syncNativeSelectionVisibility();
             },
             destroy() {
+              marquee.destroy();
               view.dom.classList.remove("ProseMirror-hideselection");
             },
           };

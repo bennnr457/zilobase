@@ -77,6 +77,20 @@
     padding-inline: 0;
   }
 
+  .editor-block-marquee {
+    position: absolute;
+    z-index: 1001;
+    pointer-events: none;
+    background-color: var(--zb-color-selection-background-marquee);
+    border: 0;
+  }
+
+  .editor-marquee-selecting,
+  .editor-marquee-selecting * {
+    cursor: default !important;
+    user-select: none !important;
+  }
+
   .tiptap-editor > * {
     min-width: 0;
     max-width: 100%;
