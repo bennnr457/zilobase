@@ -8,3 +8,12 @@ export type {
   ChatThreadDetail,
 } from "./contracts";
 export { chatCitations } from "./citations";
+
+export type {
+  ChatRunStatus,
+  ChatRunSnapshot,
+  ChatRunReceipt,
+  ChatRunEnvelope,
+  ChatRunEvent,
+} from "./runs";
+export { applyChatRunEvent, terminalChatRun, chatRunEnvelopeSchema } from "./runs";
