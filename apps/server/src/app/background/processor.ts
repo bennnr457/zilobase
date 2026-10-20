@@ -1,3 +1,4 @@
+import { processAiGeneration } from "../../services/ai/background";
 import {
   backgroundTaskLane,
   getBackgroundCellId,
@@ -20,6 +21,7 @@ export async function processBackgroundTask(input: {
   env: RuntimeEnv;
   task: BackgroundTaskV2;
   workerId: string;
+  signal?: AbortSignal;
 }): Promise<BackgroundTaskResult> {
   const startedAt = Date.now();
   const attributes = {
@@ -69,13 +71,12 @@ async function processBackgroundTaskInner(input: {
   env: RuntimeEnv;
   task: BackgroundTaskV2;
   workerId: string;
+  signal?: AbortSignal;
 }): Promise<BackgroundTaskResult> {
   const { env, task, workerId } = input;
   const handlers: Record<BackgroundTaskV2["kind"], () => Promise<BackgroundTaskResult>> = {
-    "ai.generate": async () => ({
-      outcome: "retry",
-      availableAt: new Date(Date.now() + 60_000).toISOString(),
-    }),
+    "ai.generate": () =>
+      processAiGeneration(env, { runId: task.resourceId, workerId, signal: input.signal }),
     "automation.event_window": () =>
       processDatabaseAutomationEventWindow(env, {
         windowId: task.resourceId,

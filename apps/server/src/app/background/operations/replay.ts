@@ -54,6 +54,8 @@ export async function replayBackgroundFailure(env: RuntimeEnv, taskId: string) {
         throw new Error("REPLAY_REQUIRES_FINALIZED_EXHAUSTION");
       const task = decodeBackgroundTaskV2(record.task, getBackgroundCellId(env));
       switch (task.kind) {
+        case "ai.generate":
+          throw new Error("AI_RETRY_REQUIRES_NEW_SUBMISSION");
         case "automation.run":
           await prepareAutomationReplay(task.resourceId, false);
           break;

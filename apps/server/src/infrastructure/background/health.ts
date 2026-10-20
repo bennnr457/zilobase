@@ -51,7 +51,7 @@ export async function getBackgroundOperationalSnapshot(env: RuntimeEnv) {
     })
     .from(backgroundMaintenanceTask);
   const byLane = new Map(result.rows.map((row) => [row.lane, row]));
-  const lanes = (["fast", "automation", "calendar"] as const).map((lane) => {
+  const lanes = (["fast", "automation", "calendar", "ai"] as const).map((lane) => {
     const row = byLane.get(lane);
     const rawOldestDueAt = row?.oldest_due_at as Date | string | null | undefined;
     const oldestDueAt = rawOldestDueAt ? new Date(rawOldestDueAt) : null;

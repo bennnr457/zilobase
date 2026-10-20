@@ -1,3 +1,12 @@
+import { BACKGROUND_LANE_POLICY } from "../infrastructure/background/task-v2";
+import { createNodeQueueRuntime } from "@zilobase/runtime-adapter/node";
+import { processAiGeneration } from "../services/ai/background";
+import { chatRunResponse } from "../routes/ai/durable-stream";
+import { backgroundTaskLane, parseBackgroundTask } from "../infrastructure/background/contracts";
+import { createBackgroundDeliveryStore } from "../infrastructure/background/publication";
+import { runBackgroundDelivery } from "../app/background/delivery";
+import { runWithIndependentDbEnv } from "../infrastructure/database";
+import type { Ports } from "@zilobase/runtime-ports";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
@@ -36,7 +45,7 @@ const env = {
   AI_DURABLE_STREAMING_ENABLED: "true",
   AI_RUN_PAYLOAD_ENCRYPTION_KEY: Buffer.alloc(32, 4).toString("base64"),
 };
-const ports = { jobs: { dispatch: async () => {} } };
+const ports: Partial<Ports> = { jobs: { dispatch: async () => {} } };
 try {
   await client.client.connect();
   assert.equal(
@@ -138,6 +147,78 @@ try {
       assert.equal((await client.db.select().from(askAiRunInput)).length, 0);
       await client.db.delete(member).where(eq(member.id, "member"));
       await assert.rejects(readChatRunPage(context, run.id, "workspace", 0), /Forbidden/);
+      await client.db
+        .insert(member)
+        .values({ id: "member", organizationId: "workspace", userId: "actor", role: "owner" });
+      let calls = 0;
+      const queueEnv = { ...env, QUEUE_REDIS_URL: process.env.ZILOBASE_QUEUE_VERIFY_URL };
+      const queue = createNodeQueueRuntime(queueEnv, {
+        lane: (task) => backgroundTaskLane(task.kind as never),
+        validate: (body) => {
+          const task = parseBackgroundTask(body, "test");
+          if (!task.ok) throw new Error(task.errorCode);
+          return task.task;
+        },
+        policy: BACKGROUND_LANE_POLICY,
+        deliver: (body, lane, workerId) =>
+          runWithRuntimePorts(ports, () =>
+            runWithIndependentDbEnv(env, () =>
+              runBackgroundDelivery({
+                body,
+                lane,
+                cellId: "test",
+                store: createBackgroundDeliveryStore(env, workerId),
+                execute: (task) =>
+                  processAiGeneration(
+                    env,
+                    { runId: task.resourceId, workerId },
+                    async function* () {
+                      calls++;
+                      yield { text: "A" };
+                      await new Promise((resolve) => setTimeout(resolve, 350));
+                      yield { text: "nswer" };
+                      yield { completed: true };
+                    },
+                  ),
+              }),
+            ),
+          ),
+        exhausted: async () => {},
+        maintain: async () => {},
+      });
+      try {
+        await queue.start();
+        ports.jobs = { dispatch: queue.dispatch };
+        const admitted = await admitChatRun(context, {
+          ...request,
+          requestId: randomUUID(),
+          text: "Queue test",
+        });
+        const subscriber = chatRunResponse(context, admitted, 0).body!.getReader();
+        await subscriber.read();
+        await subscriber.cancel();
+        for (let attempt = 0; ; attempt++) {
+          const receipt = await getChatRequest(context, admitted.requestId, "workspace");
+          if (receipt.status === "completed") {
+            assert.equal(receipt.text, "Answer");
+            break;
+          }
+          assert.ok(attempt < 100, "queued producer must finish after subscriber disconnect");
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        const resumed = await readChatRunPage(context, admitted.runId, "workspace", 0);
+        assert.equal(
+          resumed.events
+            .filter((entry) => entry.event.type === "delta")
+            .map((entry) => (entry.event.type === "delta" ? entry.event.text : ""))
+            .join(""),
+          "Answer",
+        );
+        assert.equal(calls, 1, "reconnecting does not generate twice");
+      } finally {
+        await queue.stop();
+        ports.jobs = { dispatch: async () => {} };
+      }
       console.info(
         "Durable AI PostgreSQL: idempotency, atomic admission, encryption, fencing, replay, cancellation and access revocation passed.",
       );

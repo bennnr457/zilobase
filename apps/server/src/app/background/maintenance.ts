@@ -1,3 +1,4 @@
+import { maintainAiRuns } from "../../services/ai/background";
 import { and, asc, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { drainCalendarOutbox } from "../../services/calendar/realtime/outbox";
 import { maintainCalendarWatches } from "../../services/calendar/realtime/watches";
@@ -16,6 +17,7 @@ import type { RuntimeEnv } from "../../shared/config/config";
 import { reconcileBackgroundFailures } from "./failures";
 
 export const BACKGROUND_MAINTENANCE_TASKS = {
+  "ai.retention": 60_000,
   "automation.retention": 60 * 60_000,
   "automation.schedules": 60_000,
   "background.reconcile": 60_000,
@@ -162,6 +164,9 @@ const MAINTENANCE_TASK_HANDLERS: Record<MaintenanceTaskKey, MaintenanceTaskHandl
     await recoverCalendarDispatches(env);
     await maintainCalendarWatches(env);
     await drainCalendarOutbox();
+  },
+  "ai.retention": async (env) => {
+    await maintainAiRuns(env);
   },
   "automation.retention": async (env) => {
     const result = await cleanupDatabaseAutomationHistory(env);

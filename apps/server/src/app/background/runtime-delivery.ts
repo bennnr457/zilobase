@@ -24,18 +24,25 @@ export async function deliverBackgroundTask(
     execute: async (task) => {
       let renewal: Promise<unknown> | undefined;
       let lost = false;
+      const cancellation = new AbortController();
       const heartbeat = setInterval(() => {
         if (renewal) return;
         renewal = runWithIndependentDbEnv(env, () => store.renew(task))
           .catch(() => {
             lost = true;
+            cancellation.abort(new Error("BACKGROUND_DELIVERY_LEASE_LOST"));
           })
           .finally(() => {
             renewal = undefined;
           });
       }, 30_000);
       try {
-        const result = await processBackgroundTask({ env, task, workerId });
+        const result = await processBackgroundTask({
+          env,
+          task,
+          workerId,
+          signal: cancellation.signal,
+        });
         await renewal;
         if (lost) throw new Error("BACKGROUND_DELIVERY_LEASE_LOST");
         return result;

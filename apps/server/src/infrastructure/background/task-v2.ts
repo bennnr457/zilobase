@@ -31,6 +31,7 @@ export const BACKGROUND_LANE_POLICY: Record<
   BackgroundLane,
   { concurrency: number; redeliveries: number }
 > = {
+  ai: { concurrency: 4, redeliveries: 5 },
   fast: { concurrency: 8, redeliveries: 5 },
   automation: { concurrency: 4, redeliveries: 8 },
   calendar: { concurrency: 2, redeliveries: 8 },
