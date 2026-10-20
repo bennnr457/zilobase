@@ -1,0 +1,20 @@
+{
+  "input": {
+    "x": 21,
+    "y": 583,
+    "width": 348,
+    "height": 64
+  },
+  "form": {
+    "x": 20,
+    "y": 582,
+    "width": 350,
+    "height": 110
+  },
+  "history": {
+    "x": 0,
+    "y": 48,
+    "width": 390,
+    "height": 490
+  }
+}
