@@ -2,6 +2,7 @@ import type { ChatRunReceipt, ChatRunStatus } from "./runs";
 import { z } from "zod";
 import type { BuildContextResult, ResourceRef } from "@zilobase/page-context";
 import { parsePageDocument } from "./context";
+import type { ChatReadProgress } from "./tools";
 
 export const resourceRefSchema = z.object({
   type: z.enum(["page", "database"]),
@@ -12,6 +13,7 @@ export const chatRequestSchema = z
     workspaceId: z.string().min(1).max(128),
     requestId: z.uuid(),
     threadId: z.uuid().optional(),
+    continueFromRunId: z.uuid().optional(),
     text: z.string().trim().min(1).max(20_000),
     roots: z.array(resourceRefSchema).max(20),
     snapshots: z
@@ -28,7 +30,7 @@ export const chatRequestSchema = z
           }),
         }),
       )
-      .max(20)
+      .max(0, "Editor snapshots are not accepted. Mention a saved source instead.")
       .default([]),
     history: z
       .array(
@@ -38,7 +40,7 @@ export const chatRequestSchema = z
           roots: z.array(resourceRefSchema).max(20),
         }),
       )
-      .max(30)
+      .max(0, "Conversation history is owned by the server")
       .default([]),
   })
   .strict();
@@ -47,6 +49,8 @@ export type ChatEvent =
   | { type: "snapshot"; run: ChatRunReceipt }
   | { type: "context"; context: BuildContextResult; threadId?: string }
   | { type: "delta"; text: string }
+  | { type: "replace-text"; text: string }
+  | { type: "read-progress"; context: BuildContextResult; progress: ChatReadProgress }
   | { type: "done"; status: "completed" | "stopped"; inputTokens?: number; outputTokens?: number }
   | { type: "error"; message: string };
 export type ChatMessage = {
@@ -55,6 +59,8 @@ export type ChatMessage = {
   text: string;
   roots?: ResourceRef[];
   context?: BuildContextResult;
+  progress?: ChatReadProgress;
+  runId?: string;
   status?: "completed" | "stopped" | "failed" | "interrupted" | "streaming";
 };
 

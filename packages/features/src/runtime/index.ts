@@ -170,3 +170,13 @@ export type {
   ChatRunEnvelope,
   ChatRunEvent,
 } from "../ai/runs";
+
+export { sourceRecordQuerySchema, recordFilterSchema } from "../databases/records/read-contracts";
+export type {
+  SourceRecordQuery,
+  SourceRecordPosition,
+  SourceReadRevision,
+} from "../databases/records/read-contracts";
+
+export { chatToolActivitySchema } from "../ai/tools";
+export type { ChatToolName, ChatToolActivity, ChatReadProgress } from "../ai/tools";

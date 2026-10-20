@@ -88,6 +88,12 @@ import {
   readDatabaseRecordWindow,
 } from "../services/databases/read/operations";
 import {
+  describeDatabaseSource,
+  querySourceRecords,
+  aggregateSourceRecords,
+} from "../services/databases/read/source-query";
+import { readDocumentWindow, readPageIdentity } from "../services/pages/read/document-window";
+import {
   completeImageUploadOperation,
   createImageUploadOperation,
   getImageUrlOperation,
@@ -370,6 +376,10 @@ export function createServerOperations(context: ServerOperationContext) {
       getSession: bind(getSessionOperation),
     },
     pages: {
+      getIdentity: (input: { pageId: string }) =>
+        runServerOperation(context, () => readPageIdentity(context, input.pageId)),
+      getDocumentWindow: (input: Parameters<typeof readDocumentWindow>[1]) =>
+        runServerOperation(context, () => readDocumentWindow(context, input)),
       acceptPageGuestInvitation: (
         input: Parameters<typeof acceptPageGuestInvitationOperation>[1],
       ) => runServerOperation(context, () => acceptPageGuestInvitationOperation(context, input)),
@@ -536,6 +546,24 @@ export function createServerOperations(context: ServerOperationContext) {
         ),
     },
     databases: {
+      describeSource: (input: Parameters<typeof describeDatabaseSource>[1]) =>
+        runServerOperation(context, () => describeDatabaseSource(context, input)),
+      queryRecords: (input: {
+        query: Parameters<typeof querySourceRecords>[1];
+        position?: Parameters<typeof querySourceRecords>[2];
+        revision?: Parameters<typeof querySourceRecords>[3];
+      }) =>
+        runServerOperation(context, () =>
+          querySourceRecords(context, input.query, input.position, input.revision),
+        ),
+      aggregateRecords: (input: {
+        query: Parameters<typeof aggregateSourceRecords>[1];
+        operation: Parameters<typeof aggregateSourceRecords>[2];
+        propertyId?: string;
+      }) =>
+        runServerOperation(context, () =>
+          aggregateSourceRecords(context, input.query, input.operation, input.propertyId),
+        ),
       getAccess: (input: Parameters<typeof readDatabaseAccess>[1]) =>
         runServerOperation(context, () => readDatabaseAccess(context, input)),
       getMutationHistory: (input: Parameters<typeof readDatabaseMutationHistory>[1]) =>
