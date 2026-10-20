@@ -30,7 +30,10 @@ export function register({ assert, readSource, readWorkspace, test }) {
       controller,
       /databaseId && !databaseDeleted && activeViewId && activeDataSourceId/,
     );
-    assert.match(controller, /realtimeEnabled: Boolean\(bootstrap\) && !databaseDeleted/);
+    assert.match(
+      controller,
+      /realtimeEnabled: Boolean\(bootstrapState\.serverData\) && !databaseDeleted/,
+    );
     assert.match(controller, /requestedEditable\s*&&\s*!databaseDeleted\s*&&\s*!isDatabaseLocked/);
     assert.match(view, /!databaseDeleted \? \([\s\S]*?className="database-scroll-section"/);
     assert.match(view, /databaseDeleted && props\.hideWhenDeleted === true/);

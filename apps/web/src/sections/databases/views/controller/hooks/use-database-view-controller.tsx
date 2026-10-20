@@ -604,7 +604,7 @@ export function useDatabaseViewController({
     hostDatabaseId: bootstrap?.database.id ?? databaseId,
     hostDatabaseName: bootstrap?.database.name,
     hostDatabaseWorkspaceId: bootstrap?.database.workspaceId,
-    realtimeEnabled: Boolean(bootstrap) && !databaseDeleted,
+    realtimeEnabled: Boolean(bootstrapState.serverData) && !databaseDeleted,
     hostViews: bootstrap?.views ?? [],
     isAddingDatabaseProperty: addProperty.isPending,
     isAddingDatabaseRow: addRow.isPending,

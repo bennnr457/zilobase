@@ -17,12 +17,28 @@ export const useEditorResourceActions = (workspaceId?: string | null, pageId?: s
 
   const createEditorDatabase = useCallback(async () => {
     if (!workspaceId || !pageId) return null;
-    const payload = await createDatabase.mutateAsync({
-      name: "New database",
-      workspaceId,
-      pageId: pageId,
+    return new Promise<string | null>((resolve, reject) => {
+      let previewed = false;
+      void createDatabase
+        .mutateAsync({
+          name: "New database",
+          workspaceId,
+          pageId,
+          onOptimistic: (database) => {
+            previewed = true;
+            resolve(database.id);
+          },
+        })
+        .then(
+          (payload) => resolve(payload.database.id),
+          (error: unknown) => {
+            if (previewed) {
+              if (error instanceof Error && error.name !== "ExpiredClientOperationError")
+                toast.error(error.message);
+            } else reject(error);
+          },
+        );
     });
-    return payload.database.id;
   }, [createDatabase, workspaceId, pageId]);
 
   const handleDatabasePageDrop = useCallback(

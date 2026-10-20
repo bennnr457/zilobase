@@ -1,6 +1,7 @@
+import { useDatabaseCreationFailed } from "@zilobase/features/databases/react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 import { hasDatabasePageDragPayload } from "@/sections/databases/interactions/lib/database-page-drop";
 import { DatabaseView } from "@/sections/databases/views/shared/components/database-view";
@@ -55,6 +56,11 @@ function DatabaseBlockView({
       editor.state.tr.delete(pos, pos + currentNode.nodeSize).setMeta("addToHistory", false),
     );
   }, [databaseId, editor, getPos, isEditable]);
+
+  const creationFailed = useDatabaseCreationFailed(databaseId);
+  useEffect(() => {
+    if (creationFailed) removeDeletedBlock();
+  }, [creationFailed, removeDeletedBlock]);
 
   return (
     <NodeViewWrapper
