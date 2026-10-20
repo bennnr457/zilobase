@@ -139,17 +139,14 @@ test("current selected-source activity is transparent and never invents workspac
   await writePrompt(page, "Summarize this page");
   await input.press("Enter");
   await expect(input).toBeEnabled();
-  await page.getByRole("button", { name: /1 selected source/ }).click();
+  await expect(page.getByLabel("Selected sources activity")).toContainText("Attached");
   await expect(
     page.getByLabel("Selected source links").getByRole("link", { name: "main", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Context from the pages and databases attached to this message.", {
-      exact: true,
-    }),
   ).toBeVisible();
   await expect(page.getByLabel("Assistant activity")).toHaveCount(0);
   await expect(page.getByText("Search workspace", { exact: true })).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole("button", { name: /1 selected source/ })).toBeVisible();
+  await expect(
+    page.getByLabel("Selected source links").getByRole("link", { name: "main", exact: true }),
+  ).toBeVisible();
 });

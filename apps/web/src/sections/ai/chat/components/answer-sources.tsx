@@ -11,19 +11,27 @@ import {
   DEFAULT_DATABASE_ITEM_ICON,
   DEFAULT_PAGE_ITEM_ICON,
 } from "@/components/navigation/lib/navigation-icons";
+import { cn } from "@/lib/utils";
+
+type SourceLink = Pick<
+  ReturnType<typeof chatCitations>[number],
+  "key" | "title" | "emoji" | "pageId" | "databaseId"
+>;
 
 export function AnswerSources({
   citations,
   label = "Answer sources",
+  className,
 }: {
-  citations: ReturnType<typeof chatCitations>;
+  citations: SourceLink[];
   label?: string;
+  className?: string;
 }) {
   const { openPage } = useOpenEmbeddedPage({ contextPageId: null, page: null });
   return (
     <>
       {citations.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2" aria-label={label}>
+        <div className={cn("mt-2 flex min-w-0 flex-wrap gap-2", className)} aria-label={label}>
           <Trace className="contents">
             <div className="contents">
               {citations.map((entry) => (
@@ -32,7 +40,7 @@ export function AnswerSources({
                   asChild
                   size="sm"
                   variant="outline"
-                  className="max-w-full justify-start"
+                  className="h-7 max-w-full justify-start rounded-md px-2 text-xs"
                 >
                   <Link
                     title={entry.title}

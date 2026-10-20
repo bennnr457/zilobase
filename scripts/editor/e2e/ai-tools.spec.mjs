@@ -16,7 +16,7 @@ test("mentions submit references, tool activity streams, and continuation keeps 
   await writePrompt(page, "Read these projects");
   await page.getByRole("button", { name: "Submit", exact: true }).click();
   await expect(page.getByRole("button", { name: "Continue reading", exact: true })).toBeVisible();
-  await expect(page.locator(".is-assistant")).toContainText("Reading records");
+  await expect(page.locator(".is-assistant")).toContainText("Records read");
   const first = await page.evaluate(() => window.pageLayoutFixture.ai.requests[0]);
   expect(first.roots).toEqual([{ type: "page", id: "main" }]);
   expect(first.snapshots).toEqual([]);

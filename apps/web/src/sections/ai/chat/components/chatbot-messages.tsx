@@ -5,6 +5,7 @@ import { Message, MessageContent, MessageResponse } from "./message";
 import { MessageActions } from "./message-actions";
 import { MessageThinking } from "./message-thinking";
 import { SelectedSources } from "./selected-sources";
+import { ReadActivity } from "./read-activity";
 import { lazy, Suspense } from "react";
 import type { ActivityActions, AgentActivity } from "../lib/agent-activity";
 import { useSmoothText } from "../hooks/use-smooth-text";
@@ -86,19 +87,6 @@ function AssistantMessage({
   onRetry?: () => void;
   onContinue?: (runId: string) => void;
 }) {
-  activities =
-    activities ??
-    message.progress?.activities.map((activity) => ({
-      type: "tool" as const,
-      id: activity.id,
-      title: activity.label,
-      status: activity.status === "running" && !active ? ("stopped" as const) : activity.status,
-      output:
-        activity.returned === undefined
-          ? undefined
-          : `${activity.returned} items read${activity.hasMore ? " · more available" : ""}`,
-      error: activity.error,
-    }));
   const displayText = chatDisplayText(message.text);
   const { text, isSmoothing } = useSmoothText(
     displayText,
@@ -106,9 +94,11 @@ function AssistantMessage({
     !active && message.status !== "completed",
   );
   const rendering = active || isSmoothing;
-  const hasActiveActivity = activities?.some(
-    (activity) => activity.status === "running" || activity.status === "pending",
-  );
+  const hasActiveActivity =
+    activities?.some(
+      (activity) => activity.status === "running" || activity.status === "pending",
+    ) ||
+    (active && message.progress?.activities.some((activity) => activity.status === "running"));
   const citations = message.context
     ? chatCitations(message.text, message.context.manifest).filter(
         (entry) => entry.pageId || entry.databaseId,
@@ -118,6 +108,7 @@ function AssistantMessage({
     <>
       <MessageContent data-ai-streaming={rendering || undefined}>
         <SelectedSources message={message} />
+        {!activities && <ReadActivity message={message} active={active} />}
         {!!activities?.length && (
           <Suspense fallback={<MessageThinking label="Loading activity" />}>
             <LazyMessageActivity activities={activities} actions={activityActions} />
