@@ -99,6 +99,8 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     workspaceId: "workspace",
     holdReads: false,
     holdStream: false,
+    holdFirstToken: false,
+    releaseFirstToken: () => {},
     holdThreadReads: false,
     failThreadReads: false,
     failNext: false,
@@ -390,8 +392,6 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
           const write = (event: unknown) =>
             controller.enqueue(new TextEncoder().encode(`${JSON.stringify(event)}\n`));
           write({ type: "context", context, threadId: detail!.thread.id });
-          assistant.text = answer;
-          write({ type: "delta", text: answer });
           controls.appendAnswer = (text) => {
             if (closed) return;
             assistant.text += text;
@@ -409,16 +409,28 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
             controller.close();
           };
           init.signal?.addEventListener("abort", stop, { once: true });
-          if (!controls.holdStream)
-            timer = setTimeout(() => {
-              if (closed) return;
-              closed = true;
-              assistant.status = "completed";
-              persist();
-              write({ type: "done", status: "completed" });
-              controller.close();
-              init.signal?.removeEventListener("abort", stop);
-            }, 100);
+          const startAnswer = () => {
+            if (closed) return;
+            assistant.text = answer;
+            write({ type: "delta", text: answer });
+            persist();
+            if (!controls.holdStream)
+              timer = setTimeout(() => {
+                if (closed) return;
+                closed = true;
+                assistant.status = "completed";
+                persist();
+                write({ type: "done", status: "completed" });
+                controller.close();
+                init.signal?.removeEventListener("abort", stop);
+              }, 100);
+          };
+          controls.releaseFirstToken = () => {
+            if (!controls.holdFirstToken) return;
+            controls.holdFirstToken = false;
+            startAnswer();
+          };
+          if (!controls.holdFirstToken) startAnswer();
         },
         cancel() {
           if (!closed) {

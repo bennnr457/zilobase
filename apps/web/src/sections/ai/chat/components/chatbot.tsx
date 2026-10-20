@@ -41,6 +41,9 @@ export default function Chatbot({
   const { data: session } = useSession();
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [pendingTurn, setPendingTurn] = useState<{ messages: ChatMessage[]; label: string } | null>(
+    null,
+  );
   const attachmentState = useChatAttachments(workspaceId);
   const send = useSendChat();
   const follow = useFollowChatRun();
@@ -108,6 +111,7 @@ export default function Chatbot({
     streamController.current = null;
     controller?.abort();
     setStreaming(false);
+    setPendingTurn(null);
     if (controller) void threads.refresh();
     loadedThread.current = null;
     activeRun.current = null;
@@ -185,13 +189,22 @@ export default function Chatbot({
     const controller = new AbortController();
     streamController.current = controller;
     const assistantId = crypto.randomUUID();
+    const userId = crypto.randomUUID();
+    setStreaming(true);
+    setPendingTurn({
+      messages: [
+        { id: userId, role: "user", text: nextText },
+        { id: assistantId, role: "assistant", text: "", status: "streaming" },
+      ],
+      label: attachmentState.attachments.length ? "Preparing selected sources" : "Thinking",
+    });
     let requestSelection = selection.revision;
     let accepted = false;
     try {
       const prepared = await attachmentState.build();
       if (!selection.isCurrent(requestSelection)) controller.abort();
       controller.signal.throwIfAborted();
-      setStreaming(true);
+      setPendingTurn((current) => (current ? { ...current, label: "Thinking" } : null));
       let nextRequest: ChatRequest = {
         workspaceId,
         requestId: crypto.randomUUID(),
@@ -226,9 +239,10 @@ export default function Chatbot({
           accepted = true;
           pendingRequest.current = null;
           setText("");
+          setPendingTurn(null);
           setMessages((current) => [
             ...current,
-            { id: crypto.randomUUID(), role: "user", text: nextText, roots: prepared.roots },
+            { id: userId, role: "user", text: nextText, roots: prepared.roots },
             {
               id: assistantId,
               role: "assistant",
@@ -281,11 +295,19 @@ export default function Chatbot({
       if (streamController.current === controller) {
         streamController.current = null;
         setStreaming(false);
+        setPendingTurn(null);
         void threads.refresh();
       }
     }
   };
-  const hasMessages = messages.length > 0;
+  const visibleMessages = pendingTurn ? [...messages, ...pendingTurn.messages] : messages;
+  const hasMessages = visibleMessages.length > 0;
+  const retryAnswer = () => {
+    const previous = [...messages].reverse().find((message) => message.role === "user");
+    if (!previous) return;
+    pendingRequest.current = null;
+    void onSubmit({ text: previous.text, files: [] });
+  };
   const centerEmptyState = !isSidebar && !hasMessages && threadReady;
   return (
     <MessageScrollerProvider autoScroll defaultScrollPosition="end" scrollEdgeThreshold={160}>
@@ -302,7 +324,13 @@ export default function Chatbot({
               <ChatEmptyState name={session?.user?.name} onSelect={setText} />
             )}
             {threadReady && hasMessages && (
-              <ChatbotMessages isSidebar={isSidebar} messages={messages} />
+              <ChatbotMessages
+                isSidebar={isSidebar}
+                messages={visibleMessages}
+                streaming={streaming}
+                pendingLabel={pendingTurn?.label}
+                onRetry={streaming ? undefined : retryAnswer}
+              />
             )}
           </ChatLayout>
         </MessageScrollerViewport>
@@ -397,19 +425,7 @@ export default function Chatbot({
               </ChatError>
             )}
             {!streaming && ["failed", "interrupted"].includes(messages.at(-1)?.status ?? "") && (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  const previous = [...messages]
-                    .reverse()
-                    .find((message) => message.role === "user");
-                  if (!previous) return;
-                  pendingRequest.current = null;
-                  void onSubmit({ text: previous.text, files: [] });
-                }}
-              >
+              <Button type="button" size="sm" variant="ghost" onClick={retryAnswer}>
                 Retry answer
               </Button>
             )}
