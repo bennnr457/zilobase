@@ -1,3 +1,4 @@
+import { ContextAttachment } from "../../attachments/components/context-attachment";
 import { terminalChatRun, type ChatRunReceipt } from "@zilobase/features/ai";
 import type { ChatRequest } from "@zilobase/features/ai";
 import {
@@ -7,10 +8,8 @@ import {
   useRecoverChatSubmission,
   useChatThreads,
   useChatSelection,
-  useChatAttachmentMetadata,
 } from "@zilobase/features/ai/react";
 import { useChatAttachments } from "../../attachments/hooks/use-chat-attachments";
-import type { ResourceRef } from "@zilobase/page-context";
 import { ChatLayout } from "./chat-layout";
 import {
   MessageScroller,
@@ -18,11 +17,6 @@ import {
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller";
 import { Button } from "@/components/ui/button";
-import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
-import {
-  DEFAULT_DATABASE_ITEM_ICON,
-  DEFAULT_PAGE_ITEM_ICON,
-} from "@/components/navigation/lib/navigation-icons";
 import { ChatbotComposer } from "../../composer/components/chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";
@@ -387,7 +381,7 @@ export default function Chatbot({
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {attachmentState.attachments.map((item) => (
-                <AttachmentButton
+                <ContextAttachment
                   key={`${item.type}:${item.id}`}
                   item={item}
                   workspaceId={workspaceId}
@@ -474,38 +468,3 @@ const starterPrompts = [
   "What needs attention in these records?",
   "Create a project plan",
 ];
-
-function AttachmentButton({
-  item,
-  workspaceId,
-  onRemove,
-}: {
-  item: ResourceRef;
-  workspaceId: string | null;
-  onRemove: () => void;
-}) {
-  const { title, emoji } = useChatAttachmentMetadata(workspaceId, item);
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      className="max-w-full justify-start"
-      onClick={onRemove}
-      aria-label={`Remove ${title}`}
-      title={title}
-    >
-      <span aria-hidden="true" className="inline-flex shrink-0">
-        <PageIconDisplay
-          size="sm"
-          value={
-            emoji ??
-            (item.type === "database" ? DEFAULT_DATABASE_ITEM_ICON : DEFAULT_PAGE_ITEM_ICON)
-          }
-        />
-      </span>
-      <span className="truncate">{title}</span>
-      <span aria-hidden="true">×</span>
-    </Button>
-  );
-}
