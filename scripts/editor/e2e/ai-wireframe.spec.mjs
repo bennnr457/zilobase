@@ -2,8 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.use({ timezoneId: "Asia/Kolkata" });
 
-// These snapshots precede the component migration. Do not update them to accept
-// layout changes: the existing frame, composer and content widths are the contract.
+// Empty frames and geometry retain the pre-migration wireframe. Conversation
+// images additionally include the requested response actions and source activity.
+// Do not update the geometry baselines to accept a layout change.
 for (const width of [1400, 390]) {
   for (const mode of ["sidebar", "floating", "page"]) {
     for (const theme of ["light", "dark"]) {
