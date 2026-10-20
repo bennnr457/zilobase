@@ -14,6 +14,13 @@ export const chatToolActivitySchema = z.object({
   name: chatToolNameSchema,
   status: z.enum(["running", "completed", "failed"]),
   label: z.string().max(512),
+  source: z
+    .object({
+      type: z.enum(["page", "database"]),
+      id: z.string().min(1).max(128),
+      dataSourceId: z.string().min(1).max(128).optional(),
+    })
+    .optional(),
   returned: z.number().int().nonnegative().optional(),
   hasMore: z.boolean().optional(),
   error: z.string().max(512).optional(),

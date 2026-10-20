@@ -45,6 +45,7 @@ test("tool progress and replacement text replay atomically without exposing raw 
             id: "read",
             name: "read_page",
             label: "Reading page",
+            source: { type: "page", id: "selected-page" },
             status: "completed",
             returned: 10,
             hasMore: true,
@@ -58,6 +59,7 @@ test("tool progress and replacement text replay atomically without exposing raw 
   const next = applyChatRunEvent(snapshot, event);
   assert.equal(next.progress?.canContinue, true);
   assert.equal(next.context?.status, "partial");
+  assert.deepEqual(next.progress?.activities[0]?.source, { type: "page", id: "selected-page" });
   assert.equal(
     applyChatRunEvent(next, {
       ...event,

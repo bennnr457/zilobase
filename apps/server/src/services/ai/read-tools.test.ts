@@ -95,6 +95,40 @@ test("only read operations are registered and @mentions do not read content", ()
   expect(dependencies.query).not.toHaveBeenCalled();
 });
 
+test("progress identifies the source while running and after completion without extra reads", async () => {
+  const fixture = readFixture();
+  const snapshots: unknown[] = [];
+  const tools = createReadTools(fixture.context, fixture.state, {
+    signal: fixture.signal,
+    maxCalls: 24,
+    maxResultBytes: 6000,
+    dependencies: fixture.dependencies,
+    changed: async () => {
+      snapshots.push(structuredClone(fixture.state.progress.activities));
+    },
+  });
+  await tools.read_page.execute!(
+    { pageId: "page", cursor: null },
+    {
+      toolCallId: "read-page",
+      messages: [],
+      abortSignal: fixture.signal,
+      context: {},
+    },
+  );
+  expect(snapshots).toMatchObject([
+    [{ source: { type: "page", id: "page" }, status: "running" }],
+    [{ source: { type: "page", id: "page" }, status: "completed" }],
+  ]);
+  expect(fixture.dependencies.document).toHaveBeenCalledTimes(1);
+  await fixture.call("query_records", { databaseId: "db", dataSourceId: "source" });
+  expect(fixture.state.progress.activities.at(-1)?.source).toEqual({
+    type: "database",
+    id: "db",
+    dataSourceId: "source",
+  });
+});
+
 test("guessed IDs are denied; links become readable only after discovery", async () => {
   const { call, dependencies } = readFixture();
   expect(await call("read_page", { pageId: "linked" })).toMatchObject({

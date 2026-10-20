@@ -236,9 +236,20 @@ export function createReadTools(
       };
     }
     state.calls++;
+    const source =
+      name === "read_page"
+        ? { type: "page" as const, id: String(input.pageId) }
+        : name === "describe_source"
+          ? { type: input.type as "page" | "database", id: String(input.id) }
+          : {
+              type: "database" as const,
+              id: String(input.databaseId),
+              dataSourceId: String(input.dataSourceId),
+            };
     const activity = {
       id: toolCallId,
       name,
+      source,
       status: "running" as "running" | "completed" | "failed",
       label: {
         describe_source: "Inspecting source",
