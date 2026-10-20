@@ -30,6 +30,9 @@ function fixture() {
     queryClient,
     chatReceipts: {
       load: async (key) => saved.get(key) ?? null,
+      clear: async (key, requestId) => {
+        if (saved.get(key)?.requestId === requestId) saved.delete(key);
+      },
       write: async (key, value) => {
         if (value) saved.set(key, value);
         else saved.delete(key);
@@ -157,5 +160,24 @@ test("compacted journals replace partial text with the authoritative snapshot", 
     () => {},
   );
   assert.equal(run.text, "Complete answer");
+  context.queryClient.clear();
+});
+
+test("an older terminal run cannot erase the receipt for a newer submission", async () => {
+  const { context, saved } = fixture();
+  await submitChatRun(
+    context,
+    { requestId: "newer", workspaceId: "workspace" } as ChatRequest,
+    new AbortController().signal,
+  );
+  context.streamFetch = async () => new Response();
+  await followChatRun(
+    context,
+    { ...initial, status: "completed" },
+    "workspace",
+    new AbortController().signal,
+    () => {},
+  );
+  assert.equal([...saved.values()][0]?.requestId, "newer");
   context.queryClient.clear();
 });

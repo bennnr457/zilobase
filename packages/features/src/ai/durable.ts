@@ -13,6 +13,7 @@ export type ChatSubmission = { requestId: string; workspaceId: string; createdAt
 export type ChatReceiptStorage = {
   load(scope: string): Promise<ChatSubmission | null>;
   write(scope: string, value: ChatSubmission | null): Promise<void>;
+  clear(scope: string, requestId: string): Promise<void>;
 };
 export type DurableChatContext = ClientOperationContext & { chatReceipts?: ChatReceiptStorage };
 const receiptScope = (identity: unknown, workspaceId: string) =>
@@ -141,9 +142,8 @@ export async function followChatRun(
   }
   if (scope.isCurrent()) {
     const key = receiptScope(scope.read.identity, workspaceId);
-    const pending = await context.chatReceipts?.load(key);
+    await context.chatReceipts?.clear(key, run.requestId);
     scope.assertCurrent();
-    if (pending?.requestId === run.requestId) await context.chatReceipts?.write(key, null);
     void context.queryClient.invalidateQueries({ queryKey: ["ai", workspaceId] });
   }
   return run;

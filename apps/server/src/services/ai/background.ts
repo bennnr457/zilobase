@@ -1,4 +1,9 @@
-import { and, eq, lt, inArray } from "drizzle-orm";
+import {
+  recordBackgroundCounter,
+  recordBackgroundHistogram,
+  backgroundAttributes,
+} from "../../infrastructure/background/telemetry";
+import { and, eq, lt, gt, isNull, inArray } from "drizzle-orm";
 import { getRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import { db, runWithIndependentDbEnv } from "../../infrastructure/database";
 import {
@@ -51,6 +56,13 @@ export async function processAiGeneration(
   let cursor: ProviderChunk = { responseId: run.responseId, cursor: run.providerCursor };
   let savedAt = Date.now();
   let finished = false;
+  let firstToken = false;
+  const startedAt = Date.now();
+  const attributes = backgroundAttributes(
+    env,
+    "ai.generate",
+    run.responseId ? "resumed" : "started",
+  );
   let stopped = false;
   let authorizedAt = 0;
   let control: Promise<void> | undefined;
@@ -71,7 +83,16 @@ export async function processAiGeneration(
         ),
       ),
     );
-    await writing;
+    try {
+      await writing;
+      recordBackgroundCounter("ai_checkpoint", attributes);
+    } catch (error) {
+      // A rejected cancellation checkpoint committed neither text nor cursor.
+      // Retain that batch for the terminal stopped transaction.
+      if (error instanceof Error && error.message === "CHAT_RUN_CANCELLED")
+        buffer = (chunk.text ?? "") + buffer;
+      throw error;
+    }
   };
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   try {
@@ -112,7 +133,7 @@ export async function processAiGeneration(
     if (!sealed || sealed.expiresAt <= new Date()) throw new Error("CHAT_INPUT_EXPIRED");
     const payload = openRunInput(env, run.id, sealed.sealed);
     await scope(async () => {
-      await db
+      const started = await db
         .update(askAiRun)
         .set({ providerStartedAt: new Date() })
         .where(
@@ -120,8 +141,13 @@ export async function processAiGeneration(
             eq(askAiRun.id, run.id),
             eq(askAiRun.leaseOwner, input.workerId),
             eq(askAiRun.fence, run.fence),
+            eq(askAiRun.status, "running"),
+            gt(askAiRun.leaseExpiresAt, new Date()),
+            isNull(askAiRun.cancelRequestedAt),
           ),
-        );
+        )
+        .returning({ id: askAiRun.id });
+      if (!started.length) throw new Error("CHAT_RUN_LEASE_LOST");
     });
     const check = async () => {
       await scope(async () => {
@@ -160,8 +186,13 @@ export async function processAiGeneration(
       if (buffer && Date.now() - savedAt >= 200)
         void flush().catch((error) => controller.abort(error));
     }, 200);
+    recordBackgroundCounter("ai_provider_start", attributes);
     for await (const chunk of provider(activeContext, payload, signal, cursor)) {
       signal.throwIfAborted();
+      if (chunk.text && !firstToken) {
+        firstToken = true;
+        recordBackgroundHistogram("ai_first_token_ms", Date.now() - startedAt, attributes);
+      }
       buffer += chunk.text ?? "";
       const newResponse = chunk.responseId && !cursor.responseId;
       cursor = { ...cursor, ...chunk, text: undefined };
@@ -176,6 +207,10 @@ export async function processAiGeneration(
     if (!finished) throw new Error("CHAT_PROVIDER_INTERRUPTED");
   } catch (error) {
     if (input.signal?.aborted) throw error;
+    const reason = signal.reason instanceof Error ? signal.reason.message : "";
+    const code = error instanceof Error ? error.message : "";
+    if ([code, reason].includes("CHAT_RUN_LEASE_LOST")) throw error;
+    if ([code, reason].includes("CHAT_RUN_CANCELLED")) stopped = true;
     if (context && cursor.responseId && signal.aborted)
       await cancelProviderResponse(context, cursor.responseId).catch(() => {});
     // A saved response can be reattached by a replacement worker. Never start another provider call for this attempt.
@@ -210,6 +245,10 @@ export async function processAiGeneration(
         throw cause;
     });
   } finally {
+    recordBackgroundCounter("ai_producer_end", {
+      ...attributes,
+      outcome: stopped ? "stopped" : finished ? "completed" : "interrupted",
+    });
     if (flushTimer) clearInterval(flushTimer);
     if (heartbeat) clearInterval(heartbeat);
     await writing.catch(() => {});

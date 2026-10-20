@@ -4,6 +4,18 @@ import type { ChatReceiptStorage, ChatSubmission } from "@zilobase/features/ai";
 // Only identifiers are stored; prompts, attachments, and answers stay on the server.
 const prefix = "zilobase:ai-submission:";
 export const webChatReceipts: ChatReceiptStorage = {
+  clear: (scope, requestId) =>
+    Effect.runPromise(
+      Effect.sync(() => {
+        try {
+          const key = prefix + scope;
+          const raw = sessionStorage.getItem(key);
+          if (raw && JSON.parse(raw).requestId === requestId) sessionStorage.removeItem(key);
+        } catch {
+          /* Optional browser storage. */
+        }
+      }),
+    ),
   load: (scope) =>
     Effect.runPromise(
       Effect.sync(() => {

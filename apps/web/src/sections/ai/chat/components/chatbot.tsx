@@ -59,11 +59,11 @@ export default function Chatbot({
     void recoverSubmission(workspaceId)
       .then((receipt) => {
         if (!disposed && selection.isCurrent(revision))
-          selection.select(receipt?.threadId ?? threads.list.data[0]?.id ?? null);
+          selection.select(receipt?.threadId ?? threads.list.data?.[0]?.id ?? null);
       })
       .catch(() => {
         if (!disposed && selection.isCurrent(revision))
-          selection.select(threads.list.data[0]?.id ?? null);
+          selection.select(threads.list.data?.[0]?.id ?? null);
       });
     return () => {
       disposed = true;
@@ -280,7 +280,7 @@ export default function Chatbot({
               : entry,
           ),
         );
-      if (!controller.signal.aborted) setText(nextText);
+      if (!controller.signal.aborted && !accepted) setText(nextText);
     } finally {
       if (streamController.current === controller) {
         streamController.current = null;
@@ -450,6 +450,21 @@ export default function Chatbot({
                 </Button>
               )}
             </p>
+          )}
+          {!streaming && ["failed", "interrupted"].includes(messages.at(-1)?.status ?? "") && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const previous = [...messages].reverse().find((message) => message.role === "user");
+                if (!previous) return;
+                pendingRequest.current = null;
+                void onSubmit({ text: previous.text, files: [] });
+              }}
+            >
+              Retry answer
+            </Button>
           )}
           {streaming && (
             <p role="status" className="mb-2 text-xs">

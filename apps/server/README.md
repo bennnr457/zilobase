@@ -155,9 +155,9 @@ calendar, background, and automation harnesses exercise persistence and delivery
 
 ### Ask AI
 
-Configure `OPENAI_API_KEY` and `AI_MODEL` in the server environment. `AI_MODEL` is
-an OpenAI Responses API model ID available to that key; it has no hard-coded
-default. Credentials stay on the server. Ask AI uses the same authenticated API
+Configure `OPENAI_API_KEY` in the server environment. Ask AI defaults to
+`gpt-6-luna` for everyday chat. Set `AI_MODEL` to override it with another OpenAI
+Responses API model available to your key. Credentials stay on the server. Ask AI uses the same authenticated API
 origin for web and desktop, and streams responses from `POST /ai/chat`.
 
 Users attach authorized workspace pages and databases with `@`. Open editor
@@ -169,8 +169,8 @@ explicitly deleted, or until their workspace/account is deleted. Deleting a chat
 cascades to its turns. Full source markdown and local editor snapshots are not
 stored; historical inspection shows IDs, revisions and coverage. Source access is
 rechecked before history is displayed or sent to a model. Inaccessible history
-requires a new chat. Generation stops with the request; abandoned turns become
-interrupted after the three-minute generation deadline and a short grace period.
+requires a new chat. Without durable streaming enabled, generation stops with the request; abandoned
+turns become interrupted after the three-minute generation deadline and grace period.
 
 Ask AI bounds each source export to 200 records before rendering; all authorized
 property definitions and view configurations remain available. The inspector
@@ -199,3 +199,60 @@ For an optional live smoke check, supply `OPENAI_API_KEY` and set
 `ZILOBASE_AI_VERIFY_MODEL` to an available Responses model when running the isolated
 AI runner. It sends only the synthetic page created by that test, then verifies
 that the streamed answer persists and reloads. This does not set deployment defaults.
+
+### Durable Ask AI rollout
+
+Deploy migration `0114_ask_ai_durable_streaming` before enabling `AI_DURABLE_STREAMING_ENABLED=true`.
+The API and producer must use the same database, cell ID, model configuration,
+and `AI_RUN_PAYLOAD_ENCRYPTION_KEY` (32 random bytes, base64). Generate the key
+with `openssl rand -base64 32` and supply it through the deployment secret manager.
+Do not rotate it while admitted runs still need their encrypted input.
+
+For Node, configure `QUEUE_REDIS_URL` and run `ZILOBASE_PROCESS_ROLE=api` separately
+from `ZILOBASE_PROCESS_ROLE=worker`; `all` supports a combined development process.
+The worker consumes the dedicated `ai` lane (concurrency 4). Run the worker and
+maintenance scheduler throughout rollout, including while admission is disabled.
+For Cloudflare, provision `zilobase-ai-runs` and `zilobase-ai-runs-dlq`, then deploy
+both the API and background Workers from the sibling Cloudflare adapter. Its
+deploy/dev launchers forward both feature flags and conditionally require the
+same encryption key in both Workers. Queue consumers own generation; HTTP
+`waitUntil()` is not used to keep generation alive after disconnect.
+
+The new client discovers capability with `GET /ai/capabilities`, admits through
+`POST /ai/turns`, and reconnects to `GET /ai/runs/:id/events?after=<seq>`.
+A submission receipt contains only identifiers and is isolated by deployment,
+account/session, and workspace. Older clients can continue using `/ai/chat`;
+with durability enabled this is an admission/subscription wrapper. Disconnecting
+any subscription leaves the producer running. Stop calls `/ai/runs/:id/cancel`.
+The full-page AI route retains the selected thread in its `thread` search parameter.
+
+Output and replay cursors commit atomically before publication. Input is encrypted
+and deleted on terminal completion; its maximum lifetime is one hour. Generation
+has a three-minute invocation deadline. Terminal replay events expire after 24 hours,
+while thread messages remain readable. A compacted journal resets from the saved
+snapshot. Active source and session access is rechecked during execution.
+
+`AI_PROVIDER_BACKGROUND_ENABLED=true` additionally enables resuming a saved OpenAI
+background Responses ID and sequence. Test support for the configured model before
+turning this on; it never substitutes a different model. With `store:false`, OpenAI
+retains background responses temporarily (roughly ten minutes), so very late
+worker recovery can become interrupted. With ordinary provider streaming, a
+producer crash preserves committed output and marks the run interrupted rather
+than silently starting another paid generation. A user retry submits a new turn.
+See [OpenAI background mode](https://developers.openai.com/api/docs/guides/background)
+and [Cloudflare queue limits](https://developers.cloudflare.com/queues/platform/limits/).
+
+Run `npm run test:ai:durable` for disposable PostgreSQL/Valkey migration, queue,
+idempotency, replay, cancellation, recovery, and authorization checks. It uses a
+synthetic provider and never sends source data to a paid model. Observe the existing
+`zilobase.background.*` counters/histograms filtered to `ai.generate` and the `ai`
+lane: enqueue failures, queue wait, execution duration, recovered leases, retries,
+exhaustion, oldest pending work, and dead letters. Measure subscriber polling load
+before raising concurrency. AI-specific counters cover provider starts/resumes, producer
+ends, checkpoints, subscriber opens/closes, snapshot resets, and cancellation requests;
+`ai_first_token_ms` and `ai_replay_ms` record latency without source data.
+Roll out to a small deployment first and smoke-test a
+reload during generation, explicit Stop, duplicate delivery, and worker restart.
+To roll back, disable new durable admission but leave workers, keys, migration,
+and read/replay endpoints in place until existing runs drain. Do not restore the
+old request-owned producer for already-admitted runs.

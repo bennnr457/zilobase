@@ -1,4 +1,4 @@
-import type { ChatThreadDetail } from "@zilobase/features/ai";
+import type { ChatRunReceipt, ChatThreadDetail } from "@zilobase/features/ai";
 import { buildContextMarkdown } from "@zilobase/page-context";
 import { collectWorkspaceContext, type ChatRequest } from "@zilobase/features/runtime";
 
@@ -93,6 +93,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
   const persist = () => sessionStorage.setItem("ai-fixture-threads", JSON.stringify(threads));
   let releaseRead: (() => void) | undefined;
   const controls = {
+    durable: new URLSearchParams(location.search).get("durableAi") === "1",
     workspaceId: "workspace",
     holdReads: false,
     holdStream: false,
@@ -116,6 +117,76 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       ["workspace", "other"].map((id) => ({ id, name: id, slug: id, createdAt: at })),
   };
   async function api(path: string, options?: RequestInit): Promise<unknown> {
+    if (path === "/ai/capabilities") return { durable: controls.durable };
+    if (path === "/ai/turns") {
+      const request = JSON.parse(String(options?.body)) as ChatRequest;
+      controls.requests.push(request);
+      const previous = threads.find((item) => item.run?.requestId === request.requestId);
+      if (previous) return structuredClone(previous.run);
+      const context = buildContextMarkdown({
+        context: await collectWorkspaceContext(request, {
+          check: () => {},
+          now: () => at,
+          page: async () => page as any,
+          database: async () => exported,
+        }),
+      });
+      let detail = threads.find((item) => item.thread.id === request.threadId);
+      if (!detail) {
+        detail = {
+          thread: {
+            id: crypto.randomUUID(),
+            workspaceId: request.workspaceId,
+            title: request.text,
+            updatedAt: at,
+          },
+          roots: request.roots,
+          messages: [],
+        };
+        threads.unshift(detail);
+      }
+      detail.run = {
+        requestId: request.requestId,
+        runId: crypto.randomUUID(),
+        turnId: request.requestId,
+        threadId: detail.thread.id,
+        seq: 1,
+        status: "running",
+        text: "Partial",
+        context,
+      };
+      detail.thread.status = "running";
+      detail.messages.push(
+        { id: `${request.requestId}:user`, role: "user", text: request.text },
+        {
+          id: `${request.requestId}:assistant`,
+          role: "assistant",
+          text: "Partial",
+          status: "streaming",
+          context,
+        },
+      );
+      sessionStorage.setItem(
+        "ai-fixture-provider-starts",
+        String(Number(sessionStorage.getItem("ai-fixture-provider-starts") ?? 0) + 1),
+      );
+      persist();
+      return structuredClone(detail.run);
+    }
+    if (path.startsWith("/ai/requests/") || path.startsWith("/ai/runs/")) {
+      const id = path.split("/")[3]?.split("?")[0];
+      const detail = threads.find((item) => item.run?.runId === id || item.run?.requestId === id);
+      if (!detail?.run) throw Object.assign(new Error("Run not found"), { status: 404 });
+      if (path.includes("/cancel")) {
+        controls.cancelled++;
+        detail.run.status = "stopped";
+        detail.run.seq++;
+        detail.messages.at(-1)!.status = "stopped";
+        detail.thread.status = "stopped";
+        persist();
+      }
+      return structuredClone(detail.run);
+    }
     if (path.startsWith("/ai/threads")) {
       const id = path.split("?")[0]!.split("/")[3];
       if (!id)
@@ -165,6 +236,61 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     return undefined;
   }
   const streamFetch = async (_path: string, init: RequestInit) => {
+    if (_path.startsWith("/ai/runs/")) {
+      const id = _path.split("/")[3];
+      const detail = threads.find((item) => item.run?.runId === id)!;
+      let cursor = Number(new URL(_path, location.origin).searchParams.get("after"));
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let closed = false;
+      const stop = () => {
+        closed = true;
+        clearTimeout(timer);
+      };
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            const poll = () => {
+              if (closed) return;
+              const write = (seq: number, event: unknown) =>
+                controller.enqueue(
+                  new TextEncoder().encode(
+                    JSON.stringify({ version: 1, runId: id, seq, event }) + "\n",
+                  ),
+                );
+              const run = detail.run as ChatRunReceipt;
+              if (!controls.holdStream && run.status === "running") {
+                run.text = "Partial answer";
+                run.status = "completed";
+                run.seq = 3;
+                detail.messages.at(-1)!.text = run.text;
+                detail.messages.at(-1)!.status = "completed";
+                detail.thread.status = "completed";
+                persist();
+              }
+              if (run.status === "completed") {
+                if (cursor < 2) write(2, { type: "delta", text: " answer" });
+                if (cursor < 3) write(3, { type: "done", status: "completed" });
+                cursor = 3;
+                stop();
+                controller.close();
+              } else if (run.status === "stopped") {
+                write(run.seq, { type: "done", status: "stopped" });
+                stop();
+                controller.close();
+              } else timer = setTimeout(poll, 50);
+            };
+            const abort = () => {
+              stop();
+              controller.close();
+            };
+            init.signal?.addEventListener("abort", abort, { once: true });
+            // Cancel removes only this subscriber, never the stored run.
+            poll();
+          },
+          cancel: stop,
+        }),
+      );
+    }
     const request = JSON.parse(String(init.body)) as ChatRequest;
     controls.requests.push(request);
     if (controls.failNext) {

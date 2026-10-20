@@ -85,6 +85,13 @@ export function runBackgroundTaskSpan<T>(
 
 export function recordBackgroundCounter(
   name:
+    | "ai_provider_start"
+    | "ai_checkpoint"
+    | "ai_producer_end"
+    | "ai_subscriber_open"
+    | "ai_subscriber_close"
+    | "ai_snapshot_reset"
+    | "ai_cancellation"
     | "enqueue"
     | "claim"
     | "completion"
@@ -101,6 +108,8 @@ export function recordBackgroundCounter(
 
 export function recordBackgroundHistogram(
   name:
+    | "ai_first_token_ms"
+    | "ai_replay_ms"
     | "queue_delay_ms"
     | "execution_duration_ms"
     | "provider_duration_ms"
@@ -157,7 +166,7 @@ function splitMetricKey(key: string): [string, string] {
   return [name, labels];
 }
 
-function backgroundAttributes(
+export function backgroundAttributes(
   env: RuntimeEnv,
   kind: BackgroundTaskKind,
   outcome: string,

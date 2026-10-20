@@ -69,7 +69,8 @@ export async function* generateChatOutput(
       ? {}
       : {
           body: JSON.stringify({
-            model: input.model ?? getStringEnv(context.env, "AI_MODEL") ?? DEFAULT_CHAT_MODEL,
+            model:
+              input.model ?? (getStringEnv(context.env, "AI_MODEL")?.trim() || DEFAULT_CHAT_MODEL),
             instructions: input.instructions ?? CHAT_INSTRUCTIONS,
             input: input.messages,
             max_output_tokens: input.maxOutputTokens,
@@ -84,7 +85,11 @@ export async function* generateChatOutput(
   let cursor = recovery.cursor ?? -1;
   let completed = false;
   for await (const event of readProviderEvents(response.body, signal)) {
-    if (typeof event.sequence_number !== "number" || event.sequence_number <= cursor) continue;
+    if (!Number.isSafeInteger(event.sequence_number) || event.sequence_number < 0)
+      throw new Error("CHAT_PROVIDER_CURSOR_INVALID");
+    if (event.sequence_number <= cursor) continue;
+    if (event.type === "response.output_text.delta" && typeof event.delta !== "string")
+      throw new Error("CHAT_PROVIDER_TEXT_INVALID");
     cursor = event.sequence_number;
     if (event.response?.id) responseId = event.response.id;
     if (!responseId) throw new Error("CHAT_PROVIDER_RESPONSE_ID_MISSING");
@@ -139,7 +144,7 @@ async function* readProviderEvents(
       signal.throwIfAborted();
       const { value, done } = await reader.read();
       signal.throwIfAborted();
-      buffer += decoder.decode(value, { stream: !done }).replace(/\r\n/g, "\n");
+      buffer = (buffer + decoder.decode(value, { stream: !done })).replace(/\r\n/g, "\n");
       if (buffer.length > 2_000_000) throw new Error("CHAT_PROVIDER_EVENT_TOO_LARGE");
       let end: number;
       while ((end = buffer.indexOf("\n\n")) >= 0) {

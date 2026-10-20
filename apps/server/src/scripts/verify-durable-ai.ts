@@ -17,6 +17,7 @@ import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
 import {
   askAiRun,
   askAiRunInput,
+  askAiRunEvent,
   askAiTurn,
   backgroundDispatch,
   member,
@@ -150,6 +151,95 @@ try {
       await client.db
         .insert(member)
         .values({ id: "member", organizationId: "workspace", userId: "actor", role: "owner" });
+      const queued = await admitChatRun(context, { ...request, requestId: randomUUID() });
+      await cancelChatRun(context, queued.runId, "workspace");
+      let cancelledCalls = 0;
+      await processAiGeneration(
+        env,
+        { runId: queued.runId, workerId: "cancelled" },
+        async function* () {
+          cancelledCalls++;
+          yield { completed: true };
+        },
+      );
+      assert.equal(cancelledCalls, 0, "cancel-before-start never calls the provider");
+
+      const abandoned = await admitChatRun(context, { ...request, requestId: randomUUID() });
+      const lost = await claimChatRun(abandoned.runId, "lost", "test");
+      assert.ok(lost);
+      await checkpointChatRun(lost.id, "lost", lost.fence, { text: "Saved partial" });
+      await client.db
+        .update(askAiRun)
+        .set({ providerStartedAt: new Date(), leaseExpiresAt: new Date(0) })
+        .where(eq(askAiRun.id, lost.id));
+      assert.equal(await claimChatRun(lost.id, "replacement", "test"), null);
+      const interrupted = await getChatRequest(context, abandoned.requestId, "workspace");
+      assert.equal(interrupted.status, "interrupted");
+      assert.equal(interrupted.text, "Saved partial");
+
+      const recovered = await admitChatRun(
+        { ...context, env: { ...env, AI_PROVIDER_BACKGROUND_ENABLED: "true" } },
+        { ...request, requestId: randomUUID() },
+      );
+      const oldOwner = await claimChatRun(recovered.runId, "old-owner", "test");
+      assert.ok(oldOwner);
+      await checkpointChatRun(recovered.runId, "old-owner", oldOwner.fence, {
+        text: "Saved",
+        responseId: "resp_fixture",
+        cursor: 3,
+      });
+      await client.db
+        .update(askAiRun)
+        .set({ providerStartedAt: new Date(), leaseExpiresAt: new Date(0) })
+        .where(eq(askAiRun.id, recovered.runId));
+      let recoveredCalls = 0;
+      await processAiGeneration(
+        env,
+        { runId: recovered.runId, workerId: "replacement" },
+        async function* (_context, _input, _signal, recovery) {
+          assert.deepEqual(recovery, { responseId: "resp_fixture", cursor: 3 });
+          recoveredCalls++;
+          yield { text: " suffix", responseId: "resp_fixture", cursor: 4 };
+          yield { completed: true, responseId: "resp_fixture", cursor: 5 };
+        },
+      );
+      assert.equal(recoveredCalls, 1);
+      assert.equal(
+        (await getChatRequest(context, recovered.requestId, "workspace")).text,
+        "Saved suffix",
+      );
+      await assert.rejects(
+        checkpointChatRun(recovered.runId, "old-owner", oldOwner.fence, { text: "stale" }),
+        /LEASE_LOST/,
+      );
+      await client.db.delete(askAiRunEvent).where(eq(askAiRunEvent.runId, recovered.runId));
+      const compacted = await readChatRunPage(context, recovered.runId, "workspace", 0);
+      assert.equal(compacted.reset, true);
+      assert.equal(compacted.snapshot.text, "Saved suffix");
+
+      const cancellable = await admitChatRun(context, { ...request, requestId: randomUUID() });
+      let started!: () => void;
+      const ready = new Promise<void>((resolve) => {
+        started = resolve;
+      });
+      const processing = processAiGeneration(
+        env,
+        { runId: cancellable.runId, workerId: "stop-owner" },
+        async function* (_context, _input, signal) {
+          yield { text: "Keep this" };
+          started();
+          await new Promise<void>((_resolve, reject) => {
+            signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+          });
+        },
+      );
+      await ready;
+      await cancelChatRun(context, cancellable.runId, "workspace");
+      await processing;
+      const stopped = await getChatRequest(context, cancellable.requestId, "workspace");
+      assert.equal(stopped.status, "stopped");
+      assert.equal(stopped.text, "Keep this");
+
       let calls = 0;
       const queueEnv = { ...env, QUEUE_REDIS_URL: process.env.ZILOBASE_QUEUE_VERIFY_URL };
       const queue = createNodeQueueRuntime(queueEnv, {
@@ -219,6 +309,11 @@ try {
         await queue.stop();
         ports.jobs = { dispatch: async () => {} };
       }
+      await client.db.delete(session).where(eq(session.id, "session"));
+      await assert.rejects(
+        readChatRunPage(context, recovered.runId, "workspace", 0),
+        /Session expired/,
+      );
       console.info(
         "Durable AI PostgreSQL: idempotency, atomic admission, encryption, fencing, replay, cancellation and access revocation passed.",
       );

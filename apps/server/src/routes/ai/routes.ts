@@ -5,7 +5,7 @@ import {
   getChatRequest,
   readChatRun,
 } from "../../services/ai/runs";
-import { chatRunResponse } from "./durable-stream";
+import { chatRunResponse, legacyChatRunResponse } from "./durable-stream";
 import { listChatThreads, getChatThread, deleteChatThread } from "../../services/ai/conversations";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
@@ -25,7 +25,10 @@ aiRoutes.use(
   }),
 );
 aiRoutes.post("/chat", jsonValidator(chatRequestSchema), async (c) => {
-  const prepared = await prepareChat(serverOperationContext(c), c.req.valid("json"));
+  const context = serverOperationContext(c);
+  if (durableChatEnabled(context.env ?? {}))
+    return legacyChatRunResponse(context, await admitChatRun(context, c.req.valid("json")));
+  const prepared = await prepareChat(context, c.req.valid("json"));
   const cancellation = new AbortController();
   const signal = AbortSignal.any([
     c.req.raw.signal,

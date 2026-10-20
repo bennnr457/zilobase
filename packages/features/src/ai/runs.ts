@@ -22,7 +22,10 @@ export type ChatRunSnapshot = {
 export type ChatRunReceipt = ChatRunSnapshot & { requestId: string; context?: BuildContextResult };
 export type ChatRunEvent = ChatEvent | { type: "status"; status: ChatRunStatus };
 export type ChatRunEnvelope = { version: 1; runId: string; seq: number; event: ChatRunEvent };
-export const terminalChatRun = (status: ChatRunStatus) => !["queued", "running"].includes(status);
+export const terminalChatRun = (
+  status: ChatRunStatus,
+): status is Exclude<ChatRunStatus, "queued" | "running"> =>
+  !["queued", "running"].includes(status);
 
 const eventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("status"), status: chatRunStatusSchema }),

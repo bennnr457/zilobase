@@ -1,3 +1,7 @@
+import {
+  recordBackgroundCounter,
+  backgroundAttributes,
+} from "../../infrastructure/background/telemetry";
 import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import { runWithIndependentDbEnv } from "../../infrastructure/database";
 import { createHash, randomUUID } from "node:crypto";
@@ -16,6 +20,7 @@ import {
   askAiRunInput,
   askAiThread,
   askAiTurn,
+  session,
 } from "../../infrastructure/database/schema";
 import {
   backgroundTransaction,
@@ -144,7 +149,7 @@ export async function admitChatRun(
         },
       ],
       maxOutputTokens: budget.output,
-      model: String(context.env.AI_MODEL || DEFAULT_CHAT_MODEL),
+      model: String(context.env.AI_MODEL ?? "").trim() || DEFAULT_CHAT_MODEL,
       instructions:
         CHAT_INSTRUCTIONS +
         (history.omitted
@@ -171,7 +176,7 @@ export async function admitChatRun(
         workspaceId: request.workspaceId,
         sessionId: context.authentication.session!.id,
         cellId: getBackgroundCellId(context.env),
-        model: String(context.env.AI_MODEL || DEFAULT_CHAT_MODEL),
+        model: String(context.env.AI_MODEL ?? "").trim() || DEFAULT_CHAT_MODEL,
         background: backgroundProviderEnabled(context.env),
         deadlineAt: deadline,
       })
@@ -223,6 +228,20 @@ export async function readChatRun(
   executor: Pick<typeof db, "select"> = db,
 ) {
   await authorizeChatWorkspace(context, workspaceId);
+  const loginId = context.authentication.session?.id;
+  if (context.authentication.authMethod !== "session" || !loginId)
+    throw new ServerOperationError({ error: "Session required" }, 401);
+  const [login] = await executor
+    .select({ id: session.id })
+    .from(session)
+    .where(
+      and(
+        eq(session.id, loginId),
+        eq(session.userId, context.authentication.user!.id),
+        gt(session.expiresAt, new Date()),
+      ),
+    );
+  if (!login) throw new ServerOperationError({ error: "Session expired" }, 401);
   const [found] = await executor
     .select({ run: askAiRun, turn: askAiTurn })
     .from(askAiRun)
@@ -278,6 +297,10 @@ export async function cancelChatRun(
   workspaceId: string,
 ) {
   await readChatRun(context, runId, workspaceId);
+  recordBackgroundCounter(
+    "ai_cancellation",
+    backgroundAttributes(context.env, "ai.generate", "requested"),
+  );
   await db.transaction(async (tx) => {
     const [run] = await tx.select().from(askAiRun).where(eq(askAiRun.id, runId)).for("update");
     if (!run || isRunTerminal(run.status)) return;

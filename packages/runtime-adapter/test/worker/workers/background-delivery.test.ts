@@ -11,6 +11,7 @@ const queues = {
   fast: "zilobase-background-fast",
   automation: "zilobase-automation-runs",
   calendar: "zilobase-calendar-jobs",
+  ai: "zilobase-ai-runs",
 };
 const worker = createBackgroundWorker();
 const env = { ZILOBASE_CELL_ID: "fixture" };
@@ -53,6 +54,13 @@ describe("Miniflare shared queue consumption", () => {
     await deliver(task, "zilobase-background-fast", 6);
     expect(backgroundFixture.exhausted).toEqual([task.taskId]);
     expect(backgroundFixture.completed.size).toBe(0);
+  });
+  it("AI dead letters finalize delivery without starting another generation", async () => {
+    const task = createBackgroundTaskV2({ env, kind: "ai.generate", resourceId: "failed-ai" });
+    const result = await deliver(task, "zilobase-ai-runs-dlq");
+    expect(backgroundFixture.exhausted).toEqual([task.taskId]);
+    expect(backgroundFixture.executed).toEqual([]);
+    expect(result.retryMessages).toHaveLength(0);
   });
   it("records DLQ exhaustion without invoking the feature", async () => {
     const task = createBackgroundTaskV2({

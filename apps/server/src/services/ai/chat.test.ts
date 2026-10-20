@@ -4,7 +4,7 @@ vi.mock("../operations/context", async (original) => ({
   runServerOperation: async (_context: unknown, run: () => Promise<unknown>) => run(),
 }));
 import { MockLanguageModelV4 } from "ai/test";
-import { prepareChat } from "./chat";
+import { configuredChatModel, DEFAULT_CHAT_MODEL, prepareChat } from "./chat";
 import type { ServerOperationContext } from "../operations/context";
 import type { ChatRequest } from "@zilobase/features/runtime";
 import type { BuildContextResult } from "@zilobase/page-context";
@@ -27,6 +27,27 @@ const built: BuildContextResult = {
   trimmedAttachmentIds: [],
 };
 const context = { env: {} } as ServerOperationContext;
+
+test("chat uses the default model with an existing API key and honors model overrides", () => {
+  const env = { OPENAI_API_KEY: "test-key" };
+  expect(configuredChatModel({ ...context, env })).toMatchObject({
+    modelId: DEFAULT_CHAT_MODEL,
+  });
+  expect(configuredChatModel({ ...context, env: { ...env, AI_MODEL: " " } })).toMatchObject({
+    modelId: DEFAULT_CHAT_MODEL,
+  });
+  expect(
+    configuredChatModel({ ...context, env: { ...env, AI_MODEL: "custom-model" } }),
+  ).toMatchObject({
+    modelId: "custom-model",
+  });
+});
+
+test("chat requires a server API key even with a default model", () => {
+  expect(() => configuredChatModel(context)).toThrow(
+    "Ask AI needs OPENAI_API_KEY configured on the server",
+  );
+});
 
 test("chat sends authorized context to the SDK and emits text plus usage", async () => {
   const model = new MockLanguageModelV4({
