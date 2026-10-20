@@ -160,40 +160,54 @@ Configure `OPENAI_API_KEY` in the server environment. Ask AI defaults to
 Responses API model available to your key. Credentials stay on the server. Ask AI uses the same authenticated API
 origin for web and desktop, and streams responses from `POST /ai/chat`.
 
-Users attach authorized workspace pages and databases with `@`. Open editor
-content is captured for the current turn. Each database source is included once,
-with all accessible view configurations. The context inspector reports omissions.
+Users mention authorized workspace pages and databases with `@`. Mentions contain
+resource references only. The model calls `describe_source`, `read_page`,
+`query_records`, `read_record`, and `aggregate_records` to fetch saved content.
+It can follow references returned by those reads, including embedded databases,
+linked pages, relation values and record page bodies. Every operation checks
+current permissions and the pinned workspace. There is no workspace search tool
+and no write tool. Unsaved editor drafts and client-supplied history are excluded.
 
-Chat history is private to its creator and workspace. Conversations persist until
-explicitly deleted, or until their workspace/account is deleted. Deleting a chat
-cascades to its turns. Full source markdown and local editor snapshots are not
-stored; historical inspection shows IDs, revisions and coverage. Source access is
-rechecked before history is displayed or sent to a model. Inaccessible history
-requires a new chat. Without durable streaming enabled, generation stops with the request; abandoned
-turns become interrupted after the three-minute generation deadline and grace period.
+Database queries use bounded SQL reads with property projection, scalar AND
+filters, stable sorting, and opaque revision-checked continuation cursors. Saved
+view filters do not apply implicitly. Counts and numeric aggregates run on the
+server over matching records, rather than the first result page. Computed-property
+reads and filters, grouped aggregates, and saved-view queries return unsupported-query errors.
+Page reads split large individual blocks and paginate content and references.
+A changed source invalidates its cursor; results always disclose whether more
+pages remain. There is no fixed 200-record ceiling across pages.
 
-Ask AI bounds each source export to 200 records before rendering; all authorized
-property definitions and view configurations remain available. The inspector
-shows acquired/included totals and any omitted page blocks, records, or history.
-Set `AI_CONTEXT_WINDOW_TOKENS` to the configured OpenAI model's context window
-(default 32768, minimum 8192). The input budget conservatively uses UTF-8 bytes as
-an upper bound for byte-level text tokens, reserves 4096 output tokens plus message
-overhead, and keeps the separate 2 MB request and 48000-character context limits.
-Metadata that cannot fit blocks the send with a remove-attachment message.
-Source citation markers resolve only against the answer's authorized manifest.
-Context logging is off by default; local `zilobaseDebugAiContext=1` enables
-metadata diagnostics, and `zilobaseDebugAiContextContent=1` additionally opts into
-raw content logging. Neither is needed for normal chat.
+The runtime uses AI SDK's `ToolLoopAgent` and reserves model usage before each
+step. Configure these limits on both API and background workers:
 
-Run `node scripts/ai/test-isolated.mjs` from the repository root to verify schema
-migration, fresh authorized context, bounded exports, request deduplication,
-private conversation access, interruption, revocation, and deletion in temporary
-PostgreSQL. `npm run test:editor:browser -- ai-presentation.spec.mjs` covers mentions,
-editor snapshots, citation navigation, retries, stop, reloads, presentation changes,
-and workspace switches with deterministic transport. Provider failures and HTTP
-stream cancellation have focused tests in `src/services/ai` and `src/routes/ai`.
-The `/ai` screen remains a web route; `/ai/chat` and `/ai/threads` are API routes
-in the combined Node server. Web and desktop share the authenticated fetch stream.
+| Variable                   | Default | Meaning                                                |
+| -------------------------- | ------- | ------------------------------------------------------ |
+| `AI_CONTEXT_WINDOW_TOKENS` | 32768   | Configured model context window                        |
+| `AI_MAX_STEPS`             | 12      | Maximum model steps per run, including final synthesis |
+| `AI_MAX_TOOL_CALLS`        | 24      | Maximum read operations per run                        |
+| `AI_TOOL_RESULT_BYTES`     | 6000    | Maximum serialized result bytes per tool               |
+| `AI_RUN_TOKEN_BUDGET`      | 128000  | Conservative cumulative token reservation per run      |
+
+A record page defaults to 50 records and accepts at most 100; result bytes may
+reduce the number actually returned. At most three read tools run concurrently.
+SQL reads have a ten-second statement deadline. The runtime reserves 4096 output
+tokens, includes tool definitions in context accounting, and removes whole older
+tool exchanges when necessary. UTF-8 bytes conservatively bound text tokens.
+Omitted exchanges are disclosed. The HTTP request ceiling remains 2 MB.
+
+Conversation history is private to its creator and workspace and remains until
+deleted. Source permissions are rechecked before display, model replay and reads.
+Citations resolve only against successfully read source evidence. Durable runs
+persist an encrypted working transcript and cursors for up to one hour; permanent
+history retains answer text, source metadata and tool activity, not raw tool
+payloads. Without durable mode, disconnecting stops the request-owned run.
+
+Run `node scripts/ai/test-isolated.mjs` for temporary PostgreSQL domain-query,
+pagination, authorization and conversation checks. `npm run test:ai:durable`
+adds disposable PostgreSQL/Valkey tests for worker recovery and a complete
+mention → tool read → next-page continuation. Browser coverage includes
+`ai-tools.spec.mjs`, `ai-durable.spec.mjs` and the mention/presentation tests.
+Provider calls in these tests are deterministic and do not spend API tokens.
 
 For an optional live smoke check, supply `OPENAI_API_KEY` and set
 `ZILOBASE_AI_VERIFY_MODEL` to an available Responses model when running the isolated
@@ -202,7 +216,8 @@ that the streamed answer persists and reloads. This does not set deployment defa
 
 ### Durable Ask AI rollout
 
-Deploy migration `0114_ask_ai_durable_streaming` before enabling `AI_DURABLE_STREAMING_ENABLED=true`.
+Deploy migrations through `0115_ask_ai_read_tools` before using the tool runtime.
+Enable `AI_DURABLE_STREAMING_ENABLED=true` for background generation and continuation.
 The API and producer must use the same database, cell ID, model configuration,
 and `AI_RUN_PAYLOAD_ENCRYPTION_KEY` (32 random bytes, base64). Generate the key
 with `openssl rand -base64 32` and supply it through the deployment secret manager.
@@ -226,21 +241,19 @@ with durability enabled this is an admission/subscription wrapper. Disconnecting
 any subscription leaves the producer running. Stop calls `/ai/runs/:id/cancel`.
 The full-page AI route retains the selected thread in its `thread` search parameter.
 
-Output and replay cursors commit atomically before publication. Input is encrypted
-and deleted on terminal completion; its maximum lifetime is one hour. Generation
-has a three-minute invocation deadline. Terminal replay events expire after 24 hours,
-while thread messages remain readable. A compacted journal resets from the saved
-snapshot. Active source and session access is rechecked during execution.
+Tool transcripts, evidence, progress and replay sequences commit under a fenced
+worker lease before the next model step. A replacement worker resumes from the
+last committed transcript and replaces uncommitted text. Read attempts can repeat
+after an uncertain failure; usage reservations include those attempts. Runs have
+a two-minute deadline and bounded worker retries. Completed checkpoints remain
+encrypted until their one-hour expiry so Continue reading can start a new bounded
+run in the same thread, with the same source scope and pending cursors. Source
+permissions are rechecked before continuation. Terminal replay events expire
+after 24 hours; conversation messages remain readable.
 
-`AI_PROVIDER_BACKGROUND_ENABLED=true` additionally enables resuming a saved OpenAI
-background Responses ID and sequence. Test support for the configured model before
-turning this on; it never substitutes a different model. With `store:false`, OpenAI
-retains background responses temporarily (roughly ten minutes), so very late
-worker recovery can become interrupted. With ordinary provider streaming, a
-producer crash preserves committed output and marks the run interrupted rather
-than silently starting another paid generation. A user retry submits a new turn.
-See [OpenAI background mode](https://developers.openai.com/api/docs/guides/background)
-and [Cloudflare queue limits](https://developers.cloudflare.com/queues/platform/limits/).
+The `AI_PROVIDER_BACKGROUND_ENABLED` flag applies only to previously admitted
+version-one runs. New tool runs recover at application transcript boundaries
+rather than depending on a single provider response ID.
 
 Run `npm run test:ai:durable` for disposable PostgreSQL/Valkey migration, queue,
 idempotency, replay, cancellation, recovery, and authorization checks. It uses a

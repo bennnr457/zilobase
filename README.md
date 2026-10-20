@@ -85,9 +85,11 @@ docker compose --env-file .env.selfhost -f docker-compose.yml -f docker-compose.
 
 ## Ask AI
 
-The Ask AI screens remain in the web app: a full page, a docked sidebar, and a
-floating panel. The server chat, settings, connector, and job implementation is
-removed, so those screens have no backend.
+Ask AI is available as a full page, docked sidebar, and floating panel. Mention
+pages or databases with `@`; the read-only agent fetches saved content through
+authorized tools and follows links discovered in those sources. Reads paginate
+with explicit coverage and citations. Durable mode supports reload recovery and
+Continue reading. See [server configuration](apps/server/README.md#ask-ai).
 
 ## Development
 
