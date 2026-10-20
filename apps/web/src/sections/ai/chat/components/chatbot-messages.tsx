@@ -8,6 +8,7 @@ import { SelectedSources } from "./selected-sources";
 import { lazy, Suspense } from "react";
 import type { ActivityActions, AgentActivity } from "../lib/agent-activity";
 import { useSmoothText } from "../hooks/use-smooth-text";
+import { Button } from "@/components/ui/button";
 
 const LazyMessageActivity = lazy(() => import("./message-activity"));
 
@@ -22,6 +23,7 @@ export function ChatbotMessages({
   onRetry,
   activityByMessage,
   activityActions,
+  onContinue,
 }: {
   isSidebar: boolean;
   messages: ChatMessage[];
@@ -30,6 +32,7 @@ export function ChatbotMessages({
   onRetry?: () => void;
   activityByMessage?: Readonly<Record<string, readonly AgentActivity[]>>;
   activityActions?: ActivityActions;
+  onContinue?: (runId: string) => void;
 }) {
   return (
     <div
@@ -51,6 +54,7 @@ export function ChatbotMessages({
                   activities={activityByMessage?.[message.id]}
                   activityActions={activityActions}
                   onRetry={message === messages.at(-1) ? onRetry : undefined}
+                  onContinue={message === messages.at(-1) ? onContinue : undefined}
                 />
               ) : (
                 <MessageContent>
@@ -72,6 +76,7 @@ function AssistantMessage({
   activities,
   activityActions,
   onRetry,
+  onContinue,
 }: {
   message: ChatMessage;
   active: boolean;
@@ -79,7 +84,21 @@ function AssistantMessage({
   activities?: readonly AgentActivity[];
   activityActions?: ActivityActions;
   onRetry?: () => void;
+  onContinue?: (runId: string) => void;
 }) {
+  activities =
+    activities ??
+    message.progress?.activities.map((activity) => ({
+      type: "tool" as const,
+      id: activity.id,
+      title: activity.label,
+      status: activity.status === "running" && !active ? ("stopped" as const) : activity.status,
+      output:
+        activity.returned === undefined
+          ? undefined
+          : `${activity.returned} items read${activity.hasMore ? " · more available" : ""}`,
+      error: activity.error,
+    }));
   const displayText = chatDisplayText(message.text);
   const { text, isSmoothing } = useSmoothText(
     displayText,
@@ -110,6 +129,23 @@ function AssistantMessage({
           <MessageResponse isAnimating={rendering}>{text}</MessageResponse>
         )}
         {text && citations.length > 0 && <AnswerSources citations={citations} />}
+        {!!message.context?.omissions.length && !rendering && (
+          <p className="text-xs text-content-secondary">{message.context.omissions.join(" ")}</p>
+        )}
+        {!rendering &&
+          message.status === "completed" &&
+          message.runId &&
+          message.progress?.canContinue &&
+          onContinue && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onContinue(message.runId!)}
+            >
+              Continue reading
+            </Button>
+          )}
       </MessageContent>
       {displayText && !rendering && <MessageActions text={displayText} onRetry={onRetry} />}
     </>

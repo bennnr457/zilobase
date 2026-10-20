@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { BuildContextResult } from "@zilobase/page-context";
 import type { ChatEvent } from "./contracts";
+import { chatReadProgressEventSchema, type ChatReadProgress } from "./tools";
 
 export const chatRunStatusSchema = z.enum([
   "queued",
@@ -18,6 +19,8 @@ export type ChatRunSnapshot = {
   status: ChatRunStatus;
   seq: number;
   text: string;
+  context?: BuildContextResult;
+  progress?: ChatReadProgress;
 };
 export type ChatRunReceipt = ChatRunSnapshot & { requestId: string; context?: BuildContextResult };
 export type ChatRunEvent = ChatEvent | { type: "status"; status: ChatRunStatus };
@@ -30,6 +33,8 @@ export const terminalChatRun = (
 const eventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("status"), status: chatRunStatusSchema }),
   z.object({ type: z.literal("delta"), text: z.string().max(65_536) }),
+  z.object({ type: z.literal("replace-text"), text: z.string().max(524_288) }),
+  chatReadProgressEventSchema,
   z.object({
     type: z.literal("done"),
     status: z.enum(["completed", "stopped"]),
@@ -57,7 +62,13 @@ export function applyChatRunEvent(
   return {
     ...snapshot,
     seq: envelope.seq,
-    text: event.type === "delta" ? snapshot.text + event.text : snapshot.text,
+    text:
+      event.type === "delta"
+        ? snapshot.text + event.text
+        : event.type === "replace-text"
+          ? event.text
+          : snapshot.text,
+    ...(event.type === "read-progress" ? { context: event.context, progress: event.progress } : {}),
     status:
       event.type === "status" || event.type === "done"
         ? event.status

@@ -1,85 +1,26 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import { usePrepareChatContext } from "@zilobase/features/ai/react";
-import type { LocalPageSnapshot } from "@zilobase/features/ai";
+import { useState } from "react";
 import type { ResourceRef } from "@zilobase/page-context";
 import type { AppSearchResult } from "@zilobase/features/search";
-import { usePageEditorRegistry } from "@/sections/pages/editor/runtime/components/page-editor-registry";
 
-export function useChatAttachments(workspaceId: string | null) {
+/** Mentions identify sources. Content is read only by server tools. */
+export function useChatAttachments() {
   const [attachments, setAttachments] = useState<AppSearchResult[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const active = useRef<AbortController | null>(null);
-  const prepare = usePrepareChatContext();
-  const registry = usePageEditorRegistry();
-  useLayoutEffect(() => () => active.current?.abort(), []);
-  const cancel = () => {
-    active.current?.abort();
-    active.current = null;
-    setBusy(false);
-  };
-  const reset = () => {
-    cancel();
-    setAttachments([]);
-    setError(null);
-  };
-  const add = (item: AppSearchResult) => {
-    cancel();
-    setError(null);
+  const add = (item: AppSearchResult) =>
     setAttachments((items) =>
       items.some((entry) => entry.id === item.id && entry.type === item.type)
         ? items
         : [...items, item].slice(0, 20),
     );
-  };
-  const remove = (item: ResourceRef) => {
-    cancel();
-    setError(null);
+  const remove = (item: ResourceRef) =>
     setAttachments((items) =>
       items.filter((entry) => entry.id !== item.id || entry.type !== item.type),
     );
+  return {
+    attachments,
+    setAttachments,
+    add,
+    remove,
+    replace: setAttachments,
+    reset: () => setAttachments([]),
   };
-  const replace = (items: AppSearchResult[]) => {
-    cancel();
-    setError(null);
-    setAttachments(items);
-  };
-  const build = async () => {
-    if (!workspaceId) throw new Error("Select a workspace first");
-    active.current?.abort();
-    const controller = new AbortController();
-    active.current = controller;
-    setBusy(true);
-    setError(null);
-    const roots = attachments.map(({ id, type }) => ({ id, type }));
-    try {
-      const snapshots: LocalPageSnapshot[] = roots.flatMap((root) => {
-        if (root.type !== "page") return [];
-        const content = registry.getEditorHandle(root.id)?.getContentJson();
-        return content == null
-          ? []
-          : [
-              {
-                pageId: root.id,
-                content: structuredClone(content),
-                capturedAt: new Date().toISOString(),
-              },
-            ];
-      });
-      const result = await prepare({ workspaceId, roots, snapshots, signal: controller.signal });
-      controller.signal.throwIfAborted();
-      if (result.status === "blocked") throw new Error(result.omissions.join(" "));
-      return { result, roots, snapshots };
-    } catch (cause) {
-      if (!controller.signal.aborted)
-        setError(cause instanceof Error ? cause.message : "Could not prepare context");
-      throw cause;
-    } finally {
-      if (active.current === controller) {
-        active.current = null;
-        setBusy(false);
-      }
-    }
-  };
-  return { attachments, setAttachments, busy, error, add, remove, replace, build, cancel, reset };
 }

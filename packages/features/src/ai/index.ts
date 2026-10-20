@@ -1,4 +1,3 @@
-export { prepareChatContext } from "./operations";
 export type { LocalPageSnapshot } from "./context";
 export type {
   ChatRequest,
@@ -19,3 +18,5 @@ export type {
 export { applyChatRunEvent, terminalChatRun, chatRunEnvelopeSchema } from "./runs";
 
 export type { ChatReceiptStorage, ChatSubmission } from "./durable";
+
+export type { ChatToolName, ChatToolActivity, ChatReadProgress } from "./tools";

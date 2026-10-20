@@ -96,6 +96,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
   const pendingThreadReads: Array<() => void> = [];
   const controls = {
     durable: new URLSearchParams(location.search).get("durableAi") === "1",
+    toolMode: new URLSearchParams(location.search).get("toolAi") === "1",
     workspaceId: "workspace",
     holdReads: false,
     holdStream: false,
@@ -130,6 +131,14 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       ["workspace", "other"].map((id) => ({ id, name: id, slug: id, createdAt: at })),
   };
   async function api(path: string, options?: RequestInit): Promise<unknown> {
+    if (path.startsWith("/ai/sources/")) {
+      controls.reads.push(path);
+      const type = path.split("/")[3];
+      const id = path.split("/")[4]?.split("?")[0];
+      return type === "database"
+        ? { title: "Tasks", emoji: "🗃️" }
+        : { title: id === "main" ? page.name : (pages[1]?.name ?? "Page"), emoji: "📝" };
+    }
     if (path === "/ai/capabilities") return { durable: controls.durable };
     if (path === "/ai/turns") {
       const request = JSON.parse(String(options?.body)) as ChatRequest;
@@ -168,6 +177,18 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         text: "Partial",
         context,
       };
+      if (controls.toolMode)
+        detail.run.progress = {
+          activities: [
+            {
+              id: "read-records",
+              name: "query_records",
+              label: "Reading records",
+              status: "running",
+            },
+          ],
+          canContinue: false,
+        };
       detail.thread.status = "running";
       detail.messages.push(
         { id: `${request.requestId}:user`, role: "user", text: request.text },
@@ -308,16 +329,45 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
               if (!controls.holdStream && run.status === "running") {
                 run.text = "Partial answer";
                 run.status = "completed";
-                run.seq = 3;
+                run.seq = controls.toolMode ? 4 : 3;
+                if (controls.toolMode) {
+                  run.progress = {
+                    activities: [
+                      {
+                        id: "read-records",
+                        name: "query_records",
+                        label: "Reading records",
+                        status: "completed",
+                        returned: 50,
+                        hasMore: !controls.requests.at(-1)?.continueFromRunId,
+                      },
+                    ],
+                    canContinue: !controls.requests.at(-1)?.continueFromRunId,
+                  };
+                  detail.messages.at(-1)!.progress = run.progress;
+                  detail.messages.at(-1)!.runId = run.runId;
+                }
                 detail.messages.at(-1)!.text = run.text;
                 detail.messages.at(-1)!.status = "completed";
                 detail.thread.status = "completed";
                 persist();
               }
               if (run.status === "completed") {
-                if (cursor < 2) write(2, { type: "delta", text: " answer" });
-                if (cursor < 3) write(3, { type: "done", status: "completed" });
-                cursor = 3;
+                if (controls.toolMode) {
+                  if (cursor < 2)
+                    write(2, {
+                      type: "read-progress",
+                      context: { ...run.context, markdown: "" },
+                      progress: run.progress,
+                    });
+                  if (cursor < 3) write(3, { type: "delta", text: " answer" });
+                  if (cursor < 4) write(4, { type: "done", status: "completed" });
+                  cursor = 4;
+                } else {
+                  if (cursor < 2) write(2, { type: "delta", text: " answer" });
+                  if (cursor < 3) write(3, { type: "done", status: "completed" });
+                  cursor = 3;
+                }
                 stop();
                 controller.close();
               } else if (run.status === "stopped") {
@@ -372,7 +422,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       id: `${request.requestId}:assistant`,
       role: "assistant" as const,
       text: "",
-      status: "streaming" as "streaming" | "completed" | "stopped",
+      status: "streaming" as "streaming" | "completed" | "stopped" | "failed",
       roots: request.roots,
       context: {
         ...context,
@@ -413,6 +463,14 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
           init.signal?.addEventListener("abort", stop, { once: true });
           const startAnswer = () => {
             if (closed) return;
+            if (controls.forbidden) {
+              closed = true;
+              assistant.status = "failed";
+              persist();
+              write({ type: "error", message: "Source unavailable. Attach an accessible source." });
+              controller.close();
+              return;
+            }
             assistant.text = answer;
             write({ type: "delta", text: answer });
             persist();
@@ -432,7 +490,11 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
             controls.holdFirstToken = false;
             startAnswer();
           };
-          if (!controls.holdFirstToken) startAnswer();
+          if (controls.holdReads)
+            releaseRead = () => {
+              if (!controls.holdFirstToken) startAnswer();
+            };
+          else if (!controls.holdFirstToken) startAnswer();
         },
         cancel() {
           if (!closed) {

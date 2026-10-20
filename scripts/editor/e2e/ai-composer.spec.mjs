@@ -28,7 +28,7 @@ test("Shift+Enter and IME retain the draft; Enter submits the completed text onc
   expect(sent[0].text).toBe("Line one\n日本語");
 });
 
-test("repeated form submission is ignored during preparation and Stop stays available", async ({
+test("repeated form submission is ignored during a source read and Stop stays available", async ({
   page,
 }) => {
   await page.goto(url);
@@ -47,6 +47,6 @@ test("repeated form submission is ignored during preparation and Stop stays avai
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
   await expect(input).toBeEnabled();
-  await expect(draft(page)).toHaveValue("Prepare this question");
-  expect(await requests(page)).toHaveLength(0);
+  await expect(draft(page)).toHaveValue("");
+  expect(await requests(page)).toHaveLength(1);
 });

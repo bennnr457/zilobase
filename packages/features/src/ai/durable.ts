@@ -7,7 +7,7 @@ import {
   terminalChatRun,
   type ChatRunReceipt,
 } from "./runs";
-import { chatThreadsKey } from "./queries";
+import { chatThreadsKey, chatThreadKey } from "./queries";
 
 export type ChatSubmission = { requestId: string; workspaceId: string; createdAt: number };
 export type ChatReceiptStorage = {
@@ -144,7 +144,10 @@ export async function followChatRun(
     const key = receiptScope(scope.read.identity, workspaceId);
     await context.chatReceipts?.clear(key, run.requestId);
     scope.assertCurrent();
-    void context.queryClient.invalidateQueries({ queryKey: ["ai", workspaceId] });
+    void context.queryClient.invalidateQueries({ queryKey: chatThreadsKey(workspaceId) });
+    void context.queryClient.invalidateQueries({
+      queryKey: chatThreadKey(workspaceId, run.threadId),
+    });
   }
   return run;
 }

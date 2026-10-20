@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai";
 const composer = (page) => page.getByRole("textbox", { name: "Ask AI message" });
 
-test("submitted turns show preparation immediately, then Thinking until the first token", async ({
+test("submitted turns show Thinking while tools read sources before the first token", async ({
   page,
 }) => {
   await page.goto(url);
@@ -18,7 +18,7 @@ test("submitted turns show preparation immediately, then Thinking until the firs
   await writePrompt(page, "Show my selected sources");
   await composer(page).press("Enter");
   await expect(page.locator(".is-user")).toHaveText("Show my selected sources");
-  await expect(page.getByRole("status", { name: "Preparing selected sources" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Thinking", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
   await expect(page.getByRole("status", { name: "Thinking", exact: true })).toBeVisible();

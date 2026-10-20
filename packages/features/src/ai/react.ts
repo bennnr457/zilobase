@@ -1,39 +1,14 @@
 import { useCallback } from "react";
 import { useZilobaseFeatures } from "../shared/context";
-import { prepareChatContext } from "./operations";
 import type { ResourceRef } from "@zilobase/page-context";
-import { useDatabaseMetadata } from "../databases/queries/metadata";
-import { getDatabaseEmoji } from "../databases/views/appearance";
-import { usePage } from "../pages/query-hooks";
-import { readMetadataRecord } from "../pages/item-relationships";
 
-/** Draft attachments resolve current authorized metadata, never historical chat labels. */
+/** Source chips fetch only authorized identity metadata, never source content. */
 export function useChatAttachmentMetadata(workspaceId: string | null, ref: ResourceRef) {
-  const database = useDatabaseMetadata(workspaceId && ref.type === "database" ? ref.id : null);
-  const page = usePage(workspaceId && ref.type === "page" ? ref.id : null);
-  if (ref.type === "database") {
-    const data = database.data;
-    if (!database.isError && data?.database.workspaceId === workspaceId && !data.database.deletedAt)
-      return {
-        title: data.displayName,
-        emoji: getDatabaseEmoji(data.activeDataSource ?? data.database),
-      };
-  } else if (!page.isError && page.data?.workspaceId === workspaceId && !page.data.deletedAt) {
-    return { title: page.data.name, emoji: readMetadataRecord(page.data.metadata).emoji };
-  }
-  const unavailable = ref.type === "database" ? database.isError : page.isError;
-  return {
-    title: unavailable ? `Unavailable ${ref.type}` : `Loading ${ref.type}…`,
-    emoji: null,
-  };
-}
-
-export function usePrepareChatContext() {
   const context = useZilobaseFeatures();
-  return useCallback(
-    (input: Parameters<typeof prepareChatContext>[1]) => prepareChatContext(context, input),
-    [context],
-  );
+  const metadata = useQuery(chatSourceOptions(context, workspaceId ?? "", ref));
+  return metadata.data && !metadata.isError
+    ? metadata.data
+    : { title: metadata.isError ? `Unavailable ${ref.type}` : `Loading ${ref.type}…`, emoji: null };
 }
 
 import { sendChat } from "./stream";
@@ -54,6 +29,7 @@ import {
   chatThreadOptions,
   chatThreadsKey,
   chatThreadKey,
+  chatSourceOptions,
   deleteChatConversation,
 } from "./queries";
 export function useChatThreads(workspaceId: string, threadId: string | null, enabled: boolean) {

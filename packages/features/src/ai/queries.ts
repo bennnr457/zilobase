@@ -1,6 +1,26 @@
 import { queryOptions } from "@tanstack/react-query";
 import { captureClientOperation, type ClientOperationContext } from "../shared/operation-context";
 import type { ChatThread, ChatThreadDetail } from "./contracts";
+import type { ResourceRef } from "@zilobase/page-context";
+
+export const chatSourceOptions = (
+  { apiFetch, queryClient }: ClientOperationContext,
+  workspaceId: string,
+  ref: ResourceRef,
+) =>
+  queryOptions({
+    queryKey: ["ai", workspaceId, "source", ref.type, ref.id] as const,
+    enabled: !!workspaceId,
+    staleTime: 30_000,
+    queryFn: ({ signal }) =>
+      captureClientOperation({ apiFetch, queryClient }).context.apiFetch<{
+        title: string;
+        emoji: string | null;
+      }>(
+        `/ai/sources/${ref.type}/${encodeURIComponent(ref.id)}?workspaceId=${encodeURIComponent(workspaceId)}`,
+        { signal },
+      ),
+  });
 
 export const chatThreadsKey = (workspaceId: string) => ["ai", workspaceId, "threads"] as const;
 export const chatThreadKey = (workspaceId: string, id: string) =>

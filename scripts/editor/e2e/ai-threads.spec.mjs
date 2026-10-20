@@ -109,7 +109,7 @@ test("new chat interrupts a stream and keeps the old conversation in sidebar his
   await expect(page.getByText("stopped", { exact: true })).toHaveCount(0);
 });
 
-test("new chat cancels context preparation before a thread exists", async ({ page }) => {
+test("new chat detaches an ongoing tool read and clears its draft", async ({ page }) => {
   await page.goto(url);
   await expect(composer(page)).toBeEnabled();
   await page.getByRole("button", { name: "Attach current page", exact: true }).click();
@@ -129,5 +129,5 @@ test("new chat cancels context preparation before a thread exists", async ({ pag
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
   await expect(draft(page)).toHaveValue("New draft");
   await expect(page.locator(".is-user")).toHaveCount(0);
-  expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(0);
+  expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(1);
 });

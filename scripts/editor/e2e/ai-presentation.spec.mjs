@@ -70,7 +70,7 @@ for (const width of [1400, 390]) {
   });
 }
 
-test("mentions use current editor content and validate citations without debug UI", async ({
+test("mentions send references without editor content and validate source citations", async ({
   page,
 }) => {
   await open(page);
@@ -86,7 +86,7 @@ test("mentions use current editor content and validate citations without debug U
   await expect(composer(page)).toBeEnabled();
   const requests = await page.evaluate(() => window.pageLayoutFixture.ai.requests);
   expect(requests).toHaveLength(1);
-  expect(JSON.stringify(requests[0].snapshots)).toContain("Edited just before sending");
+  expect(requests[0].snapshots).toEqual([]);
   await expect(
     page.locator("summary", { hasText: /Last sent context|Draft context preview/ }),
   ).toHaveCount(0);
@@ -135,10 +135,10 @@ test("stop interrupts a stalled stream and preserves the partial answer", async 
   await expect.poll(() => page.evaluate(() => window.pageLayoutFixture.ai.cancelled)).toBe(1);
 });
 
-for (const phase of ["preparation", "streaming"]) {
+for (const phase of ["tool read", "streaming"]) {
   test(`workspace switch discards old ${phase} work`, async ({ page }) => {
     await open(page);
-    if (phase === "preparation") {
+    if (phase === "tool read") {
       await page.getByRole("button", { name: "Attach current page" }).click();
       await controls(page, { holdReads: true });
     } else await controls(page, { holdStream: true });
@@ -153,19 +153,19 @@ for (const phase of ["preparation", "streaming"]) {
     await expect(page.locator(".is-assistant")).toHaveCount(0);
     await expect(composer(page)).toBeEnabled();
     await expect(draft(page)).toHaveValue("");
-    if (phase === "preparation")
-      expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(0);
+    if (phase === "tool read")
+      expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(1);
     else
       await expect.poll(() => page.evaluate(() => window.pageLayoutFixture.ai.cancelled)).toBe(1);
   });
 }
 
-test("unavailable explicit attachment blocks send and keeps the draft", async ({ page }) => {
+test("unavailable source fails its read after submission", async ({ page }) => {
   await open(page);
   await page.getByRole("button", { name: "Attach current page" }).click();
   await controls(page, { forbidden: true });
   await send(page, "Keep my question");
   await expect(page.getByRole("alert").first()).toContainText("unavailable");
-  await expect(draft(page)).toHaveValue("Keep my question");
-  expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(0);
+  await expect(draft(page)).toHaveValue("");
+  expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests.length)).toBe(1);
 });

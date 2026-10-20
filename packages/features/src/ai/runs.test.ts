@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyChatRunEvent, type ChatRunSnapshot } from "./runs";
+import { applyChatRunEvent, chatRunEnvelopeSchema, type ChatRunSnapshot } from "./runs";
 const initial: ChatRunSnapshot = {
   runId: "run",
   threadId: "thread",
@@ -21,4 +21,55 @@ test("snapshot replay ignores duplicates and accepts only the contiguous suffix"
   assert.equal(applyChatRunEvent(next, event), next);
   assert.throws(() => applyChatRunEvent(initial, { ...event, seq: 5 }), /SEQUENCE_GAP/);
   assert.throws(() => applyChatRunEvent(initial, { ...event, runId: "old" }), /MISMATCH/);
+});
+test("tool progress and replacement text replay atomically without exposing raw source content", () => {
+  const context = {
+    version: 1 as const,
+    status: "partial" as const,
+    markdown: "",
+    charCount: 0,
+    manifest: [],
+    omissions: ["More pages available"],
+    trimmedAttachmentIds: [],
+  };
+  const event = chatRunEnvelopeSchema.parse({
+    version: 1,
+    runId: "00000000-0000-4000-8000-000000000001",
+    seq: 4,
+    event: {
+      type: "read-progress",
+      context,
+      progress: {
+        activities: [
+          {
+            id: "read",
+            name: "read_page",
+            label: "Reading page",
+            status: "completed",
+            returned: 10,
+            hasMore: true,
+          },
+        ],
+        canContinue: true,
+      },
+    },
+  });
+  const snapshot = { ...initial, runId: event.runId };
+  const next = applyChatRunEvent(snapshot, event);
+  assert.equal(next.progress?.canContinue, true);
+  assert.equal(next.context?.status, "partial");
+  assert.equal(
+    applyChatRunEvent(next, {
+      ...event,
+      seq: 5,
+      event: { type: "replace-text", text: "Committed text" },
+    }).text,
+    "Committed text",
+  );
+  assert.throws(() =>
+    chatRunEnvelopeSchema.parse({
+      ...event,
+      event: { ...event.event, context: { ...context, markdown: "private page body" } },
+    }),
+  );
 });

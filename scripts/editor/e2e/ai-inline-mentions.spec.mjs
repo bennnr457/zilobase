@@ -46,7 +46,7 @@ for (const width of [1400, 390]) {
     expect(sent).toHaveLength(1);
     expect(sent[0].text).toBe("Summarize quickly please");
     expect(sent[0].roots).toEqual([{ type: "page", id: "main" }]);
-    expect(JSON.stringify(sent[0].snapshots)).toContain("Unsynced editor plan");
+    expect(sent[0].snapshots).toEqual([]);
     await expect(draft(page)).toHaveValue("");
     await expect(pills(page)).toHaveCount(1);
     expect(errors).toEqual([]);
@@ -122,7 +122,7 @@ test("selecting all and replacing the prompt removes its sources; HTML paste can
   expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].roots).toEqual([]);
 });
 
-test("inline pills stay disabled during source preparation and survive a stopped submission", async ({
+test("inline pills stay disabled during tool reads and survive a stopped submission", async ({
   page,
 }) => {
   await open(page);
@@ -139,6 +139,6 @@ test("inline pills stay disabled during source preparation and survive a stopped
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
   await expect(input(page)).toBeEnabled();
-  await expect(draft(page)).toHaveValue("Prepare this source");
+  await expect(draft(page)).toHaveValue("");
   await expect(pills(page)).toHaveCount(1);
 });

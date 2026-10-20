@@ -104,6 +104,21 @@ test("reload resumes from its snapshot cursor and ignores replay duplicates", as
   assert.equal(calls.length, 0);
   context.queryClient.clear();
 });
+test("finishing a run refreshes history without invalidating the current thread selection", async () => {
+  const { context } = fixture();
+  const key = ["ai", "workspace", "selection", "session"];
+  context.queryClient.setQueryData(key, { id: "thread", revision: 7, initialized: true });
+  context.streamFetch = async () =>
+    new Response(envelope(4, { type: "done", status: "completed" }));
+  await followChatRun(context, initial, "workspace", new AbortController().signal, () => {});
+  assert.equal(context.queryClient.getQueryState(key)?.isInvalidated, false);
+  assert.deepEqual(context.queryClient.getQueryData(key), {
+    id: "thread",
+    revision: 7,
+    initialized: true,
+  });
+  context.queryClient.clear();
+});
 test("subscriber abort cancels only the reader, with no producer cancellation", async () => {
   const { context, calls } = fixture();
   let cancelled = false;

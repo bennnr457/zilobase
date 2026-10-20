@@ -43,7 +43,7 @@ export default function Chatbot({
   const [pendingTurn, setPendingTurn] = useState<{ messages: ChatMessage[]; label: string } | null>(
     null,
   );
-  const attachmentState = useChatAttachments(workspaceId);
+  const attachmentState = useChatAttachments();
   const send = useSendChat();
   const follow = useFollowChatRun();
   const cancelRun = useCancelChatRun();
@@ -51,11 +51,7 @@ export default function Chatbot({
   const activeRun = useRef<ChatRunReceipt | null>(null);
   const [streaming, setStreaming] = useState(false);
   const selection = useChatSelection(workspaceId ?? "");
-  const threads = useChatThreads(
-    workspaceId ?? "",
-    selection.id,
-    !streaming && !attachmentState.busy,
-  );
+  const threads = useChatThreads(workspaceId ?? "", selection.id, !streaming);
   const loadedThread = useRef<string | null>(null);
   const activeSelection = useRef(selection.revision);
   useEffect(() => {
@@ -104,6 +100,8 @@ export default function Chatbot({
     [],
   );
   useLayoutEffect(() => {
+    // Query observers can briefly render an older revision after an imperative selection.
+    if (!selection.isCurrent(selection.revision)) return;
     if (activeSelection.current === selection.revision) return;
     activeSelection.current = selection.revision;
     const controller = streamController.current;
@@ -150,6 +148,9 @@ export default function Chatbot({
             ? {
                 ...message,
                 text: run.text,
+                context: run.context,
+                progress: run.progress,
+                runId: run.runId,
                 status: terminalChatRun(run.status) ? run.status : "streaming",
               }
             : message,
@@ -172,17 +173,9 @@ export default function Chatbot({
   }, [savedRun, workspaceId, selection, follow, threads]);
   const threadReady =
     selection.initialized && (selection.id === null || loadedThread.current === selection.id);
-  const onSubmit = async (message: PromptInputMessage) => {
+  const onSubmit = async (message: PromptInputMessage, continueFromRunId?: string) => {
     const nextText = message.text.trim();
-    if (
-      !nextText ||
-      !threadReady ||
-      streamController.current ||
-      attachmentState.busy ||
-      streaming ||
-      !workspaceId
-    )
-      return;
+    if (!nextText || !threadReady || streamController.current || streaming || !workspaceId) return;
     setChatError(null);
     activeRun.current = null;
     const controller = new AbortController();
@@ -195,20 +188,20 @@ export default function Chatbot({
         { id: userId, role: "user", text: nextText },
         { id: assistantId, role: "assistant", text: "", status: "streaming" },
       ],
-      label: attachmentState.attachments.length ? "Preparing selected sources" : "Thinking",
+      label: "Thinking",
     });
     let requestSelection = selection.revision;
     let accepted = false;
     try {
-      const prepared = await attachmentState.build();
-      if (!selection.isCurrent(requestSelection)) controller.abort();
+      const roots = attachmentState.attachments.map(({ id, type }) => ({ id, type }));
+      const prepared = { roots, snapshots: [] };
       controller.signal.throwIfAborted();
-      setPendingTurn((current) => (current ? { ...current, label: "Thinking" } : null));
       let nextRequest: ChatRequest = {
         workspaceId,
         requestId: crypto.randomUUID(),
         threadId: selection.id ?? undefined,
         text: nextText,
+        ...(continueFromRunId ? { continueFromRunId } : {}),
         roots: prepared.roots,
         snapshots: prepared.snapshots,
         history: [],
@@ -219,7 +212,7 @@ export default function Chatbot({
           threadId: request.threadId,
           text: request.text,
           roots: request.roots,
-          snapshots: request.snapshots.map(({ pageId, content }) => ({ pageId, content })),
+          continueFromRunId: request.continueFromRunId,
         });
       if (pendingRequest.current && signature(pendingRequest.current) === signature(nextRequest))
         nextRequest = pendingRequest.current;
@@ -232,7 +225,8 @@ export default function Chatbot({
         if (event.type === "context") {
           if (event.threadId) {
             loadedThread.current = event.threadId;
-            requestSelection = selection.select(event.threadId).revision;
+            if (event.threadId !== selection.id)
+              requestSelection = selection.select(event.threadId).revision;
             activeSelection.current = requestSelection;
           }
           accepted = true;
@@ -259,9 +253,26 @@ export default function Chatbot({
                 ? {
                     ...entry,
                     text: event.run.text,
+                    context: event.run.context,
+                    progress: event.run.progress,
+                    runId: event.run.runId,
                     status: terminalChatRun(event.run.status) ? event.run.status : "streaming",
                   }
                 : entry,
+            ),
+          );
+        } else if (event.type === "read-progress") {
+          setMessages((current) =>
+            current.map((entry) =>
+              entry.id === assistantId
+                ? { ...entry, context: event.context, progress: event.progress }
+                : entry,
+            ),
+          );
+        } else if (event.type === "replace-text") {
+          setMessages((current) =>
+            current.map((entry) =>
+              entry.id === assistantId ? { ...entry, text: event.text } : entry,
             ),
           );
         } else if (event.type === "delta")
@@ -329,6 +340,13 @@ export default function Chatbot({
                 streaming={streaming}
                 pendingLabel={pendingTurn?.label}
                 onRetry={streaming ? undefined : retryAnswer}
+                onContinue={
+                  streaming
+                    ? undefined
+                    : (runId) => {
+                        void onSubmit({ text: "Continue reading", files: [] }, runId);
+                      }
+                }
               />
             )}
           </ChatLayout>
@@ -354,16 +372,15 @@ export default function Chatbot({
           <ChatbotComposer
             key={selection.revision}
             isSidebar={isSidebar}
-            onSubmit={onSubmit}
+            onSubmit={(message) => onSubmit(message)}
             onTextChange={setText}
             workspaceId={workspaceId}
             attachments={attachmentState.attachments}
             onAttachmentsChange={attachmentState.replace}
-            disabled={!threadReady || attachmentState.busy || streaming}
+            disabled={!threadReady || streaming}
             onStop={
-              streaming || attachmentState.busy
+              streaming
                 ? () => {
-                    attachmentState.cancel();
                     const run = activeRun.current;
                     if (run && workspaceId) {
                       void cancelRun(run.runId, workspaceId).catch((cause) =>
@@ -421,9 +438,6 @@ export default function Chatbot({
               <Button type="button" size="sm" variant="ghost" onClick={retryAnswer}>
                 Retry answer
               </Button>
-            )}
-            {attachmentState.error && (
-              <ChatError>{attachmentState.error}. Retry or remove an attachment.</ChatError>
             )}
           </ChatbotComposer>
         </ChatLayout>

@@ -1,5 +1,6 @@
 import { chatCapabilities, submitChatRun, followChatRun } from "./durable";
 import type { ChatEvent, ChatRequest } from "./contracts";
+import { chatReadProgressEventSchema } from "./tools";
 import { captureClientOperation, type ClientOperationContext } from "../shared/operation-context";
 
 export async function consumeChatStream(
@@ -19,11 +20,15 @@ export async function consumeChatStream(
   let finished = false;
   const consume = (line: string) => {
     if (!line.trim()) return;
-    const event = JSON.parse(line) as ChatEvent;
-    if (!event || !["context", "delta", "done", "error"].includes(event.type))
+    let event = JSON.parse(line) as ChatEvent;
+    if (
+      !event ||
+      !["context", "delta", "replace-text", "read-progress", "done", "error"].includes(event.type)
+    )
       throw new Error("Invalid chat event");
-    if (event.type === "delta" && typeof event.text !== "string")
+    if ((event.type === "delta" || event.type === "replace-text") && typeof event.text !== "string")
       throw new Error("Invalid chat text");
+    if (event.type === "read-progress") event = chatReadProgressEventSchema.parse(event);
     onEvent(event);
     if (event.type === "error") throw new Error(event.message);
     if (event.type === "done") finished = true;
