@@ -109,6 +109,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     searchRequests: [] as string[],
     localText: "Unsynced editor plan",
     forbidden: false,
+    appendAnswer: (_text: string) => {},
     releaseReads() {
       controls.holdReads = false;
       releaseRead?.();
@@ -391,6 +392,12 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
           write({ type: "context", context, threadId: detail!.thread.id });
           assistant.text = answer;
           write({ type: "delta", text: answer });
+          controls.appendAnswer = (text) => {
+            if (closed) return;
+            assistant.text += text;
+            write({ type: "delta", text });
+            persist();
+          };
           persist();
           const stop = () => {
             if (closed) return;

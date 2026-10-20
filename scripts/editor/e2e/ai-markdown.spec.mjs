@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 test("code remains readable through incomplete fences, language changes and unknown languages", async ({
   page,
@@ -49,4 +50,15 @@ test("code copy preserves literal source and Mermaid retains its diagram rendere
   await source.fill("```mermaid\ngraph LR\nA --> B\n```");
   await expect(page.locator('[data-streamdown="mermaid-block"]')).toBeVisible();
   await expect(page.getByRole("img", { name: "Mermaid chart" })).toBeVisible();
+});
+
+test("code downloads preserve whitespace and literal annotation comments", async ({ page }) => {
+  await page.goto("/scripts/editor/e2e/ai-components.html");
+  const code = "const value = '<literal>';\n\n// [!code highlight]\n";
+  await page.getByRole("textbox", { name: "Response source" }).fill("```js\n" + code + "```");
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Download code", exact: true }).click(),
+  ]);
+  expect(await readFile(await download.path(), "utf8")).toBe(code);
 });

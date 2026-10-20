@@ -109,6 +109,7 @@ function CodeBlockCopyButton({
     <>
       <Button
         data-slot="code-block-copy-button"
+        type="button"
         data-copied={copied || undefined}
         variant={variant}
         size={size}

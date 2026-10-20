@@ -23,7 +23,7 @@ const bubbleVariants = cva(
     variants: {
       variant: {
         default:
-          "*:data-[slot=bubble-content]:bg-action-primary *:data-[slot=bubble-content]:text-action-on-neutral [&>[data-slot=bubble-content]:is(button,a):hover]:bg-action-primary-hover",
+          "*:data-[slot=bubble-content]:bg-action-primary *:data-[slot=bubble-content]:text-action-on-primary [&>[data-slot=bubble-content]:is(button,a):hover]:bg-action-primary-hover",
         secondary:
           "*:data-[slot=bubble-content]:bg-action-secondary *:data-[slot=bubble-content]:text-action-on-secondary [&>[data-slot=bubble-content]:is(button,a):hover]:bg-action-secondary-hover",
         muted:

@@ -38,7 +38,6 @@ export default function Chatbot({
   pageId?: string | null;
   databaseId?: string | null;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -294,7 +293,6 @@ export default function Chatbot({
         className={`relative flex h-full min-h-0 flex-col ${centerEmptyState ? "ask-ai-empty overflow-y-auto" : "overflow-visible"}`}
       >
         <MessageScrollerViewport
-          ref={rootRef}
           data-ai-scroll-shell
           className={`h-auto w-full [scrollbar-gutter:auto] [contain:none] ${centerEmptyState ? "shrink-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"}`}
         >

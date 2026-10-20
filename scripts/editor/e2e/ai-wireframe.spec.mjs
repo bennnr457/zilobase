@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 
+test.use({ timezoneId: "Asia/Kolkata" });
+
 // These snapshots precede the component migration. Do not update them to accept
 // layout changes: the existing frame, composer and content widths are the contract.
 for (const width of [1400, 390]) {
