@@ -12,6 +12,10 @@ import {
   getDatabasePageDragPayload,
   hasDatabasePageDragPayload,
 } from "@/sections/databases/interactions/lib/database-page-drop";
+import { getDatabaseLayoutSettings } from "@zilobase/features/databases";
+import { DatabaseListView } from "@/sections/databases/views/list/components/database-list-view";
+import { DatabaseGalleryView } from "@/sections/databases/views/gallery/components/database-gallery-view";
+import { DatabaseKanbanView } from "@/sections/databases/views/kanban/components/database-kanban-view";
 import { DatabaseTableView } from "@/sections/databases/views/table/components/database-table-view";
 import type {
   DatabasePropertyListItem,
@@ -175,6 +179,9 @@ const proof = {
 Object.assign(window, { tableProof: proof });
 function Proof() {
   const [options, setOptions] = useState({
+    view: "table",
+    standalone: false,
+    second: false,
     count: 8,
     grouped: false,
     nested: false,
@@ -308,7 +315,7 @@ function Proof() {
     editable: options.editable,
     canAddDatabaseProperties: !options.readOnlyProperties,
     realtimeEnabled: false,
-    activeView: { id: options.scope, type: "table", config: {} },
+    activeView: { id: options.scope, type: options.view, config: {} },
     activeConditionalColors: [],
     activeDatabaseFilters: options.filtered ? [{ id: "filter" }] : [],
     activeDatabaseSorts: options.sorted
@@ -320,11 +327,13 @@ function Proof() {
     items: rows.filter((row) => !trashed.includes(row.pageId)),
     sortedItems: visible,
     groupProperty: options.grouped ? status : null,
+    groupableProperties: configured,
+    options: status.property.config.options,
     personOptions: [
       { id: "ada", name: "Ada" },
       { id: "lin", name: "Lin" },
     ],
-    layoutSettings: { showVerticalLines: true },
+    layoutSettings: { ...getDatabaseLayoutSettings({}), showVerticalLines: true },
     showPageIconInTitle: true,
     titlePropertyLabel: "Name",
     headerMenusEnabled: true,
@@ -406,19 +415,56 @@ function Proof() {
         >
           <main
             className="tiptap-editor"
+            data-database-selection-region={options.standalone ? "" : undefined}
             contentEditable={options.embedded ? true : undefined}
             suppressContentEditableWarning
             data-editor-surface={options.embedded && !options.narrow ? "" : undefined}
             data-editor-page-content={options.narrow ? "narrow" : undefined}
-            style={{
-              margin: options.narrow ? "100px auto" : "100px 80px",
-              width: options.narrow ? "min(780px, calc(100% - 160px))" : undefined,
-              maxWidth: options.embedded ? 780 : 1100,
-            }}
+            style={
+              options.standalone
+                ? { marginLeft: 240, minHeight: "100vh", padding: "180px 96px 40px" }
+                : {
+                    margin: options.narrow ? "100px auto" : "100px 80px",
+                    width: options.narrow ? "min(780px, calc(100% - 160px))" : undefined,
+                    maxWidth: options.embedded ? 780 : 1100,
+                  }
+            }
           >
+            {options.standalone ? (
+              <section
+                data-standalone-heading
+                contentEditable={false}
+                style={{ padding: "24px 16px" }}
+              >
+                <div data-heading-whitespace style={{ minHeight: 48 }}>
+                  <span>Database heading</span>
+                </div>
+                <input aria-label="Fixture title" defaultValue="Database title" />
+              </section>
+            ) : null}
+            {options.standalone ? (
+              <div data-standalone-toolbar style={{ padding: 12, minHeight: 48 }}>
+                <button type="button" onClick={() => actions.push("fixture-control")}>
+                  Fixture action
+                </button>
+              </div>
+            ) : null}
             <div className="database-scroll-section relative" contentEditable={false}>
               <DatabaseViewProvider value={value}>
-                <DatabaseTableView />
+                {options.view === "list" ? (
+                  <DatabaseListView />
+                ) : options.view === "gallery" ? (
+                  <DatabaseGalleryView />
+                ) : options.view === "kanban" ? (
+                  <DatabaseKanbanView />
+                ) : (
+                  <DatabaseTableView />
+                )}
+                {options.second ? (
+                  <section data-secondary-database>
+                    <DatabaseTableView />
+                  </section>
+                ) : null}
               </DatabaseViewProvider>
             </div>
           </main>

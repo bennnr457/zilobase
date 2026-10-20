@@ -425,7 +425,10 @@ export function DatabaseMainPane({
   };
 
   return (
-    <section className={cn(className, "animate-in fade-in-0 duration-300")}>
+    <section
+      className={cn(className, "min-h-full animate-in fade-in-0 duration-300")}
+      data-database-selection-region
+    >
       <PageMetadataView
         allowIconPositionChange={false}
         cover={headingRecord ? (getDatabaseCover(headingRecord) ?? "") : ""}

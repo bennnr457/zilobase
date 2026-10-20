@@ -1,3 +1,5 @@
+import { useDatabaseRecordSelection } from "../../shared/hooks/selection";
+import { DatabaseRecordSelection } from "../../shared/components/database-record-selection";
 import { DatabaseKanbanGroupDialogs, useKanbanGroupActions } from "./database-kanban-group-actions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Plus } from "@/components/icons";
@@ -65,6 +67,7 @@ export function DatabaseKanbanView() {
 }
 
 function DatabaseKanbanBoard() {
+  const { selection, surfaceRef } = useDatabaseRecordSelection();
   const {
     fetchNextPage,
     saveDatabaseSorts,
@@ -501,12 +504,15 @@ function DatabaseKanbanBoard() {
   }
   function renderBoard() {
     return (
-      <>
+      <DatabaseRecordSelection selection={selection}>
         <div
           className="database-kanban-wrap database-inline-scroll-wrap"
           data-inline-scroll={isInlineKanbanScrollEnabled ? "true" : undefined}
           data-wrap-content={layoutSettings.wrapAllContent ? "true" : undefined}
-          ref={wrapRef}
+          ref={(node) => {
+            wrapRef.current = node;
+            surfaceRef.current = node;
+          }}
           style={kanbanWrapStyle}
         >
           {groupProperty ? (
@@ -523,6 +529,7 @@ function DatabaseKanbanBoard() {
                     .filter((option) => !groupActions.settings.hiddenGroupIds.includes(option.id))
                     .map((option) => (
                       <DatabaseKanbanColumn
+                        selectedRowIds={selection.selectedRowIds}
                         key={option.id}
                         option={option}
                         items={getKanbanOptionItems(option)}
@@ -562,7 +569,7 @@ function DatabaseKanbanBoard() {
           )}
         </div>
         <DatabaseKanbanGroupDialogs actions={groupActions} />
-      </>
+      </DatabaseRecordSelection>
     );
   }
 }

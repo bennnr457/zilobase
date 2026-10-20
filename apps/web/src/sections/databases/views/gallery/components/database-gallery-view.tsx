@@ -1,3 +1,5 @@
+import { useDatabaseRecordSelection } from "../../shared/hooks/selection";
+import { DatabaseRecordSelection } from "../../shared/components/database-record-selection";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Plus } from "@/components/icons";
 import { getPageCover, getPageEmoji, type PageMetadata } from "@zilobase/features/pages";
@@ -17,6 +19,7 @@ import { DatabaseCellContent } from "../../shared/components/database-cell-conte
 import { useDatabaseGalleryCardDrag } from "../hooks/use-database-gallery-card-drag";
 
 export function DatabaseGalleryView() {
+  const { selection, surfaceRef } = useDatabaseRecordSelection();
   const {
     addDraggedPageRow,
     addDatabaseRow,
@@ -100,6 +103,8 @@ export function DatabaseGalleryView() {
     return (
       <article
         className="database-gallery-card"
+        data-database-row-id={row.id}
+        data-row-selected={selection.selectedRowIds.has(row.id) ? "true" : undefined}
         data-dragging={cardDrag.draggedRowId === row.id ? "true" : undefined}
         data-drop-after={
           (cardDrag.draggedRowId || cardDrag.isExternalDragActive) &&
@@ -227,67 +232,73 @@ export function DatabaseGalleryView() {
     ) : null;
 
   return (
-    <div
-      className="database-gallery-view"
-      data-card-layout={layoutSettings.cardLayout}
-      data-card-preview={layoutSettings.cardPreview}
-      data-card-size={layoutSettings.cardSize}
-      data-wrap-content={layoutSettings.wrapAllContent ? "true" : undefined}
-      onDragLeave={cardDrag.leave}
-    >
-      {groupProperty ? (
-        <div className="database-gallery-groups">
-          {groupedSections.map((section) => {
-            const isCollapsed = collapsedGroups.has(section.id);
+    <DatabaseRecordSelection selection={selection}>
+      <div
+        ref={surfaceRef}
+        className="database-gallery-view"
+        data-card-layout={layoutSettings.cardLayout}
+        data-card-preview={layoutSettings.cardPreview}
+        data-card-size={layoutSettings.cardSize}
+        data-wrap-content={layoutSettings.wrapAllContent ? "true" : undefined}
+        onDragLeave={cardDrag.leave}
+      >
+        {groupProperty ? (
+          <div className="database-gallery-groups">
+            {groupedSections.map((section) => {
+              const isCollapsed = collapsedGroups.has(section.id);
 
-            return (
-              <section className="database-gallery-group" key={section.id}>
-                <button
-                  aria-expanded={!isCollapsed}
-                  className="database-table-group-toggle"
-                  onClick={() => toggleGroup(section.id)}
-                  type="button"
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="size-4 shrink-0" />
-                  ) : (
-                    <ChevronDown className="size-4 shrink-0" />
-                  )}
-                  <span className={getColorTokenBadgeClassName(section.color)}>
-                    <span aria-hidden="true" className={getColorTokenDotClassName(section.color)} />
-                    {section.name}
-                  </span>
-                  <span className="database-table-group-count">{section.rows.length}</span>
-                </button>
-                {!isCollapsed ? (
-                  <div
-                    className="database-gallery-grid"
-                    onDragOver={(event) =>
-                      cardDrag.dragOver(event, section.id, section.rows.length)
-                    }
-                    onDrop={(event) => cardDrag.drop(event, section.id, section.rows.length)}
+              return (
+                <section className="database-gallery-group" key={section.id}>
+                  <button
+                    aria-expanded={!isCollapsed}
+                    className="database-table-group-toggle"
+                    onClick={() => toggleGroup(section.id)}
+                    type="button"
                   >
-                    {section.rows.map((row, rowIndex) =>
-                      renderCard(row, rowIndex, section.id, section.rows.length),
+                    {isCollapsed ? (
+                      <ChevronRight className="size-4 shrink-0" />
+                    ) : (
+                      <ChevronDown className="size-4 shrink-0" />
                     )}
-                    {renderNewCard(section.groupValue, true)}
-                  </div>
-                ) : null}
-              </section>
-            );
-          })}
-        </div>
-      ) : (
-        <div
-          className="database-gallery-grid"
-          onDragOver={(event) => cardDrag.dragOver(event, null, rows.length)}
-          onDrop={(event) => cardDrag.drop(event, null, rows.length)}
-        >
-          {rows.map((row, rowIndex) => renderCard(row, rowIndex, null, rows.length))}
-          {renderNewCard()}
-        </div>
-      )}
-      <DatabaseRecordWindowControl automatic />
-    </div>
+                    <span className={getColorTokenBadgeClassName(section.color)}>
+                      <span
+                        aria-hidden="true"
+                        className={getColorTokenDotClassName(section.color)}
+                      />
+                      {section.name}
+                    </span>
+                    <span className="database-table-group-count">{section.rows.length}</span>
+                  </button>
+                  {!isCollapsed ? (
+                    <div
+                      className="database-gallery-grid"
+                      onDragOver={(event) =>
+                        cardDrag.dragOver(event, section.id, section.rows.length)
+                      }
+                      onDrop={(event) => cardDrag.drop(event, section.id, section.rows.length)}
+                    >
+                      {section.rows.map((row, rowIndex) =>
+                        renderCard(row, rowIndex, section.id, section.rows.length),
+                      )}
+                      {renderNewCard(section.groupValue, true)}
+                    </div>
+                  ) : null}
+                </section>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            className="database-gallery-grid"
+            onDragOver={(event) => cardDrag.dragOver(event, null, rows.length)}
+            onDrop={(event) => cardDrag.drop(event, null, rows.length)}
+          >
+            {rows.map((row, rowIndex) => renderCard(row, rowIndex, null, rows.length))}
+            {renderNewCard()}
+          </div>
+        )}
+        <DatabaseRecordWindowControl automatic />
+      </div>
+    </DatabaseRecordSelection>
   );
 }

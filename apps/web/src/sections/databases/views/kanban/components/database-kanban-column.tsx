@@ -19,6 +19,7 @@ import {
 import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
 
 export function DatabaseKanbanColumn({
+  selectedRowIds,
   option,
   items,
   cardDrag,
@@ -32,6 +33,7 @@ export function DatabaseKanbanColumn({
   visibleProperties,
   renderCardProperty,
 }: {
+  selectedRowIds: Set<string>;
   option: KanbanGroupOption;
   items: DatabaseRow[];
   cardDrag: ReturnType<typeof useDatabaseKanbanCardDrag<DatabaseRow, KanbanGroupOption>>;
@@ -88,6 +90,7 @@ export function DatabaseKanbanColumn({
           <article
             className="database-kanban-card"
             data-database-row-id={item.id}
+            data-row-selected={selectedRowIds.has(item.id) ? "true" : undefined}
             style={preview ? { transform: `translateY(${preview.offsets[index]}px)` } : undefined}
             data-drop-before={activeCardDropTarget?.targetIndex === index ? "true" : undefined}
             data-dragging={preview?.hiddenIndex === index ? "true" : undefined}

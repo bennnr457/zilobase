@@ -1,3 +1,5 @@
+import { useDatabaseRecordSelection } from "../../shared/hooks/selection";
+import { DatabaseRecordSelection } from "../../shared/components/database-record-selection";
 import { listRowDragAttributes, listRowCompletionLabel } from "../lib/list-row-presentation";
 import { useMemo } from "react";
 import { GripVertical, Plus } from "@/components/icons";
@@ -14,6 +16,7 @@ import { DatabaseRecordWindowControl } from "../../shared/components/database-re
 import { useDatabaseListRowDrag } from "../hooks/use-database-list-row-drag";
 
 export function DatabaseListView() {
+  const { selection, surfaceRef } = useDatabaseRecordSelection();
   const {
     addDraggedPageRow,
     addDatabaseRow,
@@ -54,97 +57,104 @@ export function DatabaseListView() {
     visibleRows: rows,
   });
   return (
-    <div
-      className="database-list-view"
-      data-wrap-content={layoutSettings.wrapAllContent ? "true" : undefined}
-      onDragLeave={rowDrag.leave}
-    >
-      <div className="database-list-rows">
-        {rows.map((row, rowIndex) => (
-          <div
-            className="database-list-row"
-            {...listRowDragAttributes(row.id, rowIndex, rows.length, rowDrag)}
-            key={row.id}
-            onDragOver={(event) => rowDrag.updateDropTarget(event, rowIndex)}
-            onDrop={rowDrag.drop}
-          >
-            {editable ? (
-              <button
-                aria-label={`Drag ${row.page.name || "row"}`}
-                className="database-list-drag-handle"
-                draggable={editable}
-                onDragEnd={rowDrag.clearDrag}
-                onDragStart={(event) => rowDrag.startDrag(event, row.id)}
-                title={
-                  canReorderRows ? "Drag page" : "Drag page. Clear sorting to reorder in this view"
-                }
-                type="button"
-              >
-                <GripVertical />
-              </button>
-            ) : null}
-            {isRowComplete && setRowComplete ? (
-              <Checkbox
-                aria-label={listRowCompletionLabel(row.page.name, isRowComplete(row))}
-                checked={isRowComplete(row)}
-                className="database-list-row-checkbox"
-                disabled={!editable}
-                onCheckedChange={(checked) => setRowComplete(row, checked === true)}
-              />
-            ) : null}
-            <div className="database-list-title">
-              <DatabasePageLink
-                onOpen={onOpenPage}
-                openMode="title"
-                pageId={row.pageId}
-                pageSummary={row.page}
-                showPageIcon={showPageIconInTitle}
-              />
-            </div>
-            <div className="database-list-properties">
-              {visibleProperties.map((property) => {
-                const key = `${row.pageId}:${property.property.id}`;
-                const persistedValue = propertyValuesByKey[key] ?? "";
+    <DatabaseRecordSelection selection={selection}>
+      <div
+        ref={surfaceRef}
+        className="database-list-view"
+        data-wrap-content={layoutSettings.wrapAllContent ? "true" : undefined}
+        onDragLeave={rowDrag.leave}
+      >
+        <div className="database-list-rows">
+          {rows.map((row, rowIndex) => (
+            <div
+              className="database-list-row"
+              data-database-row-id={row.id}
+              data-row-selected={selection.selectedRowIds.has(row.id) ? "true" : undefined}
+              {...listRowDragAttributes(row.id, rowIndex, rows.length, rowDrag)}
+              key={row.id}
+              onDragOver={(event) => rowDrag.updateDropTarget(event, rowIndex)}
+              onDrop={rowDrag.drop}
+            >
+              {editable ? (
+                <button
+                  aria-label={`Drag ${row.page.name || "row"}`}
+                  className="database-list-drag-handle"
+                  draggable={editable}
+                  onDragEnd={rowDrag.clearDrag}
+                  onDragStart={(event) => rowDrag.startDrag(event, row.id)}
+                  title={
+                    canReorderRows
+                      ? "Drag page"
+                      : "Drag page. Clear sorting to reorder in this view"
+                  }
+                  type="button"
+                >
+                  <GripVertical />
+                </button>
+              ) : null}
+              {isRowComplete && setRowComplete ? (
+                <Checkbox
+                  aria-label={listRowCompletionLabel(row.page.name, isRowComplete(row))}
+                  checked={isRowComplete(row)}
+                  className="database-list-row-checkbox"
+                  disabled={!editable}
+                  onCheckedChange={(checked) => setRowComplete(row, checked === true)}
+                />
+              ) : null}
+              <div className="database-list-title">
+                <DatabasePageLink
+                  onOpen={onOpenPage}
+                  openMode="title"
+                  pageId={row.pageId}
+                  pageSummary={row.page}
+                  showPageIcon={showPageIconInTitle}
+                />
+              </div>
+              <div className="database-list-properties">
+                {visibleProperties.map((property) => {
+                  const key = `${row.pageId}:${property.property.id}`;
+                  const persistedValue = propertyValuesByKey[key] ?? "";
 
-                return (
-                  <div
-                    className="database-list-property"
-                    key={`${row.id}:${property.id}`}
-                    title={property.property.name}
-                  >
-                    <DatabasePropertyValue
-                      editable={editable}
-                      properties={properties}
-                      propertyValuesByKey={propertyValuesByKey}
-                      onPropertyConfigChange={(databasePropertyId, config) =>
-                        updateDatabasePropertyConfig(databasePropertyId, config)
-                      }
-                      onSaveValue={savePropertyValue}
-                      persistedValue={persistedValue}
-                      personOptions={personOptions}
-                      property={property}
-                      row={row}
-                      titlePropertyLabel={titlePropertyLabel}
-                    />
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      className="database-list-property"
+                      key={`${row.id}:${property.id}`}
+                      title={property.property.name}
+                    >
+                      <DatabasePropertyValue
+                        editable={editable}
+                        properties={properties}
+                        propertyValuesByKey={propertyValuesByKey}
+                        onPropertyConfigChange={(databasePropertyId, config) =>
+                          updateDatabasePropertyConfig(databasePropertyId, config)
+                        }
+                        onSaveValue={savePropertyValue}
+                        persistedValue={persistedValue}
+                        personOptions={personOptions}
+                        property={property}
+                        row={row}
+                        titlePropertyLabel={titlePropertyLabel}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-        <DatabaseRecordWindowControl automatic />
-        {editable ? (
-          <button
-            className="database-list-new-row"
-            disabled={!databaseId}
-            onClick={() => addDatabaseRow()}
-            type="button"
-          >
-            <Plus />
-            <span>{newRowLabel ?? "New page"}</span>
-          </button>
-        ) : null}
+          ))}
+          <DatabaseRecordWindowControl automatic />
+          {editable ? (
+            <button
+              className="database-list-new-row"
+              disabled={!databaseId}
+              onClick={() => addDatabaseRow()}
+              type="button"
+            >
+              <Plus />
+              <span>{newRowLabel ?? "New page"}</span>
+            </button>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </DatabaseRecordSelection>
   );
 }

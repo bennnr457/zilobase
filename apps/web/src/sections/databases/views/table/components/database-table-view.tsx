@@ -1,3 +1,4 @@
+import { useDatabaseMarquee } from "../../shared/hooks/use-database-marquee";
 import { DatabaseRowActionsProvider } from "../../shared/components/database-row-actions";
 import { DataGrid } from "@/components/ui/data-grid/data-grid";
 import { DataGridCellSelection } from "@/components/ui/data-grid/data-grid-cell-selection";
@@ -395,6 +396,15 @@ export function DatabaseTableView() {
     hostDatabaseId,
     scope: gridScope,
     savePropertyValue,
+  });
+  useDatabaseMarquee({
+    surfaceRef: tableWrapRef,
+    enabled: editable,
+    scope: gridScope,
+    rowIds: visibleRows.map((row) => row.id),
+    selectedRowIds,
+    setSelectedRowIds,
+    onStart: () => grid.table.resetCellSelection(true),
   });
   const groupSectionByRowId = useMemo(() => {
     const sectionsByRowId = new Map<string, GroupSection>();

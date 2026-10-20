@@ -6,10 +6,16 @@ import {
   type DatabaseCellFillHistoryChange,
   type DatabasePropertyListItem,
 } from "@zilobase/features/databases";
-import { useCallback, useMemo, useState, type MutableRefObject } from "react";
-import type { useUndoHistory } from "@/app/shortcuts/undo-history";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useUndoHistory } from "@/app/shortcuts/undo-history";
 import type { SortableDatabaseItem } from "@zilobase/features/databases";
 import type { DatabaseViewProviderValue } from "../../state/components/database-view-context";
+import {
+  useDatabaseActionsContext,
+  useDatabaseDataContext,
+  useDatabaseUiContext,
+} from "../../state/components/database-view-context";
+import { useDatabaseMarquee } from "./use-database-marquee";
 export { getSharedDatabaseSelectionValue } from "@zilobase/features/databases";
 
 export function useDatabaseSelection({
@@ -26,6 +32,24 @@ export function useDatabaseSelection({
   undoHistory: ReturnType<typeof useUndoHistory>;
 }) {
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(() => new Set());
+  const { databaseId, hostDatabaseId, databaseWorkspaceId, editable } = useDatabaseDataContext();
+  const { activeView } = useDatabaseUiContext();
+  const scope = JSON.stringify([
+    databaseWorkspaceId,
+    hostDatabaseId,
+    databaseId,
+    activeView?.id,
+    editable,
+  ]);
+  useEffect(() => setSelectedRowIds(new Set()), [scope]);
+  useEffect(() => {
+    const available = new Set(rows.map((row) => row.id));
+    setSelectedRowIds((current) =>
+      [...current].every((id) => available.has(id))
+        ? current
+        : new Set([...current].filter((id) => available.has(id))),
+    );
+  }, [rows]);
   const selectedRows = useMemo(
     () => rows.filter((row) => selectedRowIds.has(row.id)),
     [rows, selectedRowIds],
@@ -109,4 +133,32 @@ export function useDatabaseSelection({
     saveSelectedPropertyValue,
     toggleSelectedRow,
   };
+}
+
+// Card/list views share the same bulk actions as the table and timeline.
+export function useDatabaseRecordSelection() {
+  const { items, propertyValuesByKey, editable, databaseId, hostDatabaseId } =
+    useDatabaseDataContext();
+  const { activeView } = useDatabaseUiContext();
+  const { savePropertyValue } = useDatabaseActionsContext();
+  const undoHistory = useUndoHistory();
+  const propertyValuesByKeyRef = useRef(propertyValuesByKey);
+  propertyValuesByKeyRef.current = propertyValuesByKey;
+  const selection = useDatabaseSelection({
+    rows: items,
+    propertyValuesByKey,
+    propertyValuesByKeyRef,
+    savePropertyValue,
+    undoHistory,
+  });
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  useDatabaseMarquee({
+    surfaceRef,
+    enabled: editable,
+    scope: JSON.stringify([hostDatabaseId, databaseId, activeView?.id]),
+    rowIds: items.map((row) => row.id),
+    selectedRowIds: selection.selectedRowIds,
+    setSelectedRowIds: selection.setSelectedRowIds,
+  });
+  return { selection, surfaceRef };
 }

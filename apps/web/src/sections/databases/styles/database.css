@@ -360,6 +360,21 @@
     @apply pointer-events-none absolute inset-x-0 top-0 z-[60];
   }
 
+  .database-record-marquee {
+    @apply pointer-events-none fixed z-[80];
+    background-color: var(--zb-color-selection-background-marquee);
+    border: 0;
+  }
+
+  [data-marquee-selecting],
+  [data-marquee-selecting] * {
+    user-select: none !important;
+  }
+
+  :is(.database-list-row, .database-gallery-card, .database-kanban-card)[data-row-selected="true"] {
+    @apply bg-action-selected-subtle ring-1 ring-inset ring-action-selected-border;
+  }
+
   .database-selection-toolbar {
     @apply pointer-events-auto absolute bottom-2 left-0 shadow-lg;
     width: fit-content;

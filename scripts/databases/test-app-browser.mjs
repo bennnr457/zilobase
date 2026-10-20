@@ -276,6 +276,66 @@ try {
     measurementPhase = "interactions";
   }
   console.info("Signed-in application loaded real PostgreSQL records.");
+  // Exercise the actual /d/:id route and its page layout, not just an embedded
+  // renderer fixture. Selection must start in the blank body below the table.
+  const recordRows = page.locator("tr[data-database-row-id]");
+  await expect(recordRows).toHaveCount(3);
+  const selectionRegion = page.locator("[data-database-selection-region]");
+  await expect(selectionRegion).toHaveCount(1);
+  const regionBounds = await selectionRegion.boundingBox();
+  const tableBounds = await page.locator(".database-table-wrap").boundingBox();
+  const firstRowBounds = await recordRows.first().boundingBox();
+  const startY = Math.min(
+    tableBounds.y + tableBounds.height + 140,
+    regionBounds.y + regionBounds.height - 24,
+  );
+  assert.ok(
+    startY > tableBounds.y + tableBounds.height + 20,
+    "Standalone page must own blank space below the table",
+  );
+  await page.mouse.move(tableBounds.x + 120, startY);
+  await page.mouse.down();
+  await page.mouse.move(firstRowBounds.x + 220, firstRowBounds.y + 2, { steps: 12 });
+  await expect(page.locator(".database-record-marquee")).toBeVisible();
+  await expect(page.locator('tr[data-row-selected="true"]')).toHaveCount(3);
+  await mkdir(`${root}.dev/database-app-results`, { recursive: true });
+  await page.screenshot({ path: `${root}.dev/database-app-results/standalone-marquee.png` });
+  await page.mouse.up();
+  await expect(page.getByRole("button", { name: "Clear selection of 3 rows" })).toBeVisible();
+  await page.getByRole("button", { name: "Clear selection of 3 rows" }).click();
+  await expect(page.locator('tr[data-row-selected="true"]')).toHaveCount(0);
+  console.info(
+    "Standalone database whitespace below the table selects real records and synchronizes bulk actions.",
+  );
+
+  for (const selector of ["[data-page-metadata-content]", ".database-toolbar"]) {
+    const blank = await page.locator(selector).first().boundingBox();
+    const lastRow = await recordRows.last().boundingBox();
+    const start =
+      selector === ".database-toolbar"
+        ? { x: blank.x + blank.width / 2, y: blank.y + blank.height / 2 }
+        : { x: blank.x + 8, y: blank.y + 8 };
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(lastRow.x + 140, lastRow.y + lastRow.height - 2, { steps: 12 });
+    const marquee = page.locator(".database-record-marquee");
+    await expect(marquee).toBeVisible();
+    await expect(marquee).toHaveCSS("border-top-width", "0px");
+    const alpha = await marquee.evaluate((node) =>
+      Number(getComputedStyle(node).backgroundColor.match(/(?:,|\/)\s*([\d.]+)\s*\)$/)?.[1] ?? 1),
+    );
+    assert.ok(alpha > 0 && alpha < 0.2, "Marquee must be translucent");
+    await expect(page.locator('tr[data-row-selected="true"]')).toHaveCount(3);
+    await page.screenshot({
+      path: `${root}.dev/database-app-results/standalone-whitespace-marquee.png`,
+    });
+    await page.mouse.up();
+    await page.getByRole("button", { name: "Clear selection of 3 rows" }).click();
+  }
+  console.info(
+    "Heading and toolbar whitespace select records with a translucent, borderless marquee.",
+  );
+
   await page.getByText("Board", { exact: true }).filter({ visible: true }).first().click();
   await expect(page.getByText("Alpha browser row", { exact: true }).first()).toBeVisible();
   console.info("Real Kanban view loaded.");

@@ -1,6 +1,7 @@
+import { useDatabaseMarquee } from "../../shared/hooks/use-database-marquee";
 import { useDatabaseViewBreakout } from "../../shared/hooks/use-database-view-breakout";
 import { useUndoHistory } from "@/app/shortcuts/undo-history";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { DatabaseRowActionsProvider } from "../../shared/components/database-row-actions";
 import { DatabaseSelectionToolbar } from "../../shared/components/database-selection-toolbar";
 import { useDatabaseSelection } from "../../shared/hooks/selection";
@@ -78,10 +79,14 @@ export function DatabaseTimelineView() {
     undoHistory,
   });
 
-  useEffect(() => {
-    selection.setSelectedRowIds(new Set());
-  }, [databaseId, activeView?.id, selection.setSelectedRowIds]);
-
+  useDatabaseMarquee({
+    surfaceRef: timelineRef,
+    enabled: editable,
+    scope: JSON.stringify([databaseId, activeView?.id, timelineDateProperty?.id]),
+    rowIds: items.map((row) => row.id),
+    selectedRowIds: selection.selectedRowIds,
+    setSelectedRowIds: selection.setSelectedRowIds,
+  });
   const statusProperty = useMemo(
     () => properties.find((property) => property.property.type === "status") ?? null,
     [properties],
