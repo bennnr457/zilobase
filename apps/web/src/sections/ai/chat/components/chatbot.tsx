@@ -1,3 +1,5 @@
+import { ChatEmptyState } from "./chat-empty-state";
+import { ChatError, ChatLoading } from "./chat-feedback";
 import { ContextAttachment } from "../../attachments/components/context-attachment";
 import { terminalChatRun, type ChatRunReceipt } from "@zilobase/features/ai";
 import type { ChatRequest } from "@zilobase/features/ai";
@@ -297,38 +299,9 @@ export default function Chatbot({
           className={`h-auto w-full [scrollbar-gutter:auto] [contain:none] ${centerEmptyState ? "shrink-0 overflow-visible" : "min-h-0 flex-1 overflow-y-auto"}`}
         >
           <ChatLayout sidebar={isSidebar}>
-            {!threadReady && !threads.detail.isError && (
-              <p role="status" className="py-6 text-center text-sm text-content-secondary">
-                Loading conversation…
-              </p>
-            )}
+            {!threadReady && !threads.detail.isError && <ChatLoading />}
             {threadReady && !hasMessages && (
-              <div className="mx-auto mb-6 grid w-full max-w-3xl justify-items-center gap-3 px-4 text-center">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-surface-secondary text-lg font-semibold">
-                  AI
-                </div>
-                <div>
-                  <h1 className="font-heading text-2xl font-semibold tracking-tight">
-                    {getGreeting(session?.user?.name)}
-                  </h1>
-                  <p className="mt-1 text-sm text-content-secondary">
-                    Attach pages and databases to ask questions about your workspace.
-                  </p>
-                </div>
-                <div className="flex max-w-2xl flex-wrap justify-center gap-2">
-                  {starterPrompts.map((prompt) => (
-                    <Button
-                      key={prompt}
-                      onClick={() => setText(prompt)}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      {prompt}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+              <ChatEmptyState name={session?.user?.name} onSelect={setText} />
             )}
             {threadReady && hasMessages && (
               <ChatbotMessages isSidebar={isSidebar} messages={messages} />
@@ -339,9 +312,7 @@ export default function Chatbot({
           {beforeComposer}
           {threads.detail.isError && (
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p role="alert" className="text-sm text-action-danger-text">
-                {threads.detail.error.message}
-              </p>
+              <ChatError className="mb-0">{threads.detail.error.message}</ChatError>
               <Button
                 type="button"
                 variant="ghost"
@@ -408,7 +379,7 @@ export default function Chatbot({
               )}
             </div>
             {chatError && (
-              <p role="alert" className="mb-2 text-sm text-action-danger-text">
+              <ChatError>
                 {chatError}
                 {activeRun.current && !terminalChatRun(activeRun.current.status) && !streaming && (
                   <Button
@@ -425,7 +396,7 @@ export default function Chatbot({
                     Reconnect
                   </Button>
                 )}
-              </p>
+              </ChatError>
             )}
             {!streaming && ["failed", "interrupted"].includes(messages.at(-1)?.status ?? "") && (
               <Button
@@ -445,9 +416,7 @@ export default function Chatbot({
               </Button>
             )}
             {attachmentState.error && (
-              <p role="alert" className="mb-2 text-sm text-action-danger-text">
-                {attachmentState.error}. Retry or remove an attachment.
-              </p>
+              <ChatError>{attachmentState.error}. Retry or remove an attachment.</ChatError>
             )}
           </ChatbotComposer>
         </ChatLayout>
@@ -455,16 +424,3 @@ export default function Chatbot({
     </MessageScrollerProvider>
   );
 }
-
-function getGreeting(name?: string | null) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const firstName = name?.trim().split(/\s+/)[0];
-  return firstName ? `${greeting}, ${firstName}` : greeting;
-}
-
-const starterPrompts = [
-  "Summarize the attached pages",
-  "What needs attention in these records?",
-  "Create a project plan",
-];
