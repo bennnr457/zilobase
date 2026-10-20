@@ -1,4 +1,10 @@
-import { admitChatRun, cancelChatRun, getChatRequest, readChatRun } from "../../services/ai/runs";
+import {
+  admitChatRun,
+  durableChatEnabled,
+  cancelChatRun,
+  getChatRequest,
+  readChatRun,
+} from "../../services/ai/runs";
 import { chatRunResponse } from "./durable-stream";
 import { listChatThreads, getChatThread, deleteChatThread } from "../../services/ai/conversations";
 import { Hono } from "hono";
@@ -115,4 +121,8 @@ aiRoutes.post("/runs/:id/cancel", async (c) =>
       c.req.query("workspaceId") ?? "",
     ),
   ),
+);
+
+aiRoutes.get("/capabilities", (c) =>
+  c.json({ durable: durableChatEnabled(serverOperationContext(c).env) }),
 );

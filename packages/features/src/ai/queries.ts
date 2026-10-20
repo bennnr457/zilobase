@@ -50,7 +50,7 @@ export async function deleteChatConversation(
 export const chatSelectionOptions = (workspaceId: string, sessionId?: string) =>
   queryOptions({
     queryKey: ["ai", workspaceId, "selection", sessionId] as const,
-    queryFn: async () => ({ id: null as string | null, initialized: false }),
+    queryFn: async () => ({ id: null as string | null, initialized: false, revision: 0 }),
     staleTime: Infinity,
-    initialData: { id: null as string | null, initialized: false },
+    initialData: { id: null as string | null, initialized: false, revision: 0 },
   });

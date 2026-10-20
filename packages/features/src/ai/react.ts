@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useZilobaseFeatures } from "../shared/context";
 import { prepareChatContext } from "./operations";
-
+import type { ResourceRef } from "@zilobase/page-context";
 export function usePrepareChatContext() {
   const context = useZilobaseFeatures();
   return useCallback(
@@ -32,7 +32,13 @@ import {
 } from "./queries";
 export function useChatThreads(workspaceId: string, threadId: string | null, enabled: boolean) {
   const context = useZilobaseFeatures();
-  const list = useQuery(chatThreadsOptions(context, workspaceId));
+  const list = useQuery({
+    ...chatThreadsOptions(context, workspaceId),
+    refetchInterval: (query) =>
+      query.state.data?.some((thread) => ["queued", "running"].includes(thread.status ?? ""))
+        ? 2000
+        : 15_000,
+  });
   const detail = useQuery({
     ...chatThreadOptions(context, workspaceId, threadId ?? ""),
     enabled: enabled && !!threadId,
@@ -57,7 +63,37 @@ export function useChatSelection(workspaceId: string) {
   const query = useQuery(options);
   return {
     ...query.data,
+    isCurrent: (revision: number) =>
+      queryClient.getQueryData(options.queryKey)?.revision === revision,
     select: (id: string | null) =>
-      queryClient.setQueryData(options.queryKey, { id, initialized: true }),
+      queryClient.setQueryData(options.queryKey, (current) => ({
+        id,
+        initialized: true,
+        revision: (current?.revision ?? 0) + 1,
+      }))!,
   };
+}
+
+import { followChatRun, cancelChatRun, recoverChatSubmission } from "./durable";
+export function useFollowChatRun() {
+  const context = useZilobaseFeatures();
+  return useCallback(
+    (...args: Parameters<typeof followChatRun> extends [unknown, ...infer Rest] ? Rest : never) =>
+      followChatRun(context, ...args),
+    [context],
+  );
+}
+export function useCancelChatRun() {
+  const context = useZilobaseFeatures();
+  return useCallback(
+    (runId: string, workspaceId: string) => cancelChatRun(context, runId, workspaceId),
+    [context],
+  );
+}
+export function useRecoverChatSubmission() {
+  const context = useZilobaseFeatures();
+  return useCallback(
+    (workspaceId: string) => recoverChatSubmission(context, workspaceId),
+    [context],
+  );
 }

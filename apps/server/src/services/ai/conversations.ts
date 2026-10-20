@@ -1,9 +1,10 @@
+import { latestThreadRun } from "./runs";
 import { createHash, randomUUID } from "node:crypto";
-import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lt, sql, inArray, notExists } from "drizzle-orm";
 import type { BuildContextResult } from "@zilobase/page-context";
 import type { ChatMessage, ChatRequest } from "@zilobase/features/runtime";
 import { db } from "../../infrastructure/database";
-import { askAiThread, askAiTurn } from "../../infrastructure/database/schema";
+import { askAiRun, askAiThread, askAiTurn } from "../../infrastructure/database/schema";
 import { ServerOperationError, type ServerOperationContext } from "../operations/context";
 import { authorizeChatWorkspace } from "./context";
 import { getPageOperation } from "../pages/read/operations";
@@ -91,12 +92,30 @@ function messagesFromTurns(turns: Turn[]): ChatMessage[] {
 
 export async function listChatThreads(context: ServerOperationContext, workspaceId: string) {
   const user = await authorizeChatWorkspace(context, workspaceId);
-  return db
+  const threads = await db
     .select()
     .from(askAiThread)
     .where(owner(workspaceId, user.id))
     .orderBy(desc(askAiThread.updatedAt))
     .limit(100);
+  const active = threads.length
+    ? await db
+        .select({ threadId: askAiRun.threadId, status: askAiRun.status })
+        .from(askAiRun)
+        .where(
+          and(
+            inArray(
+              askAiRun.threadId,
+              threads.map((thread) => thread.id),
+            ),
+            inArray(askAiRun.status, ["queued", "running"]),
+          ),
+        )
+    : [];
+  return threads.map((thread) => ({
+    ...thread,
+    status: active.find((run) => run.threadId === thread.id)?.status,
+  }));
 }
 
 export async function getChatThread(
@@ -114,6 +133,9 @@ export async function getChatThread(
         eq(askAiTurn.threadId, thread.id),
         eq(askAiTurn.status, "streaming"),
         lt(askAiTurn.expiresAt, new Date()),
+        notExists(
+          db.select({ id: askAiRun.id }).from(askAiRun).where(eq(askAiRun.turnId, askAiTurn.id)),
+        ),
       ),
     );
   const turns = await db
@@ -122,7 +144,12 @@ export async function getChatThread(
     .where(eq(askAiTurn.threadId, thread.id))
     .orderBy(asc(askAiTurn.createdAt), asc(askAiTurn.id));
   await assertHistoryAccess(context, workspaceId, turns);
-  return { thread, messages: messagesFromTurns(turns), roots: turns.at(-1)?.roots ?? [] };
+  return {
+    thread,
+    messages: messagesFromTurns(turns),
+    roots: turns.at(-1)?.roots ?? [],
+    run: await latestThreadRun(threadId),
+  };
 }
 
 export async function deleteChatThread(

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { BuildContextResult } from "@zilobase/page-context";
 import type { ChatEvent } from "./contracts";
 
 export const chatRunStatusSchema = z.enum([
@@ -18,7 +19,7 @@ export type ChatRunSnapshot = {
   seq: number;
   text: string;
 };
-export type ChatRunReceipt = ChatRunSnapshot & { requestId: string };
+export type ChatRunReceipt = ChatRunSnapshot & { requestId: string; context?: BuildContextResult };
 export type ChatRunEvent = ChatEvent | { type: "status"; status: ChatRunStatus };
 export type ChatRunEnvelope = { version: 1; runId: string; seq: number; event: ChatRunEvent };
 export const terminalChatRun = (status: ChatRunStatus) => !["queued", "running"].includes(status);

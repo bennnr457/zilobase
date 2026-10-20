@@ -1,3 +1,4 @@
+import type { ChatRunReceipt, ChatRunStatus } from "./runs";
 import { z } from "zod";
 import type { BuildContextResult, ResourceRef } from "@zilobase/page-context";
 import { parsePageDocument } from "./context";
@@ -43,6 +44,7 @@ export const chatRequestSchema = z
   .strict();
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 export type ChatEvent =
+  | { type: "snapshot"; run: ChatRunReceipt }
   | { type: "context"; context: BuildContextResult; threadId?: string }
   | { type: "delta"; text: string }
   | { type: "done"; status: "completed" | "stopped"; inputTokens?: number; outputTokens?: number }
@@ -56,8 +58,15 @@ export type ChatMessage = {
   status?: "completed" | "stopped" | "failed" | "interrupted" | "streaming";
 };
 
-export type ChatThread = { id: string; workspaceId: string; title: string; updatedAt: string };
+export type ChatThread = {
+  id: string;
+  workspaceId: string;
+  title: string;
+  updatedAt: string;
+  status?: ChatRunStatus;
+};
 export type ChatThreadDetail = {
+  run?: ChatRunReceipt | null;
   thread: ChatThread;
   messages: ChatMessage[];
   roots: ResourceRef[];

@@ -288,7 +288,7 @@ export function register({ assert, appPath, readSource, test }) {
     }).outputText;
     const capture = new Function(
       "ports",
-      `const {React, Effect, workspaceId, isCreatingPage, isCreatingDatabase, createPage, createDatabase, navigate, sidebarScope} = ports; ${compiled}; return {handleCreatePage, handleCreateDatabase, handleCreateChat};`,
+      `const {React, Effect, workspaceId, isCreatingPage, isCreatingDatabase, createPage, createDatabase, navigate, sidebarScope, chatSelection, setOpenMobile} = ports; ${compiled}; return {handleCreatePage, handleCreateDatabase, handleCreateChat};`,
     );
     const calls = [];
     let failure;
@@ -310,6 +310,8 @@ export function register({ assert, appPath, readSource, test }) {
         return { database: { id: "database" } };
       },
       navigate: async (input) => calls.push(["navigate", input]),
+      chatSelection: { select: (id) => calls.push(["selectChat", id]) },
+      setOpenMobile: (open) => calls.push(["mobileSidebar", open]),
     };
     const pending = capture(ports).handleCreatePage("teamspace");
     assert.deepEqual(calls, [["page", { workspaceId: "workspace", teamspaceId: "teamspace" }]]);
@@ -364,6 +366,10 @@ export function register({ assert, appPath, readSource, test }) {
     await late;
     assert.deepEqual(calls, [], "a late creation must not navigate the next workspace");
     await capture(ports).handleCreateChat();
-    assert.deepEqual(calls.at(-1), ["navigate", { to: "/ai" }]);
+    assert.deepEqual(calls, [
+      ["selectChat", null],
+      ["mobileSidebar", false],
+      ["navigate", { to: "/ai", search: { thread: undefined } }],
+    ]);
   });
 }

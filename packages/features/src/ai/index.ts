@@ -17,3 +17,5 @@ export type {
   ChatRunEvent,
 } from "./runs";
 export { applyChatRunEvent, terminalChatRun, chatRunEnvelopeSchema } from "./runs";
+
+export type { ChatReceiptStorage, ChatSubmission } from "./durable";

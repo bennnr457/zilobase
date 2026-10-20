@@ -72,6 +72,8 @@ import {
   useSetActiveWorkspace,
 } from "@zilobase/features/workspaces/react";
 import { useIntegrationAvailability } from "@zilobase/features/calendar/react";
+import { useChatSelection, useChatThreads } from "@zilobase/features/ai/react";
+import { useSidebar } from "@/components/ui/sidebar";
 import { isFeatureEnabled } from "@/platform/environment";
 import { composeDatabaseViewData } from "@zilobase/features/databases";
 import { useTaskDatabases } from "@zilobase/features/tasks/react";
@@ -354,6 +356,7 @@ export function useAppSidebar({
   settingsOpen?: boolean;
 }) {
   const navigate = useNavigate();
+  const { setOpenMobile } = useSidebar();
   const location = useLocation();
   const { openSearch } = useAppSearch();
   const routerPathname = useRouterState({ select: (state) => state.location.pathname });
@@ -484,6 +487,12 @@ export function useAppSidebar({
     workspaceId,
   ]);
   const activeTab = layout.tabs.find((tab) => tab.id === activeTabId) ?? layout.tabs[0]!;
+  const chatSelection = useChatSelection(workspaceId ?? "");
+  const chatThreads = useChatThreads(
+    sidebarAvailability.askAi && activeTab.id === "ai" ? (workspaceId ?? "") : "",
+    null,
+    false,
+  );
   const needsMeetings = activeTab.sections.some((section) => section.kind === "meetings");
   const navigationQuery = usePageNavigation(workspaceId);
   const { data: navigation } = navigationQuery;
@@ -557,10 +566,34 @@ export function useAppSidebar({
   const handleCreateChat = React.useCallback(
     () =>
       Effect.runPromise(
-        Effect.tryPromise({ try: () => navigate({ to: "/ai" }), catch: (error) => error }),
+        Effect.sync(() => {
+          chatSelection.select(null);
+          setOpenMobile(false);
+        }).pipe(
+          Effect.flatMap(() =>
+            Effect.tryPromise({
+              try: () => navigate({ to: "/ai", search: { thread: undefined } }),
+              catch: (error) => error,
+            }),
+          ),
+        ),
       ),
-    [navigate],
+    [navigate, chatSelection, setOpenMobile],
   );
+  const handleOpenChat = (id: string) =>
+    Effect.runPromise(
+      Effect.sync(() => {
+        if (chatSelection.id !== id) chatSelection.select(id);
+        setOpenMobile(false);
+      }).pipe(
+        Effect.flatMap(() =>
+          Effect.tryPromise({
+            try: () => navigate({ to: "/ai", search: { thread: id } }),
+            catch: (error) => error,
+          }),
+        ),
+      ),
+    );
   const handleDropPageOnDatabase = React.useCallback(
     (input: {
       databaseId: string;
@@ -737,6 +770,9 @@ export function useAppSidebar({
     handleCreatePage,
     handleCreateDatabase,
     handleCreateChat,
+    handleOpenChat,
+    chatSelection,
+    chatThreads: chatThreads.list,
     handleDropPageOnDatabase,
     handleRemoveFavorite,
     handleRemoveDatabaseFavorite,

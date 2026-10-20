@@ -25,6 +25,7 @@ import {
 import { PendingPage, RootRouteShell } from "./route-shell";
 import {
   validateCalendarSearch,
+  validateAiSearch,
   validateDatabaseSearch,
   validateLibrarySearch,
   validateLoginSearch,
@@ -154,6 +155,7 @@ const appRoutes = [
   createRoute({
     getParentRoute: () => appRoute,
     path: "/ai",
+    validateSearch: validateAiSearch,
     beforeLoad: () =>
       Effect.runSync(
         Effect.suspend(() =>

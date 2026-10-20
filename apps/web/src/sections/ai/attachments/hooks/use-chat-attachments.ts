@@ -19,6 +19,12 @@ export function useChatAttachments(workspaceId: string | null) {
     active.current = null;
     setBusy(false);
   };
+  const reset = () => {
+    cancel();
+    setAttachments([]);
+    setPreview(null);
+    setError(null);
+  };
   const add = (item: AppSearchResult) => {
     cancel();
     setPreview(null);
@@ -75,5 +81,5 @@ export function useChatAttachments(workspaceId: string | null) {
       }
     }
   };
-  return { attachments, setAttachments, preview, busy, error, add, remove, build, cancel };
+  return { attachments, setAttachments, preview, busy, error, add, remove, build, cancel, reset };
 }

@@ -37,7 +37,12 @@ export const durableChatEnabled = (env: Record<string, unknown>) =>
   env.AI_DURABLE_STREAMING_ENABLED === "true";
 export const isRunTerminal = (status: string) => !["queued", "running"].includes(status);
 export type RunRow = typeof askAiRun.$inferSelect;
-export const snapshot = (run: RunRow, text: string): ChatRunReceipt => ({
+export const snapshot = (
+  run: RunRow,
+  text: string,
+  context?: (typeof askAiTurn.$inferSelect)["context"],
+): ChatRunReceipt => ({
+  ...(context ? { context: { ...context, markdown: "" } } : {}),
   runId: run.id,
   requestId: run.turnId,
   threadId: run.threadId,
@@ -72,7 +77,7 @@ export async function admitChatRun(
       (request.threadId && request.threadId !== existing.run.threadId)
     )
       throw new ServerOperationError({ error: "Request ID already used" }, 409);
-    return snapshot(existing.run, existing.turn.assistantText);
+    return snapshot(existing.run, existing.turn.assistantText, existing.turn.context);
   }
   const budget = chatBudget(context.env, CHAT_INSTRUCTIONS, request.text, !!request.threadId);
   const built = await assembleChatContext(context, request, 48_000, budget.contextBytes);
@@ -90,7 +95,7 @@ export async function admitChatRun(
         (request.threadId && request.threadId !== found.run.threadId)
       )
         throw new ServerOperationError({ error: "Request ID already used" }, 409);
-      return snapshot(found.run, previous.assistantText);
+      return snapshot(found.run, previous.assistantText, previous.context);
     }
     const threadId = request.threadId ?? randomUUID();
     if (request.threadId) {
@@ -178,7 +183,7 @@ export async function admitChatRun(
       [createBackgroundTaskV2({ env: context.env, kind: "ai.generate", resourceId: runId })],
       tx,
     );
-    return snapshot(run!, "");
+    return snapshot(run!, "", metadata);
   });
 }
 
@@ -209,7 +214,7 @@ export async function getChatRequest(
   const found = await findRunByRequest(context, requestId, workspaceId);
   if (!found) throw new ServerOperationError({ error: "Request not found" }, 404);
   await assertHistoryAccess(context, workspaceId, [found.turn]);
-  return snapshot(found.run, found.turn.assistantText);
+  return snapshot(found.run, found.turn.assistantText, found.turn.context);
 }
 export async function readChatRun(
   context: ServerOperationContext,
@@ -231,7 +236,7 @@ export async function readChatRun(
     );
   if (!found) throw new ServerOperationError({ error: "Run not found" }, 404);
   await assertHistoryAccess(context, workspaceId, [found.turn]);
-  return snapshot(found.run, found.turn.assistantText);
+  return snapshot(found.run, found.turn.assistantText, found.turn.context);
 }
 export async function readChatRunPage(
   context: ServerOperationContext,
@@ -395,7 +400,7 @@ export async function latestThreadRun(threadId: string) {
     .where(eq(askAiRun.threadId, threadId))
     .orderBy(desc(askAiRun.createdAt))
     .limit(1);
-  return found ? snapshot(found.run, found.turn.assistantText) : null;
+  return found ? snapshot(found.run, found.turn.assistantText, found.turn.context) : null;
 }
 export async function failChatRunDelivery(runId: string) {
   return db.transaction(async (tx) => {

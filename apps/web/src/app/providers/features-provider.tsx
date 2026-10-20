@@ -1,3 +1,4 @@
+import { webChatReceipts } from "@/platform/storage/chat-receipts";
 import { Cause, Effect } from "effect";
 import {
   ZilobaseFeaturesProvider,
@@ -164,6 +165,7 @@ export function WebFeaturesProvider({ children }: React.PropsWithChildren) {
       value={{
         deployment: clientDeployment,
         cacheStorage: webClientCacheStorage,
+        chatReceipts: webChatReceipts,
         apiFetch,
         streamFetch: apiStreamFetch,
         lifecycle: webClientLifecycle,

@@ -149,3 +149,10 @@ export function isTeamspaceSettingsTab(value: unknown): value is TeamspaceSettin
     value === "general" || value === "members" || value === "permissions" || value === "security"
   );
 }
+
+export function validateAiSearch(search: Record<string, unknown>): { thread?: string } {
+  return typeof search.thread === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search.thread)
+    ? { thread: search.thread }
+    : {};
+}

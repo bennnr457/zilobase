@@ -1,3 +1,4 @@
+import { chatCapabilities, submitChatRun, followChatRun } from "./durable";
 import type { ChatEvent, ChatRequest } from "./contracts";
 import { captureClientOperation, type ClientOperationContext } from "../shared/operation-context";
 
@@ -60,6 +61,24 @@ export async function sendChat(
   if (!context.streamFetch) throw new Error("This client does not support streaming chat");
   scope.assertCurrent();
   signal.throwIfAborted();
+  const capabilities = await chatCapabilities(context);
+  if (capabilities?.durable) {
+    const receipt = await submitChatRun(context, request, signal);
+    scope.assertCurrent();
+    const built = receipt.context ?? {
+      version: 1 as const,
+      status: "complete" as const,
+      markdown: "",
+      charCount: 0,
+      manifest: [],
+      omissions: [],
+      trimmedAttachmentIds: [],
+    };
+    onEvent({ type: "context", threadId: receipt.threadId, context: built });
+    return followChatRun(context, receipt, request.workspaceId, signal, (run) =>
+      onEvent({ type: "snapshot", run }),
+    );
+  }
   const response = await context.streamFetch("/ai/chat", {
     method: "POST",
     body: JSON.stringify(request),

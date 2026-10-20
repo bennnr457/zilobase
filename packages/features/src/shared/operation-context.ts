@@ -7,6 +7,7 @@ import type { ClientLifecycle } from "./lifecycle";
 
 /** The same ports are supplied by React composition and imperative callers. */
 export type ClientOperationContext = {
+  chatReceipts?: import("../ai/durable").ChatReceiptStorage;
   apiFetch: ApiFetcher;
   streamFetch?: (path: string, init: RequestInit) => Promise<Response>;
   queryClient: QueryClient;

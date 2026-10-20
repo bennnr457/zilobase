@@ -1,0 +1,36 @@
+import { Effect } from "effect";
+import type { ChatReceiptStorage, ChatSubmission } from "@zilobase/features/ai";
+
+// Only identifiers are stored; prompts, attachments, and answers stay on the server.
+const prefix = "zilobase:ai-submission:";
+export const webChatReceipts: ChatReceiptStorage = {
+  load: (scope) =>
+    Effect.runPromise(
+      Effect.sync(() => {
+        try {
+          const raw = sessionStorage.getItem(prefix + scope);
+          if (!raw) return null;
+          const value = JSON.parse(raw) as ChatSubmission;
+          return typeof value.requestId === "string" &&
+            typeof value.workspaceId === "string" &&
+            typeof value.createdAt === "number"
+            ? value
+            : null;
+        } catch {
+          return null;
+        }
+      }),
+    ),
+  write: (scope, value) =>
+    Effect.runPromise(
+      Effect.sync(() => {
+        // Receipt persistence is optional (private browsing or storage quota may disable it).
+        try {
+          if (value) sessionStorage.setItem(prefix + scope, JSON.stringify(value));
+          else sessionStorage.removeItem(prefix + scope);
+        } catch {
+          /* Thread discovery remains available without browser storage. */
+        }
+      }),
+    ),
+};

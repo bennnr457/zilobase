@@ -23,6 +23,7 @@ import {
   ChevronDownIcon,
   ServerIcon,
   Settings2Icon,
+  MessageSquareIcon,
 } from "@/components/icons";
 import * as React from "react";
 import { type CSSProperties, type ReactNode } from "react";
@@ -163,7 +164,9 @@ export function AppSidebar(sidebar: AppSidebarProps) {
     (navigator.userAgent.includes("Mac") || navigator.userAgent.includes("Linux"));
   const emptyAiChats =
     navItems.some((model) => model.kind === "aiChats") &&
-    navItems.every((model) => model.kind === "aiChats" && model.items.length === 0);
+    navItems.every((model) => model.kind === "aiChats") &&
+    sidebar.chatThreads.isSuccess &&
+    sidebar.chatThreads.data.length === 0;
 
   return (
     <Sidebar aria-label="Application sidebar" className={className} style={style}>
@@ -200,7 +203,7 @@ export function AppSidebar(sidebar: AppSidebarProps) {
         />
       ) : (
         <>
-          {activeTab.id !== "calendar" && !emptyAiChats && (
+          {activeTab.id !== "calendar" && (
             <div className="shrink-0 pt-3" data-sidebar="shortcuts">
               <SidebarShortcutList shortcuts={shortcuts} onActivate={activateShortcut} />
             </div>
@@ -1158,7 +1161,74 @@ function NavigationSection({
       <DatabaseSection section={model.section} storageKey={model.storageKey} sidebar={sidebar} />
     );
   if (model.kind === "tasks") return <TasksSection model={model} sidebar={sidebar} />;
+  if (model.kind === "aiChats") return <AiChatsSection model={model} sidebar={sidebar} />;
   return <StaticSection model={model} sidebar={sidebar} />;
+}
+
+function AiChatsSection({
+  model,
+  sidebar,
+}: {
+  model: SidebarSectionModel;
+  sidebar: AppSidebarProps;
+}) {
+  const [open, setOpen] = useSidebarSectionOpen(model.storageKey);
+  const threads = [...(sidebar.chatThreads.data ?? [])]
+    .sort((left, right) =>
+      "sort" in model.section && model.section.sort === "alphabetical"
+        ? left.title.localeCompare(right.title)
+        : right.updatedAt.localeCompare(left.updatedAt),
+    )
+    .slice(0, model.section.limit);
+  return (
+    <SectionShell label={model.label} open={open} onOpenChange={setOpen}>
+      <SidebarMenu aria-label="AI chats">
+        {threads.map((thread) => (
+          <SidebarMenuItem key={thread.id}>
+            <SidebarMenuButton
+              type="button"
+              isActive={sidebar.chatSelection.id === thread.id}
+              aria-current={sidebar.chatSelection.id === thread.id ? "page" : undefined}
+              title={thread.title}
+              onClick={() => {
+                void sidebar.handleOpenChat(thread.id);
+              }}
+            >
+              <MessageSquareIcon />
+              <span>{thread.title.trim() || "Untitled chat"}</span>
+              {["queued", "running"].includes(thread.status ?? "") && (
+                <span
+                  aria-hidden="true"
+                  title="Writing answer"
+                  className="ml-auto size-2 shrink-0 animate-pulse rounded-full bg-content-secondary"
+                />
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+        {sidebar.chatThreads.isLoading ? (
+          <li role="status" className="px-2 py-1.5 text-xs text-content-secondary">
+            Loading chats…
+          </li>
+        ) : null}
+        {sidebar.chatThreads.isError ? (
+          <li className="px-2 py-1.5 text-xs text-content-secondary">
+            <p role="alert">Could not load chats.</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                void sidebar.chatThreads.refetch();
+              }}
+            >
+              Retry
+            </Button>
+          </li>
+        ) : null}
+      </SidebarMenu>
+    </SectionShell>
+  );
 }
 
 function StaticSection({

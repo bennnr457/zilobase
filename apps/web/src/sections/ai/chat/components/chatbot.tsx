@@ -1,5 +1,13 @@
+import { terminalChatRun, type ChatRunReceipt } from "@zilobase/features/ai";
 import type { ChatRequest } from "@zilobase/features/ai";
-import { useSendChat, useChatThreads, useChatSelection } from "@zilobase/features/ai/react";
+import {
+  useSendChat,
+  useFollowChatRun,
+  useCancelChatRun,
+  useRecoverChatSubmission,
+  useChatThreads,
+  useChatSelection,
+} from "@zilobase/features/ai/react";
 import { useChatAttachments } from "../../attachments/hooks/use-chat-attachments";
 import { ContextInspector } from "../../attachments/components/context-inspector";
 import type { BuildContextResult } from "@zilobase/page-context";
@@ -31,6 +39,10 @@ export default function Chatbot({
   const attachmentState = useChatAttachments(workspaceId);
   const [sentContext, setSentContext] = useState<BuildContextResult | null>(null);
   const send = useSendChat();
+  const follow = useFollowChatRun();
+  const cancelRun = useCancelChatRun();
+  const recoverSubmission = useRecoverChatSubmission();
+  const activeRun = useRef<ChatRunReceipt | null>(null);
   const [streaming, setStreaming] = useState(false);
   const selection = useChatSelection(workspaceId ?? "");
   const threads = useChatThreads(
@@ -39,12 +51,32 @@ export default function Chatbot({
     !streaming && !attachmentState.busy,
   );
   const loadedThread = useRef<string | null>(null);
+  const activeSelection = useRef(selection.revision);
   useEffect(() => {
-    if (!selection.initialized && threads.list.isSuccess)
-      selection.select(threads.list.data[0]?.id ?? null);
-  }, [selection, threads.list.isSuccess, threads.list.data]);
+    if (selection.initialized || !threads.list.isSuccess || !workspaceId) return;
+    let disposed = false;
+    const revision = selection.revision;
+    void recoverSubmission(workspaceId)
+      .then((receipt) => {
+        if (!disposed && selection.isCurrent(revision))
+          selection.select(receipt?.threadId ?? threads.list.data[0]?.id ?? null);
+      })
+      .catch(() => {
+        if (!disposed && selection.isCurrent(revision))
+          selection.select(threads.list.data[0]?.id ?? null);
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [selection, threads.list.isSuccess, threads.list.data, workspaceId, recoverSubmission]);
   useEffect(() => {
-    if (streaming || !threads.detail.data || loadedThread.current === selection.id) return;
+    if (
+      streaming ||
+      !threads.detail.data ||
+      threads.detail.data.thread.id !== selection.id ||
+      loadedThread.current === selection.id
+    )
+      return;
     const detail = threads.detail.data;
     loadedThread.current = selection.id;
     setMessages(detail.messages);
@@ -63,18 +95,104 @@ export default function Chatbot({
   const [chatError, setChatError] = useState<string | null>(null);
   const pendingRequest = useRef<ChatRequest | null>(null);
   const streamController = useRef<AbortController | null>(null);
-  useLayoutEffect(() => () => streamController.current?.abort(), []);
+  useLayoutEffect(
+    () => () => {
+      const controller = streamController.current;
+      streamController.current = null;
+      controller?.abort();
+    },
+    [],
+  );
+  useLayoutEffect(() => {
+    if (activeSelection.current === selection.revision) return;
+    activeSelection.current = selection.revision;
+    const controller = streamController.current;
+    streamController.current = null;
+    controller?.abort();
+    setStreaming(false);
+    if (controller) void threads.refresh();
+    loadedThread.current = null;
+    activeRun.current = null;
+    pendingRequest.current = null;
+    setText("");
+    setMessages([]);
+    setSentContext(null);
+    setChatError(null);
+    attachmentState.reset();
+  }, [selection.revision, attachmentState, threads]);
+  // Reloading or switching threads attaches a subscriber to the existing producer.
+  const savedRun = threads.detail.data?.run;
+  const followedRun = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      !savedRun ||
+      terminalChatRun(savedRun.status) ||
+      !workspaceId ||
+      savedRun.threadId !== selection.id ||
+      streamController.current ||
+      loadedThread.current !== selection.id
+    )
+      return;
+    const followKey = `${selection.revision}:${savedRun.runId}`;
+    if (followedRun.current === followKey) return;
+    followedRun.current = followKey;
+    const controller = new AbortController();
+    const revision = selection.revision;
+    streamController.current = controller;
+    activeRun.current = savedRun;
+    setStreaming(true);
+    void follow(savedRun, workspaceId, controller.signal, (run) => {
+      if (!selection.isCurrent(revision) || controller.signal.aborted) return;
+      activeRun.current = run;
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === `${run.turnId}:assistant`
+            ? {
+                ...message,
+                text: run.text,
+                status: terminalChatRun(run.status) ? run.status : "streaming",
+              }
+            : message,
+        ),
+      );
+    })
+      .catch((cause) => {
+        if (!controller.signal.aborted && selection.isCurrent(revision))
+          setChatError(cause instanceof Error ? cause.message : "Could not reconnect to answer");
+      })
+      .finally(() => {
+        if (streamController.current === controller) {
+          streamController.current = null;
+          setStreaming(false);
+          void threads.refresh();
+        }
+      });
+    // Scope changes are handled by the selection/unmount cleanup above. A query
+    // refresh must not disconnect the currently owned subscription.
+  }, [savedRun, workspaceId, selection, follow, threads]);
+  const threadReady =
+    selection.initialized && (selection.id === null || loadedThread.current === selection.id);
   const onSubmit = async (message: PromptInputMessage) => {
     const nextText = message.text.trim();
-    if (!nextText || streamController.current || attachmentState.busy || streaming || !workspaceId)
+    if (
+      !nextText ||
+      !threadReady ||
+      streamController.current ||
+      attachmentState.busy ||
+      streaming ||
+      !workspaceId
+    )
       return;
     setChatError(null);
+    activeRun.current = null;
     const controller = new AbortController();
     streamController.current = controller;
     const assistantId = crypto.randomUUID();
+    let requestSelection = selection.revision;
     let accepted = false;
     try {
       const prepared = await attachmentState.build();
+      if (!selection.isCurrent(requestSelection)) controller.abort();
       controller.signal.throwIfAborted();
       setStreaming(true);
       let nextRequest: ChatRequest = {
@@ -98,10 +216,15 @@ export default function Chatbot({
         nextRequest = pendingRequest.current;
       pendingRequest.current = nextRequest;
       await send(nextRequest, controller.signal, (event) => {
+        if (!selection.isCurrent(requestSelection) || controller.signal.aborted) {
+          controller.abort();
+          return;
+        }
         if (event.type === "context") {
           if (event.threadId) {
             loadedThread.current = event.threadId;
-            selection.select(event.threadId);
+            requestSelection = selection.select(event.threadId).revision;
+            activeSelection.current = requestSelection;
           }
           accepted = true;
           pendingRequest.current = null;
@@ -119,6 +242,19 @@ export default function Chatbot({
               status: "streaming",
             },
           ]);
+        } else if (event.type === "snapshot") {
+          activeRun.current = event.run;
+          setMessages((current) =>
+            current.map((entry) =>
+              entry.id === assistantId
+                ? {
+                    ...entry,
+                    text: event.run.text,
+                    status: terminalChatRun(event.run.status) ? event.run.status : "streaming",
+                  }
+                : entry,
+            ),
+          );
         } else if (event.type === "delta")
           setMessages((current) =>
             current.map((entry) =>
@@ -133,9 +269,10 @@ export default function Chatbot({
           );
       });
     } catch (cause) {
+      if (streamController.current !== controller || !selection.isCurrent(requestSelection)) return;
       if (!controller.signal.aborted)
         setChatError(cause instanceof Error ? cause.message : "Could not send message");
-      if (accepted)
+      if (accepted && !activeRun.current)
         setMessages((current) =>
           current.map((entry) =>
             entry.id === assistantId
@@ -148,12 +285,12 @@ export default function Chatbot({
       if (streamController.current === controller) {
         streamController.current = null;
         setStreaming(false);
-        if (!controller.signal.aborted) void threads.refresh();
+        void threads.refresh();
       }
     }
   };
   const hasMessages = messages.length > 0;
-  const centerEmptyState = !isSidebar && !hasMessages;
+  const centerEmptyState = !isSidebar && !hasMessages && threadReady;
   return (
     <div
       className={`relative flex h-full min-h-0 flex-col ${centerEmptyState ? "ask-ai-empty" : ""}`}
@@ -164,7 +301,12 @@ export default function Chatbot({
         className={centerEmptyState ? "shrink-0" : "min-h-0 flex-1 overflow-y-auto"}
       >
         <ChatLayout sidebar={isSidebar}>
-          {!hasMessages && (
+          {!threadReady && !threads.detail.isError && (
+            <p role="status" className="py-6 text-center text-sm text-content-secondary">
+              Loading conversation…
+            </p>
+          )}
+          {threadReady && !hasMessages && (
             <div className="mx-auto mb-6 grid w-full max-w-3xl justify-items-center gap-3 px-4 text-center">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-surface-secondary text-lg font-semibold">
                 AI
@@ -192,78 +334,29 @@ export default function Chatbot({
               </div>
             </div>
           )}
-          {hasMessages && <ChatbotMessages isSidebar={isSidebar} messages={messages} />}
+          {threadReady && hasMessages && (
+            <ChatbotMessages isSidebar={isSidebar} messages={messages} />
+          )}
         </ChatLayout>
       </div>
       <ChatLayout sidebar={isSidebar}>
         {beforeComposer}
-        <div className="mb-2 flex items-center gap-2">
-          <select
-            aria-label="Conversation"
-            value={selection.id ?? ""}
-            disabled={streaming || attachmentState.busy}
-            className="min-w-0 flex-1 rounded border bg-surface-canvas p-2 text-sm"
-            onChange={(event) => {
-              pendingRequest.current = null;
-              loadedThread.current = null;
-              setMessages([]);
-              setSentContext(null);
-              setText("");
-              attachmentState.setAttachments([]);
-              selection.select(event.target.value || null);
-            }}
-          >
-            <option value="">New chat</option>
-            {(threads.list.data ?? []).map((thread) => (
-              <option key={thread.id} value={thread.id}>
-                {thread.title}
-              </option>
-            ))}
-          </select>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={streaming || attachmentState.busy}
-            onClick={() => {
-              pendingRequest.current = null;
-              loadedThread.current = null;
-              selection.select(null);
-              setMessages([]);
-              setSentContext(null);
-              setText("");
-            }}
-          >
-            New chat
-          </Button>
-          {selection.id && (
+        {threads.detail.isError && (
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p role="alert" className="text-sm text-action-danger-text">
+              {threads.detail.error.message}
+            </p>
             <Button
               type="button"
-              size="sm"
               variant="ghost"
-              disabled={streaming || attachmentState.busy || threads.remove.isPending}
+              size="sm"
               onClick={() => {
-                const id = selection.id!;
-                threads.remove.mutate(id, {
-                  onSuccess: () => {
-                    pendingRequest.current = null;
-                    loadedThread.current = null;
-                    selection.select(null);
-                    setMessages([]);
-                    setSentContext(null);
-                  },
-                  onError: (error) => setChatError(error.message),
-                });
+                void threads.detail.refetch();
               }}
             >
-              Delete chat
+              Retry
             </Button>
-          )}
-        </div>
-        {threads.detail.isError && (
-          <p role="alert" className="mb-2 text-sm text-action-danger-text">
-            {threads.detail.error.message}
-          </p>
+          </div>
         )}
 
         <ChatbotComposer
@@ -272,13 +365,20 @@ export default function Chatbot({
           onTextChange={setText}
           workspaceId={workspaceId}
           onAttach={attachmentState.add}
-          disabled={attachmentState.busy || streaming}
+          disabled={!threadReady || attachmentState.busy || streaming}
           rootRef={rootRef}
           onStop={
             streaming || attachmentState.busy
               ? () => {
                   attachmentState.cancel();
-                  streamController.current?.abort();
+                  const run = activeRun.current;
+                  if (run && workspaceId) {
+                    void cancelRun(run.runId, workspaceId).catch((cause) =>
+                      setChatError(
+                        cause instanceof Error ? cause.message : "Could not stop answer",
+                      ),
+                    );
+                  } else streamController.current?.abort();
                 }
               : undefined
           }
@@ -334,6 +434,21 @@ export default function Chatbot({
           {chatError && (
             <p role="alert" className="mb-2 text-sm text-action-danger-text">
               {chatError}
+              {activeRun.current && !terminalChatRun(activeRun.current.status) && !streaming && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    followedRun.current = null;
+                    loadedThread.current = null;
+                    setChatError(null);
+                    void threads.refresh();
+                  }}
+                >
+                  Reconnect
+                </Button>
+              )}
             </p>
           )}
           {streaming && (
