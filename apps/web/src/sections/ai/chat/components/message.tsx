@@ -1,5 +1,11 @@
 "use client";
 
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
+import {
+  Message as MessageRoot,
+  MessageContent as MessageBody,
+  MessageFooter,
+} from "@/components/ui/message";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,39 +30,54 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: "user" | "assistant" | "system";
 };
 
+const MessageRoleContext = createContext<MessageProps["from"]>("assistant");
+
 export const Message = ({ className, from, ...props }: MessageProps) => (
-  <div
-    className={cn(
-      "group flex w-full max-w-[95%] flex-col gap-2",
-      from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
-      className,
-    )}
-    {...props}
-  />
+  <MessageRoleContext.Provider value={from}>
+    <MessageRoot
+      align={from === "user" ? "end" : "start"}
+      className={cn(
+        "group flex w-full max-w-[95%] flex-col gap-2 text-sm",
+        from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
+        className,
+      )}
+      {...props}
+    />
+  </MessageRoleContext.Provider>
 );
 
 export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 
-export const MessageContent = ({ children, className, ...props }: MessageContentProps) => (
-  <div
-    className={cn(
-      "is-user:dark flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-action-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-content-primary",
-      "group-[.is-assistant]:w-full group-[.is-assistant]:max-w-full group-[.is-assistant]:text-content-primary",
-      className,
-    )}
-    {...props}
-  >
-    {children}
-  </div>
-);
+export const MessageContent = ({ children, className, ...props }: MessageContentProps) => {
+  const from = useContext(MessageRoleContext);
+  return (
+    <MessageBody
+      className={cn(
+        "flex w-fit min-w-0 max-w-full flex-col gap-2 overflow-hidden text-sm text-content-primary",
+        from === "user" ? "ml-auto" : "w-full",
+        className,
+      )}
+      {...props}
+    >
+      {from === "user" ? (
+        <Bubble align="end" variant="secondary" className="max-w-full">
+          <BubbleContent className="flex flex-col gap-2 border-0 px-4 py-3 text-sm text-content-primary!">
+            {children}
+          </BubbleContent>
+        </Bubble>
+      ) : (
+        children
+      )}
+    </MessageBody>
+  );
+};
 
 type MessageActionsProps = ComponentProps<"div">;
 
 export const MessageActions = ({ className, children, ...props }: MessageActionsProps) => (
-  <div className={cn("flex items-center gap-1", className)} {...props}>
+  <MessageFooter className={cn("flex items-center gap-1 px-0", className)} {...props}>
     {children}
-  </div>
+  </MessageFooter>
 );
 
 type MessageActionProps = ComponentProps<typeof Button> & {
