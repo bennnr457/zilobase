@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import type { BackgroundLane } from "./contracts";
 export const BACKGROUND_TASK_KINDS = [
+  "ai.generate",
   "automation.event_window",
   "automation.run",
   "calendar.sync",

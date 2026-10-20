@@ -72,6 +72,10 @@ async function processBackgroundTaskInner(input: {
 }): Promise<BackgroundTaskResult> {
   const { env, task, workerId } = input;
   const handlers: Record<BackgroundTaskV2["kind"], () => Promise<BackgroundTaskResult>> = {
+    "ai.generate": async () => ({
+      outcome: "retry",
+      availableAt: new Date(Date.now() + 60_000).toISOString(),
+    }),
     "automation.event_window": () =>
       processDatabaseAutomationEventWindow(env, {
         windowId: task.resourceId,

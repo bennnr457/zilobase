@@ -1,3 +1,4 @@
+import { failChatRunDelivery } from "../../services/ai/runs";
 import { and, asc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import {
   backgroundTaskLane,
@@ -80,6 +81,9 @@ export async function reconcileBackgroundFailures(env: RuntimeEnv) {
     for (const row of rows) {
       let handled: boolean;
       switch (row.task.kind) {
+        case "ai.generate":
+          handled = await failChatRunDelivery(row.resourceId);
+          break;
         case "automation.run":
           handled = await failAutomationDelivery(row.resourceId, false);
           break;
