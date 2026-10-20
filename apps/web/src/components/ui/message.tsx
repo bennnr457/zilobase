@@ -1,0 +1,88 @@
+// Source: https://ui.shadcn.com/r/styles/radix-mira/message.json
+// Retrieved 2026-10-20; SHA-256 eee63e2232b284e2a8e26fc2b033ce0be8fc0aef16a16b34dd440a15d5a006b0.
+// Adaptations: local imports, Phosphor icons and Zilobase semantic colors.
+// MIT license: ./ai-elements.LICENSE
+import * as React from "react";
+import { cn } from "@/lib/utils";
+
+function MessageGroup({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="message-group"
+      className={cn("flex min-w-0 flex-col gap-1.5", className)}
+      {...props}
+    />
+  );
+}
+
+function Message({
+  className,
+  align = "start",
+  ...props
+}: React.ComponentProps<"div"> & { align?: "start" | "end" }) {
+  return (
+    <div
+      data-slot="message"
+      data-align={align}
+      className={cn(
+        "group/message relative flex w-full min-w-0 gap-1.5 text-xs/relaxed data-[align=end]:flex-row-reverse",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function MessageAvatar({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="message-avatar"
+      className={cn(
+        "flex w-fit min-w-8 shrink-0 items-center justify-center self-end overflow-hidden rounded-full bg-surface-secondary group-has-data-[slot=message-footer]/message:-translate-y-8",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function MessageContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="message-content"
+      className={cn(
+        "flex w-full min-w-0 flex-col gap-2 wrap-break-word group-data-[align=end]/message:*:data-slot:self-end",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function MessageHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="message-header"
+      className={cn(
+        "flex max-w-full min-w-0 items-center px-2.5 text-[0.625rem] font-medium text-content-secondary group-has-data-[variant=ghost]/message:px-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function MessageFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="message-footer"
+      className={cn(
+        "flex max-w-full min-w-0 items-center px-2.5 text-[0.625rem] font-medium text-content-secondary group-has-data-[variant=ghost]/message:px-0 group-data-[align=end]/message:justify-end",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { MessageGroup, Message, MessageAvatar, MessageContent, MessageFooter, MessageHeader };
