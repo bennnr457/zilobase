@@ -35,7 +35,17 @@ test("calendar callback paths reach Hono while the calendar screen remains a web
 });
 
 test("Ask AI streams and history reach the API while its screen stays a web route", () => {
-  for (const path of ["/ai/chat", "/ai/threads", "/ai/threads/thread-id"])
+  for (const path of [
+    "/ai/chat",
+    "/ai/threads",
+    "/ai/threads/thread-id",
+    "/ai/capabilities",
+    "/ai/turns",
+    "/ai/requests/request-id",
+    "/ai/runs/run-id",
+    "/ai/runs/run-id/events",
+    "/ai/runs/run-id/cancel",
+  ])
     assert.equal(isNodeApiPath(path), true);
   assert.equal(isNodeApiPath("/ai"), false);
 });
