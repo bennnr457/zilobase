@@ -80,9 +80,7 @@ test("copy uses display text, reports failures, ratings toggle exclusively, and 
   await expect(page.locator(".is-assistant")).toHaveCount(2);
 });
 
-test("Stop before the first token clears Thinking and changing threads removes pending activity", async ({
-  page,
-}) => {
+test("Stop before the first token clears Thinking and ignores late tokens", async ({ page }) => {
   await page.goto(url);
   await expect(composer(page)).toBeEnabled();
   await page.evaluate(() => {

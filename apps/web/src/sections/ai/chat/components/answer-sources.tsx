@@ -12,12 +12,18 @@ import {
   DEFAULT_PAGE_ITEM_ICON,
 } from "@/components/navigation/lib/navigation-icons";
 
-export function AnswerSources({ citations }: { citations: ReturnType<typeof chatCitations> }) {
+export function AnswerSources({
+  citations,
+  label = "Answer sources",
+}: {
+  citations: ReturnType<typeof chatCitations>;
+  label?: string;
+}) {
   const { openPage } = useOpenEmbeddedPage({ contextPageId: null, page: null });
   return (
     <>
       {citations.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2" aria-label="Answer sources">
+        <div className="mt-2 flex flex-wrap gap-2" aria-label={label}>
           <Trace className="contents">
             <div className="contents">
               {citations.map((entry) => (

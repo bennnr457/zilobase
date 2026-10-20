@@ -6,7 +6,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDownIcon } from "@/components/icons";
+import { ChevronRightIcon } from "@/components/icons";
 
 function Trace({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -111,7 +111,7 @@ function TraceCollapsibleTrigger({
     >
       {children}
       <TraceIcon className="transition-transform group-aria-expanded/trace-collapsible-trigger:rotate-90">
-        <ChevronDownIcon />
+        <ChevronRightIcon />
       </TraceIcon>
     </CollapsibleTrigger>
   );

@@ -94,7 +94,7 @@ function Action({
       <TooltipTrigger asChild>
         <Button
           type="button"
-          variant="ghost"
+          variant={pressed ? "selected" : "ghost"}
           size="icon-xs"
           aria-label={label}
           aria-pressed={pressed}

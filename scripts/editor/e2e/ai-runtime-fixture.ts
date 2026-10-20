@@ -176,6 +176,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
           role: "assistant",
           text: "Partial",
           status: "streaming",
+          roots: request.roots,
           context,
         },
       );
@@ -372,6 +373,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       role: "assistant" as const,
       text: "",
       status: "streaming" as "streaming" | "completed" | "stopped",
+      roots: request.roots,
       context: {
         ...context,
         markdown: "",
