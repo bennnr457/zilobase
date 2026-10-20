@@ -82,6 +82,8 @@ export class DatabaseController {
   private snapshot: readonly DatabaseIntention[] = [];
   private listeners = new Set<() => void>();
   private jobs = new Map<string, Job>();
+  private failedCreations = new Set<string>();
+  creationFailed = (hostId: string) => this.failedCreations.has(hostId);
   private windows = new Map<object, Window>();
   private identities = new Map<string, string>();
   private pageIdentities = new Map<string, string>();
@@ -120,6 +122,10 @@ export class DatabaseController {
     this.collect();
   }
 
+  creation(hostId: string) {
+    return this.snapshot.find((item) => item.creation?.database.id === hostId);
+  }
+
   bootstrap(hostId: string) {
     const snapshots = this.queryClient
       .getQueriesData({ queryKey: ["db", this.sessionId, hostId] })
@@ -154,10 +160,11 @@ export class DatabaseController {
           includeDeleted: false,
         });
     }
-    return undefined;
+    const creation = this.creation(hostId)?.creation;
+    return creation ? projectDatabaseMetadata(creation, this.snapshot) : undefined;
   }
 
-  execute(input: DatabaseCommandInput) {
+  execute(input: DatabaseCommandInput, options?: { commandId?: string }) {
     return this.submit(
       input,
       [],
@@ -170,6 +177,7 @@ export class DatabaseController {
             ?.databases.hosts.get(input.databaseId))
         ? metadataEffectsForCommand(input, this.bootstrap(input.databaseId))
         : [],
+      options,
     );
   }
 
@@ -210,6 +218,7 @@ export class DatabaseController {
     effects: RecordEffect[] = [],
     temporaryId?: string,
     metadataEffects: MetadataEffect[] = [],
+    options?: { commandId?: string },
   ): Promise<DatabaseCommandAck> {
     if (this.disposed) return Promise.reject(new Error("Database session ended"));
     const policy = databaseCommandPolicies[input.command.type];
@@ -250,7 +259,7 @@ export class DatabaseController {
       };
       return queued.promise;
     }
-    const id = crypto.randomUUID();
+    const id = options?.commandId ?? crypto.randomUUID();
     if (
       (input.command.type === "row.change" || input.command.type === "row.place") &&
       input.command.clearSortViewId
@@ -265,8 +274,34 @@ export class DatabaseController {
         },
       ];
     if (input.command.type === "database.create") input = { ...input, databaseId: id };
+    if (input.command.type === "view.create") {
+      input = { ...input, command: { ...input.command, viewId: input.command.viewId ?? id } };
+      metadataEffects = metadataEffectsForCommand(input, this.bootstrap(input.databaseId));
+    }
+    const now = new Date().toISOString();
     const interaction: DatabaseIntention = {
       id,
+      ...(input.command.type === "database.create"
+        ? {
+            creation: {
+              database: {
+                id,
+                workspaceId: input.command.workspaceId,
+                pageId: input.command.standalone ? null : (input.command.pageId ?? null),
+                name: input.command.name.trim() || "New database",
+                config: {},
+                accessLevel: "full" as const,
+                deletedAt: null,
+                version: 0,
+                createdAt: now,
+                updatedAt: now,
+              },
+              dataSources: [],
+              views: [],
+              properties: [],
+            },
+          }
+        : {}),
       effects: effects.map((effect) => {
         const owner = sharedClient(this.queryClient).database(input.databaseId, this.sessionId);
         if (!owner?.databases.pageForRecord(input.databaseId, effect.rowId)) return effect;
@@ -622,7 +657,7 @@ export class DatabaseController {
       job.interaction = {
         ...job.interaction,
         status: "committed",
-        ...(job.scopeExpired ? { effects: [], metadataEffects: [] } : {}),
+        ...(job.scopeExpired ? { effects: [], metadataEffects: [], creation: undefined } : {}),
         sourceVersions:
           (titleOnly(job.input) && entities) ||
           job.sharedDefinitionConfirmed ||
@@ -656,11 +691,14 @@ export class DatabaseController {
         this.commandState.report(targetsForCommand(job.input), error);
       } else {
         this.jobs.delete(job.interaction.id);
+        if (job.interaction.creation && !job.scopeExpired)
+          this.failedCreations.add(job.input.databaseId);
         this.publish(this.snapshot.filter(({ id }) => id !== job.interaction.id));
         job.release(error);
         // Cancel the entire dependency chain, including newly created schema identities.
         const createdIds = (candidate: Job) => [
           ...(candidate.temporaryId ? [candidate.temporaryId] : []),
+          ...(candidate.interaction.creation ? [candidate.input.databaseId] : []),
           ...(candidate.interaction.metadataEffects ?? []).flatMap((effect) =>
             effect.insert
               ? [effect.id, ...("propertyId" in effect.insert ? [effect.insert.propertyId] : [])]
@@ -680,7 +718,7 @@ export class DatabaseController {
           );
         };
         for (const dependent of this.jobs.values()) {
-          if (!referencesFailed(dependent.input.command)) continue;
+          if (!referencesFailed(dependent.input)) continue;
           for (const id of createdIds(dependent)) failedIds.add(id);
           this.jobs.delete(dependent.interaction.id);
           dependent.delivery?.reject(error);
@@ -791,7 +829,13 @@ export class DatabaseController {
         .findAll({ queryKey: ["db", this.sessionId] });
       const keep = this.snapshot.filter((interaction) => {
         if (interaction.status !== "committed") return true;
-        let stale = false;
+        let stale = Boolean(
+          interaction.creation &&
+          !queries.some((query) => {
+            const bootstrap = resolveDatabaseBootstrap(this.queryClient, query.state.data);
+            return bootstrap?.database.id === interaction.creation?.database.id;
+          }),
+        );
         for (const effect of interaction.metadataEffects ?? []) {
           for (const query of queries) {
             const parsed = resolveDatabaseBootstrap(this.queryClient, query.state.data);
@@ -830,6 +874,7 @@ export class DatabaseController {
       job.reject(new Error("Database session ended"));
     }
     this.jobs.clear();
+    this.failedCreations.clear();
     this.windows.clear();
     this.identities.clear();
     this.pageIdentities.clear();

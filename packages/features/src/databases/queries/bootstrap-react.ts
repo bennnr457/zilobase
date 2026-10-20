@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useSharedDataRevision } from "../../data/react";
 import { useZilobaseFeatures } from "../../shared/context";
 import { resolveDatabaseBootstrap } from "../cache-references";
-import { useProjectedDatabaseBootstrap } from "../interactions/react";
+import { useDatabaseController, useProjectedDatabaseBootstrap } from "../interactions/react";
 import {
   databaseBootstrapQueryOptions,
   type DatabaseBootstrapHookState,
@@ -16,6 +16,15 @@ export function useDatabaseBootstrap(scope: DatabaseScope | null): DatabaseBoots
   const sessionId = useDatabaseSessionId();
   const queryKey = scope ? databaseBootstrapQueryKey(sessionId, scope) : null;
 
+  const controller = useDatabaseController();
+  const intentions = useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot,
+  );
+  const creation = intentions.find((item) => item.creation?.database.id === scope?.databaseId);
+  const creating = Boolean(creation && creation.status !== "committed");
+  const creationFailed = Boolean(scope && controller.creationFailed(scope.databaseId));
   const query = useQuery({
     ...databaseBootstrapQueryOptions(
       apiFetch,
@@ -23,7 +32,7 @@ export function useDatabaseBootstrap(scope: DatabaseScope | null): DatabaseBoots
       scope ?? { databaseId: "disabled" },
       queryClient,
     ),
-    enabled: Boolean(scope),
+    enabled: Boolean(scope) && !creating && !creationFailed,
   });
   const revision = useSharedDataRevision(queryClient);
   const resolved = useMemo(
@@ -34,7 +43,7 @@ export function useDatabaseBootstrap(scope: DatabaseScope | null): DatabaseBoots
     () => resolveDatabaseBootstrap(queryClient, query.data, true),
     [queryClient, query.data, revision],
   );
-  const projected = useProjectedDatabaseBootstrap(resolved);
+  const projected = useProjectedDatabaseBootstrap(resolved, scope?.databaseId);
 
   if (!scope || !queryKey) {
     return {
@@ -59,6 +68,6 @@ export function useDatabaseBootstrap(scope: DatabaseScope | null): DatabaseBoots
     error,
     refetch: () => queryClient.refetchQueries({ exact: true, queryKey }),
     scope,
-    status: query.isError ? "error" : query.isLoading ? "loading" : query.data ? "success" : "idle",
+    status: query.isError ? "error" : projected ? "success" : query.isLoading ? "loading" : "idle",
   };
 }

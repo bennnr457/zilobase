@@ -9,6 +9,7 @@ import type { DatabaseHostEntity, DataSourceEntity } from "../core/entities";
 import type { ConfigurationChange } from "../interactions/configuration";
 export type CreateDatabaseInput = {
   name?: string;
+  onOptimistic?: (database: DatabaseHostEntity) => void;
   workspaceId: string;
   pageId?: string;
   standalone?: boolean;
@@ -45,15 +46,23 @@ export function createDatabase(
     const controller = clientDatabaseController(context);
     return clientMutation({
       mutationFn: async (input: CreateDatabaseInput) => {
-        const ack = await controller.execute({
-          databaseId: input.workspaceId,
-          command: {
-            ...input,
-            type: "database.create",
-            name: input.name ?? "New database",
-            standalone: input.standalone ?? false,
+        const { onOptimistic, ...command } = input;
+        const commandId = crypto.randomUUID();
+        const saving = controller.execute(
+          {
+            databaseId: input.workspaceId,
+            command: {
+              ...command,
+              type: "database.create",
+              name: input.name ?? "New database",
+              standalone: input.standalone ?? false,
+            },
           },
-        });
+          { commandId },
+        );
+        const preview = controller.creation(commandId)?.creation;
+        if (preview) onOptimistic?.(preview.database);
+        const ack = await saving;
         return ack.result as CreateDatabaseResponse;
       },
     });

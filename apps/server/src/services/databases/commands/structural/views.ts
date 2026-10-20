@@ -78,7 +78,7 @@ export async function viewCreate(
     ids: ordered.map(({ id }) => id),
   });
   const now = new Date();
-  const viewId = crypto.randomUUID();
+  const viewId = command.viewId ?? crypto.randomUUID();
   await context.transaction.insert(databaseView).values({
     config: command.config,
     createdAt: now,

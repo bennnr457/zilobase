@@ -3,7 +3,7 @@ import type { DatabaseBootstrapResponse } from "../core/entities";
 import { diffConfiguration } from "../interactions/configuration";
 import { type DatabaseSetupTemplateId } from "../templates/definitions";
 import { getMergedDatabaseConfig } from "../views/configuration";
-import { observeOperation } from "./mutation-bindings";
+import { observeDatabaseViewCreation, observeOperation } from "./mutation-bindings";
 import { setupDatabaseSource } from "./source-workflows";
 type SourceOperations = typeof import("../mutations/data-sources-operations");
 type ViewOperations = typeof import("../mutations/views-operations");
@@ -246,7 +246,7 @@ export function createDatabaseSourceCommands({
       return;
     }
 
-    observeOperation(
+    observeDatabaseViewCreation(
       addDatabaseView,
       {
         config: sourceView.config,

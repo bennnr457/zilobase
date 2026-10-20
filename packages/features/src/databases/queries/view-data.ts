@@ -3,7 +3,7 @@ import { useSession } from "../../auth/react";
 import { usePagePersonAccessTargets } from "../../pages/query-hooks";
 import { useZilobaseFeatures } from "../../shared/context";
 import type { DatabaseBootstrapResponse } from "../core/entities";
-import { useProjectedDatabaseRecords } from "../interactions/react";
+import { useDatabaseController, useProjectedDatabaseRecords } from "../interactions/react";
 import { deriveDatabaseViewModel } from "../views/model";
 import { databaseViewQueryHash } from "../views/query-hash";
 import { composeDatabaseViewData } from "../views/source-state";
@@ -30,8 +30,14 @@ export function useDatabaseViewData({
     bootstrap?.views.find(({ id }) => id === activeViewId)?.dataSourceId ??
     bootstrap?.dataSources[0]?.id ??
     null;
-  const recordWindow = useDatabaseRecords(
-    databaseId && !databaseDeleted && activeViewId && activeDataSourceId
+  const controller = useDatabaseController();
+  const pendingView = Boolean(
+    activeViewId &&
+    bootstrap?.views.some((view) => view.id === activeViewId) &&
+    !serverBootstrap?.views.some((view) => view.id === activeViewId),
+  );
+  const loadedWindow = useDatabaseRecords(
+    !pendingView && databaseId && !databaseDeleted && activeViewId && activeDataSourceId
       ? {
           databaseId,
           dataSourceId: activeDataSourceId,
@@ -40,6 +46,16 @@ export function useDatabaseViewData({
         }
       : null,
   );
+  const pendingRecords =
+    pendingView && activeDataSourceId ? controller.records(activeDataSourceId) : [];
+  const recordWindow = pendingView
+    ? {
+        ...loadedWindow,
+        status: "success" as const,
+        records: pendingRecords,
+        totalCount: pendingRecords.length,
+      }
+    : loadedWindow;
   const projectedRecords = useProjectedDatabaseRecords({
     databaseId,
     dataSourceId: activeDataSourceId,

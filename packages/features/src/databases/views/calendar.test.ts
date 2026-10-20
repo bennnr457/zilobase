@@ -144,7 +144,9 @@ test("calendar commands create blank-title dated records, preserve configuration
     initialValues: [{ propertyId: "date", value: "2026-10-17" }],
   });
   commands.addCalendarView();
-  assert.deepEqual(calls[1], {
+  const { onOptimistic, ...calendarInput } = calls[1] as Record<string, unknown>;
+  assert.equal(typeof onOptimistic, "function");
+  assert.deepEqual(calendarInput, {
     databaseId: "host",
     dataSourceId: "source",
     name: "Calendar",

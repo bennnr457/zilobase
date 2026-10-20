@@ -45,3 +45,31 @@ export function observeOperation<TInput, TResult>(
     .finally(callbacks?.onSettled)
     .catch(() => undefined);
 }
+
+/** Select once on admission; a slow acknowledgement must not steal a later selection. */
+export function observeDatabaseViewCreation(
+  operation: DatabaseViewMutations["addDatabaseView"],
+  input: Parameters<DatabaseViewMutations["addDatabaseView"]>[0],
+  callbacks: {
+    onSuccess?: (view: Awaited<ReturnType<DatabaseViewMutations["addDatabaseView"]>>) => unknown;
+    onError?: (error: Error) => unknown;
+  },
+) {
+  let previewed = false;
+  observeOperation(
+    operation,
+    {
+      ...input,
+      onOptimistic: (view) => {
+        previewed = true;
+        callbacks.onSuccess?.(view);
+      },
+    },
+    {
+      ...callbacks,
+      onSuccess: (view) => {
+        if (!previewed) callbacks.onSuccess?.(view);
+      },
+    },
+  );
+}

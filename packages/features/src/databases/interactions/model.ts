@@ -1,4 +1,4 @@
-import type { DatabaseRecordEntity } from "../core/entities";
+import type { DatabaseBootstrapResponse, DatabaseRecordEntity } from "../core/entities";
 import type { MetadataIntention } from "./metadata";
 import type { DatabaseOperationStatus } from "../core/lifecycle-commands";
 
@@ -18,6 +18,7 @@ export type RecordEffect = {
 
 export type DatabaseIntention = MetadataIntention & {
   id: string;
+  creation?: DatabaseBootstrapResponse;
   effects: readonly RecordEffect[];
   status: DatabaseOperationStatus;
   /** Source clocks work across linked hosts without disclosing their identities. */

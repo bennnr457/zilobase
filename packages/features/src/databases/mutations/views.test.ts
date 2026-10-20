@@ -91,6 +91,7 @@ test("view creation uses neighbor-based v2 commands", async () => {
       name: "Board",
       type: "view.create",
       viewType: "kanban",
+      viewId: sent[0]?.commandId,
     });
   } finally {
     queryClient.clear();

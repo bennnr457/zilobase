@@ -27,25 +27,39 @@ export function useDatabaseController() {
   return databaseController(queryClient, sessionId, apiFetch, lifecycle);
 }
 
-export function useProjectedDatabaseBootstrap(snapshot: DatabaseBootstrapResponse | undefined) {
+export function useDatabaseCreationFailed(databaseId: string | null) {
+  const controller = useDatabaseController();
+  return useSyncExternalStore(
+    controller.subscribe,
+    () => Boolean(databaseId && controller.creationFailed(databaseId)),
+    () => false,
+  );
+}
+
+export function useProjectedDatabaseBootstrap(
+  snapshot: DatabaseBootstrapResponse | undefined,
+  hostId?: string,
+) {
   const controller = useDatabaseController();
   const intentions = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
     controller.getSnapshot,
   );
+  const base =
+    snapshot ?? intentions.find((item) => item.creation?.database.id === hostId)?.creation;
   return useMemo(
     () =>
-      snapshot
+      base
         ? projectDatabaseMetadata(
-            snapshot,
+            base,
             intentions.map((item) => ({
               ...item,
               metadataEffects: item.metadataEffects?.filter((effect) => effect.insert),
             })),
           )
         : undefined,
-    [snapshot, intentions],
+    [base, intentions],
   );
 }
 

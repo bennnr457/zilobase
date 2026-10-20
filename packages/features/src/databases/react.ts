@@ -7,6 +7,7 @@ export {
 export {
   useChangeDatabaseRow,
   useDatabaseController,
+  useDatabaseCreationFailed,
   useDatabaseEntityCommandState,
   useDatabaseInteractionRecovery,
   useProjectedDatabaseRecords,

@@ -7,7 +7,7 @@ export type CommandPolicy = {
 
 /** Exhaustive ownership registry; adding a command requires declaring its policy. */
 export const databaseCommandPolicies = {
-  "database.create": { scope: "workspace", preview: "confirmed" },
+  "database.create": { scope: "workspace", preview: "metadata" },
   "database.archive": { scope: "host", preview: "confirmed" },
   "database.restore": { scope: "host", preview: "confirmed" },
   "database.favorite": { scope: "host", preview: "metadata" },
@@ -19,7 +19,7 @@ export const databaseCommandPolicies = {
   "dataSource.link": { scope: "host", preview: "confirmed" },
   "dataSource.unlink": { scope: "host", preview: "confirmed" },
   "dataSource.update": { scope: "source", preview: "metadata" },
-  "view.create": { scope: "host", preview: "confirmed" },
+  "view.create": { scope: "host", preview: "metadata" },
   "view.update": { scope: "host", preview: "metadata" },
   "view.move": { scope: "host", preview: "metadata" },
   "view.delete": { scope: "host", preview: "confirmed" },

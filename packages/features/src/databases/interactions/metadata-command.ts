@@ -36,6 +36,29 @@ export function metadataEffectsForCommand(
         },
       ];
     }
+    case "view.create": {
+      if (!snapshot || !command.viewId) return [];
+      const now = new Date().toISOString();
+      return [
+        {
+          ...base,
+          kind: "view",
+          id: command.viewId,
+          placement: { afterId: command.afterViewId, beforeId: command.beforeViewId },
+          insert: {
+            id: command.viewId,
+            databaseId: input.databaseId,
+            dataSourceId: command.dataSourceId,
+            name: command.name,
+            type: command.viewType,
+            config: command.config,
+            position: snapshot.views.length,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+      ];
+    }
     case "view.update": {
       const { configuration, ...patch } = command.patch;
       // Setup may create reciprocal schema and reconcile existing record values.

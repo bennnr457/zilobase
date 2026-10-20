@@ -106,3 +106,47 @@ test("view.update sets up sub-item properties and publishes them with the view",
     },
   ]);
 });
+
+test.each([undefined, "b5132e4b-50b9-446f-811f-85de991539ac"])(
+  "view.create preserves an optimistic ID and supports clients without one (%s)",
+  async (viewId) => {
+    const inserted = vi.fn().mockResolvedValue(undefined);
+    const transaction = {
+      select: vi.fn(() => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => [{ id: "source-1" }],
+            orderBy: async () => [],
+          }),
+        }),
+      })),
+      insert: vi.fn(() => ({ values: inserted })),
+      update: vi.fn(() => ({ set: () => ({ where: async () => undefined }) })),
+    };
+    mocks.getDatabaseViewEntity.mockImplementation(async (_context, id) => ({ id }));
+    const { viewCreate } = await import("./views");
+    const result = await viewCreate(
+      {
+        actorId: "user-1",
+        commandId: "command-1",
+        databaseId: "host-1",
+        dataSourceId: null,
+        transaction,
+      } as never,
+      {
+        type: "view.create",
+        viewId,
+        name: "Table",
+        viewType: "table",
+        dataSourceId: "source-1",
+        config: null,
+        beforeViewId: null,
+        afterViewId: null,
+      },
+    );
+    const saved = inserted.mock.calls[0]![0];
+    if (viewId) expect(saved.id).toBe(viewId);
+    else expect(saved.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.result).toEqual({ id: saved.id });
+  },
+);

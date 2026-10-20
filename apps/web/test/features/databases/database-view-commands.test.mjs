@@ -2353,7 +2353,8 @@ function createMutation(deferred = false) {
   const settlements = [];
   const operation = (input) => {
     const result = Promise.withResolvers();
-    calls.push([input]);
+    const { onOptimistic, ...payload } = input;
+    calls.push([payload]);
     settlements.push(result);
     if (!deferred) result.resolve();
     return result.promise;

@@ -1,6 +1,6 @@
 import { diffConfiguration } from "../interactions/configuration";
 import { getConvertedViewConfig, removeDatabaseGroupProperty } from "../views/type-transition";
-import { observeOperation } from "./mutation-bindings";
+import { observeDatabaseViewCreation, observeOperation } from "./mutation-bindings";
 
 import type { DatabasePropertyEntity, DatabaseViewEntity } from "../core/entities";
 import type { DatabaseRow } from "../core/export-payload";
@@ -161,6 +161,7 @@ export function createDatabaseViewCommands({
       property: DatabasePropertyEntity,
       currentProperties: DatabasePropertyEntity[],
     ) => void,
+    optimistic = false,
   ) => {
     const currentProperties = viewProperties ?? properties;
     const existing = getKanbanGroupProperty(
@@ -173,6 +174,12 @@ export function createDatabaseViewCommands({
     }
     if (!editable || !databaseId || pending.addProperty || resolvingKanbanProperty) return;
     resolvingKanbanProperty = true;
+    let resolved = false;
+    const resolve = (created: DatabasePropertyEntity) => {
+      if (resolved || !isCurrent()) return;
+      resolved = true;
+      onResolved(created, [...currentProperties, created]);
+    };
     observeOperation(
       addProperty,
       {
@@ -180,12 +187,12 @@ export function createDatabaseViewCommands({
         name: "Status",
         type: "status",
         config: getDefaultDatabasePropertyConfig("status"),
+        ...(optimistic ? { onOptimistic: resolve } : {}),
       },
       {
         onSuccess: (created) => {
           resolvingKanbanProperty = false;
-          if (!isCurrent()) return;
-          onResolved(created, [...currentProperties, created]);
+          resolve(created);
         },
         onError: () => {
           resolvingKanbanProperty = false;
@@ -382,7 +389,7 @@ export function createDatabaseViewCommands({
     addCalendarView: () => {
       if (!editable || !databaseId || pending.addDatabaseView || pending.addProperty) return;
       ensureTimelineDatePropertyId((datePropertyId) => {
-        observeOperation(
+        observeDatabaseViewCreation(
           addDatabaseView,
           {
             config: { datePropertyId, calendarView: "month" },
@@ -396,7 +403,7 @@ export function createDatabaseViewCommands({
             onError: () => notify.error("Couldn't add calendar view"),
           },
         );
-      });
+      }, true);
     },
     setCalendarMode: (calendarView: DatabaseCalendarMode) => {
       if (!editable || !databaseId || !activeView) return;
@@ -572,7 +579,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      observeOperation(
+      observeDatabaseViewCreation(
         addDatabaseView,
         {
           config: {
@@ -601,7 +608,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      observeOperation(
+      observeDatabaseViewCreation(
         addDatabaseView,
         {
           databaseId: viewDatabaseId ?? databaseId,
@@ -624,7 +631,7 @@ export function createDatabaseViewCommands({
         return;
       }
 
-      observeOperation(
+      observeDatabaseViewCreation(
         addDatabaseView,
         {
           config: { hiddenPropertyIds },
@@ -647,7 +654,7 @@ export function createDatabaseViewCommands({
       if (!editable || !databaseId || pending.addDatabaseView || pending.addProperty) return;
       ensureKanbanGroupProperty((groupProperty, currentProperties) => {
         const groupPropertyId = groupProperty.property.id;
-        observeOperation(
+        observeDatabaseViewCreation(
           addDatabaseView,
           {
             config: {
@@ -667,14 +674,14 @@ export function createDatabaseViewCommands({
             onError: () => notify.error("Couldn't add kanban view"),
           },
         );
-      });
+      }, true);
     },
     addListView: () => {
       if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      observeOperation(
+      observeDatabaseViewCreation(
         addDatabaseView,
         {
           databaseId: viewDatabaseId ?? databaseId,
@@ -723,7 +730,7 @@ export function createDatabaseViewCommands({
         const currentProperties = viewProperties ?? properties;
         const groupPropertyId = getTimelineGroupPropertyId(currentProperties);
 
-        observeOperation(
+        observeDatabaseViewCreation(
           addDatabaseView,
           {
             config: {
@@ -744,14 +751,14 @@ export function createDatabaseViewCommands({
             },
           },
         );
-      });
+      }, true);
     },
     addTableView: () => {
       if (!editable || !databaseId || pending.addDatabaseView) {
         return;
       }
 
-      observeOperation(
+      observeDatabaseViewCreation(
         addDatabaseView,
         {
           databaseId: viewDatabaseId ?? databaseId,
@@ -1360,7 +1367,7 @@ function createTimelineDateResolver({
   notify: { error: (message: string) => void };
 }) {
   let resolving = false;
-  return (onResolved: (datePropertyId: string) => void) => {
+  return (onResolved: (datePropertyId: string) => void, optimistic = false) => {
     const viewProperties = viewData
       ? viewData.bootstrap.properties.filter(
           (property) => property.dataSourceId === viewData.dataSourceId,
@@ -1381,18 +1388,24 @@ function createTimelineDateResolver({
     }
 
     resolving = true;
+    let resolved = false;
+    const resolve = (created: DatabasePropertyEntity) => {
+      if (resolved || !isCurrent()) return;
+      resolved = true;
+      onResolved(created.property.id);
+    };
     observeOperation(
       addProperty,
       {
         databaseId,
         name: "Date",
         type: "date",
+        ...(optimistic ? { onOptimistic: resolve } : {}),
       },
       {
         onSuccess: (createdDateProperty) => {
           resolving = false;
-          if (!isCurrent()) return;
-          onResolved(createdDateProperty.property.id);
+          resolve(createdDateProperty);
         },
         onError: () => {
           resolving = false;

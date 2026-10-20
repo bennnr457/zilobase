@@ -209,6 +209,7 @@ const dataSourceUnlinkCommandSchema = z
 
 const viewCreateCommandSchema = z
   .object({
+    viewId: z.uuid().optional(),
     afterViewId: nullableEntityIdSchema,
     beforeViewId: nullableEntityIdSchema,
     config: z.unknown(),

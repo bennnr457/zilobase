@@ -7,6 +7,7 @@ import type { DatabasePropertyEntity } from "../core/entities";
 import type { ConfigurationChange } from "../interactions/configuration";
 import { resolveDataSourceCommandScope } from "./scope";
 export type AddPropertyInput = {
+  onOptimistic?: (property: DatabasePropertyEntity) => void;
   config?: unknown;
   databaseId: string;
   name?: string;
@@ -68,6 +69,7 @@ export function addDatabaseProperty(
         name,
         position,
         type,
+        onOptimistic,
       }: AddDatabasePropertyInput) => {
         const scope = resolveDataSourceCommandScope(queryClient, controller.sessionId, databaseId);
         const anchors = resolvePropertyCreateAnchors(
@@ -75,17 +77,27 @@ export function addDatabaseProperty(
           scope.dataSourceId,
           position,
         );
-        const ack = await controller.execute({
-          command: {
-            ...anchors,
-            config: config ?? null,
-            name: name?.trim() || "Property",
-            propertyType: type?.trim() || "text",
-            type: "property.create",
+        const commandId = crypto.randomUUID();
+        const saving = controller.execute(
+          {
+            command: {
+              ...anchors,
+              config: config ?? null,
+              name: name?.trim() || "Property",
+              propertyType: type?.trim() || "text",
+              type: "property.create",
+            },
+            databaseId: scope.hostDatabaseId,
+            dataSourceId: scope.dataSourceId,
           },
-          databaseId: scope.hostDatabaseId,
-          dataSourceId: scope.dataSourceId,
-        });
+          { commandId },
+        );
+        const preview = controller
+          .getSnapshot()
+          .find((item) => item.id === commandId)
+          ?.metadataEffects?.find((effect) => effect.kind === "property" && effect.insert)?.insert;
+        if (preview && "property" in preview) onOptimistic?.(preview);
+        const ack = await saving;
         return ack.result as DatabasePropertyEntity;
       },
     });

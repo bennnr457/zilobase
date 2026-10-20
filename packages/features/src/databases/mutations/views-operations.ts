@@ -13,6 +13,7 @@ export type UpdateDatabaseViewInput = {
   type?: string;
 };
 export type AddDatabaseViewInput = {
+  onOptimistic?: (view: DatabaseViewEntity) => void;
   config?: unknown;
   databaseId: string;
   dataSourceId: string;
@@ -56,24 +57,34 @@ export function addDatabaseView(
     const controller = clientDatabaseController(context);
     return clientMutation({
       mutationFn: async ({
+        onOptimistic,
         config,
         databaseId,
         dataSourceId,
         name,
         type,
       }: AddDatabaseViewInput) => {
-        const ack = await controller.execute({
-          command: {
-            afterViewId: null,
-            beforeViewId: null,
-            config: config ?? null,
-            dataSourceId,
-            name: name?.trim() || "Table",
-            type: "view.create",
-            viewType: type?.trim() || "table",
+        const commandId = crypto.randomUUID();
+        const saving = controller.execute(
+          {
+            command: {
+              afterViewId: null,
+              beforeViewId: null,
+              config: config ?? null,
+              dataSourceId,
+              name: name?.trim() || "Table",
+              type: "view.create",
+              viewType: type?.trim() || "table",
+            },
+            databaseId,
           },
-          databaseId,
-        });
+          { commandId },
+        );
+        const preview = controller
+          .bootstrap(databaseId)
+          ?.views.find((view) => view.id === commandId);
+        if (preview) onOptimistic?.(preview);
+        const ack = await saving;
         return ack.result as DatabaseViewEntity;
       },
     });
