@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { QueryClient } from "@tanstack/react-query";
 import { sharedClient, type SharedClient } from "../data/client";
 import { pageCacheEntitySchema } from "../pages/cache-registration";
-import { hostCacheEntitySchema } from "../databases/schema/cache-entities";
+import { hostCacheEntitySchema, sourceCacheEntitySchema } from "../databases/schema/cache-entities";
 import type { AppSearchResult } from "./contracts";
 
 const resultSchema = z.object({
@@ -14,9 +14,11 @@ const resultSchema = z.object({
   emoji: z.string().nullable(),
   excerpt: z.string().nullable().optional(),
   entity: z.unknown(),
+  titleSource: z.unknown().optional(),
 });
 export type SearchReference = Omit<AppSearchResult, "title" | "emoji"> & {
   cacheId: string;
+  titleSourceId?: string | null;
   excerpt?: string | null;
 };
 export function normalizeSearchReferences(
@@ -34,19 +36,33 @@ export function normalizeSearchReferences(
         : hostCacheEntitySchema.strip().parse(result.entity);
     if (entity.id !== result.id || entity.workspaceId !== workspaceId)
       throw new Error("Search entity scope mismatch");
+    const titleSource =
+      result.type === "database" && result.titleSource
+        ? sourceCacheEntitySchema.strip().parse(result.titleSource)
+        : null;
+    if (titleSource && titleSource.workspaceId !== workspaceId)
+      throw new Error("Search source scope mismatch");
     return {
       result,
+      titleSourceId: titleSource?.id ?? null,
+      sourceStage: titleSource ? owner.databases.sources.stage([titleSource]) : null,
       stage:
         result.type === "page"
           ? owner.pages.stage([pageCacheEntitySchema.parse(entity)])
           : owner.databases.hosts.stage([hostCacheEntitySchema.parse(entity)]),
     };
   });
-  owner.session.ingest(prepared.map(({ stage }) => stage));
+  owner.session.ingest(
+    prepared.flatMap(({ stage, sourceStage }) => [stage, ...(sourceStage ? [sourceStage] : [])]),
+  );
   return prepared.map(
-    ({ result: { title: _title, emoji: _emoji, entity: _entity, ...context } }) => ({
+    ({
+      result: { title: _title, emoji: _emoji, entity: _entity, titleSource: _source, ...context },
+      titleSourceId,
+    }) => ({
       ...context,
       cacheId: owner.session.id,
+      titleSourceId,
     }),
   );
 }
@@ -61,13 +77,17 @@ export function resolveSearchReferences(
         ? owner?.pages.get(reference.id)
         : owner?.databases.hosts.get(reference.id);
     if (!entity) return [];
+    const titleSource =
+      reference.type === "database" && reference.titleSourceId
+        ? owner?.databases.sources.get(reference.titleSourceId)
+        : null;
     const metadata = reference.type === "page" && "metadata" in entity ? entity.metadata : null;
     const emoji =
       reference.type === "database" && "config" in entity
-        ? getDatabaseEmoji(entity)
+        ? getDatabaseEmoji(titleSource ?? entity)
         : metadata && typeof metadata.emoji === "string"
           ? metadata.emoji
           : null;
-    return [{ ...reference, title: entity.name, emoji }];
+    return [{ ...reference, title: titleSource?.name ?? entity.name, emoji }];
   });
 }

@@ -1,13 +1,12 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { usePrepareChatContext } from "@zilobase/features/ai/react";
 import type { LocalPageSnapshot } from "@zilobase/features/ai";
-import type { BuildContextResult, ResourceRef } from "@zilobase/page-context";
+import type { ResourceRef } from "@zilobase/page-context";
 import type { AppSearchResult } from "@zilobase/features/search";
 import { usePageEditorRegistry } from "@/sections/pages/editor/runtime/components/page-editor-registry";
 
 export function useChatAttachments(workspaceId: string | null) {
   const [attachments, setAttachments] = useState<AppSearchResult[]>([]);
-  const [preview, setPreview] = useState<BuildContextResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const active = useRef<AbortController | null>(null);
@@ -22,12 +21,10 @@ export function useChatAttachments(workspaceId: string | null) {
   const reset = () => {
     cancel();
     setAttachments([]);
-    setPreview(null);
     setError(null);
   };
   const add = (item: AppSearchResult) => {
     cancel();
-    setPreview(null);
     setError(null);
     setAttachments((items) =>
       items.some((entry) => entry.id === item.id && entry.type === item.type)
@@ -37,7 +34,6 @@ export function useChatAttachments(workspaceId: string | null) {
   };
   const remove = (item: ResourceRef) => {
     cancel();
-    setPreview(null);
     setError(null);
     setAttachments((items) =>
       items.filter((entry) => entry.id !== item.id || entry.type !== item.type),
@@ -67,7 +63,6 @@ export function useChatAttachments(workspaceId: string | null) {
       });
       const result = await prepare({ workspaceId, roots, snapshots, signal: controller.signal });
       controller.signal.throwIfAborted();
-      setPreview(result);
       if (result.status === "blocked") throw new Error(result.omissions.join(" "));
       return { result, roots, snapshots };
     } catch (cause) {
@@ -81,5 +76,5 @@ export function useChatAttachments(workspaceId: string | null) {
       }
     }
   };
-  return { attachments, setAttachments, preview, busy, error, add, remove, build, cancel, reset };
+  return { attachments, setAttachments, busy, error, add, remove, build, cancel, reset };
 }

@@ -8,6 +8,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
   const at = "2026-10-20T00:00:00Z";
   const page = {
     ...pages[0],
+    metadata: { ...pages[0]?.metadata, emoji: "📝" },
     content: {
       type: "doc",
       content: [
@@ -33,7 +34,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     id: "database",
     workspaceId: "workspace",
     pageId: null,
-    name: "Tasks",
+    name: "New database",
     accessLevel: "full",
     config: {},
     version: 1,
@@ -58,7 +59,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         orderKey: "0",
         createdAt: at,
         updatedAt: at,
-        page: pages[1],
+        page: { ...pages[1], metadata: { ...pages[1]?.metadata, emoji: "✅" } },
       },
     ],
     rowCount: 800,
@@ -92,20 +93,29 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
   const threads: ChatThreadDetail[] = stored ? JSON.parse(stored) : [];
   const persist = () => sessionStorage.setItem("ai-fixture-threads", JSON.stringify(threads));
   let releaseRead: (() => void) | undefined;
+  const pendingThreadReads: Array<() => void> = [];
   const controls = {
     durable: new URLSearchParams(location.search).get("durableAi") === "1",
     workspaceId: "workspace",
     holdReads: false,
     holdStream: false,
+    holdThreadReads: false,
+    failThreadReads: false,
     failNext: false,
     requests: [] as ChatRequest[],
     reads: [] as string[],
     cancelled: 0,
+    extraSearchPages: 0,
+    searchRequests: [] as string[],
     localText: "Unsynced editor plan",
     forbidden: false,
     releaseReads() {
       controls.holdReads = false;
       releaseRead?.();
+    },
+    releaseThreadReads() {
+      controls.holdThreadReads = false;
+      pendingThreadReads.splice(0).forEach((release) => release());
     },
   };
   const auth = {
@@ -187,6 +197,11 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       }
       return structuredClone(detail.run);
     }
+    if (path.includes("teamspace-settings")) return { canManage: true };
+    if (path.includes("teamspaces")) return { teamspaces: [] };
+    if (path.includes("notifications")) return { notifications: [], unreadCount: 0 };
+    if (path.includes("integration") || path.includes("calendar"))
+      return { providerConfigured: false };
     if (path.startsWith("/ai/threads")) {
       const id = path.split("?")[0]!.split("/")[3];
       if (!id)
@@ -204,12 +219,26 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         return { success: true };
       }
       if (index < 0) throw new Error("Conversation not found");
+      if (controls.holdThreadReads)
+        await new Promise<void>((resolve) => pendingThreadReads.push(resolve));
+      if (controls.failThreadReads) throw new Error("Could not load this conversation");
       return structuredClone(threads[index]);
     }
     if (path.startsWith("/search?")) {
-      const q = new URL(path, location.origin).searchParams.get("q")!.toLowerCase();
+      controls.searchRequests.push(path);
+      const params = new URL(path, location.origin).searchParams;
+      const q = (params.get("q") ?? "").toLowerCase();
+      const types = params.get("types")?.split(",") ?? ["page", "database"];
       return {
         results: [
+          ...Array.from({ length: controls.extraSearchPages }, (_, index) => ({
+            id: `extra-${index}`,
+            type: "page",
+            title: `A page ${index}`,
+            path: `A page ${index}`,
+            emoji: null,
+            entity: { ...page, id: `extra-${index}`, name: `A page ${index}` },
+          })),
           { id: "main", type: "page", title: "main", path: "main", emoji: null, entity: page },
           {
             id: "database",
@@ -218,8 +247,22 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
             path: "Tasks",
             emoji: null,
             entity: database,
+            titleSource: source,
           },
-        ].filter((item) => item.title.toLowerCase().includes(q)),
+        ]
+          .filter((item) => types.includes(item.type) && item.title.toLowerCase().includes(q))
+          .slice(0, 50),
+      };
+    }
+    if (path.startsWith("/databases/database/bootstrap")) {
+      controls.reads.push(path);
+      if (controls.forbidden) throw new Error("Resource unavailable");
+      return {
+        viewerType: "member",
+        database,
+        dataSources: [source],
+        properties: [],
+        views: exported.views,
       };
     }
     if (path.startsWith("/pages/main") || path.includes("/export")) {

@@ -1,6 +1,8 @@
 import { evaluateDatabaseFormula } from "../databases/schema/formula/evaluator";
 import { getFormulaExpression } from "../databases/schema/formula/config";
 import { parsePropertyValue } from "../databases/schema/property-values";
+import { getDatabaseEmoji, getDatabaseTitleSource } from "../databases/views/appearance";
+import { readMetadataRecord } from "../pages/item-relationships";
 import {
   CONTEXT_VERSION,
   extractDatabaseIds,
@@ -16,6 +18,7 @@ export type LocalPageSnapshot = { pageId: string; content: unknown; capturedAt: 
 export type ContextPageRead = {
   id: string;
   name: string;
+  metadata?: unknown;
   workspaceId: string;
   content?: unknown;
   updatedAt: string | Date;
@@ -36,6 +39,7 @@ export type ContextDatabaseRead = {
     parentDatabaseId: string;
     config?: unknown;
     version?: number;
+    position?: number;
   }>;
   activeDataSource: { id: string } | null;
   views: DatabaseViewSchema[];
@@ -47,7 +51,12 @@ export type ContextDatabaseRead = {
     position: number;
     createdAt?: string | Date;
     updatedAt?: string | Date;
-    page: { name: string; createdAt?: string | Date; updatedAt?: string | Date };
+    page: {
+      name: string;
+      metadata?: unknown;
+      createdAt?: string | Date;
+      updatedAt?: string | Date;
+    };
   }>;
   values: Array<{ pageId: string; propertyId: string; value: unknown }>;
   rowCount?: number;
@@ -138,8 +147,11 @@ export async function collectWorkspaceContext(
       origin: "saved",
       revision: String(read.database.version),
     };
+    const titleSource = getDatabaseTitleSource(read.dataSources, read.views);
     const database = {
       ...read.database,
+      name: titleSource?.name ?? read.database.name,
+      emoji: getDatabaseEmoji(titleSource ?? read.database),
       sourceIds: [] as string[],
       views: [] as DatabaseViewSchema[],
       provenance,
@@ -166,6 +178,7 @@ export async function collectWorkspaceContext(
           !payload.rowsPagination?.hasMore && (total === undefined || payload.rows.length >= total);
         const normalized: ContextDataSource = {
           ...source,
+          emoji: getDatabaseEmoji(source) ?? getDatabaseEmoji(read.database),
           hostDatabaseIds: [id],
           provenance: {
             ...provenance,
@@ -179,6 +192,7 @@ export async function collectWorkspaceContext(
             parentRowId: row.parentRowId,
             position: row.position,
             name: row.page.name,
+            emoji: readMetadataRecord(row.page.metadata).emoji,
           })),
           values: contextValues(payload, provenance.capturedAt),
           coverage: {
@@ -230,6 +244,7 @@ export async function collectWorkspaceContext(
     context.pages.push({
       id: page.id,
       title: page.name,
+      emoji: readMetadataRecord(page.metadata).emoji,
       path: page.name,
       content,
       databaseIds: loadedIds,

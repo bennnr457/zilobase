@@ -39,3 +39,22 @@ export function getDatabaseDescription(database: { config?: unknown } | null | u
 
   return typeof description === "string" ? description : "";
 }
+
+/** Resolve a heading from authorized sources, following the selected/default view. */
+export function getDatabaseTitleSource<T extends { id: string; position?: number }>(
+  dataSources: readonly T[],
+  views: readonly { id: string; dataSourceId: string; position?: number }[],
+  viewId?: string | null,
+): T | null {
+  const orderedViews = [...views].sort(
+    (a, b) => (a.position ?? 0) - (b.position ?? 0) || a.id.localeCompare(b.id),
+  );
+  const selectedView = orderedViews.find((view) => view.id === viewId) ?? orderedViews[0];
+  return (
+    dataSources.find((source) => source.id === selectedView?.dataSourceId) ??
+    [...dataSources].sort(
+      (a, b) => (a.position ?? 0) - (b.position ?? 0) || a.id.localeCompare(b.id),
+    )[0] ??
+    null
+  );
+}

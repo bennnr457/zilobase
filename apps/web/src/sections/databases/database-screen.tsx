@@ -1,6 +1,6 @@
 import { PageDesignEditorProvider } from "@/sections/pages/design/components/page-design-editor";
 import { PageLayout } from "@/sections/pages/layout/components/page-layout";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouteContext, useSearch } from "@tanstack/react-router";
 import { ArrowUpRight } from "@/components/icons";
 
@@ -306,10 +306,7 @@ export function DatabaseMainPane({
   const { data: accessLevel } = usePageAccessLevel(databasePageId);
   const updateDatabase = useUpdateDatabase();
   const updateDataSource = useUpdateDataSource();
-  const [cover, setCover] = useState("");
-  const [emoji, setEmoji] = useState("");
   const [embeddedViewId, setEmbeddedViewId] = useState<string | undefined>();
-  const [showDataSourceTitles, setShowDataSourceTitles] = useState(true);
   const activeViewId = embedded ? embeddedViewId : localActiveViewId;
   const selectedView = payload?.views.find((view) => view.id === activeViewId) ?? payload?.views[0];
   const activeDataSource = payload?.dataSources.find(
@@ -338,22 +335,25 @@ export function DatabaseMainPane({
   const sourceEditable =
     editable &&
     Boolean(activeDataSource && sourceContainer) &&
+    !sourceContainer?.deletedAt &&
     !sourcePage?.deletedAt &&
     !isDatabaseLocked(sourceContainer) &&
     (sourceContainer?.accessLevel === "edit" ||
       sourceContainer?.accessLevel === "full" ||
       sourceAccessLevel === "edit" ||
       sourceAccessLevel === "full");
-  const hasMultipleDataSources = (payload?.dataSources.length ?? 0) > 1;
-  const headingRecord = hasMultipleDataSources ? payload?.database : activeDataSource;
-  const headingEditable = hasMultipleDataSources ? editable : sourceEditable;
+  // The selected view owns the heading, regardless of how many sources are linked.
+  // Only an empty database uses its container metadata while it is being set up.
+  const headingRecord = activeDataSource ?? payload?.database;
+  const headingUsesDataSource = Boolean(activeDataSource);
+  const headingEditable = headingUsesDataSource ? sourceEditable : editable;
   const headingTitle = headingRecord?.name ?? "";
   const { setTitle, title } = usePageTitleDraft({
     enabled: headingEditable,
     onSave: async (nextTitle) => {
       if (!headingRecord) return;
 
-      if (hasMultipleDataSources) {
+      if (!headingUsesDataSource) {
         await updateDatabase.mutateAsync({
           databaseId: headingRecord.id,
           name: nextTitle,
@@ -380,27 +380,14 @@ export function DatabaseMainPane({
         ],
       };
 
-      if (hasMultipleDataSources) await updateDatabase.mutateAsync(input);
+      if (!headingUsesDataSource) await updateDatabase.mutateAsync(input);
       else await updateDataSource.mutateAsync(input);
     },
     sourceId: headingRecord?.id ?? "no-database-heading",
     sourceTitle: getDatabaseDescription(headingRecord),
   });
 
-  useEffect(() => {
-    if (!headingRecord) {
-      setCover("");
-      setEmoji("");
-      return;
-    }
-
-    setCover(getDatabaseCover(headingRecord) ?? "");
-    setEmoji(getDatabaseEmoji(headingRecord) ?? "");
-  }, [headingRecord]);
-
   const updateCover = (nextCover: string) => {
-    setCover(nextCover);
-
     if (!headingRecord || !headingEditable) {
       return;
     }
@@ -410,13 +397,11 @@ export function DatabaseMainPane({
       configuration: [{ operation: "set" as const, path: ["cover"], value: nextCover }],
     };
 
-    if (hasMultipleDataSources) updateDatabase.mutate(input);
+    if (!headingUsesDataSource) updateDatabase.mutate(input);
     else updateDataSource.mutate(input);
   };
 
   const updateEmoji = (nextEmoji: string) => {
-    setEmoji(nextEmoji);
-
     if (!headingRecord || !headingEditable) {
       return;
     }
@@ -426,7 +411,7 @@ export function DatabaseMainPane({
       configuration: [{ operation: "set" as const, path: ["emoji"], value: nextEmoji }],
     };
 
-    if (hasMultipleDataSources) updateDatabase.mutate(input);
+    if (!headingUsesDataSource) updateDatabase.mutate(input);
     else updateDataSource.mutate(input);
   };
 
@@ -443,13 +428,13 @@ export function DatabaseMainPane({
     <section className={cn(className, "animate-in fade-in-0 duration-300")}>
       <PageMetadataView
         allowIconPositionChange={false}
-        cover={cover}
-        databaseId={hasMultipleDataSources ? databaseId : sourceParentDatabaseId}
+        cover={headingRecord ? (getDatabaseCover(headingRecord) ?? "") : ""}
+        databaseId={headingUsesDataSource ? sourceParentDatabaseId : databaseId}
         description={description}
         descriptionInitiallyHidden
         editable={headingEditable}
         enableComments={false}
-        icon={emoji}
+        icon={headingRecord ? (getDatabaseEmoji(headingRecord) ?? "") : ""}
         iconPosition="inline"
         layoutSection="heading"
         onCoverChange={updateCover}
@@ -459,17 +444,15 @@ export function DatabaseMainPane({
         onTitleChange={setTitle}
         workspaceId={headingRecord?.workspaceId}
         title={title}
-        titlePrefix={
-          !hasMultipleDataSources &&
-          sourceParentDatabaseId &&
-          sourceParentDatabaseId !== databaseId ? (
+        titleSuffix={
+          sourceParentDatabaseId && sourceParentDatabaseId !== databaseId ? (
             <ArrowUpRight
               aria-label={`Linked from ${headingTitle || "another database"}`}
               className="size-6"
             />
           ) : undefined
         }
-        pageId={hasMultipleDataSources ? databasePageId : sourcePageId}
+        pageId={headingUsesDataSource ? sourcePageId : databasePageId}
       />
       <div className="tiptap-editor px-5 pb-10 sm:px-8 md:px-20 lg:px-24">
         <DatabaseView
@@ -481,9 +464,8 @@ export function DatabaseMainPane({
           includeDeleted={databaseDeleted}
           onActiveViewIdChange={updateActiveViewSearch}
           onOpenPage={onOpenPage}
-          onShowTitleChange={hasMultipleDataSources ? setShowDataSourceTitles : undefined}
           workspaceId={payload?.database.workspaceId}
-          showTitle={hasMultipleDataSources && showDataSourceTitles}
+          showTitle={false}
         />
       </div>
     </section>

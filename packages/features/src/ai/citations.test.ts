@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chatCitations } from "./citations";
+import { chatCitations, chatDisplayText } from "./citations";
 test("only exact supplied citation identities resolve and repeated citations collapse", () => {
   const entry = {
     key: "page:allowed",
@@ -16,4 +16,26 @@ test("only exact supplied citation identities resolve and repeated citations col
     ]),
     [entry],
   );
+});
+
+test("display text hides internal citations, including unknown identities, and retains markdown", () => {
+  assert.equal(
+    chatDisplayText(
+      "**Summary**\n\nDone. [[page:allowed]] [[record:source:row]] [[page:secret]]\n\nNext. [[database:db]] [[source:s]]",
+    ),
+    "**Summary**\n\nDone.\n\nNext.",
+  );
+  assert.equal(
+    chatDisplayText("See [[ordinary text]] and [a link](https://example.com)."),
+    "See [[ordinary text]] and [a link](https://example.com).",
+  );
+});
+
+test("streaming and interrupted citations never expose partial identities", () => {
+  for (const marker of ["[[page:abc]]", "[[database:abc]]", "[[source:abc]]", "[[record:s:r]]"]) {
+    for (let length = 2; length <= marker.length; length++) {
+      assert.equal(chatDisplayText(`Answer. ${marker.slice(0, length)}`), "Answer.");
+    }
+  }
+  assert.equal(chatDisplayText("Answer [[ordinary"), "Answer [[ordinary");
 });

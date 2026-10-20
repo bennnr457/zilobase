@@ -164,3 +164,91 @@ test("computed properties use shared formula semantics and preserve relation IDs
   assert.deepEqual(values.get("related"), ["linked-page"]);
   assert.match(JSON.stringify(values.get("broken")), /unavailable/);
 });
+
+test("source emojis survive acquisition and citation manifest generation", async () => {
+  const { buildContextMarkdown } = await import("@zilobase/page-context");
+  const { ports } = fixture();
+  const readPage = ports.page;
+  ports.page = async (id) => ({ ...(await readPage(id)), metadata: { emoji: "📝" } });
+  const readDatabase = ports.database;
+  ports.database = async (id, source) => {
+    const read = await readDatabase(id, source);
+    return {
+      ...read,
+      database: { ...read.database, config: { emoji: "📚" } },
+      dataSources: read.dataSources.map((item) => ({ ...item, config: { emoji: "📋" } })),
+      rowCount: 1,
+      rows: [
+        {
+          id: "row",
+          pageId: "child",
+          position: 0,
+          page: { name: "Child", metadata: { emoji: "✅" } },
+        },
+      ],
+    };
+  };
+  const context = await collectWorkspaceContext(
+    {
+      workspaceId: "workspace",
+      roots: [
+        { type: "page", id: "page" },
+        { type: "database", id: "db" },
+      ],
+    },
+    ports,
+  );
+  const { manifest } = buildContextMarkdown({ context });
+  assert.equal(manifest.find((entry) => entry.key === "page:page")?.emoji, "📝");
+  assert.equal(manifest.find((entry) => entry.key === "database:db")?.emoji, "📋");
+  assert.equal(manifest.find((entry) => entry.key === "source:native")?.emoji, "📋");
+  assert.equal(manifest.find((entry) => entry.key === "record:native:row")?.emoji, "✅");
+});
+
+test("AI context uses the default linked view title and includes records without renaming the host", async () => {
+  const { buildContextMarkdown } = await import("@zilobase/page-context");
+  const { ports } = fixture();
+  const read = await ports.database("db");
+  read.database.name = "New database";
+  read.dataSources = [
+    { id: "native", name: "Tasks Tracker", parentDatabaseId: "db", position: 0 },
+    {
+      id: "linked",
+      name: "Projects",
+      parentDatabaseId: "other",
+      position: 1,
+      config: { emoji: "🚀" },
+    },
+  ];
+  read.views = [
+    { id: "linked-view", dataSourceId: "linked", name: "Table", type: "table", position: 0 },
+  ];
+  ports.database = async (_, sourceId) => ({
+    ...read,
+    activeDataSource: { id: sourceId ?? "native" },
+    rows: [
+      {
+        id: `row-${sourceId ?? "native"}`,
+        pageId: `page-${sourceId ?? "native"}`,
+        position: 0,
+        page: { name: sourceId === "linked" ? "Launch project" : "Review launch checklist" },
+      },
+    ],
+    rowCount: 1,
+  });
+  const input = { workspaceId: "workspace", roots: [{ type: "database" as const, id: "db" }] };
+  const result = buildContextMarkdown({ context: await collectWorkspaceContext(input, ports) });
+  assert.equal(result.status, "complete");
+  assert.equal(result.manifest.find((entry) => entry.key === "database:db")?.title, "Projects");
+  assert.equal(result.manifest.find((entry) => entry.key === "database:db")?.emoji, "🚀");
+  assert.match(result.markdown, /Launch project/);
+  assert.match(result.markdown, /Review launch checklist/);
+  assert.doesNotMatch(result.markdown, /New database/);
+  assert.equal(read.database.name, "New database");
+  read.dataSources[1]!.name = "Roadmap";
+  assert.equal((await collectWorkspaceContext(input, ports)).databases[0]?.name, "Roadmap");
+  read.dataSources = [];
+  read.views = [];
+  read.database.name = "Empty database";
+  assert.equal((await collectWorkspaceContext(input, ports)).databases[0]?.name, "Empty database");
+});

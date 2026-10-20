@@ -56,7 +56,9 @@ export function useItemActionController({
     meetingId,
     page,
     listedPage: listPage,
-    database: databasePayload?.database,
+    database: databasePayload
+      ? { ...databasePayload.database, name: databasePayload.displayName }
+      : undefined,
     pageAccessLevel,
   });
   const { isFavorite, locked, canToggleLock } = itemState;

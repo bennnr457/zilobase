@@ -2,6 +2,32 @@ import { useCallback } from "react";
 import { useZilobaseFeatures } from "../shared/context";
 import { prepareChatContext } from "./operations";
 import type { ResourceRef } from "@zilobase/page-context";
+import { useDatabaseMetadata } from "../databases/queries/metadata";
+import { getDatabaseEmoji } from "../databases/views/appearance";
+import { usePage } from "../pages/query-hooks";
+import { readMetadataRecord } from "../pages/item-relationships";
+
+/** Draft attachments resolve current authorized metadata, never historical chat labels. */
+export function useChatAttachmentMetadata(workspaceId: string | null, ref: ResourceRef) {
+  const database = useDatabaseMetadata(workspaceId && ref.type === "database" ? ref.id : null);
+  const page = usePage(workspaceId && ref.type === "page" ? ref.id : null);
+  if (ref.type === "database") {
+    const data = database.data;
+    if (!database.isError && data?.database.workspaceId === workspaceId && !data.database.deletedAt)
+      return {
+        title: data.displayName,
+        emoji: getDatabaseEmoji(data.activeDataSource ?? data.database),
+      };
+  } else if (!page.isError && page.data?.workspaceId === workspaceId && !page.data.deletedAt) {
+    return { title: page.data.name, emoji: readMetadataRecord(page.data.metadata).emoji };
+  }
+  const unavailable = ref.type === "database" ? database.isError : page.isError;
+  return {
+    title: unavailable ? `Unavailable ${ref.type}` : `Loading ${ref.type}…`,
+    emoji: null,
+  };
+}
+
 export function usePrepareChatContext() {
   const context = useZilobaseFeatures();
   return useCallback(

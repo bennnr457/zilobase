@@ -1,3 +1,4 @@
+import { sourceCacheEntitySchema } from "../databases/schema/cache-entities";
 import { databaseHostEntitySchema } from "../databases/core/entities";
 import { pagesQueryKey } from "../pages/queries";
 import assert from "node:assert/strict";
@@ -293,10 +294,15 @@ test("sidebar-only favorites publish actor confirmation from one write without a
   }
 });
 
-test("sidebar-only host edits use the shared preview and confirmation without bootstrap reads", async () => {
+test("empty database host edits use the shared preview and confirmation without bootstrap reads", async () => {
   const client = new TestQueryClient();
   const cache = sharedClient(client);
-  const navigation = normalizeNavigationReference(client, cache.capture(), "workspace", nav);
+  const navigation = normalizeNavigationReference(client, cache.capture(), "workspace", {
+    ...nav,
+    databases: [
+      { ...nav.databases[0]!, dataSources: [], metadataState: { version: 1, primarySource: null } },
+    ],
+  });
   client.setQueryData(pagesQueryKey("workspace"), navigation);
   const receipt = Promise.withResolvers<unknown>();
   const requests: Array<{ path: string; body: string }> = [];
@@ -344,6 +350,117 @@ test("sidebar-only host edits use the shared preview and confirmation without bo
     assert.equal(resolveNavigationReference(client, navigation).databases[0]!.name, "Confirmed");
     assert.equal(requests.length, 1);
     assert.equal(controller.getSnapshot().length, 0);
+  } finally {
+    controller.dispose();
+    client.clear();
+  }
+});
+
+test("database navigation and search display the source title and follow revisioned renames", () => {
+  const client = new TestQueryClient();
+  const cache = sharedClient(client);
+  const legacyHost = { ...host, name: "New database" };
+  const titleSource = { ...source, name: "Projects", config: { emoji: "🚀" } };
+  const searchResult = {
+    id: host.id,
+    type: "database",
+    path: "/d/host",
+    title: "Projects",
+    emoji: "🚀",
+    entity: legacyHost,
+    titleSource,
+  };
+  try {
+    const navigation = normalizeNavigationReference(client, cache.capture(), "workspace", {
+      ...nav,
+      databases: [{ ...nav.databases[0]!, ...legacyHost, dataSources: [titleSource] }],
+    });
+    const search = normalizeSearchReferences(client, cache.capture(), "workspace", [searchResult]);
+    assert.equal(resolveNavigationReference(client, navigation).databases[0]!.name, "Projects");
+    assert.equal(resolveSearchReferences(client, search)[0]!.title, "Projects");
+    assert.equal(resolveSearchReferences(client, search)[0]!.emoji, "🚀");
+    const owner = cache.get(search[0]!.cacheId)!;
+    // A source update must not rewrite the canonical container under its old clock.
+    assert.equal(owner.databases.hosts.get(host.id)!.name, "New database");
+    owner.session.ingest([
+      owner.databases.sources.stage([
+        sourceCacheEntitySchema.strip().parse({
+          ...titleSource,
+          name: "Roadmap",
+          config: { emoji: "🗺️" },
+          version: 2,
+          updatedAt: stamp(2),
+        }),
+      ]),
+    ]);
+    normalizeSearchReferences(client, cache.capture(), "workspace", [searchResult]);
+    assert.equal(resolveSearchReferences(client, search)[0]!.title, "Roadmap");
+    assert.equal(resolveSearchReferences(client, search)[0]!.emoji, "🗺️");
+    assert.equal(resolveNavigationReference(client, navigation).databases[0]!.name, "Roadmap");
+    assert.throws(
+      () =>
+        normalizeSearchReferences(client, cache.capture(), "workspace", [
+          {
+            ...searchResult,
+            titleSource: { ...titleSource, workspaceId: "other" },
+          },
+        ]),
+      /scope mismatch/,
+    );
+    const withoutAccess = normalizeSearchReferences(client, cache.capture(), "workspace", [
+      { ...searchResult, titleSource: null },
+    ]);
+    assert.equal(
+      resolveSearchReferences(client, withoutAccess)[0]!.title,
+      "New database",
+      "a cached foreign source cannot supply a title without an authorized result reference",
+    );
+    client.clear();
+    assert.deepEqual(resolveSearchReferences(client, search), []);
+  } finally {
+    client.clear();
+  }
+});
+
+test("source title edits update navigation and search together and roll back on rejection", async () => {
+  const client = new TestQueryClient();
+  const cache = sharedClient(client);
+  const navigation = normalizeNavigationReference(client, cache.capture(), "workspace", nav);
+  client.setQueryData(pagesQueryKey("workspace"), navigation);
+  const search = normalizeSearchReferences(client, cache.capture(), "workspace", [
+    {
+      id: host.id,
+      type: "database",
+      path: "/d/host",
+      title: source.name,
+      emoji: null,
+      entity: host,
+      titleSource: source,
+    },
+  ]);
+  const receipt = Promise.withResolvers<never>();
+  const controller = new DatabaseController(
+    client,
+    "session",
+    (async () => receipt.promise) as ApiFetcher,
+  );
+  try {
+    const save = controller.execute({
+      databaseId: "host",
+      dataSourceId: "source",
+      command: { type: "dataSource.update", patch: { name: "Draft project name" } },
+    });
+    const rejected = assert.rejects(save, /Rename rejected/);
+    for (let i = 0; i < 12; i++) await Promise.resolve();
+    assert.equal(
+      resolveNavigationReference(client, navigation).databases[0]!.name,
+      "Draft project name",
+    );
+    assert.equal(resolveSearchReferences(client, search)[0]!.title, "Draft project name");
+    receipt.reject(new Error("Rename rejected"));
+    await rejected;
+    assert.equal(resolveNavigationReference(client, navigation).databases[0]!.name, "Source");
+    assert.equal(resolveSearchReferences(client, search)[0]!.title, "Source");
   } finally {
     controller.dispose();
     client.clear();

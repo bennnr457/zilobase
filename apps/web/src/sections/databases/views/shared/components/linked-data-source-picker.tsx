@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useActiveWorkspaceId } from "@zilobase/features/workspaces/react";
 import { usePageNavigation } from "@zilobase/features/pages/react";
 import type { PageLayoutLinkedTab } from "@zilobase/features/pages";
-import { PageDatabasePicker } from "../../../components/page-database-picker";
+import { PageDatabasePicker } from "@/components/navigation/components/page-database-picker";
 
 function getLinkedViewIcon(type: string) {
   const ViewIcon =

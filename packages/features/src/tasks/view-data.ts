@@ -59,7 +59,7 @@ export function buildTasksViewData({
           iconKind: "database",
           id: `task-source:${source.database.id}`,
           metadata: emoji ? { emoji } : null,
-          name: source.database.name || "Untitled database",
+          name: (source.activeDataSource?.name ?? source.database.name) || "Untitled database",
         },
       ];
     }),

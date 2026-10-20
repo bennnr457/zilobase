@@ -74,7 +74,16 @@ export async function refreshConfirmedDatabaseReads(
     )
       workspaces.add(String(query.queryKey[1]));
   }
-  for (const workspace of workspaces) invalidate(["pages", workspace, "nav"]);
+  for (const workspace of workspaces) {
+    invalidate(["pages", workspace, "nav"]);
+    // A rename changes which queries match, in addition to the live entity label.
+    if (
+      ack.event?.areas.some(
+        (area) => area === "databases" || area === "dataSources" || area === "views",
+      )
+    )
+      invalidate(["search", workspace]);
+  }
   await Promise.all(refreshes);
 }
 

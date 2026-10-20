@@ -1,7 +1,16 @@
+import { getDatabaseEmoji, type DataSourceEntity } from "@zilobase/features/runtime";
+import { getDatabaseTitleSourcesService } from "../databases/read/service";
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "../../infrastructure/database";
-import { database, databaseView, page, searchDocument } from "../../infrastructure/database/schema";
+import {
+  database,
+  databaseView,
+  databaseDataSource,
+  dataSource,
+  page,
+  searchDocument,
+} from "../../infrastructure/database/schema";
 import { canAccessDatabaseInWorkspace, getAccessiblePageIds } from "../access/effective-access";
 import { getMembership } from "../access/principal-access";
 
@@ -14,6 +23,7 @@ export type WorkspaceSearchResult = {
   type: "database" | "page";
   updatedAt: Date;
   entity: unknown;
+  titleSource?: DataSourceEntity | null;
 };
 
 const DEFAULT_MAX_SEARCH_RESULTS = 50;
@@ -66,6 +76,44 @@ export async function searchWorkspaceItems(input: {
             .limit(candidateLimit)
         ).map((match) => match.databaseId)
       : [];
+  // Source titles are authoritative and may never have been copied into the
+  // legacy host search document. Match them directly, checking foreign access
+  // before allowing a source name to make its host discoverable.
+  const sourceMatches =
+    tsQuery && requestedTypes.has("database")
+      ? await db
+          .select({ databaseId: database.id, parentDatabaseId: dataSource.parentDatabaseId })
+          .from(databaseDataSource)
+          .innerJoin(database, eq(database.id, databaseDataSource.databaseId))
+          .innerJoin(dataSource, eq(dataSource.id, databaseDataSource.dataSourceId))
+          .where(
+            and(
+              eq(database.workspaceId, input.workspaceId),
+              isNull(database.deletedAt),
+              isNull(dataSource.deletedAt),
+              sql`to_tsvector('simple', ${dataSource.name}) @@ ${tsQuery}`,
+            ),
+          )
+          .limit(candidateLimit)
+      : [];
+  const sourceAccess = new Map<string, Promise<boolean>>();
+  for (const match of sourceMatches) {
+    if (match.databaseId === match.parentDatabaseId) {
+      matchingViewDatabaseIds.push(match.databaseId);
+      continue;
+    }
+    let access = sourceAccess.get(match.parentDatabaseId);
+    if (!access) {
+      access = canAccessDatabaseInWorkspace(
+        match.parentDatabaseId,
+        input.workspaceId,
+        input.userId,
+        "view",
+      );
+      sourceAccess.set(match.parentDatabaseId, access);
+    }
+    if (await access) matchingViewDatabaseIds.push(match.databaseId);
+  }
   const excerpt = tsQuery
     ? sql<
         string | null
@@ -157,22 +205,25 @@ export async function searchWorkspaceItems(input: {
   ]);
   const pagesById = new Map(pages.map((entity) => [entity.id, entity]));
   const hostsById = new Map(hosts.map((entity) => [entity.id, entity]));
+  const titleSources = await getDatabaseTitleSourcesService(hosts, input.userId);
   // Index ordering and snippets remain contextual. Labels carry storage clocks,
   // so an index refresh cannot regress an already confirmed shared entity.
   return visible.flatMap((candidate): WorkspaceSearchResult[] => {
     const entity =
       candidate.type === "page" ? pagesById.get(candidate.id) : hostsById.get(candidate.id);
     if (!entity) return [];
+    const titleSource = candidate.type === "database" ? titleSources.get(candidate.id) : undefined;
     return [
       {
-        emoji: candidate.emoji,
+        emoji: titleSource ? getDatabaseEmoji(titleSource) : candidate.emoji,
         excerpt: candidate.type === "page" ? stripSearchHeadlineMarkers(candidate.excerpt) : null,
         id: candidate.id,
         path: candidate.path,
-        title: entity.name,
+        title: titleSource?.name ?? entity.name,
         type: candidate.type as WorkspaceSearchResult["type"],
         updatedAt: entity.updatedAt,
         entity,
+        ...(candidate.type === "database" ? { titleSource: titleSource ?? null } : {}),
       },
     ];
   });

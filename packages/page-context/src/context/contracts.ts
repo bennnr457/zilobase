@@ -50,6 +50,7 @@ export type DatabaseRowContext = {
   parentRowId?: string | null;
   position: number;
   name: string;
+  emoji?: string | null;
 };
 
 export const CONTEXT_VERSION = 1 as const;
@@ -70,6 +71,7 @@ export type ContextCoverage = {
 export type ContextPage = {
   id: string;
   title: string;
+  emoji?: string | null;
   path: string;
   content: unknown;
   databaseIds: string[];
@@ -79,6 +81,7 @@ export type ContextPage = {
 export type ContextDatabase = {
   id: string;
   name: string;
+  emoji?: string | null;
   pageId: string | null;
   sourceIds: string[];
   views: DatabaseViewSchema[];
@@ -89,6 +92,7 @@ export type ContextDatabase = {
 export type ContextDataSource = {
   id: string;
   name: string;
+  emoji?: string | null;
   parentDatabaseId: string;
   hostDatabaseIds: string[];
   config?: unknown;
@@ -112,6 +116,7 @@ export type ContextManifestEntry = {
   type: "page" | "database" | "source" | "record";
   id: string;
   title: string;
+  emoji?: string | null;
   pageId?: string;
   databaseId?: string;
   sourceId?: string;

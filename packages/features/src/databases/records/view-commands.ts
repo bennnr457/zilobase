@@ -136,7 +136,7 @@ export function createDatabaseViewCommands({
   } = mutations;
   const databaseConfig = viewData?.bootstrap.database.config;
   const databasePageId = viewData?.bootstrap.database.pageId;
-  const databaseName = viewData?.bootstrap.database.name;
+  const databaseName = viewData?.activeDataSource?.name;
   const viewProperties = viewData
     ? viewData.bootstrap.properties.filter(
         (property) => property.dataSourceId === viewData.dataSourceId,

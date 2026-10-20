@@ -1,5 +1,6 @@
 import { streamText } from "ai";
-import { configuredChatModel, CHAT_INSTRUCTIONS, DEFAULT_CHAT_MODEL } from "./chat";
+import { z } from "zod";
+import { configuredChatModel, CHAT_INSTRUCTIONS } from "./chat";
 import { getStringEnv } from "../../shared/config/config";
 import type { ServerOperationContext } from "../operations/context";
 
@@ -28,90 +29,152 @@ export async function* generateChatOutput(
   recovery: ProviderCursor = {},
   transport: typeof fetch = fetch,
 ): AsyncGenerator<ProviderChunk> {
-  if (!backgroundProviderEnabled(context.env)) {
-    if (recovery.responseId) throw new Error("CHAT_PROVIDER_RESUME_UNAVAILABLE");
-    const result = streamText({
-      model: configuredChatModel(context),
-      instructions: input.instructions ?? CHAT_INSTRUCTIONS,
-      messages: input.messages,
-      maxOutputTokens: input.maxOutputTokens,
-      abortSignal: signal,
-      maxRetries: 0,
-    });
-    let completed = false;
-    for await (const part of result.stream) {
-      if (part.type === "text-delta") yield { text: part.text };
-      else if (part.type === "error") throw new Error("CHAT_PROVIDER_FAILED");
-      else if (part.type === "finish") {
-        completed = true;
-        yield {
-          completed: true,
-          usage: {
-            inputTokens: part.totalUsage.inputTokens,
-            outputTokens: part.totalUsage.outputTokens,
-          },
-        };
-      }
-    }
-    if (!completed) throw new Error("CHAT_PROVIDER_INTERRUPTED");
+  const background = backgroundProviderEnabled(context.env);
+  if (recovery.responseId) {
+    if (!background) throw new Error("CHAT_PROVIDER_RESUME_UNAVAILABLE");
+    yield* resumeChatOutput(context, signal, recovery, transport);
     return;
   }
-  const key = getStringEnv(context.env, "OPENAI_API_KEY");
-  if (!key) throw new Error("CHAT_PROVIDER_KEY_REQUIRED");
-  const url = recovery.responseId
-    ? `https://api.openai.com/v1/responses/${encodeURIComponent(recovery.responseId)}?stream=true&starting_after=${recovery.cursor ?? -1}`
-    : "https://api.openai.com/v1/responses";
-  const response = await transport(url, {
-    method: recovery.responseId ? "GET" : "POST",
-    signal,
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    ...(recovery.responseId
-      ? {}
-      : {
+  const providerFetch: typeof fetch = background
+    ? (url, init) =>
+        transport(url, {
+          ...init,
+          // The installed OpenAI provider has no typed background option yet.
+          // Its supported fetch port adds this field without replacing SDK streaming.
           body: JSON.stringify({
-            model:
-              input.model ?? (getStringEnv(context.env, "AI_MODEL")?.trim() || DEFAULT_CHAT_MODEL),
-            instructions: input.instructions ?? CHAT_INSTRUCTIONS,
-            input: input.messages,
-            max_output_tokens: input.maxOutputTokens,
+            ...JSON.parse(String(init?.body)),
             background: true,
-            stream: true,
             store: false,
           }),
-        }),
+        })
+    : transport;
+  const modelContext = input.model
+    ? { ...context, env: { ...context.env, AI_MODEL: input.model } }
+    : context;
+  const result = streamText({
+    model: configuredChatModel(modelContext, providerFetch),
+    instructions: input.instructions ?? CHAT_INSTRUCTIONS,
+    messages: input.messages,
+    maxOutputTokens: input.maxOutputTokens,
+    abortSignal: signal,
+    maxRetries: 0,
+    ...(background ? { include: { rawChunks: true } } : {}),
+    // Provider errors are surfaced below without logging source documents.
+    onError: () => {},
   });
+  let cursor: ProviderCursor = {};
+  let pendingText: ProviderChunk | undefined;
+  let terminalCursor: ProviderCursor | undefined;
+  let completed = false;
+  for await (const part of result.stream) {
+    signal.throwIfAborted();
+    if (part.type === "raw" && background) {
+      if (pendingText) throw new Error("CHAT_PROVIDER_TEXT_UNCHECKPOINTED");
+      const event = parseProviderEvent(part.rawValue);
+      const next = providerEventChunk(event, cursor);
+      if (!next) continue;
+      cursor = { responseId: next.responseId, cursor: next.cursor };
+      if (event.type === "response.output_text.delta") pendingText = next;
+      else if (event.type === "response.completed") terminalCursor = cursor;
+      else yield cursor;
+    } else if (part.type === "text-delta") {
+      if (background) {
+        if (!pendingText || pendingText.text !== part.text)
+          throw new Error("CHAT_PROVIDER_TEXT_CURSOR_MISMATCH");
+        // Never checkpoint a text event's cursor before its SDK text delta.
+        yield { ...pendingText, text: part.text };
+        pendingText = undefined;
+      } else yield { text: part.text };
+    } else if (part.type === "error") throw new Error("CHAT_PROVIDER_FAILED");
+    else if (part.type === "finish") {
+      if (
+        (background && (!terminalCursor || pendingText)) ||
+        ["error", "other"].includes(part.finishReason)
+      )
+        throw new Error("CHAT_PROVIDER_INTERRUPTED");
+      completed = true;
+      yield {
+        ...terminalCursor,
+        completed: true,
+        usage: {
+          inputTokens: part.totalUsage.inputTokens,
+          outputTokens: part.totalUsage.outputTokens,
+        },
+      };
+    }
+  }
+  signal.throwIfAborted();
+  if (!completed) throw new Error("CHAT_PROVIDER_INTERRUPTED");
+}
+
+const providerEventSchema = z.object({
+  type: z.string(),
+  sequence_number: z.number().int().nonnegative().safe(),
+  delta: z.string().optional(),
+  response: z
+    .object({
+      id: z.string().min(1).optional(),
+      usage: z
+        .object({ input_tokens: z.number().optional(), output_tokens: z.number().optional() })
+        .nullish(),
+    })
+    .optional(),
+});
+type ProviderEvent = z.infer<typeof providerEventSchema>;
+function parseProviderEvent(value: unknown): ProviderEvent {
+  const parsed = providerEventSchema.safeParse(value);
+  if (!parsed.success) throw new Error("CHAT_PROVIDER_EVENT_INVALID");
+  return parsed.data;
+}
+function providerEventChunk(event: ProviderEvent, previous: ProviderCursor): ProviderChunk | null {
+  if (event.sequence_number <= (previous.cursor ?? -1)) return null;
+  const responseId = event.response?.id ?? previous.responseId;
+  if (!responseId) throw new Error("CHAT_PROVIDER_RESPONSE_ID_MISSING");
+  if (
+    ["response.failed", "response.incomplete", "error", "response.cancelled"].includes(event.type)
+  )
+    throw new Error("CHAT_PROVIDER_FAILED");
+  if (event.type === "response.output_text.delta" && event.delta === undefined)
+    throw new Error("CHAT_PROVIDER_TEXT_INVALID");
+  return {
+    responseId,
+    cursor: event.sequence_number,
+    ...(event.type === "response.output_text.delta" ? { text: event.delta } : {}),
+    ...(event.type === "response.completed"
+      ? {
+          completed: true,
+          usage: {
+            inputTokens: event.response?.usage?.input_tokens,
+            outputTokens: event.response?.usage?.output_tokens,
+          },
+        }
+      : {}),
+  };
+}
+
+/** Reattach the original response; streamText must never issue a second POST here. */
+async function* resumeChatOutput(
+  context: ServerOperationContext,
+  signal: AbortSignal,
+  recovery: ProviderCursor,
+  transport: typeof fetch,
+): AsyncGenerator<ProviderChunk> {
+  const key = getStringEnv(context.env, "OPENAI_API_KEY");
+  if (!key) throw new Error("CHAT_PROVIDER_KEY_REQUIRED");
+  const response = await transport(
+    `https://api.openai.com/v1/responses/${encodeURIComponent(recovery.responseId!)}?stream=true&starting_after=${recovery.cursor ?? -1}`,
+    { method: "GET", signal, headers: { Authorization: `Bearer ${key}` } },
+  );
   if (!response.ok || !response.body) throw new Error(`CHAT_PROVIDER_HTTP_${response.status}`);
-  let responseId = recovery.responseId;
-  let cursor = recovery.cursor ?? -1;
+  let cursor = recovery;
   let completed = false;
   for await (const event of readProviderEvents(response.body, signal)) {
-    if (!Number.isSafeInteger(event.sequence_number) || event.sequence_number < 0)
-      throw new Error("CHAT_PROVIDER_CURSOR_INVALID");
-    if (event.sequence_number <= cursor) continue;
-    if (event.type === "response.output_text.delta" && typeof event.delta !== "string")
-      throw new Error("CHAT_PROVIDER_TEXT_INVALID");
-    cursor = event.sequence_number;
-    if (event.response?.id) responseId = event.response.id;
-    if (!responseId) throw new Error("CHAT_PROVIDER_RESPONSE_ID_MISSING");
-    if (
-      ["response.failed", "response.incomplete", "error", "response.cancelled"].includes(event.type)
-    )
-      throw new Error("CHAT_PROVIDER_FAILED");
-    completed = event.type === "response.completed";
-    yield {
-      responseId,
-      cursor,
-      ...(event.type === "response.output_text.delta" ? { text: event.delta } : {}),
-      ...(completed
-        ? {
-            completed: true,
-            usage: {
-              inputTokens: event.response?.usage?.input_tokens,
-              outputTokens: event.response?.usage?.output_tokens,
-            },
-          }
-        : {}),
-    };
+    const chunk = providerEventChunk(event, cursor);
+    if (!chunk) continue;
+    cursor = { responseId: chunk.responseId, cursor: chunk.cursor };
+    completed = !!chunk.completed;
+    yield chunk;
+    if (completed) return;
   }
   if (!completed) throw new Error("CHAT_PROVIDER_INTERRUPTED");
 }
@@ -131,7 +194,7 @@ export async function cancelProviderResponse(context: ServerOperationContext, re
 async function* readProviderEvents(
   body: ReadableStream<Uint8Array>,
   signal: AbortSignal,
-): AsyncGenerator<any> {
+): AsyncGenerator<ProviderEvent> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -155,7 +218,7 @@ async function* readProviderEvents(
           .filter((line) => line.startsWith("data:"))
           .map((line) => line.slice(5).trimStart())
           .join("\n");
-        if (data && data !== "[DONE]") yield JSON.parse(data);
+        if (data && data !== "[DONE]") yield parseProviderEvent(JSON.parse(data));
       }
       if (done) break;
     }

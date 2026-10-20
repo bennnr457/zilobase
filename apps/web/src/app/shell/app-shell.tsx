@@ -260,7 +260,7 @@ function AppShellContent({
     refetchOnMount: false,
   });
   const desktopTabTitle =
-    (databaseId ? databasePayload?.database.name.trim() : pageId ? hostPage?.name.trim() : null) ||
+    (databaseId ? databasePayload?.displayName.trim() : pageId ? hostPage?.name.trim() : null) ||
     getDesktopTabTitle(pathname);
   const desktopTabIcon = databasePayload?.activeDataSource
     ? getDatabaseEmoji(databasePayload.activeDataSource)

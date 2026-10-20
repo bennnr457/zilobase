@@ -1,5 +1,10 @@
 import { createAiRuntimeFixture } from "./ai-runtime-fixture";
 import { AskAiWorkspace } from "@/sections/ai/workspace/components/ask-ai-workspace";
+import { PageDatabaseSearchPopover } from "@/components/navigation/components/page-database-search-popover";
+import { AppSidebar } from "@/app/shell/sidebar/components/app-sidebar";
+import { useAppSidebar } from "@/app/shell/sidebar/hooks/sidebar-controller";
+import { AppSearchProvider } from "@/app/shell/search/components/app-search";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import {
   sharingTarget,
   sharingLevel,
@@ -561,8 +566,57 @@ function AiPresentationFixture() {
   );
 }
 
+function SearchPickerFixture() {
+  const [selected, setSelected] = useState("");
+  const type = new URLSearchParams(window.location.search).get("picker");
+  return (
+    <div className="flex flex-col items-start gap-4 p-8">
+      <PageDatabaseSearchPopover
+        workspaceId="workspace"
+        types={type === "page" || type === "database" ? [type] : undefined}
+        onSelect={(item) => setSelected(`${item.type}:${item.title}`)}
+      >
+        <button>Choose context</button>
+      </PageDatabaseSearchPopover>
+      <output aria-label="Selected context">{selected}</output>
+    </div>
+  );
+}
+
+function AiApplicationFixture() {
+  const sidebar = useAppSidebar({});
+  const state = usePageSidePaneState("main");
+  return (
+    <PageSidePaneContext.Provider value={state}>
+      <AppSidebar {...sidebar} />
+      <SidebarInset className="h-svh min-w-0 overflow-hidden">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
+          <SidebarTrigger />
+          <span>Ask AI</span>
+        </header>
+        <div className="min-h-0 flex-1">
+          <AskAiWorkspace pageId="main" />
+        </div>
+      </SidebarInset>
+    </PageSidePaneContext.Provider>
+  );
+}
+
 const root = createRootRoute({
-  component: () => (aiFixture ? <AiPresentationFixture /> : <Outlet />),
+  component: () =>
+    aiFixture ? (
+      new URLSearchParams(window.location.search).has("picker") ? (
+        <SearchPickerFixture />
+      ) : new URLSearchParams(window.location.search).has("appSidebar") ? (
+        <AppSearchProvider>
+          <AiApplicationFixture />
+        </AppSearchProvider>
+      ) : (
+        <AiPresentationFixture />
+      )
+    ) : (
+      <Outlet />
+    ),
 });
 const routes = ["main", "child", "other"].map((id) =>
   createRoute({
@@ -571,7 +625,10 @@ const routes = ["main", "child", "other"].map((id) =>
     component: () => <Content id={id} />,
   }),
 );
-const initial = new URLSearchParams(window.location.search).get("target") ?? "/p/main";
+routes.push(createRoute({ getParentRoute: () => root, path: "/ai", component: () => null }));
+const initial =
+  new URLSearchParams(window.location.search).get("target") ??
+  (new URLSearchParams(window.location.search).has("appSidebar") ? "/ai" : "/p/main");
 const history = createMemoryHistory({ initialEntries: [initial] });
 const router = createRouter({ routeTree: root.addChildren(routes), history });
 Object.assign(window, {

@@ -1057,7 +1057,7 @@ export function useSidebarDatabaseSection({
     [currentUserId, viewData, section.viewId],
   );
   const rows = model.sortedItems.slice(0, section.limit);
-  const title = section.label || database.data?.database.name || "Database view";
+  const title = section.label || database.data?.displayName || "Database view";
 
   return {
     open,

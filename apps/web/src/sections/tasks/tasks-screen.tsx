@@ -640,7 +640,9 @@ function DatabaseWarnings({ payloads }: { payloads: DatabaseExportPayload[] }) {
           className="flex flex-wrap items-center gap-2 rounded-lg border bg-feedback-warning-subtle px-3 py-2 text-sm text-feedback-warning-text"
           key={payload.database.id}
         >
-          <span className="font-medium">{payload.database.name}</span>
+          <span className="font-medium">
+            {payload.activeDataSource?.name ?? payload.database.name}
+          </span>
           <span>needs {missing.join(", ")}.</span>
           <Button asChild className="ml-auto" size="sm" variant="ghost">
             <Link

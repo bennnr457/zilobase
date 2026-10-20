@@ -29,41 +29,76 @@ for (const width of [1400, 390]) {
     await expect(page.locator("[data-ai-scroll-shell]")).toContainText("Keep this conversation");
     await page.reload();
     await expect(page.locator("[data-ai-scroll-shell]")).toContainText("Keep this conversation");
-    await page.getByRole("button", { name: "Delete chat", exact: true }).click();
-    await expect(page.locator(".is-user")).toHaveCount(0);
+    await expect(page.getByRole("combobox", { name: "Conversation" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "New chat", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Delete chat", exact: true })).toHaveCount(0);
   });
 }
 
-test("mentions use current editor content, deduplicate databases, show limits and validate citations", async ({
+for (const width of [1400, 390]) {
+  test(`mention databases remain available beyond the mixed search limit at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page);
+    await controls(page, { extraSearchPages: 60 });
+    const before = await composer(page).boundingBox();
+    await composer(page).fill("@");
+    const database = page.getByRole("option", { name: /Tasks database/i });
+    await expect(database).toBeVisible();
+    await expect(page.getByRole("group", { name: "Pages", exact: true })).toContainText("A page 0");
+    await expect(composer(page)).toBeFocused();
+    expect((await composer(page).boundingBox()).height).toBe(before.height);
+    const requests = await page.evaluate(() => window.pageLayoutFixture.ai.searchRequests);
+    expect(
+      requests.some(
+        (path) => new URL(path, "http://fixture").searchParams.get("types") === "database",
+      ),
+    ).toBe(true);
+    expect(
+      requests.some((path) => new URL(path, "http://fixture").searchParams.get("types") === "page"),
+    ).toBe(true);
+    await composer(page).press("Enter");
+    await expect(page.getByRole("button", { name: "Remove Tasks", exact: true })).toBeVisible();
+    await expect(composer(page)).toHaveValue("");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await page.getByRole("button", { name: "Remove Tasks", exact: true }).click();
+    await composer(page).fill("@Task");
+    await database.click();
+    await expect(page.getByRole("button", { name: "Remove Tasks", exact: true })).toBeVisible();
+  });
+}
+
+test("mentions use current editor content and validate citations without debug UI", async ({
   page,
 }) => {
   await open(page);
   await composer(page).fill("@ma");
-  await expect(page.getByRole("option", { name: /main page/ })).toBeVisible();
+  await expect(page.getByRole("option", { name: /main page/i })).toBeVisible();
   await composer(page).press("Enter");
   await expect(page.getByRole("button", { name: "Remove main" })).toBeVisible();
   await composer(page).fill("@Task");
-  await page.getByRole("option", { name: /Tasks database/ }).click();
-  await page.getByRole("button", { name: "Refresh context preview" }).click();
-  const draft = page
-    .locator("details")
-    .filter({ has: page.locator("summary", { hasText: "Draft context preview" }) });
-  await draft.locator("summary").click();
-  await expect(draft).toContainText("Unsynced editor plan");
-  await expect(draft).toContainText("1/800 records");
+  await page.getByRole("option", { name: /Tasks database/i }).click();
+  await expect(page.getByRole("button", { name: "Refresh context preview" })).toHaveCount(0);
   await controls(page, { localText: "Edited just before sending" });
   await send(page, "Summarize the records");
   await expect(composer(page)).toBeEnabled();
-  const sent = page
-    .locator("details")
-    .filter({ has: page.locator("summary", { hasText: "Last sent context" }) });
-  await sent.locator("summary").click();
-  await expect(sent).toContainText("Edited just before sending");
-  const markdown = await sent.locator("pre").textContent();
-  expect(markdown.match(/## Data source: Tasks/g)).toHaveLength(1);
-  expect(markdown).toContain("Status board");
+  const requests = await page.evaluate(() => window.pageLayoutFixture.ai.requests);
+  expect(requests).toHaveLength(1);
+  expect(JSON.stringify(requests[0].snapshots)).toContain("Edited just before sending");
+  await expect(
+    page.locator("summary", { hasText: /Last sent context|Draft context preview/ }),
+  ).toHaveCount(0);
   await expect(page.getByRole("link", { name: "main", exact: true })).toBeVisible();
+  const answer = page.locator(".is-assistant");
+  await expect(answer).not.toContainText("[[");
+  await expect(answer.locator("details")).toHaveCount(0);
+  await expect(answer.getByRole("link", { name: "main", exact: true })).toContainText("📝");
+  await expect(answer.getByRole("link", { name: "child", exact: true })).toContainText("✅");
   await expect(page.locator('a[href*="invented"]')).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator(".is-assistant")).not.toContainText("[[");
+  await expect(page.getByRole("link", { name: "main", exact: true })).toContainText("📝");
   await page.getByRole("link", { name: "child", exact: true }).click();
   await expect(page.locator("[data-citation-destination]")).toHaveText("child");
 });
@@ -90,9 +125,12 @@ test("stop interrupts a stalled stream and preserves the partial answer", async 
   await controls(page, { holdStream: true });
   await send(page, "Long answer");
   await expect(page.locator(".is-assistant")).toContainText("Attached records are partial");
+  await expect(page.getByText("streaming", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Writing answer…", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await expect(composer(page)).toBeEnabled();
-  await expect(page.locator(".is-assistant")).toContainText("stopped");
+  await expect(page.locator(".is-assistant")).toContainText("Attached records are partial");
+  await expect(page.getByText("stopped", { exact: true })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => window.pageLayoutFixture.ai.cancelled)).toBe(1);
 });
 
@@ -105,6 +143,7 @@ for (const phase of ["preparation", "streaming"]) {
     } else await controls(page, { holdStream: true });
     await send(page, "Old workspace question");
     await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
+    await expect(page.getByText("Preparing context…", { exact: true })).toHaveCount(0);
     if (phase === "streaming") await expect(page.locator(".is-assistant")).toBeVisible();
     await page.getByRole("button", { name: "Switch workspace", exact: true }).click();
     await expect(page.getByRole("button", { name: "Stop", exact: true })).toHaveCount(0);

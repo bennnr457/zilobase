@@ -1,3 +1,5 @@
+import { sourceLinkIdentity } from "../databases/schema/cache-entities";
+import { getDatabaseTitleSource } from "../databases/views/appearance";
 import { z } from "zod";
 import type { QueryClient } from "@tanstack/react-query";
 import type { DataSession } from "../data/session";
@@ -250,13 +252,33 @@ export function resolveNavigationDatabase(
   const owner = sharedClient(client).get(reference.cacheId);
   const host = owner?.databases.hosts.get(reference.id);
   if (!owner || !host) return null;
-  const source =
-    reference.primarySourceId && owner.databases.sources.get(reference.primarySourceId);
+  const dataSources = reference.sourceIds.flatMap((id) => {
+    const source = owner.databases.sources.get(id);
+    const link = owner.databases.links.get(sourceLinkIdentity(reference.id, id));
+    return source && link
+      ? [
+          {
+            ...sourceCacheEntitySchema.strip().parse(source),
+            position: link.position,
+            linkedAt: link.linkedAt,
+          },
+        ]
+      : [];
+  });
+  const views = reference.viewIds.flatMap((id) => {
+    const view = owner.databases.views.get(id);
+    if (!view) return [];
+    const { hostVersion: _version, ...item } = viewCacheEntitySchema.strip().parse(view);
+    return [item];
+  });
+  const source = getDatabaseTitleSource(dataSources, views);
   const favorite = owner.navigation.databasePreferences.get(reference.id);
   return {
     ...owner.navigation.databaseContexts.get(reference.id)?.context,
     ...reference.context,
     ...hostCacheEntitySchema.strip().parse(host),
+    name: source?.name ?? host.name,
+    dataSources,
     dataSourceConfig: source ? sourceCacheEntitySchema.strip().parse(source).config : null,
     metadataState: {
       version: host.version,
@@ -272,11 +294,6 @@ export function resolveNavigationDatabase(
           isFavorite: favorite.isFavorite,
         }
       : {}),
-    views: reference.viewIds.flatMap((id) => {
-      const view = owner.databases.views.get(id);
-      if (!view) return [];
-      const { hostVersion: _version, ...item } = viewCacheEntitySchema.strip().parse(view);
-      return [item];
-    }),
+    views,
   };
 }

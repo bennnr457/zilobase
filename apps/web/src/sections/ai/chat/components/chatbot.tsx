@@ -7,12 +7,17 @@ import {
   useRecoverChatSubmission,
   useChatThreads,
   useChatSelection,
+  useChatAttachmentMetadata,
 } from "@zilobase/features/ai/react";
 import { useChatAttachments } from "../../attachments/hooks/use-chat-attachments";
-import { ContextInspector } from "../../attachments/components/context-inspector";
-import type { BuildContextResult } from "@zilobase/page-context";
+import type { ResourceRef } from "@zilobase/page-context";
 import { ChatLayout } from "./chat-layout";
 import { Button } from "@/components/ui/button";
+import { PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
+import {
+  DEFAULT_DATABASE_ITEM_ICON,
+  DEFAULT_PAGE_ITEM_ICON,
+} from "@/components/navigation/lib/navigation-icons";
 import { ChatbotComposer } from "../../composer/components/chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";
@@ -37,7 +42,6 @@ export default function Chatbot({
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const attachmentState = useChatAttachments(workspaceId);
-  const [sentContext, setSentContext] = useState<BuildContextResult | null>(null);
   const send = useSendChat();
   const follow = useFollowChatRun();
   const cancelRun = useCancelChatRun();
@@ -81,15 +85,9 @@ export default function Chatbot({
     loadedThread.current = selection.id;
     setMessages(detail.messages);
     attachmentState.setAttachments(
-      detail.roots.map((ref) => ({
-        ...ref,
-        title:
-          detail.messages
-            .flatMap((message) => message.context?.manifest ?? [])
-            .find((entry) => entry.id === ref.id && entry.type === ref.type)?.title ?? ref.type,
-        path: "",
-        emoji: null,
-      })),
+      detail.roots.map((ref) => {
+        return { ...ref, title: ref.type, path: "", emoji: null };
+      }),
     );
   }, [threads.detail.data, selection.id, streaming, attachmentState]);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -116,7 +114,6 @@ export default function Chatbot({
     pendingRequest.current = null;
     setText("");
     setMessages([]);
-    setSentContext(null);
     setChatError(null);
     attachmentState.reset();
   }, [selection.revision, attachmentState, threads]);
@@ -228,7 +225,6 @@ export default function Chatbot({
           }
           accepted = true;
           pendingRequest.current = null;
-          setSentContext(event.context);
           setText("");
           setMessages((current) => [
             ...current,
@@ -384,20 +380,14 @@ export default function Chatbot({
           }
           text={text}
         >
-          {sentContext && <ContextInspector context={sentContext} label="Last sent context" />}
-
           <div className="mb-2 flex flex-wrap items-center gap-2">
             {attachmentState.attachments.map((item) => (
-              <Button
+              <AttachmentButton
                 key={`${item.type}:${item.id}`}
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => attachmentState.remove(item)}
-                aria-label={`Remove ${item.title}`}
-              >
-                {item.title} ×
-              </Button>
+                item={item}
+                workspaceId={workspaceId}
+                onRemove={() => attachmentState.remove(item)}
+              />
             ))}
             {(pageId || databaseId) && (
               <Button
@@ -415,19 +405,6 @@ export default function Chatbot({
                 }
               >
                 Attach current {databaseId ? "database" : "page"}
-              </Button>
-            )}
-            {!!attachmentState.attachments.length && (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                disabled={attachmentState.busy || streaming}
-                onClick={() => {
-                  void attachmentState.build().catch(() => {});
-                }}
-              >
-                Refresh context preview
               </Button>
             )}
           </div>
@@ -466,23 +443,10 @@ export default function Chatbot({
               Retry answer
             </Button>
           )}
-          {streaming && (
-            <p role="status" className="mb-2 text-xs">
-              Writing answer…
-            </p>
-          )}
-          {attachmentState.busy && (
-            <p role="status" className="mb-2 text-xs">
-              Preparing context…
-            </p>
-          )}
           {attachmentState.error && (
             <p role="alert" className="mb-2 text-sm text-action-danger-text">
               {attachmentState.error}. Retry or remove an attachment.
             </p>
-          )}
-          {attachmentState.preview && (
-            <ContextInspector context={attachmentState.preview} label="Draft context preview" />
           )}
         </ChatbotComposer>
       </ChatLayout>
@@ -502,3 +466,38 @@ const starterPrompts = [
   "What needs attention in these records?",
   "Create a project plan",
 ];
+
+function AttachmentButton({
+  item,
+  workspaceId,
+  onRemove,
+}: {
+  item: ResourceRef;
+  workspaceId: string | null;
+  onRemove: () => void;
+}) {
+  const { title, emoji } = useChatAttachmentMetadata(workspaceId, item);
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      className="max-w-full justify-start"
+      onClick={onRemove}
+      aria-label={`Remove ${title}`}
+      title={title}
+    >
+      <span aria-hidden="true" className="inline-flex shrink-0">
+        <PageIconDisplay
+          size="sm"
+          value={
+            emoji ??
+            (item.type === "database" ? DEFAULT_DATABASE_ITEM_ICON : DEFAULT_PAGE_ITEM_ICON)
+          }
+        />
+      </span>
+      <span className="truncate">{title}</span>
+      <span aria-hidden="true">×</span>
+    </Button>
+  );
+}

@@ -45,7 +45,7 @@ export function DocumentFavicon() {
         ? getPageIconValue(page)
         : null;
   const itemTitle = databaseId
-    ? databasePayload?.database.name
+    ? databasePayload?.displayName
     : meetingId
       ? meetingPayload?.meeting.title
       : directPageId

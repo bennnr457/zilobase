@@ -64,7 +64,7 @@ import {
   type DatabaseViewType,
 } from "../../views/settings/lib/view-type-options";
 import { databaseCsvPayload, databaseTemplateRows } from "@zilobase/features/databases";
-import { PageDatabasePicker } from "../../components/page-database-picker";
+import { PageDatabasePicker } from "@/components/navigation/components/page-database-picker";
 
 type SetupView = "main" | "link";
 
@@ -331,7 +331,7 @@ export function DatabaseSetupCard({
               databaseId: activeDataSource.id,
             };
 
-            if (template.name !== databasePayload?.database.name) {
+            if (template.name !== databasePayload?.displayName) {
               nextDatabasePatch.name = template.name;
             }
 
@@ -558,7 +558,7 @@ export function DatabaseSetupCard({
           (viewItem) => !sourceDataSourceId || viewItem.dataSourceId === sourceDataSourceId,
         ) ?? [];
       const databaseName =
-        selectedLinkDatabasePayload?.database.name ??
+        selectedLinkDatabasePayload?.displayName ??
         linkableDatabases.find((item) => item.database.id === selectedLinkDatabaseId)?.database
           .name ??
         "Untitled database";

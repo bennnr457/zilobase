@@ -13,6 +13,7 @@ import {
   databaseViewQueryHash,
   evaluateDatabaseRecordsForView,
   getDatabaseInitialPageSize,
+  getDatabaseTitleSource,
   parseDatabaseOrderKey,
 } from "@zilobase/features/runtime";
 
@@ -222,16 +223,20 @@ function recordEntity(
 
 async function loadAccessibleSourceLinks(input: {
   includeDeleted?: boolean;
-  record: DatabaseRecord;
+  records: DatabaseRecord[];
   userId?: string;
 }) {
+  if (!input.records.length) return [];
   const sourceLinks = await db
     .select({ link: databaseDataSource, source: dataSource })
     .from(databaseDataSource)
     .innerJoin(dataSource, eq(databaseDataSource.dataSourceId, dataSource.id))
     .where(
       and(
-        eq(databaseDataSource.databaseId, input.record.id),
+        inArray(
+          databaseDataSource.databaseId,
+          input.records.map((record) => record.id),
+        ),
         input.includeDeleted ? undefined : isNull(dataSource.deletedAt),
       ),
     )
@@ -239,8 +244,8 @@ async function loadAccessibleSourceLinks(input: {
   const foreignParentIds = [
     ...new Set(
       sourceLinks
-        .map(({ source }) => source.parentDatabaseId)
-        .filter((parentId) => parentId !== input.record.id),
+        .filter(({ source, link }) => source.parentDatabaseId !== link.databaseId)
+        .map(({ source }) => source.parentDatabaseId),
     ),
   ];
   const foreignParents = foreignParentIds.length
@@ -256,14 +261,20 @@ async function loadAccessibleSourceLinks(input: {
     : [];
   const foreignParentsById = new Map(foreignParents.map((parent) => [parent.id, parent]));
   const accessibleLinks: typeof sourceLinks = [];
+  const permissions = new Map<string, Promise<boolean>>();
   for (const link of sourceLinks) {
-    if (link.source.parentDatabaseId === input.record.id) {
+    if (link.source.parentDatabaseId === link.link.databaseId) {
       accessibleLinks.push(link);
       continue;
     }
     const parent = foreignParentsById.get(link.source.parentDatabaseId);
-    if (parent && input.userId && (await canAccessDatabaseRecord(parent, input.userId, "view"))) {
-      accessibleLinks.push(link);
+    if (parent && input.userId) {
+      let allowed = permissions.get(parent.id);
+      if (!allowed) {
+        allowed = canAccessDatabaseRecord(parent, input.userId, "view");
+        permissions.set(parent.id, allowed);
+      }
+      if (await allowed) accessibleLinks.push(link);
     }
   }
 
@@ -271,7 +282,50 @@ async function loadAccessibleSourceLinks(input: {
 }
 
 export async function getAuthorizedDatabaseSourceIds(record: DatabaseRecord, userId: string) {
-  return (await loadAccessibleSourceLinks({ record, userId })).map(({ source }) => source.id);
+  return (await loadAccessibleSourceLinks({ records: [record], userId })).map(
+    ({ source }) => source.id,
+  );
+}
+
+/** Batch search headings without loading properties or records. Hosts must already be authorized. */
+export async function getDatabaseTitleSourcesService(records: DatabaseRecord[], userId: string) {
+  if (!records.length) return new Map<string, DataSourceEntity | null>();
+  const [links, views] = await Promise.all([
+    loadAccessibleSourceLinks({ records, userId }),
+    db
+      .select({
+        id: databaseView.id,
+        databaseId: databaseView.databaseId,
+        dataSourceId: databaseView.dataSourceId,
+        position: databaseView.position,
+      })
+      .from(databaseView)
+      .where(
+        inArray(
+          databaseView.databaseId,
+          records.map((record) => record.id),
+        ),
+      ),
+  ]);
+  return new Map(
+    records.map((record) => {
+      const sources = links
+        .filter(({ link }) => link.databaseId === record.id)
+        .map(({ source, link }) =>
+          sourceEntity({ ...source, position: link.position, linkedAt: link.createdAt }),
+        );
+      const allowedIds = new Set(sources.map((source) => source.id));
+      return [
+        record.id,
+        getDatabaseTitleSource(
+          sources,
+          views.filter(
+            (view) => view.databaseId === record.id && allowedIds.has(view.dataSourceId),
+          ),
+        ),
+      ] as const;
+    }),
+  );
 }
 
 async function loadDatabaseReadModel(input: {
@@ -281,7 +335,7 @@ async function loadDatabaseReadModel(input: {
   userId?: string;
 }): Promise<DatabaseReadModel> {
   const [accessibleLinks, storedViews] = await Promise.all([
-    loadAccessibleSourceLinks(input),
+    loadAccessibleSourceLinks({ ...input, records: [input.record] }),
     db
       .select()
       .from(databaseView)

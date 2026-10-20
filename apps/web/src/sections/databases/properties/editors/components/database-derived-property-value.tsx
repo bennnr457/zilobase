@@ -27,7 +27,7 @@ import { useDatabaseSecondaryPayload } from "@zilobase/features/databases/react"
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
-} from "../../../components/page-database-picker";
+} from "@/components/navigation/components/page-database-picker";
 
 type DatabaseRow = {
   createdAt: string;

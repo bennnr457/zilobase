@@ -83,7 +83,7 @@ type PageMetadataProps = {
   onTitleChange?: (title: string) => void;
   workspaceId?: string | null;
   title?: string;
-  titlePrefix?: ReactNode;
+  titleSuffix?: ReactNode;
   titlePlaceholder?: string;
   pageId?: string | null;
   ref?: Ref<PageMetadataHandle>;
@@ -173,7 +173,7 @@ export function PageMetadata({
   onTitleChange,
   workspaceId,
   title: titleProp,
-  titlePrefix,
+  titleSuffix,
   titlePlaceholder,
   pageId,
   ref,
@@ -804,14 +804,9 @@ export function PageMetadata({
             ref={titleRowRef}
           >
             {iconPosition === "inline" ? pageIcon : null}
-            {titlePrefix ? (
-              <span className="flex min-h-10 shrink-0 items-center text-content-secondary">
-                {titlePrefix}
-              </span>
-            ) : null}
             <textarea
               aria-label={headingLabel ? `${headingLabel} title` : "Page title"}
-              className="min-h-10 min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-4xl font-semibold leading-tight tracking-normal whitespace-pre-wrap text-balance text-content-primary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent"
+              className={`min-h-10 min-w-0 ${titleSuffix ? "flex-initial [field-sizing:content]" : "flex-1"} resize-none overflow-hidden border-0 bg-transparent px-0 py-0 text-4xl font-semibold leading-tight tracking-normal whitespace-pre-wrap text-balance text-content-primary shadow-none outline-none placeholder:text-content-secondary placeholder:opacity-60 focus-visible:ring-0 dark:bg-transparent`}
               onBlur={onTitleBlur}
               onChange={(event) => updateTitle(event.target.value)}
               onKeyDown={(event) => {
@@ -829,6 +824,11 @@ export function PageMetadata({
               rows={1}
               value={title}
             />
+            {titleSuffix ? (
+              <span className="flex shrink-0 self-center items-center text-content-secondary">
+                {titleSuffix}
+              </span>
+            ) : null}
           </div>
         ) : null}
 

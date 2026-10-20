@@ -36,7 +36,7 @@ import { DatabaseSearchableMenuItems } from "../../shared/components/database-se
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
-} from "../../../components/page-database-picker";
+} from "@/components/navigation/components/page-database-picker";
 import { getDatabaseViewIcon } from "@zilobase/features/databases";
 import {
   DataSourceAddGlyph,

@@ -65,7 +65,8 @@ export function buildTaskRows(payloads: DatabaseExportPayload[]): TaskRow[] {
         assigneeIds: readPersonIds(values.get(`${row.pageId}:${schema.assignee!.property.id}`)),
         createdAt: row.createdAt,
         databaseId: payload.database.id,
-        databaseName: payload.database.name || "Untitled database",
+        databaseName:
+          (payload.activeDataSource?.name ?? payload.database.name) || "Untitled database",
         dueDate: readDate(values.get(`${row.pageId}:${schema.dueDate!.property.id}`)),
         isCompleted: isTaskStatusComplete(status, statusOptions),
         pageId: row.pageId,

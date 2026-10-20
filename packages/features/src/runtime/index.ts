@@ -161,6 +161,8 @@ export type { ContextReadPorts, ContextDatabaseRead, LocalPageSnapshot } from ".
 export { chatRequestSchema } from "../ai/contracts";
 export type { ChatRequest, ChatEvent, ChatMessage } from "../ai/contracts";
 
+export { getDatabaseTitleSource, getDatabaseEmoji } from "../databases/views/appearance";
+
 export type {
   ChatRunStatus,
   ChatRunSnapshot,

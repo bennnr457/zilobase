@@ -1,3 +1,4 @@
+import { getDatabaseTitleSource } from "../views/appearance";
 import { useEffect, useMemo } from "react";
 import { composeDatabaseViewData } from "../views/source-state";
 import { useDatabaseBootstrap } from "./bootstrap-react";
@@ -22,19 +23,14 @@ export function useDatabaseMetadata(
   const data = useMemo(() => {
     if (!bootstrap.data) return undefined;
 
-    const activeView = options?.viewId
-      ? bootstrap.data.views.find((view) => view.id === options.viewId)
-      : bootstrap.data.views[0];
     const activeDataSource =
-      bootstrap.data.dataSources.find(
-        (source) => source.id === (options?.dataSourceId ?? activeView?.dataSourceId),
-      ) ??
-      bootstrap.data.dataSources[0] ??
-      null;
+      bootstrap.data.dataSources.find((source) => source.id === options?.dataSourceId) ??
+      getDatabaseTitleSource(bootstrap.data.dataSources, bootstrap.data.views, options?.viewId);
 
     return {
       ...bootstrap.data,
       activeDataSource,
+      displayName: activeDataSource?.name ?? bootstrap.data.database.name,
     };
   }, [bootstrap.data, options?.dataSourceId, options?.viewId]);
 

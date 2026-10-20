@@ -30,7 +30,7 @@ import { usePageNavigation } from "@zilobase/features/pages/react";
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
-} from "../../../components/page-database-picker";
+} from "@/components/navigation/components/page-database-picker";
 import type { DatabasePropertyConfig } from "@zilobase/features/databases";
 import { useDatabaseMetadata } from "@zilobase/features/databases/react";
 import { useDatabaseSecondaryPayload } from "@zilobase/features/databases/react";

@@ -14,7 +14,7 @@ import {
 
 function DatabaseOutlineTitle({ id }: { id: string | null }) {
   const { data } = useDatabaseMetadata(id, { includeDeleted: true });
-  return data?.database.name.trim() || "Database";
+  return data?.displayName.trim() || "Database";
 }
 
 function MeetingOutlineTitle({ id }: { id: string | null }) {

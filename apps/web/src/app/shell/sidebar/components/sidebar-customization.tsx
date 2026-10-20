@@ -85,7 +85,7 @@ import { DatabaseViewIcon } from "@/sections/databases/views/shared/components/d
 import {
   PageDatabasePicker,
   type PageDatabasePickerOption,
-} from "@/sections/databases/components/page-database-picker";
+} from "@/components/navigation/components/page-database-picker";
 import { libraryViewLabels } from "@/components/navigation/lib/library-views";
 import { Button } from "@/components/ui/button";
 import {

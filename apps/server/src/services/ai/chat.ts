@@ -12,7 +12,10 @@ export const CHAT_INSTRUCTIONS = `You are Zilobase Ask AI, a read-only workspace
 
 export const DEFAULT_CHAT_MODEL = "gpt-6-luna";
 
-export function configuredChatModel(context: ServerOperationContext): LanguageModel {
+export function configuredChatModel(
+  context: ServerOperationContext,
+  transport?: typeof fetch,
+): LanguageModel {
   const apiKey = getStringEnv(context.env, "OPENAI_API_KEY")?.trim();
   const model = getStringEnv(context.env, "AI_MODEL")?.trim() || DEFAULT_CHAT_MODEL;
   if (!apiKey)
@@ -20,7 +23,7 @@ export function configuredChatModel(context: ServerOperationContext): LanguageMo
       { error: "Ask AI needs OPENAI_API_KEY configured on the server" },
       503,
     );
-  return createOpenAI({ apiKey })(model);
+  return createOpenAI({ apiKey, fetch: transport })(model);
 }
 
 export async function prepareChat(

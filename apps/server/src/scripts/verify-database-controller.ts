@@ -1,3 +1,4 @@
+import { searchWorkspaceItems } from "../services/search/workspace-search";
 import type {
   DatabaseCommand,
   DatabaseCommandRequest,
@@ -395,6 +396,98 @@ try {
   }
   console.info(
     "Passed millisecond-safe entity confirmation stamps across two independent PostgreSQL clients.",
+  );
+  // Cold search must resolve source names without first opening a database.
+  await first.db.insert(database).values([
+    { id: "naming-host", workspaceId: "workspace", createdById: "actor", name: "New database" },
+    { id: "naming-private", workspaceId: "workspace", createdById: "actor", name: "Private" },
+  ]);
+  await first.db.insert(dataSource).values([
+    {
+      id: "naming-source",
+      workspaceId: "workspace",
+      parentDatabaseId: "naming-host",
+      createdById: "actor",
+      name: "Projects",
+      config: { emoji: "🚀" },
+    },
+    {
+      id: "naming-secret",
+      workspaceId: "workspace",
+      parentDatabaseId: "naming-private",
+      createdById: "actor",
+      name: "Confidential roadmap",
+    },
+  ]);
+  await first.db.insert(databaseDataSource).values([
+    { databaseId: "naming-host", dataSourceId: "naming-source", position: 0 },
+    { databaseId: "naming-private", dataSourceId: "naming-secret", position: 0 },
+  ]);
+  await first.db.insert(databaseView).values({
+    id: "naming-view",
+    databaseId: "naming-host",
+    dataSourceId: "naming-source",
+    name: "Table",
+    type: "table",
+    position: 1,
+  });
+  await first.db.insert(databaseAccess).values({
+    id: "naming-access",
+    databaseId: "naming-host",
+    workspaceId: "workspace",
+    targetType: "user",
+    targetId: "other",
+    accessLevel: "view",
+  });
+  const search = (query: string, userId = "actor") =>
+    runWithDb(first.db, () =>
+      searchWorkspaceItems({ workspaceId: "workspace", userId, query, types: ["database"] }),
+    );
+  const cold = (await search("")).find((item) => item.id === "naming-host")!;
+  assert.equal(cold.title, "Projects");
+  assert.equal(cold.emoji, "🚀");
+  assert.equal(cold.titleSource?.id, "naming-source");
+  assert.equal(
+    (await search("Projects")).find((item) => item.id === "naming-host")?.title,
+    "Projects",
+  );
+  await send(
+    { type: "dataSource.update", patch: { name: "Launch plans" } },
+    { databaseId: "naming-host", dataSourceId: "naming-source" },
+  );
+  assert.equal(
+    (await search("Launch plans")).find((item) => item.id === "naming-host")?.title,
+    "Launch plans",
+  );
+  assert.equal(
+    (await search("Projects")).some((item) => item.id === "naming-host"),
+    false,
+  );
+  await first.db
+    .insert(databaseDataSource)
+    .values({ databaseId: "naming-host", dataSourceId: "naming-secret", position: 1 });
+  await first.db.insert(databaseView).values({
+    id: "naming-linked-view",
+    databaseId: "naming-host",
+    dataSourceId: "naming-secret",
+    name: "Linked table",
+    type: "table",
+    position: 0,
+  });
+  assert.equal(
+    (await search("")).find((item) => item.id === "naming-host")?.title,
+    "Confidential roadmap",
+  );
+  assert.equal(
+    (await search("", "other")).find((item) => item.id === "naming-host")?.title,
+    "Launch plans",
+  );
+  assert.equal(
+    (await search("Confidential roadmap", "other")).some((item) => item.id === "naming-host"),
+    false,
+  );
+  console.info(
+    "Passed cold database search titles, source-name matching, renames and linked-source access isolation.",
   );
 } finally {
   await Promise.all([first.client.end(), second.client.end()]);
