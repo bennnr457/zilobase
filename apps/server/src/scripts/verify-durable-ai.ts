@@ -39,6 +39,7 @@ import {
   checkpointChatRun,
   claimChatRun,
   readChatRunPage,
+  renewChatRunLease,
   getChatRequest,
 } from "../services/ai/runs";
 import type { ServerOperationContext } from "../services/operations/context";
@@ -133,6 +134,8 @@ try {
       );
       const run = await claimChatRun(receipt.runId, "owner", "test");
       assert.ok(run);
+      await renewChatRunLease(run.id, "owner", run.fence);
+      await assert.rejects(renewChatRunLease(run.id, "stale", run.fence), /LEASE_LOST/);
       await assert.rejects(claimChatRun(receipt.runId, "duplicate", "test"), /BUSY/);
       await checkpointChatRun(run.id, "owner", run.fence, { text: "Saved" });
       const initialPage = await readChatRunPage(context, run.id, "workspace", 0);
@@ -144,6 +147,7 @@ try {
         /LEASE_LOST/,
       );
       await cancelChatRun(context, run.id, "workspace");
+      await assert.rejects(renewChatRunLease(run.id, "owner", run.fence), /CANCELLED/);
       await assert.rejects(
         checkpointChatRun(run.id, "owner", run.fence, { text: "late" }, "completed"),
         /CANCELLED/,
@@ -171,6 +175,43 @@ try {
         },
       );
       assert.equal(cancelledCalls, 0, "cancel-before-start never calls the provider");
+
+      // Simulate slow remote persistence. Reading each token must not wait for its own database transaction.
+      const batched = await admitChatRun(context, { ...request, requestId: randomUUID() });
+      await client.client.query(`
+        CREATE FUNCTION verify_ai_slow_delta() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN PERFORM pg_sleep(0.3); RETURN NEW; END $$;
+        CREATE TRIGGER verify_ai_slow_delta BEFORE INSERT ON ask_ai_run_event
+        FOR EACH ROW WHEN (NEW.event->>'type' = 'delta') EXECUTE FUNCTION verify_ai_slow_delta();
+      `);
+      try {
+        await processAiGeneration(
+          env,
+          { runId: batched.runId, workerId: "batching" },
+          async function* () {
+            for (let index = 0; index < 50; index++) {
+              yield { text: "x" };
+              await new Promise((resolve) => setTimeout(resolve, 10));
+            }
+            yield { completed: true };
+          },
+        );
+        const answer = await getChatRequest(context, batched.turnId, "workspace");
+        assert.equal(answer.status, "completed");
+        assert.equal(answer.text, "x".repeat(50), "Coalescing preserves every token exactly once");
+        const persisted = await client.db
+          .select()
+          .from(askAiRunEvent)
+          .where(eq(askAiRunEvent.runId, batched.runId));
+        assert.ok(
+          persisted.filter((event) => event.event.type === "delta").length <= 4,
+          "Slow persistence must batch tokens, not force one database write per token",
+        );
+      } finally {
+        await client.client.query(
+          "DROP TRIGGER verify_ai_slow_delta ON ask_ai_run_event; DROP FUNCTION verify_ai_slow_delta()",
+        );
+      }
 
       const abandoned = await admitChatRun(context, { ...request, requestId: randomUUID() });
       const lost = await claimChatRun(abandoned.runId, "lost", "test");

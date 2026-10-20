@@ -5,7 +5,7 @@ import {
 import { runWithRuntimePorts } from "@zilobase/runtime-adapter/capabilities";
 import { runWithIndependentDbEnv } from "../../infrastructure/database";
 import { createHash, randomUUID } from "node:crypto";
-import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import type {
   ChatRequest,
   ChatRunEnvelope,
@@ -518,6 +518,34 @@ export async function checkpointChatRun(
     if (terminal) await finalizeRunLocked(tx, { ...run, seq }, terminal);
     return { cancelled: !!run.cancelRequestedAt };
   });
+}
+/** A lease heartbeat carries no events; keep its successful path to one fenced SQL update. */
+export async function renewChatRunLease(runId: string, owner: string, fence: number) {
+  const now = new Date();
+  const [renewed] = await db
+    .update(askAiRun)
+    .set({ leaseExpiresAt: new Date(now.getTime() + 90_000), updatedAt: now })
+    .where(
+      and(
+        eq(askAiRun.id, runId),
+        eq(askAiRun.leaseOwner, owner),
+        eq(askAiRun.fence, fence),
+        eq(askAiRun.status, "running"),
+        gt(askAiRun.leaseExpiresAt, now),
+        isNull(askAiRun.cancelRequestedAt),
+      ),
+    )
+    .returning({ id: askAiRun.id });
+  if (renewed) return;
+  const [state] = await db.select().from(askAiRun).where(eq(askAiRun.id, runId));
+  if (
+    state?.leaseOwner === owner &&
+    state.fence === fence &&
+    state.status === "running" &&
+    state.cancelRequestedAt
+  )
+    throw new Error("CHAT_RUN_CANCELLED");
+  throw new Error("CHAT_RUN_LEASE_LOST");
 }
 export async function latestThreadRun(threadId: string) {
   const [found] = await db

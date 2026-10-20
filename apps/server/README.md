@@ -251,6 +251,14 @@ run in the same thread, with the same source scope and pending cursors. Source
 permissions are rechecked before continuation. Terminal replay events expire
 after 24 hours; conversation messages remain readable.
 
+Stream consumption does not wait for each token's database write. The producer
+coalesces text with one write in flight and a limit of 65,536 characters across the
+pending and in-flight batches. Step checkpoints and terminal completion drain
+pending text in order; cancellation retains batches rejected before commit.
+Lease-only heartbeats use a fenced conditional update without an event transaction.
+The durable test includes a slow-write regression so small tokens cannot turn
+into one remote transaction per token.
+
 The `AI_PROVIDER_BACKGROUND_ENABLED` flag applies only to previously admitted
 version-one runs. New tool runs recover at application transcript boundaries
 rather than depending on a single provider response ID.

@@ -22,11 +22,12 @@ import {
   claimChatRun,
   checkpointChatRun,
   failChatRunDelivery,
-  isRunTerminal,
   readChatRun,
+  renewChatRunLease,
 } from "./runs";
 import { openRunInput } from "./run-input";
 import { createAiDiagnostics } from "./diagnostics";
+import { createChatTextBuffer } from "./text-buffer";
 
 export async function processAiGeneration(
   env: RuntimeEnv,
@@ -72,9 +73,7 @@ export async function processAiGeneration(
     ...(input.signal ? [input.signal] : []),
   ]);
   let context: ServerOperationContext | undefined;
-  let buffer = "";
   let cursor: ProviderChunk = { responseId: run.responseId, cursor: run.providerCursor };
-  let savedAt = Date.now();
   let finished = false;
   let firstToken = false;
   const startedAt = Date.now();
@@ -88,10 +87,7 @@ export async function processAiGeneration(
   let control: Promise<void> | undefined;
   let flushTimer: ReturnType<typeof setInterval> | undefined;
   let writing: Promise<unknown> = Promise.resolve();
-  const flush = async (complete = false) => {
-    const chunk = { ...cursor, text: buffer };
-    buffer = "";
-    savedAt = Date.now();
+  const textBuffer = createChatTextBuffer(async (chunk, complete) => {
     writing = writing.then(() =>
       scope(
         () =>
@@ -105,17 +101,9 @@ export async function processAiGeneration(
         "text_checkpoint",
       ),
     );
-    try {
-      await writing;
-      recordBackgroundCounter("ai_checkpoint", attributes);
-    } catch (error) {
-      // A rejected cancellation checkpoint committed neither text nor cursor.
-      // Retain that batch for the terminal stopped transaction.
-      if (error instanceof Error && error.message === "CHAT_RUN_CANCELLED")
-        buffer = (chunk.text ?? "") + buffer;
-      throw error;
-    }
-  };
+    await writing;
+    recordBackgroundCounter("ai_checkpoint", attributes);
+  }, cursor);
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   try {
     context = await scope(async () => {
@@ -173,25 +161,13 @@ export async function processAiGeneration(
     });
     const check = async () => {
       await scope(async () => {
-        const [state] = await db.select().from(askAiRun).where(eq(askAiRun.id, run.id));
-        if (
-          !state ||
-          state.leaseOwner !== input.workerId ||
-          state.fence !== run.fence ||
-          isRunTerminal(state.status)
-        )
-          throw new Error("CHAT_RUN_LEASE_LOST");
-        if (state.cancelRequestedAt) {
-          stopped = true;
-          throw new Error("CHAT_RUN_CANCELLED");
-        }
+        await renewChatRunLease(run.id, input.workerId, run.fence);
         if (Date.now() - authorizedAt > 5000) {
           const [login] = await db.select().from(session).where(eq(session.id, run.sessionId));
           if (!login || login.expiresAt <= new Date()) throw new Error("CHAT_SESSION_REVOKED");
           await readChatRun(activeContext, run.id, run.workspaceId);
           authorizedAt = Date.now();
         }
-        await checkpointChatRun(run.id, input.workerId, run.fence, {});
       }, "control");
     };
     heartbeat = setInterval(() => {
@@ -205,13 +181,13 @@ export async function processAiGeneration(
         });
     }, 1000);
     flushTimer = setInterval(() => {
-      if (buffer && Date.now() - savedAt >= 200)
-        void flush().catch((error) => controller.abort(error));
+      if (textBuffer.due()) void textBuffer.start().catch((error) => controller.abort(error));
     }, 200);
     recordBackgroundCounter("ai_provider_start", attributes);
     for await (const chunk of provider(activeContext, payload, signal, cursor, fetch, {
       diagnostics,
       checkpoint: async (state) => {
+        await textBuffer.drain();
         writing = writing.then(() =>
           scope(
             () =>
@@ -231,7 +207,7 @@ export async function processAiGeneration(
     })) {
       signal.throwIfAborted();
       if (chunk.replaceText !== undefined || chunk.context || chunk.progress) {
-        await flush();
+        await textBuffer.drain();
         await scope(() =>
           checkpointChatRun(run.id, input.workerId, run.fence, {
             replaceText: chunk.replaceText,
@@ -245,16 +221,17 @@ export async function processAiGeneration(
         recordBackgroundHistogram("ai_first_token_ms", Date.now() - startedAt, attributes);
         diagnostics.event("first_text", { waitMs: Date.now() - startedAt });
       }
-      buffer += chunk.text ?? "";
+      if (textBuffer.size + (chunk.text?.length ?? 0) > 65_536) await textBuffer.drain();
+      textBuffer.append(chunk);
       const newResponse = chunk.responseId && !cursor.responseId;
       cursor = {
         responseId: chunk.responseId ?? cursor.responseId,
         cursor: chunk.cursor ?? cursor.cursor,
         usage: chunk.usage,
       };
-      if (newResponse || buffer.length >= 4096 || Date.now() - savedAt >= 200 || chunk.completed) {
-        await flush(!!chunk.completed);
-      }
+      if (newResponse || chunk.completed) await textBuffer.drain(!!chunk.completed);
+      else if (textBuffer.size >= 4096 && !textBuffer.flushing)
+        void textBuffer.start().catch((error) => controller.abort(error));
       if (chunk.completed) {
         finished = true;
         break;
@@ -262,6 +239,10 @@ export async function processAiGeneration(
     }
     if (!finished) throw new Error("CHAT_PROVIDER_INTERRUPTED");
   } catch (error) {
+    if (flushTimer) clearInterval(flushTimer);
+    if (heartbeat) clearInterval(heartbeat);
+    await writing.catch(() => {});
+    await textBuffer.settle().catch(() => {});
     if (input.signal?.aborted) throw error;
     const reason = signal.reason instanceof Error ? signal.reason.message : "";
     const code = error instanceof Error ? error.message : "";
@@ -311,7 +292,7 @@ export async function processAiGeneration(
         run.id,
         input.workerId,
         run.fence,
-        { ...cursor, text: buffer },
+        textBuffer.pending(),
         stopped ? "stopped" : signal.aborted ? "interrupted" : "failed",
       ),
     ).catch(async (cause) => {

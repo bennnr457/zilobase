@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { parsePageDocument } from "@zilobase/features/runtime";
 import { prosemirrorToMarkdown, type ResourceRef } from "@zilobase/page-context";
 import { ServerOperationError, type ServerOperationContext } from "../../operations/context";
-import { getPageOperation } from "./operations";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../../../infrastructure/database";
 import { page } from "../../../infrastructure/database/schema";
@@ -127,13 +126,23 @@ export async function readDocumentWindow(
   context: ServerOperationContext,
   input: { pageId: string; offset?: number; revision?: string; limit?: number; outline?: boolean },
 ) {
-  const detail = await getPageOperation(context, { pageId: input.pageId });
-  if (detail.viewerType === "public" || detail.page.deletedAt)
-    throw new ServerOperationError({ error: "Page is no longer accessible" }, 403);
-  const document = parsePageDocument(detail.page.content) as Node;
+  const identity = await readPageIdentity(context, input.pageId);
+  const [saved] = await db
+    .select({ name: page.name, content: page.content, updatedAt: page.updatedAt })
+    .from(page)
+    .where(
+      and(
+        eq(page.id, input.pageId),
+        eq(page.workspaceId, identity.workspaceId),
+        isNull(page.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (!saved) throw new ServerOperationError({ error: "Page is no longer accessible" }, 404);
+  const document = parsePageDocument(saved.content) as Node;
   const origin = context.env.CLIENT_URL ? getCanonicalWebOrigin(context.env) : undefined;
   const revision = createHash("sha256")
-    .update(JSON.stringify([detail.page.updatedAt, document]))
+    .update(JSON.stringify([saved.updatedAt, document]))
     .digest("hex");
   if (input.revision && revision !== input.revision)
     throw new ServerOperationError({ error: "SOURCE_CHANGED" }, 409);
@@ -149,7 +158,7 @@ export async function readDocumentWindow(
     throw new ServerOperationError({ error: "Invalid document position" }, 400);
   const limit = Math.min(25, Math.max(1, input.limit ?? 10));
   return {
-    title: detail.page.name,
+    title: saved.name,
     revision,
     entries: entries.slice(offset, offset + limit),
     offset,
