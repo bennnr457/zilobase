@@ -1,5 +1,8 @@
 import { BACKGROUND_LANE_POLICY } from "../infrastructure/background/task-v2";
 import { createNodeQueueRuntime } from "@zilobase/runtime-adapter/node";
+import { generateReadAgent } from "../services/ai/agent";
+import { openRunInput } from "../services/ai/run-input";
+import { MockLanguageModelV4 } from "ai/test";
 import { processAiGeneration } from "../services/ai/background";
 import { chatRunResponse } from "../routes/ai/durable-stream";
 import { backgroundTaskLane, parseBackgroundTask } from "../infrastructure/background/contracts";
@@ -15,6 +18,11 @@ import { runMigrationSets } from "@zilobase/runtime-adapter/node";
 import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
 import {
+  database,
+  dataSource,
+  databaseDataSource,
+  databaseRow,
+  page,
   askAiRun,
   askAiRunInput,
   askAiRunEvent,
@@ -127,10 +135,10 @@ try {
       assert.ok(run);
       await assert.rejects(claimChatRun(receipt.runId, "duplicate", "test"), /BUSY/);
       await checkpointChatRun(run.id, "owner", run.fence, { text: "Saved" });
-      const page = await readChatRunPage(context, run.id, "workspace", 0);
-      assert.equal(page.snapshot.text, "Saved");
-      assert.equal(page.snapshot.seq, 1);
-      assert.equal(page.events[0]?.seq, 1);
+      const initialPage = await readChatRunPage(context, run.id, "workspace", 0);
+      assert.equal(initialPage.snapshot.text, "Saved");
+      assert.equal(initialPage.snapshot.seq, 1);
+      assert.equal(initialPage.events[0]?.seq, 1);
       await assert.rejects(
         checkpointChatRun(run.id, "stale", run.fence, { text: "wrong" }),
         /LEASE_LOST/,
@@ -172,15 +180,35 @@ try {
         .update(askAiRun)
         .set({ providerStartedAt: new Date(), leaseExpiresAt: new Date(0) })
         .where(eq(askAiRun.id, lost.id));
-      assert.equal(await claimChatRun(lost.id, "replacement", "test"), null);
+      const replacement = await claimChatRun(lost.id, "replacement", "test");
+      assert.ok(
+        replacement,
+        "Tool runs can restart from a committed transcript without a provider response ID",
+      );
+      assert.equal(replacement.fence, lost.fence + 1);
+      await assert.rejects(
+        checkpointChatRun(lost.id, "lost", lost.fence, { text: "stale" }),
+        /LEASE_LOST/,
+      );
+      await checkpointChatRun(
+        lost.id,
+        "replacement",
+        replacement.fence,
+        { replaceText: "", text: "Recovered" },
+        "completed",
+      );
       const interrupted = await getChatRequest(context, abandoned.requestId, "workspace");
-      assert.equal(interrupted.status, "interrupted");
-      assert.equal(interrupted.text, "Saved partial");
+      assert.equal(interrupted.status, "completed");
+      assert.equal(interrupted.text, "Recovered", "Uncommitted text is replaced, not duplicated");
 
       const recovered = await admitChatRun(
         { ...context, env: { ...env, AI_PROVIDER_BACKGROUND_ENABLED: "true" } },
         { ...request, requestId: randomUUID() },
       );
+      await client.db
+        .update(askAiRun)
+        .set({ agentVersion: 1, background: true })
+        .where(eq(askAiRun.id, recovered.runId));
       const oldOwner = await claimChatRun(recovered.runId, "old-owner", "test");
       assert.ok(oldOwner);
       await checkpointChatRun(recovered.runId, "old-owner", oldOwner.fence, {
@@ -239,6 +267,160 @@ try {
       const stopped = await getChatRequest(context, cancellable.requestId, "workspace");
       assert.equal(stopped.status, "stopped");
       assert.equal(stopped.text, "Keep this");
+
+      // Real read operations + deterministic model: source mention -> schema -> first page -> continuation.
+      await client.db.insert(database).values({
+        id: "tools-db",
+        workspaceId: "workspace",
+        createdById: "actor",
+        name: "Projects",
+      });
+      await client.db.insert(dataSource).values({
+        id: "tools-source",
+        workspaceId: "workspace",
+        parentDatabaseId: "tools-db",
+        name: "Projects",
+      });
+      await client.db
+        .insert(databaseDataSource)
+        .values({ databaseId: "tools-db", dataSourceId: "tools-source" });
+      for (let i = 0; i < 2; i++) {
+        await client.db.insert(page).values({
+          id: `tools-page-${i}`,
+          workspaceId: "workspace",
+          createdById: "actor",
+          name: `Project ${i}`,
+        });
+        await client.db.insert(databaseRow).values({
+          id: `tools-row-${i}`,
+          dataSourceId: "tools-source",
+          pageId: `tools-page-${i}`,
+          orderKey: String(i),
+        });
+      }
+      const toolRequest = {
+        ...request,
+        requestId: randomUUID(),
+        text: "Read the projects",
+        roots: [{ type: "database" as const, id: "tools-db" }],
+      };
+      const toolRun = await admitChatRun(context, toolRequest);
+      const [acceptedInput] = await client.db
+        .select()
+        .from(askAiRunInput)
+        .where(eq(askAiRunInput.runId, toolRun.runId));
+      assert.ok(
+        !JSON.stringify(openRunInput(env, toolRun.runId, acceptedInput!.sealed)).includes(
+          "Project 0",
+        ),
+        "Admission must not preload record content",
+      );
+      const providerFor = (continuing = false) =>
+        async function* (
+          ctx: ServerOperationContext,
+          input: import("../services/ai/provider").ProviderInput,
+          signal: AbortSignal,
+          _cursor: unknown,
+          _transport: unknown,
+          persistence?: import("../services/ai/agent").AgentPersistence,
+        ) {
+          let step = 0;
+          const pending = Object.values(input.agent!.pending)[0];
+          const model = new MockLanguageModelV4({
+            doStream: async () => {
+              const current = step++;
+              const invocation = continuing
+                ? current === 0
+                  ? { name: pending!.name, input: pending!.input }
+                  : null
+                : current === 0
+                  ? { name: "describe_source", input: { type: "database", id: "tools-db" } }
+                  : current === 1
+                    ? {
+                        name: "query_records",
+                        input: { databaseId: "tools-db", dataSourceId: "tools-source", limit: 1 },
+                      }
+                    : null;
+              return {
+                stream: new ReadableStream({
+                  start(controller) {
+                    controller.enqueue({ type: "stream-start", warnings: [] });
+                    if (invocation)
+                      controller.enqueue({
+                        type: "tool-call",
+                        toolCallId: `tool-${current}`,
+                        toolName: invocation.name,
+                        input: JSON.stringify(invocation.input),
+                      });
+                    else {
+                      controller.enqueue({ type: "text-start", id: "answer" });
+                      controller.enqueue({
+                        type: "text-delta",
+                        id: "answer",
+                        delta: continuing
+                          ? "Second project. [[source:tools-source]]"
+                          : "First project. [[source:tools-source]]",
+                      });
+                      controller.enqueue({ type: "text-end", id: "answer" });
+                    }
+                    controller.enqueue({
+                      type: "finish",
+                      finishReason: {
+                        unified: invocation ? "tool-calls" : "stop",
+                        raw: invocation ? "tool_calls" : "stop",
+                      },
+                      usage: {
+                        inputTokens: { total: 20, noCache: 20, cacheRead: 0, cacheWrite: 0 },
+                        outputTokens: { total: 5, text: 5, reasoning: 0 },
+                      },
+                    });
+                    controller.close();
+                  },
+                }),
+              };
+            },
+          });
+          yield* generateReadAgent(ctx, input.agent!, signal, { model, persistence });
+        };
+      await processAiGeneration(env, { runId: toolRun.runId, workerId: "tools" }, providerFor());
+      const firstPage = await getChatRequest(context, toolRequest.requestId, "workspace");
+      assert.equal(firstPage.status, "completed");
+      assert.ok(firstPage.progress?.canContinue);
+      assert.equal(firstPage.progress?.activities.length, 2);
+      assert.ok(
+        firstPage.context?.manifest.some(
+          (entry) => entry.key === "record:tools-source:tools-row-0",
+        ),
+      );
+      const continued = await admitChatRun(context, {
+        ...toolRequest,
+        requestId: randomUUID(),
+        threadId: toolRun.threadId,
+        continueFromRunId: toolRun.runId,
+        text: "Continue reading",
+      });
+      await processAiGeneration(
+        env,
+        { runId: continued.runId, workerId: "continue" },
+        providerFor(true),
+      );
+      const lastPage = await getChatRequest(context, continued.requestId, "workspace");
+      assert.equal(lastPage.status, "completed");
+      assert.equal(lastPage.progress?.canContinue, false);
+      assert.ok(
+        lastPage.context?.manifest.some((entry) => entry.key === "record:tools-source:tools-row-1"),
+      );
+      assert.ok(lastPage.text.includes("Second project"));
+      await assert.rejects(
+        admitChatRun(context, {
+          ...toolRequest,
+          requestId: randomUUID(),
+          threadId: toolRun.threadId,
+          continueFromRunId: toolRun.runId,
+          roots: [],
+        }),
+        /sources changed/,
+      );
 
       let calls = 0;
       const queueEnv = { ...env, QUEUE_REDIS_URL: process.env.ZILOBASE_QUEUE_VERIFY_URL };

@@ -1,11 +1,16 @@
-import { streamText } from "ai";
+import { streamText, type ModelMessage } from "ai";
+import type { BuildContextResult } from "@zilobase/page-context";
+import type { ChatReadProgress } from "@zilobase/features/runtime";
+import type { AgentState } from "./agent-state";
+import { generateReadAgent, type AgentPersistence } from "./agent";
 import { z } from "zod";
 import { configuredChatModel, CHAT_INSTRUCTIONS } from "./chat";
 import { getStringEnv } from "../../shared/config/config";
 import type { ServerOperationContext } from "../operations/context";
 
 export type ProviderInput = {
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  messages: ModelMessage[];
+  agent?: AgentState;
   maxOutputTokens: number;
   instructions?: string;
   model?: string;
@@ -13,6 +18,10 @@ export type ProviderInput = {
 export type ProviderCursor = { responseId?: string | null; cursor?: number | null };
 export type ProviderChunk = ProviderCursor & {
   text?: string;
+  replaceText?: string;
+  context?: BuildContextResult;
+  progress?: ChatReadProgress;
+  checkpoint?: AgentState;
   completed?: boolean;
   usage?: { inputTokens?: number; outputTokens?: number };
 };
@@ -28,7 +37,17 @@ export async function* generateChatOutput(
   signal: AbortSignal,
   recovery: ProviderCursor = {},
   transport: typeof fetch = fetch,
+  persistence?: AgentPersistence,
 ): AsyncGenerator<ProviderChunk> {
+  if (input.agent) {
+    yield* generateReadAgent(
+      input.model ? { ...context, env: { ...context.env, AI_MODEL: input.model } } : context,
+      input.agent,
+      signal,
+      { transport, persistence },
+    );
+    return;
+  }
   const background = backgroundProviderEnabled(context.env);
   if (recovery.responseId) {
     if (!background) throw new Error("CHAT_PROVIDER_RESUME_UNAVAILABLE");

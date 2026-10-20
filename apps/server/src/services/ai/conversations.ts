@@ -7,8 +7,9 @@ import { db } from "../../infrastructure/database";
 import { askAiRun, askAiThread, askAiTurn } from "../../infrastructure/database/schema";
 import { ServerOperationError, type ServerOperationContext } from "../operations/context";
 import { authorizeChatWorkspace } from "./context";
-import { getPageOperation } from "../pages/read/operations";
-import { readDatabaseExport } from "../databases/read/operations";
+import { readPageIdentity } from "../pages/read/document-window";
+import { authorizeSourceRead } from "../databases/read/source-query";
+import type { ChatReadProgress } from "@zilobase/features/runtime";
 
 type Turn = typeof askAiTurn.$inferSelect;
 const owner = (workspaceId: string, userId: string) =>
@@ -37,21 +38,14 @@ export async function assertHistoryAccess(
       checked.add(entry.key);
       try {
         if (entry.type === "page") {
-          const result = await getPageOperation(scoped, { pageId: entry.id });
-          if (result.viewerType === "public" || result.page.deletedAt)
-            throw new Error("Unavailable");
+          await readPageIdentity(scoped, entry.id);
         } else {
           if (!entry.databaseId) throw new Error("Unavailable");
-          const result = await readDatabaseExport(scoped, {
-            databaseId: entry.databaseId,
-            dataSourceId: entry.type === "source" ? entry.id : undefined,
-            rowLimit: 1,
-          });
-          if (
-            result.viewerType === "public" ||
-            (entry.type === "source" && result.activeDataSource?.id !== entry.id)
-          )
-            throw new Error("Unavailable");
+          await authorizeSourceRead(
+            scoped,
+            entry.databaseId,
+            entry.type === "source" ? entry.id : undefined,
+          );
         }
       } catch {
         throw new ServerOperationError(
@@ -86,6 +80,7 @@ function messagesFromTurns(turns: Turn[]): ChatMessage[] {
       roots: turn.roots,
       context: historicalContext(turn),
       status: turn.status as ChatMessage["status"],
+      progress: turn.progress,
     } as ChatMessage,
   ]);
 }
@@ -144,11 +139,15 @@ export async function getChatThread(
     .where(eq(askAiTurn.threadId, thread.id))
     .orderBy(asc(askAiTurn.createdAt), asc(askAiTurn.id));
   await assertHistoryAccess(context, workspaceId, turns);
+  const run = await latestThreadRun(threadId);
+  const messages = messagesFromTurns(turns).map((message) =>
+    message.id === `${run?.turnId}:assistant` ? { ...message, runId: run!.runId } : message,
+  );
   return {
     thread,
-    messages: messagesFromTurns(turns),
+    messages,
     roots: turns.at(-1)?.roots ?? [],
-    run: await latestThreadRun(threadId),
+    run,
   };
 }
 
@@ -173,7 +172,11 @@ export async function beginChatTurn(
   const user = await authorizeChatWorkspace(context, request.workspaceId);
   const requestHash = createHash("sha256")
     .update(
-      JSON.stringify({ text: request.text, roots: request.roots, snapshots: request.snapshots }),
+      JSON.stringify({
+        text: request.text,
+        roots: request.roots,
+        continueFromRunId: request.continueFromRunId,
+      }),
     )
     .digest("hex");
   const { markdown: _markdown, ...metadata } = built;
@@ -268,6 +271,7 @@ export async function finishChatTurn(
   status: "completed" | "stopped" | "failed" | "interrupted",
   usage?: { inputTokens?: number; outputTokens?: number },
   context?: Omit<BuildContextResult, "markdown">,
+  progress?: ChatReadProgress,
 ) {
   await db
     .update(askAiTurn)
@@ -276,6 +280,7 @@ export async function finishChatTurn(
       status,
       usage,
       ...(context ? { context } : {}),
+      ...(progress ? { progress } : {}),
       updatedAt: new Date(),
     })
     .where(and(eq(askAiTurn.id, id), eq(askAiTurn.status, "streaming")));

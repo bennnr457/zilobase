@@ -138,14 +138,28 @@ export function legacyChatRunResponse(context: ServerOperationContext, receipt: 
             if (!line.trim()) continue;
             const item = JSON.parse(line);
             if (item.type === "snapshot") {
-              if (!item.snapshot.text.startsWith(text)) throw new Error("CHAT_RUN_TEXT_MISMATCH");
-              const suffix = item.snapshot.text.slice(text.length);
+              if (item.snapshot.text.startsWith(text)) {
+                const suffix = item.snapshot.text.slice(text.length);
+                if (suffix) controller.enqueue(frame({ type: "delta", text: suffix }));
+              } else controller.enqueue(frame({ type: "replace-text", text: item.snapshot.text }));
               text = item.snapshot.text;
-              if (suffix) controller.enqueue(frame({ type: "delta", text: suffix }));
+              if (item.snapshot.context && item.snapshot.progress)
+                controller.enqueue(
+                  frame({
+                    type: "read-progress",
+                    context: item.snapshot.context,
+                    progress: item.snapshot.progress,
+                  }),
+                );
               const done = terminalFrame(item.snapshot.status);
               if (done) controller.enqueue(done);
             } else if (item.event.type === "delta") {
               text += item.event.text;
+              controller.enqueue(frame(item.event));
+            } else if (item.event.type === "replace-text") {
+              text = item.event.text;
+              controller.enqueue(frame(item.event));
+            } else if (item.event.type === "read-progress") {
               controller.enqueue(frame(item.event));
             } else if (item.event.type === "status" || item.event.type === "done") {
               const done = terminalFrame(item.event.status);

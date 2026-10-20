@@ -1,8 +1,8 @@
-import { collectWorkspaceContext, type ChatRequest } from "@zilobase/features/runtime";
-import { buildContextMarkdown } from "@zilobase/page-context";
-import { getPageOperation } from "../pages/read/operations";
-import { readDatabaseExport } from "../databases/read/operations";
+import { readableDatabase } from "../databases/read/operations";
+import { readPageIdentity } from "../pages/read/document-window";
 import { getMembership } from "../access/principal-access";
+import { getDatabaseTitleSourcesService } from "../databases/read/service";
+import { getDatabaseEmoji } from "@zilobase/features/runtime";
 import {
   requireOperationActor,
   requireOperationPolicy,
@@ -22,31 +22,30 @@ export async function authorizeChatWorkspace(context: ServerOperationContext, wo
   return user;
 }
 
-export async function assembleChatContext(
+export async function chatSourceIdentity(
   context: ServerOperationContext,
-  request: Pick<ChatRequest, "workspaceId" | "roots" | "snapshots">,
-  maxChars = 48_000,
-  maxBytes?: number,
+  workspaceId: string,
+  type: string,
+  id: string,
 ) {
-  const scoped = { ...context, pinnedWorkspaceId: request.workspaceId };
-  const data = await collectWorkspaceContext(request, {
-    check: () => context.request?.signal.throwIfAborted(),
-    now: () => new Date().toISOString(),
-    page: async (pageId) => {
-      const detail = await getPageOperation(scoped, { pageId });
-      if (detail.viewerType === "public")
-        throw new ServerOperationError({ error: "Page is no longer accessible" }, 403);
-      return detail.page;
-    },
-    database: async (databaseId, dataSourceId) => {
-      const result = await readDatabaseExport(scoped, { databaseId, dataSourceId, rowLimit: 200 });
-      if (result.viewerType === "public")
-        throw new ServerOperationError({ error: "Database is no longer accessible" }, 403);
-      return result;
-    },
-  });
-  const result = buildContextMarkdown({ context: data, maxChars, maxBytes });
-  if (result.status === "blocked")
-    throw new ServerOperationError({ error: result.omissions.join(" ") }, 422);
-  return result;
+  await authorizeChatWorkspace(context, workspaceId);
+  const scoped = { ...context, pinnedWorkspaceId: workspaceId };
+  if (type === "page") {
+    const record = await readPageIdentity(scoped, id);
+    const metadata = record.metadata as { emoji?: unknown } | null;
+    return {
+      title: record.name,
+      emoji: typeof metadata?.emoji === "string" ? metadata.emoji : null,
+    };
+  }
+  if (type !== "database") throw new ServerOperationError({ error: "Invalid source type" }, 400);
+  const result = await readableDatabase(scoped, id, false);
+  if (result.viewerType === "public")
+    throw new ServerOperationError({ error: "Source unavailable" }, 403);
+  const titleSources = await getDatabaseTitleSourcesService([result.record], result.user!.id);
+  const source = titleSources.get(id);
+  return {
+    title: source?.name ?? result.record.name,
+    emoji: getDatabaseEmoji(source ?? result.record),
+  };
 }

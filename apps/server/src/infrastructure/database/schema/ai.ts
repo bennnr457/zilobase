@@ -1,4 +1,4 @@
-import type { ChatRunStatus, ChatRunEvent } from "@zilobase/features/runtime";
+import type { ChatRunStatus, ChatRunEvent, ChatReadProgress } from "@zilobase/features/runtime";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -49,6 +49,10 @@ export const askAiTurn = pgTable(
     roots: jsonb("roots").$type<ResourceRef[]>().notNull(),
     // Coverage and IDs only. Full page/database snapshots are not retained.
     context: jsonb("context").$type<Omit<BuildContextResult, "markdown">>().notNull(),
+    progress: jsonb("progress")
+      .$type<ChatReadProgress>()
+      .notNull()
+      .default({ activities: [], canContinue: false }),
     usage: jsonb("usage").$type<{ inputTokens?: number; outputTokens?: number }>(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ...timestampColumns(),
@@ -83,6 +87,7 @@ export const askAiRun = pgTable(
     cellId: text("cell_id").notNull(),
     model: text("model").notNull(),
     background: boolean("background").notNull().default(false),
+    agentVersion: integer("agent_version").notNull().default(1),
     status: text("status").$type<ChatRunStatus>().notNull().default("queued"),
     seq: integer("seq").notNull().default(0),
     fence: integer("fence").notNull().default(0),

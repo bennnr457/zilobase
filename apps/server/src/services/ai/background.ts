@@ -187,15 +187,45 @@ export async function processAiGeneration(
         void flush().catch((error) => controller.abort(error));
     }, 200);
     recordBackgroundCounter("ai_provider_start", attributes);
-    for await (const chunk of provider(activeContext, payload, signal, cursor)) {
+    for await (const chunk of provider(activeContext, payload, signal, cursor, fetch, {
+      checkpoint: async (state) => {
+        writing = writing.then(() =>
+          scope(() =>
+            checkpointChatRun(
+              run.id,
+              input.workerId,
+              run.fence,
+              { checkpoint: state, context: state.context, progress: state.progress },
+              undefined,
+              env,
+            ),
+          ),
+        );
+        await writing;
+      },
+    })) {
       signal.throwIfAborted();
+      if (chunk.replaceText !== undefined || chunk.context || chunk.progress) {
+        await flush();
+        await scope(() =>
+          checkpointChatRun(run.id, input.workerId, run.fence, {
+            replaceText: chunk.replaceText,
+            context: chunk.context,
+            progress: chunk.progress,
+          }),
+        );
+      }
       if (chunk.text && !firstToken) {
         firstToken = true;
         recordBackgroundHistogram("ai_first_token_ms", Date.now() - startedAt, attributes);
       }
       buffer += chunk.text ?? "";
       const newResponse = chunk.responseId && !cursor.responseId;
-      cursor = { ...cursor, ...chunk, text: undefined };
+      cursor = {
+        responseId: chunk.responseId ?? cursor.responseId,
+        cursor: chunk.cursor ?? cursor.cursor,
+        usage: chunk.usage,
+      };
       if (newResponse || buffer.length >= 4096 || Date.now() - savedAt >= 200 || chunk.completed) {
         await flush(!!chunk.completed);
       }
@@ -211,6 +241,27 @@ export async function processAiGeneration(
     const code = error instanceof Error ? error.message : "";
     if ([code, reason].includes("CHAT_RUN_LEASE_LOST")) throw error;
     if ([code, reason].includes("CHAT_RUN_CANCELLED")) stopped = true;
+    if (
+      run.agentVersion === 2 &&
+      !signal.aborted &&
+      !stopped &&
+      run.fence < 3 &&
+      run.deadlineAt > new Date()
+    ) {
+      await scope(() =>
+        db
+          .update(askAiRun)
+          .set({ leaseExpiresAt: new Date() })
+          .where(
+            and(
+              eq(askAiRun.id, run.id),
+              eq(askAiRun.leaseOwner, input.workerId),
+              eq(askAiRun.fence, run.fence),
+            ),
+          ),
+      );
+      throw error;
+    }
     if (context && cursor.responseId && signal.aborted)
       await cancelProviderResponse(context, cursor.responseId).catch(() => {});
     // A saved response can be reattached by a replacement worker. Never start another provider call for this attempt.
@@ -259,6 +310,7 @@ export async function processAiGeneration(
 
 /** A bounded sweep closes abandoned input and removes replay data after history is durable. */
 export async function maintainAiRuns(env: RuntimeEnv) {
+  await db.delete(askAiRunInput).where(lt(askAiRunInput.expiresAt, new Date()));
   const rows = await db
     .select({ id: askAiRun.id })
     .from(askAiRun)

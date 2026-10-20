@@ -7,7 +7,6 @@ import { MockLanguageModelV4 } from "ai/test";
 import { configuredChatModel, DEFAULT_CHAT_MODEL, prepareChat } from "./chat";
 import type { ServerOperationContext } from "../operations/context";
 import type { ChatRequest } from "@zilobase/features/runtime";
-import type { BuildContextResult } from "@zilobase/page-context";
 
 const request: ChatRequest = {
   workspaceId: "workspace",
@@ -16,15 +15,6 @@ const request: ChatRequest = {
   roots: [],
   snapshots: [],
   history: [],
-};
-const built: BuildContextResult = {
-  version: 1,
-  status: "complete",
-  markdown: "Due Friday",
-  charCount: 10,
-  manifest: [],
-  omissions: [],
-  trimmedAttachmentIds: [],
 };
 const context = { env: {} } as ServerOperationContext;
 
@@ -49,7 +39,7 @@ test("chat requires a server API key even with a default model", () => {
   );
 });
 
-test("chat sends authorized context to the SDK and emits text plus usage", async () => {
+test("chat sends source references without eagerly loading content and emits text plus usage", async () => {
   const model = new MockLanguageModelV4({
     doStream: async () => ({
       stream: new ReadableStream({
@@ -77,21 +67,29 @@ test("chat sends authorized context to the SDK and emits text plus usage", async
   const prepared = await prepareChat(context, request, {
     authorize,
     model: () => model,
-    assemble: async () => built,
     begin: async () => ({ threadId: "thread", turns: [], replay: null }),
     finish: async () => {},
   });
   const events = [];
   for await (const event of prepared.events(new AbortController().signal)) events.push(event);
   expect(authorize).toHaveBeenCalledOnce();
-  expect(events.map((event) => event.type)).toEqual(["context", "delta", "done"]);
-  expect(events[1]).toEqual({ type: "delta", text: "Friday." });
+  expect(events.filter((event) => event.type === "delta")).toEqual([
+    { type: "delta", text: "Friday." },
+  ]);
+  expect(events.at(-1)).toMatchObject({
+    type: "done",
+    status: "completed",
+    inputTokens: 20,
+    outputTokens: 3,
+  });
   expect(model.doStreamCalls[0]?.prompt).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
         role: "user",
         content: expect.arrayContaining([
-          expect.objectContaining({ text: expect.stringContaining("Due Friday") }),
+          expect.objectContaining({
+            text: expect.stringContaining("Mentioned sources (references only)"),
+          }),
         ]),
       }),
     ]),
@@ -105,7 +103,6 @@ test("authorization failure prevents provider setup and streaming", async () => 
       authorize: async () => {
         throw new Error("Forbidden");
       },
-      assemble: async () => built,
       begin: async () => ({ threadId: "thread", turns: [], replay: null }),
       finish: async () => {},
       model,
@@ -136,7 +133,6 @@ test("aborting after a partial delta stops the provider and persists the partial
     authorize: async () =>
       ({}) as Awaited<ReturnType<typeof import("./context").authorizeChatWorkspace>>,
     model: () => model,
-    assemble: async () => structuredClone(built),
     begin: async () => ({ threadId: "thread", turns: [], replay: null }),
     finish,
   });
@@ -153,6 +149,7 @@ test("aborting after a partial delta stops the provider and persists the partial
     "stopped",
     undefined,
     expect.objectContaining({ status: "complete" }),
+    expect.objectContaining({ activities: [], canContinue: false }),
   );
 });
 
@@ -172,7 +169,6 @@ test("provider failure emits a useful error and finalizes the saved turn", async
     authorize: async () =>
       ({}) as Awaited<ReturnType<typeof import("./context").authorizeChatWorkspace>>,
     model: () => model,
-    assemble: async () => structuredClone(built),
     begin: async () => ({ threadId: "thread", turns: [], replay: null }),
     finish,
   });
@@ -185,5 +181,6 @@ test("provider failure emits a useful error and finalizes the saved turn", async
     "failed",
     undefined,
     expect.any(Object),
+    expect.objectContaining({ activities: [], canContinue: false }),
   );
 });

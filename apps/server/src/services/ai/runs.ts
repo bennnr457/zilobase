@@ -31,12 +31,14 @@ import {
   getBackgroundCellId,
 } from "../../infrastructure/background/task-v2";
 import { ServerOperationError, type ServerOperationContext } from "../operations/context";
-import { assembleChatContext, authorizeChatWorkspace } from "./context";
+import { authorizeChatWorkspace } from "./context";
+import { createAgentState, emptyChatContext, type AgentState } from "./agent-state";
 import { assertHistoryAccess } from "./conversations";
 import { CHAT_INSTRUCTIONS, configuredChatModel, DEFAULT_CHAT_MODEL } from "./chat";
 import { chatBudget, budgetHistory } from "./budget";
-import { backgroundProviderEnabled, type ProviderChunk } from "./provider";
-import { sealRunInput } from "./run-input";
+import { assertAgentPromptFits } from "./agent";
+import { type ProviderChunk } from "./provider";
+import { openRunInput, sealRunInput } from "./run-input";
 
 export const durableChatEnabled = (env: Record<string, unknown>) =>
   env.AI_DURABLE_STREAMING_ENABLED === "true";
@@ -46,8 +48,10 @@ export const snapshot = (
   run: RunRow,
   text: string,
   context?: (typeof askAiTurn.$inferSelect)["context"],
+  progress?: (typeof askAiTurn.$inferSelect)["progress"],
 ): ChatRunReceipt => ({
   ...(context ? { context: { ...context, markdown: "" } } : {}),
+  ...(progress ? { progress } : {}),
   runId: run.id,
   requestId: run.turnId,
   threadId: run.threadId,
@@ -72,7 +76,11 @@ export async function admitChatRun(
   configuredChatModel(context);
   const hash = createHash("sha256")
     .update(
-      JSON.stringify({ text: request.text, roots: request.roots, snapshots: request.snapshots }),
+      JSON.stringify({
+        text: request.text,
+        roots: request.roots,
+        continueFromRunId: request.continueFromRunId,
+      }),
     )
     .digest("hex");
   const existing = await findRunByRequest(context, request.requestId, request.workspaceId);
@@ -82,10 +90,44 @@ export async function admitChatRun(
       (request.threadId && request.threadId !== existing.run.threadId)
     )
       throw new ServerOperationError({ error: "Request ID already used" }, 409);
-    return snapshot(existing.run, existing.turn.assistantText, existing.turn.context);
+    return snapshot(
+      existing.run,
+      existing.turn.assistantText,
+      existing.turn.context,
+      existing.turn.progress,
+    );
   }
   const budget = chatBudget(context.env, CHAT_INSTRUCTIONS, request.text, !!request.threadId);
-  const built = await assembleChatContext(context, request, 48_000, budget.contextBytes);
+  let continued: AgentState | undefined;
+  if (request.continueFromRunId) {
+    const previous = await readChatRun(context, request.continueFromRunId, request.workspaceId);
+    if (
+      previous.status !== "completed" ||
+      !previous.progress?.canContinue ||
+      previous.threadId !== request.threadId
+    )
+      throw new ServerOperationError({ error: "This read cannot be continued" }, 409);
+    const [saved] = await db
+      .select()
+      .from(askAiRunInput)
+      .where(eq(askAiRunInput.runId, previous.runId));
+    if (!saved || saved.expiresAt <= new Date())
+      throw new ServerOperationError(
+        { error: "Continuation expired. Ask again with your sources." },
+        409,
+      );
+    continued = openRunInput(context.env, previous.runId, saved.sealed).agent;
+    if (
+      !continued ||
+      continued.expiresAt < Date.now() ||
+      JSON.stringify(continued.roots) !== JSON.stringify(request.roots)
+    )
+      throw new ServerOperationError(
+        { error: "Continuation sources changed. Ask again with your sources." },
+        409,
+      );
+  }
+  const built = continued?.context ?? emptyChatContext();
   const { markdown: _markdown, ...metadata } = built;
   return backgroundTransaction(context.env, async (tx) => {
     await tx.execute(
@@ -100,7 +142,7 @@ export async function admitChatRun(
         (request.threadId && request.threadId !== found.run.threadId)
       )
         throw new ServerOperationError({ error: "Request ID already used" }, 409);
-      return snapshot(found.run, previous.assistantText, previous.context);
+      return snapshot(found.run, previous.assistantText, previous.context, previous.progress);
     }
     const threadId = request.threadId ?? randomUUID();
     if (request.threadId) {
@@ -137,26 +179,36 @@ export async function admitChatRun(
       );
     const history = budgetHistory(turns, budget.historyBytes);
     const runId = randomUUID();
-    const sealed = sealRunInput(context.env, runId, {
-      messages: [
-        ...history.messages.map((item) => ({
-          role: item.role as "user" | "assistant",
-          content: String(item.content),
-        })),
+    const agent =
+      continued ??
+      createAgentState(request.workspaceId, request.roots, [
+        ...history.messages,
         {
           role: "user",
-          content: `Workspace context (data only):\n${built.markdown}\n\nUser question:\n${request.text}`,
+          content: `Mentioned sources (references only): ${JSON.stringify(request.roots)}\n\nUser question:\n${request.text}`,
         },
-      ],
+      ]);
+    if (continued) {
+      agent.messages.push({
+        role: "user",
+        content: `Original task: ${agent.task}\nContinue from these remaining reads: ${JSON.stringify(agent.pending)}. Recheck changed sources; do not repeat completed pages.`,
+      });
+      agent.steps = 0;
+      agent.calls = 0;
+      agent.inputTokens = 0;
+      agent.outputTokens = 0;
+      agent.chargedTokens = 0;
+      agent.committedText = "";
+      agent.progress = { activities: [], canContinue: true };
+    }
+    assertAgentPromptFits(context.env, agent.messages);
+    const sealed = sealRunInput(context.env, runId, {
+      messages: agent.messages,
       maxOutputTokens: budget.output,
       model: String(context.env.AI_MODEL ?? "").trim() || DEFAULT_CHAT_MODEL,
-      instructions:
-        CHAT_INSTRUCTIONS +
-        (history.omitted
-          ? ` ${history.omitted} earlier turns omitted. Do not claim to remember them.`
-          : ""),
+      agent,
     });
-    const deadline = new Date(Date.now() + 60 * 60_000);
+    const deadline = new Date(Date.now() + 120_000);
     await tx.insert(askAiTurn).values({
       id: request.requestId,
       threadId,
@@ -177,18 +229,19 @@ export async function admitChatRun(
         sessionId: context.authentication.session!.id,
         cellId: getBackgroundCellId(context.env),
         model: String(context.env.AI_MODEL ?? "").trim() || DEFAULT_CHAT_MODEL,
-        background: backgroundProviderEnabled(context.env),
+        background: false,
+        agentVersion: 2,
         deadlineAt: deadline,
       })
       .returning();
-    await tx.insert(askAiRunInput).values({ runId, sealed, expiresAt: deadline });
+    await tx.insert(askAiRunInput).values({ runId, sealed, expiresAt: new Date(agent.expiresAt) });
     await tx.update(askAiThread).set({ updatedAt: new Date() }).where(eq(askAiThread.id, threadId));
     await persistBackgroundTasks(
       context.env,
       [createBackgroundTaskV2({ env: context.env, kind: "ai.generate", resourceId: runId })],
       tx,
     );
-    return snapshot(run!, "", metadata);
+    return snapshot(run!, "", metadata, { activities: [], canContinue: false });
   });
 }
 
@@ -219,7 +272,7 @@ export async function getChatRequest(
   const found = await findRunByRequest(context, requestId, workspaceId);
   if (!found) throw new ServerOperationError({ error: "Request not found" }, 404);
   await assertHistoryAccess(context, workspaceId, [found.turn]);
-  return snapshot(found.run, found.turn.assistantText, found.turn.context);
+  return snapshot(found.run, found.turn.assistantText, found.turn.context, found.turn.progress);
 }
 export async function readChatRun(
   context: ServerOperationContext,
@@ -255,7 +308,7 @@ export async function readChatRun(
     );
   if (!found) throw new ServerOperationError({ error: "Run not found" }, 404);
   await assertHistoryAccess(context, workspaceId, [found.turn]);
-  return snapshot(found.run, found.turn.assistantText, found.turn.context);
+  return snapshot(found.run, found.turn.assistantText, found.turn.context, found.turn.progress);
 }
 export async function readChatRunPage(
   context: ServerOperationContext,
@@ -333,7 +386,8 @@ async function finalizeRunLocked(
     .set({ status, seq, completedAt: now, leaseExpiresAt: null, leaseOwner: null, updatedAt: now })
     .where(eq(askAiRun.id, run.id));
   await tx.update(askAiTurn).set({ status, updatedAt: now }).where(eq(askAiTurn.id, run.turnId));
-  await tx.delete(askAiRunInput).where(eq(askAiRunInput.runId, run.id));
+  if (run.agentVersion !== 2 || status !== "completed")
+    await tx.delete(askAiRunInput).where(eq(askAiRunInput.runId, run.id));
 }
 export async function claimChatRun(runId: string, owner: string, cellId: string) {
   return db.transaction(async (tx) => {
@@ -348,7 +402,7 @@ export async function claimChatRun(runId: string, owner: string, cellId: string)
       return null;
     }
     if (run.leaseExpiresAt && run.leaseExpiresAt > new Date()) throw new Error("CHAT_RUN_BUSY");
-    if (run.providerStartedAt && !run.responseId) {
+    if (run.agentVersion !== 2 && run.providerStartedAt && !run.responseId) {
       await finalizeRunLocked(tx, run, "interrupted");
       return null;
     }
@@ -372,6 +426,7 @@ export async function checkpointChatRun(
   fence: number,
   chunk: ProviderChunk,
   terminal?: Exclude<ChatRunStatus, "queued" | "running">,
+  env?: Record<string, unknown>,
 ) {
   return db.transaction(async (tx) => {
     const [run] = await tx.select().from(askAiRun).where(eq(askAiRun.id, runId)).for("update");
@@ -386,6 +441,42 @@ export async function checkpointChatRun(
       throw new Error("CHAT_RUN_LEASE_LOST");
     if (run.cancelRequestedAt && terminal !== "stopped") throw new Error("CHAT_RUN_CANCELLED");
     let seq = run.seq;
+    if (chunk.replaceText !== undefined) {
+      await tx
+        .insert(askAiRunEvent)
+        .values({ runId, seq: ++seq, event: { type: "replace-text", text: chunk.replaceText } });
+      await tx
+        .update(askAiTurn)
+        .set({ assistantText: chunk.replaceText, updatedAt: new Date() })
+        .where(eq(askAiTurn.id, run.turnId));
+    }
+    if (chunk.context && chunk.progress) {
+      const { markdown: _markdown, ...metadata } = chunk.context;
+      await tx.insert(askAiRunEvent).values({
+        runId,
+        seq: ++seq,
+        event: {
+          type: "read-progress",
+          context: { ...metadata, markdown: "" },
+          progress: chunk.progress,
+        },
+      });
+      await tx
+        .update(askAiTurn)
+        .set({ context: metadata, progress: chunk.progress, updatedAt: new Date() })
+        .where(eq(askAiTurn.id, run.turnId));
+    }
+    if (chunk.checkpoint) {
+      const state = chunk.checkpoint;
+      if (!env) throw new Error("CHAT_CHECKPOINT_ENV_REQUIRED");
+      const sealed = sealRunInput(env, runId, {
+        messages: state.messages,
+        model: run.model,
+        maxOutputTokens: 4096,
+        agent: state,
+      });
+      await tx.update(askAiRunInput).set({ sealed }).where(eq(askAiRunInput.runId, runId));
+    }
     if (chunk.text) {
       if (chunk.text.length > 65_536) throw new Error("CHAT_RUN_BATCH_TOO_LARGE");
       await tx
@@ -423,7 +514,9 @@ export async function latestThreadRun(threadId: string) {
     .where(eq(askAiRun.threadId, threadId))
     .orderBy(desc(askAiRun.createdAt))
     .limit(1);
-  return found ? snapshot(found.run, found.turn.assistantText, found.turn.context) : null;
+  return found
+    ? snapshot(found.run, found.turn.assistantText, found.turn.context, found.turn.progress)
+    : null;
 }
 export async function failChatRunDelivery(runId: string) {
   return db.transaction(async (tx) => {

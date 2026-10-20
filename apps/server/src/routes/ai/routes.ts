@@ -12,6 +12,7 @@ import { bodyLimit } from "hono/body-limit";
 import { chatRequestSchema } from "@zilobase/features/runtime";
 import type { AppBindings } from "../../shared/contracts/http";
 import { prepareChat } from "../../services/ai/chat";
+import { chatSourceIdentity } from "../../services/ai/context";
 import { jsonValidator } from "../http/json";
 import { serverOperationContext } from "../http/operation-context";
 import { attachServiceErrorHandler } from "../http/route-error";
@@ -67,6 +68,16 @@ aiRoutes.post("/chat", jsonValidator(chatRequestSchema), async (c) => {
 
 aiRoutes.get("/threads", async (c) =>
   c.json(await listChatThreads(serverOperationContext(c), c.req.query("workspaceId") ?? "")),
+);
+aiRoutes.get("/sources/:type/:id", async (c) =>
+  c.json(
+    await chatSourceIdentity(
+      serverOperationContext(c),
+      c.req.query("workspaceId") ?? "",
+      c.req.param("type"),
+      c.req.param("id"),
+    ),
+  ),
 );
 aiRoutes.get("/threads/:id", async (c) =>
   c.json(

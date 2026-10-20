@@ -14,6 +14,9 @@ import {
   databaseDataSource,
   databaseRow,
   page,
+  pageProperty,
+  pagePropertyValue,
+  databaseProperty,
 } from "../infrastructure/database/schema";
 import { CORE_MIGRATION_SET } from "../public/node-adapter-api";
 import { managedAppPolicy } from "../shared/config/app-policy";
@@ -25,7 +28,13 @@ import {
   deleteChatThread,
 } from "../services/ai/conversations";
 import { prepareChat } from "../services/ai/chat";
-import { assembleChatContext } from "../services/ai/context";
+import {
+  querySourceRecords,
+  aggregateSourceRecords,
+  describeDatabaseSource,
+} from "../services/databases/read/source-query";
+import { readDocumentWindow } from "../services/pages/read/document-window";
+import { sourceRecordQuerySchema } from "@zilobase/features/runtime";
 import { readDatabaseExport } from "../services/databases/read/operations";
 import type { ChatRequest } from "@zilobase/features/runtime";
 import type { BuildContextResult } from "@zilobase/page-context";
@@ -124,6 +133,25 @@ try {
       orderKey: String(i).padStart(4, "0"),
     })),
   );
+  await client.db.insert(pageProperty).values([
+    { id: "amount", workspaceId: "workspace", name: "Amount", type: "number" },
+    { id: "due", workspaceId: "workspace", name: "Due", type: "date" },
+  ]);
+  await client.db.insert(databaseProperty).values([
+    { id: "amount-column", dataSourceId: "source", propertyId: "amount" },
+    { id: "due-column", dataSourceId: "source", propertyId: "due" },
+  ]);
+  await client.db.insert(pagePropertyValue).values(
+    Array.from({ length: 205 }, (_, i) => [
+      { id: `amount-${i}`, pageId: `page-${i}`, propertyId: "amount", value: i },
+      {
+        id: `due-${i}`,
+        pageId: `page-${i}`,
+        propertyId: "due",
+        value: i > 100 ? { start: "2026-10-01", end: "2026-10-22" } : "2026-11-01",
+      },
+    ]).flat(),
+  );
   const bounded = await run(() => readDatabaseExport(context, { databaseId: "db", rowLimit: 200 }));
   assert.equal(bounded.rows.length, 200);
   assert.ok("rowCount" in bounded && "rowsPagination" in bounded);
@@ -136,45 +164,113 @@ try {
     run(() => readDatabaseExport(context, { databaseId: "db", rowLimit: 501 })),
     /rowLimit/,
   );
-  const assembled = await run(() =>
-    assembleChatContext(context, {
-      workspaceId: "workspace",
-      roots: [
-        { type: "page", id: "page-0" },
-        { type: "database", id: "db" },
-      ],
-      snapshots: [
-        {
-          pageId: "page-0",
-          capturedAt: new Date().toISOString(),
-          content: {
-            type: "doc",
-            content: [
-              { type: "paragraph", content: [{ type: "text", text: "Unsynced before send" }] },
-              { type: "databaseBlock", attrs: { databaseId: "db" } },
-              { type: "databaseBlock", attrs: { databaseId: "inaccessible" } },
-            ],
-          },
-        },
-      ],
+  const query = sourceRecordQuerySchema.parse({
+    databaseId: "db",
+    dataSourceId: "source",
+    limit: 50,
+  });
+  const description = await run(() =>
+    describeDatabaseSource(context, { databaseId: "db", section: "sources" }),
+  );
+  assert.equal(description.entries[0]?.id, "source");
+  const seen = new Set<string>();
+  let position: import("@zilobase/features/runtime").SourceRecordPosition | undefined;
+  let revision: import("@zilobase/features/runtime").SourceReadRevision | undefined;
+  for (;;) {
+    const result = await run(() => querySourceRecords(context, query, position, revision));
+    revision = result.revision;
+    for (const record of result.records) {
+      assert.ok(!seen.has(record.id), "Pagination must not duplicate records");
+      seen.add(record.id);
+    }
+    position = result.positions.at(-1);
+    if (!result.hasMore) break;
+  }
+  assert.equal(
+    seen.size,
+    204,
+    "Pagination reaches every live record beyond the old 200-row ceiling",
+  );
+  const count = await run(() => aggregateSourceRecords(context, query, "count"));
+  assert.equal(Number(count.value), 204);
+  const filtered = await run(() =>
+    aggregateSourceRecords(context, { ...query, nameContains: "Task 1" }, "count"),
+  );
+  assert.equal(Number(filtered.value), 111);
+  const numeric = await run(() =>
+    querySourceRecords(context, {
+      ...query,
+      propertyIds: ["amount"],
+      filters: [{ propertyId: "amount", operator: "gte", value: 200 }],
+      sort: "name",
+      direction: "desc",
+      limit: 2,
     }),
   );
-  assert.ok(assembled.markdown.includes("Unsynced before send"));
-  assert.equal(assembled.markdown.match(/## Data source: Tasks/g)?.length, 1);
-  assert.equal(assembled.status, "partial");
-  assert.ok(!assembled.manifest.some((entry) => entry.id === "inaccessible"));
-  assert.ok(assembled.omissions.some((reason) => reason.includes("could not be loaded")));
+  assert.equal(numeric.records.length, 2);
+  assert.equal(numeric.records[0]?.name, "Task 203");
+  assert.deepEqual(Object.keys(numeric.records[0]!.values), ["amount"]);
+  const numericNext = await run(() =>
+    querySourceRecords(
+      context,
+      {
+        ...query,
+        propertyIds: ["amount"],
+        filters: [{ propertyId: "amount", operator: "gte", value: 200 }],
+        sort: "name",
+        direction: "desc",
+        limit: 2,
+      },
+      numeric.positions.at(-1),
+      numeric.revision,
+    ),
+  );
+  assert.equal(numericNext.records[0]?.name, "Task 201");
+  assert.equal(numericNext.hasMore, false);
+  const sum = await run(() => aggregateSourceRecords(context, query, "sum", "amount"));
+  assert.equal(Number(sum.value), 20706);
+  const overdue = await run(() =>
+    aggregateSourceRecords(
+      context,
+      { ...query, filters: [{ propertyId: "due", operator: "lt", value: "2026-10-20" }] },
+      "count",
+    ),
+  );
+  assert.equal(Number(overdue.value), 103);
+  await client.db.update(dataSource).set({ version: 1 }).where(eq(dataSource.id, "source"));
+  await assert.rejects(
+    run(() => querySourceRecords(context, query, position, revision)),
+    /SOURCE_CHANGED/,
+  );
+  await client.db
+    .update(page)
+    .set({
+      content: {
+        type: "doc",
+        content: [
+          { type: "paragraph", content: [{ type: "text", text: "Saved source content" }] },
+          { type: "databaseBlock", attrs: { databaseId: "db" } },
+        ],
+      },
+    })
+    .where(eq(page.id, "page-0"));
+  const document = await run(() => readDocumentWindow(context, { pageId: "page-0" }));
   assert.ok(
-    assembled.manifest.find((entry) => entry.key === "source:source")?.coverage?.totalRows === 204,
+    document.entries.some((entry) => entry.kind === "reference" && entry.resource.id === "db"),
+  );
+  assert.ok(
+    document.entries.some(
+      (entry) => entry.kind === "text" && entry.text.includes("Saved source content"),
+    ),
   );
   await assert.rejects(
     run(() =>
-      assembleChatContext(context, {
-        workspaceId: "workspace",
-        roots: [{ type: "page", id: "missing" }],
-        snapshots: [],
-      }),
+      readDocumentWindow(
+        { ...context, pinnedWorkspaceId: "other-workspace" },
+        { pageId: "page-0" },
+      ),
     ),
+    /Forbidden/,
   );
   const claimed = await run(() => beginChatTurn(context, request, built));
   assert.ok(claimed.threadId);
