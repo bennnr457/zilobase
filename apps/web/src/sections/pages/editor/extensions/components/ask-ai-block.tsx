@@ -10,10 +10,9 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-} from "@/sections/ai/composer/components/prompt-input";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/prompt-input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
+import { InputGroup, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
 import { isFeatureEnabled } from "@/platform/environment";
 
 type AskAiBlockOptions = {
@@ -129,9 +128,9 @@ function AskAiBlockView({ editor, getPos, node }: ReactNodeViewProps) {
 
   return (
     <NodeViewWrapper className="ask-ai-block w-full" contentEditable={false}>
-      <div className="flex min-h-12 w-full items-end gap-2 rounded-md border bg-surface-canvas px-3 py-2 shadow-sm transition-colors focus-within:border-action-focus-ring focus-within:ring-2 focus-within:ring-action-focus-ring">
+      <InputGroup className="flex h-auto min-h-12 w-full items-end gap-2 rounded-md border bg-surface-canvas dark:bg-surface-canvas px-3 py-2 shadow-sm transition-colors focus-within:border-action-focus-ring focus-within:ring-2 focus-within:ring-action-focus-ring">
         <Sparkles aria-hidden="true" className="mt-2 size-4 shrink-0 text-content-secondary" />
-        <Textarea
+        <InputGroupTextarea
           autoFocus
           className="max-h-48 min-h-8 flex-1 resize-none border-0 bg-transparent px-0 py-1 text-base leading-6 shadow-none focus-visible:ring-0"
           onChange={(event) => setPrompt(event.target.value)}
@@ -145,27 +144,27 @@ function AskAiBlockView({ editor, getPos, node }: ReactNodeViewProps) {
           rows={1}
           value={prompt}
         />
-        <Button
+        <InputGroupButton
           aria-label="Remove Ask AI"
           className="size-8 shrink-0 rounded-sm [&_svg]:size-4"
           onClick={removeBlock}
-          size="icon"
+          size="icon-sm"
           type="button"
           variant="ghost"
         >
           <X />
-        </Button>
-        <Button
+        </InputGroupButton>
+        <InputGroupButton
           aria-label="Send prompt"
           className="size-8 shrink-0 rounded-sm [&_svg]:size-4"
           disabled={!prompt.trim()}
-          size="icon"
+          size="icon-sm"
           type="button"
           variant="ghost"
         >
           <Send />
-        </Button>
-      </div>
+        </InputGroupButton>
+      </InputGroup>
     </NodeViewWrapper>
   );
 }

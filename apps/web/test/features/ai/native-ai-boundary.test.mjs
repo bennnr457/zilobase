@@ -7,7 +7,7 @@ export function register({ readSource, assert, test }) {
       readChatbotSource(readSource),
       readSource("/src/sections/ai/workspace/components/ask-ai-workspace.tsx"),
       readSource("/src/app/shell/sidebar/components/app-sidebar.tsx"),
-      readSource("/src/sections/ai/composer/components/prompt-input.tsx"),
+      readSource("/src/components/ui/prompt-input.tsx"),
       readSource("/src/sections/ai/chat/components/message.tsx"),
     ]);
     assert.doesNotMatch(

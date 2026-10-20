@@ -2,7 +2,7 @@ import { Sparkles } from "@/components/icons";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function SelectionAiMenu() {
@@ -44,12 +44,15 @@ export function SelectionAiMenu() {
             event.preventDefault();
           }}
         >
-          <Input
-            autoFocus
-            onChange={(event) => setPrompt(event.currentTarget.value)}
-            placeholder="Ask AI to rewrite the selection..."
-            value={prompt}
-          />
+          <InputGroup className="has-[[data-slot=input-group-control]:focus-visible]:ring-1">
+            <InputGroupInput
+              className="h-full"
+              autoFocus
+              onChange={(event) => setPrompt(event.currentTarget.value)}
+              placeholder="Ask AI to rewrite the selection..."
+              value={prompt}
+            />
+          </InputGroup>
         </form>
       </PopoverContent>
     </Popover>

@@ -26,7 +26,7 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
   type PromptInputMessage,
-} from "@/sections/ai/composer/components/prompt-input";
+} from "@/components/ui/prompt-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getIconSolidClassName } from "@/lib/color-tokens";

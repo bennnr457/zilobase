@@ -23,7 +23,7 @@ import { ChatbotComposer } from "../../composer/components/chatbot-composer";
 import { ChatbotMessages, type ChatMessage } from "./chatbot-messages";
 import { useSession } from "@zilobase/features/auth/react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import type { PromptInputMessage } from "../../composer/components/prompt-input";
+import type { PromptInputMessage } from "@/components/ui/prompt-input";
 
 export default function Chatbot({
   isSidebar = false,

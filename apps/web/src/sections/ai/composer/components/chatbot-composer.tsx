@@ -13,7 +13,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   type PromptInputMessage,
-} from "./prompt-input";
+} from "@/components/ui/prompt-input";
 
 type ChatbotComposerProps = {
   isSidebar: boolean;

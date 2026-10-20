@@ -2,9 +2,7 @@ export function register({ readSource, assert, test }) {
   test("form surfaces use the control background role", async () => {
     const inputSource = await readSource("/src/components/ui/input.tsx");
     const textareaSource = await readSource("/src/components/ui/textarea.tsx");
-    const promptInputSource = await readSource(
-      "/src/sections/ai/composer/components/prompt-input.tsx",
-    );
+    const promptInputSource = await readSource("/src/components/ui/prompt-input.tsx");
     const selectSource = await readSource("/src/components/ui/select.tsx");
 
     assert.match(
