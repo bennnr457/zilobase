@@ -19,7 +19,7 @@ const select = async (page, name) => {
 const send = async (page, text) => {
   await writePrompt(page, text);
   await page.getByRole("button", { name: "Submit", exact: true }).click();
-  await expect(page.locator(".is-user").last()).toHaveText(text);
+  await expect(page.locator(".is-user").last()).toContainText(text);
   await expect(composer(page)).toBeEnabled();
 };
 
@@ -48,7 +48,7 @@ for (const width of [1400, 390]) {
     await expect(page.locator("summary", { hasText: "Last sent context" })).toHaveCount(0);
     await send(page, "Second conversation");
     await select(page, "First conversation");
-    await expect(page.locator(".is-user")).toHaveText(["First conversation"]);
+    await expect(page.locator(".is-user")).toContainText(["First conversation"]);
     await expect(page.getByRole("button", { name: "Remove main", exact: true })).toBeVisible();
     await send(page, "Continue first");
     await expect(page.locator(".is-user")).toHaveCount(2);
@@ -57,13 +57,13 @@ for (const width of [1400, 390]) {
     expect(requests[1].threadId).toBeUndefined();
     expect(requests[2].threadId).toBeTruthy();
     await select(page, "Second conversation");
-    await expect(page.locator(".is-user")).toHaveText(["Second conversation"]);
+    await expect(page.locator(".is-user")).toContainText(["Second conversation"]);
     await expect(page.getByRole("button", { name: "Remove main", exact: true })).toHaveCount(0);
     await page.reload();
     await openSidebar(page);
     await expect(history(page).getByRole("button")).toHaveCount(2);
     await select(page, "First conversation");
-    await expect(page.locator(".is-user")).toHaveText(["First conversation", "Continue first"]);
+    await expect(page.locator(".is-user")).toContainText(["First conversation", "Continue first"]);
   });
 }
 
@@ -104,7 +104,7 @@ test("new chat interrupts a stream and keeps the old conversation in sidebar his
   await expect(page.locator(".is-user")).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => window.pageLayoutFixture.ai.cancelled)).toBe(1);
   await select(page, "Interrupted conversation");
-  await expect(page.locator(".is-user")).toHaveText(["Interrupted conversation"]);
+  await expect(page.locator(".is-user")).toContainText(["Interrupted conversation"]);
   await expect(page.locator(".is-assistant")).toContainText("Attached records are partial");
   await expect(page.getByText("stopped", { exact: true })).toHaveCount(0);
 });

@@ -1,5 +1,6 @@
 import type { ChatMessage, ChatToolActivity } from "@zilobase/features/ai";
-import { CircleAlertIcon, CircleCheckIcon, CircleIcon, Loader2Icon } from "@/components/icons";
+import { Trace } from "@/components/ui/trace";
+import { ActivityDisclosure } from "./activity-trace";
 import { AnswerSources } from "./answer-sources";
 
 type ReadGroup = {
@@ -101,38 +102,24 @@ export function ReadActivity({ message, active }: { message: ChatMessage; active
                 : records !== undefined && status === "completed"
                   ? `${records} ${records === 1 ? "record" : "records"}${latest.hasMore ? " · more available" : ""}`
                   : undefined;
-        const Icon = running
-          ? Loader2Icon
-          : status === "failed"
-            ? CircleAlertIcon
-            : status === "completed"
-              ? CircleCheckIcon
-              : CircleIcon;
         return (
-          <div
+          <Trace
             key={group.id}
             data-ai-read-source={source ? `${source.type}:${source.id}` : undefined}
             data-read-status={status}
-            className="flex min-w-0 items-start gap-2 text-xs text-content-secondary"
           >
-            <Icon
-              aria-hidden="true"
-              className={`mt-1.5 size-3.5 shrink-0 ${running ? "motion-safe:animate-spin" : ""}`}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="py-1">{readLabel(activity, active)}</span>
-                {link && (
-                  <AnswerSources
-                    citations={[link]}
-                    label="Read source link"
-                    className="mt-0 max-w-full"
-                  />
-                )}
-              </div>
-              {detail && <p className="mt-0.5 text-xs text-content-secondary">{detail}</p>}
-            </div>
-          </div>
+            <ActivityDisclosure title={readLabel(activity, active)} status={status}>
+              {link && (
+                <AnswerSources
+                  citations={[link]}
+                  label="Read source link"
+                  className="mt-0 max-w-full"
+                />
+              )}
+              {detail && <p className="mt-1.5 text-xs text-content-secondary">{detail}</p>}
+              {!link && !detail && <p className="text-xs">Source details are unavailable.</p>}
+            </ActivityDisclosure>
+          </Trace>
         );
       })}
     </div>

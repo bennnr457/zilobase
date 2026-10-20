@@ -1,12 +1,12 @@
 import { chatCitations, chatDisplayText } from "@zilobase/features/ai";
-import { AnswerSources } from "./answer-sources";
+import { AnswerSources, ChatSourceContext } from "./answer-sources";
 import { MessageScrollerItem, MessageScrollerContent } from "@/components/ui/message-scroller";
 import { Message, MessageContent, MessageResponse } from "./message";
 import { MessageActions } from "./message-actions";
 import { MessageThinking } from "./message-thinking";
-import { SelectedSources } from "./selected-sources";
+import { UserMessage } from "./user-message";
 import { ReadActivity } from "./read-activity";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import type { ActivityActions, AgentActivity } from "../lib/agent-activity";
 import { useSmoothText } from "../hooks/use-smooth-text";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import type { ChatMessage } from "@zilobase/features/ai";
 export type { ChatMessage } from "@zilobase/features/ai";
 
 export function ChatbotMessages({
+  workspaceId = null,
   isSidebar,
   messages,
   streaming = false,
@@ -26,6 +27,7 @@ export function ChatbotMessages({
   activityActions,
   onContinue,
 }: {
+  workspaceId?: string | null;
   isSidebar: boolean;
   messages: ChatMessage[];
   streaming?: boolean;
@@ -35,38 +37,47 @@ export function ChatbotMessages({
   activityActions?: ActivityActions;
   onContinue?: (runId: string) => void;
 }) {
+  const sources = useMemo(
+    () => ({
+      workspaceId,
+      openIn: isSidebar ? ("main" as const) : ("sidepanel" as const),
+    }),
+    [workspaceId, isSidebar],
+  );
   return (
-    <div
-      className={`relative flex-1 ${isSidebar ? "" : "h-auto! overflow-visible! [scrollbar-gutter:auto]!"}`}
-    >
-      <MessageScrollerContent className="flex h-auto min-h-0 flex-col gap-8 p-4">
-        {messages.map((message) => (
-          <MessageScrollerItem
-            key={message.id}
-            messageId={message.id}
-            className="[content-visibility:visible]"
-          >
-            <Message from={message.role}>
-              {message.role === "assistant" ? (
-                <AssistantMessage
-                  message={message}
-                  active={streaming && message === messages.at(-1)}
-                  pendingLabel={pendingLabel}
-                  activities={activityByMessage?.[message.id]}
-                  activityActions={activityActions}
-                  onRetry={message === messages.at(-1) ? onRetry : undefined}
-                  onContinue={message === messages.at(-1) ? onContinue : undefined}
-                />
-              ) : (
-                <MessageContent>
-                  <MessageResponse>{message.text}</MessageResponse>
-                </MessageContent>
-              )}
-            </Message>
-          </MessageScrollerItem>
-        ))}
-      </MessageScrollerContent>
-    </div>
+    <ChatSourceContext.Provider value={sources}>
+      <div
+        className={`relative flex-1 ${isSidebar ? "" : "h-auto! overflow-visible! [scrollbar-gutter:auto]!"}`}
+      >
+        <MessageScrollerContent className="flex h-auto min-h-0 flex-col gap-8 p-4">
+          {messages.map((message) => (
+            <MessageScrollerItem
+              key={message.id}
+              messageId={message.id}
+              className="[content-visibility:visible]"
+            >
+              <Message from={message.role}>
+                {message.role === "assistant" ? (
+                  <AssistantMessage
+                    message={message}
+                    active={streaming && message === messages.at(-1)}
+                    pendingLabel={pendingLabel}
+                    activities={activityByMessage?.[message.id]}
+                    activityActions={activityActions}
+                    onRetry={message === messages.at(-1) ? onRetry : undefined}
+                    onContinue={message === messages.at(-1) ? onContinue : undefined}
+                  />
+                ) : (
+                  <MessageContent>
+                    <UserMessage message={message} />
+                  </MessageContent>
+                )}
+              </Message>
+            </MessageScrollerItem>
+          ))}
+        </MessageScrollerContent>
+      </div>
+    </ChatSourceContext.Provider>
   );
 }
 
@@ -107,7 +118,6 @@ function AssistantMessage({
   return (
     <>
       <MessageContent data-ai-streaming={rendering || undefined}>
-        <SelectedSources message={message} />
         {!activities && <ReadActivity message={message} active={active} />}
         {!!activities?.length && (
           <Suspense fallback={<MessageThinking label="Loading activity" />}>

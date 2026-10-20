@@ -91,15 +91,18 @@ for (const width of [1400, 390]) {
     const reading = page.getByLabel("Source reading activity", { exact: true });
     await expect(reading.locator("[data-ai-read-source]")).toHaveCount(1);
     await expect(reading).toContainText("Page read");
-    await expect(reading.getByRole("link", { name: title, exact: true })).toBeVisible();
-    await expect(
-      page.locator(".is-assistant").getByRole("link", { name: title, exact: true }),
-    ).toHaveCount(1);
+    const accordion = reading.getByRole("button", { name: /Page read/ });
+    await expect(accordion).toHaveAttribute("aria-expanded", "false");
+    await accordion.click();
+    await expect(accordion).toHaveAttribute("aria-expanded", "true");
+    await expect(reading.getByRole("link", { name: "main", exact: true })).toBeVisible();
     await expect(reading).not.toContainText("items");
     await expect(reading).not.toContainText("Output");
     await expect(reading).not.toContainText("More of this page");
     const fits = await reading.evaluate((el) => el.scrollWidth <= el.clientWidth);
     expect(fits).toBe(true);
+    await accordion.click();
+    await expect(reading.getByRole("link", { name: "main", exact: true })).toBeHidden();
   });
 }
 
@@ -114,7 +117,8 @@ for (const [options, label] of [
     const reading = page.getByLabel("Source reading activity", { exact: true });
     await expect(reading.locator("[data-ai-read-source]")).toHaveCount(1);
     await expect(reading).toContainText(label);
-    await expect(reading.getByRole("link", { name: title, exact: true })).toBeVisible();
+    await reading.getByRole("button", { name: new RegExp(label) }).click();
+    await expect(reading.getByRole("link", { name: "main", exact: true })).toBeVisible();
     if (options.partial) await expect(reading).toContainText("More of this page is available");
   });
 }

@@ -50,6 +50,7 @@ const streamdownIcons = {
 export default function MessageMarkdown({
   className,
   isAnimating = false,
+  components,
   ...props
 }: ComponentProps<typeof Streamdown>) {
   return (
@@ -58,7 +59,7 @@ export default function MessageMarkdown({
       isAnimating={isAnimating}
       className={cn("size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
       plugins={streamdownPlugins}
-      components={markdownComponents}
+      components={components ? { ...markdownComponents, ...components } : markdownComponents}
       icons={streamdownIcons}
       {...props}
     />

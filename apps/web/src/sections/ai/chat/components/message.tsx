@@ -5,6 +5,7 @@ import { Message as MessageRoot, MessageContent as MessageBody } from "@/compone
 import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
 import { createContext, lazy, memo, Suspense, useContext } from "react";
+import type { Components } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: "user" | "assistant" | "system";
@@ -56,6 +57,7 @@ type MessageResponseProps = {
   children?: string;
   className?: string;
   isAnimating?: boolean;
+  components?: Components;
 };
 
 const LazyMessageMarkdown = lazy(() => import("./message-markdown"));
@@ -71,7 +73,8 @@ export const MessageResponse = memo(
   (prevProps, nextProps) =>
     prevProps.children === nextProps.children &&
     nextProps.isAnimating === prevProps.isAnimating &&
-    prevProps.className === nextProps.className,
+    prevProps.className === nextProps.className &&
+    prevProps.components === nextProps.components,
 );
 
 MessageResponse.displayName = "MessageResponse";

@@ -44,12 +44,19 @@ for (const width of [1400, 390]) {
     await expect(input(page)).toBeEnabled();
     const sent = await page.evaluate(() => window.pageLayoutFixture.ai.requests);
     expect(sent).toHaveLength(1);
-    expect(sent[0].text).toBe("Summarize quickly please");
+    expect(sent[0].text).toBe("Summarize [[page:main]]quickly please");
     expect(sent[0].roots).toEqual([{ type: "page", id: "main" }]);
     expect(sent[0].snapshots).toEqual([]);
+    const mention = page.locator('.is-user [data-ai-message-mention="page:main"]');
+    await expect(mention.getByRole("link", { name: "main", exact: true })).toBeVisible();
+    await expect(mention.locator('[aria-hidden="true"]').first()).toBeVisible();
+    await expect(page.locator(".is-user")).not.toContainText("[[page:");
+    await expect(page.getByLabel("Selected sources activity")).toHaveCount(0);
     await expect(draft(page)).toHaveValue("");
     await expect(pills(page)).toHaveCount(1);
     expect(errors).toEqual([]);
+    await page.reload();
+    await expect(mention.getByRole("link", { name: "main", exact: true })).toBeVisible();
   });
 }
 
@@ -78,6 +85,44 @@ test("Backspace, Delete, undo and the remove button keep inline sources synchron
   expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].roots).toEqual([
     { type: "page", id: "main" },
   ]);
+});
+
+test("page and database pills retain their inline order and icons after reload", async ({
+  page,
+}) => {
+  await open(page);
+  await input(page).fill("Compare @ma");
+  await expect(page.getByRole("option", { name: /main page/i })).toBeVisible();
+  await input(page).press("Enter");
+  await input(page).pressSequentially(" with @Ta");
+  await expect(page.getByRole("option", { name: /Tasks database/i })).toBeVisible();
+  await input(page).press("Enter");
+  await input(page).pressSequentially(" today");
+  await input(page).press("Enter");
+  await expect(input(page)).toBeEnabled();
+  const request = await page.evaluate(() => window.pageLayoutFixture.ai.requests[0]);
+  expect(request.text).toBe("Compare [[page:main]] with [[database:database]] today");
+  expect(request.roots).toEqual([
+    { type: "page", id: "main" },
+    { type: "database", id: "database" },
+  ]);
+  const mentions = page.locator(".is-user [data-ai-message-mention]");
+  await expect(mentions).toHaveCount(2);
+  await expect(mentions.nth(0).getByRole("link", { name: "main", exact: true })).toBeVisible();
+  await expect(mentions.nth(1).getByRole("link", { name: "Tasks", exact: true })).toBeVisible();
+  await expect(mentions.nth(1).locator('[aria-hidden="true"]').first()).toBeVisible();
+  await page.reload();
+  await expect(mentions).toHaveCount(2);
+  await expect(mentions.nth(1).getByRole("link", { name: "Tasks", exact: true })).toBeVisible();
+});
+
+test("typed bracket references do not attach a source or grant access", async ({ page }) => {
+  await open(page);
+  await input(page).fill("Read [[page:invented]]");
+  await input(page).press("Enter");
+  await expect(input(page)).toBeEnabled();
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests[0])).roots).toEqual([]);
+  await expect(page.locator(".is-user [data-ai-message-mention]")).toHaveCount(0);
 });
 
 test("a repeated source stays selected until its last inline pill is removed", async ({ page }) => {

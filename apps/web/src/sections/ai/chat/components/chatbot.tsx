@@ -185,7 +185,12 @@ export default function Chatbot({
     setStreaming(true);
     setPendingTurn({
       messages: [
-        { id: userId, role: "user", text: nextText },
+        {
+          id: userId,
+          role: "user",
+          text: nextText,
+          roots: attachmentState.attachments.map(({ id, type }) => ({ id, type })),
+        },
         { id: assistantId, role: "assistant", text: "", status: "streaming" },
       ],
       label: "Thinking",
@@ -300,7 +305,7 @@ export default function Chatbot({
               : entry,
           ),
         );
-      if (!controller.signal.aborted && !accepted) setText(nextText);
+      if (!controller.signal.aborted && !accepted) setText(text);
     } finally {
       if (streamController.current === controller) {
         streamController.current = null;
@@ -335,6 +340,7 @@ export default function Chatbot({
             )}
             {threadReady && hasMessages && (
               <ChatbotMessages
+                workspaceId={workspaceId}
                 isSidebar={isSidebar}
                 messages={visibleMessages}
                 streaming={streaming}

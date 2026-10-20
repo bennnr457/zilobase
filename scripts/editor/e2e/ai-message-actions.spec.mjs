@@ -17,7 +17,7 @@ test("submitted turns show Thinking while tools read sources before the first to
   });
   await writePrompt(page, "Show my selected sources");
   await composer(page).press("Enter");
-  await expect(page.locator(".is-user")).toHaveText("Show my selected sources");
+  await expect(page.locator(".is-user")).toContainText("Show my selected sources");
   await expect(page.getByRole("status", { name: "Thinking", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());

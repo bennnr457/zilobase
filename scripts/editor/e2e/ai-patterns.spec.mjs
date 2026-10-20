@@ -129,7 +129,7 @@ test("context, inline citations and model selection use supplied metadata and sa
   );
 });
 
-test("current selected-source activity is transparent and never invents workspace search or reasoning", async ({
+test("attached sources appear in the sent message without a selected-source section", async ({
   page,
 }) => {
   await page.goto("/scripts/editor/e2e/page-layout.html?workspace=ai");
@@ -139,14 +139,14 @@ test("current selected-source activity is transparent and never invents workspac
   await writePrompt(page, "Summarize this page");
   await input.press("Enter");
   await expect(input).toBeEnabled();
-  await expect(page.getByLabel("Selected sources activity")).toContainText("Attached");
   await expect(
-    page.getByLabel("Selected source links").getByRole("link", { name: "main", exact: true }),
+    page.locator(".is-user").getByRole("link", { name: "main", exact: true }),
   ).toBeVisible();
+  await expect(page.getByLabel("Selected sources activity")).toHaveCount(0);
   await expect(page.getByLabel("Assistant activity")).toHaveCount(0);
   await expect(page.getByText("Search workspace", { exact: true })).toHaveCount(0);
   await page.reload();
   await expect(
-    page.getByLabel("Selected source links").getByRole("link", { name: "main", exact: true }),
+    page.locator(".is-user").getByRole("link", { name: "main", exact: true }),
   ).toBeVisible();
 });

@@ -1,4 +1,5 @@
 import type { ChatRunReceipt, ChatThreadDetail } from "@zilobase/features/ai";
+import { chatDisplayText } from "@zilobase/features/ai";
 import { buildContextMarkdown } from "@zilobase/page-context";
 import { collectWorkspaceContext, type ChatRequest } from "@zilobase/features/runtime";
 
@@ -137,7 +138,10 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       const id = path.split("/")[4]?.split("?")[0];
       return type === "database"
         ? { title: "Tasks", emoji: "🗃️" }
-        : { title: id === "main" ? page.name : (pages[1]?.name ?? "Page"), emoji: "📝" };
+        : {
+            title: id === "main" ? page.name : (pages[1]?.name ?? "Page"),
+            emoji: id === "main" ? "📝" : "✅",
+          };
     }
     if (path === "/ai/capabilities") return { durable: controls.durable };
     if (path === "/ai/turns") {
@@ -159,7 +163,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
           thread: {
             id: crypto.randomUUID(),
             workspaceId: request.workspaceId,
-            title: request.text,
+            title: chatDisplayText(request.text).trim(),
             updatedAt: at,
           },
           roots: request.roots,
@@ -191,7 +195,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         };
       detail.thread.status = "running";
       detail.messages.push(
-        { id: `${request.requestId}:user`, role: "user", text: request.text },
+        { id: `${request.requestId}:user`, role: "user", text: request.text, roots: request.roots },
         {
           id: `${request.requestId}:assistant`,
           role: "assistant",
@@ -407,7 +411,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       detail = {
         thread: {
           id: crypto.randomUUID(),
-          title: request.text,
+          title: chatDisplayText(request.text).trim(),
           workspaceId: request.workspaceId,
           updatedAt: at,
         },
