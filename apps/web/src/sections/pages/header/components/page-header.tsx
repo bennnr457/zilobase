@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { HeaderActions } from "@/components/navigation/components/navigation-actions";
 import { useOptionalPageSidePane } from "@/sections/pages/presentation/components/page-presentation";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useDatabaseBootstrap, useDatabaseRecords } from "@zilobase/features/databases/react";
@@ -279,7 +280,11 @@ function PagePaneControls({
   };
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <ButtonGroup
+      aria-label="Page presentation actions"
+      className="shrink-0 items-center"
+      variant="plain"
+    >
       {onClose ? (
         isDialogPane ? (
           <Button aria-label="Close" onClick={onClose} size="icon" variant="ghost">
@@ -347,6 +352,6 @@ function PagePaneControls({
           </Button>
         </div>
       ) : null}
-    </div>
+    </ButtonGroup>
   );
 }

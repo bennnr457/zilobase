@@ -8,6 +8,7 @@ import {
 } from "@/sections/settings/shell/components/settings-layout";
 import { Minus, Plus, RotateCcw } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -120,7 +121,7 @@ export function CalendarSettings({
           description="Controls the vertical density of day and week views."
           title="Hour height"
         >
-          <div className="flex items-center gap-1">
+          <ButtonGroup aria-label="Hour height controls" className="items-center" variant="plain">
             <Button
               aria-label="Decrease hour height"
               disabled={draft.hourHeight <= 32}
@@ -168,7 +169,7 @@ export function CalendarSettings({
             >
               <RotateCcw />
             </Button>
-          </div>
+          </ButtonGroup>
         </SettingsRow>
 
         <SettingsRow title="Time zones">

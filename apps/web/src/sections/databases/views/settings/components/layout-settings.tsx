@@ -17,6 +17,7 @@ import {
   DropDrawerSubTrigger,
 } from "@/components/ui/dropdrawer";
 import { Switch } from "@/components/ui/switch";
+import { ButtonGroup, ButtonGroupItem } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 
 import { getDatabasePropertyType } from "../../../properties/lib/property-catalog";
@@ -318,22 +319,22 @@ export function LayoutSettingsSection({
             </DropDrawerSub>
             <div className="flex min-h-8 items-center gap-2 px-2 py-1 text-sm">
               <span>Card size</span>
-              <div className="ml-auto flex rounded-md bg-surface-muted p-0.5">
+              <ButtonGroup aria-label="Card size" className="ml-auto" variant="segmented">
                 {(["small", "medium", "large"] as const).map((size) => (
-                  <button
+                  <ButtonGroupItem
+                    aria-pressed={layoutSettings.cardSize === size}
                     className={cn(
-                      "rounded px-2 py-1 text-xs capitalize text-content-secondary",
-                      layoutSettings.cardSize === size &&
-                        "bg-surface-canvas text-content-primary shadow-sm",
+                      "px-2 capitalize text-content-secondary",
+                      layoutSettings.cardSize === size && "text-action-selected-text",
                     )}
                     key={size}
                     onClick={() => onUpdateDatabaseLayoutSettings({ cardSize: size })}
                     type="button"
                   >
                     {size}
-                  </button>
+                  </ButtonGroupItem>
                 ))}
-              </div>
+              </ButtonGroup>
             </div>
             <div className="mt-1 rounded-md bg-surface-subtle p-2">
               <div className="mb-2 px-1 text-xs font-medium text-content-secondary">

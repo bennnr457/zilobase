@@ -10,6 +10,7 @@ import {
 import { BanIcon, Minus, MoreHorizontal, RotateCwIcon, Trash2Icon } from "@/components/icons";
 import type { MouseEvent as ReactMouseEvent } from "react";
 
+import { ButtonGroup, ButtonGroupItem, ButtonGroupSeparator } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 
 import {
@@ -27,9 +28,6 @@ import type {
   CanvasStrokeStyle,
   CanvasStrokeWidth,
 } from "../lib/types";
-
-const toolbarButtonClassName =
-  "flex h-8 w-8 items-center justify-center rounded-lg text-content-primary transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral";
 
 export function ShapeNode({ data, height, id, selected, width }: NodeProps<CanvasShapeNode>) {
   const { deleteElements, setNodes } = useReactFlow<CanvasNode>();
@@ -126,29 +124,25 @@ export function ShapeNode({ data, height, id, selected, width }: NodeProps<Canva
   return (
     <>
       <NodeToolbar isVisible={selected} offset={40} position={Position.Top}>
-        <div className="flex items-center gap-1 rounded-2xl border border-stroke-default bg-effect-backdrop p-1.5 shadow-lg backdrop-blur">
-          <button
+        <ButtonGroup aria-label="Shape actions" variant="floating">
+          <ButtonGroupItem
+            layout="icon"
             aria-label="Use default shape color"
-            className={cn(
-              toolbarButtonClassName,
-              data.color === "default" && "bg-action-neutral-hover",
-            )}
+            className={cn(data.color === "default" && "bg-action-neutral-hover")}
             onClick={() => updateNode({ color: "default" })}
             type="button"
           >
             <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-content-primary">
               <BanIcon className="size-4" />
             </span>
-          </button>
+          </ButtonGroupItem>
           {canvasColorOptions
             .filter((option) => option.id !== "default")
             .map((option) => (
-              <button
+              <ButtonGroupItem
+                layout="icon"
                 aria-label={`Use ${option.label.toLowerCase()} shape color`}
-                className={cn(
-                  toolbarButtonClassName,
-                  data.color === option.id && "bg-action-neutral-hover",
-                )}
+                className={cn(data.color === option.id && "bg-action-neutral-hover")}
                 key={option.id}
                 onClick={() => updateNode({ color: option.id })}
                 type="button"
@@ -160,16 +154,14 @@ export function ShapeNode({ data, height, id, selected, width }: NodeProps<Canva
                     borderColor: option.stroke,
                   }}
                 />
-              </button>
+              </ButtonGroupItem>
             ))}
-          <div className="mx-1 h-6 w-px bg-stroke-default" />
+          <ButtonGroupSeparator />
           {canvasStrokeWidthOptions.map((option) => (
-            <button
+            <ButtonGroupItem
+              layout="icon"
               aria-label={`Use ${option.label.toLowerCase()} stroke`}
-              className={cn(
-                toolbarButtonClassName,
-                data.strokeWidth === option.value && "bg-action-neutral-hover",
-              )}
+              className={cn(data.strokeWidth === option.value && "bg-action-neutral-hover")}
               key={option.value}
               onClick={() => updateNode({ strokeWidth: option.value })}
               type="button"
@@ -178,33 +170,31 @@ export function ShapeNode({ data, height, id, selected, width }: NodeProps<Canva
                 className="block w-4 rounded-full bg-content-primary"
                 style={{ height: Math.max(2, option.value - 1) }}
               />
-            </button>
+            </ButtonGroupItem>
           ))}
-          <div className="mx-1 h-6 w-px bg-stroke-default" />
+          <ButtonGroupSeparator />
           {canvasStrokeStyleOptions.map((option) => (
-            <button
+            <ButtonGroupItem
+              layout="icon"
               aria-label={`Use ${option.label.toLowerCase()} stroke style`}
-              className={cn(
-                toolbarButtonClassName,
-                data.strokeStyle === option.value && "bg-action-neutral-hover",
-              )}
+              className={cn(data.strokeStyle === option.value && "bg-action-neutral-hover")}
               key={option.value}
               onClick={() => updateNode({ strokeStyle: option.value })}
               type="button"
             >
               <StrokeStyleIcon style={option.value} />
-            </button>
+            </ButtonGroupItem>
           ))}
-          <div className="mx-1 h-6 w-px bg-stroke-default" />
-          <button
+          <ButtonGroupSeparator />
+          <ButtonGroupItem
+            layout="icon"
             aria-label="Delete shape"
-            className={toolbarButtonClassName}
             onClick={() => void deleteElements({ nodes: [{ id }] })}
             type="button"
           >
             <Trash2Icon className="size-4" />
-          </button>
-        </div>
+          </ButtonGroupItem>
+        </ButtonGroup>
       </NodeToolbar>
       <div className="relative h-full w-full" ref={nodeRef}>
         <div

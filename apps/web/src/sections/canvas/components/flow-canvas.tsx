@@ -5,8 +5,7 @@ import {
   Background,
   BackgroundVariant,
   ConnectionMode,
-  Controls,
-  ControlButton,
+  Panel,
   MiniMap,
   type EdgeTypes,
   type OnEdgesChange,
@@ -17,6 +16,7 @@ import {
   useStore,
   useStoreApi,
 } from "@xyflow/react";
+import { ButtonGroup, ButtonGroupItem } from "@/components/ui/button-group";
 import { nanoid } from "nanoid";
 import { useTheme } from "next-themes";
 import { useThemeFamily } from "@/app/providers/theme-family-provider";
@@ -68,7 +68,6 @@ type DraftItem = {
   tool: CanvasTool;
 };
 
-// React Flow supplies custom ControlButton children but no icon override API.
 function CanvasControls() {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const store = useStoreApi();
@@ -80,49 +79,64 @@ function CanvasControls() {
   const labels = useStore((state) => state.ariaLabelConfig);
 
   return (
-    <Controls showZoom={false} showFitView={false} showInteractive={false}>
-      <ControlButton
-        aria-label={labels["controls.zoomIn.ariaLabel"]}
-        className="react-flow__controls-zoomin"
-        disabled={maxZoomReached}
-        onClick={() => void zoomIn()}
-        title={labels["controls.zoomIn.ariaLabel"]}
+    <Panel position="bottom-left">
+      <ButtonGroup
+        aria-label="Canvas view controls"
+        orientation="vertical"
+        variant="floating"
+        density="compact"
       >
-        <Plus aria-hidden="true" />
-      </ControlButton>
-      <ControlButton
-        aria-label={labels["controls.zoomOut.ariaLabel"]}
-        className="react-flow__controls-zoomout"
-        disabled={minZoomReached}
-        onClick={() => void zoomOut()}
-        title={labels["controls.zoomOut.ariaLabel"]}
-      >
-        <Minus aria-hidden="true" />
-      </ControlButton>
-      <ControlButton
-        aria-label={labels["controls.fitView.ariaLabel"]}
-        className="react-flow__controls-fitview"
-        onClick={() => void fitView()}
-        title={labels["controls.fitView.ariaLabel"]}
-      >
-        <Maximize2 aria-hidden="true" />
-      </ControlButton>
-      <ControlButton
-        aria-label={labels["controls.interactive.ariaLabel"]}
-        aria-pressed={!isInteractive}
-        className="react-flow__controls-interactive"
-        onClick={() => {
-          store.setState({
-            nodesDraggable: !isInteractive,
-            nodesConnectable: !isInteractive,
-            elementsSelectable: !isInteractive,
-          });
-        }}
-        title={labels["controls.interactive.ariaLabel"]}
-      >
-        {isInteractive ? <LockOpenIcon aria-hidden="true" /> : <LockIcon aria-hidden="true" />}
-      </ControlButton>
-    </Controls>
+        <ButtonGroupItem
+          layout="icon"
+          type="button"
+          aria-label={labels["controls.zoomIn.ariaLabel"]}
+          className="react-flow__controls-zoomin"
+          disabled={maxZoomReached}
+          onClick={() => void zoomIn()}
+          title={labels["controls.zoomIn.ariaLabel"]}
+        >
+          <Plus aria-hidden="true" />
+        </ButtonGroupItem>
+        <ButtonGroupItem
+          layout="icon"
+          type="button"
+          aria-label={labels["controls.zoomOut.ariaLabel"]}
+          className="react-flow__controls-zoomout"
+          disabled={minZoomReached}
+          onClick={() => void zoomOut()}
+          title={labels["controls.zoomOut.ariaLabel"]}
+        >
+          <Minus aria-hidden="true" />
+        </ButtonGroupItem>
+        <ButtonGroupItem
+          layout="icon"
+          type="button"
+          aria-label={labels["controls.fitView.ariaLabel"]}
+          className="react-flow__controls-fitview"
+          onClick={() => void fitView()}
+          title={labels["controls.fitView.ariaLabel"]}
+        >
+          <Maximize2 aria-hidden="true" />
+        </ButtonGroupItem>
+        <ButtonGroupItem
+          layout="icon"
+          type="button"
+          aria-label={labels["controls.interactive.ariaLabel"]}
+          aria-pressed={!isInteractive}
+          className="react-flow__controls-interactive"
+          onClick={() => {
+            store.setState({
+              nodesDraggable: !isInteractive,
+              nodesConnectable: !isInteractive,
+              elementsSelectable: !isInteractive,
+            });
+          }}
+          title={labels["controls.interactive.ariaLabel"]}
+        >
+          {isInteractive ? <LockOpenIcon aria-hidden="true" /> : <LockIcon aria-hidden="true" />}
+        </ButtonGroupItem>
+      </ButtonGroup>
+    </Panel>
   );
 }
 

@@ -23,6 +23,7 @@ import { Subscribe } from "@tanstack/react-table";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 /** Where a finished edit sends the focused cell, or null to stay. */
 type DataGridEditorAdvance = "down" | "up" | "right" | "left" | null;
@@ -2447,10 +2448,12 @@ function DataGridSelectionBar({
         const count = table.getSelectedRowModel().rows.length;
         if (count === 0) return null;
         return (
-          <div
+          <ButtonGroup
+            aria-label="Selected row actions"
             data-slot="data-grid-selection-bar"
+            variant="floating"
             className={cn(
-              "bg-surface-canvas rounded-lg sticky inset-x-0 bottom-4 z-40 mx-auto flex w-fit max-w-[calc(100%-2rem)] flex-wrap items-center gap-3 border px-4 py-2.5 shadow-lg",
+              "sticky inset-x-0 bottom-4 z-40 mx-auto max-w-[calc(100%-2rem)] flex-wrap items-center gap-3",
               className,
             )}
           >
@@ -2470,7 +2473,7 @@ function DataGridSelectionBar({
                 {clearLabel}
               </Button>
             </div>
-          </div>
+          </ButtonGroup>
         );
       }}
     </Subscribe>

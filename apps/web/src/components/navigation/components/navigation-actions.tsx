@@ -39,6 +39,7 @@ import { type SidebarNavItem } from "@zilobase/features/pages";
 import { useHeaderActions } from "@/components/navigation/hooks/use-navigation-actions";
 import { SharePopover } from "@/components/sharing/components/share-popover";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePageCommentsSnapshot } from "@/sections/pages/editor/comments/components/comments-context";
 import { Switch } from "@/components/ui/switch";
@@ -80,7 +81,7 @@ export function HeaderActions({
   const openDiscussionCount = comments.threads.filter((thread) => !thread.resolvedAt).length;
   const discussionsActionLabel = discussionsOpen ? "Close comments" : "Open comments";
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <ButtonGroup aria-label="Page actions" className="items-center gap-2 text-sm" variant="plain">
       <div className="hidden text-sm font-medium text-content-secondary md:inline-block">
         Edited recently
       </div>
@@ -221,7 +222,7 @@ export function HeaderActions({
           </AlertDialog>
         </>
       ) : null}
-    </div>
+    </ButtonGroup>
   );
 }
 

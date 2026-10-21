@@ -4,6 +4,7 @@ import { CalendarCommands } from "./calendar-commands";
 import { CalendarTravel } from "../../preferences/components/calendar-travel";
 import { useCalendarWorkspace } from "./calendar-workspace";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SearchIcon, SidebarSimpleIcon, SettingsIcon, PlusIcon } from "@/components/icons";
@@ -30,7 +31,7 @@ export function CalendarToolbar({
     />
   );
   return (
-    <div className="flex min-w-0 items-center gap-1" aria-label="Calendar controls">
+    <ButtonGroup aria-label="Calendar controls" className="min-w-0 items-center" variant="plain">
       <div className="hidden w-40 xl:block">{input}</div>
       <Popover open={searchOpen} onOpenChange={setSearchOpen}>
         <PopoverTrigger asChild>
@@ -72,6 +73,6 @@ export function CalendarToolbar({
         <PlusIcon />
         <span className="hidden sm:inline">Create event</span>
       </Button>
-    </div>
+    </ButtonGroup>
   );
 }

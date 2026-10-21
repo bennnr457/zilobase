@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ImagePlus, X } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ImageSourcePicker } from "./image-source-picker";
 
@@ -31,7 +32,11 @@ export function PageCover({
     >
       <img alt="Cover" className="size-full object-cover" src={cover} />
       {editable ? (
-        <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-opacity group-focus-within/cover:opacity-100 group-hover/cover:opacity-100">
+        <ButtonGroup
+          aria-label="Cover actions"
+          className="absolute right-3 top-3 items-center opacity-0 transition-opacity group-focus-within/cover:opacity-100 group-hover/cover:opacity-100"
+          variant="plain"
+        >
           <Popover onOpenChange={setOpen} open={open}>
             <PopoverTrigger asChild>
               <Button
@@ -77,7 +82,7 @@ export function PageCover({
           >
             <X />
           </Button>
-        </div>
+        </ButtonGroup>
       ) : null}
     </div>
   );

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
   DropDrawer,
   DropDrawerContent,
@@ -196,15 +197,15 @@ export function DatabaseFormShareMenu() {
           </DropDrawerSub>
         )}
 
-        <div className="mt-2 flex min-w-0 items-center rounded-md border bg-surface-canvas">
-          <Input
-            aria-label="Form link"
-            className="min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-            readOnly
-            value={formLink}
-          />
+        <ButtonGroup
+          aria-label="Form link sharing"
+          className="mt-2 min-w-0"
+          variant="connected"
+          width="full"
+        >
+          <Input aria-label="Form link" className="h-9 min-w-0 flex-1" readOnly value={formLink} />
           <Button
-            className="h-9 shrink-0 rounded-l-none border-y-0 border-r-0"
+            className="h-9 shrink-0"
             onClick={() => void copyFormLink()}
             type="button"
             variant="outline"
@@ -212,7 +213,7 @@ export function DatabaseFormShareMenu() {
             <Link2 />
             Copy form link
           </Button>
-        </div>
+        </ButtonGroup>
       </DropDrawerContent>
     </DropDrawer>
   );

@@ -73,6 +73,7 @@ import { Slot } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -2638,13 +2639,17 @@ function GanttView({
           className="relative h-full min-w-0 flex-1"
         >
           {viewConfig.zoomControl && (
-            <div
+            <ButtonGroup
+              aria-label="Timeline zoom"
+              variant="floating"
+              orientation="vertical"
+              density="compact"
               data-slot="gantt-zoom"
               /* --gantt-zoom-shift comes from the offscreen-chips measure
                  pass: the control glides inward while a chip occupies its
                  band, because the chips' position IS their meaning and this
                  corner spot is merely a habit */
-              className="bg-surface-canvas absolute end-[calc(0.75rem+var(--gantt-zoom-shift,0px))] bottom-5 z-40 flex flex-col rounded-md border shadow-sm transition-[inset-inline-end] duration-200"
+              className="absolute end-[calc(0.75rem+var(--gantt-zoom-shift,0px))] bottom-5 z-40 transition-[inset-inline-end] duration-200"
             >
               {/* aria-disabled instead of disabled: the not-allowed cursor
                   must still show at the zoom limits */}
@@ -2656,7 +2661,7 @@ function GanttView({
                       size="icon-xs"
                       aria-label={settings.i18n.labels.zoomIn}
                       aria-disabled={!canZoomIn || undefined}
-                      className="text-content-secondary hover:text-content-primary size-5! rounded-b-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
+                      className="text-content-secondary hover:text-content-primary size-5! aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
                       onClick={() => {
                         if (!canZoomIn) return;
                         // controlled zoom anchors via fineCenterRef when
@@ -2678,7 +2683,7 @@ function GanttView({
                       size="icon-xs"
                       aria-label={settings.i18n.labels.zoomOut}
                       aria-disabled={!canZoomOut || undefined}
-                      className="text-content-secondary hover:text-content-primary size-5! rounded-t-none border-t aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
+                      className="text-content-secondary hover:text-content-primary size-5! aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent"
                       onClick={() => {
                         if (!canZoomOut) return;
                         if (viewConfig.zoom === undefined) anchorZoomCenter();
@@ -2691,7 +2696,7 @@ function GanttView({
                   <TooltipContent side="left">{settings.i18n.labels.zoomOut}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </div>
+            </ButtonGroup>
           )}
           {customScrollbars ? (
             // The vertical scrollbar is inset into the body lane: it starts

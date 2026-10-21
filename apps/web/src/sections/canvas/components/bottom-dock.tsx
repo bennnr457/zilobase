@@ -1,6 +1,6 @@
 import { ChevronUpIcon, RotateCcwIcon } from "@/components/icons";
 
-import { Button } from "@/components/ui/button";
+import { ButtonGroup, ButtonGroupItem, ButtonGroupSeparator } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 
 import { canvasToolOptions } from "../lib/constants";
@@ -23,14 +23,18 @@ export function BottomDock({
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
       <div className="pointer-events-auto relative flex items-center gap-3">
         {open ? (
-          <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 items-center gap-1.5 rounded-2xl border border-stroke-default bg-effect-backdrop p-1.5 shadow-lg backdrop-blur">
+          <ButtonGroup
+            aria-label="Canvas tools"
+            className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2"
+            variant="floating"
+          >
             {canvasToolOptions.map((option) => {
               const Icon = option.icon;
 
               return (
-                <button
+                <ButtonGroupItem
                   className={cn(
-                    "flex min-w-24 items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors hover:bg-action-neutral-hover hover:text-action-on-neutral",
+                    "min-w-24 justify-start",
                     activeTool === option.tool && "bg-action-neutral-hover text-action-on-neutral",
                   )}
                   key={option.tool}
@@ -39,17 +43,14 @@ export function BottomDock({
                 >
                   <Icon className="size-3.5" />
                   {option.label}
-                </button>
+                </ButtonGroupItem>
               );
             })}
-          </div>
+          </ButtonGroup>
         ) : null}
-        <div className="flex items-center gap-1.5 rounded-2xl border border-stroke-default bg-effect-backdrop p-1.5 shadow-lg backdrop-blur">
-          <Button
-            className={cn(
-              "h-8 rounded-xl px-3 text-sm",
-              open && "bg-action-neutral-hover text-action-on-neutral",
-            )}
+        <ButtonGroup aria-label="Canvas actions" variant="floating">
+          <ButtonGroupItem
+            className={cn("px-3", open && "bg-action-neutral-hover text-action-on-neutral")}
             onClick={toggleOpen}
             type="button"
             variant="ghost"
@@ -60,18 +61,18 @@ export function BottomDock({
             <ChevronUpIcon
               className={cn("size-4 transition-transform", open ? "rotate-180" : "rotate-0")}
             />
-          </Button>
-          <div className="h-6 w-px bg-stroke-default" />
-          <Button
-            className="h-8 w-8 rounded-xl"
+          </ButtonGroupItem>
+          <ButtonGroupSeparator />
+          <ButtonGroupItem
+            aria-label="Reset canvas"
+            layout="icon"
             onClick={onReset}
-            size="icon"
             type="button"
             variant="ghost"
           >
             <RotateCcwIcon className="size-4" />
-          </Button>
-        </div>
+          </ButtonGroupItem>
+        </ButtonGroup>
       </div>
     </div>
   );
