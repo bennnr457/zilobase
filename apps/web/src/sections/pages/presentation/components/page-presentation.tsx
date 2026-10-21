@@ -6,11 +6,9 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -30,7 +28,6 @@ export type PageSidePaneContextValue = {
   dialogFocusTitle: boolean;
   embeddedItemsOpenAs: EmbeddedItemsOpenAs;
   mainHeader?: ReactNode;
-  mainPaneNavigationActive: boolean;
   openEmbeddedPageDialog: (pageId: string, options?: OpenPageSidePaneOptions) => void;
   openDatabaseSidePane: (databaseId: string) => void;
   openDatabaseInMainPane: (databaseId: string) => void;
@@ -49,9 +46,11 @@ export const PageSidePaneContext = createContext<PageSidePaneContextValue | null
 
 export const WORKSPACE_SIDE_PANE_TRANSITION_MS = 200;
 
-export const SIDE_PANE_DEFAULT_WIDTH = "clamp(22rem, 50%, 48rem)";
+export const SIDE_PANE_DEFAULT_MIN_WIDTH_REM = 22;
+export const SIDE_PANE_DEFAULT_MAX_WIDTH_REM = 48;
+export const SIDE_PANE_DEFAULT_WIDTH = `clamp(${SIDE_PANE_DEFAULT_MIN_WIDTH_REM}rem, 50%, ${SIDE_PANE_DEFAULT_MAX_WIDTH_REM}rem)`;
 export const SIDE_PANE_MIN_WIDTH = 320;
-export const SIDE_PANE_MIN_MAIN_WIDTH = 256;
+export const SIDE_PANE_MAX_WIDTH_RATIO = 2 / 3;
 export const SIDE_PANE_READABLE_MIN_WIDTH = 352;
 export const SIDE_PANE_KEYBOARD_RESIZE_STEP = 24;
 
@@ -62,67 +61,12 @@ export const getFullPagePath = (pageId: string) => `/p/${encodeURIComponent(page
 
 export const getFullDatabasePath = (databaseId: string) => `/d/${encodeURIComponent(databaseId)}`;
 
-let promotedFullPagePath: string | null = null;
-const promotedFullPageListeners = new Set<() => void>();
-
-function setPromotedFullPagePath(path: string | null) {
-  if (promotedFullPagePath === path) return;
-  promotedFullPagePath = path;
-  for (const listener of promotedFullPageListeners) listener();
-}
-
-export function clearPromotedFullPagePath() {
-  setPromotedFullPagePath(null);
-  document.querySelectorAll<HTMLElement>("[data-page-side-pane-shell]").forEach((shell) => {
-    delete shell.dataset.pageSidePanePromoted;
-    shell.style.setProperty("--page-side-pane-width", SIDE_PANE_DEFAULT_WIDTH);
-  });
-}
-
-function promoteMountedSidePane(targetPath: string) {
-  return Effect.gen(function* () {
-    yield* Effect.sync(() => {
-      const panel = document.querySelector<HTMLElement>("[data-page-side-pane-panel]");
-      const shell = panel?.closest<HTMLElement>("[data-page-side-pane-shell]");
-      if (shell) {
-        shell.style.setProperty(
-          "--page-side-pane-width",
-          `${shell.getBoundingClientRect().width}px`,
-        );
-        shell.dataset.pageSidePanePromoted = "true";
-      }
-      setPromotedFullPagePath(targetPath);
-    });
-    // Preserve the live editor: router navigation would replace its route owner.
-    yield* Effect.sync(() =>
-      window.History.prototype.replaceState.call(
-        window.history,
-        window.history.state,
-        "",
-        targetPath,
-      ),
-    );
-  });
-}
-
-export function usePromotedFullPagePath() {
-  return useSyncExternalStore(
-    (listener) => {
-      promotedFullPageListeners.add(listener);
-      return () => promotedFullPageListeners.delete(listener);
-    },
-    () => promotedFullPagePath,
-    () => null,
-  );
-}
-
 export function usePageSidePaneState(
   _resetKey?: string | null,
   embeddedItemsOpenAs: EmbeddedItemsOpenAs = "sidepanel",
 ): PageSidePaneContextValue {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const promotedFullPagePath = usePromotedFullPagePath();
   const location = useLocation({
     select: ({ hash, pathname, searchStr }) => ({
       hash,
@@ -141,7 +85,6 @@ export function usePageSidePaneState(
   const [sidePaneAnimatedOpen, setSidePaneAnimatedOpen] = useState(false);
   const [sidePaneContentReady, setSidePaneContentReady] = useState(false);
   const sidePaneWasOpenRef = useRef(false);
-  const pendingMainPanePathRef = useRef<string | null>(null);
   const writeSidePaneParams = useCallback(
     (pageId: string | null, databaseId?: string | null, replace = false) => {
       const params = new URLSearchParams(location.searchStr);
@@ -177,7 +120,6 @@ export function usePageSidePaneState(
     [location.hash, location.pathname, location.searchStr, router.history],
   );
   const closeSidePane = useCallback(() => {
-    clearPromotedFullPagePath();
     writeSidePaneParams(null, null, true);
   }, [writeSidePaneParams]);
   const closeEmbeddedPageDialog = useCallback(() => {
@@ -235,62 +177,34 @@ export function usePageSidePaneState(
     [getEditorHandle, closeEmbeddedPageDialog, isMobile, router.history, writeSidePaneParams],
   );
   const openPageInMainPane = useCallback(
-    (nextPageId: string, options?: OpenPageSidePaneOptions) => {
+    (nextPageId: string, _options?: OpenPageSidePaneOptions) => {
       Effect.runSync(
-        Effect.sync(() => {
-          if (isMobile || isMobileViewport()) {
-            closeEmbeddedPageDialog();
-            if (location.pathname !== getFullPagePath(nextPageId))
-              router.history.push(getFullPagePath(nextPageId));
-            return;
-          }
-          const existing = getEditorHandle(nextPageId);
-          if (existing?.focus) {
-            existing.focus();
-            return;
-          }
-          closeEmbeddedPageDialog();
-
-          pendingMainPanePathRef.current = getFullPagePath(nextPageId);
-          writeSidePaneParams(nextPageId, options?.databaseId);
+        Effect.gen(function* () {
+          yield* Effect.sync(closeEmbeddedPageDialog);
+          yield* Effect.sync(() => router.history.push(getFullPagePath(nextPageId)));
         }),
       );
     },
-    [
-      getEditorHandle,
-      closeEmbeddedPageDialog,
-      isMobile,
-      location.pathname,
-      router.history,
-      writeSidePaneParams,
-    ],
+    [closeEmbeddedPageDialog, router.history],
   );
   const openDatabaseInMainPane = useCallback(
     (databaseId: string) => {
       Effect.runSync(
-        Effect.sync(() => {
-          closeEmbeddedPageDialog();
-
-          if (isMobile || isMobileViewport()) {
-            router.history.push(getFullDatabasePath(databaseId));
-            return;
-          }
-
-          pendingMainPanePathRef.current = getFullDatabasePath(databaseId);
-          writeSidePaneParams(null, databaseId);
+        Effect.gen(function* () {
+          yield* Effect.sync(closeEmbeddedPageDialog);
+          yield* Effect.sync(() => router.history.push(getFullDatabasePath(databaseId)));
         }),
       );
     },
-    [getEditorHandle, closeEmbeddedPageDialog, isMobile, router.history, writeSidePaneParams],
+    [closeEmbeddedPageDialog, router.history],
   );
   const openSidePaneAsFullPage = useCallback(() => {
-    const targetPath = sidePanePageId
-      ? getFullPagePath(sidePanePageId)
-      : sidePaneDatabaseId
-        ? getFullDatabasePath(sidePaneDatabaseId)
-        : null;
-    if (targetPath) Effect.runSync(promoteMountedSidePane(targetPath));
-  }, [sidePaneDatabaseId, sidePanePageId]);
+    if (sidePanePageId) {
+      openPageInMainPane(sidePanePageId);
+    } else if (sidePaneDatabaseId) {
+      openDatabaseInMainPane(sidePaneDatabaseId);
+    }
+  }, [openDatabaseInMainPane, openPageInMainPane, sidePaneDatabaseId, sidePanePageId]);
   const openEmbeddedPageDialog = useCallback(
     (nextPageId: string, options?: OpenPageSidePaneOptions) => {
       Effect.runSync(
@@ -338,7 +252,6 @@ export function usePageSidePaneState(
     Effect.runSync(
       Effect.gen(function* () {
         yield* Effect.sync(closeEmbeddedPageDialog);
-        yield* Effect.sync(clearPromotedFullPagePath);
         yield* Effect.sync(() => router.history.replace(targetPath));
       }),
     );
@@ -408,24 +321,6 @@ export function usePageSidePaneState(
     };
   }, [sidePaneDatabaseId, sidePanePageId]);
 
-  useLayoutEffect(() => {
-    const targetPath = pendingMainPanePathRef.current;
-    const renderedTargetPath = renderedSidePanePageId
-      ? getFullPagePath(renderedSidePanePageId)
-      : renderedSidePaneDatabaseId
-        ? getFullDatabasePath(renderedSidePaneDatabaseId)
-        : null;
-
-    if (!targetPath || targetPath !== renderedTargetPath) return;
-
-    const panel = document.querySelector<HTMLElement>("[data-page-side-pane-panel]");
-    const shell = panel?.closest<HTMLElement>("[data-page-side-pane-shell]");
-    if (!shell) return;
-
-    pendingMainPanePathRef.current = null;
-    Effect.runSync(promoteMountedSidePane(targetPath));
-  }, [renderedSidePaneDatabaseId, renderedSidePanePageId]);
-
   return useMemo<PageSidePaneContextValue>(
     () => ({
       closeEmbeddedPageDialog,
@@ -434,7 +329,6 @@ export function usePageSidePaneState(
       dialogFocusTitle,
       dialogPageId,
       embeddedItemsOpenAs,
-      mainPaneNavigationActive: Boolean(promotedFullPagePath || pendingMainPanePathRef.current),
       openEmbeddedPageDialog,
       openDatabaseInMainPane,
       openDatabaseSidePane,
@@ -455,7 +349,6 @@ export function usePageSidePaneState(
       dialogPageId,
       dialogFocusTitle,
       embeddedItemsOpenAs,
-      promotedFullPagePath,
       openEmbeddedPageDialog,
       openDatabaseInMainPane,
       openDatabaseSidePane,

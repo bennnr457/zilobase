@@ -38,10 +38,6 @@ import {
   type PageDatabaseView,
 } from "@zilobase/features/pages";
 import {
-  clearPromotedFullPagePath,
-  usePromotedFullPagePath,
-} from "@/sections/pages/presentation/components/page-presentation";
-import {
   discoverRuntimeDesktopServer,
   getSelectedDesktopServer,
   type DesktopServer,
@@ -359,9 +355,7 @@ export function useAppSidebar({
   const { setOpenMobile } = useSidebar();
   const location = useLocation();
   const { openSearch } = useAppSearch();
-  const routerPathname = useRouterState({ select: (state) => state.location.pathname });
-  const promotedFullPagePath = usePromotedFullPagePath();
-  const pathname = promotedFullPagePath ?? routerPathname;
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const workspaceId = useActiveWorkspaceId();
   const { data: session } = useSession();
   const identity = `${session?.user?.id ?? "anonymous"}:${workspaceId ?? "default"}`;
@@ -382,15 +376,6 @@ export function useAppSidebar({
     getSelectedDesktopServer(),
   );
 
-  React.useEffect(() => {
-    const handlePopState = () => clearPromotedFullPagePath();
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-  React.useEffect(() => {
-    if (promotedFullPagePath && window.location.pathname !== promotedFullPagePath)
-      clearPromotedFullPagePath();
-  }, [promotedFullPagePath, routerPathname]);
   React.useEffect(() => {
     if (desktopLinkServer || isDesktopApp()) return;
     let disposed = false;

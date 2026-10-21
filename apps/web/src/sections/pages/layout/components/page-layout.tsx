@@ -12,7 +12,6 @@ import {
   type PageHeaderProps,
 } from "../../header/components/page-header";
 import { ScrollViewport } from "@/components/ui/scroll-viewport";
-import { usePromotedFullPagePath } from "@/sections/pages/presentation/components/page-presentation";
 import { cn } from "@/lib/utils";
 
 type PagePlacement =
@@ -58,12 +57,9 @@ export function PageLayout({
   rowNavigationDatabaseId,
 }: PageLayoutProps) {
   const sidebar = useOptionalPageDesignSidebar();
-  const promotedPath = usePromotedFullPagePath();
   const pathname = databaseId
     ? `/d/${encodeURIComponent(databaseId)}`
     : `/p/${encodeURIComponent(pageId ?? "")}`;
-  // Promotion changes chrome without moving or remounting the live editor.
-  const effectivePlacement = placement === "pane" && promotedPath === pathname ? "main" : placement;
   const overlaySidebar = placement !== "main";
   const hasSidebar = overlaySidebar
     ? Boolean(pageId && sidebar?.hasOverlaySidebar(pageId))
@@ -98,7 +94,7 @@ export function PageLayout({
   return (
     <section
       className={cn("flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden", className)}
-      data-page-layout={effectivePlacement}
+      data-page-layout={placement}
       ref={frameRef}
       onClick={(event) => {
         const target = event.target instanceof Element ? event.target : null;
@@ -120,10 +116,8 @@ export function PageLayout({
           onToggleDiscussions={
             controller ? () => (commentsOpen ? closeComments() : openComments()) : undefined
           }
-          leadingControl={
-            effectivePlacement === "main" ? <MainPaneHeaderLeadingControl /> : undefined
-          }
-          onClose={effectivePlacement === "main" ? undefined : onClose}
+          leadingControl={placement === "main" ? <MainPaneHeaderLeadingControl /> : undefined}
+          onClose={placement === "main" ? undefined : onClose}
           onOpenFullPage={onOpenFullPage}
           onTogglePageSidebar={
             hasSidebar
@@ -136,9 +130,9 @@ export function PageLayout({
           pageId={pageId}
           pageSidebarOpen={overlaySidebar ? sidebar?.overlayPageId === pageId : sidebar?.open}
           pathname={pathname}
-          placement={effectivePlacement}
+          placement={placement}
           rowNavigationDatabaseId={rowNavigationDatabaseId}
-          showBreadcrumb={effectivePlacement === "main"}
+          showBreadcrumb={placement === "main"}
           {...header}
         />
       )}

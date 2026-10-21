@@ -113,10 +113,6 @@
   }
 }
 
-[data-page-side-pane-promoted="true"] [data-page-side-pane-resize-handle] {
-  display: none;
-}
-
 [data-page-side-pane-open="true"] [data-page-side-pane-main-content] {
   width: calc(100% - var(--page-side-pane-width, 50%));
 }

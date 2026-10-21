@@ -74,7 +74,7 @@ import {
 } from "@/sections/pages/editor/comments/lib/yjs-comments";
 import { Toaster } from "sonner";
 import { PageDesignEditorProvider } from "@/sections/pages/design/components/page-design-editor";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, useOptionalSidebar } from "@/components/ui/sidebar";
 import { ShortcutProvider } from "@/app/shortcuts/shortcut-provider";
 
 const meetingFixture = new URLSearchParams(window.location.search).get("workspace") === "meeting";
@@ -502,6 +502,10 @@ function Content({ id }: { id: string }) {
 }
 
 function Commands({ id }: { id: string }) {
+  const sidebar = useOptionalSidebar();
+  useEffect(() => {
+    Object.assign(window, { pageLayoutSidebar: sidebar });
+  }, [sidebar]);
   const { openPage } = useOpenEmbeddedPage({ contextPageId: id, page: null });
   // Commands intentionally exercise both the preference policy and direct callers.
   const state = useContextState();
@@ -530,7 +534,19 @@ function Commands({ id }: { id: string }) {
 }
 import { usePageSidePane as useContextState } from "@/sections/pages/presentation/components/page-presentation";
 function FixtureSidebar({ children }: { children: ReactNode }) {
-  return fixtureAudience ? children : <SidebarProvider>{children}</SidebarProvider>;
+  if (fixtureAudience) return children;
+  return (
+    <SidebarProvider>
+      {new URLSearchParams(window.location.search).has("navigation") ? (
+        <>
+          <Sidebar>Navigation fixture</Sidebar>
+          <SidebarInset className="min-w-0">{children}</SidebarInset>
+        </>
+      ) : (
+        children
+      )}
+    </SidebarProvider>
+  );
 }
 
 function SettingsFixture() {
@@ -661,6 +677,13 @@ const routes = ["main", "child", "other"].map((id) =>
     getParentRoute: () => root,
     path: `/p/${id}`,
     component: () => <Content id={id} />,
+  }),
+);
+routes.push(
+  createRoute({
+    getParentRoute: () => root,
+    path: "/d/database",
+    component: () => <main data-fixture-database-main>Database route</main>,
   }),
 );
 routes.push(createRoute({ getParentRoute: () => root, path: "/ai", component: () => null }));

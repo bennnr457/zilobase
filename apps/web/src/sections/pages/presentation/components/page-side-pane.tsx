@@ -11,12 +11,15 @@ import {
 import { isMobileViewport, useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
+import { useOptionalSidebar } from "@/components/ui/sidebar";
 import { ScrollViewport } from "@/components/ui/scroll-viewport";
 import {
   PageSidePaneContext,
   SIDE_PANE_DEFAULT_WIDTH,
+  SIDE_PANE_DEFAULT_MIN_WIDTH_REM,
+  SIDE_PANE_DEFAULT_MAX_WIDTH_REM,
   SIDE_PANE_KEYBOARD_RESIZE_STEP,
-  SIDE_PANE_MIN_MAIN_WIDTH,
+  SIDE_PANE_MAX_WIDTH_RATIO,
   SIDE_PANE_MIN_WIDTH,
   SIDE_PANE_READABLE_MIN_WIDTH,
   useOptionalPageSidePane,
@@ -30,7 +33,8 @@ export const pageSidePaneMobilePanelTransitionClass =
 
 export function getPageSidePaneGridStyle(_visible: boolean, _open: boolean): CSSProperties {
   return {
-    "--page-side-pane-width": SIDE_PANE_DEFAULT_WIDTH,
+    "--page-side-pane-requested-width": SIDE_PANE_DEFAULT_WIDTH,
+    "--page-side-pane-width": `min(var(--page-side-pane-requested-width), ${SIDE_PANE_MAX_WIDTH_RATIO * 100}%)`,
     gridTemplateColumns: "minmax(0, 1fr)",
   } as CSSProperties;
 }
@@ -64,7 +68,10 @@ export function PageSidePaneShell({
     if (open) return;
 
     const timer = window.setTimeout(() => {
-      shellRef.current?.style.setProperty("--page-side-pane-width", SIDE_PANE_DEFAULT_WIDTH);
+      shellRef.current?.style.setProperty(
+        "--page-side-pane-requested-width",
+        SIDE_PANE_DEFAULT_WIDTH,
+      );
     }, WORKSPACE_SIDE_PANE_TRANSITION_MS);
 
     return () => window.clearTimeout(timer);
@@ -140,19 +147,27 @@ export function PageSidePaneSideCell({
   const isMobile = useIsMobile();
   const panelRef = useRef<HTMLElement | null>(null);
   const pointerCleanupRef = useRef<() => void>(() => {});
-  const promotionTimerRef = useRef<number | null>(null);
-  const promotionPendingRef = useRef(false);
+  const autoCollapsedSidebarWidthRef = useRef<number | null>(null);
   const sidePaneContext = useContext(PageSidePaneContext);
+  const sidebar = useOptionalSidebar();
 
   useEffect(
     () => () => {
       pointerCleanupRef.current();
-      if (promotionTimerRef.current !== null) {
-        window.clearTimeout(promotionTimerRef.current);
-      }
     },
     [],
   );
+
+  useEffect(() => {
+    if ((!open || !show || isMobile) && autoCollapsedSidebarWidthRef.current !== null) {
+      autoCollapsedSidebarWidthRef.current = null;
+      sidebar?.setAutoCollapsed(false);
+    }
+  }, [open, show, isMobile, sidebar?.setAutoCollapsed]);
+
+  useEffect(() => {
+    if (sidebar?.open || !sidebar?.preferredOpen) autoCollapsedSidebarWidthRef.current = null;
+  }, [sidebar?.open, sidebar?.preferredOpen]);
 
   if (!show || isMobile || isMobileViewport()) {
     return null;
@@ -161,69 +176,32 @@ export function PageSidePaneSideCell({
   const setPanelWidth = (width: number) => {
     const panel = panelRef.current;
     const shell = panel?.closest<HTMLElement>("[data-page-side-pane-shell]");
-    if (!panel || !shell) return null;
+    if (!panel || !shell) return;
 
     const shellWidth = shell.getBoundingClientRect().width;
-    const maxWidth = Math.max(SIDE_PANE_MIN_WIDTH, shellWidth - SIDE_PANE_MIN_MAIN_WIDTH);
-    const nextWidth = Math.min(Math.max(width, SIDE_PANE_MIN_WIDTH), maxWidth);
-    shell.style.setProperty("--page-side-pane-width", `${nextWidth}px`);
+    const maxWidth = shellWidth * SIDE_PANE_MAX_WIDTH_RATIO;
+    const requestedWidth = Math.max(width, Math.min(SIDE_PANE_MIN_WIDTH, maxWidth));
+    const rem = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+    const defaultWidth = Math.min(
+      Math.max(SIDE_PANE_DEFAULT_MIN_WIDTH_REM * rem, shellWidth / 2),
+      SIDE_PANE_DEFAULT_MAX_WIDTH_REM * rem,
+      maxWidth,
+    );
+    const restoreWidth = autoCollapsedSidebarWidthRef.current;
 
-    return {
-      mainWidth: shellWidth - nextWidth,
-      sideWidth: nextWidth,
-    };
-  };
-
-  const promoteSidePaneToFullPage = () => {
-    if (!sidePaneContext || promotionPendingRef.current) return;
-
-    const panel = panelRef.current;
-    const shell = panel?.closest<HTMLElement>("[data-page-side-pane-shell]");
-    if (!panel || !shell) {
-      sidePaneContext.openSidePaneAsFullPage();
+    if (restoreWidth !== null && requestedWidth <= restoreWidth + 1) {
+      autoCollapsedSidebarWidthRef.current = null;
+      shell.style.setProperty("--page-side-pane-requested-width", SIDE_PANE_DEFAULT_WIDTH);
+      sidebar?.setAutoCollapsed(false);
       return;
     }
 
-    promotionPendingRef.current = true;
-    shell.dataset.pageSidePanePromoting = "true";
-    shell.style.setProperty("--page-side-pane-width", `${shell.getBoundingClientRect().width}px`);
-
-    promotionTimerRef.current = window.setTimeout(() => {
-      promotionTimerRef.current = null;
-      delete shell.dataset.pageSidePanePromoting;
-      shell.dataset.pageSidePanePromoted = "true";
-      promotionPendingRef.current = false;
-      sidePaneContext.openSidePaneAsFullPage();
-    }, WORKSPACE_SIDE_PANE_TRANSITION_MS);
-  };
-
-  const expandUnreadablePane = (
-    layout: { mainWidth: number; sideWidth: number },
-    resizedSide: "main" | "side",
-  ) => {
-    if (!open || !sidePaneContext) return false;
-
-    const mainIsUnreadable = layout.mainWidth < SIDE_PANE_READABLE_MIN_WIDTH;
-    const sideIsUnreadable = layout.sideWidth < SIDE_PANE_READABLE_MIN_WIDTH;
-
-    if (!mainIsUnreadable && !sideIsUnreadable) return false;
-
-    if (mainIsUnreadable && sideIsUnreadable) {
-      if (resizedSide === "side") {
-        sidePaneContext.closeSidePane();
-      } else {
-        promoteSidePaneToFullPage();
-      }
-      return true;
+    if (sidebar?.open && requestedWidth > defaultWidth + 1) {
+      autoCollapsedSidebarWidthRef.current = defaultWidth;
+      sidebar.setAutoCollapsed(true);
     }
 
-    if (sideIsUnreadable) {
-      sidePaneContext.closeSidePane();
-      return true;
-    }
-
-    promoteSidePaneToFullPage();
-    return true;
+    shell.style.setProperty("--page-side-pane-requested-width", `${requestedWidth}px`);
   };
 
   const handleResizePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -237,6 +215,8 @@ export function PageSidePaneSideCell({
     pointerCleanupRef.current();
     shell.dataset.pageSidePaneResizing = "true";
     const startPanelWidth = panel.getBoundingClientRect().width;
+    const startPointerX = event.clientX;
+    let resized = false;
     const previousCursor = document.body.style.cursor;
     const previousUserSelect = document.body.style.userSelect;
     document.body.style.cursor = "col-resize";
@@ -253,21 +233,18 @@ export function PageSidePaneSideCell({
     };
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (!resized) {
+        if (moveEvent.clientX === startPointerX) return;
+        resized = true;
+      }
       const shellRect = shell.getBoundingClientRect();
-      const layout = setPanelWidth(shellRect.right - moveEvent.clientX);
-      if (!layout) return;
+      const width = shellRect.right - moveEvent.clientX;
+      setPanelWidth(width);
 
-      const resizedSide = layout.sideWidth < startPanelWidth ? "side" : "main";
-      const crossedReadableLimit =
-        layout.mainWidth < SIDE_PANE_READABLE_MIN_WIDTH ||
-        layout.sideWidth < SIDE_PANE_READABLE_MIN_WIDTH;
-
-      if (!crossedReadableLimit) return;
-
-      cleanup();
-      window.requestAnimationFrame(() => {
-        expandUnreadablePane(layout, resizedSide);
-      });
+      if (width < startPanelWidth && width < SIDE_PANE_READABLE_MIN_WIDTH && sidePaneContext) {
+        cleanup();
+        sidePaneContext.closeSidePane();
+      }
     };
 
     const handlePointerUp = cleanup;
@@ -287,11 +264,10 @@ export function PageSidePaneSideCell({
 
     event.preventDefault();
     const direction = event.key === "ArrowLeft" ? 1 : -1;
-    const layout = setPanelWidth(
-      panel.getBoundingClientRect().width + direction * SIDE_PANE_KEYBOARD_RESIZE_STEP,
-    );
-    if (layout) {
-      expandUnreadablePane(layout, event.key === "ArrowRight" ? "side" : "main");
+    const width = panel.getBoundingClientRect().width + direction * SIDE_PANE_KEYBOARD_RESIZE_STEP;
+    setPanelWidth(width);
+    if (direction < 0 && width < SIDE_PANE_READABLE_MIN_WIDTH) {
+      sidePaneContext?.closeSidePane();
     }
   };
 
@@ -306,6 +282,7 @@ export function PageSidePaneSideCell({
       data-page-side-pane-panel
       inert={open ? undefined : true}
       ref={panelRef}
+      style={{ maxWidth: `${SIDE_PANE_MAX_WIDTH_RATIO * 100}%` }}
     >
       <div
         aria-label="Resize side pane"

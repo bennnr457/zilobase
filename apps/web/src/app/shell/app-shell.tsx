@@ -15,7 +15,6 @@ import type { ChatPresentationMode } from "@/sections/ai/workspace/components/ch
 import {
   usePageSidePaneState,
   PageSidePaneContext,
-  usePromotedFullPagePath,
 } from "@/sections/pages/presentation/components/page-presentation";
 import { PageSidePaneShell } from "@/sections/pages/presentation/components/page-side-pane";
 import { RightSidebarMobilePanels, RightSidebars } from "@/app/shell/panels/components/tool-panels";
@@ -138,8 +137,7 @@ function AppLayoutWithRoutePage({
   utilitySidebarOpen: boolean;
 }) {
   const navigate = useNavigate();
-  const promotedPath = usePromotedFullPagePath();
-  const routePageId = useRoutePageId(promotedPath ?? pathname);
+  const routePageId = useRoutePageId(pathname);
   const isSettingsPage = pathname.startsWith("/settings");
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(isSettingsPage);
   const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection>(() =>
@@ -221,7 +219,11 @@ function AppShellContent({
     }),
   });
   const embeddedMobileViewer = isEmbeddedMobileViewer();
-  const { isMobile, open: appSidebarOpen, setOpen: setAppSidebarOpen } = useSidebar();
+  const {
+    isMobile,
+    open: appSidebarOpen,
+    setAutoCollapsed: setAppSidebarAutoCollapsed,
+  } = useSidebar();
   const askAiEnabled = isFeatureEnabled("askAi");
   const isAiPage = askAiEnabled && pathname === "/ai";
   const aiWorkspacePanel = isAiPage ? new URLSearchParams(searchStr).get("panel") : null;
@@ -248,9 +250,8 @@ function AppShellContent({
     [hash, pathname, router.history, searchStr],
   );
   const isFullPanePage = pathname === "/calendar";
-  const promotedPath = usePromotedFullPagePath();
-  const pageId = useRoutePageId(promotedPath ?? pathname);
-  const databaseId = getDatabaseId(promotedPath ?? pathname);
+  const pageId = useRoutePageId(pathname);
+  const databaseId = getDatabaseId(pathname);
   const activeWorkspaceId = useActiveWorkspaceId();
   const { data: databasePayload } = useDatabaseMetadata(databaseId, {
     includeDeleted: true,
@@ -278,7 +279,6 @@ function AppShellContent({
     openSidePane: openSidePaneBase,
     renderedSidePaneDatabaseId,
     renderedSidePanePageId,
-    mainPaneNavigationActive,
     sidePaneAnimatedOpen,
     sidePaneDatabaseId,
     sidePanePageId,
@@ -297,10 +297,9 @@ function AppShellContent({
   const handleRightSidebarResizeIntent = useCallback(
     (intent: SidebarResizeIntent) => {
       if (isMobile) return;
-      const nextOpen = intent === "decrease";
-      if (appSidebarOpen !== nextOpen) setAppSidebarOpen(nextOpen);
+      setAppSidebarAutoCollapsed(intent === "increase");
     },
-    [appSidebarOpen, isMobile, setAppSidebarOpen],
+    [isMobile, setAppSidebarAutoCollapsed],
   );
   const openSidePane = useCallback(
     (nextPageId: string, options?: { databaseId?: string | null }) => {
@@ -430,21 +429,10 @@ function AppShellContent({
   ]);
 
   useEffect(() => {
-    if (
-      appSidebarOpen &&
-      (sidePanePageId || sidePaneDatabaseId) &&
-      !mainPaneNavigationActive &&
-      chatSidebarOpen
-    ) {
+    if (appSidebarOpen && (sidePanePageId || sidePaneDatabaseId) && chatSidebarOpen) {
       setChatSidebarOpen(false);
     }
-  }, [
-    appSidebarOpen,
-    chatSidebarOpen,
-    mainPaneNavigationActive,
-    sidePaneDatabaseId,
-    sidePanePageId,
-  ]);
+  }, [appSidebarOpen, chatSidebarOpen, sidePaneDatabaseId, sidePanePageId]);
 
   const showEmbeddedSidePaneLayout =
     !utilitySidebarOpen &&

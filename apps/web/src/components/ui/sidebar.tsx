@@ -24,7 +24,9 @@ type SidebarContextValue = {
   isMobile: boolean;
   mobileWidth: React.CSSProperties["width"];
   open: boolean;
+  preferredOpen: boolean;
   setOpen: SidebarOpenSetter;
+  setAutoCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   openMobile: boolean;
   setOpenMobile: React.Dispatch<React.SetStateAction<boolean>>;
   toggleSidebar: () => void;
@@ -32,8 +34,12 @@ type SidebarContextValue = {
 
 const SidebarContext = React.createContext<SidebarContextValue | null>(null);
 
+function useOptionalSidebar() {
+  return React.useContext(SidebarContext);
+}
+
 function useSidebar() {
-  const context = React.useContext(SidebarContext);
+  const context = useOptionalSidebar();
 
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.");
@@ -62,11 +68,14 @@ function SidebarProvider({
     DEFAULT_MOBILE_SIDEBAR_WIDTH;
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
   const [openMobile, setOpenMobile] = React.useState(false);
-  const open = controlledOpen ?? uncontrolledOpen;
+  const preferredOpen = controlledOpen ?? uncontrolledOpen;
+  const [autoCollapsed, setAutoCollapsed] = React.useState(false);
+  const open = preferredOpen && !autoCollapsed;
 
   const setOpen = React.useCallback<SidebarOpenSetter>(
     (value) => {
       const nextOpen = typeof value === "function" ? value(open) : value;
+      setAutoCollapsed(false);
 
       if (controlledOpen === undefined) {
         setUncontrolledOpen(nextOpen);
@@ -91,12 +100,14 @@ function SidebarProvider({
       isMobile,
       mobileWidth,
       open,
+      preferredOpen,
       setOpen,
+      setAutoCollapsed,
       openMobile,
       setOpenMobile,
       toggleSidebar,
     }),
-    [isMobile, mobileWidth, open, openMobile, setOpen, toggleSidebar],
+    [isMobile, mobileWidth, open, preferredOpen, openMobile, setOpen, toggleSidebar],
   );
 
   return (
@@ -432,6 +443,7 @@ export {
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
+  useOptionalSidebar,
 };
 
 const SIDEBAR_NAV_ACTION_EDGE_INSET = 6;

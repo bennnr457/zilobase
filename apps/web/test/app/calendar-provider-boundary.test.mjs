@@ -47,7 +47,6 @@ export function register({ assert, readSource, test }) {
       useRouterState: () => "/calendar",
       useNavigate: () => () => {},
       useRoutePageId: () => null,
-      usePromotedFullPagePath: () => null,
       getSettingsSection: () => "preferences",
     };
     const AppShell = new Function(...Object.keys(dependencies), `${code}; return AppShell;`)(
