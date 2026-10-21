@@ -1,5 +1,7 @@
 import { Extension, Node, type Editor, type JSONContent } from "@tiptap/core";
-import { history, undo, redo, closeHistory } from "@tiptap/pm/history";
+import { Plugin } from "@tiptap/pm/state";
+import { chatReferences } from "@zilobase/features/ai";
+import { history, undo, redo, closeHistory, isHistoryTransaction } from "@tiptap/pm/history";
 import { createContext, useContext } from "react";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import type { AppSearchResult } from "@zilobase/features/search";
@@ -13,7 +15,7 @@ function ContextPill({ node, extension, editor, deleteNode }: ReactNodeViewProps
     <NodeViewWrapper
       as="span"
       contentEditable={false}
-      className="mx-0.5 inline-flex max-w-full align-middle"
+      className="inline-flex max-w-full px-1 align-middle"
       data-ai-inline-mention={`${node.attrs.item.type}:${node.attrs.item.id}`}
     >
       <ContextAttachment
@@ -40,11 +42,66 @@ export const PromptContext = Node.create<{ workspaceId: string | null }>({
   selectable: false,
   addOptions: () => ({ workspaceId: null }),
   addAttributes: () => ({ item: { default: null } }),
-  // Only the authorized picker/selected-source state creates references.
+  // HTML attributes never create references; text markers and the picker share the node.
   parseHTML: () => [],
   renderHTML: ({ node }) => ["span", { "data-prompt-context": "" }, `@${node.attrs.item.title}`],
   renderText: ({ node }) => `@${node.attrs.item.title}`,
   addNodeView: () => ReactNodeViewRenderer(ContextPill),
+  addProseMirrorPlugins() {
+    const editor = this.editor;
+    return [
+      new Plugin({
+        appendTransaction(transactions, _oldState, state) {
+          const force = transactions.some(
+            (tr) => tr.getMeta("parsePromptReferences") || tr.getMeta("uiEvent") === "paste",
+          );
+          if (
+            transactions.some(isHistoryTransaction) ||
+            (!force && (!transactions.some((tr) => tr.docChanged) || editor.view.composing))
+          )
+            return null;
+          // Inline text positions map directly to the document, including hard breaks and atoms.
+          let text = "";
+          const positions: number[] = [];
+          state.doc.descendants((node, pos) => {
+            if (node.isTextblock && text) {
+              text += "\n";
+              positions.push(pos);
+            }
+            if (node.isText) {
+              text += node.text;
+              for (let index = 0; index < node.nodeSize; index++) positions.push(pos + index);
+            } else if (node.isInline && node.isLeaf) {
+              text += node.type.name === "hardBreak" ? "\n" : "\ufffc";
+              positions.push(pos);
+            }
+          });
+          const references = chatReferences(text).filter(({ from, to, source }) => {
+            if (text.slice(from, to).includes("\ufffc")) return false;
+            const end = positions[to - 1]! + 1;
+            // A bare ID is still being typed until a delimiter, paste or submission completes it.
+            return (
+              force ||
+              text.startsWith("[[", from) ||
+              state.selection.from !== end ||
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(source.id)
+            );
+          });
+          if (!references.length) return null;
+          const tr = state.tr;
+          for (const { from, to, source } of references.reverse()) {
+            const item: AppSearchResult = { ...source, title: source.type, path: "", emoji: null };
+            tr.replaceWith(
+              positions[from]!,
+              positions[to - 1]! + 1,
+              state.schema.nodes.promptContext!.create({ item }),
+            );
+          }
+          return tr;
+        },
+      }),
+    ];
+  },
   addKeyboardShortcuts() {
     const remove = (backwards: boolean) => {
       const { selection } = this.editor.state;

@@ -108,7 +108,16 @@ export function ChatbotComposer(props: ChatbotComposerProps) {
               if (index) nodes.push({ type: "hardBreak" });
               if (line) nodes.push({ type: "text", text: line });
             });
-          return editorRef.current?.commands.insertContent(nodes) ?? true;
+          return (
+            editorRef.current
+              ?.chain()
+              .command(({ tr }) => {
+                tr.setMeta("uiEvent", "paste");
+                return true;
+              })
+              .insertContent(nodes)
+              .run() ?? true
+          );
         },
       },
       onSelectionUpdate: ({ editor }) => publishSelection(editor),
@@ -212,12 +221,15 @@ export function ChatbotComposer(props: ChatbotComposerProps) {
         >
           {(inputProps) => (
             <PromptInput
-              onSubmit={(message) =>
-                onSubmit({
+              getMessageText={() => (editor ? promptMessageText(editor) : text)}
+              onSubmit={(message) => {
+                if (editor)
+                  editor.view.dispatch(editor.state.tr.setMeta("parsePromptReferences", true));
+                return onSubmit({
                   ...message,
                   text: editor ? promptMessageText(editor) : message.text,
-                })
-              }
+                });
+              }}
             >
               <textarea name="message" hidden readOnly value={text} disabled={disabled} />
               <PromptEditableContext.Provider value={!disabled}>
@@ -231,7 +243,12 @@ export function ChatbotComposer(props: ChatbotComposerProps) {
                   onCompositionEndCapture={() => {
                     composing.current = false;
                     requestAnimationFrame(() => {
-                      if (editor && !editor.isDestroyed) publishSelection(editor);
+                      if (editor && !editor.isDestroyed) {
+                        editor.view.dispatch(
+                          editor.state.tr.setMeta("parsePromptReferences", true),
+                        );
+                        publishSelection(editor);
+                      }
                     });
                   }}
                   onKeyDownCapture={(event) => {
@@ -287,7 +304,7 @@ export function ChatbotComposer(props: ChatbotComposerProps) {
                     Stop
                   </Button>
                 ) : (
-                  <PromptInputSubmit disabled={!text.trim() || disabled} />
+                  <PromptInputSubmit disabled={(!text.trim() && !attachments.length) || disabled} />
                 )}
               </PromptInputFooter>
             </PromptInput>

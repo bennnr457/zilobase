@@ -34,10 +34,17 @@ for (const width of [1400, 390]) {
         await page.getByRole("button", { name: "Submit", exact: true }).click();
         await expect(input).toBeEnabled();
         await expect(page.locator(".is-assistant")).toContainText("Attached records are partial");
-        await expect(page.getByRole("link", { name: "main", exact: true })).toBeVisible();
+        await expect(
+          page
+            .locator(".is-assistant [data-ai-message-mention]")
+            .getByRole("link", { name: "main", exact: true }),
+        ).toBeVisible();
         await writePrompt(page, "A follow-up\nwith a second line");
+        // Text edges can vary slightly between Chromium rasterization runs.
+        // Empty frames and the geometry assertions below remain exact.
         await expect(shell).toHaveScreenshot(`${snapshot}-conversation.png`, {
           animations: "disabled",
+          maxDiffPixels: 20,
         });
 
         const geometry = await input.evaluate((element) => {

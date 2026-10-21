@@ -63,7 +63,7 @@ async function openSources(page, mode) {
             {
               id: "assistant",
               role: "assistant",
-              text: "Found sources. [[page:child]] [[database:database]] [[source:source]]",
+              text: "Found sources. [[page:child]] [[database:database]] [[source:source]] See [External reference](https://example.com).",
               status: "completed",
               roots,
               context,
@@ -129,7 +129,7 @@ for (const mode of ["page", "sidebar", "floating"]) {
     );
     await expect(reading.getByRole("link", { name: "child", exact: true })).toContainText("✅");
     await expect(reading.getByRole("link", { name: "Database", exact: true })).toHaveCount(0);
-    const answers = page.getByLabel("Answer sources", { exact: true });
+    const answers = page.locator(".is-assistant [data-ai-message-mention]");
     await expect(answers.getByRole("link", { name: "Tasks", exact: true })).toHaveCount(2);
     await expect(answers.getByRole("link", { name: "Records", exact: true })).toHaveCount(0);
     const appearance = (element) => {
@@ -183,3 +183,15 @@ for (const mode of ["page", "sidebar", "floating"]) {
     }
   });
 }
+
+test("inline source pills preserve ordinary Markdown link safety", async ({ page }) => {
+  await openSources(page, "sidebar");
+  await page
+    .locator(".is-assistant")
+    .getByRole("button", { name: "External reference", exact: true })
+    .click();
+  await expect(page.locator('[data-streamdown="link-safety-modal"]')).toBeVisible();
+  await expect(page.locator('[data-streamdown="link-safety-modal"]')).toContainText(
+    "https://example.com",
+  );
+});

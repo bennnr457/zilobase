@@ -22,6 +22,7 @@ export interface PromptInputMessage {
 
 export type PromptInputProps = Omit<ComponentProps<"form">, "onSubmit"> & {
   inputGroupClassName?: string;
+  getMessageText?: () => string;
   onSubmit: (
     message: PromptInputMessage,
     event: FormEvent<HTMLFormElement>,
@@ -31,6 +32,7 @@ export type PromptInputProps = Omit<ComponentProps<"form">, "onSubmit"> & {
 export function PromptInput({
   className,
   inputGroupClassName,
+  getMessageText,
   onSubmit,
   children,
   ...props
@@ -48,7 +50,7 @@ export function PromptInput({
         if (!field || field.disabled) return;
         const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (submit?.disabled) return;
-        const text = field.value;
+        const text = getMessageText?.() ?? field.value;
         if (!text.trim()) return;
         submitting.current = true;
         try {

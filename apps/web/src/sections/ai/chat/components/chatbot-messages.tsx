@@ -1,15 +1,19 @@
-import { chatCitations, chatDisplayText } from "@zilobase/features/ai";
-import { AnswerSources, ChatSourceContext } from "./answer-sources";
+import { chatDisplayText } from "@zilobase/features/ai";
+import { ChatSourceContext } from "./answer-sources";
 import { MessageScrollerItem, MessageScrollerContent } from "@/components/ui/message-scroller";
-import { Message, MessageContent, MessageResponse } from "./message";
+import { Message, MessageContent } from "./message";
 import { MessageActions } from "./message-actions";
 import { MessageThinking } from "./message-thinking";
-import { UserMessage } from "./user-message";
+import { MessageSources } from "./message-sources";
 import { ReadActivity } from "./read-activity";
 import { lazy, Suspense, useMemo } from "react";
 import type { ActivityActions, AgentActivity } from "../lib/agent-activity";
 import { useSmoothText } from "../hooks/use-smooth-text";
 import { Button } from "@/components/ui/button";
+
+const LazyRunDebugger = lazy(() =>
+  import("./run-debugger").then((module) => ({ default: module.RunDebugger })),
+);
 
 const LazyMessageActivity = lazy(() => import("./message-activity"));
 
@@ -60,6 +64,7 @@ export function ChatbotMessages({
                 {message.role === "assistant" ? (
                   <AssistantMessage
                     message={message}
+                    workspaceId={workspaceId}
                     active={streaming && message === messages.at(-1)}
                     pendingLabel={pendingLabel}
                     activities={activityByMessage?.[message.id]}
@@ -69,7 +74,7 @@ export function ChatbotMessages({
                   />
                 ) : (
                   <MessageContent>
-                    <UserMessage message={message} />
+                    <MessageSources text={message.text} roots={message.roots} />
                   </MessageContent>
                 )}
               </Message>
@@ -83,6 +88,7 @@ export function ChatbotMessages({
 
 function AssistantMessage({
   message,
+  workspaceId,
   active,
   pendingLabel,
   activities,
@@ -91,6 +97,7 @@ function AssistantMessage({
   onContinue,
 }: {
   message: ChatMessage;
+  workspaceId: string | null;
   active: boolean;
   pendingLabel?: string;
   activities?: readonly AgentActivity[];
@@ -100,7 +107,7 @@ function AssistantMessage({
 }) {
   const displayText = chatDisplayText(message.text);
   const { text, isSmoothing } = useSmoothText(
-    displayText,
+    message.text,
     active,
     !active && message.status !== "completed",
   );
@@ -110,11 +117,7 @@ function AssistantMessage({
       (activity) => activity.status === "running" || activity.status === "pending",
     ) ||
     (active && message.progress?.activities.some((activity) => activity.status === "running"));
-  const citations = message.context
-    ? chatCitations(message.text, message.context.manifest).filter(
-        (entry) => entry.pageId || entry.databaseId,
-      )
-    : [];
+
   return (
     <>
       <MessageContent data-ai-streaming={rendering || undefined}>
@@ -127,9 +130,13 @@ function AssistantMessage({
         {rendering && !text ? (
           !hasActiveActivity && <MessageThinking label={pendingLabel} />
         ) : (
-          <MessageResponse isAnimating={rendering}>{text}</MessageResponse>
+          <MessageSources
+            text={text}
+            manifest={message.context?.manifest ?? []}
+            isAnimating={rendering}
+          />
         )}
-        {text && citations.length > 0 && <AnswerSources citations={citations} />}
+
         {!!message.context?.omissions.length && !rendering && (
           <p className="text-xs text-content-secondary">{message.context.omissions.join(" ")}</p>
         )}
@@ -149,6 +156,11 @@ function AssistantMessage({
           )}
       </MessageContent>
       {displayText && !rendering && <MessageActions text={displayText} onRetry={onRetry} />}
+      {workspaceId && (
+        <Suspense fallback={null}>
+          <LazyRunDebugger workspaceId={workspaceId} message={message} />
+        </Suspense>
+      )}
     </>
   );
 }

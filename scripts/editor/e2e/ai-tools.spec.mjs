@@ -18,9 +18,10 @@ test("mentions submit references, tool activity streams, and continuation keeps 
   await expect(page.getByRole("button", { name: "Continue reading", exact: true })).toBeVisible();
   await expect(page.locator(".is-assistant")).toContainText("Records read");
   const first = await page.evaluate(() => window.pageLayoutFixture.ai.requests[0]);
-  expect(first.roots).toEqual([{ type: "page", id: "main" }]);
-  expect(first.snapshots).toEqual([]);
-  expect(first.history).toEqual([]);
+  expect(first.text).toContain("[[page:main]]");
+  expect(first).not.toHaveProperty("roots");
+  expect(first).not.toHaveProperty("snapshots");
+  expect(first).not.toHaveProperty("history");
   expect(first.continueFromRunId).toBeUndefined();
   expect(JSON.stringify(first)).not.toContain("Unsynced editor plan");
   await page.reload();
@@ -33,7 +34,8 @@ test("mentions submit references, tool activity streams, and continuation keeps 
   await expect(resume).toHaveCount(0);
   const continued = await page.evaluate(() => window.pageLayoutFixture.ai.requests.at(-1));
   expect(continued.continueFromRunId).toMatch(/^[0-9a-f-]{36}$/);
-  expect(continued.roots).toEqual(first.roots);
+  expect(continued.text).toContain("[[page:main]]");
+  expect(continued).not.toHaveProperty("roots");
   await expect(draft(page)).toHaveValue("");
   await expect(page.getByRole("alert")).toHaveCount(0);
 });

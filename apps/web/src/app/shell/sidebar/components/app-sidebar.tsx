@@ -23,7 +23,6 @@ import {
   ChevronDownIcon,
   ServerIcon,
   Settings2Icon,
-  MessageSquareIcon,
 } from "@/components/icons";
 import * as React from "react";
 import { type CSSProperties, type ReactNode } from "react";
@@ -1194,7 +1193,6 @@ function AiChatsSection({
                 void sidebar.handleOpenChat(thread.id);
               }}
             >
-              <MessageSquareIcon />
               <span>{thread.title.trim() || "Untitled chat"}</span>
               {["queued", "running"].includes(thread.status ?? "") && (
                 <span

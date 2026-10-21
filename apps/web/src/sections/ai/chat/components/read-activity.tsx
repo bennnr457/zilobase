@@ -34,6 +34,7 @@ export function groupSourceReads(message: ChatMessage) {
 
 function readLabel(activity: ChatToolActivity, active: boolean) {
   if (activity.status === "failed") return "Couldn't read source";
+  if (activity.cached && activity.status === "completed") return "Source reused";
   if (activity.status === "running") {
     if (!active) return "Reading stopped";
     return {

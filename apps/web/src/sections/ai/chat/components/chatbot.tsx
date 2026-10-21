@@ -1,7 +1,11 @@
 import { ChatEmptyState } from "./chat-empty-state";
 import { ChatError, ChatLoading } from "./chat-feedback";
 import { terminalChatRun, type ChatRunReceipt } from "@zilobase/features/ai";
-import type { ChatRequest } from "@zilobase/features/ai";
+import {
+  chatReferenceMarker,
+  resolveChatReferences,
+  type ChatRequestInput,
+} from "@zilobase/features/ai";
 import {
   useSendChat,
   useFollowChatRun,
@@ -89,7 +93,7 @@ export default function Chatbot({
     );
   }, [threads.detail.data, selection.id, streaming, attachmentState]);
   const [chatError, setChatError] = useState<string | null>(null);
-  const pendingRequest = useRef<ChatRequest | null>(null);
+  const pendingRequest = useRef<ChatRequestInput | null>(null);
   const streamController = useRef<AbortController | null>(null);
   useLayoutEffect(
     () => () => {
@@ -174,7 +178,22 @@ export default function Chatbot({
   const threadReady =
     selection.initialized && (selection.id === null || loadedThread.current === selection.id);
   const onSubmit = async (message: PromptInputMessage, continueFromRunId?: string) => {
-    const nextText = message.text.trim();
+    const continuedSources = continueFromRunId
+      ? (messages.find((entry) => entry.runId === continueFromRunId)?.roots ??
+        threads.detail.data?.roots ??
+        [])
+      : [];
+    const mentioned = resolveChatReferences(message.text).roots;
+    const marked =
+      message.text +
+      continuedSources
+        .filter(
+          (source) => !mentioned.some((ref) => ref.type === source.type && ref.id === source.id),
+        )
+        .map((source) => ` ${chatReferenceMarker(source)}`)
+        .join("");
+    const { text: normalizedText, roots } = resolveChatReferences(marked.trim());
+    const nextText = normalizedText.trim();
     if (!nextText || !threadReady || streamController.current || streaming || !workspaceId) return;
     setChatError(null);
     activeRun.current = null;
@@ -189,7 +208,7 @@ export default function Chatbot({
           id: userId,
           role: "user",
           text: nextText,
-          roots: attachmentState.attachments.map(({ id, type }) => ({ id, type })),
+          roots,
         },
         { id: assistantId, role: "assistant", text: "", status: "streaming" },
       ],
@@ -198,25 +217,19 @@ export default function Chatbot({
     let requestSelection = selection.revision;
     let accepted = false;
     try {
-      const roots = attachmentState.attachments.map(({ id, type }) => ({ id, type }));
-      const prepared = { roots, snapshots: [] };
       controller.signal.throwIfAborted();
-      let nextRequest: ChatRequest = {
+      let nextRequest: ChatRequestInput = {
         workspaceId,
         requestId: crypto.randomUUID(),
         threadId: selection.id ?? undefined,
         text: nextText,
         ...(continueFromRunId ? { continueFromRunId } : {}),
-        roots: prepared.roots,
-        snapshots: prepared.snapshots,
-        history: [],
       };
-      const signature = (request: ChatRequest) =>
+      const signature = (request: ChatRequestInput) =>
         JSON.stringify({
           workspaceId: request.workspaceId,
           threadId: request.threadId,
           text: request.text,
-          roots: request.roots,
           continueFromRunId: request.continueFromRunId,
         });
       if (pendingRequest.current && signature(pendingRequest.current) === signature(nextRequest))
@@ -240,12 +253,12 @@ export default function Chatbot({
           setPendingTurn(null);
           setMessages((current) => [
             ...current,
-            { id: userId, role: "user", text: nextText, roots: prepared.roots },
+            { id: userId, role: "user", text: nextText, roots },
             {
               id: assistantId,
               role: "assistant",
               text: "",
-              roots: prepared.roots,
+              roots,
               context: event.context,
               status: "streaming",
             },
@@ -261,6 +274,7 @@ export default function Chatbot({
                     context: event.run.context,
                     progress: event.run.progress,
                     runId: event.run.runId,
+                    roots,
                     status: terminalChatRun(event.run.status) ? event.run.status : "streaming",
                   }
                 : entry,
@@ -271,6 +285,20 @@ export default function Chatbot({
             current.map((entry) =>
               entry.id === assistantId
                 ? { ...entry, context: event.context, progress: event.progress }
+                : entry,
+            ),
+          );
+        } else if (event.type === "debug") {
+          setMessages((current) =>
+            current.map((entry) =>
+              entry.id === assistantId
+                ? {
+                    ...entry,
+                    debug: {
+                      events: [...(entry.debug?.events ?? []), ...event.events],
+                      omitted: event.omitted,
+                    },
+                  }
                 : entry,
             ),
           );
@@ -321,7 +349,14 @@ export default function Chatbot({
     const previous = [...messages].reverse().find((message) => message.role === "user");
     if (!previous) return;
     pendingRequest.current = null;
-    void onSubmit({ text: previous.text, files: [] });
+    const { text, roots } = resolveChatReferences(previous.text);
+    const missing = (previous.roots ?? []).filter(
+      (source) => !roots.some((ref) => ref.type === source.type && ref.id === source.id),
+    );
+    void onSubmit({
+      text: text + missing.map((source) => ` ${chatReferenceMarker(source)}`).join(""),
+      files: [],
+    });
   };
   const centerEmptyState = !isSidebar && !hasMessages && threadReady;
   return (

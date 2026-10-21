@@ -45,8 +45,8 @@ for (const width of [1400, 390]) {
     const sent = await page.evaluate(() => window.pageLayoutFixture.ai.requests);
     expect(sent).toHaveLength(1);
     expect(sent[0].text).toBe("Summarize [[page:main]]quickly please");
-    expect(sent[0].roots).toEqual([{ type: "page", id: "main" }]);
-    expect(sent[0].snapshots).toEqual([]);
+    expect(sent[0]).not.toHaveProperty("roots");
+    expect(sent[0]).not.toHaveProperty("snapshots");
     const mention = page.locator('.is-user [data-ai-message-mention="page:main"]');
     await expect(mention.getByRole("link", { name: "main", exact: true })).toBeVisible();
     await expect(mention.locator('[aria-hidden="true"]').first()).toBeVisible();
@@ -82,9 +82,9 @@ test("Backspace, Delete, undo and the remove button keep inline sources synchron
   await writePrompt(page, "Use this page");
   await input(page).press("Enter");
   await expect(input(page)).toBeEnabled();
-  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].roots).toEqual([
-    { type: "page", id: "main" },
-  ]);
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].text).toContain(
+    "[[page:main]]",
+  );
 });
 
 test("page and database pills retain their inline order and icons after reload", async ({
@@ -102,10 +102,7 @@ test("page and database pills retain their inline order and icons after reload",
   await expect(input(page)).toBeEnabled();
   const request = await page.evaluate(() => window.pageLayoutFixture.ai.requests[0]);
   expect(request.text).toBe("Compare [[page:main]] with [[database:database]] today");
-  expect(request.roots).toEqual([
-    { type: "page", id: "main" },
-    { type: "database", id: "database" },
-  ]);
+  expect(request).not.toHaveProperty("roots");
   const mentions = page.locator(".is-user [data-ai-message-mention]");
   await expect(mentions).toHaveCount(2);
   await expect(mentions.nth(0).getByRole("link", { name: "main", exact: true })).toBeVisible();
@@ -116,13 +113,23 @@ test("page and database pills retain their inline order and icons after reload",
   await expect(mentions.nth(1).getByRole("link", { name: "Tasks", exact: true })).toBeVisible();
 });
 
-test("typed bracket references do not attach a source or grant access", async ({ page }) => {
+test("typed references become a message pill while unavailable identities stay unavailable", async ({
+  page,
+}) => {
   await open(page);
   await input(page).fill("Read [[page:invented]]");
   await input(page).press("Enter");
   await expect(input(page)).toBeEnabled();
-  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests[0])).roots).toEqual([]);
-  await expect(page.locator(".is-user [data-ai-message-mention]")).toHaveCount(0);
+  expect(await page.evaluate(() => window.pageLayoutFixture.ai.requests[0])).not.toHaveProperty(
+    "roots",
+  );
+  await expect(page.locator(".is-user [data-ai-message-mention]")).toHaveCount(1);
+  await expect(
+    page.locator(".is-user").getByRole("link", { name: "Unavailable page", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.is-assistant [data-ai-message-mention="page:invented"]')).toHaveCount(
+    0,
+  );
 });
 
 test("a repeated source stays selected until its last inline pill is removed", async ({ page }) => {
@@ -137,9 +144,9 @@ test("a repeated source stays selected until its last inline pill is removed", a
   await input(page).pressSequentially("Use the remaining reference");
   await input(page).press("Enter");
   await expect(input(page)).toBeEnabled();
-  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].roots).toEqual([
-    { type: "page", id: "main" },
-  ]);
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].text).toContain(
+    "[[page:main]]",
+  );
 });
 
 test("selecting all and replacing the prompt removes its sources; HTML paste cannot create pills", async ({
@@ -164,7 +171,9 @@ test("selecting all and replacing the prompt removes its sources; HTML paste can
   await expect(pills(page)).toHaveCount(0);
   await input(page).press("Enter");
   await expect(input(page)).toBeEnabled();
-  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0].roots).toEqual([]);
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests))[0]).not.toHaveProperty(
+    "roots",
+  );
 });
 
 test("inline pills stay disabled during tool reads and survive a stopped submission", async ({
@@ -186,4 +195,105 @@ test("inline pills stay disabled during tool reads and survive a stopped submiss
   await expect(input(page)).toBeEnabled();
   await expect(draft(page)).toHaveValue("");
   await expect(pills(page)).toHaveCount(1);
+});
+
+for (const marker of ["page:main", "[[page:main]]"]) {
+  test(`pasted ${marker} sends text only and renders inline citations after reload`, async ({
+    page,
+  }) => {
+    await open(page);
+    await input(page).evaluate((node, text) => {
+      node.focus();
+      const data = new DataTransfer();
+      data.setData("text/plain", text);
+      node.dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+      );
+    }, `Summarize ${marker}, then ${marker}.`);
+    await expect(pills(page)).toHaveCount(2);
+    await expect(
+      pills(page).first().getByRole("button", { name: "Remove main", exact: true }),
+    ).toBeVisible();
+    await input(page).press("Enter");
+    await expect(input(page)).toBeEnabled();
+    const request = await page.evaluate(() => window.pageLayoutFixture.ai.requests[0]);
+    expect(request.text).toBe("Summarize [[page:main]], then [[page:main]].");
+    expect(Object.keys(request).sort()).toEqual(["requestId", "text", "workspaceId"]);
+    const mentions = page.locator('.is-user [data-ai-message-mention="page:main"]');
+    await expect(mentions).toHaveCount(2);
+    const cited = page.locator('.is-assistant [data-ai-message-mention="page:main"]');
+    await expect(cited.getByRole("link", { name: "main", exact: true })).toBeVisible();
+    await expect(
+      page.locator('.is-assistant [data-ai-message-mention="page:invented"]'),
+    ).toHaveCount(0);
+    await expect(page.locator(".is-assistant")).not.toContainText("[[page:");
+    await page.reload();
+    await expect(mentions).toHaveCount(2);
+    await expect(cited.getByRole("link", { name: "main", exact: true })).toBeVisible();
+  });
+}
+
+test("typed references resolve into composer pills without consuming an unfinished ID", async ({
+  page,
+}) => {
+  await open(page);
+  await input(page).pressSequentially("Summarize [[page:ma");
+  await expect(pills(page)).toHaveCount(0);
+  await input(page).pressSequentially("in]] then page:main");
+  await expect(pills(page)).toHaveCount(1);
+  await input(page).pressSequentially(" please");
+  await expect(pills(page)).toHaveCount(2);
+  await input(page).press("Enter");
+  await expect(input(page)).toBeEnabled();
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests[0])).text).toBe(
+    "Summarize [[page:main]] then [[page:main]] please",
+  );
+});
+
+test("pasted references preserve undo, redo and surrounding text", async ({ page }) => {
+  await open(page);
+  await input(page).evaluate((node) => {
+    node.focus();
+    const data = new DataTransfer();
+    data.setData("text/plain", "Compare [[page:main]] with [[database:database]].");
+    node.dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+    );
+  });
+  await expect(pills(page)).toHaveCount(2);
+  await input(page).press("ControlOrMeta+z");
+  await expect(pills(page)).toHaveCount(0);
+  await expect(draft(page)).toHaveValue("");
+  await input(page).press("ControlOrMeta+Shift+z");
+  await expect(pills(page)).toHaveCount(2);
+  await input(page).press("Enter");
+  await expect(input(page)).toBeEnabled();
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests[0])).text).toBe(
+    "Compare [[page:main]] with [[database:database]].",
+  );
+});
+
+test("literal code and malformed references stay as text in the composer", async ({ page }) => {
+  await open(page);
+  const text = "Example `[[page:main]]` and [[page:%broken]]";
+  await input(page).fill(text);
+  await expect(pills(page)).toHaveCount(0);
+  await expect(draft(page)).toHaveValue(text);
+  await input(page).fill("");
+  await input(page).pressSequentially("`[[page:main]]");
+  await expect(pills(page)).toHaveCount(0);
+  await input(page).pressSequentially("` and [[page:main]]");
+  await expect(pills(page)).toHaveCount(1);
+});
+
+test("a standalone page reference can be submitted after it becomes a pill", async ({ page }) => {
+  await open(page);
+  await input(page).fill("[[page:main]]");
+  await expect(pills(page)).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Submit", exact: true })).toBeEnabled();
+  await input(page).press("Enter");
+  await expect(input(page)).toBeEnabled();
+  expect((await page.evaluate(() => window.pageLayoutFixture.ai.requests[0])).text).toBe(
+    "[[page:main]]",
+  );
 });

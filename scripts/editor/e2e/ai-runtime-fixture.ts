@@ -1,7 +1,11 @@
 import type { ChatRunReceipt, ChatThreadDetail } from "@zilobase/features/ai";
 import { chatDisplayText } from "@zilobase/features/ai";
 import { buildContextMarkdown } from "@zilobase/page-context";
-import { collectWorkspaceContext, type ChatRequest } from "@zilobase/features/runtime";
+import {
+  chatRequestSchema,
+  collectWorkspaceContext,
+  type ChatRequestInput,
+} from "@zilobase/features/runtime";
 
 // Deterministic transport fixture; production acquisition, rendering, shared-client
 // cache and UI code run unchanged. Real authorization/persistence is tested in PostgreSQL.
@@ -98,15 +102,18 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
   const controls = {
     durable: new URLSearchParams(location.search).get("durableAi") === "1",
     toolMode: new URLSearchParams(location.search).get("toolAi") === "1",
+    cachedInspection: false,
     workspaceId: "workspace",
     holdReads: false,
+    debugDenied: false,
+    debugExpired: false,
     holdStream: false,
     holdFirstToken: false,
     releaseFirstToken: () => {},
     holdThreadReads: false,
     failThreadReads: false,
     failNext: false,
-    requests: [] as ChatRequest[],
+    requests: [] as ChatRequestInput[],
     reads: [] as string[],
     cancelled: 0,
     extraSearchPages: 0,
@@ -136,6 +143,11 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       controls.reads.push(path);
       const type = path.split("/")[3];
       const id = path.split("/")[4]?.split("?")[0];
+      if (
+        (type === "page" && !pages.some((page) => page.id === id)) ||
+        (type === "database" && id !== "database")
+      )
+        throw Object.assign(new Error("Source unavailable"), { status: 404 });
       return type === "database"
         ? { title: "Tasks", emoji: "🗃️" }
         : {
@@ -145,8 +157,9 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     }
     if (path === "/ai/capabilities") return { durable: controls.durable };
     if (path === "/ai/turns") {
-      const request = JSON.parse(String(options?.body)) as ChatRequest;
-      controls.requests.push(request);
+      const raw = JSON.parse(String(options?.body));
+      controls.requests.push(raw);
+      const request = chatRequestSchema.parse(raw);
       const previous = threads.find((item) => item.run?.requestId === request.requestId);
       if (previous) return structuredClone(previous.run);
       const context = buildContextMarkdown({
@@ -216,6 +229,57 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       const id = path.split("/")[3]?.split("?")[0];
       const detail = threads.find((item) => item.run?.runId === id || item.run?.requestId === id);
       if (!detail?.run) throw Object.assign(new Error("Run not found"), { status: 404 });
+      if (path.includes("/debug")) {
+        controls.reads.push(path);
+        if (controls.debugDenied)
+          throw Object.assign(new Error("Source access denied"), { status: 403 });
+        return {
+          runId: detail.run.runId,
+          status: detail.run.status,
+          model: "fixture-model",
+          available: !controls.debugExpired,
+          omitted: 0,
+          expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+          events: controls.debugExpired
+            ? []
+            : [
+                {
+                  id: 1,
+                  at,
+                  step: 1,
+                  type: "tool.call",
+                  tool: "read_page",
+                  toolCallId: "read-1",
+                  payload: JSON.stringify({ pageId: "main", cursor: null }),
+                },
+                ...(["completed", "stopped"].includes(detail.run.status)
+                  ? [
+                      {
+                        id: 2,
+                        at,
+                        step: 1,
+                        type: "tool.result",
+                        tool: "read_page",
+                        toolCallId: "read-1",
+                        durationMs: 24,
+                        payload: JSON.stringify({
+                          title: "Customer feedback review",
+                          entries: [{ kind: "text", text: "Saved server plan" }],
+                          coverage: { complete: true },
+                        }),
+                      },
+                      {
+                        id: 3,
+                        at,
+                        step: 1,
+                        type: "run.completed",
+                        payload: JSON.stringify({ calls: 1 }),
+                      },
+                    ]
+                  : []),
+              ],
+        };
+      }
       if (path.includes("/cancel")) {
         controls.cancelled++;
         detail.run.status = "stopped";
@@ -339,14 +403,16 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
                     activities: [
                       {
                         id: "read-records",
-                        name: "query_records",
-                        label: "Reading records",
+                        name: controls.cachedInspection ? "describe_source" : "query_records",
+                        label: controls.cachedInspection ? "Inspecting source" : "Reading records",
+                        cached: controls.cachedInspection || undefined,
                         status: "completed",
                         returned: 50,
                         hasMore: !controls.requests.at(-1)?.continueFromRunId,
                       },
                     ],
                     canContinue: !controls.requests.at(-1)?.continueFromRunId,
+                    ...(controls.cachedInspection ? { stopReason: "no_progress" } : {}),
                   };
                   detail.messages.at(-1)!.progress = run.progress;
                   detail.messages.at(-1)!.runId = run.runId;
@@ -392,8 +458,9 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         }),
       );
     }
-    const request = JSON.parse(String(init.body)) as ChatRequest;
-    controls.requests.push(request);
+    const raw = JSON.parse(String(init.body));
+    controls.requests.push(raw);
+    const request = chatRequestSchema.parse(raw);
     if (controls.failNext) {
       controls.failNext = false;
       throw new Error("Connection lost. Retry your message.");
@@ -448,6 +515,21 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
           const write = (event: unknown) =>
             controller.enqueue(new TextEncoder().encode(`${JSON.stringify(event)}\n`));
           write({ type: "context", context, threadId: detail!.thread.id });
+          write({
+            type: "debug",
+            omitted: 0,
+            events: [
+              {
+                id: 1,
+                at,
+                step: 1,
+                type: "tool.call",
+                tool: "read_page",
+                toolCallId: "read-1",
+                payload: JSON.stringify({ pageId: "main" }),
+              },
+            ],
+          });
           controls.appendAnswer = (text) => {
             if (closed) return;
             assistant.text += text;
@@ -475,6 +557,21 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
               controller.close();
               return;
             }
+            write({
+              type: "debug",
+              omitted: 0,
+              events: [
+                {
+                  id: 2,
+                  at,
+                  step: 1,
+                  type: "tool.result",
+                  tool: "read_page",
+                  toolCallId: "read-1",
+                  payload: JSON.stringify({ text: "Saved server plan" }),
+                },
+              ],
+            });
             assistant.text = answer;
             write({ type: "delta", text: answer });
             persist();

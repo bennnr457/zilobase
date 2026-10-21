@@ -86,11 +86,13 @@ test("mentions send references without editor content and validate source citati
   await expect(composer(page)).toBeEnabled();
   const requests = await page.evaluate(() => window.pageLayoutFixture.ai.requests);
   expect(requests).toHaveLength(1);
-  expect(requests[0].snapshots).toEqual([]);
+  expect(requests[0]).not.toHaveProperty("snapshots");
   await expect(
     page.locator("summary", { hasText: /Last sent context|Draft context preview/ }),
   ).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "main", exact: true })).toBeVisible();
+  await expect(
+    page.locator(".is-user").getByRole("link", { name: "main", exact: true }),
+  ).toBeVisible();
   const answer = page.locator(".is-assistant");
   await expect(answer).not.toContainText("[[");
   await expect(answer.locator("details")).toHaveCount(0);
@@ -99,9 +101,13 @@ test("mentions send references without editor content and validate source citati
   await expect(page.locator('a[href*="invented"]')).toHaveCount(0);
   await page.reload();
   await expect(page.locator(".is-assistant")).not.toContainText("[[");
-  await expect(page.getByRole("link", { name: "main", exact: true })).toContainText("📝");
+  await expect(
+    page.locator(".is-assistant").getByRole("link", { name: "main", exact: true }),
+  ).toContainText("📝");
   await page.getByRole("link", { name: "child", exact: true }).click();
-  await expect(page.locator("[data-citation-destination]")).toHaveText("child");
+  await expect
+    .poll(() => page.evaluate(() => window.pageLayoutFixture.router.state.location.pathname))
+    .toBe("/p/child");
 });
 
 test("failed submission preserves draft and retries the identical captured request", async ({
