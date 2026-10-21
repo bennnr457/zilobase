@@ -183,13 +183,12 @@ export function useDatabaseViewController({
       viewData.bootstrap.dataSources.length > 1),
   );
   const effectiveSetupMode = shouldUseDatabaseSetupMode({
-    // Emptiness is only knowable after load: unloaded and placeholder states
-    // always compute hasContent === false, so the setup dialog must wait for
-    // this hash's real result. Background refetches keep settled data (not
-    // placeholder), so an already-correct dialog never flickers.
+    // A new host has no source or record window yet; its bootstrap already
+    // proves it is empty. Existing sources still need a settled record window
+    // before we can judge emptiness, including when changing view hashes.
     dataSettled:
       bootstrapState.status === "success" &&
-      recordWindow.status === "success" &&
+      (!activeDataSourceId || recordWindow.status === "success") &&
       !recordWindow.isPlaceholderData,
     editable,
     hasContent: hasSetupContent,

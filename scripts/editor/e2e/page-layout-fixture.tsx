@@ -103,6 +103,16 @@ if (meetingFixture)
     openLocalFile: async () => {},
   });
 const fixtureAudience = new URLSearchParams(window.location.search).get("audience");
+const databaseCreationFixture =
+  new URLSearchParams(window.location.search).get("workspace") === "database-creation";
+const databaseCreations: Array<{ commandId: string; command: { name: string; pageId: string } }> =
+  [];
+let rejectDatabaseCreation: (error: Error) => void;
+const databaseCreationDelivery = databaseCreationFixture
+  ? new Promise<never>((_resolve, reject) => {
+      rejectDatabaseCreation = reject;
+    })
+  : null;
 let settings = { ...defaultUserSettings };
 const requests: string[] = [];
 const writes: unknown[] = [];
@@ -128,6 +138,10 @@ const aiFixture =
     : null;
 const apiFetch: ApiFetcher = async <T,>(path: string, options?: RequestInit) => {
   requests.push(path);
+  if (databaseCreationFixture && path === "/databases/commands") {
+    databaseCreations.push(JSON.parse(String(options?.body)));
+    return (await databaseCreationDelivery) as T;
+  }
   if (aiFixture) {
     const response = await aiFixture.api(path, options);
     if (response !== undefined) return response as T;
@@ -268,6 +282,21 @@ function Body({ id }: { id: string }) {
   useEffect(() => {
     mounts[id] = (mounts[id] ?? 0) + 1;
   }, [id]);
+  if (databaseCreationFixture)
+    return (
+      <Editor
+        session={{
+          kind: "local",
+          documentId: id,
+          workspaceId: "workspace",
+          pageId: id,
+          content: "<p></p>",
+        }}
+        capabilities={{ comments: false }}
+        presentation={{ hideMetadata: true, enableComments: false }}
+        view={{ viewId: id }}
+      />
+    );
   if (new URLSearchParams(window.location.search).has("comments")) return <CommentsBody id={id} />;
   if (bodyState === "loading") return <p>Loading page...</p>;
   if (bodyState === "error") return <p role="alert">Page unavailable.</p>;
@@ -642,6 +671,9 @@ const history = createMemoryHistory({ initialEntries: [initial] });
 const router = createRouter({ routeTree: root.addChildren(routes), history });
 Object.assign(window, {
   pageLayoutFixture: {
+    databaseCreations,
+    rejectDatabaseCreation: () =>
+      rejectDatabaseCreation(Object.assign(new Error("Database creation denied"), { status: 403 })),
     ai: aiFixture?.controls,
     mounts,
     requests,

@@ -99,9 +99,9 @@ export function DatabaseView(props: DatabaseViewProps) {
               <div className="database-empty-state">
                 <span>This database is unavailable.</span>
               </div>
-            ) : (
+            ) : viewData.activeDataSource ? (
               <DatabaseViewContent viewType={viewType} />
-            )}
+            ) : null}
             {setupMode && databaseId ? (
               <DatabaseSetupCard
                 databaseId={databaseId}
