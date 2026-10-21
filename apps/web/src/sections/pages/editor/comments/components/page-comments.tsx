@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup, ButtonGroupItem } from "@/components/ui/button-group";
 import {
   Command,
   CommandEmpty,
@@ -209,62 +210,66 @@ function CommentItemComponent({
           {(canReact || canEdit || (showResolveUnresolve && (canResolve || onUnresolve))) &&
           !isEditing ? (
             <AlertDialog>
-              <span className="absolute right-0 top-0 flex shrink-0 items-center gap-1 rounded-xl border bg-surface-canvas p-1 opacity-0 shadow-sm transition-opacity group-hover/comment:opacity-100 group-focus-within/comment:opacity-100">
+              <ButtonGroup
+                aria-label="Comment actions"
+                className="absolute right-0 top-0 opacity-0 transition-opacity group-hover/comment:opacity-100 group-focus-within/comment:opacity-100 has-[[aria-expanded=true]]:opacity-100"
+                variant="segmented"
+              >
                 {canReact ? (
                   <CommentReactionPicker align="end" disabled={isMutating} onSelect={onAddReaction}>
-                    <Button
+                    <ButtonGroupItem
                       aria-label="Add reaction"
                       className="text-content-secondary"
                       disabled={isMutating}
-                      size="icon-sm"
+                      layout="icon"
                       type="button"
                       variant="ghost"
                     >
                       <SmilePlus />
-                    </Button>
+                    </ButtonGroupItem>
                   </CommentReactionPicker>
                 ) : null}
                 {canResolve ? (
-                  <Button
+                  <ButtonGroupItem
                     aria-label="Resolve thread"
                     className="text-content-secondary"
                     disabled={isMutating}
                     onClick={onResolve}
-                    size="icon-sm"
+                    layout="icon"
                     title="Resolve"
                     type="button"
                     variant="ghost"
                   >
                     <Check />
-                  </Button>
+                  </ButtonGroupItem>
                 ) : null}
                 {onUnresolve ? (
-                  <Button
+                  <ButtonGroupItem
                     aria-label="Unresolve thread"
                     className="text-content-secondary"
                     disabled={isMutating}
                     onClick={onUnresolve}
-                    size="icon-sm"
+                    layout="icon"
                     title="Unresolve"
                     type="button"
                     variant="ghost"
                   >
                     <RotateCcw className="size-4" />
-                  </Button>
+                  </ButtonGroupItem>
                 ) : null}
                 {canEdit ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <ButtonGroupItem
                         aria-label="More comment actions"
                         className="text-content-secondary"
                         disabled={isMutating}
-                        size="icon-sm"
+                        layout="icon"
                         type="button"
                         variant="ghost"
                       >
                         <MoreHorizontal />
-                      </Button>
+                      </ButtonGroupItem>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-28" sideOffset={6}>
                       <DropdownMenuItem disabled={isMutating} onClick={onEdit}>
@@ -284,7 +289,7 @@ function CommentItemComponent({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : null}
-              </span>
+              </ButtonGroup>
               <AlertDialogContent size="sm">
                 <AlertDialogHeader>
                   <AlertDialogTitle>
@@ -330,7 +335,11 @@ function CommentItemComponent({
               }}
               value={editingBody}
             />
-            <div className="flex shrink-0 items-center gap-1 pb-1 text-content-secondary">
+            <ButtonGroup
+              aria-label="Comment edit actions"
+              className="shrink-0 items-center pb-1 text-content-secondary"
+              variant="plain"
+            >
               <Button
                 aria-label="Cancel edit"
                 className="text-content-secondary"
@@ -353,7 +362,7 @@ function CommentItemComponent({
               >
                 <Check />
               </Button>
-            </div>
+            </ButtonGroup>
           </div>
         ) : (
           <>
@@ -752,7 +761,7 @@ export function PageCommentThread({
     }
   };
 
-  const isMutating = false;
+  const actionsDisabled = !controller?.canWrite;
 
   const threadResolved = Boolean(thread?.resolvedAt);
   const hasComments = comments.length > 0;
@@ -880,7 +889,7 @@ export function PageCommentThread({
         compact={compact}
         deletesThread={isRoot}
         editingBody={editingComment?.id === comment.id ? editingComment.body : null}
-        isMutating={isMutating}
+        isMutating={actionsDisabled}
         mentionLabels={mentionLabels}
         onAddReaction={(emoji) => addCommentReaction(comment.id, emoji)}
         onCancelEdit={() => setEditingComment(null)}
@@ -975,7 +984,7 @@ export function PageCommentThread({
                         ? "text-transparent caret-content-primary"
                         : "text-content-primary",
                     )}
-                    disabled={isMutating}
+                    disabled={actionsDisabled}
                     onChange={(event) => {
                       setNewCommentBody(event.target.value);
                       setNewCommentCursor((current) => {
@@ -1053,11 +1062,15 @@ export function PageCommentThread({
                     />
                   ) : null}
                 </div>
-                <div className="flex shrink-0 items-center gap-0.5 text-content-secondary">
+                <ButtonGroup
+                  aria-label="Reply actions"
+                  className="shrink-0 items-center gap-0.5 text-content-secondary"
+                  variant="plain"
+                >
                   <Button
                     aria-label="Attach file"
                     className="text-content-secondary"
-                    disabled={isMutating}
+                    disabled={actionsDisabled}
                     size={compact ? "icon-xs" : "icon-sm"}
                     type="button"
                     variant="ghost"
@@ -1067,7 +1080,7 @@ export function PageCommentThread({
                   <Button
                     aria-label="Mention person"
                     className="text-content-secondary"
-                    disabled={isMutating}
+                    disabled={actionsDisabled}
                     onClick={openMentionPicker}
                     size={compact ? "icon-xs" : "icon-sm"}
                     type="button"
@@ -1081,14 +1094,14 @@ export function PageCommentThread({
                       "rounded-full bg-action-primary text-action-on-primary hover:bg-action-primary-hover",
                       !compact && "h-7 w-7",
                     )}
-                    disabled={isMutating || !newCommentBody.trim()}
+                    disabled={actionsDisabled || !newCommentBody.trim()}
                     onClick={createComment}
                     size={compact ? "icon-xs" : "icon-sm"}
                     type="button"
                   >
                     <ArrowUp className={compact ? "size-3.5" : "size-4"} />
                   </Button>
-                </div>
+                </ButtonGroup>
               </div>
             ) : null}
           </div>

@@ -41,6 +41,30 @@ export function register({ assert, loadModule, test }) {
     second.destroy();
   });
 
+  test("page comments stay in place until explicitly opened in the overlay", async () => {
+    const { createCommentDocument, createPageCommentController } = await loadModule(
+      "/src/sections/pages/editor/comments/lib/yjs-comments.ts",
+    );
+    const controller = createPageCommentController({
+      canEdit: true,
+      canModerate: false,
+      document: createCommentDocument(),
+      user: author("user-1", "One"),
+    });
+    const openedThreads = [];
+    controller.setOpenThreadHandler((threadId) => openedThreads.push(threadId));
+
+    const threadId = controller.createPageThread("A comment from page metadata");
+    controller.reply(threadId, "A reply from page metadata");
+    assert.deepEqual(openedThreads, []);
+    assert.equal(controller.getSnapshot().activeThreadId, threadId);
+    assert.equal(controller.getSnapshot().threads[0].comments.length, 2);
+
+    controller.activateThread(threadId);
+    assert.deepEqual(openedThreads, [threadId]);
+    controller.destroy();
+  });
+
   test("Yjs comment reactions aggregate and readonly controllers reject writes", async () => {
     const { createCommentDocument, createPageCommentController } = await loadModule(
       "/src/sections/pages/editor/comments/lib/yjs-comments.ts",
@@ -69,6 +93,56 @@ export function register({ assert, loadModule, test }) {
     assert.throws(() => readonly.reply(threadId, "No"), /read-only/);
     writable.destroy();
     readonly.destroy();
+  });
+
+  test("connection readiness preserves active threads and blocks writes until reconnect", async () => {
+    const { createCommentDocument, createPageCommentController } = await loadModule(
+      "/src/sections/pages/editor/comments/lib/yjs-comments.ts",
+    );
+    const controller = createPageCommentController({
+      canEdit: true,
+      canModerate: false,
+      document: createCommentDocument(),
+      user: author("user-1", "One"),
+      connectionReady: false,
+    });
+    assert.equal(controller.canEdit, true);
+    assert.equal(controller.canWrite, false);
+    assert.throws(() => controller.createPageThread("Not yet"), /read-only/);
+    controller.setConnectionReady(true);
+    const threadId = controller.createPageThread("Root comment");
+    const before = controller.getSnapshot();
+    let notifications = 0;
+    const unsubscribe = controller.subscribe(() => notifications++);
+
+    controller.setConnectionReady(false);
+    assert.deepEqual(controller.getSnapshot(), before);
+    assert.equal(controller.canWrite, false);
+    assert.throws(() => controller.reply(threadId, "Not yet"), /read-only/);
+    assert.throws(() => controller.resolveThread(threadId), /read-only/);
+    assert.equal(notifications, 1);
+    controller.setConnectionReady(false);
+    assert.equal(notifications, 1);
+
+    controller.setConnectionReady(true);
+    assert.equal(controller.canWrite, true);
+    assert.equal(controller.getSnapshot().activeThreadId, threadId);
+    controller.reply(threadId, "Reconnected");
+    assert.equal(controller.getSnapshot().threads[0].comments.length, 2);
+    unsubscribe();
+    controller.destroy();
+
+    const viewer = createPageCommentController({
+      canEdit: false,
+      canModerate: false,
+      document: createCommentDocument(),
+      user: author("viewer", "Viewer"),
+    });
+    viewer.setConnectionReady(false);
+    viewer.setConnectionReady(true);
+    assert.equal(viewer.canWrite, false);
+    assert.throws(() => viewer.createPageThread("Still forbidden"), /read-only/);
+    viewer.destroy();
   });
 
   test("deleting a thread's first comment deletes the entire thread", async () => {

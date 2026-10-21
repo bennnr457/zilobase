@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/scripts/editor/e2e/page-layout.html?comments=1");
   await expect(page.locator(".editor-comment-anchor")).toBeVisible();
 });
@@ -47,6 +48,112 @@ test("floating comments reserve space, navigate anchors, reply, resolve and undo
   await page.locator(".editor-comment-anchor").click();
   await expect(card).toBeVisible();
   await expect(card.getByPlaceholder("Reply...")).toBeVisible();
+});
+
+test("comment actions stay visible while the More menu has focus", async ({ page }) => {
+  await page.getByRole("button", { name: "Open comments", exact: true }).click();
+  const card = page.locator(".floating-comments");
+  await card.getByRole("button", { name: /Maya Chen.*Shared drafts/ }).click();
+  const comment = card.locator("article").first();
+  const actions = comment.locator('[aria-label="Comment actions"]');
+
+  await comment.hover();
+  await actions.getByRole("button", { name: "More comment actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit", exact: true }).focus();
+  await page.mouse.move(0, 0);
+  await expect(actions).toHaveCSS("opacity", "1");
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await card.getByPlaceholder("Reply...", { exact: true }).focus();
+  await page.mouse.move(0, 0);
+  await expect(actions).toHaveCSS("opacity", "0");
+});
+
+test("reconnecting keeps the comment input, draft and active thread mounted", async ({ page }) => {
+  await page.getByRole("button", { name: "Open comments", exact: true }).click();
+  const card = page.locator(".floating-comments");
+  await card.getByRole("button", { name: /Maya Chen.*Shared drafts/ }).click();
+  const reply = card.getByPlaceholder("Reply...", { exact: true });
+  await reply.fill("Keep this draft through reconnect.");
+  await reply.evaluate((input) => {
+    window.savedCommentInput = input;
+  });
+
+  await page.evaluate(() => window.commentControllers.get("main").setConnectionReady(false));
+  await expect(reply).toBeVisible();
+  await expect(reply).toBeDisabled();
+  await expect(reply).toHaveValue("Keep this draft through reconnect.");
+  await expect(
+    card.getByRole("list", { name: "Open comments" }).getByRole("button", { name: "Send reply" }),
+  ).toBeDisabled();
+  await expect(card.getByText("I will update the draft today.", { exact: true })).toBeVisible();
+
+  await page.evaluate(() => window.commentControllers.get("main").setConnectionReady(true));
+  await expect(reply).toBeEnabled();
+  expect(await reply.evaluate((input) => input === window.savedCommentInput)).toBe(true);
+  await expect(reply).toHaveValue("Keep this draft through reconnect.");
+  await reply.press("Enter");
+  await expect(card.getByText("Keep this draft through reconnect.", { exact: true })).toBeVisible();
+  await expect(reply).toHaveValue("");
+});
+
+test("page discussion input stays visible with its draft while reconnecting", async ({ page }) => {
+  await page.goto("/scripts/editor/e2e/page-layout.html?comments=1&inline-comments=1");
+  const input = page.getByPlaceholder("Add a comment...", { exact: true });
+  await expect(input).toBeVisible();
+  await input.fill("A draft below the page title.");
+  await input.evaluate((element) => {
+    window.savedPageCommentInput = element;
+  });
+  await page.evaluate(() => window.commentControllers.get("main").setConnectionReady(false));
+  await expect(input).toBeVisible();
+  await expect(input).toBeDisabled();
+  await expect(page.getByText("I will update the draft today.", { exact: true })).toBeVisible();
+  await page.evaluate(() => window.commentControllers.get("main").setConnectionReady(true));
+  await expect(input).toBeEnabled();
+  await expect(input).toHaveValue("A draft below the page title.");
+  expect(await input.evaluate((element) => element === window.savedPageCommentInput)).toBe(true);
+  await input.press("Enter");
+  await expect(page.getByText("A draft below the page title.", { exact: true })).toBeVisible();
+});
+
+test("submitting page metadata comments keeps the overlay closed", async ({ page }) => {
+  await page.goto("/scripts/editor/e2e/page-layout.html?comments=1&inline-comments=1");
+  const metadata = page.locator("[data-page-metadata-content]");
+  const input = metadata.getByPlaceholder("Add a comment...", { exact: true });
+  await expect(input).toBeEnabled();
+  await page.evaluate(() => {
+    const controller = window.commentControllers.get("main");
+    for (const thread of controller.getSnapshot().threads) {
+      controller.resolveThread(thread.id);
+    }
+  });
+  await expect(
+    metadata.getByText("Can we make this clearer before launch?", { exact: true }),
+  ).toHaveCount(0);
+  const card = page.getByRole("region", { name: "Comments", exact: true });
+  await expect(card).toHaveCount(0);
+
+  await metadata.hover();
+  await metadata.getByRole("button", { name: "Add comment", exact: true }).click();
+  await input.fill("A new comment from page metadata.");
+  await metadata.getByRole("button", { name: "Send reply", exact: true }).click();
+  await expect(
+    metadata.getByText("A new comment from page metadata.", { exact: true }),
+  ).toBeVisible();
+  await expect(card).toHaveCount(0);
+  await expect(input).toHaveValue("");
+
+  await input.fill("A reply from page metadata.");
+  await input.press("Enter");
+  await expect(metadata.getByText("A reply from page metadata.", { exact: true })).toBeVisible();
+  await expect(card).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Open comments", exact: true }).click();
+  await expect(card).toBeVisible();
+  await expect(card.getByText("A new comment from page metadata.", { exact: true })).toBeVisible();
+  await expect(card.getByText("A reply from page metadata.", { exact: true })).toBeVisible();
 });
 
 test("selection comments keep their anchor while the document changes", async ({ page }) => {

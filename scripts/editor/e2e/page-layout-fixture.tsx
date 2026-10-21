@@ -250,7 +250,12 @@ const auth = {
     : sharingTarget
       ? sharingAuth
       : {
-          getSession: async () => ({ user: null, session: null }),
+          getSession: async () => ({
+            user: new URLSearchParams(window.location.search).has("inline-comments")
+              ? { id: "commenter", name: "Maya Chen", email: "maya@example.test", image: null }
+              : null,
+            session: null,
+          }),
           listWorkspaces: async () => [],
         }),
 } as unknown as ZilobaseAuthClient;
@@ -285,6 +290,7 @@ const commentControllers = new Map<string, ReturnType<typeof createPageCommentCo
 const commentEditors = new Map<string, TiptapEditor>();
 Object.assign(window, { commentControllers, commentEditors });
 function CommentsBody({ id }: { id: string }) {
+  const inlineComments = new URLSearchParams(window.location.search).has("inline-comments");
   const registry = usePageCommentsRegistry();
   const { requestEditorComments } = usePageEditorComments();
   const controller = useMemo(
@@ -313,15 +319,17 @@ function CommentsBody({ id }: { id: string }) {
       commentEditors.set(id, editor);
       controller.setEditor(editor);
       if (controller.getSnapshot().threads.length === 0) {
-        const thread = controller.createBlockThread("Can we make this clearer before launch?", {
-          from: 1,
-          to: 21,
-        });
+        const thread = inlineComments
+          ? controller.createPageThread("Can we make this clearer before launch?")
+          : controller.createBlockThread("Can we make this clearer before launch?", {
+              from: 1,
+              to: 21,
+            });
         if (thread) controller.reply(thread, "I will update the draft today.");
         controller.activateThread(null, { openSidebar: false });
       }
     },
-    [id, controller],
+    [id, controller, inlineComments],
   );
   return (
     <div>
@@ -339,8 +347,9 @@ function CommentsBody({ id }: { id: string }) {
         }}
         capabilities={{ comments: true }}
         presentation={{
-          hideMetadata: !new URLSearchParams(window.location.search).has("cover"),
-          enableComments: false,
+          hideMetadata:
+            !inlineComments && !new URLSearchParams(window.location.search).has("cover"),
+          enableComments: inlineComments,
           title: "Shared drafts",
           fullWidth: !new URLSearchParams(window.location.search).has("narrow"),
           cover:

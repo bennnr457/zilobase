@@ -63,6 +63,8 @@ export type PageCommentController = {
   addReaction: (threadId: string, messageId: string, emoji: string) => void;
   canEdit: boolean;
   canModerate: boolean;
+  readonly canWrite: boolean;
+  setConnectionReady: (ready: boolean) => void;
   createBlockThread: (body: string, range: { from: number; to: number }) => string | null;
   createInlineThread: (body: string, range: { from: number; to: number }) => string | null;
   createPageThread: (body: string) => string;
@@ -85,6 +87,7 @@ type CreateControllerOptions = {
   canModerate: boolean;
   document: Y.Doc;
   user: CommentAuthorSnapshot;
+  connectionReady?: boolean;
 };
 
 export function createPageCommentController({
@@ -92,6 +95,7 @@ export function createPageCommentController({
   canModerate,
   document,
   user,
+  connectionReady = true,
 }: CreateControllerOptions): PageCommentController {
   const threads = document.getMap<Y.Map<unknown>>(COMMENT_THREADS_FIELD);
   const listeners = new Set<() => void>();
@@ -110,7 +114,7 @@ export function createPageCommentController({
   document.on("update", handleDocumentUpdate);
 
   const requireWritable = () => {
-    if (!canEdit) throw new Error("Comments are read-only");
+    if (!canEdit || !connectionReady) throw new Error("Comments are read-only");
   };
 
   const getThread = (threadId: string) => {
@@ -223,6 +227,14 @@ export function createPageCommentController({
   const controller: PageCommentController = {
     canEdit,
     canModerate,
+    get canWrite() {
+      return canEdit && connectionReady;
+    },
+    setConnectionReady(ready) {
+      if (connectionReady === ready) return;
+      connectionReady = ready;
+      emit();
+    },
     user,
     activateThread(threadId, options) {
       activeThreadId = threadId;
@@ -258,7 +270,7 @@ export function createPageCommentController({
     createBlockThread: (body, range) => createAnchoredThread("block", body, range),
     createInlineThread: (body, range) => createAnchoredThread("inline", body, range),
     createPageThread(body) {
-      return createThread("page", body, null) as string;
+      return createThread("page", body, null, undefined, { openSidebar: false }) as string;
     },
     deleteMessage(threadId, messageId) {
       requireWritable();

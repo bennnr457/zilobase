@@ -405,30 +405,34 @@ export function PageContent({
     if (!session?.user || (!accessDenied && collaboration.status !== "blocked")) return;
     void blockCachedPage(session.user.id, pageId);
   }, [accessDenied, collaboration.status, pageId, session?.user]);
+  const commentUser = session?.user;
   const commentOptions = useMemo(() => {
-    if (!enableComments || !collaboration.document || !session?.user) {
+    if (!enableComments || !collaboration.document || !commentUser?.id) {
       return null;
     }
 
     return {
-      canEdit: commentsEditable && collaboration.canEdit,
-      canModerate: pageEditable && accessLevel === "full" && collaboration.canEdit,
+      canEdit: commentsEditable,
+      canModerate: pageEditable && accessLevel === "full",
+      connectionReady: false,
       document: collaboration.document,
       user: {
-        email: session.user.email ?? null,
-        id: session.user.id,
-        image: session.user.image ?? null,
-        name: session.user.name ?? null,
+        email: commentUser.email ?? null,
+        id: commentUser.id,
+        image: commentUser.image ?? null,
+        name: commentUser.name ?? null,
       },
     };
   }, [
     accessLevel,
     collaboration.document,
-    collaboration.canEdit,
     commentsEditable,
     enableComments,
     pageEditable,
-    session?.user,
+    commentUser?.id,
+    commentUser?.email,
+    commentUser?.image,
+    commentUser?.name,
   ]);
 
   const [commentState, setCommentState] = useState<{
@@ -447,6 +451,9 @@ export function PageContent({
       controller.destroy();
     };
   }, [commentOptions, commentsRegistry, pageId]);
+  useEffect(() => {
+    commentController?.setConnectionReady(collaboration.canEdit);
+  }, [commentController, collaboration.canEdit]);
   const liveEditingReady = demoMode || !pageEditable || collaboration.canEdit;
   useEffect(() => {
     const timing = navigationTimingRef.current;

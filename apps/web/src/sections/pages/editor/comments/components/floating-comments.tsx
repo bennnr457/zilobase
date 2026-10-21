@@ -113,7 +113,9 @@ export function FloatingComments({ pageId, onClose }: { pageId: string; onClose:
                 data-active={active}
                 className={cn(
                   "rounded-lg p-3",
-                  active ? "bg-action-neutral-pressed" : "hover:bg-action-neutral-hover",
+                  active
+                    ? "bg-action-neutral-hover hover:bg-action-neutral-pressed"
+                    : "hover:bg-action-neutral-hover",
                 )}
               >
                 <div className="flex items-start gap-2">
@@ -161,6 +163,7 @@ export function FloatingComments({ pageId, onClose }: { pageId: string; onClose:
                   {controller?.canEdit ? (
                     <Button
                       aria-label={`Resolve comment from ${author}`}
+                      disabled={!controller.canWrite}
                       size="icon-sm"
                       variant="ghost"
                       onClick={() => resolve(thread.id)}
