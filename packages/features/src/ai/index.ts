@@ -1,12 +1,13 @@
 export type { LocalPageSnapshot } from "./context";
 export type {
   ChatRequest,
+  ChatRequestInput,
   ChatEvent,
   ChatMessage,
   ChatThread,
   ChatThreadDetail,
 } from "./contracts";
-export { chatCitations, chatDisplayText, chatMentionParts } from "./citations";
+export { chatCitations, chatDisplayText, chatMentionParts, chatCitationParts } from "./citations";
 
 export type {
   ChatRunStatus,
@@ -20,3 +21,7 @@ export { applyChatRunEvent, terminalChatRun, chatRunEnvelopeSchema } from "./run
 export type { ChatReceiptStorage, ChatSubmission } from "./durable";
 
 export type { ChatToolName, ChatToolActivity, ChatReadProgress } from "./tools";
+
+export type { ChatDebugEvent, ChatDebugLog, ChatRunDebug } from "./debug";
+
+export { chatReferences, chatReferenceMarker, resolveChatReferences } from "./references";

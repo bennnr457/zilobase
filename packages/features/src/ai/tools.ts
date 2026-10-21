@@ -24,6 +24,7 @@ export const chatToolActivitySchema = z.object({
   returned: z.number().int().nonnegative().optional(),
   hasMore: z.boolean().optional(),
   error: z.string().max(512).optional(),
+  cached: z.boolean().optional(),
 });
 export type ChatToolActivity = z.infer<typeof chatToolActivitySchema>;
 export type ChatReadProgress = {

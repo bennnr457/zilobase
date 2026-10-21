@@ -4,6 +4,7 @@ import {
   cancelChatRun,
   getChatRequest,
   readChatRun,
+  readChatRunDebug,
 } from "../../services/ai/runs";
 import { chatRunResponse, legacyChatRunResponse } from "./durable-stream";
 import { listChatThreads, getChatThread, deleteChatThread } from "../../services/ai/conversations";
@@ -119,6 +120,16 @@ aiRoutes.get("/runs/:id", async (c) =>
     ),
   ),
 );
+aiRoutes.get("/runs/:id/debug", async (c) => {
+  c.header("Cache-Control", "no-store");
+  return c.json(
+    await readChatRunDebug(
+      serverOperationContext(c),
+      c.req.param("id"),
+      c.req.query("workspaceId") ?? "",
+    ),
+  );
+});
 aiRoutes.get("/runs/:id/events", async (c) => {
   const after = Number(c.req.query("after") ?? 0);
   if (!Number.isSafeInteger(after) || after < 0)

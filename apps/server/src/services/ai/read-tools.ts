@@ -1,3 +1,4 @@
+import { recordDebugEvent } from "./debug";
 import { createHash, randomUUID } from "node:crypto";
 import type { AiDiagnostics } from "./diagnostics";
 import { tool } from "ai";
@@ -14,6 +15,7 @@ import {
   aggregateSourceRecords,
   authorizeSourceRead,
   describeDatabaseSource,
+  readDatabaseMetadataRevision,
   querySourceRecords,
 } from "../databases/read/source-query";
 import {
@@ -23,30 +25,69 @@ import {
 } from "../operations/context";
 import { authorizeChatWorkspace } from "./context";
 import { updateReadCoverage, type AgentState } from "./agent-state";
+import {
+  restoreAgentKnowledge,
+  rememberInspection,
+  rememberRead,
+  inspectionKey,
+  forgetDatabaseKnowledge,
+  markReadUnavailable,
+  type InspectionInput,
+} from "./agent-memory";
 
 const id = z.string().min(1).max(128);
 const cursor = z.string().max(128).nullable().default(null);
 const describeSchema = z
   .object({
     type: z.enum(["page", "database"]),
-    id,
-    dataSourceId: id.nullable().default(null),
+    id: id.describe("The pageId or databaseId matching type. Never a dataSourceId."),
+    dataSourceId: id
+      .describe("A dataSourceId returned by section=sources. It is not a pageId.")
+      .nullable()
+      .default(null),
     section: z.enum(["sources", "properties", "views"]).default("sources"),
     cursor,
   })
   .strict();
-const pageSchema = z.object({ pageId: id, cursor }).strict();
-const recordsSchema = sourceRecordQuerySchema.extend({ cursor }).strict();
+const pageSchema = z
+  .object({
+    pageId: id.describe(
+      "A mentioned page ID or pageId discovered in record/reference results. Never a dataSourceId or recordId.",
+    ),
+    cursor,
+  })
+  .strict();
+const recordsSchema = sourceRecordQuerySchema
+  .extend({
+    databaseId: id.describe("The mentioned/discovered databaseId."),
+    dataSourceId: id.describe("A dataSourceId from describe_source(section=sources)."),
+    propertyIds: z
+      .array(id)
+      .max(20)
+      .default([])
+      .describe(
+        "propertyIds returned by describe_source(section=properties). Empty reads record identities without property values.",
+      ),
+    cursor,
+  })
+  .strict();
 const recordSchema = z
   .object({
-    databaseId: id,
-    dataSourceId: id,
-    recordId: id,
+    databaseId: id.describe("The record's databaseId."),
+    dataSourceId: id.describe("The record's dataSourceId, not a pageId."),
+    recordId: id.describe("A recordId returned by query_records, not its pageId."),
     propertyIds: z.array(id).max(20).default([]),
   })
   .strict();
-const aggregateSchema = sourceRecordQuerySchema
-  .omit({ limit: true, recordId: true, sort: true, direction: true, propertyIds: true })
+const aggregateSchema = recordsSchema
+  .omit({
+    limit: true,
+    recordId: true,
+    sort: true,
+    direction: true,
+    propertyIds: true,
+    cursor: true,
+  })
   .extend({
     operation: z.enum(["count", "sum", "avg", "min", "max"]),
     propertyId: id.nullable().default(null),
@@ -59,14 +100,11 @@ export const readToolSchemas = {
   read_record: recordSchema,
   aggregate_records: aggregateSchema,
 };
-export const readToolSchemaBytes =
-  Buffer.byteLength(
-    JSON.stringify(
-      Object.fromEntries(
-        Object.entries(readToolSchemas).map(([name, schema]) => [name, z.toJSONSchema(schema)]),
-      ),
-    ),
-  ) + 2048;
+export const readToolSchemaText = JSON.stringify(
+  Object.fromEntries(
+    Object.entries(readToolSchemas).map(([name, schema]) => [name, z.toJSONSchema(schema)]),
+  ),
+);
 
 export type ReadToolDependencies = {
   document: typeof readDocumentWindow;
@@ -76,6 +114,7 @@ export type ReadToolDependencies = {
   authorizeDatabase: typeof authorizeSourceRead;
   authorizePage: typeof readPageIdentity;
   authorizeWorkspace: typeof authorizeChatWorkspace;
+  metadataRevision?: typeof readDatabaseMetadataRevision;
 };
 const dependencies: ReadToolDependencies = {
   document: readDocumentWindow,
@@ -85,8 +124,63 @@ const dependencies: ReadToolDependencies = {
   authorizeDatabase: authorizeSourceRead,
   authorizePage: readPageIdentity,
   authorizeWorkspace: authorizeChatWorkspace,
+  metadataRevision: readDatabaseMetadataRevision,
 };
+
+/** Do not replay retained inspection metadata after access revocation or a revision change. */
+export async function revalidateReadKnowledge(
+  context: ServerOperationContext,
+  state: AgentState,
+  ports: ReadToolDependencies = dependencies,
+) {
+  if (!ports.metadataRevision || !state.knowledge) return;
+  const scoped = { ...context, pinnedWorkspaceId: state.workspaceId };
+  const checks = new Map<string, { databaseId: string; dataSourceId?: string; revision: string }>();
+  for (const entry of state.knowledge.inspections)
+    checks.set(JSON.stringify([entry.input.id, entry.input.dataSourceId]), {
+      databaseId: entry.input.id,
+      dataSourceId: entry.input.dataSourceId ?? undefined,
+      revision: entry.revision,
+    });
+  for (const source of state.knowledge.sources)
+    if (source.revision)
+      checks.set(JSON.stringify([source.databaseId, source.dataSourceId]), {
+        databaseId: source.databaseId,
+        dataSourceId: source.dataSourceId,
+        revision: source.revision,
+      });
+  for (const check of checks.values()) {
+    try {
+      await ports.authorizeWorkspace(scoped, state.workspaceId);
+      if ((await ports.metadataRevision(scoped, check)) !== check.revision)
+        forgetDatabaseKnowledge(state, check.databaseId);
+    } catch (error) {
+      forgetDatabaseKnowledge(state, check.databaseId);
+      if (error instanceof ServerOperationError && [403, 404].includes(error.status)) {
+        state.progress.stopReason = "source_unavailable";
+        throw new Error("CHAT_SOURCE_UNAVAILABLE");
+      }
+      throw error;
+    }
+  }
+}
 const key = (resource: ResourceRef) => `${resource.type}:${resource.id}`;
+function metadataEntry(
+  section: string,
+  databaseId: string,
+  dataSourceId: string | null,
+  entry: Record<string, unknown> & { id: string },
+) {
+  const { id, ...metadata } = entry;
+  return {
+    ...metadata,
+    kind: section === "sources" ? "data_source" : section === "properties" ? "property" : "view",
+    databaseId,
+    ...(section === "sources"
+      ? { dataSourceId: id }
+      : { dataSourceId, [section === "properties" ? "propertyId" : "viewId"]: id }),
+  };
+}
 const fingerprint = (name: string, input: Record<string, unknown>) =>
   createHash("sha256")
     .update(
@@ -100,9 +194,25 @@ const fingerprint = (name: string, input: Record<string, unknown>) =>
       ]),
     )
     .digest("hex");
-class ReadToolError extends Error {}
-const fail = (code: string): never => {
-  throw new ReadToolError(code);
+class ReadToolError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public recovery?: { tool: ChatToolName; input: Record<string, unknown> },
+  ) {
+    super(message);
+  }
+}
+const fail = (
+  detail: string,
+  recovery?: { tool: ChatToolName; input: Record<string, unknown> },
+): never => {
+  const separator = detail.indexOf(":");
+  throw new ReadToolError(
+    separator < 0 ? detail : detail.slice(0, separator),
+    separator < 0 ? detail : detail.slice(separator + 1).trim(),
+    recovery,
+  );
 };
 
 export function createReadTools(
@@ -118,6 +228,7 @@ export function createReadTools(
   },
 ) {
   const ports = options.dependencies ?? dependencies;
+  restoreAgentKnowledge(state);
   const scoped = { ...context, pinnedWorkspaceId: state.workspaceId };
   const check = () => {
     options.signal.throwIfAborted();
@@ -125,8 +236,23 @@ export function createReadTools(
   };
   const assertGrant = async (resource: ResourceRef, seen = new Set<string>()) => {
     const grant = state.grants.find((g) => key(g.resource) === key(resource));
-    if (!grant || seen.has(key(resource)) || seen.size >= 8)
-      fail("OUT_OF_SCOPE: attach this source with @ before reading it");
+    if (!grant || seen.has(key(resource)) || seen.size >= 8) {
+      const source =
+        resource.type === "page" &&
+        state.knowledge!.sources.find((entry) => entry.dataSourceId === resource.id);
+      if (source) {
+        await assertGrant({ type: "database", id: source.databaseId }, seen);
+        await ports.authorizeDatabase(scoped, source.databaseId, source.dataSourceId);
+        fail(
+          `RESOURCE_TYPE_MISMATCH: ${resource.id} is a dataSourceId, not a pageId. Call query_records with databaseId=${source.databaseId} and dataSourceId=${source.dataSourceId}; use returned pageIds with read_page.`,
+          {
+            tool: "query_records",
+            input: { databaseId: source.databaseId, dataSourceId: source.dataSourceId },
+          },
+        );
+      }
+      fail("OUT_OF_SCOPE: mention this source as [[page:ID]] or [[database:ID]] before reading it");
+    }
     seen.add(key(resource));
     if (grant!.parent) {
       await assertGrant(grant!.parent, seen);
@@ -225,15 +351,22 @@ export function createReadTools(
     run: () => Promise<unknown>,
   ) => {
     check();
+    const startedAt = performance.now();
+    const debugDetail = { tool: name, toolCallId };
+    recordDebugEvent(state, "tool.call", input, debugDetail);
     if (state.calls >= options.maxCalls) {
       state.progress.stopReason = "tool_budget";
       updateReadCoverage(state);
-      return {
+      const result = {
         error: {
           code: "BUDGET_EXHAUSTED",
           message: "Do not call more tools. Answer using available evidence and disclose coverage.",
         },
       };
+      recordDebugEvent(state, "tool.result", result, debugDetail);
+      updateReadCoverage(state);
+      await options.changed?.();
+      return result;
     }
     state.calls++;
     const source =
@@ -261,6 +394,7 @@ export function createReadTools(
       returned: undefined as number | undefined,
       hasMore: undefined as boolean | undefined,
       error: undefined as string | undefined,
+      cached: undefined as boolean | undefined,
     };
     state.progress.activities.push(activity);
     const queuedAt = performance.now();
@@ -294,11 +428,21 @@ export function createReadTools(
       if (Buffer.byteLength(JSON.stringify(result)) > options.maxResultBytes)
         fail("RESULT_TOO_LARGE");
       activity.status = "completed";
+      state.knowledge!.unavailable = state.knowledge!.unavailable.filter(
+        (entry) => entry !== `${source.type}:${source.id}`,
+      );
+      if (result && typeof result === "object" && "cached" in result)
+        activity.cached = result.cached === true;
       if (result && typeof result === "object" && "coverage" in result) {
         const coverage = result.coverage as { returned?: number; complete: boolean };
         activity.returned = coverage.returned;
         activity.hasMore = !coverage.complete;
       }
+      recordDebugEvent(state, "tool.result", result, {
+        ...debugDetail,
+        durationMs: performance.now() - startedAt,
+      });
+      updateReadCoverage(state);
       await options.changed?.();
       return result;
     } catch (error) {
@@ -310,16 +454,28 @@ export function createReadTools(
             ? "SOURCE_UNAVAILABLE"
             : String(error.body.error).slice(0, 512)
           : error instanceof ReadToolError
-            ? error.message.slice(0, 512)
+            ? error.code.slice(0, 512)
             : "READ_FAILED";
-      await options.changed?.();
-      return {
+      if (error instanceof ServerOperationError && [403, 404].includes(error.status)) {
+        markReadUnavailable(state, source);
+      }
+      const result = {
+        ...(error instanceof ReadToolError && error.recovery ? { next: error.recovery } : {}),
         error: {
           code: activity.error,
           message:
-            "Do not infer content from a failed read. Correct the query or explain the limitation.",
+            error instanceof ReadToolError
+              ? error.message
+              : "Do not infer content from a failed read. Correct the query or explain the limitation.",
         },
       };
+      recordDebugEvent(state, "tool.result", result, {
+        ...debugDetail,
+        durationMs: performance.now() - startedAt,
+      });
+      updateReadCoverage(state);
+      await options.changed?.();
+      return result;
     } finally {
       timing?.({ outcome: activity.status, returned: activity.returned });
       active--;
@@ -354,6 +510,7 @@ export function createReadTools(
       hasMore,
     );
     for (const entry of entries) if (entry.kind === "reference") grant(entry.resource, parent);
+    rememberRead(state, name, parent, !hasMore, entries.length);
     evidence(
       { key: `page:${pageId}`, type: "page", id: pageId, title: result.title, pageId },
       result.revision,
@@ -383,7 +540,22 @@ export function createReadTools(
       previous?.position as SourceRecordPosition | undefined,
       previous?.revision as SourceReadRevision | undefined,
     );
-    const records = fit(result.records, (records) => ({ records, properties: result.properties }));
+    const typedRecord = ({ id, ...record }: (typeof result.records)[number]) => ({
+      ...record,
+      kind: "record",
+      recordId: id,
+      databaseId: query.databaseId,
+      dataSourceId: query.dataSourceId,
+    });
+    const properties = result.properties.map(({ id, ...property }) => ({
+      ...property,
+      kind: "property",
+      propertyId: id,
+    }));
+    const records = fit(result.records, (records) => ({
+      records: records.map(typedRecord),
+      properties,
+    }));
     const hasMore = result.hasMore || records.length < result.records.length;
     const nextCursor = continuation(
       name,
@@ -435,10 +607,12 @@ export function createReadTools(
               grant({ type: "page", id: pageId }, parent, query.dataSourceId);
         }
     }
+    rememberRead(state, name, parent, !hasMore, records.length, query.dataSourceId);
     return {
       revision: result.revision,
-      records,
-      properties: result.properties,
+      records: records.map(typedRecord),
+      properties,
+      next: "Use recordId with read_record for selected properties. Use the returned pageId with read_page for page bodies. Follow nextCursor with the same query for more records.",
       evidence: [`[[source:${query.dataSourceId}]]`],
       coverage: {
         scope: "matching-records",
@@ -452,13 +626,53 @@ export function createReadTools(
   return {
     describe_source: tool({
       description:
-        "Inspect a mentioned or discovered page outline, or database sources/properties/views. No records are read. Database properties and views require a dataSourceId; use section=sources first. Follow nextCursor to inspect more metadata.",
+        "Inspect a page outline or database metadata. section=sources returns data_source entries with dataSourceId, NOT pages. Then query_records to get records and their pageIds; inspect properties only when property values/filters are needed. Views are optional metadata, not records. Reuse inspected metadata. Follow nextCursor for remaining metadata.",
       inputSchema: describeSchema,
       execute: (input, { toolCallId }) =>
         execute("describe_source", input, toolCallId, async () => {
           if (input.type === "page") return pageRead("describe_source", input, input.id, true);
           await assertGrant({ type: "database", id: input.id });
           const previous = readCursor("describe_source", input);
+          const inspectionInput: InspectionInput = { ...input, type: "database" };
+          const cached = state.knowledge!.inspections.find(
+            (entry) => entry.key === inspectionKey(inspectionInput),
+          );
+          // Consumed cursors cannot be revived by a cache hit. First-page complete inspections are reusable.
+          if (
+            cached &&
+            !input.cursor &&
+            !cached.result.continuation?.nextCursor &&
+            ports.metadataRevision
+          ) {
+            try {
+              const revision = await ports.metadataRevision(scoped, {
+                databaseId: input.id,
+                dataSourceId: input.dataSourceId ?? undefined,
+              });
+              if (revision === cached.revision) {
+                if (input.dataSourceId)
+                  evidence(
+                    {
+                      key: `source:${input.dataSourceId}`,
+                      type: "source",
+                      id: input.dataSourceId,
+                      databaseId: input.id,
+                      sourceId: input.dataSourceId,
+                      title: String(cached.result.title),
+                    },
+                    revision,
+                  );
+                cached.hits++;
+                if (++state.knowledge!.repeatedInspections >= 3)
+                  state.progress.stopReason = "no_progress";
+                return { ...cached.result, cached: true };
+              }
+              forgetDatabaseKnowledge(state, input.id);
+            } catch (error) {
+              forgetDatabaseKnowledge(state, input.id);
+              throw error;
+            }
+          }
           const result = await ports.describe(scoped, {
             databaseId: input.id,
             dataSourceId: input.dataSourceId ?? undefined,
@@ -466,9 +680,11 @@ export function createReadTools(
             after: previous?.position as string | undefined,
             revision: previous?.revision as string | undefined,
           });
+          const typedEntry = (entry: (typeof result.entries)[number]) =>
+            metadataEntry(input.section, input.id, input.dataSourceId, entry);
           const entries = fit(result.entries, (entries) => ({
             title: result.title.slice(0, 512),
-            entries,
+            entries: entries.map(typedEntry),
           }));
           const hasMore = result.hasMore || entries.length < result.entries.length;
           const nextCursor = continuation(
@@ -488,15 +704,37 @@ export function createReadTools(
             },
             result.revision,
           );
-          return {
+          if (input.dataSourceId)
+            evidence(
+              {
+                key: `source:${input.dataSourceId}`,
+                type: "source",
+                id: input.dataSourceId,
+                databaseId: input.id,
+                sourceId: input.dataSourceId,
+                title: result.title,
+              },
+              result.revision,
+            );
+          const response = {
             title: result.title.slice(0, 512),
+            kind: "database_metadata",
+            databaseId: input.id,
+            dataSourceId: input.dataSourceId,
             revision: result.revision,
             section: result.section,
-            entries,
+            entries: entries.map(typedEntry),
+            next:
+              input.section === "sources"
+                ? "These entries are database data sources, not pages. Use their dataSourceId with query_records (or inspect properties for needed values/filters). To summarize pages inside the database, query_records first, then read_page using returned pageIds."
+                : "Use propertyId values with query_records or aggregate_records as needed. Read records before summarizing their content; inspect views only if the question needs view metadata.",
             evidence: [`[[database:${input.id}]]`],
             coverage: { scope: input.section, complete: !hasMore, returned: entries.length },
             continuation: { nextCursor },
           };
+          rememberInspection(state, inspectionInput, response);
+          state.knowledge!.repeatedInspections = 0;
+          return response;
         }),
     }),
     read_page: tool({
@@ -549,6 +787,14 @@ export function createReadTools(
               sourceId: input.dataSourceId,
             },
             result.revision,
+          );
+          rememberRead(
+            state,
+            "aggregate_records",
+            { type: "database", id: input.databaseId },
+            true,
+            result.matchingRecords,
+            input.dataSourceId,
           );
           return {
             ...result,

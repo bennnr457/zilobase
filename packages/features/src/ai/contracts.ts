@@ -1,3 +1,5 @@
+import { resolveChatReferences } from "./references";
+import type { ChatDebugEvent } from "./debug";
 import type { ChatRunReceipt, ChatRunStatus } from "./runs";
 import { z } from "zod";
 import type { BuildContextResult, ResourceRef } from "@zilobase/page-context";
@@ -15,7 +17,7 @@ export const chatRequestSchema = z
     threadId: z.uuid().optional(),
     continueFromRunId: z.uuid().optional(),
     text: z.string().trim().min(1).max(20_000),
-    roots: z.array(resourceRefSchema).max(20),
+    roots: z.array(resourceRefSchema).max(20).default([]),
     snapshots: z
       .array(
         z.object({
@@ -43,11 +45,29 @@ export const chatRequestSchema = z
       .max(0, "Conversation history is owned by the server")
       .default([]),
   })
-  .strict();
+  .strict()
+  .transform((request, ctx) => {
+    const resolved = resolveChatReferences(request.text, request.roots);
+    if (resolved.roots.length > 20)
+      ctx.addIssue({
+        code: "custom",
+        path: ["text"],
+        message: "Mention at most 20 distinct sources.",
+      });
+    if (resolved.text.length > 20_000)
+      ctx.addIssue({
+        code: "custom",
+        path: ["text"],
+        message: "Message exceeds the size limit after normalizing references.",
+      });
+    return { ...request, ...resolved };
+  });
+export type ChatRequestInput = z.input<typeof chatRequestSchema>;
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 export type ChatEvent =
   | { type: "snapshot"; run: ChatRunReceipt }
   | { type: "context"; context: BuildContextResult; threadId?: string }
+  | { type: "debug"; events: ChatDebugEvent[]; omitted: number }
   | { type: "delta"; text: string }
   | { type: "replace-text"; text: string }
   | { type: "read-progress"; context: BuildContextResult; progress: ChatReadProgress }
@@ -60,6 +80,7 @@ export type ChatMessage = {
   roots?: ResourceRef[];
   context?: BuildContextResult;
   progress?: ChatReadProgress;
+  debug?: { events: ChatDebugEvent[]; omitted: number };
   runId?: string;
   status?: "completed" | "stopped" | "failed" | "interrupted" | "streaming";
 };

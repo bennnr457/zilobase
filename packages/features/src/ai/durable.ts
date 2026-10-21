@@ -1,6 +1,6 @@
 import type { ClientOperationContext } from "../shared/operation-context";
 import { captureClientOperation } from "../shared/operation-context";
-import type { ChatRequest } from "./contracts";
+import type { ChatRequestInput } from "./contracts";
 import {
   applyChatRunEvent,
   chatRunEnvelopeSchema,
@@ -28,7 +28,7 @@ export async function chatCapabilities(context: ClientOperationContext) {
 }
 export async function submitChatRun(
   context: DurableChatContext,
-  request: ChatRequest,
+  request: ChatRequestInput,
   signal: AbortSignal,
 ) {
   const scope = captureClientOperation(context);

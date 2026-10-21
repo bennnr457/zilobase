@@ -1,6 +1,6 @@
 import { streamText, type ModelMessage } from "ai";
 import type { BuildContextResult } from "@zilobase/page-context";
-import type { ChatReadProgress } from "@zilobase/features/runtime";
+import type { ChatDebugEvent, ChatReadProgress } from "@zilobase/features/runtime";
 import type { AgentState } from "./agent-state";
 import { generateReadAgent, type AgentPersistence } from "./agent";
 import { z } from "zod";
@@ -21,6 +21,7 @@ export type ProviderChunk = ProviderCursor & {
   replaceText?: string;
   context?: BuildContextResult;
   progress?: ChatReadProgress;
+  debug?: { events: ChatDebugEvent[]; omitted: number };
   checkpoint?: AgentState;
   completed?: boolean;
   usage?: { inputTokens?: number; outputTokens?: number };

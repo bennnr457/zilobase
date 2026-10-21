@@ -8,10 +8,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import type {
   ChatRequest,
+  ChatRequestInput,
   ChatRunEnvelope,
   ChatRunEvent,
   ChatRunReceipt,
   ChatRunStatus,
+  ChatRunDebug,
 } from "@zilobase/features/runtime";
 import { db } from "../../infrastructure/database";
 import {
@@ -33,7 +35,7 @@ import {
 import { ServerOperationError, type ServerOperationContext } from "../operations/context";
 import { authorizeChatWorkspace } from "./context";
 import { createAgentState, emptyChatContext, type AgentState } from "./agent-state";
-import { chatDisplayText } from "@zilobase/features/runtime";
+import { chatRequestSchema, chatDisplayText } from "@zilobase/features/runtime";
 import { assertHistoryAccess } from "./conversations";
 import { CHAT_INSTRUCTIONS, configuredChatModel, DEFAULT_CHAT_MODEL } from "./chat";
 import { chatBudget, budgetHistory } from "./budget";
@@ -65,8 +67,9 @@ export const snapshot = (
 
 export async function admitChatRun(
   context: ServerOperationContext,
-  request: ChatRequest,
+  input: ChatRequestInput,
 ): Promise<ChatRunReceipt> {
+  const request = chatRequestSchema.parse(input);
   const diagnostics = createAiDiagnostics(context.env, { requestId: request.requestId });
   const receipt = await diagnostics.measure("admission", () =>
     admitChatRunOperation(context, request),
@@ -205,15 +208,18 @@ async function admitChatRunOperation(
     if (continued) {
       agent.messages.push({
         role: "user",
-        content: `Original task: ${agent.task}\nContinue from these remaining reads: ${JSON.stringify(agent.pending)}. Recheck changed sources; do not repeat completed pages.`,
+        content: `Original task: ${agent.task}\nContinue unfinished reads in the retained inventory and these remaining cursors: ${JSON.stringify(agent.pending)}. Recheck changed sources; do not repeat completed pages.`,
       });
       agent.steps = 0;
       agent.calls = 0;
       agent.inputTokens = 0;
       agent.outputTokens = 0;
       agent.chargedTokens = 0;
+      agent.usage = undefined;
+      if (agent.knowledge) agent.knowledge.repeatedInspections = 0;
       agent.committedText = "";
       agent.progress = { activities: [], canContinue: true };
+      agent.debug = undefined;
     }
     assertAgentPromptFits(context.env, agent.messages);
     const sealed = sealRunInput(context.env, runId, {
@@ -324,6 +330,47 @@ export async function readChatRun(
   await assertHistoryAccess(context, workspaceId, [found.turn]);
   return snapshot(found.run, found.turn.assistantText, found.turn.context, found.turn.progress);
 }
+/** Raw payloads are only returned on demand after owner, session and source authorization. */
+export async function readChatRunDebug(
+  context: ServerOperationContext,
+  runId: string,
+  workspaceId: string,
+): Promise<ChatRunDebug> {
+  return db.transaction(
+    async (tx) => {
+      const receipt = await readChatRun(context, runId, workspaceId, tx);
+      const turns = await tx
+        .select()
+        .from(askAiTurn)
+        .where(eq(askAiTurn.threadId, receipt.threadId));
+      await assertHistoryAccess(context, workspaceId, turns);
+      const [saved] = await tx.select().from(askAiRunInput).where(eq(askAiRunInput.runId, runId));
+      if (!saved || saved.expiresAt <= new Date())
+        return {
+          runId,
+          status: receipt.status,
+          model: null,
+          expiresAt: null,
+          available: false,
+          events: [],
+          omitted: 0,
+        };
+      const input = openRunInput(context.env, runId, saved.sealed);
+      return {
+        runId,
+        status: receipt.status,
+        model: input.model ?? null,
+        expiresAt: saved.expiresAt.toISOString(),
+        available:
+          !!input.agent?.debug || receipt.status === "queued" || receipt.status === "running",
+        events: input.agent?.debug?.events ?? [],
+        omitted: input.agent?.debug?.omitted ?? 0,
+      };
+    },
+    { isolationLevel: "repeatable read" },
+  );
+}
+
 export async function readChatRunPage(
   context: ServerOperationContext,
   runId: string,
@@ -400,8 +447,8 @@ async function finalizeRunLocked(
     .set({ status, seq, completedAt: now, leaseExpiresAt: null, leaseOwner: null, updatedAt: now })
     .where(eq(askAiRun.id, run.id));
   await tx.update(askAiTurn).set({ status, updatedAt: now }).where(eq(askAiTurn.id, run.turnId));
-  if (run.agentVersion !== 2 || status !== "completed")
-    await tx.delete(askAiRunInput).where(eq(askAiRunInput.runId, run.id));
+  // Agent checkpoints (including debug reads) expire after their existing one-hour TTL.
+  if (run.agentVersion !== 2) await tx.delete(askAiRunInput).where(eq(askAiRunInput.runId, run.id));
 }
 export async function claimChatRun(runId: string, owner: string, cellId: string) {
   return db.transaction(async (tx) => {

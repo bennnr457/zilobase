@@ -30,6 +30,7 @@ import {
   chatThreadsKey,
   chatThreadKey,
   chatSourceOptions,
+  chatRunDebugOptions,
   deleteChatConversation,
 } from "./queries";
 export function useChatThreads(workspaceId: string, threadId: string | null, enabled: boolean) {
@@ -98,4 +99,20 @@ export function useRecoverChatSubmission() {
     (workspaceId: string) => recoverChatSubmission(context, workspaceId),
     [context],
   );
+}
+
+/** Fetch raw run payloads only while the debugger is open; never persist this query. */
+export function useChatRunDebug(workspaceId: string, runId: string, enabled: boolean) {
+  const context = useZilobaseFeatures();
+  return useQuery({
+    ...chatRunDebugOptions(context, workspaceId, runId),
+    enabled: enabled && !!workspaceId && !!runId,
+    refetchInterval: (query) =>
+      query.state.error
+        ? false
+        : query.state.data && !["queued", "running"].includes(query.state.data.status)
+          ? false
+          : 1000,
+    refetchOnWindowFocus: true,
+  });
 }

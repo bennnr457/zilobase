@@ -42,6 +42,30 @@ export async function authorizeSourceRead(
   return { ...readable, allowed };
 }
 
+async function metadataScope(
+  context: ServerOperationContext,
+  input: { databaseId: string; dataSourceId?: string },
+) {
+  const access = await authorizeSourceRead(context, input.databaseId, input.dataSourceId);
+  const [source] = input.dataSourceId
+    ? await db
+        .select()
+        .from(dataSource)
+        .where(and(eq(dataSource.id, input.dataSourceId), isNull(dataSource.deletedAt)))
+    : [];
+  if (input.dataSourceId && (!source || source.workspaceId !== access.record.workspaceId))
+    deny("Source unavailable", 403);
+  return { access, source, revision: `${access.record.version}:${source?.version ?? "host"}` };
+}
+
+/** Reauthorize and check metadata versions before reusing a run-local inspection. */
+export async function readDatabaseMetadataRevision(
+  context: ServerOperationContext,
+  input: { databaseId: string; dataSourceId?: string },
+) {
+  return boundedSnapshot(async () => (await metadataScope(context, input)).revision);
+}
+
 /** Metadata pagination never loads database rows or property values. */
 export async function describeDatabaseSource(
   context: ServerOperationContext,
@@ -55,15 +79,7 @@ export async function describeDatabaseSource(
   },
 ) {
   return boundedSnapshot(async () => {
-    const access = await authorizeSourceRead(context, input.databaseId, input.dataSourceId);
-    const [source] = input.dataSourceId
-      ? await db
-          .select()
-          .from(dataSource)
-          .where(and(eq(dataSource.id, input.dataSourceId), isNull(dataSource.deletedAt)))
-      : [];
-    const revision = `${access.record.version}:${source?.version ?? "host"}`;
-    if (source && source.workspaceId !== access.record.workspaceId) deny("Source unavailable", 403);
+    const { access, source, revision } = await metadataScope(context, input);
     if (input.revision && input.revision !== revision) deny("SOURCE_CHANGED", 409);
     const limit = Math.min(50, Math.max(1, input.limit ?? 25));
     let entries: Array<Record<string, unknown> & { id: string }>;

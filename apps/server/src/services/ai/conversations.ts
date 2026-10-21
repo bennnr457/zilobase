@@ -141,9 +141,14 @@ export async function getChatThread(
     .orderBy(asc(askAiTurn.createdAt), asc(askAiTurn.id));
   await assertHistoryAccess(context, workspaceId, turns);
   const run = await latestThreadRun(threadId);
-  const messages = messagesFromTurns(turns).map((message) =>
-    message.id === `${run?.turnId}:assistant` ? { ...message, runId: run!.runId } : message,
-  );
+  const runs = await db
+    .select({ id: askAiRun.id, turnId: askAiRun.turnId })
+    .from(askAiRun)
+    .where(eq(askAiRun.threadId, threadId));
+  const messages = messagesFromTurns(turns).map((message) => {
+    const messageRun = runs.find((item) => message.id === `${item.turnId}:assistant`);
+    return messageRun ? { ...message, runId: messageRun.id } : message;
+  });
   return {
     thread,
     messages,

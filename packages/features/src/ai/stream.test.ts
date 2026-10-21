@@ -57,3 +57,35 @@ test("provider errors keep prior deltas and reject with a useful retry error", a
   );
   assert.equal(events.length, 2);
 });
+
+test("live debug events preserve raw tool payloads separately from progress and reject malformed events", async () => {
+  const event = {
+    type: "debug",
+    omitted: 0,
+    events: [
+      {
+        id: 1,
+        at: "2026-10-21T00:00:00.000Z",
+        step: 1,
+        type: "tool.result",
+        tool: "read_page",
+        toolCallId: "read",
+        payload: JSON.stringify({ text: "Actual source data" }),
+      },
+    ],
+  };
+  const events: unknown[] = [];
+  await consumeChatStream(
+    new Response(JSON.stringify(event) + '\n{"type":"done","status":"completed"}\n'),
+    new AbortController().signal,
+    (event) => events.push(event),
+  );
+  assert.deepEqual(events[0], event);
+  await assert.rejects(
+    consumeChatStream(
+      new Response('{"type":"debug","events":[{}],"omitted":0}\n'),
+      new AbortController().signal,
+      () => {},
+    ),
+  );
+});

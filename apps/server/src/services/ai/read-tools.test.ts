@@ -5,6 +5,7 @@ vi.mock("../operations/context", async (original) => ({
 }));
 import type { ServerOperationContext } from "../operations/context";
 import { ServerOperationError } from "../operations/context";
+import { chatRequestSchema } from "@zilobase/features/runtime";
 import { createAgentState } from "./agent-state";
 import { createReadTools, readToolSchemas, type ReadToolDependencies } from "./read-tools";
 
@@ -13,16 +14,17 @@ export function readFixture() {
     env: {},
     authentication: { user: { id: "actor" } },
   } as unknown as ServerOperationContext;
-  const state = createAgentState(
-    "workspace",
-    [
-      { type: "page", id: "page" },
-      { type: "database", id: "db" },
-    ],
-    [{ role: "user", content: "Question" }],
-  );
+  const request = chatRequestSchema.parse({
+    workspaceId: "workspace",
+    requestId: "11111111-1111-4111-8111-111111111111",
+    text: "Question about page:page and [[database:db]]",
+  });
+  const state = createAgentState(request.workspaceId, request.roots, [
+    { role: "user", content: request.text },
+  ]);
   const dependencies = {
     authorizeWorkspace: vi.fn(async () => ({})),
+    metadataRevision: vi.fn(async () => "v1"),
     authorizeDatabase: vi.fn(async () => ({})),
     authorizePage: vi.fn(async () => ({})),
     document: vi.fn(async ({}, input: { pageId: string; offset?: number }) => ({
@@ -93,6 +95,33 @@ test("only read operations are registered and @mentions do not read content", ()
   ]);
   expect(dependencies.document).not.toHaveBeenCalled();
   expect(dependencies.query).not.toHaveBeenCalled();
+});
+
+test("database metadata and records have explicit resource identities", async () => {
+  const { call } = readFixture();
+  const sources = await call("describe_source", { type: "database", id: "db" });
+  expect(sources).toMatchObject({
+    databaseId: "db",
+    entries: [{ kind: "data_source", databaseId: "db", dataSourceId: "source", name: "Tasks" }],
+  });
+  expect(sources.entries[0]).not.toHaveProperty("id");
+  expect(sources.next).toContain("query_records");
+  const properties = await call("describe_source", {
+    type: "database",
+    id: "db",
+    dataSourceId: "source",
+    section: "properties",
+  });
+  expect(properties.entries[0]).toMatchObject({ kind: "property", propertyId: "source" });
+  const records = await call("query_records", { databaseId: "db", dataSourceId: "source" });
+  expect(records.records[0]).toMatchObject({
+    kind: "record",
+    recordId: "row",
+    pageId: "row-page",
+    databaseId: "db",
+    dataSourceId: "source",
+  });
+  expect(records.records[0]).not.toHaveProperty("id");
 });
 
 test("progress identifies the source while running and after completion without extra reads", async () => {
@@ -260,4 +289,110 @@ test("paging beyond 200 record references keeps a bounded working set without im
   expect(state.grants.some((g) => g.resource.id === "row-page")).toBe(true);
   expect(state.grants.some((g) => g.resource.id === "db")).toBe(true);
   expect(dependencies.query).toHaveBeenCalledOnce();
+});
+
+test("raw tool log contains the exact selected input and result without leaking them into progress", async () => {
+  const { state, call } = readFixture();
+  await call("read_page", { pageId: "page" });
+  const result = await call("read_page", { pageId: "linked" });
+  const events = state.debug!.events;
+  expect(events.map((event) => event.type)).toEqual([
+    "tool.call",
+    "tool.result",
+    "tool.call",
+    "tool.result",
+  ]);
+  expect(JSON.parse(events[2]!.payload)).toEqual({ pageId: "linked", cursor: null });
+  expect(JSON.parse(events[3]!.payload)).toEqual(result);
+  expect(events[3]).toMatchObject({ tool: "read_page", toolCallId: "tool-1", step: 1 });
+  expect(events[3]!.durationMs).toBeGreaterThanOrEqual(0);
+  expect(JSON.stringify(state.progress)).not.toContain("Private linked content");
+});
+
+test("failed authorized reads log the same safe error returned to the model", async () => {
+  const { state, call, dependencies } = readFixture();
+  vi.mocked(dependencies.document).mockRejectedValueOnce(
+    new ServerOperationError({ error: "Private internal failure" }, 403),
+  );
+  const result = await call("read_page", { pageId: "page" });
+  expect(result.error.code).toBe("SOURCE_UNAVAILABLE");
+  expect(JSON.parse(state.debug!.events.at(-1)!.payload)).toEqual(result);
+  expect(JSON.stringify(state.debug)).not.toContain("Private internal failure");
+});
+
+test("a text reference cannot bypass page authorization or produce citation evidence on failure", async () => {
+  const { call, dependencies, state } = readFixture();
+  vi.mocked(dependencies.document).mockRejectedValueOnce(
+    new ServerOperationError({ error: "Forbidden" }, 403),
+  );
+  expect(await call("read_page", { pageId: "page" })).toMatchObject({
+    error: { code: "SOURCE_UNAVAILABLE" },
+  });
+  expect(dependencies.document).toHaveBeenCalledWith(
+    expect.objectContaining({ pinnedWorkspaceId: "workspace" }),
+    expect.objectContaining({ pageId: "page" }),
+  );
+  expect(state.context.manifest).toEqual([]);
+});
+
+test("cached metadata revalidates revision, records reuse and stops inspection loops", async () => {
+  const { call, state, dependencies } = readFixture();
+  const input = { type: "database", id: "db" };
+  await call("describe_source", input);
+  for (let i = 0; i < 3; i++)
+    expect(await call("describe_source", input)).toMatchObject({ cached: true });
+  expect(dependencies.describe).toHaveBeenCalledTimes(1);
+  expect(dependencies.metadataRevision).toHaveBeenCalledTimes(3);
+  expect(state.progress.activities.at(-1)).toMatchObject({ cached: true });
+  expect(state.progress.stopReason).toBe("no_progress");
+  expect(state.progress.canContinue).toBe(true);
+  vi.mocked(dependencies.metadataRevision!).mockResolvedValueOnce("v2");
+  vi.mocked(dependencies.describe).mockResolvedValueOnce({
+    title: "Changed",
+    revision: "v2",
+    section: "sources",
+    entries: [],
+    hasMore: false,
+  });
+  expect(await call("describe_source", input)).toMatchObject({ title: "Changed", entries: [] });
+  expect(dependencies.describe).toHaveBeenCalledTimes(2);
+  expect(state.knowledge!.sources).toHaveLength(0);
+});
+
+test("known source IDs receive an authorized correction without becoming page grants", async () => {
+  const { call, state, dependencies } = readFixture();
+  await call("describe_source", { type: "database", id: "db" });
+  expect(await call("read_page", { pageId: "source" })).toMatchObject({
+    error: { code: "RESOURCE_TYPE_MISMATCH" },
+    next: { tool: "query_records", input: { databaseId: "db", dataSourceId: "source" } },
+  });
+  expect(dependencies.document).not.toHaveBeenCalled();
+  expect(state.grants.some((entry) => entry.resource.id === "source")).toBe(false);
+  vi.mocked(dependencies.authorizeDatabase).mockRejectedValueOnce(
+    new ServerOperationError({ error: "Forbidden" }, 403),
+  );
+  const denied = await call("read_page", { pageId: "source" });
+  expect(denied).toMatchObject({ error: { code: "SOURCE_UNAVAILABLE" } });
+  expect(denied).not.toHaveProperty("next");
+  expect(await call("read_page", { pageId: "unknown" })).toMatchObject({
+    error: { code: "OUT_OF_SCOPE" },
+  });
+});
+
+test("revoked metadata is forgotten and denied pending reads cannot be continued", async () => {
+  const { call, state, dependencies } = readFixture();
+  await call("describe_source", { type: "database", id: "db" });
+  await call("query_records", { databaseId: "db", dataSourceId: "source" });
+  expect(Object.keys(state.pending)).toHaveLength(1);
+  vi.mocked(dependencies.metadataRevision!).mockRejectedValueOnce(
+    new ServerOperationError({ error: "Forbidden" }, 403),
+  );
+  expect(await call("describe_source", { type: "database", id: "db" })).toMatchObject({
+    error: { code: "SOURCE_UNAVAILABLE" },
+  });
+  expect(state.knowledge!.inspections).toHaveLength(0);
+  expect(state.knowledge!.sources).toHaveLength(0);
+  expect(Object.keys(state.pending)).toHaveLength(0);
+  expect(Object.keys(state.cursors)).toHaveLength(0);
+  expect(state.progress.canContinue).toBe(false);
 });

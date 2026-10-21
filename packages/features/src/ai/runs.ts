@@ -23,7 +23,9 @@ export type ChatRunSnapshot = {
   progress?: ChatReadProgress;
 };
 export type ChatRunReceipt = ChatRunSnapshot & { requestId: string; context?: BuildContextResult };
-export type ChatRunEvent = ChatEvent | { type: "status"; status: ChatRunStatus };
+export type ChatRunEvent =
+  | Exclude<ChatEvent, { type: "debug" }>
+  | { type: "status"; status: ChatRunStatus };
 export type ChatRunEnvelope = { version: 1; runId: string; seq: number; event: ChatRunEvent };
 export const terminalChatRun = (
   status: ChatRunStatus,

@@ -5,6 +5,7 @@ const apiPathPrefixes = [
   "/ai/capabilities",
   "/ai/turns",
   "/ai/requests",
+  "/ai/sources",
   "/ai/runs",
   "/ai/threads",
   "/clips",

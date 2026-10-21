@@ -186,14 +186,23 @@ step. Configure these limits on both API and background workers:
 | `AI_MAX_STEPS`             | 12      | Maximum model steps per run, including final synthesis |
 | `AI_MAX_TOOL_CALLS`        | 24      | Maximum read operations per run                        |
 | `AI_TOOL_RESULT_BYTES`     | 6000    | Maximum serialized result bytes per tool               |
-| `AI_RUN_TOKEN_BUDGET`      | 128000  | Conservative cumulative token reservation per run      |
+| `AI_RUN_TOKEN_BUDGET`      | 128000  | Actual usage plus unresolved reservations per run      |
 
 A record page defaults to 50 records and accepts at most 100; result bytes may
 reduce the number actually returned. At most three read tools run concurrently.
 SQL reads have a ten-second statement deadline. The runtime reserves 4096 output
 tokens, includes tool definitions in context accounting, and removes whole older
-tool exchanges when necessary. UTF-8 bytes conservatively bound text tokens.
-Omitted exchanges are disclosed. The HTTP request ceiling remains 2 MB.
+tool exchanges when necessary. Known models use their supported tokenizer. Unknown models conservatively use UTF-8 bytes; `AI_TOKENIZER_ENCODING` may explicitly select `o200k_base`, `cl100k_base`, or `utf8_bound`.
+Reported usage replaces each request reservation once. Missing usage and requests
+interrupted by worker loss remain conservatively charged. The last affordable
+step disables tools and summarizes evidence. Expected limits have precise stop
+reasons rather than generic generation failures.
+
+Bounded source identities, inspected schemas, read completion and pending cursors
+survive transcript trimming. Metadata reuse rechecks access and revision, appears
+as “Source reused” in activity, and stops repeated inspections without progress.
+Continuation is offered only for unfinished accessible reads. Omitted exchanges
+are disclosed. The HTTP request ceiling remains 2 MB.
 
 Conversation history is private to its creator and workspace and remains until
 deleted. Source permissions are rechecked before display, model replay and reads.

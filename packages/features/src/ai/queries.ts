@@ -74,3 +74,25 @@ export const chatSelectionOptions = (workspaceId: string, sessionId?: string) =>
     staleTime: Infinity,
     initialData: { id: null as string | null, initialized: false, revision: 0 },
   });
+
+export const chatRunDebugOptions = (
+  { apiFetch, queryClient }: ClientOperationContext,
+  workspaceId: string,
+  runId: string,
+) =>
+  queryOptions({
+    queryKey: ["ai", workspaceId, "run-debug", runId] as const,
+    enabled: !!workspaceId && !!runId,
+    retry: false,
+    staleTime: 0,
+    gcTime: 0,
+    queryFn: async ({ signal }) => {
+      const scope = captureClientOperation({ apiFetch, queryClient });
+      const result = await scope.context.apiFetch<import("./debug").ChatRunDebug>(
+        `/ai/runs/${encodeURIComponent(runId)}/debug?workspaceId=${encodeURIComponent(workspaceId)}`,
+        { signal },
+      );
+      scope.assertCurrent();
+      return result;
+    },
+  });

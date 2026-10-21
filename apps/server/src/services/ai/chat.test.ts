@@ -64,15 +64,25 @@ test("chat sends source references without eagerly loading content and emits tex
   const authorize = vi.fn(
     async () => ({}) as Awaited<ReturnType<typeof import("./context").authorizeChatWorkspace>>,
   );
-  const prepared = await prepareChat(context, request, {
-    authorize,
-    model: () => model,
-    begin: async () => ({ threadId: "thread", turns: [], replay: null }),
-    finish: async () => {},
-  });
+  const begin = vi.fn(async () => ({ threadId: "thread", turns: [], replay: null }));
+  const prepared = await prepareChat(
+    context,
+    { workspaceId: request.workspaceId, requestId: request.requestId, text: "Read page:plan" },
+    {
+      authorize,
+      model: () => model,
+      begin,
+      finish: async () => {},
+    },
+  );
   const events = [];
   for await (const event of prepared.events(new AbortController().signal)) events.push(event);
   expect(authorize).toHaveBeenCalledOnce();
+  expect(begin).toHaveBeenCalledWith(
+    context,
+    expect.objectContaining({ text: "Read [[page:plan]]", roots: [{ type: "page", id: "plan" }] }),
+    expect.any(Object),
+  );
   expect(events.filter((event) => event.type === "delta")).toEqual([
     { type: "delta", text: "Friday." },
   ]);

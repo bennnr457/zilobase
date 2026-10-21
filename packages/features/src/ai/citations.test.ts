@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chatCitations, chatDisplayText, chatMentionParts } from "./citations";
+import { chatCitations, chatDisplayText, chatMentionParts, chatCitationParts } from "./citations";
 
-test("sent mentions retain position and repeated references while resolving only attached roots", () => {
+test("sent mentions retain position and repeated references without an attachment list", () => {
   const page = { type: "page" as const, id: "page" };
   const database = { type: "database" as const, id: "db/with]characters" };
   assert.deepEqual(
@@ -21,7 +21,8 @@ test("sent mentions retain position and repeated references while resolving only
     ],
   );
   assert.deepEqual(chatMentionParts("[[page:unknown]] [[page:%broken]]", []), [
-    { type: "text", text: "[[page:unknown]] [[page:%broken]]" },
+    { type: "source", source: { type: "page", id: "unknown" } },
+    { type: "text", text: " [[page:%broken]]" },
   ]);
   assert.deepEqual(chatMentionParts("Old question", [page, page]), [
     { type: "text", text: "Old question" },
@@ -66,4 +67,33 @@ test("streaming and interrupted citations never expose partial identities", () =
     }
   }
   assert.equal(chatDisplayText("Answer [[ordinary"), "Answer [[ordinary");
+});
+
+test("citations stay inline, repeat in place, and only resolve successfully read evidence", () => {
+  const entry = {
+    key: "page:allowed",
+    id: "allowed",
+    type: "page" as const,
+    title: "Plan",
+    pageId: "allowed",
+    provenance: { capturedAt: "now", origin: "saved" as const },
+  };
+  assert.deepEqual(
+    chatCitationParts("**Due Friday** [[page:allowed]], then [[page:allowed]]. [[page:unread]]", [
+      entry,
+    ]),
+    [
+      { type: "text", text: "**Due Friday** " },
+      { type: "citation", entry },
+      { type: "text", text: ", then " },
+      { type: "citation", entry },
+      { type: "text", text: "." },
+    ],
+  );
+  const literal = "`[[page:allowed]]`\n\n```md\n[[page:allowed]]\n```\n\n";
+  assert.deepEqual(chatCitationParts(literal + "[[page:allowed]]", [entry]), [
+    { type: "text", text: literal },
+    { type: "citation", entry },
+  ]);
+  assert.equal(chatDisplayText(literal), literal.trimEnd());
 });

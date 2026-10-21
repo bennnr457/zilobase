@@ -1,5 +1,6 @@
 import { BACKGROUND_LANE_POLICY } from "../infrastructure/background/task-v2";
 import { createNodeQueueRuntime } from "@zilobase/runtime-adapter/node";
+import { getChatThread } from "../services/ai/conversations";
 import { generateReadAgent } from "../services/ai/agent";
 import { openRunInput } from "../services/ai/run-input";
 import { MockLanguageModelV4 } from "ai/test";
@@ -157,7 +158,13 @@ try {
         (await getChatRequest(context, request.requestId, "workspace")).status,
         "stopped",
       );
-      assert.equal((await client.db.select().from(askAiRunInput)).length, 0);
+      const retained = await client.db.select().from(askAiRunInput);
+      assert.equal(
+        retained.length,
+        1,
+        "Stopped agent checkpoints retain the raw log until their existing TTL",
+      );
+      assert.ok(retained[0]!.expiresAt > new Date());
       await client.db.delete(member).where(eq(member.id, "member"));
       await assert.rejects(readChatRunPage(context, run.id, "workspace", 0), /Forbidden/);
       await client.db
@@ -331,6 +338,12 @@ try {
           workspaceId: "workspace",
           createdById: "actor",
           name: `Project ${i}`,
+          content: JSON.stringify({
+            type: "doc",
+            content: [
+              { type: "paragraph", content: [{ type: "text", text: `Saved project plan ${i}` }] },
+            ],
+          }),
         });
         await client.db.insert(databaseRow).values({
           id: `tools-row-${i}`,
@@ -340,10 +353,9 @@ try {
         });
       }
       const toolRequest = {
-        ...request,
+        workspaceId: "workspace",
         requestId: randomUUID(),
-        text: "Read the projects",
-        roots: [{ type: "database" as const, id: "tools-db" }],
+        text: "Read page:tools-page-0 and [[database:tools-db]]",
       };
       const toolRun = await admitChatRun(context, toolRequest);
       const [acceptedInput] = await client.db
@@ -352,7 +364,7 @@ try {
         .where(eq(askAiRunInput.runId, toolRun.runId));
       assert.ok(
         !JSON.stringify(openRunInput(env, toolRun.runId, acceptedInput!.sealed)).includes(
-          "Project 0",
+          "Saved project plan 0",
         ),
         "Admission must not preload record content",
       );
@@ -370,18 +382,33 @@ try {
           const model = new MockLanguageModelV4({
             doStream: async () => {
               const current = step++;
+              if (!continuing && current === 1)
+                assert.ok(
+                  JSON.stringify(input.agent!.messages).includes("Saved project plan 0"),
+                  "Page content must arrive through read_page",
+                );
               const invocation = continuing
                 ? current === 0
                   ? { name: pending!.name, input: pending!.input }
                   : null
                 : current === 0
-                  ? { name: "describe_source", input: { type: "database", id: "tools-db" } }
+                  ? { name: "read_page", input: { pageId: "tools-page-0" } }
                   : current === 1
-                    ? {
-                        name: "query_records",
-                        input: { databaseId: "tools-db", dataSourceId: "tools-source", limit: 1 },
-                      }
-                    : null;
+                    ? { name: "describe_source", input: { type: "database", id: "tools-db" } }
+                    : current === 2
+                      ? { name: "read_page", input: { pageId: "tools-source" } }
+                      : current === 3
+                        ? { name: "describe_source", input: { type: "database", id: "tools-db" } }
+                        : current === 4
+                          ? {
+                              name: "query_records",
+                              input: {
+                                databaseId: "tools-db",
+                                dataSourceId: "tools-source",
+                                limit: 1,
+                              },
+                            }
+                          : null;
               return {
                 stream: new ReadableStream({
                   start(controller) {
@@ -400,7 +427,7 @@ try {
                         id: "answer",
                         delta: continuing
                           ? "Second project. [[source:tools-source]]"
-                          : "First project. [[source:tools-source]]",
+                          : "First project. [[page:tools-page-0]] [[source:tools-source]]",
                       });
                       controller.enqueue({ type: "text-end", id: "answer" });
                     }
@@ -427,7 +454,19 @@ try {
       const firstPage = await getChatRequest(context, toolRequest.requestId, "workspace");
       assert.equal(firstPage.status, "completed");
       assert.ok(firstPage.progress?.canContinue);
-      assert.equal(firstPage.progress?.activities.length, 2);
+      assert.equal(firstPage.progress?.activities.length, 5);
+      assert.equal(firstPage.progress?.activities[2]?.error, "RESOURCE_TYPE_MISMATCH");
+      assert.equal(firstPage.progress?.activities[3]?.cached, true);
+      assert.ok(firstPage.context?.manifest.some((entry) => entry.key === "page:tools-page-0"));
+      const history = await getChatThread(context, "workspace", toolRun.threadId);
+      assert.equal(
+        history.messages[0]?.text,
+        "Read [[page:tools-page-0]] and [[database:tools-db]]",
+      );
+      assert.deepEqual(history.roots, [
+        { type: "page", id: "tools-page-0" },
+        { type: "database", id: "tools-db" },
+      ]);
       assert.ok(
         firstPage.context?.manifest.some(
           (entry) => entry.key === "record:tools-source:tools-row-0",
@@ -438,7 +477,7 @@ try {
         requestId: randomUUID(),
         threadId: toolRun.threadId,
         continueFromRunId: toolRun.runId,
-        text: "Continue reading",
+        text: "Continue reading [[page:tools-page-0]] [[database:tools-db]]",
       });
       await processAiGeneration(
         env,
@@ -458,7 +497,7 @@ try {
           requestId: randomUUID(),
           threadId: toolRun.threadId,
           continueFromRunId: toolRun.runId,
-          roots: [],
+          text: "Continue without sources",
         }),
         /sources changed/,
       );
