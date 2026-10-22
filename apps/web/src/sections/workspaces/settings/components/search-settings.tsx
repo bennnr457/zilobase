@@ -10,6 +10,9 @@ export function WorkspaceSearchSettingsSection({ workspaceId }: { workspaceId: s
   const update = useUpdateWorkspaceSearchSettings(workspaceId);
   const reindex = useReindexWorkspaceSearch(workspaceId);
   const data = settings.data;
+  const total = data
+    ? data.progress.ready + data.progress.pending + data.progress.running + data.progress.failed
+    : 0;
   const busy = update.isPending || reindex.isPending;
   const error = update.error || reindex.error;
   return (
@@ -33,9 +36,23 @@ export function WorkspaceSearchSettingsSection({ workspaceId }: { workspaceId: s
         <>
           <p className="text-sm text-content-secondary" role="status">
             {data.enabled
-              ? `${data.progress.ready} pages indexed · ${data.progress.pending + data.progress.running} pending${!data.backfillComplete ? " · Scanning workspace" : ""}${data.progress.failed ? ` · ${data.progress.failed} failed` : ""}`
+              ? `${data.progress.ready} of ${total} pages indexed · ${data.progress.running} processing · ${data.progress.pending} queued${!data.backfillComplete ? " · Scanning workspace" : ""}${data.progress.failed ? ` · ${data.progress.failed} failed` : ""}`
               : "Semantic search is disabled. Keyword search remains available."}
           </p>
+          {data.enabled && total > 0 ? (
+            <progress
+              className="h-2 w-full accent-accent"
+              aria-label="Pages indexed for semantic search"
+              value={data.backfillComplete ? data.progress.ready : undefined}
+              max={total}
+            />
+          ) : null}
+          {data.enabled && data.progress.pending + data.progress.running > 0 ? (
+            <p className="text-sm text-content-secondary">
+              Indexing runs in the background in batches. Progress refreshes every five seconds;
+              queued pages may wait for the next batch or the embedding rate limit.
+            </p>
+          ) : null}
           {!data.capability.available ? (
             <p className="text-sm text-content-secondary">
               A deployment administrator must configure Gemini search and its background queue
