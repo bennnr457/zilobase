@@ -5,9 +5,17 @@ import {
   ServerOperationError,
   type ServerOperationContext,
 } from "../operations/context";
+import { hybridSearchWorkspace } from "./retrieval";
+import type { SearchPurpose } from "./vector-contracts";
 import { searchWorkspaceItems } from "./workspace-search";
 const maxSearchResults = 50;
-export type SearchWorkspaceOperationInput = { workspaceId?: string; types?: string; q?: string };
+export type SearchWorkspaceOperationInput = {
+  workspaceId?: string;
+  types?: string;
+  q?: string;
+  mode?: string;
+  purpose?: SearchPurpose;
+};
 export async function searchWorkspaceOperation(
   context: ServerOperationContext,
   operationInput: SearchWorkspaceOperationInput,
@@ -30,14 +38,25 @@ export async function searchWorkspaceOperation(
   const requestedTypes = (operationInput.types ?? "")
     .split(",")
     .filter((type): type is "database" | "page" => type === "database" || type === "page");
-  const results = await searchWorkspaceItems({
+  if (
+    operationInput.mode !== undefined &&
+    operationInput.mode !== "keyword" &&
+    operationInput.mode !== "hybrid"
+  )
+    return deny({ error: "Invalid search mode" }, 400);
+  if (operationInput.mode === "hybrid" && (operationInput.q ?? "").length > 512)
+    return deny({ error: "Hybrid search is limited to 512 characters" }, 400);
+  const input = {
     limit: maxSearchResults,
     membershipVerified: true,
     query: operationInput.q ?? "",
     types: requestedTypes.length ? requestedTypes : undefined,
     userId: user.id,
     workspaceId,
-  });
+  };
+  if (operationInput.mode === "hybrid")
+    return hybridSearchWorkspace(input, context.env, { purpose: operationInput.purpose });
+  const results = await searchWorkspaceItems(input);
   return {
     results,
   };

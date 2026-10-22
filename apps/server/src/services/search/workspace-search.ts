@@ -11,7 +11,7 @@ import {
   page,
   searchDocument,
 } from "../../infrastructure/database/schema";
-import { canAccessDatabaseInWorkspace, getAccessiblePageIds } from "../access/effective-access";
+import { authorizedSearchIdentities } from "./eligibility";
 import { getMembership } from "../access/principal-access";
 
 export type WorkspaceSearchResult = {
@@ -24,7 +24,21 @@ export type WorkspaceSearchResult = {
   updatedAt: Date;
   entity: unknown;
   titleSource?: DataSourceEntity | null;
+  match?: SearchMatchProvenance;
 };
+
+export type SearchMatchProvenance = {
+  chunkId: string;
+  pageId: string;
+  kind: "title" | "body" | "property";
+  headingPath: string[];
+  blockId?: string;
+  blockIndex?: number;
+  propertyId?: string;
+  databaseId?: string;
+  dataSourceId?: string;
+};
+export type WorkspaceSearchInput = Parameters<typeof searchWorkspaceItems>[0];
 
 const DEFAULT_MAX_SEARCH_RESULTS = 50;
 const MAX_SEARCH_RESULTS = 100;
@@ -51,9 +65,6 @@ export async function searchWorkspaceItems(input: {
     1,
     Math.min(input.limit ?? DEFAULT_MAX_SEARCH_RESULTS, MAX_SEARCH_RESULTS),
   );
-  const accessibleIds = await getAccessiblePageIds(input.workspaceId, input.userId, {
-    membershipVerified: true,
-  });
 
   const types = [...requestedTypes];
   if (types.length === 0) return [];
@@ -96,24 +107,18 @@ export async function searchWorkspaceItems(input: {
           )
           .limit(candidateLimit)
       : [];
-  const sourceAccess = new Map<string, Promise<boolean>>();
-  for (const match of sourceMatches) {
-    if (match.databaseId === match.parentDatabaseId) {
+  const sourceAccess = await authorizedSearchIdentities(
+    input.workspaceId,
+    input.userId,
+    [],
+    [...new Set(sourceMatches.map((m) => m.parentDatabaseId))],
+  );
+  for (const match of sourceMatches)
+    if (
+      match.databaseId === match.parentDatabaseId ||
+      sourceAccess.databases.has(match.parentDatabaseId)
+    )
       matchingViewDatabaseIds.push(match.databaseId);
-      continue;
-    }
-    let access = sourceAccess.get(match.parentDatabaseId);
-    if (!access) {
-      access = canAccessDatabaseInWorkspace(
-        match.parentDatabaseId,
-        input.workspaceId,
-        input.userId,
-        "view",
-      );
-      sourceAccess.set(match.parentDatabaseId, access);
-    }
-    if (await access) matchingViewDatabaseIds.push(match.databaseId);
-  }
   const excerpt = tsQuery
     ? sql<
         string | null
@@ -154,20 +159,19 @@ export async function searchWorkspaceItems(input: {
     .orderBy(...(rank ? [desc(rank), searchDocument.title] : [searchDocument.title]))
     .limit(candidateLimit);
 
-  const permissionChecks = await Promise.all(
-    candidates.map(async (candidate) => {
-      if (candidate.type === "page") {
-        return accessibleIds.has(candidate.id);
-      }
-      if (candidate.type !== "database") return false;
-      if (candidate.sourcePageId && !accessibleIds.has(candidate.sourcePageId)) {
-        return false;
-      }
-      return canAccessDatabaseInWorkspace(candidate.id, input.workspaceId, input.userId, "view");
-    }),
+  const allowed = await authorizedSearchIdentities(
+    input.workspaceId,
+    input.userId,
+    candidates.filter((c) => c.type === "page").map((c) => c.id),
+    candidates.filter((c) => c.type === "database").map((c) => c.id),
   );
-
-  const visible = candidates.filter((_, index) => permissionChecks[index]).slice(0, limit);
+  const visible = candidates
+    .filter((c) =>
+      c.type === "page"
+        ? allowed.pages.has(c.id)
+        : c.type === "database" && allowed.databases.has(c.id),
+    )
+    .slice(0, limit);
   const pageIds = visible.filter((item) => item.type === "page").map((item) => item.id);
   const hostIds = visible.filter((item) => item.type === "database").map((item) => item.id);
   const [pages, hosts] = await Promise.all([
@@ -205,14 +209,38 @@ export async function searchWorkspaceItems(input: {
   ]);
   const pagesById = new Map(pages.map((entity) => [entity.id, entity]));
   const hostsById = new Map(hosts.map((entity) => [entity.id, entity]));
-  const titleSources = await getDatabaseTitleSourcesService(hosts, input.userId);
+  const titleSources = await getDatabaseTitleSourcesService(
+    hosts,
+    input.userId,
+    async (records) =>
+      (
+        await authorizedSearchIdentities(
+          input.workspaceId,
+          input.userId,
+          [],
+          records.map((r) => r.id),
+        )
+      ).databases,
+  );
+  const finalAccess = await authorizedSearchIdentities(input.workspaceId, input.userId, pageIds, [
+    ...hostIds,
+    ...[...titleSources.values()].flatMap((s) => (s ? [s.parentDatabaseId] : [])),
+  ]);
   // Index ordering and snippets remain contextual. Labels carry storage clocks,
   // so an index refresh cannot regress an already confirmed shared entity.
   return visible.flatMap((candidate): WorkspaceSearchResult[] => {
     const entity =
       candidate.type === "page" ? pagesById.get(candidate.id) : hostsById.get(candidate.id);
-    if (!entity) return [];
-    const titleSource = candidate.type === "database" ? titleSources.get(candidate.id) : undefined;
+    if (
+      !entity ||
+      !(candidate.type === "page"
+        ? finalAccess.pages.has(candidate.id)
+        : finalAccess.databases.has(candidate.id))
+    )
+      return [];
+    const source = candidate.type === "database" ? titleSources.get(candidate.id) : undefined;
+    const titleSource =
+      source && finalAccess.databases.has(source.parentDatabaseId) ? source : undefined;
     return [
       {
         emoji: titleSource ? getDatabaseEmoji(titleSource) : candidate.emoji,

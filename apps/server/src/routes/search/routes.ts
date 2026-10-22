@@ -13,6 +13,7 @@ searchRoutes.get("/", async (c) =>
       workspaceId: c.req.query("workspaceId"),
       types: c.req.query("types"),
       q: c.req.query("q"),
+      mode: c.req.query("mode"),
     }),
     200,
   ),

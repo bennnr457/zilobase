@@ -223,6 +223,7 @@ function recordEntity(
 
 async function loadAccessibleSourceLinks(input: {
   includeDeleted?: boolean;
+  authorizeForeignParents?: (records: DatabaseRecord[]) => Promise<ReadonlySet<string>>;
   records: DatabaseRecord[];
   userId?: string;
 }) {
@@ -260,6 +261,9 @@ async function loadAccessibleSourceLinks(input: {
         )
     : [];
   const foreignParentsById = new Map(foreignParents.map((parent) => [parent.id, parent]));
+  const authorizedParents = input.authorizeForeignParents
+    ? await input.authorizeForeignParents(foreignParents)
+    : null;
   const accessibleLinks: typeof sourceLinks = [];
   const permissions = new Map<string, Promise<boolean>>();
   for (const link of sourceLinks) {
@@ -268,6 +272,10 @@ async function loadAccessibleSourceLinks(input: {
       continue;
     }
     const parent = foreignParentsById.get(link.source.parentDatabaseId);
+    if (parent && authorizedParents) {
+      if (authorizedParents.has(parent.id)) accessibleLinks.push(link);
+      continue;
+    }
     if (parent && input.userId) {
       let allowed = permissions.get(parent.id);
       if (!allowed) {
@@ -288,10 +296,14 @@ export async function getAuthorizedDatabaseSourceIds(record: DatabaseRecord, use
 }
 
 /** Batch search headings without loading properties or records. Hosts must already be authorized. */
-export async function getDatabaseTitleSourcesService(records: DatabaseRecord[], userId: string) {
+export async function getDatabaseTitleSourcesService(
+  records: DatabaseRecord[],
+  userId: string,
+  authorizeForeignParents?: (records: DatabaseRecord[]) => Promise<ReadonlySet<string>>,
+) {
   if (!records.length) return new Map<string, DataSourceEntity | null>();
   const [links, views] = await Promise.all([
-    loadAccessibleSourceLinks({ records, userId }),
+    loadAccessibleSourceLinks({ records, userId, authorizeForeignParents }),
     db
       .select({
         id: databaseView.id,

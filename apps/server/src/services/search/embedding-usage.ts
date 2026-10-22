@@ -198,6 +198,7 @@ export async function embedSearchQuery(
   const result = await budgeted(env, input.workspaceId, "query", [formatted], () =>
     client.embedQuery(input.query, input.purpose, input.signal),
   );
+  input.signal?.throwIfAborted();
   const vector = validateSearchVector(result.embeddings[0]);
   await db.execute(sql`insert into search_query_embedding_cache(workspace_id,user_id,profile_id,purpose,input_hash,embedding,expires_at)
     values(${input.workspaceId},${input.userId},${SEARCH_PROFILE.id},${input.purpose},${hash},${JSON.stringify(vector)}::vector,clock_timestamp()+interval '10 minutes')
