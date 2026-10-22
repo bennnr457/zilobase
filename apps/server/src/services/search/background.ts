@@ -1,3 +1,4 @@
+import { indexSearchPage } from "./indexing";
 import { sql } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
 import type {
@@ -6,7 +7,7 @@ import type {
 } from "../../infrastructure/background/contracts";
 import type { RuntimeEnv } from "../../shared/config/config";
 
-// Admission stays disabled until the resumable indexing and maintenance handlers are installed.
+// Workspace scanning and fanout are connected by maintenance in the next pass.
 export async function processSearchTask(input: {
   env: RuntimeEnv;
   task: BackgroundTaskV2;
@@ -14,6 +15,7 @@ export async function processSearchTask(input: {
   signal?: AbortSignal;
 }): Promise<BackgroundTaskResult> {
   if (input.env.SEARCH_EMBEDDINGS_ENABLED !== "true") return { outcome: "noop" };
+  if (input.task.kind === "search.page_index") return indexSearchPage(input);
   throw new Error("SEARCH_HANDLER_UNAVAILABLE");
 }
 
