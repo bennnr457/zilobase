@@ -24,6 +24,7 @@ import {
   type ServerOperationContext,
 } from "../operations/context";
 import { authorizeChatWorkspace } from "./context";
+import { searchWorkspaceOperation } from "../search/operations";
 import { updateReadCoverage, type AgentState } from "./agent-state";
 import {
   restoreAgentKnowledge,
@@ -37,6 +38,16 @@ import {
 
 const id = z.string().min(1).max(128);
 const cursor = z.string().max(128).nullable().default(null);
+const searchSchema = z
+  .object({
+    query: z.string().trim().min(1).max(512).describe("Short, specific keywords or a page title."),
+    types: z
+      .array(z.enum(["page", "database"]))
+      .max(2)
+      .default([]),
+    limit: z.number().int().min(1).max(20).default(10),
+  })
+  .strict();
 const describeSchema = z
   .object({
     type: z.enum(["page", "database"]),
@@ -94,6 +105,7 @@ const aggregateSchema = recordsSchema
   })
   .strict();
 export const readToolSchemas = {
+  search_workspace: searchSchema,
   describe_source: describeSchema,
   read_page: pageSchema,
   query_records: recordsSchema,
@@ -107,6 +119,7 @@ export const readToolSchemaText = JSON.stringify(
 );
 
 export type ReadToolDependencies = {
+  search: typeof searchWorkspaceOperation;
   document: typeof readDocumentWindow;
   describe: typeof describeDatabaseSource;
   query: typeof querySourceRecords;
@@ -117,6 +130,7 @@ export type ReadToolDependencies = {
   metadataRevision?: typeof readDatabaseMetadataRevision;
 };
 const dependencies: ReadToolDependencies = {
+  search: searchWorkspaceOperation,
   document: readDocumentWindow,
   describe: describeDatabaseSource,
   query: querySourceRecords,
@@ -251,7 +265,9 @@ export function createReadTools(
           },
         );
       }
-      fail("OUT_OF_SCOPE: mention this source as [[page:ID]] or [[database:ID]] before reading it");
+      fail(
+        "OUT_OF_SCOPE: discover this source with search_workspace or mention it before reading it",
+      );
     }
     seen.add(key(resource));
     if (grant!.parent) {
@@ -261,7 +277,7 @@ export function createReadTools(
       else await ports.authorizePage(scoped, grant!.parent.id);
     }
   };
-  const grant = (resource: ResourceRef, parent: ResourceRef, sourceId?: string) => {
+  const grant = (resource: ResourceRef, parent?: ResourceRef, sourceId?: string) => {
     if (state.grants.some((g) => key(g.resource) === key(resource))) return;
     if (state.grants.length >= 200) {
       // Keep a bounded working set, not a lifetime ceiling on paginated records.
@@ -370,21 +386,25 @@ export function createReadTools(
     }
     state.calls++;
     const source =
-      name === "read_page"
-        ? { type: "page" as const, id: String(input.pageId) }
-        : name === "describe_source"
-          ? { type: input.type as "page" | "database", id: String(input.id) }
-          : {
-              type: "database" as const,
-              id: String(input.databaseId),
-              dataSourceId: String(input.dataSourceId),
-            };
+      name === "search_workspace"
+        ? undefined
+        : name === "read_page"
+          ? { type: "page" as const, id: String(input.pageId) }
+          : name === "describe_source"
+            ? { type: input.type as "page" | "database", id: String(input.id) }
+            : {
+                type: "database" as const,
+                id: String(input.databaseId),
+                dataSourceId: String(input.dataSourceId),
+              };
     const activity = {
       id: toolCallId,
       name,
       source,
+      ...(name === "search_workspace" ? { query: String(input.query) } : {}),
       status: "running" as "running" | "completed" | "failed",
       label: {
+        search_workspace: "Searching workspace",
         describe_source: "Inspecting source",
         read_page: "Reading page",
         query_records: "Reading records",
@@ -428,9 +448,10 @@ export function createReadTools(
       if (Buffer.byteLength(JSON.stringify(result)) > options.maxResultBytes)
         fail("RESULT_TOO_LARGE");
       activity.status = "completed";
-      state.knowledge!.unavailable = state.knowledge!.unavailable.filter(
-        (entry) => entry !== `${source.type}:${source.id}`,
-      );
+      if (source)
+        state.knowledge!.unavailable = state.knowledge!.unavailable.filter(
+          (entry) => entry !== `${source.type}:${source.id}`,
+        );
       if (result && typeof result === "object" && "cached" in result)
         activity.cached = result.cached === true;
       if (result && typeof result === "object" && "coverage" in result) {
@@ -456,7 +477,7 @@ export function createReadTools(
           : error instanceof ReadToolError
             ? error.code.slice(0, 512)
             : "READ_FAILED";
-      if (error instanceof ServerOperationError && [403, 404].includes(error.status)) {
+      if (source && error instanceof ServerOperationError && [403, 404].includes(error.status)) {
         markReadUnavailable(state, source);
       }
       const result = {
@@ -624,6 +645,42 @@ export function createReadTools(
     };
   };
   return {
+    search_workspace: tool({
+      description:
+        "Search accessible pages and databases in the current workspace using keywords or titles. Results are bounded, relevance-ranked discovery hints, not citation evidence or an exhaustive inventory. Read important matches with read_page or inspect databases with describe_source before relying on their content. Listing search matches does not require reading every result. Refine the query to find other matches; there is no search cursor.",
+      inputSchema: searchSchema,
+      execute: (input, { toolCallId }) =>
+        execute("search_workspace", input, toolCallId, async () => {
+          const matches = await ports.search(scoped, {
+            workspaceId: state.workspaceId,
+            q: input.query,
+            types: input.types.join(","),
+          });
+          const candidates = matches.results.slice(0, input.limit).map((match) => ({
+            type: match.type,
+            id: match.id,
+            title: match.title.slice(0, 256),
+            path: match.path.slice(0, 256),
+            excerpt: match.excerpt?.slice(0, 280) ?? null,
+            updatedAt: match.updatedAt.toISOString(),
+          }));
+          const results = fit(candidates, (results) => ({ results }));
+          // Only matches actually returned to the model become traversable. Search
+          // snippets never enter the evidence manifest; reads recheck source access.
+          for (const result of results) grant({ type: result.type, id: result.id });
+          return {
+            results,
+            exhaustive: false,
+            coverage: {
+              scope: "ranked-search-results",
+              complete: results.length === matches.results.length,
+              returned: results.length,
+              total: null,
+            },
+            next: "Read important matches before relying on their content or citing them; listing search matches needs no page read. Search is bounded and not exhaustive; no matches does not prove absence. Refine the keywords or types for other matches.",
+          };
+        }),
+    }),
     describe_source: tool({
       description:
         "Inspect a page outline or database metadata. section=sources returns data_source entries with dataSourceId, NOT pages. Then query_records to get records and their pageIds; inspect properties only when property values/filters are needed. Views are optional metadata, not records. Reuse inspected metadata. Follow nextCursor for remaining metadata.",

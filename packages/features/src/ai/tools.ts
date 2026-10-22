@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { BuildContextResult } from "@zilobase/page-context";
 
 export const chatToolNameSchema = z.enum([
+  "search_workspace",
   "describe_source",
   "read_page",
   "query_records",
@@ -14,6 +15,7 @@ export const chatToolActivitySchema = z.object({
   name: chatToolNameSchema,
   status: z.enum(["running", "completed", "failed"]),
   label: z.string().max(512),
+  query: z.string().max(512).optional(),
   source: z
     .object({
       type: z.enum(["page", "database"]),

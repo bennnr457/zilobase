@@ -160,13 +160,20 @@ Configure `OPENAI_API_KEY` in the server environment. Ask AI defaults to
 Responses API model available to your key. Credentials stay on the server. Ask AI uses the same authenticated API
 origin for web and desktop, and streams responses from `POST /ai/chat`.
 
-Users mention authorized workspace pages and databases with `@`. Mentions contain
-resource references only. The model calls `describe_source`, `read_page`,
+Users can ask workspace questions directly or mention pages and databases with `@`.
+The model uses `search_workspace` to discover accessible sources by keywords or
+title. Search results are bounded discovery hints, not citation evidence or an
+exhaustive inventory. The model reads important matches before relying on their
+content; listing search matches does not require reading every result.
+Search defaults to 10 matches, accepts at most 20, and shares the tool result-byte
+budget. Refine the keywords or page/database types for other matches; search has
+no continuation cursor. Mentions contain resource references only.
+The model calls `describe_source`, `read_page`,
 `query_records`, `read_record`, and `aggregate_records` to fetch saved content.
 It can follow references returned by those reads, including embedded databases,
 linked pages, relation values and record page bodies. Every operation checks
-current permissions and the pinned workspace. There is no workspace search tool
-and no write tool. Unsaved editor drafts and client-supplied history are excluded.
+current permissions and the pinned workspace. There is no write tool.
+Unsaved editor drafts and client-supplied history are excluded.
 
 Database queries use bounded SQL reads with property projection, scalar AND
 filters, stable sorting, and opaque revision-checked continuation cursors. Saved

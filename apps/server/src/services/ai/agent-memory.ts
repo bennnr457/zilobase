@@ -254,6 +254,7 @@ export function agentKnowledgeSummary(state: AgentState) {
   const knowledge = state.knowledge!;
   const inventory: {
     sources: typeof knowledge.sources;
+    discovered: ResourceRef[];
     inspections: Array<Record<string, unknown>>;
     reads: typeof knowledge.reads;
     pending: typeof state.pending;
@@ -261,6 +262,7 @@ export function agentKnowledgeSummary(state: AgentState) {
     summaryLimited: boolean;
   } = {
     sources: [],
+    discovered: [],
     inspections: [],
     reads: [],
     pending: {},
@@ -274,6 +276,22 @@ export function agentKnowledgeSummary(state: AgentState) {
     inventory.sources.push(source);
     if (!fits()) {
       inventory.sources.pop();
+      inventory.summaryLimited = true;
+      break;
+    }
+  }
+  // Search grants survive checkpoint recovery even if their tool exchange was
+  // compacted. Keep their typed identities available without treating them as reads.
+  for (const { resource, parent } of [...state.grants].reverse()) {
+    if (
+      parent ||
+      state.roots.some((root) => root.type === resource.type && root.id === resource.id) ||
+      knowledge.unavailable.includes(`${resource.type}:${resource.id}`)
+    )
+      continue;
+    inventory.discovered.push(resource);
+    if (!fits()) {
+      inventory.discovered.pop();
       inventory.summaryLimited = true;
       break;
     }

@@ -23,6 +23,19 @@ export function readFixture() {
     { role: "user", content: request.text },
   ]);
   const dependencies = {
+    search: vi.fn(async () => ({
+      results: [
+        { type: "page", id: "found-page", title: "Launch plan" },
+        { type: "database", id: "found-db", title: "Launch tasks" },
+      ].map((item) => ({
+        ...item,
+        path: item.title,
+        excerpt: "Search snippet",
+        emoji: null,
+        updatedAt: new Date("2026-10-22T00:00:00Z"),
+        entity: { private: "Never return the underlying entity" },
+      })),
+    })),
     authorizeWorkspace: vi.fn(async () => ({})),
     metadataRevision: vi.fn(async () => "v1"),
     authorizeDatabase: vi.fn(async () => ({})),
@@ -87,6 +100,7 @@ export function readFixture() {
 test("only read operations are registered and @mentions do not read content", () => {
   const { tools, dependencies } = readFixture();
   expect(Object.keys(tools)).toEqual([
+    "search_workspace",
     "describe_source",
     "read_page",
     "query_records",
@@ -95,6 +109,149 @@ test("only read operations are registered and @mentions do not read content", ()
   ]);
   expect(dependencies.document).not.toHaveBeenCalled();
   expect(dependencies.query).not.toHaveBeenCalled();
+  expect(dependencies.search).not.toHaveBeenCalled();
+});
+
+test("workspace search validates nonempty bounded queries without accepting a workspace override", () => {
+  const schema = readToolSchemas.search_workspace;
+  expect(schema.parse({ query: " launch " })).toEqual({ query: "launch", types: [], limit: 10 });
+  for (const input of [
+    { query: " " },
+    { query: "x".repeat(513) },
+    { query: "launch", workspaceId: "other-workspace" },
+    { query: "launch", limit: 21 },
+    { query: "launch", limit: 0 },
+    { query: "launch", types: ["user"] },
+  ])
+    expect(schema.safeParse(input).success).toBe(false);
+});
+
+test("search discovers accessible sources without mentions but grants no citation evidence", async () => {
+  const { call, dependencies, state } = readFixture();
+  state.roots = [];
+  state.grants = [];
+  const result = await call("search_workspace", { query: "launch", types: ["page", "database"] });
+  expect(dependencies.search).toHaveBeenCalledWith(
+    expect.objectContaining({ pinnedWorkspaceId: "workspace" }),
+    { workspaceId: "workspace", q: "launch", types: "page,database" },
+  );
+  expect(result).toMatchObject({
+    exhaustive: false,
+    results: [
+      { type: "page", id: "found-page", title: "Launch plan", excerpt: "Search snippet" },
+      { type: "database", id: "found-db", title: "Launch tasks" },
+    ],
+    coverage: { returned: 2, total: null },
+  });
+  expect(JSON.stringify(result)).not.toContain("Never return the underlying entity");
+  expect(state.context.manifest).toEqual([]);
+  expect(state.roots).toEqual([]);
+  expect(state.progress.activities.at(-1)).toMatchObject({
+    name: "search_workspace",
+    query: "launch",
+    status: "completed",
+    returned: 2,
+  });
+  expect(state.progress.activities.at(-1)?.source).toBeUndefined();
+  expect(JSON.stringify(state.progress)).not.toContain("Search snippet");
+  expect(await call("read_page", { pageId: "found-page" })).toMatchObject({
+    entries: [{ text: "Private linked content" }],
+  });
+  expect(await call("describe_source", { type: "database", id: "found-db" })).toMatchObject({
+    databaseId: "found-db",
+  });
+  expect(await call("read_page", { pageId: "not-returned" })).toMatchObject({
+    error: { code: "OUT_OF_SCOPE" },
+  });
+});
+
+test("search trims result bytes and grants only matches returned to the model", async () => {
+  const fixture = readFixture();
+  const template = (await fixture.dependencies.search(fixture.context, {})).results[0]!;
+  vi.mocked(fixture.dependencies.search).mockResolvedValue({
+    results: Array.from({ length: 30 }, (_, i) => ({
+      ...template,
+      id: `hit-${i}`,
+      title: "界".repeat(500),
+      path: "界".repeat(700),
+      excerpt: "界".repeat(500),
+    })),
+  });
+  const tools = createReadTools(fixture.context, fixture.state, {
+    signal: fixture.signal,
+    maxCalls: 24,
+    maxResultBytes: 4096,
+    dependencies: fixture.dependencies,
+  });
+  const result = (await tools.search_workspace.execute!(
+    { query: "launch", limit: 20, types: [] },
+    { toolCallId: "search", messages: [], abortSignal: fixture.signal, context: {} },
+  )) as any;
+  expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThanOrEqual(4096);
+  expect(result.results.length).toBeGreaterThan(0);
+  expect(result.results.length).toBeLessThan(20);
+  expect(result.coverage.complete).toBe(false);
+  expect(fixture.state.grants.filter((entry) => entry.resource.id.startsWith("hit-"))).toHaveLength(
+    result.results.length,
+  );
+  expect(
+    fixture.state.grants.some((entry) => entry.resource.id === `hit-${result.results.length}`),
+  ).toBe(false);
+  expect(Object.keys(fixture.state.pending)).toHaveLength(0);
+});
+
+test("search limits and type filters are forwarded; empty results are not an exhaustive absence claim", async () => {
+  const { call, dependencies, state } = readFixture();
+  const result = await call("search_workspace", { query: "launch", limit: 1, types: ["page"] });
+  expect(result.results).toHaveLength(1);
+  expect(result.coverage.complete).toBe(false);
+  expect(dependencies.search).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ types: "page" }),
+  );
+  vi.mocked(dependencies.search).mockResolvedValueOnce({ results: [] });
+  expect(await call("search_workspace", { query: "missing" })).toMatchObject({
+    results: [],
+    exhaustive: false,
+    coverage: { returned: 0, total: null },
+    next: expect.stringContaining("does not prove absence"),
+  });
+  expect(state.grants.some((entry) => entry.resource.id === "found-db")).toBe(false);
+});
+
+test("search requires current workspace access and discovered pages still recheck read access", async () => {
+  const { call, dependencies, state } = readFixture();
+  vi.mocked(dependencies.authorizeWorkspace).mockRejectedValueOnce(
+    new ServerOperationError({ error: "Forbidden" }, 403),
+  );
+  expect(await call("search_workspace", { query: "launch" })).toMatchObject({
+    error: { code: "SOURCE_UNAVAILABLE" },
+  });
+  expect(dependencies.search).not.toHaveBeenCalled();
+  expect(state.knowledge!.unavailable).toEqual([]);
+  await call("search_workspace", { query: "launch" });
+  vi.mocked(dependencies.document).mockRejectedValueOnce(
+    new ServerOperationError({ error: "Forbidden" }, 403),
+  );
+  expect(await call("read_page", { pageId: "found-page" })).toMatchObject({
+    error: { code: "SOURCE_UNAVAILABLE" },
+  });
+  expect(state.context.manifest).toEqual([]);
+});
+
+test("search failure creates no discovered grants and shares the run's tool budget", async () => {
+  const { call, dependencies, state } = readFixture();
+  const grants = structuredClone(state.grants);
+  vi.mocked(dependencies.search).mockRejectedValueOnce(new Error("private database error"));
+  const failed = await call("search_workspace", { query: "launch" });
+  expect(failed.error.code).toBe("READ_FAILED");
+  expect(JSON.stringify(failed)).not.toContain("private database error");
+  expect(state.grants).toEqual(grants);
+  state.calls = 24;
+  expect(await call("search_workspace", { query: "launch" })).toMatchObject({
+    error: { code: "BUDGET_EXHAUSTED" },
+  });
+  expect(dependencies.search).toHaveBeenCalledTimes(1);
 });
 
 test("database metadata and records have explicit resource identities", async () => {

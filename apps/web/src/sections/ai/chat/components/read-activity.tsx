@@ -33,6 +33,11 @@ export function groupSourceReads(message: ChatMessage) {
 }
 
 function readLabel(activity: ChatToolActivity, active: boolean) {
+  if (activity.name === "search_workspace") {
+    if (activity.status === "failed") return "Couldn't search workspace";
+    if (activity.status === "running") return active ? "Searching workspace" : "Search stopped";
+    return "Workspace searched";
+  }
   if (activity.status === "failed") return "Couldn't read source";
   if (activity.cached && activity.status === "completed") return "Source reused";
   if (activity.status === "running") {
@@ -92,17 +97,30 @@ export function ReadActivity({ message, active }: { message: ChatMessage; active
           latest.hasMore ??
           [...group.calls].reverse().find((call) => call.status === "completed")?.hasMore;
         const detail =
-          status === "failed"
-            ? "This source couldn't be read."
-            : status === "stopped"
-              ? "The read didn't finish."
-              : latest.name === "read_page" && morePageContent
-                ? running
-                  ? "Reading more of this page"
-                  : "More of this page is available"
-                : records !== undefined && status === "completed"
-                  ? `${records} ${records === 1 ? "record" : "records"}${latest.hasMore ? " · more available" : ""}`
-                  : undefined;
+          latest.name === "search_workspace"
+            ? status === "failed"
+              ? "Workspace search couldn't finish."
+              : status === "stopped"
+                ? "The search didn't finish."
+                : [
+                    latest.query ? `“${latest.query}”` : undefined,
+                    status === "completed"
+                      ? `${latest.returned ?? 0} matching sources${latest.hasMore ? " · refine the search for other matches" : ""}`
+                      : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+            : status === "failed"
+              ? "This source couldn't be read."
+              : status === "stopped"
+                ? "The read didn't finish."
+                : latest.name === "read_page" && morePageContent
+                  ? running
+                    ? "Reading more of this page"
+                    : "More of this page is available"
+                  : records !== undefined && status === "completed"
+                    ? `${records} ${records === 1 ? "record" : "records"}${latest.hasMore ? " · more available" : ""}`
+                    : undefined;
         return (
           <Trace
             key={group.id}

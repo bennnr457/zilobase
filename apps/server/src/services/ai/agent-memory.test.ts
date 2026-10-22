@@ -31,6 +31,24 @@ const sources = {
   continuation: { nextCursor: null },
 };
 
+test("search-discovered identities survive checkpoint recovery and transcript compaction without becoming evidence", () => {
+  const original = stateFor();
+  original.grants.push({ resource: { type: "page", id: "found-page" } });
+  original.grants.push({ resource: { type: "database", id: "found-db" } });
+  original.grants.push({ resource: { type: "page", id: "revoked" } });
+  original.knowledge!.unavailable.push("page:revoked");
+  const recovered = JSON.parse(JSON.stringify(original)) as typeof original;
+  recovered.messages = [{ role: "user", content: "Continue reading the launch sources" }];
+  const summary = agentKnowledgeSummary(recovered);
+  expect(JSON.parse(summary).discovered).toEqual([
+    { type: "database", id: "found-db" },
+    { type: "page", id: "found-page" },
+  ]);
+  expect(recovered.context.manifest).toEqual([]);
+  expect(recovered.knowledge!.reads).toEqual([]);
+  expect(new TextEncoder().encode(summary).length).toBeLessThanOrEqual(6000);
+});
+
 test("source identities and unfinished reads survive transcript compaction", () => {
   const state = stateFor();
   rememberInspection(state, input, sources);

@@ -34,6 +34,8 @@ import {
   describeDatabaseSource,
 } from "../services/databases/read/source-query";
 import { readDocumentWindow } from "../services/pages/read/document-window";
+import { createAgentState } from "../services/ai/agent-state";
+import { createReadTools } from "../services/ai/read-tools";
 import { sourceRecordQuerySchema } from "@zilobase/features/runtime";
 import { readDatabaseExport } from "../services/databases/read/operations";
 import type { ChatRequest } from "@zilobase/features/runtime";
@@ -261,6 +263,70 @@ try {
   assert.ok(
     document.entries.some(
       (entry) => entry.kind === "text" && entry.text.includes("Saved source content"),
+    ),
+  );
+  await client.db.insert(page).values([
+    {
+      id: "search-private",
+      workspaceId: "workspace",
+      createdById: "other",
+      name: "Saved source secret",
+    },
+    {
+      id: "search-foreign",
+      workspaceId: "other-workspace",
+      createdById: "actor",
+      name: "Saved source foreign",
+    },
+  ]);
+  const searchState = createAgentState(
+    "workspace",
+    [],
+    [{ role: "user", content: "Find saved source content" }],
+  );
+  const searchSignal = new AbortController().signal;
+  const searchTools = createReadTools(context, searchState, {
+    signal: searchSignal,
+    maxCalls: 24,
+    maxResultBytes: 6000,
+  });
+  const searchOptions = {
+    toolCallId: "search",
+    messages: [],
+    abortSignal: searchSignal,
+    context: {},
+  };
+  const found = (await run(async () =>
+    searchTools.search_workspace.execute!(
+      { query: "Saved source", types: ["page"], limit: 20 },
+      searchOptions,
+    ),
+  )) as { results: Array<{ id: string; type: string }> };
+  assert.deepEqual(
+    found.results.map((match) => match.id),
+    ["page-0"],
+  );
+  assert.equal(searchState.context.manifest.length, 0, "Search snippets are not evidence");
+  const discovered = await run(async () =>
+    searchTools.read_page.execute!(
+      { pageId: "page-0", cursor: null },
+      { ...searchOptions, toolCallId: "read-found" },
+    ),
+  );
+  assert.ok(JSON.stringify(discovered).includes("Saved source content"));
+  const foundDatabase = (await run(async () =>
+    searchTools.search_workspace.execute!(
+      { query: "Tasks", types: ["database"], limit: 20 },
+      { ...searchOptions, toolCallId: "search-db" },
+    ),
+  )) as { results: Array<{ id: string; type: string }> };
+  assert.deepEqual(
+    foundDatabase.results.map((match) => [match.type, match.id]),
+    [["database", "db"]],
+  );
+  assert.ok(
+    searchState.grants.every(
+      (grant) => !["search-private", "search-foreign"].includes(grant.resource.id),
     ),
   );
   await assert.rejects(

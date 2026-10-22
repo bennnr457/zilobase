@@ -21,112 +21,146 @@ const usage = {
   inputTokens: { total: 20, noCache: 20, cacheRead: 0, cacheWrite: 0 },
   outputTokens: { total: 5, text: 5, reasoning: 0 },
 };
-test("agent reads through tools and commits their transcript before the next model step", async () => {
-  const logs = vi.spyOn(console, "info").mockImplementation(() => {});
-  const request = chatRequestSchema.parse({
-    workspaceId: "workspace",
-    requestId: "11111111-1111-4111-8111-111111111111",
-    text: "What is due on page:page?",
-  });
-  const state = createAgentState(request.workspaceId, request.roots, [
-    { role: "user", content: request.text },
-  ]);
-  const checkpoints: AgentState[] = [];
-  const document = vi.fn(async () => ({
-    title: "Plan",
-    revision: "1",
-    offset: 0,
-    hasMore: false,
-    entries: [{ kind: "text", block: 0, text: "Due Friday" }],
-  }));
-  let step = 0;
-  const model = new MockLanguageModelV4({
-    doStream: async ({ prompt }) => {
-      const first = step++ === 0;
-      if (first) expect(JSON.stringify(prompt)).not.toContain("Due Friday");
-      else {
-        expect(checkpoints.some((s) => s.messages.some((m) => m.role === "tool"))).toBe(true);
-        expect(JSON.stringify(prompt)).toContain("Due Friday");
-      }
-      return {
-        stream: new ReadableStream({
-          start(controller) {
-            controller.enqueue({ type: "stream-start", warnings: [] });
-            if (first)
+for (const discover of [false, true])
+  test(`agent ${discover ? "searches without mentions then reads" : "reads mentioned sources"} and checkpoints before the next model step`, async () => {
+    const logs = vi.spyOn(console, "info").mockImplementation(() => {});
+    const request = chatRequestSchema.parse({
+      workspaceId: "workspace",
+      requestId: "11111111-1111-4111-8111-111111111111",
+      text: discover ? "What is due for the launch?" : "What is due on page:page?",
+    });
+    const state = createAgentState(request.workspaceId, request.roots, [
+      { role: "user", content: request.text },
+    ]);
+    const checkpoints: AgentState[] = [];
+    const document = vi.fn(async () => ({
+      title: "Plan",
+      revision: "1",
+      offset: 0,
+      hasMore: false,
+      entries: [{ kind: "text", block: 0, text: "Due Friday" }],
+    }));
+    let step = 0;
+    const model = new MockLanguageModelV4({
+      doStream: async ({ prompt }) => {
+        const current = step++;
+        const searching = discover && current === 0;
+        const first = current === (discover ? 1 : 0);
+        const usingTool = searching || first;
+        if (first && discover) {
+          expect(state.roots).toEqual([]);
+          expect(checkpoints.some((s) => s.grants.some((g) => g.resource.id === "page"))).toBe(
+            true,
+          );
+          expect(state.context.manifest).toEqual([]);
+        }
+        if (usingTool) expect(JSON.stringify(prompt)).not.toContain("Due Friday");
+        else {
+          expect(checkpoints.some((s) => s.messages.some((m) => m.role === "tool"))).toBe(true);
+          expect(JSON.stringify(prompt)).toContain("Due Friday");
+        }
+        return {
+          stream: new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "stream-start", warnings: [] });
+              if (usingTool)
+                controller.enqueue({
+                  type: "tool-call",
+                  toolCallId: searching ? "search" : "read",
+                  toolName: searching ? "search_workspace" : "read_page",
+                  input: JSON.stringify(searching ? { query: "launch" } : { pageId: "page" }),
+                });
+              else {
+                controller.enqueue({ type: "text-start", id: "answer" });
+                controller.enqueue({
+                  type: "text-delta",
+                  id: "answer",
+                  delta: "Due Friday. [[page:page]]",
+                });
+                controller.enqueue({ type: "text-end", id: "answer" });
+              }
               controller.enqueue({
-                type: "tool-call",
-                toolCallId: "read",
-                toolName: "read_page",
-                input: JSON.stringify({ pageId: "page" }),
+                type: "finish",
+                finishReason: {
+                  unified: usingTool ? "tool-calls" : "stop",
+                  raw: usingTool ? "tool_calls" : "stop",
+                },
+                usage,
               });
-            else {
-              controller.enqueue({ type: "text-start", id: "answer" });
-              controller.enqueue({
-                type: "text-delta",
-                id: "answer",
-                delta: "Due Friday. [[page:page]]",
-              });
-              controller.enqueue({ type: "text-end", id: "answer" });
-            }
-            controller.enqueue({
-              type: "finish",
-              finishReason: {
-                unified: first ? "tool-calls" : "stop",
-                raw: first ? "tool_calls" : "stop",
-              },
-              usage,
-            });
-            controller.close();
-          },
-        }),
-      };
-    },
-  });
-  const dependencies = {
-    document,
-    authorizeWorkspace: async () => ({}),
-  } as unknown as ReadToolDependencies;
-  const chunks = [];
-  for await (const chunk of generateReadAgent(context, state, new AbortController().signal, {
-    model,
-    dependencies,
-    persistence: {
-      checkpoint: async (s) => {
-        checkpoints.push(s);
+              controller.close();
+            },
+          }),
+        };
       },
-    },
-  }))
-    chunks.push(chunk);
-  expect(document).toHaveBeenCalledOnce();
-  expect(
-    chunks
-      .filter((c) => c.text)
-      .map((c) => c.text)
-      .join(""),
-  ).toBe("Due Friday. [[page:page]]");
-  expect(chunks.at(-1)).toMatchObject({
-    completed: true,
-    usage: { inputTokens: 40, outputTokens: 10 },
+    });
+    const dependencies = {
+      document,
+      search: async () => ({
+        results: [
+          {
+            type: "page",
+            id: "page",
+            title: "Launch plan",
+            path: "Launch",
+            excerpt: "A launch plan",
+            updatedAt: new Date(),
+          },
+        ],
+      }),
+      authorizeWorkspace: async () => ({}),
+    } as unknown as ReadToolDependencies;
+    const chunks = [];
+    for await (const chunk of generateReadAgent(context, state, new AbortController().signal, {
+      model,
+      dependencies,
+      persistence: {
+        checkpoint: async (s) => {
+          checkpoints.push(s);
+        },
+      },
+    }))
+      chunks.push(chunk);
+    expect(document).toHaveBeenCalledOnce();
+    expect(
+      chunks
+        .filter((c) => c.text)
+        .map((c) => c.text)
+        .join(""),
+    ).toBe("Due Friday. [[page:page]]");
+    expect(chunks.at(-1)).toMatchObject({
+      completed: true,
+      usage: { inputTokens: discover ? 60 : 40, outputTokens: discover ? 15 : 10 },
+    });
+    expect(state.progress.activities.at(-1)).toMatchObject({ id: "read", status: "completed" });
+    expect(state.context.manifest[0]?.key).toBe("page:page");
+    expect(state.messages.at(-1)?.role).toBe("assistant");
+    expect(state.debug!.events.filter((event) => event.type === "model.request")).toHaveLength(
+      discover ? 3 : 2,
+    );
+    expect(state.debug!.events.filter((event) => event.type === "model.response")).toHaveLength(
+      discover ? 3 : 2,
+    );
+    expect(
+      state.debug!.events.find(
+        (event) => event.type === "tool.result" && event.tool === "read_page",
+      )!.payload,
+    ).toContain("Due Friday");
+    expect(state.debug!.events.at(-1)!.type).toBe("run.completed");
+    expect(JSON.stringify(state.progress)).not.toContain("Due Friday");
+    const diagnostics = logs.mock.calls.map((call) => JSON.parse(call[0]));
+    expect(
+      diagnostics.filter((event) => event.stage === "model" && event.phase === "end"),
+    ).toHaveLength(discover ? 3 : 2);
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({
+        stage: "tool_read",
+        phase: "end",
+        tool: "read_page",
+        outcome: "ok",
+      }),
+    );
+    expect(JSON.stringify(diagnostics)).not.toMatch(/Due Friday|What is due|Mentioned page/);
   });
-  expect(state.progress.activities[0]).toMatchObject({ id: "read", status: "completed" });
-  expect(state.context.manifest[0]?.key).toBe("page:page");
-  expect(state.messages.at(-1)?.role).toBe("assistant");
-  expect(state.debug!.events.filter((event) => event.type === "model.request")).toHaveLength(2);
-  expect(state.debug!.events.filter((event) => event.type === "model.response")).toHaveLength(2);
-  expect(state.debug!.events.find((event) => event.type === "tool.result")!.payload).toContain(
-    "Due Friday",
-  );
-  expect(state.debug!.events.at(-1)!.type).toBe("run.completed");
-  expect(JSON.stringify(state.progress)).not.toContain("Due Friday");
-  const diagnostics = logs.mock.calls.map((call) => JSON.parse(call[0]));
-  expect(
-    diagnostics.filter((event) => event.stage === "model" && event.phase === "end"),
-  ).toHaveLength(2);
-  expect(diagnostics).toContainEqual(
-    expect.objectContaining({ stage: "tool_read", phase: "end", tool: "read_page", outcome: "ok" }),
-  );
-  expect(JSON.stringify(diagnostics)).not.toMatch(/Due Friday|What is due|Mentioned page/);
-});
 
 test("compaction removes whole tool exchanges and preserves the latest request", () => {
   const result = compactAgentMessages(

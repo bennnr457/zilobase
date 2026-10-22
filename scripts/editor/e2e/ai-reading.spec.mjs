@@ -3,10 +3,10 @@ import { test, expect } from "@playwright/test";
 const title = "Customer feedback review";
 async function openReadHistory(
   page,
-  { partial = false, stopped = false, failed = false, legacy = false } = {},
+  { partial = false, stopped = false, failed = false, legacy = false, search = false } = {},
 ) {
   await page.addInitScript(
-    ({ title, partial, stopped, failed, legacy }) => {
+    ({ title, partial, stopped, failed, legacy, search }) => {
       if (sessionStorage.getItem("ai-fixture-threads")) return;
       const at = "2026-10-20T00:00:00Z";
       const source = { type: "page", id: "main" };
@@ -29,6 +29,16 @@ async function openReadHistory(
           ...(failed ? { error: "SOURCE_UNAVAILABLE" } : {}),
         },
       ].map((call) => (legacy ? call : { ...call, source }));
+      if (search)
+        calls.unshift({
+          id: "search",
+          name: "search_workspace",
+          label: "Searching workspace",
+          query: "customer feedback",
+          status: failed ? "failed" : "completed",
+          returned: failed ? undefined : 2,
+          hasMore: false,
+        });
       const context = {
         version: 1,
         markdown: "",
@@ -73,7 +83,7 @@ async function openReadHistory(
         ]),
       );
     },
-    { title, partial, stopped, failed, legacy },
+    { title, partial, stopped, failed, legacy, search },
   );
   await page.goto("/scripts/editor/e2e/page-layout.html?workspace=ai&appSidebar=1");
   const conversation = page
@@ -82,6 +92,25 @@ async function openReadHistory(
   if (!(await conversation.isVisible()))
     await page.getByRole("button", { name: "Toggle Sidebar", exact: true }).click();
   await conversation.click();
+}
+
+for (const failed of [false, true]) {
+  test(`workspace search activity renders ${failed ? "failure" : "matches"} without a fake source`, async ({
+    page,
+  }) => {
+    await openReadHistory(page, { search: true, failed });
+    const reading = page.getByLabel("Source reading activity", { exact: true });
+    await expect(reading.locator("[data-ai-read-source]")).toHaveCount(1);
+    await reading
+      .getByRole("button", {
+        name: failed ? /Couldn't search workspace/ : /Workspace searched/,
+      })
+      .click();
+    await expect(reading).toContainText(
+      failed ? "Workspace search couldn't finish." : "“customer feedback” · 2 matching sources",
+    );
+    await expect(reading).not.toContainText("Source details are unavailable");
+  });
 }
 
 for (const width of [1400, 390]) {

@@ -1,4 +1,29 @@
 export function register({ loadModule, assert, test }) {
+  test("search activity stays separate from reads and never inherits a citation source", async () => {
+    const { groupSourceReads } = await loadModule(
+      "/src/sections/ai/chat/components/read-activity.tsx",
+      ["groupSourceReads"],
+    );
+    const groups = groupSourceReads({
+      context: { manifest: [{ type: "page", id: "page" }] },
+      progress: {
+        activities: [
+          { id: "search-1", name: "search_workspace", query: "launch", status: "completed" },
+          { id: "search-2", name: "search_workspace", query: "roadmap", status: "completed" },
+          {
+            id: "read",
+            name: "read_page",
+            status: "completed",
+            source: { type: "page", id: "page" },
+          },
+        ],
+      },
+    });
+    assert.equal(groups.length, 3);
+    assert.equal(groups[0].source, undefined);
+    assert.equal(groups[1].source, undefined);
+    assert.equal(groups[2].source.id, "page");
+  });
   test("reading groups pagination by source and preserves distinct pages and tools", async () => {
     const { groupSourceReads } = await loadModule(
       "/src/sections/ai/chat/components/read-activity.tsx",
