@@ -10,7 +10,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 2    | PostgreSQL/pgvector provisioning                | Verified: image build, upgrade, vectors/HNSW, backup/restore; 5 adapter tests; tooling tests    |
 | 3    | Page-owned vector schema                        | Verified: fresh migration; 12 focused tests including real schema constraints; server typecheck |
 | 4    | Markdown chunking                               | Verified: 7 chunking tests, 13 converter/parser tests, server typecheck                         |
-| 5    | Stored property chunks                          | Pending                                                                                         |
+| 5    | Stored property chunks                          | Verified: 25 property serialization tests; server typecheck                                     |
 | 6    | Transactional invalidation                      | Pending                                                                                         |
 | 7    | Gemini provider                                 | Pending                                                                                         |
 | 8    | Quotas and query cache                          | Pending                                                                                         |
