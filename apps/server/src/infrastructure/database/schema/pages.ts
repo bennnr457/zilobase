@@ -36,6 +36,7 @@ export const page = pgTable(
     ...softDeleteColumns(),
   },
   (table) => [
+    uniqueIndex("page_workspace_id_unique").on(table.workspaceId, table.id),
     index("page_workspace_deleted_idx").on(table.workspaceId, table.deletedAt),
     index("page_workspace_teamspace_deleted_idx").on(
       table.workspaceId,

@@ -74,7 +74,16 @@ export {
   pageLayout,
 } from "./schema/pages";
 export { pageItemPlacement } from "./schema/placements";
-export { searchChunk, searchDocument } from "./schema/search";
+export {
+  searchChunk,
+  searchDocument,
+  searchEmbeddingProfile,
+  workspaceSearchSettings,
+  pageSearchIndex,
+  searchInvalidation,
+  searchQueryEmbeddingCache,
+  searchEmbeddingUsageBucket,
+} from "./schema/search";
 export { slackConnection, slackOauthAttempt } from "./schema/slack-connections";
 export { pageSettings } from "./schema/user-settings";
 export {
