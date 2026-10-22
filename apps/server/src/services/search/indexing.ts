@@ -49,6 +49,27 @@ async function claimPage(input: SearchTaskInput) {
   ).rows[0];
 }
 
+async function deferEarlyPage(input: SearchTaskInput) {
+  await db.transaction(async (tx) => {
+    const row = (
+      await tx.execute<{ workspace_id: string; not_before: string }>(
+        sql`select i.workspace_id,i.not_before::text from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id where i.page_id=${input.task.resourceId} and i.profile_id=s.profile_id and i.index_epoch=s.index_epoch and s.enabled and s.cell_id=${getBackgroundCellId(input.env)} and i.pending_task_id=${input.task.taskId}::uuid and i.not_before>clock_timestamp() and (i.lease_expires_at is null or i.lease_expires_at<=clock_timestamp()) for update of i`,
+      )
+    ).rows[0];
+    if (!row) return;
+    const next = createBackgroundTask({
+      env: input.env,
+      kind: "search.page_index",
+      resourceId: input.task.resourceId,
+      availableAt: new Date(row.not_before),
+    });
+    await persistBackgroundTasks(input.env, [next], tx, `search:${next.taskId}`);
+    await tx.execute(
+      sql`update page_search_index set pending_task_id=${next.taskId}::uuid where workspace_id=${row.workspace_id} and page_id=${input.task.resourceId} and pending_task_id=${input.task.taskId}::uuid`,
+    );
+  });
+}
+
 async function sourceSnapshot(c: Claim): Promise<PreparedSearchChunk[]> {
   const source = await db.transaction(async (tx) => {
     await tx.execute(sql`set transaction isolation level repeatable read, read only`);
@@ -211,7 +232,10 @@ export async function indexSearchPage(
   if (input.env.SEARCH_EMBEDDINGS_ENABLED !== "true") return { outcome: "noop" };
   const started = Date.now();
   const c = await claimPage(input);
-  if (!c) return { outcome: "noop" };
+  if (!c) {
+    await deferEarlyPage(input);
+    return { outcome: "noop" };
+  }
   try {
     const chunks = await sourceSnapshot(c);
     const generation = await prepareGeneration(c, input.workerId, chunks);

@@ -16,7 +16,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 8    | Quotas and query cache                          | Verified: 5 real-Postgres concurrency, quota, cooldown, accounting and cache tests; server typecheck                                                         |
 | 9    | Search background lane                          | Verified: 32 shared delivery tests, 10 adapter tests, 15 Miniflare queue tests; server/adapter typechecks                                                    |
 | 10   | Resumable indexing                              | Verified: 7 real-Postgres tests covering publication, reuse, edits/disablement in flight, lease reclaim, durable continuation and failures; server typecheck |
-| 11   | Backfill and maintenance                        | Pending                                                                                                                                                      |
+| 11   | Backfill and maintenance                        | Verified: 104 search/background tests, including bounded backfill/fanout, admission recovery, lease recovery, debounce and cleanup; server typecheck         |
 | 12   | Live SQL eligibility                            | Pending                                                                                                                                                      |
 | 13   | Hybrid retrieval                                | Pending                                                                                                                                                      |
 | 14   | HNSW retrieval                                  | Pending                                                                                                                                                      |
@@ -38,6 +38,6 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 - Gemini credential validated read-only and stored with dotenvx encryption in Node development and hosted development/production envs. Production API and background Worker secrets were updated at the explicit user request. Live relevance evaluation is still pending.
 - Production secrets were explicitly requested and configured. No production migrations, deployments, or workspace activation are authorized as incidental implementation actions.
 
-Pass 6 installs durable invalidation and post-commit publication nudges. Admission from dirty state is connected with the resumable handlers in passes 9–11, before feature enablement.
+Passes 6–11 connect transactional dirty state, post-commit admission, delayed queue notifications, resumable indexing, backfill and minute maintenance. Feature controls remain disabled.
 
 Concurrent non-search changes appeared in runtime-adapter package/template docs/tests during pass 6; preserve them and stage only search-owned hunks.

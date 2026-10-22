@@ -238,6 +238,22 @@ describe.skipIf(!url)("fenced resumable indexing", () => {
       });
       expect((await state()).pending_task_id).not.toBe(input.task.taskId);
     }));
+  it("reschedules an early notification to the current debounce due time", async () =>
+    within(async () => {
+      await db.execute(
+        sql`update page_search_index set not_before=now()+interval '5 seconds' where workspace_id=${workspace}`,
+      );
+      const fake = provider();
+      await indexSearchPage(input, { provider: fake });
+      expect(fake.embedDocuments).not.toHaveBeenCalled();
+      const pending = (await state()).pending_task_id;
+      expect(pending).not.toBe(input.task.taskId);
+      const dispatch = (
+        await db.execute(sql`select task,available_at from background_dispatch where id=${pending}`)
+      ).rows[0];
+      expect(dispatch.task).toMatchObject({ kind: "search.page_index", resourceId: page });
+      expect(new Date(dispatch.available_at as string).getTime()).toBeGreaterThan(Date.now());
+    }));
   it("indexes deletion as an empty complete generation without provider calls", async () =>
     within(async () => {
       await db.execute(sql`update page set deleted_at=now() where id=${page}`);
