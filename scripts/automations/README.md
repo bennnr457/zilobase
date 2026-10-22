@@ -3,7 +3,7 @@
 Run from the core repository root with Node 24+, Docker, and installed workspace dependencies:
 
 ```sh
-docker pull postgres:17.10-alpine
+node scripts/search/postgres-image.mjs
 docker pull valkey/valkey:8-alpine
 npm run test:automations:unit
 npm run test:automations:node

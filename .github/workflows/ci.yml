@@ -18,20 +18,6 @@ jobs:
     name: Core checks
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_DB: zilobase_test
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d zilobase_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/zilobase_test
     steps:
@@ -41,6 +27,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: node scripts/search/postgres-image.mjs
+      - run: docker run -d --name zilobase-ci-postgres -p 5432:5432 -e POSTGRES_DB=zilobase_test -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres zilobase-postgres:17.10-vector0.8.7
+      - run: until docker exec zilobase-ci-postgres pg_isready -U postgres -d zilobase_test; do sleep 1; done
       - run: npm run db:migrate:production --workspace @zilobase/server
       - run: npm run verify:core
       - run: npm run lint
@@ -82,7 +71,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: docker pull postgres:17.10-alpine
+      - run: node scripts/search/postgres-image.mjs
       - run: docker pull valkey/valkey:8-alpine
       - run: npm run test:automations:${{ matrix.runtime }}
       - uses: actions/upload-artifact@v4
@@ -103,7 +92,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: docker pull postgres:17.10-alpine
+      - run: node scripts/search/postgres-image.mjs
       - run: docker pull valkey/valkey:8-alpine
       - run: mkdir -p .test-results/background
       - run: npm run test:background:isolated 2>&1 | tee .test-results/background/recovery.log

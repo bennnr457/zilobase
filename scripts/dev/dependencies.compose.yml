@@ -2,7 +2,10 @@ name: zilobase-source-dev
 
 services:
   postgres:
-    image: postgres:17.10-alpine
+    image: zilobase-postgres:17.10-vector0.8.7
+    build:
+      context: ../..
+      dockerfile: deploy/postgres/Dockerfile
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres

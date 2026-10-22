@@ -1,3 +1,5 @@
+import { ensureSearchPostgresImage } from "../search/postgres-image.mjs";
+ensureSearchPostgresImage();
 import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
@@ -23,7 +25,7 @@ try {
     "-p",
     "127.0.0.1::5432",
     "-d",
-    "postgres:17.10-alpine",
+    "zilobase-postgres:17.10-vector0.8.7",
   ]);
   created = true;
   let ready = false;

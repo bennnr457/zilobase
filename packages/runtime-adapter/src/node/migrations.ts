@@ -1,3 +1,4 @@
+import { preflightVector } from "./vector-preflight";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 
@@ -20,6 +21,7 @@ export async function runMigrationSets(
   runner: MigrationRunner = migrate,
 ) {
   assertMigrationSets(migrationSets);
+  if (runner === migrate) await preflightVector(database);
 
   await database.execute(sql`select pg_advisory_lock(hashtext('zilobase-database-migrations'))`);
 

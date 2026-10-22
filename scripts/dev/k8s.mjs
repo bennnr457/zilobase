@@ -1,3 +1,4 @@
+import { ensureSearchPostgresImage } from "../search/postgres-image.mjs";
 import { spawn } from "node:child_process";
 import { constants, rmSync } from "node:fs";
 import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
@@ -25,7 +26,7 @@ const profile = kubernetesProfiles.community;
 const dependencyManifest = path.join(coreDir, "scripts", "dev", "k8s-dependencies.yaml");
 const k8sStateFile = path.join(stateDir, "k8s-runtime.json");
 const dependencyImages = [
-  "postgres:17.10-alpine",
+  "zilobase-postgres:17.10-vector0.8.7",
   "rustfs/rustfs:1.0.2",
   "rustfs/rc:v0.1.36",
   "axllent/mailpit:v1.27.8",
@@ -331,6 +332,7 @@ async function ensureKindCluster() {
     await run("kind", ["create", "cluster", "--name", kindCluster, "--wait", "5m"]);
   }
   await tuneKindInotifyLimit();
+  ensureSearchPostgresImage();
   for (const image of dependencyImages) {
     const inspect = runResult("docker", ["image", "inspect", image]);
     if (inspect.status !== 0) await run("docker", ["pull", image]);

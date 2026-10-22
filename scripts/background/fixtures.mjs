@@ -1,3 +1,4 @@
+import { ensureSearchPostgresImage } from "../search/postgres-image.mjs";
 import { execFile, spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { randomUUID } from "node:crypto";
@@ -26,7 +27,7 @@ export async function withBackgroundFixtures(run) {
       "-p",
       "127.0.0.1::5432",
       "-d",
-      "postgres:17.10-alpine",
+      (ensureSearchPostgresImage(), "zilobase-postgres:17.10-vector0.8.7"),
     ]);
     created = true;
     for (let attempt = 0; ; attempt++) {

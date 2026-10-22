@@ -1,3 +1,5 @@
+import { ensureSearchPostgresImage } from "../search/postgres-image.mjs";
+ensureSearchPostgresImage();
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -53,7 +55,7 @@ async function waitFor(check, label) {
 }
 
 try {
-  const postgres = await container("postgres:17.10-alpine", 5432, [
+  const postgres = await container("zilobase-postgres:17.10-vector0.8.7", 5432, [
     "--tmpfs",
     "/var/lib/postgresql/data",
     "-e",

@@ -75,6 +75,7 @@ jobs:
               ghcr.io/zilobase/zilobase:community-helm-ci \
               "ghcr.io/zilobase/zilobase@$digest"
           done
+      - run: node scripts/search/postgres-image.mjs
       - name: Start external PostgreSQL, TLS RustFS, and Valkey
         shell: bash
         run: |
@@ -88,7 +89,7 @@ jobs:
             -e POSTGRES_DB=zilobase \
             -e POSTGRES_PASSWORD="$postgres_password" \
             -e POSTGRES_USER=zilobase \
-            postgres:17.10-alpine
+            zilobase-postgres:17.10-vector0.8.7
           until docker exec community-helm-postgres pg_isready -U zilobase -d zilobase >/dev/null 2>&1; do sleep 1; done
 
           mkdir -p "$RUNNER_TEMP/community-rustfs-tls"
@@ -247,7 +248,7 @@ jobs:
           docker volume create community-helm-postgres-restored >/dev/null
           docker run -d --name community-helm-postgres --network kind \
             -e POSTGRES_DB=zilobase -e POSTGRES_PASSWORD="$postgres_password" -e POSTGRES_USER=zilobase \
-            -v community-helm-postgres-restored:/var/lib/postgresql/data postgres:17.10-alpine
+            -v community-helm-postgres-restored:/var/lib/postgresql/data zilobase-postgres:17.10-vector0.8.7
           until [ "$(docker exec community-helm-postgres psql -U zilobase -d postgres -Atc "select 1 from pg_database where datname = 'zilobase'" 2>/dev/null)" = 1 ]; do sleep 1; done
           docker exec -i community-helm-postgres pg_restore -U zilobase -d zilobase --no-owner --no-privileges < "$RUNNER_TEMP/community.dump"
           restored_postgres_ip=$(docker inspect community-helm-postgres --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')

@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:17.10-alpine
+          image: zilobase-postgres:17.10-vector0.8.7
           env:
             - { name: POSTGRES_DB, value: zilobase }
             - { name: POSTGRES_USER, value: zilobase }
