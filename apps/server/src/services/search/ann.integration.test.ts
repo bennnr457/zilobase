@@ -60,7 +60,7 @@ describe.skipIf(!url)("partitioned HNSW authorized retrieval", () => {
         await tx.execute(sql`set local enable_seqscan=off`);
         await tx.execute(sql`set local enable_sort=off`);
         const plan = (
-          await tx.execute(sql`explain(format json) ${annCandidateQuery(w, query, 100)}`)
+          await tx.execute(sql`explain(format json) ${annCandidateQuery(w, u, query, 100)}`)
         ).rows[0]["QUERY PLAN"];
         const text = JSON.stringify(plan);
         expect(text).toContain("Index Scan");
@@ -71,7 +71,7 @@ describe.skipIf(!url)("partitioned HNSW authorized retrieval", () => {
         expect(relations).toHaveLength(1);
       }),
     ));
-  it("refills inaccessible candidates and measures recall against exact authorized results", async () =>
+  it("filters inside iterative retrieval and measures recall against exact authorized results", async () =>
     within(async () =>
       db.transaction(async (tx) => {
         await tx.execute(sql`set local jit=off`);
@@ -85,15 +85,15 @@ describe.skipIf(!url)("partitioned HNSW authorized retrieval", () => {
           const initial = await hydrateVectorResults(
             w,
             u,
-            await annSearchCandidates(w, query, 100),
+            await annSearchCandidates(w, u, query, 100),
           );
           const expanded = await hydrateVectorResults(
             w,
             u,
-            await annSearchCandidates(w, query, 500),
+            await annSearchCandidates(w, u, query, 500),
           );
-          expect(initial.length).toBeLessThan(50);
-          expect(expanded.length).toBeGreaterThanOrEqual(50);
+          expect(initial).toHaveLength(100);
+          expect(expanded).toHaveLength(200);
           const oracle = new Set(exact.map((r) => r.id));
           const recall = expanded.slice(0, 20).filter((r) => oracle.has(r.id)).length / 20;
           expect(recall).toBeGreaterThanOrEqual(0.95);

@@ -1,0 +1,618 @@
+{
+  "version": 1,
+  "review": "Authored synthetic application corpus, reviewed for explicit source support; no human relevance review claimed. Freeze labels before measuring results.",
+  "documents": [
+    {
+      "id": "session",
+      "title": "SEC204 Session rotation",
+      "markdown": "Refresh credentials expire after thirty days. An expired refresh credential forces another authentication challenge even when the browser still has a cookie. Rotate credentials after use and revoke the previous value."
+    },
+    {
+      "id": "mfa",
+      "title": "SEC205 Hardware authenticators",
+      "markdown": "Employees enroll physical security keys as a second authentication factor. A backup key prevents lockout if the primary device is lost. Recovery codes are stored separately."
+    },
+    {
+      "id": "acl",
+      "title": "SEC206 Access inheritance",
+      "markdown": "A nested page inherits read permissions from its parent placement. Moving a page can alter the effective audience. Explicit sharing grants are evaluated along its ancestor chain."
+    },
+    {
+      "id": "secrets",
+      "title": "SEC207 Credential hygiene",
+      "markdown": "API credentials belong in the server secret manager. Never include private keys in a browser bundle or application logs. Rotate exposed credentials and remove obsolete grants."
+    },
+    {
+      "id": "invoice",
+      "title": "FIN301 Billing documents",
+      "markdown": "A supplier invoice records an amount owed for delivered goods. Finance checks the purchase order, approves the invoice and schedules an outgoing payment before its due date."
+    },
+    {
+      "id": "refund",
+      "title": "FIN302 Customer reimbursements",
+      "markdown": "Support verifies the original card charge before issuing a refund. Reimbursements return funds to the original payment method. The order history records the reason and refunded amount."
+    },
+    {
+      "id": "expense",
+      "title": "FIN303 Employee expenses",
+      "markdown": "Staff submit travel receipts for reimbursement. Managers approve eligible meals, transport and accommodation. Finance rejects duplicate claims and expenses outside the travel policy."
+    },
+    {
+      "id": "renewal",
+      "title": "FIN304 Subscription continuation",
+      "markdown": "Annual contracts renew automatically unless cancelled before the notice deadline. Account owners receive reminders ninety days before expiry and confirm the next service period."
+    },
+    {
+      "id": "backup",
+      "title": "OPS401 Recovery copies",
+      "markdown": "Nightly PostgreSQL backups are encrypted and copied to a separate region. Monthly restore drills verify that archives can recreate pages and relational constraints. Retention is thirty days."
+    },
+    {
+      "id": "replication",
+      "title": "OPS402 Read replicas",
+      "markdown": "Read replicas asynchronously receive changes from the primary database. Replication lag can cause a freshly edited record to be missing temporarily. Critical reads use the primary connection."
+    },
+    {
+      "id": "queue",
+      "title": "OPS403 Deferred jobs",
+      "markdown": "A durable outbox stores background work in the same transaction as application changes. A publisher notifies the broker. Consumers claim persisted jobs with leases and retry interrupted work."
+    },
+    {
+      "id": "leases",
+      "title": "OPS404 Worker fencing",
+      "markdown": "Every execution claim increments a fencing counter. Publication checks both the current counter and source revision. A slow worker cannot overwrite output published by a newer execution."
+    },
+    {
+      "id": "dns",
+      "title": "NET501 Domain resolution",
+      "markdown": "DNS maps a host name to an IP address. A stale resolver cache can point clients at an old server until the record TTL expires. Flush the cache after changing the destination."
+    },
+    {
+      "id": "tls",
+      "title": "NET502 Certificate renewal",
+      "markdown": "TLS certificates prove endpoint identity and encrypt transport. Automated renewal runs before expiry. An expired certificate causes browsers to reject otherwise healthy HTTPS connections."
+    },
+    {
+      "id": "ratelimit",
+      "title": "NET503 Request throttling",
+      "markdown": "The gateway limits requests per account per minute. Clients receiving HTTP 429 should honor Retry-After and use exponential backoff with jitter. Repeated immediate retries increase congestion."
+    },
+    {
+      "id": "cache",
+      "title": "NET504 Cache invalidation",
+      "markdown": "A query cache key includes workspace, account and search mode. Mutations invalidate affected entries. Cached result membership never replaces live authorization at the server."
+    },
+    {
+      "id": "embedding",
+      "title": "AI601 Semantic representations",
+      "markdown": "An embedding converts a text passage into a numeric vector. Nearby vectors tend to express similar meaning. Cosine distance compares their direction rather than their magnitude."
+    },
+    {
+      "id": "chunking",
+      "title": "AI602 Source segmentation",
+      "markdown": "Long Markdown pages are split along headings and paragraph boundaries. Overlap preserves nearby context. Every segment retains its page identity, heading ancestry and source range."
+    },
+    {
+      "id": "grounding",
+      "title": "AI603 Answer evidence",
+      "markdown": "Search returns candidate locations. The assistant must read the authorized live page or record before citing content. A stored snippet or similarity score alone is insufficient evidence."
+    },
+    {
+      "id": "hallucination",
+      "title": "AI604 Unsupported claims",
+      "markdown": "An answer must distinguish retrieved facts from speculation. If the available sources do not support a claim, the assistant says the information was not found. Fabricated citations are rejected."
+    },
+    {
+      "id": "onboarding",
+      "title": "HR701 New starters",
+      "markdown": "Before the first day, IT provisions a laptop and workspace account. The manager assigns a buddy and schedules an introduction. A checklist tracks equipment delivery and training completion."
+    },
+    {
+      "id": "leave",
+      "title": "HR702 Time away",
+      "markdown": "Employees request annual leave through the team calendar. Managers check coverage before approval. Approved absences update the staffing schedule and remaining allowance."
+    },
+    {
+      "id": "interview",
+      "title": "HR703 Candidate assessment",
+      "markdown": "Interviewers use a consistent role rubric and submit independent feedback before the debrief. Hiring decisions compare demonstrated skills against requirements rather than personal affinity."
+    },
+    {
+      "id": "incident",
+      "title": "OPS405 Incident response",
+      "markdown": "The on-call engineer assesses impact and starts an incident channel. A commander coordinates mitigation while a separate scribe records the timeline. Follow-up actions are assigned after recovery."
+    },
+    {
+      "id": "deploy",
+      "title": "ENG801 Release rollout",
+      "markdown": "A release starts in staging, then reaches a small production cohort. Error rates and latency are monitored before increasing traffic. Feature flags control admission of new capabilities."
+    },
+    {
+      "id": "tests",
+      "title": "ENG802 Test isolation",
+      "markdown": "Integration suites create dedicated databases and brokers with unique names. Fake HTTP providers make failure behavior reproducible. Cleanup removes only resources owned by the current test run."
+    },
+    {
+      "id": "unicode",
+      "title": "ENG803 UTF-8 boundaries",
+      "markdown": "UTF-8 characters occupy variable numbers of bytes. Byte-limited text splitting iterates Unicode code points and never cuts inside an encoded character. Emoji and CJK fixtures detect broken boundaries."
+    },
+    {
+      "id": "pagination",
+      "title": "ENG804 Cursor traversal",
+      "markdown": "Large collections use keyset pagination ordered by a stable identifier. The next request starts after the last identifier seen. A captured high-water mark bounds a long-running scan."
+    },
+    {
+      "id": "launch",
+      "title": "SPACE901 Launch operations",
+      "markdown": "A rocket lifts a payload through the atmosphere into its planned trajectory. The launch team tracks weather, fueling and countdown gates. A scrub postpones departure without changing the payload mission."
+    },
+    {
+      "id": "orbit",
+      "title": "SPACE902 Orbital maintenance",
+      "markdown": "A satellite circles Earth along a predictable orbital path. Small thruster burns correct drift and avoid debris. Ground stations monitor position and fuel reserves throughout the mission."
+    },
+    {
+      "id": "reef",
+      "title": "BIO903 Reef ecology",
+      "markdown": "Coral reefs support diverse marine communities in warm shallow seas. Rising water temperatures cause bleaching when corals lose symbiotic algae. Local conservation reduces additional stress."
+    },
+    {
+      "id": "deepsea",
+      "title": "BIO904 Abyss exploration",
+      "markdown": "Submersibles investigate deep ocean environments where sunlight cannot reach. Pressure-resistant vessels carry cameras and sampling arms. Hydrothermal vents support life through chemical energy."
+    },
+    {
+      "id": "record1",
+      "title": "REC101 Operations record 1",
+      "markdown": "Stored operational record. Consult the current fields for details.",
+      "property": {
+        "name": "Region",
+        "type": "text",
+        "value": "Tokyo"
+      }
+    },
+    {
+      "id": "record2",
+      "title": "REC102 Operations record 2",
+      "markdown": "Stored operational record. Consult the current fields for details.",
+      "property": {
+        "name": "Stage",
+        "type": "text",
+        "value": "Awaiting legal approval"
+      }
+    },
+    {
+      "id": "record3",
+      "title": "REC103 Operations record 3",
+      "markdown": "Stored operational record. Consult the current fields for details.",
+      "property": {
+        "name": "Priority",
+        "type": "text",
+        "value": "Emergency"
+      }
+    },
+    {
+      "id": "record4",
+      "title": "REC104 Operations record 4",
+      "markdown": "Stored operational record. Consult the current fields for details.",
+      "property": {
+        "name": "Contact email",
+        "type": "text",
+        "value": "support@example.test"
+      }
+    },
+    {
+      "id": "record5",
+      "title": "REC105 Operations record 5",
+      "markdown": "Stored operational record. Consult the current fields for details.",
+      "property": {
+        "name": "Delivery window",
+        "type": "text",
+        "value": "2026-11-12 to 2026-11-16"
+      }
+    },
+    {
+      "id": "record6",
+      "title": "REC106 Operations record 6",
+      "markdown": "Stored operational record. Consult the current fields for details.",
+      "property": {
+        "name": "Notes",
+        "type": "text",
+        "value": "Cold-chain transport required for temperature-sensitive vaccines"
+      }
+    }
+  ],
+  "queries": [
+    {
+      "text": "SEC204 Session rotation",
+      "kind": "exact",
+      "expected": ["session"]
+    },
+    {
+      "text": "SEC205 Hardware authenticators",
+      "kind": "exact",
+      "expected": ["mfa"]
+    },
+    {
+      "text": "SEC206 Access inheritance",
+      "kind": "exact",
+      "expected": ["acl"]
+    },
+    {
+      "text": "SEC207 Credential hygiene",
+      "kind": "exact",
+      "expected": ["secrets"]
+    },
+    {
+      "text": "FIN301 Billing documents",
+      "kind": "exact",
+      "expected": ["invoice"]
+    },
+    {
+      "text": "FIN302 Customer reimbursements",
+      "kind": "exact",
+      "expected": ["refund"]
+    },
+    {
+      "text": "FIN303 Employee expenses",
+      "kind": "exact",
+      "expected": ["expense"]
+    },
+    {
+      "text": "FIN304 Subscription continuation",
+      "kind": "exact",
+      "expected": ["renewal"]
+    },
+    {
+      "text": "OPS401 Recovery copies",
+      "kind": "exact",
+      "expected": ["backup"]
+    },
+    {
+      "text": "OPS402 Read replicas",
+      "kind": "exact",
+      "expected": ["replication"]
+    },
+    {
+      "text": "OPS403 Deferred jobs",
+      "kind": "exact",
+      "expected": ["queue"]
+    },
+    {
+      "text": "OPS404 Worker fencing",
+      "kind": "exact",
+      "expected": ["leases"]
+    },
+    {
+      "text": "NET501 Domain resolution",
+      "kind": "exact",
+      "expected": ["dns"]
+    },
+    {
+      "text": "NET502 Certificate renewal",
+      "kind": "exact",
+      "expected": ["tls"]
+    },
+    {
+      "text": "NET503 Request throttling",
+      "kind": "exact",
+      "expected": ["ratelimit"]
+    },
+    {
+      "text": "NET504 Cache invalidation",
+      "kind": "exact",
+      "expected": ["cache"]
+    },
+    {
+      "text": "AI601 Semantic representations",
+      "kind": "exact",
+      "expected": ["embedding"]
+    },
+    {
+      "text": "AI602 Source segmentation",
+      "kind": "exact",
+      "expected": ["chunking"]
+    },
+    {
+      "text": "AI603 Answer evidence",
+      "kind": "exact",
+      "expected": ["grounding"]
+    },
+    {
+      "text": "AI604 Unsupported claims",
+      "kind": "exact",
+      "expected": ["hallucination"]
+    },
+    {
+      "text": "SEC204",
+      "kind": "identifier",
+      "expected": ["session"]
+    },
+    {
+      "text": "SEC205",
+      "kind": "identifier",
+      "expected": ["mfa"]
+    },
+    {
+      "text": "SEC206",
+      "kind": "identifier",
+      "expected": ["acl"]
+    },
+    {
+      "text": "SEC207",
+      "kind": "identifier",
+      "expected": ["secrets"]
+    },
+    {
+      "text": "FIN301",
+      "kind": "identifier",
+      "expected": ["invoice"]
+    },
+    {
+      "text": "FIN302",
+      "kind": "identifier",
+      "expected": ["refund"]
+    },
+    {
+      "text": "FIN303",
+      "kind": "identifier",
+      "expected": ["expense"]
+    },
+    {
+      "text": "FIN304",
+      "kind": "identifier",
+      "expected": ["renewal"]
+    },
+    {
+      "text": "OPS401",
+      "kind": "identifier",
+      "expected": ["backup"]
+    },
+    {
+      "text": "OPS402",
+      "kind": "identifier",
+      "expected": ["replication"]
+    },
+    {
+      "text": "OPS403",
+      "kind": "identifier",
+      "expected": ["queue"]
+    },
+    {
+      "text": "OPS404",
+      "kind": "identifier",
+      "expected": ["leases"]
+    },
+    {
+      "text": "NET501",
+      "kind": "identifier",
+      "expected": ["dns"]
+    },
+    {
+      "text": "NET502",
+      "kind": "identifier",
+      "expected": ["tls"]
+    },
+    {
+      "text": "NET503",
+      "kind": "identifier",
+      "expected": ["ratelimit"]
+    },
+    {
+      "text": "NET504",
+      "kind": "identifier",
+      "expected": ["cache"]
+    },
+    {
+      "text": "AI601",
+      "kind": "identifier",
+      "expected": ["embedding"]
+    },
+    {
+      "text": "AI602",
+      "kind": "identifier",
+      "expected": ["chunking"]
+    },
+    {
+      "text": "AI603",
+      "kind": "identifier",
+      "expected": ["grounding"]
+    },
+    {
+      "text": "AI604",
+      "kind": "identifier",
+      "expected": ["hallucination"]
+    },
+    {
+      "text": "People keep getting asked to sign in again",
+      "kind": "paraphrase",
+      "expected": ["session"]
+    },
+    {
+      "text": "How can staff protect accounts with a physical second factor?",
+      "kind": "paraphrase",
+      "expected": ["mfa"]
+    },
+    {
+      "text": "Who can see a document after it is moved into a shared folder?",
+      "kind": "paraphrase",
+      "expected": ["acl"]
+    },
+    {
+      "text": "Where should confidential service tokens be kept?",
+      "kind": "paraphrase",
+      "expected": ["secrets"]
+    },
+    {
+      "text": "How do we settle a bill from a vendor?",
+      "kind": "paraphrase",
+      "expected": ["invoice"]
+    },
+    {
+      "text": "A buyer wants their money back after returning an item",
+      "kind": "paraphrase",
+      "expected": ["refund"]
+    },
+    {
+      "text": "What is the process for claiming the cost of a business trip?",
+      "kind": "paraphrase",
+      "expected": ["expense"]
+    },
+    {
+      "text": "How do we avoid accidentally extending an annual agreement?",
+      "kind": "paraphrase",
+      "expected": ["renewal"]
+    },
+    {
+      "text": "Can we bring back our records after the primary storage is lost?",
+      "kind": "paraphrase",
+      "expected": ["backup"]
+    },
+    {
+      "text": "Why does a newly saved item briefly disappear on a read-only database node?",
+      "kind": "paraphrase",
+      "expected": ["replication"]
+    },
+    {
+      "text": "How do we avoid losing asynchronous work when the message broker is down?",
+      "kind": "paraphrase",
+      "expected": ["queue"]
+    },
+    {
+      "text": "Prevent an old background process from replacing newer results",
+      "kind": "paraphrase",
+      "expected": ["leases"]
+    },
+    {
+      "text": "Why does a website name still lead to the previous machine?",
+      "kind": "paraphrase",
+      "expected": ["dns"]
+    },
+    {
+      "text": "Browsers warn that our secure connection has expired",
+      "kind": "paraphrase",
+      "expected": ["tls"]
+    },
+    {
+      "text": "What should a client do when a service says too many requests?",
+      "kind": "paraphrase",
+      "expected": ["ratelimit"]
+    },
+    {
+      "text": "Stop one tenant receiving another tenant’s cached lookup results",
+      "kind": "paraphrase",
+      "expected": ["cache"]
+    },
+    {
+      "text": "How can we find related writing without matching the same words?",
+      "kind": "paraphrase",
+      "expected": ["embedding"]
+    },
+    {
+      "text": "How should a lengthy document be divided before making numeric representations?",
+      "kind": "paraphrase",
+      "expected": ["chunking"]
+    },
+    {
+      "text": "When may the assistant cite information it has only discovered in an index?",
+      "kind": "paraphrase",
+      "expected": ["grounding"]
+    },
+    {
+      "text": "What should happen when the sources do not contain an answer?",
+      "kind": "paraphrase",
+      "expected": ["hallucination"]
+    },
+    {
+      "text": "What needs to be prepared before a new colleague joins?",
+      "kind": "paraphrase",
+      "expected": ["onboarding"]
+    },
+    {
+      "text": "How can an employee book a holiday?",
+      "kind": "paraphrase",
+      "expected": ["leave"]
+    },
+    {
+      "text": "How do we evaluate applicants consistently during hiring?",
+      "kind": "paraphrase",
+      "expected": ["interview"]
+    },
+    {
+      "text": "Who coordinates the team during a major service outage?",
+      "kind": "paraphrase",
+      "expected": ["incident"]
+    },
+    {
+      "text": "How should a software change be introduced gradually?",
+      "kind": "paraphrase",
+      "expected": ["deploy"]
+    },
+    {
+      "text": "Keep automated checks from modifying real customer systems",
+      "kind": "paraphrase",
+      "expected": ["tests"]
+    },
+    {
+      "text": "How do we avoid corrupting emoji while splitting text by size?",
+      "kind": "paraphrase",
+      "expected": ["unicode"]
+    },
+    {
+      "text": "How can a background scan continue through millions of rows without large offsets?",
+      "kind": "paraphrase",
+      "expected": ["pagination"]
+    },
+    {
+      "text": "What can postpone a spacecraft’s departure from the ground?",
+      "kind": "paraphrase",
+      "expected": ["launch"]
+    },
+    {
+      "text": "How does an artificial moon stay on course around our planet?",
+      "kind": "paraphrase",
+      "expected": ["orbit"]
+    },
+    {
+      "text": "Why do colorful underwater habitats turn pale during a heat wave?",
+      "kind": "paraphrase",
+      "expected": ["reef"]
+    },
+    {
+      "text": "How can researchers investigate life far below the sunlit sea?",
+      "kind": "paraphrase",
+      "expected": ["deepsea"]
+    },
+    {
+      "text": "Which customer record is based in Japan’s capital?",
+      "kind": "property",
+      "expected": ["record1"]
+    },
+    {
+      "text": "Find the deal that is waiting for the lawyers to approve it",
+      "kind": "property",
+      "expected": ["record2"]
+    },
+    {
+      "text": "Which item needs the most urgent attention?",
+      "kind": "property",
+      "expected": ["record3"]
+    },
+    {
+      "text": "Find the record containing the help desk email address",
+      "kind": "property",
+      "expected": ["record4"]
+    },
+    {
+      "text": "Which record describes a delivery scheduled in the middle of November 2026?",
+      "kind": "property",
+      "expected": ["record5"]
+    },
+    {
+      "text": "Which shipment must remain refrigerated?",
+      "kind": "property",
+      "expected": ["record6"]
+    }
+  ]
+}

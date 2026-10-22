@@ -29,13 +29,13 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 21   | Operations and diagnostics                      | Verified: 102 search/background tests including real scoped operations/replay; server typecheck                                                                                |
 | 22   | Node acceptance and recovery                    | Verified: 15 real PostgreSQL/Redis/HTTP/process scenarios, fresh migration and vector restore; 102 search tests; server typecheck                                              |
 | 23   | Worker/browser parity                           | Verified: 15 Node and 10 real workerd/Postgres scenarios; matching chunks/hashes/vectors/ranking; 4 browser checks; 126 search/AI tests; server typecheck                      |
-| 24   | Relevance and scale                             | Pending                                                                                                                                                                        |
+| 24   | Relevance and scale                             | Verified: live Gemini Recall@10 and exact Top-1 1.00; 10k/100k/1m scale gates, selected ANN Recall@20 >= 0.95, interactive <= 2123 ms; 103 search tests                        |
 | 25   | Verification and runbooks                       | Pending                                                                                                                                                                        |
 
 ## Verification notes
 
 - Docker daemon is available.
-- Gemini credential validated read-only and stored with dotenvx encryption in Node development and hosted development/production envs. Production API and background Worker secrets were updated at the explicit user request. Live relevance evaluation is still pending.
+- Gemini credential validated read-only and stored with dotenvx encryption in Node development and hosted development/production envs. Production API and background Worker secrets were updated at the explicit user request. Live relevance evaluation passed; see the recorded evaluation reports.
 - Production secrets were explicitly requested and configured. No production migrations, deployments, or workspace activation are authorized as incidental implementation actions.
 
 Passes 6–11 connect transactional dirty state, post-commit admission, delayed queue notifications, resumable indexing, backfill and minute maintenance. Feature controls remain disabled.
@@ -44,6 +44,6 @@ Concurrent non-search changes appeared in runtime-adapter package/template docs/
 
 Search access traversal fails closed when ancestry reaches 64 levels, including corrupt cycles. Final chunk hydration evaluates access, source membership, revisions and freshness in one SQL statement.
 
-Pass 14 found and fixed freshness-subquery flattening that prevented ordered HNSW scans. Retrieval disables PostgreSQL JIT locally to avoid expensive compilation for short interactive queries. The 600-chunk fixture proves partition pruning, index availability and filtered ANN Recall@20 >= 0.95; release-scale evaluation remains pending.
+Pass 14 found and fixed freshness-subquery flattening that prevented ordered HNSW scans. Retrieval disables PostgreSQL JIT locally to avoid expensive compilation for short interactive queries. The 600-chunk fixture proves partition pruning, index availability and filtered ANN Recall@20 >= 0.95; release-scale evaluation is recorded in pass 24.
 
 The user explicitly permits breaking changes and disposal of stale production test data. Legacy upgrade, compatibility-shim, and rollback requirements are removed. Fresh migrations, authorization, recovery, runtime parity, and relevance/scale gates remain required. Production rollout is still a separate explicit action.

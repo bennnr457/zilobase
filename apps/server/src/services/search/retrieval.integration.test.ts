@@ -4,10 +4,10 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { db, runWithDbEnv } from "../../infrastructure/database";
 import { createBackgroundTask } from "../../infrastructure/background/contracts";
 import { indexSearchPage } from "./indexing";
-import { hybridSearchWorkspace, fuseSearchPageRanks } from "./retrieval";
+import { hybridSearchWorkspace, fuseSearchPageRanks, exactSearchCandidates } from "./retrieval";
 import { searchWorkspaceItems, type WorkspaceSearchResult } from "./workspace-search";
 import { SEARCH_PROFILE } from "./vector-contracts";
-import { fakeSearchProvider } from "./testing/fixtures";
+import { fakeSearchProvider, fixtureEmbedding } from "./testing/fixtures";
 import { SearchEmbeddingError } from "./gemini";
 
 const url = process.env.ZILOBASE_SEARCH_TEST_DATABASE_URL;
@@ -90,6 +90,8 @@ describe.skipIf(!url)("authorized exact hybrid search", () => {
         membershipVerified: true,
       });
       expect(keyword).toHaveLength(0);
+      const pageCandidates = await exactSearchCandidates(w, u, fixtureEmbedding(0), 2);
+      expect(new Set(pageCandidates.map((c) => c.page_id)).size).toBe(2);
       const response = await search("I must authenticate again");
       expect(response.metadata.mode).toBe("hybrid");
       expect(response.results[0].id).toBe(auth);

@@ -11,7 +11,7 @@ import {
   page,
   searchDocument,
 } from "../../infrastructure/database/schema";
-import { authorizedSearchIdentities } from "./eligibility";
+import { authorizedSearchIdentities, withSearchRead } from "./eligibility";
 import { getMembership } from "../access/principal-access";
 
 export type WorkspaceSearchResult = {
@@ -29,7 +29,14 @@ export type WorkspaceSearchResult = {
 
 export type { SearchMatchProvenance } from "@zilobase/features/search";
 import type { SearchMatchProvenance } from "@zilobase/features/search";
-export type WorkspaceSearchInput = Parameters<typeof searchWorkspaceItems>[0];
+export type WorkspaceSearchInput = {
+  limit?: number;
+  membershipVerified?: boolean;
+  query: string;
+  types?: Array<WorkspaceSearchResult["type"]>;
+  userId: string;
+  workspaceId: string;
+};
 
 const DEFAULT_MAX_SEARCH_RESULTS = 50;
 const MAX_SEARCH_RESULTS = 100;
@@ -38,14 +45,10 @@ const SEARCH_HEADLINE_START = "__ZILOBASE_MATCH_START__";
 const SEARCH_HEADLINE_STOP = "__ZILOBASE_MATCH_STOP__";
 export const SEARCH_HEADLINE_OPTIONS = `MaxWords=35, MinWords=10, StartSel=${SEARCH_HEADLINE_START}, StopSel=${SEARCH_HEADLINE_STOP}`;
 
-export async function searchWorkspaceItems(input: {
-  limit?: number;
-  membershipVerified?: boolean;
-  query: string;
-  types?: Array<WorkspaceSearchResult["type"]>;
-  userId: string;
-  workspaceId: string;
-}) {
+export async function searchWorkspaceItems(input: WorkspaceSearchInput) {
+  return withSearchRead(() => readWorkspaceSearchItems(input));
+}
+async function readWorkspaceSearchItems(input: WorkspaceSearchInput) {
   if (!input.membershipVerified && !(await getMembership(input.workspaceId, input.userId))) {
     return [];
   }

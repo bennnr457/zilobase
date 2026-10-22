@@ -3,7 +3,7 @@ import {
   annSearchCandidates,
   searchEligibleChunkCount,
   SEARCH_EXACT_THRESHOLD,
-  SEARCH_CANDIDATE_WINDOWS,
+  SEARCH_ANN_CANDIDATE_LIMIT,
 } from "./ann";
 import { sql } from "drizzle-orm";
 import { db, runWithDb, type Database } from "../../infrastructure/database";
@@ -11,6 +11,7 @@ import { getBackgroundCellId } from "../../infrastructure/background/contracts";
 import type { RuntimeEnv } from "../../shared/config/config";
 import {
   authorizedSearchChunks,
+  withSearchRead,
   authorizedSearchIdentities,
   freshSearchChunk,
   searchVectorAccessCtes,
@@ -43,7 +44,7 @@ export async function exactSearchCandidates(
   const value = JSON.stringify(validateSearchVector(vector));
   return (
     await db.execute<VectorCandidate>(
-      sql`${searchVectorAccessCtes(workspaceId, userId)}, exact_search_chunks as materialized(select c.id,c.page_id,c.embedding from search_chunk c where ${freshSearchChunk(workspaceId)} and ${liveSearchChunkAllowed(workspaceId)}) select id,page_id,(embedding <=> ${value}::vector) as distance from exact_search_chunks order by embedding <=> ${value}::vector,page_id,id limit ${limit}`,
+      sql`${searchVectorAccessCtes(workspaceId, userId)}, exact_search_chunks as materialized(select c.id,c.page_id,c.embedding from search_chunk c where ${freshSearchChunk(workspaceId)} and ${liveSearchChunkAllowed(workspaceId)}) select id,page_id,distance from (select distinct on(page_id) id,page_id,(embedding <=> ${value}::vector) as distance from exact_search_chunks order by page_id,embedding <=> ${value}::vector,id) best_chunks order by distance,page_id,id limit ${limit}`,
     )
   ).rows;
 }
@@ -152,6 +153,10 @@ export async function hydrateVectorResults(
 }
 
 async function recheckResults(input: WorkspaceSearchInput, results: WorkspaceSearchResult[]) {
+  if (!results.length) return [];
+  return withSearchRead(() => recheckSearchRead(input, results));
+}
+async function recheckSearchRead(input: WorkspaceSearchInput, results: WorkspaceSearchResult[]) {
   const allowed = await authorizedSearchIdentities(
     input.workspaceId,
     input.userId,
@@ -199,8 +204,11 @@ export async function hybridSearchWorkspace(
   if (env.SEARCH_EMBEDDINGS_ENABLED !== "true" || (!options.provider && !env.GEMINI_API_KEY))
     return fallback();
   const settings = (
-    await db.execute<{ enabled: boolean; ready: boolean }>(
-      sql`select s.enabled,exists(select 1 from search_chunk c where ${freshSearchChunk(input.workspaceId)} limit 1) as ready from workspace_search_settings s where s.workspace_id=${input.workspaceId} and s.cell_id=${getBackgroundCellId(env)} and s.profile_id=${SEARCH_PROFILE.id}`,
+    await withSearchRead(
+      async () =>
+        await db.execute<{ enabled: boolean; ready: boolean }>(
+          sql`select s.enabled,exists(select 1 from search_chunk c where ${freshSearchChunk(input.workspaceId)} limit 1) as ready from workspace_search_settings s where s.workspace_id=${input.workspaceId} and s.cell_id=${getBackgroundCellId(env)} and s.profile_id=${SEARCH_PROFILE.id}`,
+        ),
     )
   ).rows[0];
   if (!settings?.enabled) {
@@ -250,7 +258,7 @@ export async function hybridSearchWorkspace(
     const databaseStarted = Date.now();
     const vectorResults = await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select set_config('statement_timeout',${String(Math.max(1, 2500 - (Date.now() - started)))},true),set_config('jit','off',true)`,
+        sql`select set_config('statement_timeout',${String(Math.max(1, 2200 - (Date.now() - started)))},true),set_config('jit','off',true)`,
       );
       // Database context remains this transaction for bounded retrieval and access checks.
       return runWithDb(tx as unknown as Database, async () => {
@@ -261,24 +269,22 @@ export async function hybridSearchWorkspace(
             input.userId,
             await exactSearchCandidates(input.workspaceId, input.userId, vector),
           );
-        let matches: WorkspaceSearchResult[] = [];
-        for (const window of SEARCH_CANDIDATE_WINDOWS) {
-          if (window > 100) searchCounter(env, "refill", "query");
-          const remaining = 2500 - (Date.now() - started);
-          if (remaining < 100) {
-            metadata.degradationReason = "retrieval_budget";
-            break;
-          }
-          await db.execute(sql`select set_config('statement_timeout',${String(remaining)},true)`);
-          matches = await hydrateVectorResults(
-            input.workspaceId,
-            input.userId,
-            await annSearchCandidates(input.workspaceId, vector, window),
-          );
-          if (matches.length >= (input.limit ?? 50)) break;
-          if (window === 2000) metadata.degradationReason = "retrieval_budget";
+        // Fetch one bounded pool: repeating the workspace ACL CTE for each
+        // window exhausted the interactive budget at one million chunks.
+        const remaining = 2200 - (Date.now() - started);
+        if (remaining < 100) {
+          metadata.degradationReason = "retrieval_budget";
+          return [];
         }
-        return matches;
+        await db.execute(sql`select set_config('statement_timeout',${String(remaining)},true)`);
+        const candidates = await annSearchCandidates(
+          input.workspaceId,
+          input.userId,
+          vector,
+          SEARCH_ANN_CANDIDATE_LIMIT,
+        );
+        searchCounter(env, "refill", "query");
+        return hydrateVectorResults(input.workspaceId, input.userId, candidates);
       });
     });
     searchHistogram(env, "database_ms", "completed", Date.now() - databaseStarted);
@@ -296,12 +302,14 @@ export async function hybridSearchWorkspace(
       mode: "keyword",
       indexAvailability: "ready",
       degradationReason:
-        error instanceof SearchBudgetDeferred
-          ? "capacity"
-          : error instanceof SearchEmbeddingError &&
-              ["SEARCH_QUERY_TIMEOUT", "SEARCH_PROVIDER_TIMEOUT"].includes(error.code)
-            ? "provider_timeout"
-            : "provider_unavailable",
+        Date.now() - started >= 2100
+          ? "retrieval_budget"
+          : error instanceof SearchBudgetDeferred
+            ? "capacity"
+            : error instanceof SearchEmbeddingError &&
+                ["SEARCH_QUERY_TIMEOUT", "SEARCH_PROVIDER_TIMEOUT"].includes(error.code)
+              ? "provider_timeout"
+              : "provider_unavailable",
     };
     return fallback();
   } finally {

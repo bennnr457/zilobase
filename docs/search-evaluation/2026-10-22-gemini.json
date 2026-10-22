@@ -1,0 +1,734 @@
+{
+  "model": "gemini-embedding-2",
+  "dimensions": 1536,
+  "queryPrefillTimeoutMs": 20000,
+  "corpusVersion": 1,
+  "review": "Authored synthetic application corpus, reviewed for explicit source support; no human relevance review claimed. Freeze labels before measuring results.",
+  "documents": 38,
+  "queries": [
+    {
+      "text": "SEC204 Session rotation",
+      "kind": "exact",
+      "expected": ["session"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 601
+    },
+    {
+      "text": "SEC205 Hardware authenticators",
+      "kind": "exact",
+      "expected": ["mfa"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 814
+    },
+    {
+      "text": "SEC206 Access inheritance",
+      "kind": "exact",
+      "expected": ["acl"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1151
+    },
+    {
+      "text": "SEC207 Credential hygiene",
+      "kind": "exact",
+      "expected": ["secrets"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 2115
+    },
+    {
+      "text": "FIN301 Billing documents",
+      "kind": "exact",
+      "expected": ["invoice"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 2191
+    },
+    {
+      "text": "FIN302 Customer reimbursements",
+      "kind": "exact",
+      "expected": ["refund"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1780
+    },
+    {
+      "text": "FIN303 Employee expenses",
+      "kind": "exact",
+      "expected": ["expense"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1973
+    },
+    {
+      "text": "FIN304 Subscription continuation",
+      "kind": "exact",
+      "expected": ["renewal"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 2136
+    },
+    {
+      "text": "OPS401 Recovery copies",
+      "kind": "exact",
+      "expected": ["backup"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1632
+    },
+    {
+      "text": "OPS402 Read replicas",
+      "kind": "exact",
+      "expected": ["replication"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1013
+    },
+    {
+      "text": "OPS403 Deferred jobs",
+      "kind": "exact",
+      "expected": ["queue"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1361
+    },
+    {
+      "text": "OPS404 Worker fencing",
+      "kind": "exact",
+      "expected": ["leases"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1161
+    },
+    {
+      "text": "NET501 Domain resolution",
+      "kind": "exact",
+      "expected": ["dns"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 881
+    },
+    {
+      "text": "NET502 Certificate renewal",
+      "kind": "exact",
+      "expected": ["tls"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 703
+    },
+    {
+      "text": "NET503 Request throttling",
+      "kind": "exact",
+      "expected": ["ratelimit"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 708
+    },
+    {
+      "text": "NET504 Cache invalidation",
+      "kind": "exact",
+      "expected": ["cache"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 657
+    },
+    {
+      "text": "AI601 Semantic representations",
+      "kind": "exact",
+      "expected": ["embedding"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 842
+    },
+    {
+      "text": "AI602 Source segmentation",
+      "kind": "exact",
+      "expected": ["chunking"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1764
+    },
+    {
+      "text": "AI603 Answer evidence",
+      "kind": "exact",
+      "expected": ["grounding"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1224
+    },
+    {
+      "text": "AI604 Unsupported claims",
+      "kind": "exact",
+      "expected": ["hallucination"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 62354
+    },
+    {
+      "text": "SEC204",
+      "kind": "identifier",
+      "expected": ["session"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 623
+    },
+    {
+      "text": "SEC205",
+      "kind": "identifier",
+      "expected": ["mfa"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 697
+    },
+    {
+      "text": "SEC206",
+      "kind": "identifier",
+      "expected": ["acl"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 785
+    },
+    {
+      "text": "SEC207",
+      "kind": "identifier",
+      "expected": ["secrets"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1096
+    },
+    {
+      "text": "FIN301",
+      "kind": "identifier",
+      "expected": ["invoice"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 818
+    },
+    {
+      "text": "FIN302",
+      "kind": "identifier",
+      "expected": ["refund"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 740
+    },
+    {
+      "text": "FIN303",
+      "kind": "identifier",
+      "expected": ["expense"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 866
+    },
+    {
+      "text": "FIN304",
+      "kind": "identifier",
+      "expected": ["renewal"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 945
+    },
+    {
+      "text": "OPS401",
+      "kind": "identifier",
+      "expected": ["backup"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 854
+    },
+    {
+      "text": "OPS402",
+      "kind": "identifier",
+      "expected": ["replication"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 761
+    },
+    {
+      "text": "OPS403",
+      "kind": "identifier",
+      "expected": ["queue"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 754
+    },
+    {
+      "text": "OPS404",
+      "kind": "identifier",
+      "expected": ["leases"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 952
+    },
+    {
+      "text": "NET501",
+      "kind": "identifier",
+      "expected": ["dns"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 774
+    },
+    {
+      "text": "NET502",
+      "kind": "identifier",
+      "expected": ["tls"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 755
+    },
+    {
+      "text": "NET503",
+      "kind": "identifier",
+      "expected": ["ratelimit"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 637
+    },
+    {
+      "text": "NET504",
+      "kind": "identifier",
+      "expected": ["cache"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 816
+    },
+    {
+      "text": "AI601",
+      "kind": "identifier",
+      "expected": ["embedding"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 715
+    },
+    {
+      "text": "AI602",
+      "kind": "identifier",
+      "expected": ["chunking"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 788
+    },
+    {
+      "text": "AI603",
+      "kind": "identifier",
+      "expected": ["grounding"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 1222
+    },
+    {
+      "text": "AI604",
+      "kind": "identifier",
+      "expected": ["hallucination"],
+      "hybridRank": 1,
+      "keywordRank": 1,
+      "actualMode": "hybrid",
+      "embeddingMs": 733
+    },
+    {
+      "text": "People keep getting asked to sign in again",
+      "kind": "paraphrase",
+      "expected": ["session"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 948
+    },
+    {
+      "text": "How can staff protect accounts with a physical second factor?",
+      "kind": "paraphrase",
+      "expected": ["mfa"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 744
+    },
+    {
+      "text": "Who can see a document after it is moved into a shared folder?",
+      "kind": "paraphrase",
+      "expected": ["acl"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 673
+    },
+    {
+      "text": "Where should confidential service tokens be kept?",
+      "kind": "paraphrase",
+      "expected": ["secrets"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 895
+    },
+    {
+      "text": "How do we settle a bill from a vendor?",
+      "kind": "paraphrase",
+      "expected": ["invoice"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 887
+    },
+    {
+      "text": "A buyer wants their money back after returning an item",
+      "kind": "paraphrase",
+      "expected": ["refund"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 798
+    },
+    {
+      "text": "What is the process for claiming the cost of a business trip?",
+      "kind": "paraphrase",
+      "expected": ["expense"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 912
+    },
+    {
+      "text": "How do we avoid accidentally extending an annual agreement?",
+      "kind": "paraphrase",
+      "expected": ["renewal"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 787
+    },
+    {
+      "text": "Can we bring back our records after the primary storage is lost?",
+      "kind": "paraphrase",
+      "expected": ["backup"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1064
+    },
+    {
+      "text": "Why does a newly saved item briefly disappear on a read-only database node?",
+      "kind": "paraphrase",
+      "expected": ["replication"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1136
+    },
+    {
+      "text": "How do we avoid losing asynchronous work when the message broker is down?",
+      "kind": "paraphrase",
+      "expected": ["queue"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1105
+    },
+    {
+      "text": "Prevent an old background process from replacing newer results",
+      "kind": "paraphrase",
+      "expected": ["leases"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 913
+    },
+    {
+      "text": "Why does a website name still lead to the previous machine?",
+      "kind": "paraphrase",
+      "expected": ["dns"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 879
+    },
+    {
+      "text": "Browsers warn that our secure connection has expired",
+      "kind": "paraphrase",
+      "expected": ["tls"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 945
+    },
+    {
+      "text": "What should a client do when a service says too many requests?",
+      "kind": "paraphrase",
+      "expected": ["ratelimit"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1112
+    },
+    {
+      "text": "Stop one tenant receiving another tenant’s cached lookup results",
+      "kind": "paraphrase",
+      "expected": ["cache"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1086
+    },
+    {
+      "text": "How can we find related writing without matching the same words?",
+      "kind": "paraphrase",
+      "expected": ["embedding"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 786
+    },
+    {
+      "text": "How should a lengthy document be divided before making numeric representations?",
+      "kind": "paraphrase",
+      "expected": ["chunking"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 970
+    },
+    {
+      "text": "When may the assistant cite information it has only discovered in an index?",
+      "kind": "paraphrase",
+      "expected": ["grounding"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 780
+    },
+    {
+      "text": "What should happen when the sources do not contain an answer?",
+      "kind": "paraphrase",
+      "expected": ["hallucination"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 663
+    },
+    {
+      "text": "What needs to be prepared before a new colleague joins?",
+      "kind": "paraphrase",
+      "expected": ["onboarding"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 848
+    },
+    {
+      "text": "How can an employee book a holiday?",
+      "kind": "paraphrase",
+      "expected": ["leave"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 846
+    },
+    {
+      "text": "How do we evaluate applicants consistently during hiring?",
+      "kind": "paraphrase",
+      "expected": ["interview"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1102
+    },
+    {
+      "text": "Who coordinates the team during a major service outage?",
+      "kind": "paraphrase",
+      "expected": ["incident"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 2161
+    },
+    {
+      "text": "How should a software change be introduced gradually?",
+      "kind": "paraphrase",
+      "expected": ["deploy"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 2063
+    },
+    {
+      "text": "Keep automated checks from modifying real customer systems",
+      "kind": "paraphrase",
+      "expected": ["tests"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 740
+    },
+    {
+      "text": "How do we avoid corrupting emoji while splitting text by size?",
+      "kind": "paraphrase",
+      "expected": ["unicode"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1612
+    },
+    {
+      "text": "How can a background scan continue through millions of rows without large offsets?",
+      "kind": "paraphrase",
+      "expected": ["pagination"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1482
+    },
+    {
+      "text": "What can postpone a spacecraft’s departure from the ground?",
+      "kind": "paraphrase",
+      "expected": ["launch"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 4334
+    },
+    {
+      "text": "How does an artificial moon stay on course around our planet?",
+      "kind": "paraphrase",
+      "expected": ["orbit"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 2064
+    },
+    {
+      "text": "Why do colorful underwater habitats turn pale during a heat wave?",
+      "kind": "paraphrase",
+      "expected": ["reef"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1898
+    },
+    {
+      "text": "How can researchers investigate life far below the sunlit sea?",
+      "kind": "paraphrase",
+      "expected": ["deepsea"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1982
+    },
+    {
+      "text": "Which customer record is based in Japan’s capital?",
+      "kind": "property",
+      "expected": ["record1"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1296
+    },
+    {
+      "text": "Find the deal that is waiting for the lawyers to approve it",
+      "kind": "property",
+      "expected": ["record2"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1044
+    },
+    {
+      "text": "Which item needs the most urgent attention?",
+      "kind": "property",
+      "expected": ["record3"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1912
+    },
+    {
+      "text": "Find the record containing the help desk email address",
+      "kind": "property",
+      "expected": ["record4"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 1997
+    },
+    {
+      "text": "Which record describes a delivery scheduled in the middle of November 2026?",
+      "kind": "property",
+      "expected": ["record5"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 2112
+    },
+    {
+      "text": "Which shipment must remain refrigerated?",
+      "kind": "property",
+      "expected": ["record6"],
+      "hybridRank": 1,
+      "keywordRank": 0,
+      "actualMode": "hybrid",
+      "embeddingMs": 2093
+    }
+  ],
+  "metrics": {
+    "hybridRecallAt10": 1,
+    "keywordParaphraseRecallAt10": 0,
+    "hybridParaphraseRecallAt10": 1,
+    "exactTop1": 1,
+    "paraphraseImprovement": 1
+  },
+  "usage": [
+    {
+      "traffic_class": "index",
+      "requests": 6,
+      "reserved_tokens": "2320",
+      "reported_tokens": "2320"
+    },
+    {
+      "traffic_class": "query",
+      "requests": 79,
+      "reserved_tokens": "1227",
+      "reported_tokens": "1174"
+    }
+  ],
+  "passed": true
+}

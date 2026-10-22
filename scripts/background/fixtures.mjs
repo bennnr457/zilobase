@@ -6,7 +6,10 @@ import { promisify } from "node:util";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const exec = promisify(execFile);
-export async function withBackgroundFixtures(run, { persistentDatabase = false } = {}) {
+export async function withBackgroundFixtures(
+  run,
+  { persistentDatabase = false, postgresShmSize } = {},
+) {
   const name = `zilobase-background-test-${randomUUID()}`;
   let created = false;
   let brokerCreated = false;
@@ -25,6 +28,7 @@ export async function withBackgroundFixtures(run, { persistentDatabase = false }
       "--name",
       name,
       ...(persistentDatabase ? [] : ["--tmpfs", "/var/lib/postgresql/data"]),
+      ...(postgresShmSize ? ["--shm-size", postgresShmSize] : []),
       "-e",
       "POSTGRES_PASSWORD=background-test-only",
       "-e",

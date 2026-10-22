@@ -96,7 +96,9 @@
     "test:search:node": "node scripts/search/test-isolated.mjs node",
     "test:search:worker": "node scripts/search/test-isolated.mjs worker",
     "test:search:browser": "node scripts/search/test-browser.mjs",
-    "test:search": "npm run test:search:node && npm run test:search:worker"
+    "test:search": "npm run test:search:node && npm run test:search:worker",
+    "test:search:scale": "node scripts/search/test-scale.mjs",
+    "test:search:relevance": "node --import tsx scripts/search/evaluate-live.mts"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "1.75.1",

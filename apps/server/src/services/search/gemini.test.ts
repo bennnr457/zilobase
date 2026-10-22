@@ -88,6 +88,29 @@ describe("Gemini Embedding 2 transport", () => {
     ])
       expect(() => validateSearchVector(value)).toThrow("VECTOR_INVALID");
   });
+  it("classifies its own timeout separately from caller cancellation", async () => {
+    const timeout = new AbortController();
+    const clock = vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeout.signal);
+    try {
+      const request: typeof fetch = async (_url, options) =>
+        new Promise((_resolve, reject) => {
+          options!.signal!.addEventListener(
+            "abort",
+            () => reject(new Error("private network error")),
+            { once: true },
+          );
+        });
+      const pending = createGeminiEmbeddingProvider("test", request).embedQuery("test", "search");
+      const assertion = expect(pending).rejects.toMatchObject({
+        code: "SEARCH_PROVIDER_TIMEOUT",
+        retryable: true,
+      });
+      timeout.abort();
+      await assertion;
+    } finally {
+      clock.mockRestore();
+    }
+  });
   it("bounds requests before HTTP and propagates cancellation", async () => {
     const request = vi.fn().mockRejectedValue(new Error("sensitive network detail"));
     const provider = createGeminiEmbeddingProvider("test", request);

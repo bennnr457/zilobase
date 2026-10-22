@@ -56,6 +56,7 @@ export function createGeminiEmbeddingProvider(
     });
     const batch = inputs.length > 1;
     let response: Response;
+    const timeoutSignal = AbortSignal.timeout(timeout);
     try {
       response = await request(
         `https://generativelanguage.googleapis.com/v1beta/models/${SEARCH_PROFILE.model}:${batch ? "batchEmbedContents" : "embedContent"}`,
@@ -63,14 +64,16 @@ export function createGeminiEmbeddingProvider(
           method: "POST",
           headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
           body: JSON.stringify(batch ? { requests: inputs.map(content) } : content(inputs[0])),
-          signal: signal
-            ? AbortSignal.any([signal, AbortSignal.timeout(timeout)])
-            : AbortSignal.timeout(timeout),
+          signal: signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal,
         },
       );
     } catch {
       throw new SearchEmbeddingError(
-        signal?.aborted ? "SEARCH_PROVIDER_ABORTED" : "SEARCH_PROVIDER_UNAVAILABLE",
+        signal?.aborted
+          ? "SEARCH_PROVIDER_ABORTED"
+          : timeoutSignal.aborted
+            ? "SEARCH_PROVIDER_TIMEOUT"
+            : "SEARCH_PROVIDER_UNAVAILABLE",
         !signal?.aborted,
       );
     }
