@@ -1179,6 +1179,7 @@ function PageShortcutPicker({
     debouncedQuery,
     hasQuery && searchSettled,
     ["page"],
+    "keyword",
   );
   const pagesById = React.useMemo(() => new Map(pages.map((page) => [page.id, page])), [pages]);
   const displayedPages = hasQuery && searchSettled ? results : [];

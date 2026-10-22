@@ -34,7 +34,13 @@ export function AppSearchProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 250);
   const workspaceId = useActiveWorkspaceId();
-  const { data: results = [], isFetching } = useAppSearchResults(workspaceId, debouncedQuery, open);
+  const { data: results = [], isFetching } = useAppSearchResults(
+    workspaceId,
+    debouncedQuery,
+    open,
+    undefined,
+    "hybrid",
+  );
   const contextValue = useMemo(() => ({ openSearch: () => setOpen(true) }), []);
 
   useAppShortcut(
@@ -85,7 +91,14 @@ export function AppSearchProvider({ children }: { children: ReactNode }) {
                     <ResultIcon result={result} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{result.title}</div>
-                      <div className="truncate text-xs text-content-secondary">{result.path}</div>
+                      <div className="truncate text-xs text-content-secondary">
+                        {result.match?.headingPath.join(" / ") || result.path}
+                      </div>
+                      {result.excerpt ? (
+                        <p className="line-clamp-2 text-xs text-content-secondary">
+                          {result.excerpt}
+                        </p>
+                      ) : null}
                     </div>
                     <CommandShortcut className="ml-3 shrink-0 rounded-sm bg-surface-muted px-1.5 py-0.5 text-[11px] font-medium uppercase leading-4 tracking-normal text-content-secondary">
                       {result.type === "database" ? "Database" : "Page"}

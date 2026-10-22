@@ -29,19 +29,8 @@ import {
   type WorkspaceSearchResult,
 } from "./workspace-search";
 
-export type SearchMetadata = {
-  mode: "keyword" | "hybrid";
-  indexAvailability: "disabled" | "unavailable" | "building" | "ready";
-  degradationReason?:
-    | "configuration"
-    | "workspace_disabled"
-    | "index_building"
-    | "query_empty"
-    | "provider_timeout"
-    | "provider_unavailable"
-    | "capacity"
-    | "retrieval_budget";
-};
+export type { SearchMetadata } from "@zilobase/features/search";
+import type { SearchMetadata } from "@zilobase/features/search";
 export type VectorCandidate = { id: string; page_id: string; distance: number };
 
 export async function exactSearchCandidates(

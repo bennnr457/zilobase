@@ -27,17 +27,8 @@ export type WorkspaceSearchResult = {
   match?: SearchMatchProvenance;
 };
 
-export type SearchMatchProvenance = {
-  chunkId: string;
-  pageId: string;
-  kind: "title" | "body" | "property";
-  headingPath: string[];
-  blockId?: string;
-  blockIndex?: number;
-  propertyId?: string;
-  databaseId?: string;
-  dataSourceId?: string;
-};
+export type { SearchMatchProvenance } from "@zilobase/features/search";
+import type { SearchMatchProvenance } from "@zilobase/features/search";
 export type WorkspaceSearchInput = Parameters<typeof searchWorkspaceItems>[0];
 
 const DEFAULT_MAX_SEARCH_RESULTS = 50;

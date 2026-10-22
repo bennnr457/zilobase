@@ -1,3 +1,4 @@
+import { WorkspaceSearchSettingsSection } from "./components/search-settings";
 import { WorkspaceDetailsSection } from "./components/workspace-details";
 import { WorkspaceImportSection } from "./components/workspace-import";
 import { DeleteWorkspaceSection } from "./components/delete-workspace";
@@ -30,6 +31,8 @@ export default function WorkspaceSettingsScreen({
       <div className="mx-auto grid w-full max-w-3xl gap-6">
         <WorkspaceDetailsSection workspace={workspace} />
         {policySettings}
+        <Separator />
+        <WorkspaceSearchSettingsSection workspaceId={activeWorkspaceId ?? null} />
         {isFeatureEnabled("notionImport") ? (
           <>
             <Separator />

@@ -22,7 +22,16 @@ export function register({ assert, loadModule, test }) {
       client.clear();
     }
 
-    assert.equal(requestedPath, "/search?workspaceId=workspace-1&q=project+plan&types=page");
-    assert.deepEqual(options.queryKey, ["search", "workspace-1", "project plan", "page"]);
+    assert.equal(
+      requestedPath,
+      "/search?workspaceId=workspace-1&q=project+plan&mode=keyword&types=page",
+    );
+    assert.deepEqual(options.queryKey, [
+      "search",
+      "workspace-1",
+      "project plan",
+      "page",
+      "keyword",
+    ]);
   });
 }

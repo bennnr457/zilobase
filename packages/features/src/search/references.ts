@@ -13,6 +13,19 @@ const resultSchema = z.object({
   type: z.enum(["page", "database"]),
   emoji: z.string().nullable(),
   excerpt: z.string().nullable().optional(),
+  match: z
+    .object({
+      chunkId: z.string(),
+      pageId: z.string(),
+      kind: z.enum(["title", "body", "property"]),
+      headingPath: z.array(z.string()),
+      blockId: z.string().optional(),
+      blockIndex: z.number().int().nonnegative().optional(),
+      propertyId: z.string().optional(),
+      databaseId: z.string().optional(),
+      dataSourceId: z.string().optional(),
+    })
+    .optional(),
   entity: z.unknown(),
   titleSource: z.unknown().optional(),
 });

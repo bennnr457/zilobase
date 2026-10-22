@@ -71,10 +71,15 @@ export function PageDatabaseSearchPopover({
     debouncedQuery,
     open && types.includes("database"),
     ["database"],
+    "keyword",
   );
-  const pages = useAppSearchResults(workspaceId, debouncedQuery, open && types.includes("page"), [
-    "page",
-  ]);
+  const pages = useAppSearchResults(
+    workspaceId,
+    debouncedQuery,
+    open && types.includes("page"),
+    ["page"],
+    "keyword",
+  );
   const groups = [
     { type: "database" as const, heading: "Databases", search: databases },
     { type: "page" as const, heading: "Pages", search: pages },
