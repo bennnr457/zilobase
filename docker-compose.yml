@@ -124,10 +124,7 @@ services:
       start_period: 30s
 
   postgres:
-    image: zilobase-postgres:17.10-vector0.8.7
-    build:
-      context: .
-      dockerfile: deploy/postgres/Dockerfile
+    image: ghcr.io/zilobase/postgres@sha256:8ba7c752d0567b22b8d33c5f87c663c82ea9fd693375cf754f01dd6082a0345b
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}

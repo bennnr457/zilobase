@@ -64,5 +64,84 @@ vector hydration so the shared client accepts the same ISO contract as keyword
 results. The real-Postgres regression asserts the serialized date contract.
 
 126 search and Ask AI read-tool tests also passed. Search discovery remains
-separate from live read evidence. Full final verification and live relevance /
-release-scale performance are subsequent gates.
+separate from live read evidence. Final verification, live relevance and release-scale performance outcomes are
+recorded below.
+
+## Final verification and image publication
+
+After the scale-related search changes, the real acceptance suites passed again:
+15 Node scenarios, 10 Worker scenarios with matching parity outputs, and four
+actual-app browser checks. Search-specific web tests passed. The full server
+quality command passed 952 tests (14 pre-existing conditional skips), followed
+by 262 query-regression tests and the server build. The HTTP inventory explicitly
+includes the three new settings/reindex routes.
+
+Other checks passed: 577 shared-client tests; 13 page-context and nine HTML
+conversion tests; all workspace typechecks; architecture/ownership and 112 public
+export entry conditions; dependency alignment (one existing clipper TypeScript
+version warning); lint (existing warnings); tooling/community guards; main web
+and server builds. Runtime-adapter Node tests passed 114 with three conditional
+skips; Worker tests passed 42. Hosted `0adf8ec` passed 79 Node tests (one
+conditional skip), 14 Worker tests, build/type generation and API/background
+Wrangler dry-runs against the final shared code.
+
+The broad web suite currently fails an assertion at
+`apps/web/test/features/pages/editor/document-session.test.mjs:230` in concurrent,
+uncommitted editor changes: the replacement awareness clock is not greater than 50. Search-specific checks and browser acceptance pass. Those unrelated editor
+and database changes are excluded from the search commits. Do not describe the
+whole worktree as release-green until their owner resolves that failure.
+
+[GitHub Actions run 39724890435](https://github.com/zilobase/zilobase/actions/runs/39724890435)
+published the PostgreSQL image from image-only branch commit
+`28481a42fb82b803f5938251bab25fee8e243f78`. Both native architectures passed
+PostgreSQL 17, pgvector 0.8.7, 1536-dimensional vector and HNSW probes. The OCI
+index is:
+
+```text
+ghcr.io/zilobase/postgres@sha256:8ba7c752d0567b22b8d33c5f87c663c82ea9fd693375cf754f01dd6082a0345b
+```
+
+Anonymous manifest access and full AMD64/ARM64 pulls passed using an empty Docker
+credential store. The pinned published ARM64 image also passed the local volume,
+vector/HNSW and dump/restore test. Self-hosted production Compose now pins that
+registry digest; source development continues building the pinned Dockerfile.
+Production Compose configuration validates. This publication changed no
+production application deployment, database schema or workspace setting.
+
+The image-only publication branch is intentionally separate from the application
+commit series: it contains only the Dockerfile and image workflow on remote main,
+so publishing did not push the local application history or concurrent edits.
+
+## Relevance, scale and final local verification
+
+Pass 24 (`ba04a96a29`) records the [live model report](../search-evaluation/2026-10-22-gemini.json)
+and [10k/100k/1m scale report](../search-evaluation/2026-10-22-scale.json).
+The final live Gemini run passed all relevance gates: semantic Recall@10 1.00,
+paraphrase improvement 1.00, title/identifier Top-1 1.00, with 3,494 reported
+input tokens. Offline query prefill uses 20 seconds; interactive limits remain
+1.8 / 2.5 seconds and are tested separately. An earlier final-run attempt hit
+the interactive provider timeout; it was not counted as a passing relevance run.
+The provider now distinguishes its own timeout from caller cancellation.
+
+The clean million-chunk run passed ANN Recall@20 0.95 in the dominant workspace
+and exact recall 1.00 in small/selective sets. All nine interactive cases returned
+hybrid results within 2.5 seconds (maximum 2,122 ms), with one partition selected.
+The large index built in 670.29 seconds using 2 GiB maintenance memory and two
+parallel workers. Read the evaluation guide for synthetic-corpus limitations,
+raw selective ANN results, storage and memory measurements; these are not
+production traffic percentiles.
+
+The scale run exposed and fixed repeated ancestry/ownership scans, a pulled-up
+permission semi-join, and recall loss from strict iterative ordering/early
+stopping. The measured final path uses a single bounded, authorized 2,000-chunk
+ANN pool with relaxed scanning and cosine reranking; small sets remain exact.
+103 focused real-database/provider/search tests pass. The final Node/Worker
+acceptance run passes all 25 scenarios; the four actual-app browser checks pass.
+
+Local development was also repaired after the running pre-feature PostgreSQL
+container blocked preflight. The dependency container was recreated with the
+vector-capable image while retaining `zilobase-source-dev_postgres_data`. Core
+migrations were applied only to loopback `zilobase_node`, `zilobase_worker` and
+`zilobase_enterprise_connected`. The new source revision column and pgvector
+0.8.7 are present; both Node and Worker health endpoints return 200. The Worker
+database retains its 49 live pages. No production migration was performed.

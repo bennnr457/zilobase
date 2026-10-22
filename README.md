@@ -183,12 +183,17 @@ The public self-hosted deployment uses Docker Compose with:
 
 - Caddy for HTTP/HTTPS
 - Zilobase for the web client and API
-- Postgres for relational data
+- PostgreSQL 17 with pgvector for relational data and optional semantic search
 - RustFS for S3-compatible image storage
 
 The open-source server exports edition-neutral runtime extension surfaces from
 `@zilobase/server/adapter-api`. This repository documents and supports the
 public self-hosted deployment only.
+
+Gemini search is disabled by default and requires workspace opt-in. See the
+[search deployment guide](docs/search-deployment.md) and
+[release runbook](docs/search-release.md) for configuration, supported text/property
+coverage, indexing controls and operating limits.
 
 ## Community
 

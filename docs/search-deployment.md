@@ -77,6 +77,21 @@ The check requires its source map and rejects Node queue/storage SDKs and
 filesystem/process imports while checking that the shared indexing handler is
 present. Worker/real-Postgres acceptance is a separate gate from bundle checks.
 
+## Retrieval tuning and verification
+
+The final large-set path uses one authorized pool of at most 2000 chunks,
+relaxed iterative HNSW scanning, and actual cosine reranking before page fusion.
+It uses ef_search 1000, max_scan_tuples 100000 and scan_mem_multiplier 4;
+smaller diagnostic windows start at 100. Sets of at most 10,000 eligible chunks
+use exact retrieval. The database phase reserves time for authorization/fallback
+within the 2.5-second request budget. JIT and vector settings are transaction-local.
+
+These settings were refined by the million-chunk gate; repeating full workspace
+eligibility for progressive windows exceeded the interactive budget. See the
+[evaluation record](search-evaluation/README.md) for measured recall, latency,
+resource costs and limitations. See the [release runbook](search-release.md) for
+coverage, staging/production activation and operator acceptance gates.
+
 ## Search operations
 
 Run `node --import tsx apps/server/src/scripts/search-ops.ts status --cell CELL`

@@ -4,7 +4,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 import assert from "node:assert/strict";
 import { ensureSearchPostgresImage, SEARCH_POSTGRES_IMAGE } from "./postgres-image.mjs";
 
-ensureSearchPostgresImage();
+const testImage = process.env.ZILOBASE_SEARCH_POSTGRES_TEST_IMAGE ?? SEARCH_POSTGRES_IMAGE;
+if (testImage === SEARCH_POSTGRES_IMAGE) ensureSearchPostgresImage();
 const prefix = `zilobase-vector-image-${randomUUID()}`;
 const volume = `${prefix}-volume`;
 const containers = new Set();
@@ -36,6 +37,8 @@ async function start(name, image, persistent = false) {
     "-d",
     "--name",
     name,
+    "--platform",
+    process.arch === "arm64" ? "linux/arm64" : "linux/amd64",
     "-e",
     "POSTGRES_PASSWORD=image-test-only",
     ...(persistent ? ["-v", `${volume}:/var/lib/postgresql/data`] : []),
@@ -63,7 +66,7 @@ try {
   docker(["rm", old]);
   containers.delete(old);
   const upgraded = `${prefix}-upgraded`;
-  await start(upgraded, SEARCH_POSTGRES_IMAGE, true);
+  await start(upgraded, testImage, true);
   assert.equal(sql(upgraded, "select id from upgrade_marker"), "42");
   sql(
     upgraded,
@@ -84,7 +87,7 @@ try {
     "postgres",
   ]);
   const restored = `${prefix}-restored`;
-  await start(restored, SEARCH_POSTGRES_IMAGE);
+  await start(restored, testImage);
   docker(
     [
       "exec",
