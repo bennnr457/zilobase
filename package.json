@@ -92,7 +92,8 @@
     "test:automations:unit": "npm test --workspace @zilobase/server -- src/services/automations src/routes/automations src/app/background src/infrastructure/background src/shared/config && npm exec --workspace @zilobase/features -- tsx --test \"src/automations/*.test.ts\" \"src/automations/*.test.mjs\"",
     "test:automations:node": "node scripts/automations/test-isolated.mjs node",
     "test:automations:worker": "node scripts/automations/test-isolated.mjs worker",
-    "test:automations": "npm run test:automations:unit && npm run test:automations:node && npm run test:automations:worker"
+    "test:automations": "npm run test:automations:unit && npm run test:automations:node && npm run test:automations:worker",
+    "test:search:node": "node scripts/search/test-isolated.mjs node"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "1.75.1",

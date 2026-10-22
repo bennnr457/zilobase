@@ -6,26 +6,31 @@ import { promisify } from "node:util";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const exec = promisify(execFile);
-export async function withBackgroundFixtures(run) {
+export async function withBackgroundFixtures(run, { persistentDatabase = false } = {}) {
   const name = `zilobase-background-test-${randomUUID()}`;
   let created = false;
   let brokerCreated = false;
   const broker = `${name}-queue`;
   try {
+    const databaseReservation = createServer();
+    await new Promise((resolve) => databaseReservation.listen(0, "127.0.0.1", resolve));
+    const databasePort = databaseReservation.address().port;
+    await new Promise((resolve, reject) =>
+      databaseReservation.close((error) => (error ? reject(error) : resolve())),
+    );
     await exec("docker", [
       "run",
       "--pull=never",
       "--rm",
       "--name",
       name,
-      "--tmpfs",
-      "/var/lib/postgresql/data",
+      ...(persistentDatabase ? [] : ["--tmpfs", "/var/lib/postgresql/data"]),
       "-e",
       "POSTGRES_PASSWORD=background-test-only",
       "-e",
       "POSTGRES_DB=zilobase_background_verify",
       "-p",
-      "127.0.0.1::5432",
+      `127.0.0.1:${databasePort}:5432`,
       "-d",
       (ensureSearchPostgresImage(), "zilobase-postgres:17.10-vector0.8.7"),
     ]);
@@ -79,6 +84,7 @@ export async function withBackgroundFixtures(run) {
     if (!/^127\.0\.0\.1:\d+$/.test(redisEndpoint))
       throw new Error("Unexpected Redis fixture binding");
     return await run({
+      ZILOBASE_DATABASE_VERIFY_CONTAINER: name,
       ZILOBASE_QUEUE_VERIFY_URL: `redis://${redisEndpoint}`,
       ZILOBASE_QUEUE_VERIFY_CONTAINER: broker,
       ZILOBASE_BACKGROUND_VERIFY_URL: `postgres://postgres:background-test-only@${endpoint}/zilobase_background_verify`,

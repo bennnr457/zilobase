@@ -31,6 +31,9 @@ describe("stored property chunks", () => {
     ["phone", "+12345", "+12345"],
     ["id", "ISSUE-1", "ISSUE-1"],
     ["select", "blocked", "Blocked"],
+    ["select", "Blocked", "Blocked"],
+    ["status", "Done", "Done"],
+    ["multi_select", ["Blocked", "Done"], "Blocked, Done"],
     ["status", "done", "Done"],
     ["multi_select", ["blocked", "done"], "Blocked, Done"],
   ])("serializes %s values", (type, value, expected) => {
@@ -67,5 +70,6 @@ describe("stored property chunks", () => {
       valueRevision: "3",
     });
     expect(chunks.find((x) => x.sourceKey === "p")?.input).not.toContain("private");
+    expect(chunks.find((x) => x.sourceKey === "p")?.input).toContain(a.name + ": Blocked");
   });
 });

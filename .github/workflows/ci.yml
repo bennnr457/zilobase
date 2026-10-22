@@ -102,3 +102,24 @@ jobs:
           name: background-recovery-results
           path: .test-results/background/
           if-no-files-found: warn
+
+  search-acceptance:
+    name: Search Node acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/search/postgres-image.mjs
+      - run: docker pull valkey/valkey:8-alpine
+      - run: npm run test:search:node
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: search-node-results
+          path: .test-results/search/
+          if-no-files-found: warn

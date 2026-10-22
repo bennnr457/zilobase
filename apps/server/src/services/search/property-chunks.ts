@@ -43,8 +43,12 @@ export function serializeSearchProperty(property: StoredSearchProperty): string 
           : [];
       }),
     );
-    // Deleted or unknown option IDs are not useful text and must not survive as stale labels.
-    values = values.flatMap((value) => (labels.has(value) ? [labels.get(value)!] : []));
+    // Commands store option names; imported/editor values can store IDs. Resolve
+    // both against the current definition, never preserving deleted labels.
+    const currentNames = new Set(labels.values());
+    values = values.flatMap((value) =>
+      currentNames.has(value) ? [value] : labels.has(value) ? [labels.get(value)!] : [],
+    );
   } else if (property.type === "number") {
     values = values.flatMap((value) =>
       value.trim() && Number.isFinite(Number(value)) ? [String(Number(value))] : [],
@@ -73,16 +77,23 @@ export function chunkStoredProperties(
       if (!value) return [];
       const label = searchSafeText(property.name);
       return splitSearchText(value).map((piece, index) =>
-        prepareSearchChunk(title, piece.text, "property", property.id, index, {
-          headingPath: splitSearchText(label, 500, 0)
-            .slice(0, 1)
-            .map((item) => item.text),
-          propertyId: property.id,
-          definitionRevision: property.definitionRevision,
-          valueRevision: property.valueRevision,
-          start: piece.start,
-          end: piece.end,
-        }),
+        prepareSearchChunk(
+          title,
+          `${splitSearchText(label, 500, 0)[0]?.text ?? "Property"}: ${piece.text}`,
+          "property",
+          property.id,
+          index,
+          {
+            headingPath: splitSearchText(label, 500, 0)
+              .slice(0, 1)
+              .map((item) => item.text),
+            propertyId: property.id,
+            definitionRevision: property.definitionRevision,
+            valueRevision: property.valueRevision,
+            start: piece.start,
+            end: piece.end,
+          },
+        ),
       );
     });
 }
