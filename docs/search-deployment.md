@@ -76,3 +76,37 @@ Validate a Wrangler dry-run bundle with
 The check requires its source map and rejects Node queue/storage SDKs and
 filesystem/process imports while checking that the shared indexing handler is
 present. Worker/real-Postgres acceptance is a separate gate from bundle checks.
+
+## Search operations
+
+Run `node --import tsx apps/server/src/scripts/search-ops.ts status --cell CELL`
+with server environment variables loaded securely. Add `--workspace ID` to scope
+a command to one workspace. The explicit cell must equal `ZILOBASE_CELL_ID`;
+workspace operations reject settings owned by another cell.
+
+Commands: `status`, `backfill`, `reindex`, `retry`, `repair`, `cleanup`.
+Backfill/reindex require a workspace. Backfill restarts the bounded scan; reindex
+also increments the epoch. Retry resets at most 100 transient page failures and
+100 exhausted invalidations per call. It preserves malformed-input/provider
+validation failures and disabled workspaces. Repair recovers missing dispatch or
+expired page leases through normal admission. Publication runs on maintenance.
+Cleanup removes at most 500 obsolete chunks per call and retains active/current
+staging data. Disabled workspaces can be cleaned with the deployment flag off.
+
+Generic `background:ops replay` also reconnects finalized exhausted search work
+to its new durable task. It rejects disabled, obsolete or already-replayed work.
+All commands report bounded operational data; no source/query text or keys.
+Status includes pending/failed pages, oldest dirty time, expired leases, dispatch
+states, provider cooldown and the shared database maintenance heartbeat.
+
+Existing process metrics include search provider latency, reserved/reported
+usage, query-vector cache hits, generated/reused chunks, publication/stale work,
+indexing lag, retrieval/fallback reasons, database duration, candidate refill and
+final authorization rejections. Labels are closed outcomes plus runtime/cell,
+never workspace/page/query identifiers. Queue delay/retries/exhaustion use the
+existing background metrics. Node exposes these through its existing metrics
+listener. Worker process counters are ephemeral; persisted status and provider
+usage buckets remain authoritative across invocations.
+
+Implementation targets the fresh schema. The owner permits breaking releases
+and disposal of stale test data; no legacy upgrade or rollback package is needed.

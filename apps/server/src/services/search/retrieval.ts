@@ -1,3 +1,4 @@
+import { searchCounter, searchHistogram } from "./metrics";
 import {
   annSearchCandidates,
   searchEligibleChunkCount,
@@ -188,7 +189,12 @@ export async function hybridSearchWorkspace(
     indexAvailability: "disabled",
     degradationReason: "configuration",
   };
-  const fallback = async () => ({ results: await recheckResults(input, await keyword), metadata });
+  const finish = (results: WorkspaceSearchResult[]) => {
+    searchCounter(env, "retrieval", metadata.degradationReason ?? metadata.mode);
+    searchHistogram(env, "request_ms", metadata.mode, Date.now() - started);
+    return { results, metadata };
+  };
+  const fallback = async () => finish(await recheckResults(input, await keyword));
   if (env.SEARCH_EMBEDDINGS_ENABLED !== "true" || (!options.provider && !env.GEMINI_API_KEY))
     return fallback();
   const settings = (
@@ -240,6 +246,7 @@ export async function hybridSearchWorkspace(
       metadata.degradationReason = "retrieval_budget";
       return fallback();
     }
+    const databaseStarted = Date.now();
     const vectorResults = await db.transaction(async (tx) => {
       await tx.execute(
         sql`select set_config('statement_timeout',${String(Math.max(1, 2500 - (Date.now() - started)))},true),set_config('jit','off',true)`,
@@ -255,6 +262,7 @@ export async function hybridSearchWorkspace(
           );
         let matches: WorkspaceSearchResult[] = [];
         for (const window of SEARCH_CANDIDATE_WINDOWS) {
+          if (window > 100) searchCounter(env, "refill", "query");
           const remaining = 2500 - (Date.now() - started);
           if (remaining < 100) {
             metadata.degradationReason = "retrieval_budget";
@@ -272,13 +280,16 @@ export async function hybridSearchWorkspace(
         return matches;
       });
     });
+    searchHistogram(env, "database_ms", "completed", Date.now() - databaseStarted);
     const results = fuseSearchPageRanks(await keyword, vectorResults, input.limit ?? 50);
     metadata = {
       ...metadata,
       mode: vectorResults.length ? "hybrid" : "keyword",
       indexAvailability: "ready",
     };
-    return { results: await recheckResults(input, results), metadata };
+    const checked = await recheckResults(input, results);
+    searchCounter(env, "authorization_rejection", "query", results.length - checked.length);
+    return finish(checked);
   } catch (error) {
     metadata = {
       mode: "keyword",

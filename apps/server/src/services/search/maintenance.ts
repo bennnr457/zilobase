@@ -1,3 +1,4 @@
+import { searchQuotaScope } from "./embedding-usage";
 import { sql } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
 import {
@@ -193,21 +194,21 @@ export async function admitSearchWork(env: RuntimeEnv, workspaceId?: string) {
   });
 }
 
-export async function cleanupSearchIndex(env: RuntimeEnv) {
+export async function cleanupSearchIndex(env: RuntimeEnv, workspaceId?: string) {
   const cell = getBackgroundCellId(env);
   // Keep inactive complete generations for one day to support reuse. Never delete current staging.
   const chunks = await db.execute(sql`with doomed as (
     select c.workspace_id,c.id from search_chunk c join workspace_search_settings s on s.workspace_id=c.workspace_id left join page_search_index i on i.workspace_id=c.workspace_id and i.page_id=c.page_id and i.profile_id=c.profile_id
-    where s.cell_id=${cell} and (not s.enabled or c.index_epoch<>s.index_epoch or not c.is_active and c.created_at<now()-interval '1 day' and c.generation_id is distinct from i.staged_generation_id) limit 500)
+    where s.cell_id=${cell} and (${workspaceId ?? null}::text is null or s.workspace_id=${workspaceId ?? null}) and (not s.enabled or c.index_epoch<>s.index_epoch or not c.is_active and c.created_at<now()-interval '1 day' and c.generation_id is distinct from i.staged_generation_id) limit 500)
     delete from search_chunk c using doomed d where c.workspace_id=d.workspace_id and c.id=d.id returning c.id`);
   await db.execute(
-    sql`with doomed as(select c.workspace_id,c.user_id,c.profile_id,c.purpose,c.input_hash from search_query_embedding_cache c join workspace_search_settings s on s.workspace_id=c.workspace_id where s.cell_id=${cell} and (not s.enabled or c.expires_at<=now()) limit 500) delete from search_query_embedding_cache c using doomed d where (c.workspace_id,c.user_id,c.profile_id,c.purpose,c.input_hash)=(d.workspace_id,d.user_id,d.profile_id,d.purpose,d.input_hash)`,
+    sql`with doomed as(select c.workspace_id,c.user_id,c.profile_id,c.purpose,c.input_hash from search_query_embedding_cache c join workspace_search_settings s on s.workspace_id=c.workspace_id where s.cell_id=${cell} and (${workspaceId ?? null}::text is null or s.workspace_id=${workspaceId ?? null}) and (not s.enabled or c.expires_at<=now()) limit 500) delete from search_query_embedding_cache c using doomed d where (c.workspace_id,c.user_id,c.profile_id,c.purpose,c.input_hash)=(d.workspace_id,d.user_id,d.profile_id,d.purpose,d.input_hash)`,
   );
   await db.execute(
-    sql`with doomed as(select quota_scope,bucket_scope,window_start,window_kind,traffic_class from search_embedding_usage_bucket where window_kind<>'cooldown' and window_start<now()-interval '2 days' or window_kind='cooldown' and cooldown_until<now() limit 500) delete from search_embedding_usage_bucket b using doomed d where (b.quota_scope,b.bucket_scope,b.window_start,b.window_kind,b.traffic_class)=(d.quota_scope,d.bucket_scope,d.window_start,d.window_kind,d.traffic_class)`,
+    sql`with doomed as(select quota_scope,bucket_scope,window_start,window_kind,traffic_class from search_embedding_usage_bucket where ${workspaceId ?? null}::text is null and quota_scope=${searchQuotaScope(env)} and (window_kind<>'cooldown' and window_start<now()-interval '2 days' or window_kind='cooldown' and cooldown_until<now()) limit 500) delete from search_embedding_usage_bucket b using doomed d where (b.quota_scope,b.bucket_scope,b.window_start,b.window_kind,b.traffic_class)=(d.quota_scope,d.bucket_scope,d.window_start,d.window_kind,d.traffic_class)`,
   );
   await db.execute(
-    sql`with doomed as(select inv.id from search_invalidation inv join workspace_search_settings s on s.workspace_id=inv.workspace_id where s.cell_id=${cell} and (not s.enabled or inv.status='ready' and inv.updated_at<now()-interval '1 day') limit 500) delete from search_invalidation inv using doomed d where inv.id=d.id`,
+    sql`with doomed as(select inv.id from search_invalidation inv join workspace_search_settings s on s.workspace_id=inv.workspace_id where s.cell_id=${cell} and (${workspaceId ?? null}::text is null or s.workspace_id=${workspaceId ?? null}) and (not s.enabled or inv.status='ready' and inv.updated_at<now()-interval '1 day') limit 500) delete from search_invalidation inv using doomed d where inv.id=d.id`,
   );
   return { deletedChunks: chunks.rows.length };
 }

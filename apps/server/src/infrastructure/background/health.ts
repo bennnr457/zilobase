@@ -21,6 +21,8 @@ export async function getBackgroundOperationalSnapshot(env: RuntimeEnv) {
       union all select 'fast', next_attempt_at from in_product_notification_outbox where status = 'pending'
       union all select 'automation', available_at from database_automation_run where status = 'queued'
       union all select 'automation', lease_expires_at from database_automation_run where status = 'running'
+      union all select 'search', i.not_before from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id where s.cell_id=${getBackgroundCellId(env)} and s.enabled and i.profile_id=s.profile_id and i.index_epoch=s.index_epoch and i.status='pending'
+      union all select 'search', i.lease_expires_at from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id where s.cell_id=${getBackgroundCellId(env)} and s.enabled and i.profile_id=s.profile_id and i.index_epoch=s.index_epoch and i.status='running'
       union all select 'calendar', coalesce(dirty_at, current_timestamp) from calendar_provider_calendar
         where dirty_at is not null or page_token is not null
     )
@@ -51,7 +53,7 @@ export async function getBackgroundOperationalSnapshot(env: RuntimeEnv) {
     })
     .from(backgroundMaintenanceTask);
   const byLane = new Map(result.rows.map((row) => [row.lane, row]));
-  const lanes = (["fast", "automation", "calendar", "ai"] as const).map((lane) => {
+  const lanes = (["fast", "automation", "calendar", "ai", "search"] as const).map((lane) => {
     const row = byLane.get(lane);
     const rawOldestDueAt = row?.oldest_due_at as Date | string | null | undefined;
     const oldestDueAt = rawOldestDueAt ? new Date(rawOldestDueAt) : null;

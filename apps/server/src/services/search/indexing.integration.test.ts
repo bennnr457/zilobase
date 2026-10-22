@@ -203,6 +203,11 @@ describe.skipIf(!url)("fenced resumable indexing", () => {
         ).rows,
       ).toHaveLength(0);
       clock.mockRestore();
+      // The fake invocation advanced 25s; make its persisted continuation due
+      // without relying on wall-clock time catching up.
+      await db.execute(
+        sql`update page_search_index set not_before=now() where workspace_id=${workspace}`,
+      );
       const task = (
         await db.execute<{ task: SearchTaskInput["task"] }>(
           sql`select task from background_dispatch where id=${partial.pending_task_id}`,

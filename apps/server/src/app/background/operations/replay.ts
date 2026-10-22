@@ -1,3 +1,4 @@
+import { prepareSearchReplay } from "../../../services/search/operator";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getBackgroundCellId } from "../../../infrastructure/background/contracts";
 import {
@@ -53,7 +54,13 @@ export async function replayBackgroundFailure(env: RuntimeEnv, taskId: string) {
       if (!record || record.status !== "exhausted" || !record.failureHandledAt)
         throw new Error("REPLAY_REQUIRES_FINALIZED_EXHAUSTION");
       const task = decodeBackgroundTaskV2(record.task, getBackgroundCellId(env));
+      const next = { ...task, taskId: crypto.randomUUID(), availableAt: new Date().toISOString() };
       switch (task.kind) {
+        case "search.page_index":
+        case "search.workspace_scan":
+        case "search.invalidate":
+          await prepareSearchReplay(env, task, next.taskId);
+          break;
         case "ai.generate":
           throw new Error("AI_RETRY_REQUIRES_NEW_SUBMISSION");
         case "automation.run":
@@ -72,7 +79,6 @@ export async function replayBackgroundFailure(env: RuntimeEnv, taskId: string) {
           await prepareNotificationReplay(task.resourceId);
           break;
       }
-      const next = { ...task, taskId: crypto.randomUUID(), availableAt: new Date().toISOString() };
       await persistBackgroundTasks(
         env,
         [next],

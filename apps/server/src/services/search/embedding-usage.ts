@@ -1,3 +1,4 @@
+import { searchCounter, searchHistogram } from "./metrics";
 import { sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { db } from "../../infrastructure/database";
@@ -34,7 +35,7 @@ export function searchNumber(env: RuntimeEnv, key: string, fallback: number) {
     throw new SearchEmbeddingError("SEARCH_CONFIGURATION_INVALID", false);
   return value;
 }
-const quotaScope = (env: RuntimeEnv) =>
+export const searchQuotaScope = (env: RuntimeEnv) =>
   typeof env.SEARCH_EMBEDDING_QUOTA_SCOPE === "string" && env.SEARCH_EMBEDDING_QUOTA_SCOPE.trim()
     ? env.SEARCH_EMBEDDING_QUOTA_SCOPE.trim()
     : `${getBackgroundCellId(env)}:gemini-embedding-2`;
@@ -49,7 +50,7 @@ export async function reserveSearchUsage(
 ): Promise<Reservation> {
   if (!Number.isSafeInteger(tokens) || tokens < 1)
     throw new SearchEmbeddingError("SEARCH_USAGE_INVALID", false);
-  const quota = quotaScope(env);
+  const quota = searchQuotaScope(env);
   return db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`search-quota:${quota}`},0))`,
@@ -135,7 +136,7 @@ async function reportUsage(reservation: Reservation, reported: number | undefine
 }
 export async function recordSearchCooldown(env: RuntimeEnv, delay: number) {
   await db.execute(sql`insert into search_embedding_usage_bucket(quota_scope,bucket_scope,window_start,window_kind,traffic_class,cooldown_until)
-    values(${quotaScope(env)},'deployment','1970-01-01'::timestamptz,'cooldown','all',clock_timestamp()+${Math.max(1000, Math.min(delay, 43200000))}*interval '1 millisecond')
+    values(${searchQuotaScope(env)},'deployment','1970-01-01'::timestamptz,'cooldown','all',clock_timestamp()+${Math.max(1000, Math.min(delay, 43200000))}*interval '1 millisecond')
     on conflict(quota_scope,bucket_scope,window_start,window_kind,traffic_class) do update set cooldown_until=greatest(search_embedding_usage_bucket.cooldown_until,excluded.cooldown_until),updated_at=now()`);
 }
 async function budgeted(
@@ -151,11 +152,19 @@ async function budgeted(
     traffic,
     inputs.reduce((sum, input) => sum + byteLength(input), 0),
   );
+  searchCounter(env, "reserved_tokens", traffic, reservation.tokens);
+  const started = Date.now();
   try {
     const result = await call();
+    searchCounter(env, "provider", traffic);
+    if (result.inputTokens !== undefined)
+      searchCounter(env, "reported_tokens", traffic, result.inputTokens);
+    searchHistogram(env, "provider_ms", "completed", Date.now() - started);
     await reportUsage(reservation, result.inputTokens);
     return result;
   } catch (error) {
+    searchCounter(env, "provider", "failed");
+    searchHistogram(env, "provider_ms", "failed", Date.now() - started);
     if (error instanceof SearchEmbeddingError && error.code === "SEARCH_PROVIDER_RATE_LIMIT")
       await recordSearchCooldown(env, error.retryAfterMs ?? 60000);
     throw error;
@@ -193,6 +202,7 @@ export async function embedSearchQuery(
       sql`select embedding::text from search_query_embedding_cache where workspace_id=${input.workspaceId} and user_id=${input.userId} and profile_id=${SEARCH_PROFILE.id} and purpose=${input.purpose} and input_hash=${hash} and expires_at>clock_timestamp()`,
     )
   ).rows[0];
+  searchCounter(env, "cache", cached ? "hit" : "miss");
   if (cached) return validateSearchVector(JSON.parse(cached.embedding));
   const client = provider ?? createGeminiEmbeddingProvider(String(env.GEMINI_API_KEY ?? ""));
   const result = await budgeted(env, input.workspaceId, "query", [formatted], () =>

@@ -85,6 +85,16 @@ export function runBackgroundTaskSpan<T>(
 
 export function recordBackgroundCounter(
   name:
+    | "search_provider"
+    | "search_reserved_tokens"
+    | "search_reported_tokens"
+    | "search_cache"
+    | "search_chunks"
+    | "search_reused_chunks"
+    | "search_index"
+    | "search_retrieval"
+    | "search_refill"
+    | "search_authorization_rejection"
     | "ai_provider_start"
     | "ai_checkpoint"
     | "ai_producer_end"
@@ -108,6 +118,10 @@ export function recordBackgroundCounter(
 
 export function recordBackgroundHistogram(
   name:
+    | "search_provider_ms"
+    | "search_index_lag_ms"
+    | "search_database_ms"
+    | "search_request_ms"
     | "ai_first_token_ms"
     | "ai_replay_ms"
     | "queue_delay_ms"

@@ -1,3 +1,4 @@
+import { searchCounter, searchHistogram } from "./metrics";
 import { sql } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
 import {
@@ -28,6 +29,7 @@ type Claim = {
   staged_generation_id: string | null;
   staged_revision: string | null;
   consecutive_failures: number;
+  first_dirty_at: Date;
 };
 export type SearchTaskInput = {
   env: RuntimeEnv;
@@ -248,6 +250,8 @@ export async function indexSearchPage(
         sql`select id,embedding_input_hash from search_chunk where workspace_id=${c.workspace_id} and page_id=${c.page_id} and generation_id=${generation}::uuid and embedding is null order by chunk_kind,source_key,chunk_index`,
       )
     ).rows;
+    searchCounter(input.env, "chunks", "index", chunks.length);
+    searchCounter(input.env, "reused_chunks", "index", chunks.length - missing.length);
     const byHash = new Map(chunks.map((ch) => [ch.inputHash, ch.input]));
     for (let at = 0; at < missing.length; at += 16) {
       input.signal?.throwIfAborted();
@@ -290,9 +294,25 @@ export async function indexSearchPage(
         return { outcome: "noop" };
       }
     }
-    if (!(await activate(c, input.workerId, generation))) await releaseObsolete(c, input.workerId);
+    if (!(await activate(c, input.workerId, generation))) {
+      searchCounter(input.env, "index", "stale");
+      await releaseObsolete(c, input.workerId);
+    } else {
+      searchCounter(input.env, "index", "completed");
+      searchHistogram(
+        input.env,
+        "index_lag_ms",
+        "completed",
+        Date.now() - new Date(c.first_dirty_at).getTime(),
+      );
+    }
     return { outcome: "completed" };
   } catch (error) {
+    searchCounter(
+      input.env,
+      "index",
+      error instanceof SearchBudgetDeferred ? "deferred" : "failed",
+    );
     if (error instanceof SearchBudgetDeferred) {
       await continuePage(input, c, new Date(error.availableAt), error.code);
       return { outcome: "completed" };
