@@ -17,7 +17,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 9    | Search background lane                          | Verified: 32 shared delivery tests, 10 adapter tests, 15 Miniflare queue tests; server/adapter typechecks                                                    |
 | 10   | Resumable indexing                              | Verified: 7 real-Postgres tests covering publication, reuse, edits/disablement in flight, lease reclaim, durable continuation and failures; server typecheck |
 | 11   | Backfill and maintenance                        | Verified: 104 search/background tests, including bounded backfill/fanout, admission recovery, lease recovery, debounce and cleanup; server typecheck         |
-| 12   | Live SQL eligibility                            | Pending                                                                                                                                                      |
+| 12   | Live SQL eligibility                            | Verified: 6 real-Postgres differential/adversarial tests over generated graphs, teams, guests, expiry, sources and revisions; server typecheck               |
 | 13   | Hybrid retrieval                                | Pending                                                                                                                                                      |
 | 14   | HNSW retrieval                                  | Pending                                                                                                                                                      |
 | 15   | Workspace controls                              | Pending                                                                                                                                                      |
@@ -41,3 +41,5 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 Passes 6–11 connect transactional dirty state, post-commit admission, delayed queue notifications, resumable indexing, backfill and minute maintenance. Feature controls remain disabled.
 
 Concurrent non-search changes appeared in runtime-adapter package/template docs/tests during pass 6; preserve them and stage only search-owned hunks.
+
+Search access traversal fails closed when ancestry reaches 64 levels, including corrupt cycles. Final chunk hydration evaluates access, source membership, revisions and freshness in one SQL statement.
