@@ -20,6 +20,7 @@ export type SearchMatchProvenance = {
   propertyId?: string;
   databaseId?: string;
   dataSourceId?: string;
+  recordId?: string;
 };
 export type SearchMetadata = {
   mode: SearchMode;

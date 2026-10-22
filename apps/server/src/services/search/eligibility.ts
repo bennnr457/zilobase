@@ -111,10 +111,10 @@ export async function readAuthorizedSearchChunks(
   const sources = sql`select distinct ds.parent_database_id from database_row r join data_source ds on ds.id=r.data_source_id where r.page_id in(${selected}) and r.deleted_at is null and ds.deleted_at is null and ds.workspace_id=${workspaceId}`;
   return (
     await db.execute<AuthorizedSearchChunk>(sql`${searchAccessCtes(workspaceId, userId, selected, sources)}
-    select c.id,c.page_id,c.chunk_kind,c.content_markdown,c.metadata,p.name,p.updated_at,p.metadata as page_metadata,source.database_id,source.data_source_id
+    select c.id,c.page_id,c.chunk_kind,c.content_markdown,c.metadata,p.name,p.updated_at,p.metadata as page_metadata,source.database_id,source.data_source_id,source.record_id
     from search_chunk c join page p on p.id=c.page_id and p.workspace_id=c.workspace_id
     left join lateral (
-      select ds.parent_database_id as database_id,ds.id as data_source_id from database_row r join data_source ds on ds.id=r.data_source_id join database_property dp on dp.data_source_id=ds.id and dp.property_id=c.source_key
+      select ds.parent_database_id as database_id,ds.id as data_source_id,r.id as record_id from database_row r join data_source ds on ds.id=r.data_source_id join database_property dp on dp.data_source_id=ds.id and dp.property_id=c.source_key
       where r.page_id=c.page_id and r.deleted_at is null and ds.deleted_at is null and ds.workspace_id=${workspaceId} and ds.parent_database_id in(select id from search_allowed_databases) order by ds.id limit 1
     ) source on c.chunk_kind='property'
     where ${freshSearchChunk(workspaceId)} and c.id in(select jsonb_array_elements_text(${JSON.stringify(chunkIds)}::jsonb)::uuid) and c.page_id in(select id from search_allowed_pages)
@@ -133,6 +133,7 @@ export type AuthorizedSearchChunk = {
   page_metadata: Record<string, unknown> | null;
   database_id: string | null;
   data_source_id: string | null;
+  record_id: string | null;
 };
 export async function authorizedSearchChunks(
   workspaceId: string,

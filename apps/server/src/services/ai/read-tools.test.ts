@@ -133,7 +133,13 @@ test("search discovers accessible sources without mentions but grants no citatio
   const result = await call("search_workspace", { query: "launch", types: ["page", "database"] });
   expect(dependencies.search).toHaveBeenCalledWith(
     expect.objectContaining({ pinnedWorkspaceId: "workspace" }),
-    { workspaceId: "workspace", q: "launch", types: "page,database" },
+    {
+      workspaceId: "workspace",
+      q: "launch",
+      types: "page,database",
+      mode: "hybrid",
+      purpose: "question_answering",
+    },
   );
   expect(result).toMatchObject({
     exhaustive: false,
@@ -163,6 +169,119 @@ test("search discovers accessible sources without mentions but grants no citatio
   expect(await call("read_page", { pageId: "not-returned" })).toMatchObject({
     error: { code: "OUT_OF_SCOPE" },
   });
+});
+
+test("semantic property discovery supplies a live record reference without establishing evidence", async () => {
+  const { call, dependencies, state } = readFixture();
+  vi.mocked(dependencies.search).mockResolvedValue({
+    results: [
+      {
+        type: "page",
+        id: "row-page",
+        title: "Task",
+        path: "Task",
+        excerpt: "An indexed old status",
+        emoji: null,
+        updatedAt: new Date(),
+        entity: {},
+        match: {
+          chunkId: "chunk",
+          pageId: "row-page",
+          kind: "property",
+          headingPath: ["Status"],
+          propertyId: "status",
+          databaseId: "discovered-db",
+          dataSourceId: "discovered-source",
+          recordId: "record",
+        },
+      },
+    ],
+  } as never);
+  const search = await call("search_workspace", { query: "Which task cannot ship?" });
+  expect(search.results[0].match).toMatchObject({ recordId: "record", propertyId: "status" });
+  expect(state.context.manifest).toEqual([]);
+  vi.mocked(dependencies.query).mockResolvedValue({
+    revision: { database: 2, source: 2 },
+    properties: [{ id: "status", name: "Status", type: "text" }],
+    records: [
+      { id: "record", pageId: "row-page", name: "Task", values: { status: "Current live value" } },
+    ],
+    positions: [{ id: "record", value: "record" }],
+    hasMore: false,
+  } as never);
+  const read = await call("read_record", {
+    databaseId: "discovered-db",
+    dataSourceId: "discovered-source",
+    recordId: "record",
+    propertyIds: ["status"],
+  });
+  expect(dependencies.query).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ recordId: "record", propertyIds: ["status"] }),
+    undefined,
+    undefined,
+  );
+  expect(read.records[0].values.status).toBe("Current live value");
+  expect(
+    state.context.manifest.some((entry) => entry.type === "record" && entry.id === "record"),
+  ).toBe(true);
+  expect(JSON.stringify(state.context.manifest)).not.toContain("An indexed old status");
+});
+
+test("property discovery survives run replay but revoked live reads add no citation evidence", async () => {
+  const fixture = readFixture();
+  vi.mocked(fixture.dependencies.search).mockResolvedValue({
+    results: [
+      {
+        type: "page",
+        id: "row-page",
+        title: "Task",
+        path: "Task",
+        excerpt: "Indexed",
+        emoji: null,
+        updatedAt: new Date(),
+        entity: {},
+        match: {
+          chunkId: "chunk",
+          pageId: "row-page",
+          kind: "property",
+          headingPath: ["Status"],
+          propertyId: "status",
+          databaseId: "discovered-db",
+          dataSourceId: "source",
+          recordId: "record",
+        },
+      },
+    ],
+  } as never);
+  await fixture.call("search_workspace", { query: "Blocked work" });
+  const restored = structuredClone(fixture.state);
+  vi.mocked(fixture.dependencies.query).mockRejectedValue(
+    new ServerOperationError({ error: "Forbidden" }, 403),
+  );
+  const tools = createReadTools(fixture.context, restored, {
+    signal: fixture.signal,
+    maxCalls: 24,
+    maxResultBytes: 6000,
+    dependencies: fixture.dependencies,
+  });
+  const result = await tools.read_record.execute!(
+    readToolSchemas.read_record.parse({
+      databaseId: "discovered-db",
+      dataSourceId: "source",
+      recordId: "record",
+      propertyIds: ["status"],
+    }),
+    {
+      toolCallId: "replayed",
+      messages: [],
+      abortSignal: fixture.signal,
+      context: undefined as never,
+    },
+  );
+  expect(result).toMatchObject({ error: { code: "SOURCE_UNAVAILABLE" } });
+  expect(fixture.dependencies.query).toHaveBeenCalled();
+  expect(restored.context.manifest).toEqual([]);
 });
 
 test("search trims result bytes and grants only matches returned to the model", async () => {

@@ -40,7 +40,12 @@ const id = z.string().min(1).max(128);
 const cursor = z.string().max(128).nullable().default(null);
 const searchSchema = z
   .object({
-    query: z.string().trim().min(1).max(512).describe("Short, specific keywords or a page title."),
+    query: z
+      .string()
+      .trim()
+      .min(1)
+      .max(512)
+      .describe("A natural-language question, specific keywords, or a page title."),
     types: z
       .array(z.enum(["page", "database"]))
       .max(2)
@@ -647,13 +652,15 @@ export function createReadTools(
   return {
     search_workspace: tool({
       description:
-        "Search accessible pages and databases in the current workspace using keywords or titles. Results are bounded, relevance-ranked discovery hints, not citation evidence or an exhaustive inventory. Read important matches with read_page or inspect databases with describe_source before relying on their content. Listing search matches does not require reading every result. Refine the query to find other matches; there is no search cursor.",
+        "Search accessible pages and databases in the current workspace using meaning, keywords or titles. Results are bounded, relevance-ranked discovery hints, not citation evidence or an exhaustive inventory. Read body matches with read_page. For property matches, use read_record with the supplied databaseId, dataSourceId, recordId and propertyId. Inspect schema and use structured record tools for counts, filters and aggregations before relying on their content. Listing search matches does not require reading every result. Refine the query to find other matches; there is no search cursor.",
       inputSchema: searchSchema,
       execute: (input, { toolCallId }) =>
         execute("search_workspace", input, toolCallId, async () => {
           const matches = await ports.search(scoped, {
             workspaceId: state.workspaceId,
             q: input.query,
+            mode: "hybrid",
+            purpose: "question_answering",
             types: input.types.join(","),
           });
           const candidates = matches.results.slice(0, input.limit).map((match) => ({
@@ -663,11 +670,16 @@ export function createReadTools(
             path: match.path.slice(0, 256),
             excerpt: match.excerpt?.slice(0, 280) ?? null,
             updatedAt: match.updatedAt.toISOString(),
+            ...(match.match ? { match: match.match } : {}),
           }));
           const results = fit(candidates, (results) => ({ results }));
           // Only matches actually returned to the model become traversable. Search
           // snippets never enter the evidence manifest; reads recheck source access.
-          for (const result of results) grant({ type: result.type, id: result.id });
+          for (const result of results) {
+            grant({ type: result.type, id: result.id });
+            if (result.match?.kind === "property" && result.match.databaseId)
+              grant({ type: "database", id: result.match.databaseId });
+          }
           return {
             results,
             exhaustive: false,
@@ -677,7 +689,7 @@ export function createReadTools(
               returned: results.length,
               total: null,
             },
-            next: "Read important matches before relying on their content or citing them; listing search matches needs no page read. Search is bounded and not exhaustive; no matches does not prove absence. Refine the keywords or types for other matches.",
+            next: "Read important matches before relying on their content or citing them; listing search matches needs no page read. Search is bounded and not exhaustive; no matches does not prove absence. Use match locations to guide live reads. Property match references identify the record and property to read; indexed excerpts alone never establish evidence. Refine the question, keywords or types for other matches.",
           };
         }),
     }),

@@ -24,6 +24,7 @@ const resultSchema = z.object({
       propertyId: z.string().optional(),
       databaseId: z.string().optional(),
       dataSourceId: z.string().optional(),
+      recordId: z.string().optional(),
     })
     .optional(),
   entity: z.unknown(),

@@ -140,6 +140,7 @@ export async function hydrateVectorResults(
               propertyId: c.metadata.propertyId,
               databaseId: c.database_id,
               dataSourceId: c.data_source_id,
+              ...(c.record_id ? { recordId: c.record_id } : {}),
             }
           : {}),
       },
