@@ -13,7 +13,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 5    | Stored property chunks                          | Verified: 25 property serialization tests; server typecheck                                                                  |
 | 6    | Transactional invalidation                      | Verified: 73 search/mutation/collaboration tests; real invalidation triggers; server typecheck                               |
 | 7    | Gemini provider                                 | Verified: 12 provider tests; server typecheck; live Gemini batch/query returned 1536 dimensions and correct semantic ranking |
-| 8    | Quotas and query cache                          | Pending                                                                                                                      |
+| 8    | Quotas and query cache                          | Verified: 5 real-Postgres concurrency, quota, cooldown, accounting and cache tests; server typecheck                         |
 | 9    | Search background lane                          | Pending                                                                                                                      |
 | 10   | Resumable indexing                              | Pending                                                                                                                      |
 | 11   | Backfill and maintenance                        | Pending                                                                                                                      |
@@ -36,7 +36,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 
 - Docker daemon is available.
 - Gemini credential validated read-only and stored with dotenvx encryption in Node development and hosted development/production envs. Production API and background Worker secrets were updated at the explicit user request. Live relevance evaluation is still pending.
-- No production migrations, secrets, deployments, or workspace activation are authorized as incidental implementation actions.
+- Production secrets were explicitly requested and configured. No production migrations, deployments, or workspace activation are authorized as incidental implementation actions.
 
 Pass 6 installs durable invalidation and post-commit publication nudges. Admission from dirty state is connected with the resumable handlers in passes 9–11, before feature enablement.
 
