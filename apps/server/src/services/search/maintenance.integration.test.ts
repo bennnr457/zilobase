@@ -161,6 +161,61 @@ describe.skipIf(!url)("incremental search maintenance", () => {
           .rows[0].status,
       ).toBe("ready");
     }));
+  it("bounds concurrent admission and refills only the slots freed by completed pages", async () =>
+    within(async () => {
+      await db.execute(
+        sql`update workspace_search_settings set enabled=true,backfill_completed_at=now() where workspace_id=${w}`,
+      );
+      await seedPages(18);
+      await db.execute(sql`update page_search_index set not_before=now() where workspace_id=${w}`);
+      await Promise.all(Array.from({ length: 8 }, () => admitSearchWork(env, w)));
+      const outstanding = async () =>
+        (
+          await db.execute<{ n: number }>(
+            sql`select count(*)::int n from page_search_index where workspace_id=${w} and status='pending' and pending_task_id is not null`,
+          )
+        ).rows[0].n;
+      expect(await outstanding()).toBe(5);
+      // Waiting for a quota window must not admit another wave of doomed calls.
+      await db.execute(
+        sql`update page_search_index set not_before=now()+interval '1 day' where workspace_id=${w} and pending_task_id is not null`,
+      );
+      expect(await admitSearchWork(env, w)).toEqual({ admitted: 0 });
+      await db.execute(
+        sql`update page_search_index set status='ready',indexed_revision=requested_revision,pending_task_id=null where workspace_id=${w} and page_id in (select page_id from page_search_index where workspace_id=${w} and pending_task_id is not null order by page_id limit 2)`,
+      );
+      expect(await admitSearchWork(env, w)).toEqual({ admitted: 2 });
+      expect(await outstanding()).toBe(5);
+      const other = randomUUID();
+      try {
+        await db.execute(
+          sql`insert into workspace(id,name,slug) values(${other},'Other',${other})`,
+        );
+        await db.execute(
+          sql`insert into workspace_search_settings(workspace_id,cell_id,enabled,profile_id,backfill_completed_at) values(${other},${env.ZILOBASE_CELL_ID},true,${SEARCH_PROFILE.id},now())`,
+        );
+        await db.execute(
+          sql`insert into page(id,workspace_id,name,created_at,updated_at) values(${other + "-page"},${other},'Other page',now(),now())`,
+        );
+        await db.execute(
+          sql`update page_search_index set not_before=now() where workspace_id=${other}`,
+        );
+        expect(await admitSearchWork(env)).toEqual({ admitted: 1 });
+        expect(
+          (
+            await db.execute(
+              sql`select pending_task_id from page_search_index where workspace_id=${other}`,
+            )
+          ).rows[0].pending_task_id,
+        ).not.toBeNull();
+        expect(await outstanding()).toBe(5);
+      } finally {
+        await db.execute(
+          sql`delete from background_dispatch where cell_id=${env.ZILOBASE_CELL_ID} and resource_id=${other + "-page"}`,
+        );
+        await db.execute(sql`delete from workspace where id=${other}`);
+      }
+    }));
   it("keeps active and staged generations and purges disabled workspace chunks idempotently", async () =>
     within(async () => {
       await seedPages(1);

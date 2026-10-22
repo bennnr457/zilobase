@@ -145,3 +145,23 @@ migrations were applied only to loopback `zilobase_node`, `zilobase_worker` and
 `zilobase_enterprise_connected`. The new source revision column and pgvector
 0.8.7 are present; both Node and Worker health endpoints return 200. The Worker
 database retains its 49 live pages. No production migration was performed.
+
+## Follow-up: continuous indexing admission
+
+Search deliveries now refill and publish pending work after each processed page,
+workspace scan or invalidation. Five outstanding page jobs per workspace keep
+the four consumers supplied without unbounded admission. Future quota/budget
+continuations retain their slots, and settings locks prevent concurrent refills
+from overfilling the window. Admission continues rotating across workspaces.
+Recovery publishes newly admitted work in the same sweep; cron is a repair path
+rather than the normal throughput clock.
+
+The focused real-PostgreSQL/search/background run passes 138 tests. The complete
+Node acceptance suite passes 16 scenarios and Worker acceptance passes 11.
+Both include a 12-page backfill with one initial maintenance kick and no further
+maintenance while draining (2,280 ms Node; 1,207 ms Worker with the deterministic
+fake provider). These timings demonstrate queue refill, not live Gemini latency.
+Concurrency, delayed-slot retention and admission of another workspace are
+covered by database tests. Server/runtime-adapter typechecks and the Worker
+bundle guard pass. The local workspace reports 42 ready pages and both local
+API readiness endpoints return 200. No production deployment was performed.

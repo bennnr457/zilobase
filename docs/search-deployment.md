@@ -104,7 +104,12 @@ Backfill/reindex require a workspace. Backfill restarts the bounded scan; reinde
 also increments the epoch. Retry resets at most 100 transient page failures and
 100 exhausted invalidations per call. It preserves malformed-input/provider
 validation failures and disabled workspaces. Repair recovers missing dispatch or
-expired page leases through normal admission. Publication runs on maintenance.
+expired page leases through normal admission. Search deliveries refill and publish
+the next work immediately after processing. Each workspace has at most five
+outstanding page jobs (four consumers plus a buffer); delayed quota/budget
+continuations retain their slots. Admission still rotates across workspaces.
+Minute maintenance recovers lost wakes and publications and performs cleanup;
+it does not pace the normal backfill pipeline.
 Cleanup removes at most 500 obsolete chunks per call and retains active/current
 staging data. Disabled workspaces can be cleaned with the deployment flag off.
 

@@ -169,6 +169,9 @@ const MAINTENANCE_TASK_HANDLERS: Record<MaintenanceTaskKey, MaintenanceTaskHandl
   },
   "search.index": async (env) => {
     await maintainSearchIndex(env);
+    // Recovery can admit new work; publish it in this sweep rather than waiting
+    // for the next cron/reconciliation tick to start the queue again.
+    await publishBackgroundDispatches(env);
   },
   "ai.retention": async (env) => {
     await maintainAiRuns(env);

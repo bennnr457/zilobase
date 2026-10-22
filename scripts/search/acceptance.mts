@@ -196,6 +196,46 @@ try {
     await request(`/search?workspaceId=${workspace}&mode=keyword&q=Flight`);
     assert.equal(provider.state.calls, calls);
   });
+  await check(
+    "page completions drain a bounded backfill without repeated maintenance",
+    async () => {
+      const ids = Array.from({ length: 12 }, () => randomUUID());
+      await runtime.pause();
+      await query(
+        "insert into page(id,workspace_id,name,content,created_at,updated_at) select id,$1,'Pipeline '||n,$3::jsonb,now(),now() from unnest($2::text[]) with ordinality as pages(id,n)",
+        [workspace, ids, JSON.stringify(content("Pipeline scheduling fixture."))],
+      );
+      await query("update page_search_index set not_before=now() where page_id=any($1::text[])", [
+        ids,
+      ]);
+      // One initial kick; no maintenance calls while the consumers drain all 12.
+      await runtime.maintenance();
+      const admitted = await query(
+        "select count(*)::int n from page_search_index where page_id=any($1::text[]) and pending_task_id is not null",
+        [ids],
+      );
+      assert.equal(admitted.rows[0].n, 5);
+      await runtime.resume();
+      await until(
+        async () => ({
+          pages: (
+            await query(
+              "select status,last_error_code,count(*)::int n from page_search_index where page_id=any($1::text[]) group by status,last_error_code",
+              [ids],
+            )
+          ).rows,
+          dispatch: (
+            await query(
+              "select status,error_code,count(*)::int n,min(available_at) first_due,min(next_publication_at) first_publication from background_dispatch where resource_id=any($1::text[]) group by status,error_code",
+              [ids],
+            )
+          ).rows,
+        }),
+        (value) => value.pages.some((row) => row.status === "ready" && row.n === ids.length),
+        45000,
+      );
+    },
+  );
   await check("body edits and title changes replace complete generations", async () => {
     const first = await state(space);
     await runtime.pause();

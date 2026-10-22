@@ -1,5 +1,6 @@
 import { scanSearchWorkspace, processSearchInvalidation } from "./maintenance";
 import { indexSearchPage } from "./indexing";
+import { nudgeSearchIndexing } from "./invalidation";
 import { sql } from "drizzle-orm";
 import { db } from "../../infrastructure/database";
 import type {
@@ -15,10 +16,15 @@ export async function processSearchTask(input: {
   signal?: AbortSignal;
 }): Promise<BackgroundTaskResult> {
   if (input.env.SEARCH_EMBEDDINGS_ENABLED !== "true") return { outcome: "noop" };
-  if (input.task.kind === "search.page_index") return indexSearchPage(input);
-  if (input.task.kind === "search.workspace_scan") return scanSearchWorkspace(input);
-  if (input.task.kind === "search.invalidate") return processSearchInvalidation(input);
-  throw new Error("SEARCH_TASK_KIND_INVALID");
+  let result: BackgroundTaskResult;
+  if (input.task.kind === "search.page_index") result = await indexSearchPage(input);
+  else if (input.task.kind === "search.workspace_scan") result = await scanSearchWorkspace(input);
+  else if (input.task.kind === "search.invalidate") result = await processSearchInvalidation(input);
+  else throw new Error("SEARCH_TASK_KIND_INVALID");
+  // Each delivery replenishes a bounded workspace window and publishes persisted
+  // continuations. Cron repairs missed wakes; it doesn't pace normal indexing.
+  await nudgeSearchIndexing(input.env);
+  return result;
 }
 
 export async function failSearchDelivery(taskId: string) {

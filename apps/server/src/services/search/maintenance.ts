@@ -130,6 +130,17 @@ export async function admitSearchWork(env: RuntimeEnv, workspaceId?: string) {
     ).rows;
     let admitted = 0;
     for (const w of workspaces) {
+      // Keep one buffered job beyond the four consumers per workspace. Settings
+      // are locked above, so concurrent completions cannot overfill this window.
+      // Future quota/budget continuations occupy slots too, avoiding retry storms.
+      const outstanding = (
+        await tx.execute<{ pages: number; invalidations: number }>(sql`select
+          (select count(*)::int from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id join background_dispatch d on d.id=i.pending_task_id::text
+            where i.workspace_id=${w.workspace_id} and i.index_epoch=s.index_epoch and i.profile_id=s.profile_id and i.status in ('pending','running') and i.requested_revision>i.indexed_revision
+            and (i.status<>'running' or i.lease_expires_at>now()) and d.status in ('pending','published','running')) as pages,
+          (select count(*)::int from search_invalidation inv join background_dispatch d on d.id=inv.pending_task_id::text
+            where inv.workspace_id=${w.workspace_id} and inv.status='pending' and d.status in ('pending','published','running')) as invalidations`)
+      ).rows[0];
       const pages = (
         await tx.execute<{
           page_id: string;
@@ -137,7 +148,7 @@ export async function admitSearchWork(env: RuntimeEnv, workspaceId?: string) {
         }>(sql`select i.page_id,i.not_before::text from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id
         where i.workspace_id=${w.workspace_id} and i.index_epoch=s.index_epoch and i.profile_id=s.profile_id and i.status in ('pending','running') and i.requested_revision>i.indexed_revision and i.not_before<=now()+interval '30 seconds'
         and (i.lease_expires_at is null or i.lease_expires_at<=now()) and (i.pending_task_id is null or not exists(select 1 from background_dispatch d where d.id=i.pending_task_id::text and d.status in ('pending','published','running')) or i.status='running' and i.lease_expires_at<=now())
-        order by i.first_dirty_at,i.page_id limit 5 for update of i skip locked`)
+        order by i.first_dirty_at,i.page_id limit ${Math.max(0, 5 - outstanding.pages)} for update of i skip locked`)
       ).rows;
       for (const p of pages) {
         const task = createBackgroundTask({
@@ -154,7 +165,7 @@ export async function admitSearchWork(env: RuntimeEnv, workspaceId?: string) {
       }
       const invalidations = (
         await tx.execute<{ id: string }>(
-          sql`select id from search_invalidation inv where inv.workspace_id=${w.workspace_id} and inv.status='pending' and (inv.pending_task_id is null or not exists(select 1 from background_dispatch d where d.id=inv.pending_task_id::text and d.status in ('pending','published','running'))) order by inv.created_at limit 5 for update skip locked`,
+          sql`select id from search_invalidation inv where inv.workspace_id=${w.workspace_id} and inv.status='pending' and (inv.pending_task_id is null or not exists(select 1 from background_dispatch d where d.id=inv.pending_task_id::text and d.status in ('pending','published','running'))) order by inv.created_at limit ${Math.max(0, 5 - outstanding.invalidations)} for update skip locked`,
         )
       ).rows;
       for (const inv of invalidations) {
