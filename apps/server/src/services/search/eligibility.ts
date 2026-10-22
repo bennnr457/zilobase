@@ -129,7 +129,7 @@ export type AuthorizedSearchChunk = {
   content_markdown: string;
   metadata: SearchChunkMetadata;
   name: string;
-  updated_at: Date;
+  updated_at: Date | string;
   page_metadata: Record<string, unknown> | null;
   database_id: string | null;
   data_source_id: string | null;

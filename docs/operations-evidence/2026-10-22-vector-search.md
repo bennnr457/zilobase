@@ -34,3 +34,35 @@ and stored IDs are both resolved against the live property definition. Unknown
 or deleted names/IDs are excluded. Property excerpts now include their bounded
 label. The option-rename case explicitly exercises a stored ID; an unmigrated
 old stored name is excluded if it no longer exists in the source definition.
+
+## Worker and browser acceptance
+
+`npm run test:search` passed 15 Node scenarios and 10 Worker scenarios. The Worker
+suite bundles production API, queue, cron and Durable Object composition through
+Wrangler, then runs it in workerd/Miniflare against real PostgreSQL/pgvector. It
+uses actual queue producers/consumers and the production dispatch handlers. A
+control binding pauses admission or queue availability; no app authentication or
+search handler is replaced. Cron eligibility is accelerated in the fixture DB.
+
+The Worker interruption test replaces the running workerd module while its
+second embedding batch is blocked, after 16 embeddings are checkpointed. It
+expires the abandoned page lease, runs cron, and verifies publication of the
+same staged generation. In-flight provider billing remains at least once.
+
+Both runs compare canonical content, provenance, input hashes, normalized vector
+hashes and the semantic Top-1 title for the same fixture pages. They write
+`node-parity.json` / `worker-parity.json` under `.test-results/search`. This proves
+shared behavior with controlled vectors, not real-provider relevance.
+
+`npm run test:search:browser` passed four checks using the actual web app, shared
+client and authenticated API: workspace disable/enable/reindex; hybrid results
+and keyboard navigation; keyword-only sidebar picker; and settings/results that
+fit a 390px viewport. Screenshots and request/response summaries are retained in
+`.test-results/search`; CI uploads them. Desktop and mobile captures were
+visually inspected. The API response dates caught by this test are normalized at
+vector hydration so the shared client accepts the same ISO contract as keyword
+results. The real-Postgres regression asserts the serialized date contract.
+
+126 search and Ask AI read-tool tests also passed. Search discovery remains
+separate from live read evidence. Full final verification and live relevance /
+release-scale performance are subsequent gates.

@@ -1,9 +1,9 @@
 import { execFile, spawnSync } from "node:child_process";
 import { promisify } from "node:util";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import {
   createDbClientForUrl,
   createDbClient,
@@ -47,6 +47,16 @@ const content = (text) => ({
 });
 const query = (text, values = []) => fixture.client.query(text, values);
 async function check(name, work) {
+  if (
+    process.env.ZILOBASE_SEARCH_BROWSER_ONLY === "true" &&
+    ![
+      "authenticated fresh-schema bootstrap",
+      "workspace opt-in backfills existing pages and semantic discovery",
+      "body edits and title changes replace complete generations",
+      "browser search and settings",
+    ].includes(name)
+  )
+    return;
   const start = Date.now();
   try {
     await work();
@@ -87,10 +97,10 @@ async function request(path, method = "GET", body?, expected = 200) {
 }
 const state = async (page) =>
   (
-    await query("select * from page_search_index where workspace_id=$1 and page_id=$2", [
-      workspace,
-      page,
-    ])
+    await query(
+      "select i.*,s.index_epoch as current_epoch from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id where i.workspace_id=$1 and i.page_id=$2",
+      [workspace, page],
+    )
   ).rows[0];
 async function ready(page) {
   await runtime.maintenance();
@@ -99,7 +109,10 @@ async function ready(page) {
       await runtime.maintenance();
       return state(page);
     },
-    (s) => s?.status === "ready" && s.indexed_revision === s.requested_revision,
+    (s) =>
+      s?.status === "ready" &&
+      s.indexed_revision === s.requested_revision &&
+      s.index_epoch === s.current_epoch,
   );
 }
 async function createPage(name, text) {
@@ -153,6 +166,32 @@ try {
     assert.equal(result.metadata.mode, "hybrid");
     assert.equal(result.results[0].id, space);
     assert.ok(result.results[0].match.chunkId);
+    const parity = {
+      topTitle: result.results[0].title,
+      chunks: (
+        await query(
+          "select p.name,c.chunk_kind,c.chunk_index,c.embedding_input_hash,c.content_markdown,c.metadata,c.embedding::text as vector from search_chunk c join page p on p.id=c.page_id where c.workspace_id=$1 and c.is_active order by p.name,c.chunk_kind,c.chunk_index",
+          [workspace],
+        )
+      ).rows.map(({ vector, ...row }) => ({
+        ...row,
+        vectorHash: createHash("sha256").update(vector).digest("hex"),
+      })),
+    };
+    await mkdir(".test-results/search", { recursive: true });
+    await writeFile(`.test-results/search/${kind}-parity.json`, JSON.stringify(parity, null, 2));
+    try {
+      const other = JSON.parse(
+        await readFile(
+          `.test-results/search/${kind === "node" ? "worker" : "node"}-parity.json`,
+          "utf8",
+        ),
+      );
+      assert.deepEqual(parity, other);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+
     const calls = provider.state.calls;
     await request(`/search?workspaceId=${workspace}&mode=keyword&q=Flight`);
     assert.equal(provider.state.calls, calls);
@@ -334,7 +373,10 @@ try {
       const page = await createPage("Crash scenario", "An astronaut studies celestial bodies.");
       await runtime.maintenance();
       await until(
-        () => provider.state.held,
+        async () => {
+          await runtime.maintenance();
+          return provider.state.held;
+        },
         (n) => n === provider.state.holdAt,
       );
       const before = await state(page);
@@ -360,7 +402,10 @@ try {
       await runtime.maintenance();
       await runtime.resume();
       await until(
-        () => provider.state.held,
+        async () => {
+          await runtime.maintenance();
+          return provider.state.held;
+        },
         (n) => n === provider.state.holdAt,
       );
       const partial = await state(page);
@@ -435,12 +480,41 @@ try {
       assert.equal((await state(space)).active_generation_id, generation);
     });
   }
+  if (kind === "worker")
+    await check("Worker interruption preserves checkpoint and cron resumes staging", async () => {
+      provider.state.holdAt = provider.state.calls + 2;
+      const page = await createPage(
+        "Worker checkpoint",
+        "Satellite orbit observations. ".repeat(4000),
+      );
+      await until(
+        async () => {
+          await runtime.maintenance();
+          return provider.state.held;
+        },
+        (n) => n === provider.state.holdAt,
+      );
+      const partial = await state(page);
+      assert.equal(partial.completed_chunk_count, 16);
+      assert.equal(partial.indexed_revision, "0");
+      await runtime.interrupt();
+      provider.release();
+      await query(
+        "update page_search_index set lease_expires_at=now()-interval '1 second' where workspace_id=$1 and page_id=$2",
+        [workspace, page],
+      );
+      await ready(page);
+      assert.equal((await state(page)).active_generation_id, partial.staged_generation_id);
+    });
   await check("disablement fences an in-flight provider call and cleanup", async () => {
     provider.state.holdAt = provider.state.calls + 1;
     const page = await createPage("Disable scenario", "Astronaut mission orbit.");
     await runtime.maintenance();
     await until(
-      () => provider.state.held,
+      async () => {
+        await runtime.maintenance();
+        return provider.state.held;
+      },
       (n) => n === provider.state.holdAt,
     );
     await request(`/workspaces/${workspace}/search/settings`, "PATCH", { enabled: false });
@@ -470,6 +544,11 @@ try {
     await ready(space);
     assert.ok((await state(space)).active_generation_id);
   });
+  if (process.env.ZILOBASE_SEARCH_BROWSER === "true")
+    await check("browser search and settings", async () => {
+      const { runSearchBrowser } = await import("./browser.mts");
+      await runSearchBrowser({ runtime, env, jar, workspace, pageId: space, ready });
+    });
   if (kind === "node")
     await check("backup and restore preserve vectors and HNSW partitions", async () => {
       await runtime.pause();
@@ -544,7 +623,7 @@ try {
   await createDbClient({ DATABASE_URL: url }).client.end();
   await mkdir(".test-results/search", { recursive: true });
   await writeFile(
-    `.test-results/search/${kind}-acceptance.json`,
+    `.test-results/search/${kind}${process.env.ZILOBASE_SEARCH_BROWSER_ONLY === "true" ? "-browser" : ""}-acceptance.json`,
     JSON.stringify({ runtime: kind, checks, providerCalls: provider.state.calls }, null, 2),
   );
 }

@@ -28,7 +28,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 20   | Hosted Cloudflare adapter (separate repository) | Verified: hosted `0adf8ec`; 79 Node and 14 Worker tests, type generation, builds/dry-runs, Hyperdrive preflight; production pgvector available but not installed               |
 | 21   | Operations and diagnostics                      | Verified: 102 search/background tests including real scoped operations/replay; server typecheck                                                                                |
 | 22   | Node acceptance and recovery                    | Verified: 15 real PostgreSQL/Redis/HTTP/process scenarios, fresh migration and vector restore; 102 search tests; server typecheck                                              |
-| 23   | Worker/browser parity                           | Pending                                                                                                                                                                        |
+| 23   | Worker/browser parity                           | Verified: 15 Node and 10 real workerd/Postgres scenarios; matching chunks/hashes/vectors/ranking; 4 browser checks; 126 search/AI tests; server typecheck                      |
 | 24   | Relevance and scale                             | Pending                                                                                                                                                                        |
 | 25   | Verification and runbooks                       | Pending                                                                                                                                                                        |
 

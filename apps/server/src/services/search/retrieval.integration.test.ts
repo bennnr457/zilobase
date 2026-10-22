@@ -93,6 +93,9 @@ describe.skipIf(!url)("authorized exact hybrid search", () => {
       const response = await search("I must authenticate again");
       expect(response.metadata.mode).toBe("hybrid");
       expect(response.results[0].id).toBe(auth);
+      const wire = JSON.parse(JSON.stringify(response.results[0]));
+      expect(wire.entity.updatedAt).toMatch(/^\d{4}-\d\d-\d\dT.*Z$/);
+      expect(wire.updatedAt).toBe(wire.entity.updatedAt);
       expect(response.results.map((r) => r.id)).not.toContain(hidden);
       expect(new Set(response.results.map((r) => r.id)).size).toBe(response.results.length);
       expect(response.results[0].match?.pageId).toBe(auth);

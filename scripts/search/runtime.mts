@@ -20,7 +20,8 @@ import { publishBackgroundDispatches } from "../../apps/server/src/infrastructur
 import { maintainSearchIndex } from "../../apps/server/src/services/search/maintenance";
 
 export async function startSearchRuntime(kind, env, providerOrigin) {
-  if (kind !== "node") throw new Error("Worker fixture is added in the parity pass");
+  if (kind === "worker")
+    return (await import("./worker-runtime.mts")).startSearchWorker(env, providerOrigin);
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (input, init) => {
     const request = new Request(input, init);

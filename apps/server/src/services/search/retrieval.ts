@@ -112,6 +112,7 @@ export async function hydrateVectorResults(
     const c = byId.get(candidate.id);
     if (!c || seen.has(c.page_id)) continue;
     seen.add(c.page_id);
+    const updatedAt = new Date(c.updated_at);
     const emoji = typeof c.page_metadata?.emoji === "string" ? c.page_metadata.emoji : null;
     results.push({
       id: c.page_id,
@@ -119,14 +120,14 @@ export async function hydrateVectorResults(
       title: c.name,
       path: c.name,
       emoji,
-      updatedAt: c.updated_at,
+      updatedAt,
       excerpt: plainExcerpt(c.content_markdown),
       entity: {
         id: c.page_id,
         name: c.name,
         workspaceId,
         metadata: c.page_metadata,
-        updatedAt: c.updated_at,
+        updatedAt,
         deletedAt: null,
       },
       match: {
