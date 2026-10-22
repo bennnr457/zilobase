@@ -31,6 +31,7 @@ describe("dedicated Node queues", () => {
     expect(NODE_BACKGROUND_QUEUE_NAMES).toEqual({
       fast: "background-fast",
       ai: "background-ai",
+      search: "background-search",
       automation: "automation-runs",
       calendar: "calendar-jobs",
     });

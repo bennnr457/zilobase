@@ -14,7 +14,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 6    | Transactional invalidation                      | Verified: 73 search/mutation/collaboration tests; real invalidation triggers; server typecheck                               |
 | 7    | Gemini provider                                 | Verified: 12 provider tests; server typecheck; live Gemini batch/query returned 1536 dimensions and correct semantic ranking |
 | 8    | Quotas and query cache                          | Verified: 5 real-Postgres concurrency, quota, cooldown, accounting and cache tests; server typecheck                         |
-| 9    | Search background lane                          | Pending                                                                                                                      |
+| 9    | Search background lane                          | Verified: 32 shared delivery tests, 10 adapter tests, 15 Miniflare queue tests; server/adapter typechecks                    |
 | 10   | Resumable indexing                              | Pending                                                                                                                      |
 | 11   | Backfill and maintenance                        | Pending                                                                                                                      |
 | 12   | Live SQL eligibility                            | Pending                                                                                                                      |

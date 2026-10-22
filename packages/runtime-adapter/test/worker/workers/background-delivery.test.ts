@@ -12,6 +12,7 @@ const queues = {
   automation: "zilobase-automation-runs",
   calendar: "zilobase-calendar-jobs",
   ai: "zilobase-ai-runs",
+  search: "zilobase-search-indexing",
 };
 const worker = createBackgroundWorker();
 const env = { ZILOBASE_CELL_ID: "fixture" };

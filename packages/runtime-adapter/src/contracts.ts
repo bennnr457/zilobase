@@ -12,6 +12,10 @@ export type MeetingStatus = "idle" | "recording" | "paused" | "processing" | "co
 export type MeetingLifecycleAction = "start" | "pause" | "resume" | "stop" | "complete" | "fail";
 
 export type BackgroundTaskKind =
+  | "ai.generate"
+  | "search.page_index"
+  | "search.workspace_scan"
+  | "search.invalidate"
   | "automation.event_window"
   | "automation.run"
   | "calendar.sync"

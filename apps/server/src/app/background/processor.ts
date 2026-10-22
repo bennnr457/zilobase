@@ -1,3 +1,4 @@
+import { processSearchTask } from "../../services/search/background";
 import { processAiGeneration } from "../../services/ai/background";
 import {
   backgroundTaskLane,
@@ -75,6 +76,9 @@ async function processBackgroundTaskInner(input: {
 }): Promise<BackgroundTaskResult> {
   const { env, task, workerId } = input;
   const handlers: Record<BackgroundTaskV2["kind"], () => Promise<BackgroundTaskResult>> = {
+    "search.page_index": () => processSearchTask(input),
+    "search.workspace_scan": () => processSearchTask(input),
+    "search.invalidate": () => processSearchTask(input),
     "ai.generate": () =>
       processAiGeneration(env, { runId: task.resourceId, workerId, signal: input.signal }),
     "automation.event_window": () =>

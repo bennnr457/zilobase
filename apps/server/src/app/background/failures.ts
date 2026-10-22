@@ -1,3 +1,4 @@
+import { failSearchDelivery } from "../../services/search/background";
 import { failChatRunDelivery } from "../../services/ai/runs";
 import { and, asc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import {
@@ -81,6 +82,11 @@ export async function reconcileBackgroundFailures(env: RuntimeEnv) {
     for (const row of rows) {
       let handled: boolean;
       switch (row.task.kind) {
+        case "search.page_index":
+        case "search.workspace_scan":
+        case "search.invalidate":
+          handled = await failSearchDelivery(row.id);
+          break;
         case "ai.generate":
           handled = await failChatRunDelivery(row.resourceId);
           break;

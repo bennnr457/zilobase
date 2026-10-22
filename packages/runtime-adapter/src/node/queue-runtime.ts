@@ -9,6 +9,7 @@ import type {
 
 export const NODE_BACKGROUND_QUEUE_NAMES: Record<BackgroundLane, string> = {
   fast: "background-fast",
+  search: "background-search",
   ai: "background-ai",
   automation: "automation-runs",
   calendar: "calendar-jobs",

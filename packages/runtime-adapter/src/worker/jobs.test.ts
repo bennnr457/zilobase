@@ -42,3 +42,24 @@ it("isolates AI generation and rejects missing AI producer bindings", async () =
     "BACKGROUND_AI_QUEUE_REQUIRED",
   );
 });
+
+it.each(["search.page_index", "search.workspace_scan", "search.invalidate"])(
+  "isolates %s in the search queue",
+  async (kind) => {
+    const send = vi.fn(async () => {});
+    const task = {
+      availableAt: new Date(0).toISOString(),
+      cellId: "default",
+      kind,
+      resourceId: "identifier",
+      taskId: "00000000-0000-4000-8000-000000000001",
+      version: 2,
+    };
+    await createWorkerJobs({ SEARCH_INDEXING: { send } }).dispatch([task]);
+    expect(send).toHaveBeenCalledWith(task);
+    await expect(createWorkerJobs({}).dispatch([task])).rejects.toThrow(
+      "BACKGROUND_SEARCH_QUEUE_REQUIRED",
+    );
+    expect(JSON.stringify(task)).not.toMatch(/markdown|embedding|content/);
+  },
+);

@@ -15,6 +15,7 @@ export type BackgroundQueue = {
 export type WorkerEnvBindings = Record<string, unknown> & {
   COLLABORATION_RATE_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
   AI_RUNS?: BackgroundQueue;
+  SEARCH_INDEXING?: BackgroundQueue;
   BACKGROUND_FAST?: BackgroundQueue;
   AUTOMATION_RUNS?: BackgroundQueue;
   CALENDAR_JOBS?: BackgroundQueue;

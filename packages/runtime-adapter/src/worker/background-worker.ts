@@ -37,6 +37,7 @@ export type BackgroundWorkerOptions<Env extends WorkerEnvBindings = WorkerEnvBin
 
 const queueLanes: Record<string, BackgroundLane> = {
   "zilobase-ai-runs": "ai",
+  "zilobase-search-indexing": "search",
   "zilobase-automation-runs": "automation",
   "zilobase-background-fast": "fast",
   "zilobase-calendar-jobs": "calendar",
@@ -80,7 +81,8 @@ export function createBackgroundWorker<Env extends WorkerEnvBindings = WorkerEnv
             env.BACKGROUND_FAST &&
             env.AUTOMATION_RUNS &&
             env.CALENDAR_JOBS &&
-            (env.AI_DURABLE_STREAMING_ENABLED !== "true" || env.AI_RUNS)
+            (env.AI_DURABLE_STREAMING_ENABLED !== "true" || env.AI_RUNS) &&
+            (env.SEARCH_EMBEDDINGS_ENABLED !== "true" || env.SEARCH_INDEXING)
           ),
           consumerReady: null,
           maintenanceFresh: null,
