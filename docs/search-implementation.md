@@ -19,7 +19,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 11   | Backfill and maintenance                        | Verified: 104 search/background tests, including bounded backfill/fanout, admission recovery, lease recovery, debounce and cleanup; server typecheck         |
 | 12   | Live SQL eligibility                            | Verified: 6 real-Postgres differential/adversarial tests over generated graphs, teams, guests, expiry, sources and revisions; server typecheck               |
 | 13   | Hybrid retrieval                                | Verified: 5 real-Postgres ranking/fallback tests, 10 access/route regressions and affected read/AI regressions; server typecheck                             |
-| 14   | HNSW retrieval                                  | Pending                                                                                                                                                      |
+| 14   | HNSW retrieval                                  | Verified: 3 real-Postgres plan/recall/filter tests (600 chunks), 11 retrieval/access regressions, concurrent rebuild of 32 indexes; server typecheck         |
 | 15   | Workspace controls                              | Pending                                                                                                                                                      |
 | 16   | Shared client and UI                            | Pending                                                                                                                                                      |
 | 17   | Ask AI integration                              | Pending                                                                                                                                                      |
@@ -43,3 +43,5 @@ Passes 6–11 connect transactional dirty state, post-commit admission, delayed 
 Concurrent non-search changes appeared in runtime-adapter package/template docs/tests during pass 6; preserve them and stage only search-owned hunks.
 
 Search access traversal fails closed when ancestry reaches 64 levels, including corrupt cycles. Final chunk hydration evaluates access, source membership, revisions and freshness in one SQL statement.
+
+Pass 14 found and fixed freshness-subquery flattening that prevented ordered HNSW scans. Retrieval disables PostgreSQL JIT locally to avoid expensive compilation for short interactive queries. The 600-chunk fixture proves partition pruning, index availability and filtered ANN Recall@20 >= 0.95; release-scale evaluation remains pending.

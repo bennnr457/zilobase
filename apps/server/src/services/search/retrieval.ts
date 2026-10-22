@@ -1,3 +1,9 @@
+import {
+  annSearchCandidates,
+  searchEligibleChunkCount,
+  SEARCH_EXACT_THRESHOLD,
+  SEARCH_CANDIDATE_WINDOWS,
+} from "./ann";
 import { sql } from "drizzle-orm";
 import { db, runWithDb, type Database } from "../../infrastructure/database";
 import { getBackgroundCellId } from "../../infrastructure/background/contracts";
@@ -246,19 +252,42 @@ export async function hybridSearchWorkspace(
     }
     const vectorResults = await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select set_config('statement_timeout',${String(Math.max(1, 2500 - (Date.now() - started)))},true)`,
+        sql`select set_config('statement_timeout',${String(Math.max(1, 2500 - (Date.now() - started)))},true),set_config('jit','off',true)`,
       );
       // Database context remains this transaction for bounded retrieval and access checks.
-      return runWithDb(tx as unknown as Database, async () =>
-        hydrateVectorResults(
-          input.workspaceId,
-          input.userId,
-          await exactSearchCandidates(input.workspaceId, input.userId, vector),
-        ),
-      );
+      return runWithDb(tx as unknown as Database, async () => {
+        const count = await searchEligibleChunkCount(input.workspaceId, input.userId);
+        if (count <= SEARCH_EXACT_THRESHOLD)
+          return hydrateVectorResults(
+            input.workspaceId,
+            input.userId,
+            await exactSearchCandidates(input.workspaceId, input.userId, vector),
+          );
+        let matches: WorkspaceSearchResult[] = [];
+        for (const window of SEARCH_CANDIDATE_WINDOWS) {
+          const remaining = 2500 - (Date.now() - started);
+          if (remaining < 100) {
+            metadata.degradationReason = "retrieval_budget";
+            break;
+          }
+          await db.execute(sql`select set_config('statement_timeout',${String(remaining)},true)`);
+          matches = await hydrateVectorResults(
+            input.workspaceId,
+            input.userId,
+            await annSearchCandidates(input.workspaceId, vector, window),
+          );
+          if (matches.length >= (input.limit ?? 50)) break;
+          if (window === 2000) metadata.degradationReason = "retrieval_budget";
+        }
+        return matches;
+      });
     });
     const results = fuseSearchPageRanks(await keyword, vectorResults, input.limit ?? 50);
-    metadata = { mode: vectorResults.length ? "hybrid" : "keyword", indexAvailability: "ready" };
+    metadata = {
+      ...metadata,
+      mode: vectorResults.length ? "hybrid" : "keyword",
+      indexAvailability: "ready",
+    };
     return { results: await recheckResults(input, results), metadata };
   } catch (error) {
     metadata = {

@@ -82,7 +82,7 @@ export async function authorizedSearchIdentities(
 
 export function freshSearchChunk(workspaceId: string, alias: "c" = "c") {
   const c = sql.identifier(alias);
-  return sql`${c}.workspace_id=${workspaceId} and ${c}.profile_id=${SEARCH_PROFILE.id} and ${c}.is_active and ${c}.embedding is not null and exists(select 1 from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id join page p on p.id=i.page_id and p.workspace_id=i.workspace_id where i.workspace_id=${c}.workspace_id and i.page_id=${c}.page_id and i.profile_id=${c}.profile_id and s.enabled and s.profile_id=i.profile_id and s.index_epoch=i.index_epoch and ${c}.index_epoch=i.index_epoch and i.active_generation_id=${c}.generation_id and i.indexed_revision=i.requested_revision and ${c}.source_revision=i.indexed_revision and p.deleted_at is null)`;
+  return sql`${c}.workspace_id=${workspaceId} and ${c}.profile_id=${SEARCH_PROFILE.id} and ${c}.is_active and ${c}.embedding is not null and exists(select 1 from page_search_index i join workspace_search_settings s on s.workspace_id=i.workspace_id join page p on p.id=i.page_id and p.workspace_id=i.workspace_id where i.workspace_id=${c}.workspace_id and i.page_id=${c}.page_id and i.profile_id=${c}.profile_id and s.enabled and s.profile_id=i.profile_id and s.index_epoch=i.index_epoch and ${c}.index_epoch=i.index_epoch and i.active_generation_id=${c}.generation_id and i.indexed_revision=i.requested_revision and ${c}.source_revision=i.indexed_revision and p.deleted_at is null offset 0)`;
 }
 
 export function searchVectorAccessCtes(workspaceId: string, userId: string) {

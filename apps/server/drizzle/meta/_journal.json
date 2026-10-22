@@ -806,6 +806,13 @@
       "when": 1792454400002,
       "tag": "0117_search_invalidation",
       "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1792454400003,
+      "tag": "0118_search_hnsw",
+      "breakpoints": true
     }
   ]
 }
