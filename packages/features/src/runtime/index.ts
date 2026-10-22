@@ -156,8 +156,7 @@ export * from "./notification-room";
 export { eventOverlaps } from "../calendar-layout/time";
 export { timedLayout } from "../calendar/context";
 
-export { collectWorkspaceContext, parsePageDocument } from "../ai/context";
-export type { ContextReadPorts, ContextDatabaseRead, LocalPageSnapshot } from "../ai/context";
+export { parsePageDocument } from "@zilobase/page-context";
 export { chatRequestSchema } from "../ai/contracts";
 export { chatDisplayText } from "../ai/citations";
 export type { ChatRequest, ChatRequestInput, ChatEvent, ChatMessage } from "../ai/contracts";

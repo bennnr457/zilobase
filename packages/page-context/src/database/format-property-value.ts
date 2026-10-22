@@ -78,17 +78,3 @@ export function parsePropertyValue(value: unknown, propertyType = "text"): Datab
 
   return "";
 }
-
-export function formatPropertyValueForContext(value: unknown, propertyType: string) {
-  const parsed = parsePropertyValue(value, propertyType);
-
-  if (Array.isArray(parsed)) {
-    return parsed.join(", ");
-  }
-
-  if (propertyType === "checkbox") {
-    return parsed === "true" ? "Yes" : parsed === "false" ? "No" : "";
-  }
-
-  return parsed.trim();
-}

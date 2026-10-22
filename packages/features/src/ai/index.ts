@@ -1,4 +1,3 @@
-export type { LocalPageSnapshot } from "./context";
 export type {
   ChatRequest,
   ChatRequestInput,

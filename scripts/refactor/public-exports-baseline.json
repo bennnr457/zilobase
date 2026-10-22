@@ -13324,39 +13324,7 @@
     }
   },
   "@zilobase/page-context:.:default": {
-    "BuildContextInput": {
-      "value": false,
-      "type": true
-    },
-    "buildContextMarkdown": {
-      "value": true,
-      "type": false
-    },
     "BuildContextResult": {
-      "value": false,
-      "type": true
-    },
-    "buildDatabaseMarkdown": {
-      "value": true,
-      "type": false
-    },
-    "collectRequiredDataSourceRefs": {
-      "value": true,
-      "type": false
-    },
-    "ContextAttachment": {
-      "value": false,
-      "type": true
-    },
-    "ContextSection": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRef": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRole": {
       "value": false,
       "type": true
     },
@@ -13364,99 +13332,11 @@
       "value": true,
       "type": false
     },
-    "DatabaseContextPayload": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseContextSection": {
-      "value": false,
-      "type": true
-    },
-    "DatabasePropertyFilterConfig": {
-      "value": false,
-      "type": true
-    },
-    "DatabasePropertySchema": {
-      "value": false,
-      "type": true
-    },
     "DatabasePropertyValue": {
       "value": false,
       "type": true
     },
-    "DatabaseRowContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseSortConfig": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseValueContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseViewSchema": {
-      "value": false,
-      "type": true
-    },
-    "DataSourceContext": {
-      "value": false,
-      "type": true
-    },
     "extractDatabaseIds": {
-      "value": true,
-      "type": false
-    },
-    "extractPageMarkdownFromContext": {
-      "value": true,
-      "type": false
-    },
-    "formatPropertyValueForContext": {
-      "value": true,
-      "type": false
-    },
-    "getActiveVisibilityConfig": {
-      "value": true,
-      "type": false
-    },
-    "getDatabaseFilters": {
-      "value": true,
-      "type": false
-    },
-    "getDatabaseSorts": {
-      "value": true,
-      "type": false
-    },
-    "getNameColumnLabel": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyHidden": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyHiddenForView": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyLabel": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyTypeHint": {
-      "value": true,
-      "type": false
-    },
-    "getViewHiddenPropertyIds": {
-      "value": true,
-      "type": false
-    },
-    "getVisiblePropertiesForView": {
-      "value": true,
-      "type": false
-    },
-    "hasViewHiddenPropertyIds": {
       "value": true,
       "type": false
     },
@@ -13471,30 +13351,6 @@
     "isStructuralBlockMarkerLine": {
       "value": true,
       "type": false
-    },
-    "logPageContext": {
-      "value": true,
-      "type": false
-    },
-    "logPageContextRebuild": {
-      "value": true,
-      "type": false
-    },
-    "logPageContextSent": {
-      "value": true,
-      "type": false
-    },
-    "PageContextLogMeta": {
-      "value": false,
-      "type": true
-    },
-    "PageContextSection": {
-      "value": false,
-      "type": true
-    },
-    "PageDatabaseContext": {
-      "value": false,
-      "type": true
     },
     "parsePropertyValue": {
       "value": true,
@@ -13513,52 +13369,12 @@
       "type": false
     },
     "shouldShowInlineDatabaseTitle": {
-      "value": true,
-      "type": false
-    },
-    "stripDatabasePayload": {
-      "value": true,
-      "type": false
-    },
-    "warnPageContextTrimmed": {
       "value": true,
       "type": false
     }
   },
   "@zilobase/page-context:.:types": {
-    "BuildContextInput": {
-      "value": false,
-      "type": true
-    },
-    "buildContextMarkdown": {
-      "value": true,
-      "type": false
-    },
     "BuildContextResult": {
-      "value": false,
-      "type": true
-    },
-    "buildDatabaseMarkdown": {
-      "value": true,
-      "type": false
-    },
-    "collectRequiredDataSourceRefs": {
-      "value": true,
-      "type": false
-    },
-    "ContextAttachment": {
-      "value": false,
-      "type": true
-    },
-    "ContextSection": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRef": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRole": {
       "value": false,
       "type": true
     },
@@ -13566,99 +13382,11 @@
       "value": true,
       "type": false
     },
-    "DatabaseContextPayload": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseContextSection": {
-      "value": false,
-      "type": true
-    },
-    "DatabasePropertyFilterConfig": {
-      "value": false,
-      "type": true
-    },
-    "DatabasePropertySchema": {
-      "value": false,
-      "type": true
-    },
     "DatabasePropertyValue": {
       "value": false,
       "type": true
     },
-    "DatabaseRowContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseSortConfig": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseValueContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseViewSchema": {
-      "value": false,
-      "type": true
-    },
-    "DataSourceContext": {
-      "value": false,
-      "type": true
-    },
     "extractDatabaseIds": {
-      "value": true,
-      "type": false
-    },
-    "extractPageMarkdownFromContext": {
-      "value": true,
-      "type": false
-    },
-    "formatPropertyValueForContext": {
-      "value": true,
-      "type": false
-    },
-    "getActiveVisibilityConfig": {
-      "value": true,
-      "type": false
-    },
-    "getDatabaseFilters": {
-      "value": true,
-      "type": false
-    },
-    "getDatabaseSorts": {
-      "value": true,
-      "type": false
-    },
-    "getNameColumnLabel": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyHidden": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyHiddenForView": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyLabel": {
-      "value": true,
-      "type": false
-    },
-    "getPropertyTypeHint": {
-      "value": true,
-      "type": false
-    },
-    "getViewHiddenPropertyIds": {
-      "value": true,
-      "type": false
-    },
-    "getVisiblePropertiesForView": {
-      "value": true,
-      "type": false
-    },
-    "hasViewHiddenPropertyIds": {
       "value": true,
       "type": false
     },
@@ -13673,30 +13401,6 @@
     "isStructuralBlockMarkerLine": {
       "value": true,
       "type": false
-    },
-    "logPageContext": {
-      "value": true,
-      "type": false
-    },
-    "logPageContextRebuild": {
-      "value": true,
-      "type": false
-    },
-    "logPageContextSent": {
-      "value": true,
-      "type": false
-    },
-    "PageContextLogMeta": {
-      "value": false,
-      "type": true
-    },
-    "PageContextSection": {
-      "value": false,
-      "type": true
-    },
-    "PageDatabaseContext": {
-      "value": false,
-      "type": true
     },
     "parsePropertyValue": {
       "value": true,
@@ -13715,34 +13419,6 @@
       "type": false
     },
     "shouldShowInlineDatabaseTitle": {
-      "value": true,
-      "type": false
-    },
-    "stripDatabasePayload": {
-      "value": true,
-      "type": false
-    },
-    "warnPageContextTrimmed": {
-      "value": true,
-      "type": false
-    }
-  },
-  "@zilobase/page-context:./build-database-markdown:default": {
-    "buildDatabaseMarkdown": {
-      "value": true,
-      "type": false
-    },
-    "collectRequiredDataSourceRefs": {
-      "value": true,
-      "type": false
-    }
-  },
-  "@zilobase/page-context:./build-database-markdown:types": {
-    "buildDatabaseMarkdown": {
-      "value": true,
-      "type": false
-    },
-    "collectRequiredDataSourceRefs": {
       "value": true,
       "type": false
     }
@@ -13764,10 +13440,6 @@
       "value": false,
       "type": true
     },
-    "formatPropertyValueForContext": {
-      "value": true,
-      "type": false
-    },
     "parsePropertyValue": {
       "value": true,
       "type": false
@@ -13777,10 +13449,6 @@
     "DatabasePropertyValue": {
       "value": false,
       "type": true
-    },
-    "formatPropertyValueForContext": {
-      "value": true,
-      "type": false
     },
     "parsePropertyValue": {
       "value": true,
@@ -13827,138 +13495,14 @@
       "type": false
     }
   },
-  "@zilobase/page-context:./strip-database-payload:default": {
-    "stripDatabasePayload": {
-      "value": true,
-      "type": false
-    }
-  },
-  "@zilobase/page-context:./strip-database-payload:types": {
-    "stripDatabasePayload": {
-      "value": true,
-      "type": false
-    }
-  },
   "@zilobase/page-context:./types:default": {
-    "BuildContextInput": {
-      "value": false,
-      "type": true
-    },
     "BuildContextResult": {
-      "value": false,
-      "type": true
-    },
-    "ContextAttachment": {
-      "value": false,
-      "type": true
-    },
-    "ContextSection": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRef": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRole": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseContextPayload": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseContextSection": {
-      "value": false,
-      "type": true
-    },
-    "DatabasePropertySchema": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseRowContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseValueContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseViewSchema": {
-      "value": false,
-      "type": true
-    },
-    "DataSourceContext": {
-      "value": false,
-      "type": true
-    },
-    "PageContextSection": {
-      "value": false,
-      "type": true
-    },
-    "PageDatabaseContext": {
       "value": false,
       "type": true
     }
   },
   "@zilobase/page-context:./types:types": {
-    "BuildContextInput": {
-      "value": false,
-      "type": true
-    },
     "BuildContextResult": {
-      "value": false,
-      "type": true
-    },
-    "ContextAttachment": {
-      "value": false,
-      "type": true
-    },
-    "ContextSection": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRef": {
-      "value": false,
-      "type": true
-    },
-    "ContextSourceRole": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseContextPayload": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseContextSection": {
-      "value": false,
-      "type": true
-    },
-    "DatabasePropertySchema": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseRowContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseValueContext": {
-      "value": false,
-      "type": true
-    },
-    "DatabaseViewSchema": {
-      "value": false,
-      "type": true
-    },
-    "DataSourceContext": {
-      "value": false,
-      "type": true
-    },
-    "PageContextSection": {
-      "value": false,
-      "type": true
-    },
-    "PageDatabaseContext": {
       "value": false,
       "type": true
     }

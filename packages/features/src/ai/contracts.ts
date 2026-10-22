@@ -2,8 +2,11 @@ import { resolveChatReferences } from "./references";
 import type { ChatDebugEvent } from "./debug";
 import type { ChatRunReceipt, ChatRunStatus } from "./runs";
 import { z } from "zod";
-import type { BuildContextResult, ResourceRef } from "@zilobase/page-context";
-import { parsePageDocument } from "./context";
+import {
+  parsePageDocument,
+  type BuildContextResult,
+  type ResourceRef,
+} from "@zilobase/page-context";
 import type { ChatReadProgress } from "./tools";
 
 export const resourceRefSchema = z.object({
