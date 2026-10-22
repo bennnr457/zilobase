@@ -113,8 +113,12 @@ function serializeEmbedBlock(node: PageDocumentNode) {
 }
 
 function serializeFileBlock(node: PageDocumentNode) {
-  const name = trimmedStringAttr(node.attrs, "name", "File");
-  const url = stringAttr(node.attrs, "url");
+  const name = trimmedStringAttr(
+    node.attrs,
+    "title",
+    trimmedStringAttr(node.attrs, "name", "File"),
+  );
+  const url = stringAttr(node.attrs, "href") || stringAttr(node.attrs, "url");
   return url ? `[File: ${name}](${url})` : `[File: ${name}]`;
 }
 

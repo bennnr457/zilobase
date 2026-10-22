@@ -18,6 +18,7 @@ export type SearchPurpose = "search" | "question_answering";
 export type SearchChunkKind = "title" | "body" | "property";
 export type SearchChunkMetadata = {
   headingPath: string[];
+  blocks?: Array<{ blockIndex: number; start: number; end: number; blockId?: string }>;
   blockId?: string;
   blockIndex?: number;
   start?: number;

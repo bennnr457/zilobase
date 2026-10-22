@@ -21,3 +21,5 @@ export {
   insertDatabaseBlockInContent,
 } from "./database/insert-database-block";
 export { isEffectivelyEmptyPageContent } from "./document/empty-page-content";
+
+export type { PageDocumentNode } from "./document/page-document";
