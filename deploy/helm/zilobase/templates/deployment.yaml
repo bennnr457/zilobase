@@ -1,4 +1,5 @@
 {{- if eq .Values.realtime.existingSecret "" }}{{ fail "realtime.existingSecret is required for every Node deployment" }}{{ end }}
+{{- if and (eq .Values.node.processRole "worker") .Values.ingress.enabled }}{{ fail "worker releases must disable ingress" }}{{ end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,7 +50,7 @@ spec:
             preStop:
               exec: { command: ["/bin/sh", "-c", "sleep 10"] }
           ports:
-            - { name: http, containerPort: 3000, protocol: TCP }
+            - { name: http, containerPort: {{ if eq .Values.node.processRole "worker" }}3001{{ else }}3000{{ end }}, protocol: TCP }
             {{ if .Values.debug.enabled }}
             - { name: inspector, containerPort: {{ .Values.debug.port }}, protocol: TCP }
             {{ end }}

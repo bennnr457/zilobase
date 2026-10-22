@@ -16,12 +16,18 @@ spec:
             matchLabels:
               {{- toYaml .Values.networkPolicy.ingressNamespaceSelector | nindent 14 }}
       ports:
-        - { protocol: TCP, port: 3000 }
+        - { protocol: TCP, port: {{ if eq $.Values.node.processRole "worker" }}3001{{ else }}3000{{ end }} }
     {{- range .Values.networkPolicy.healthProbeCIDRs }}
     - from: [{ ipBlock: { cidr: {{ . | quote }} } }]
-      ports: [{ protocol: TCP, port: 3000 }]
+      ports: [{ protocol: TCP, port: {{ if eq $.Values.node.processRole "worker" }}3001{{ else }}3000{{ end }} }]
     {{- end }}
   egress:
+    {{- if .Values.search.enabled }}
+    {{- range .Values.search.egressCIDRs }}
+    - to: [{ ipBlock: { cidr: {{ . | quote }} } }]
+      ports: [{ protocol: TCP, port: 443 }]
+    {{- end }}
+    {{- end }}
     - to:
         - namespaceSelector: {}
           podSelector:

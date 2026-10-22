@@ -89,3 +89,19 @@ podAnnotations: {}
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+node:
+  processRole: all
+  backgroundLanes: ""
+search:
+  enabled: false
+  existingSecret: zilobase-search
+  secretKey: GEMINI_API_KEY
+  quotaScope: default:gemini-embedding-2
+  requestsPerMinute: 30
+  tokensPerMinute: 100000
+  deploymentDailyTokens: 10000000
+  workspaceDailyTokens: 1000000
+  concurrency: 4
+  # Use provider-approved ranges or an egress proxy when restricting outbound HTTPS.
+  egressCIDRs: [0.0.0.0/0]

@@ -25,7 +25,7 @@ services:
       timeout: 5s
       retries: 5
 
-  zilobase:
+  zilobase: &app-service
     image: ${ZILOBASE_IMAGE:?Set ZILOBASE_IMAGE to an immutable release tag or digest}
     restart: unless-stopped
     depends_on:
@@ -39,10 +39,11 @@ services:
         condition: service_healthy
       queue-valkey:
         condition: service_healthy
-    environment:
+    environment: &app-environment
       HOST: 0.0.0.0
       PORT: 3000
       ZILOBASE_PROCESS_ROLE: ${ZILOBASE_PROCESS_ROLE:-all}
+      ZILOBASE_BACKGROUND_LANES: ${ZILOBASE_BACKGROUND_LANES:-}
       ZILOBASE_CELL_ID: ${ZILOBASE_CELL_ID:-default}
       ZILOBASE_OPERATIONS_TOKEN: ${ZILOBASE_OPERATIONS_TOKEN:-}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-zilobase-server}
@@ -75,6 +76,14 @@ services:
       S3_ACCESS_KEY_ID: ${RUSTFS_ACCESS_KEY:?Set RUSTFS_ACCESS_KEY}
       S3_SECRET_ACCESS_KEY: ${RUSTFS_SECRET_KEY:?Set RUSTFS_SECRET_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SEARCH_EMBEDDINGS_ENABLED: ${SEARCH_EMBEDDINGS_ENABLED:-false}
+      SEARCH_EMBEDDING_QUOTA_SCOPE: ${SEARCH_EMBEDDING_QUOTA_SCOPE:-default:gemini-embedding-2}
+      SEARCH_EMBEDDING_RPM: ${SEARCH_EMBEDDING_RPM:-30}
+      SEARCH_EMBEDDING_TPM: ${SEARCH_EMBEDDING_TPM:-100000}
+      SEARCH_EMBEDDING_DAILY_TOKENS: ${SEARCH_EMBEDDING_DAILY_TOKENS:-10000000}
+      SEARCH_EMBEDDING_WORKSPACE_DAILY_TOKENS: ${SEARCH_EMBEDDING_WORKSPACE_DAILY_TOKENS:-1000000}
+      ZILOBASE_BACKGROUND_SEARCH_CONCURRENCY: ${ZILOBASE_BACKGROUND_SEARCH_CONCURRENCY:-4}
       EMAIL_FROM: ${EMAIL_FROM:?Set EMAIL_FROM to the production sender identity}
       SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST to the production mail server}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
@@ -88,6 +97,26 @@ services:
           "node",
           "-e",
           "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  search-worker:
+    <<: *app-service
+    profiles: [search-worker]
+    environment:
+      <<: *app-environment
+      ZILOBASE_PROCESS_ROLE: worker
+      ZILOBASE_BACKGROUND_LANES: search
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 10s
       timeout: 5s

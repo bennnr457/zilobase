@@ -333,6 +333,8 @@ function createBackgroundAdminServer(
   isRealtimeReady: () => boolean,
 ) {
   const port = readPort(process.env.BACKGROUND_HEALTH_PORT) ?? 3001;
+  const healthHost =
+    typeof env.BACKGROUND_HEALTH_HOST === "string" ? env.BACKGROUND_HEALTH_HOST : "127.0.0.1";
   const admin = createServer(async (request, response) => {
     if (request.url === "/metrics") {
       response.statusCode = 200;
@@ -373,9 +375,9 @@ function createBackgroundAdminServer(
     start: () =>
       new Promise<void>((resolve, reject) => {
         admin.once("error", reject);
-        admin.listen(port, "127.0.0.1", () => {
+        admin.listen(port, healthHost, () => {
           admin.off("error", reject);
-          console.log(`Zilobase background health listening on http://127.0.0.1:${port}`);
+          console.log(`Zilobase background health listening on http://${healthHost}:${port}`);
           resolve();
         });
       }),

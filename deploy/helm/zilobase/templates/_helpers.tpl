@@ -62,6 +62,23 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - { name: HOST, value: "0.0.0.0" }
 - { name: PORT, value: "3000" }
 - { name: NODE_ENV, value: "production" }
+- { name: ZILOBASE_PROCESS_ROLE, value: {{ .Values.node.processRole | quote }} }
+- { name: ZILOBASE_BACKGROUND_LANES, value: {{ .Values.node.backgroundLanes | quote }} }
+- { name: SEARCH_EMBEDDINGS_ENABLED, value: {{ .Values.search.enabled | quote }} }
+- { name: SEARCH_EMBEDDING_QUOTA_SCOPE, value: {{ .Values.search.quotaScope | quote }} }
+- { name: SEARCH_EMBEDDING_RPM, value: {{ .Values.search.requestsPerMinute | quote }} }
+- { name: SEARCH_EMBEDDING_TPM, value: {{ .Values.search.tokensPerMinute | quote }} }
+- { name: SEARCH_EMBEDDING_DAILY_TOKENS, value: {{ .Values.search.deploymentDailyTokens | quote }} }
+- { name: SEARCH_EMBEDDING_WORKSPACE_DAILY_TOKENS, value: {{ .Values.search.workspaceDailyTokens | quote }} }
+- { name: ZILOBASE_BACKGROUND_SEARCH_CONCURRENCY, value: {{ .Values.search.concurrency | quote }} }
+{{- if .Values.search.enabled }}
+- name: GEMINI_API_KEY
+  valueFrom: { secretKeyRef: { name: {{ required "search.existingSecret is required" .Values.search.existingSecret | quote }}, key: {{ .Values.search.secretKey | quote }} } }
+{{- end }}
+{{- if eq .Values.node.processRole "worker" }}
+- { name: BACKGROUND_HEALTH_HOST, value: "0.0.0.0" }
+- { name: BACKGROUND_HEALTH_PORT, value: "3001" }
+{{- end }}
 {{ if .Values.debug.enabled }}
 - { name: NODE_OPTIONS, value: "--enable-source-maps --inspect=0.0.0.0:{{ .Values.debug.port }}" }
 {{ end }}

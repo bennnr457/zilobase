@@ -15,6 +15,24 @@ export const NODE_BACKGROUND_QUEUE_NAMES: Record<BackgroundLane, string> = {
   calendar: "calendar-jobs",
 };
 const LANES = Object.keys(NODE_BACKGROUND_QUEUE_NAMES) as BackgroundLane[];
+export function selectedNodeBackgroundLanes(env: Record<string, unknown>): BackgroundLane[] {
+  const raw = env.ZILOBASE_BACKGROUND_LANES;
+  if (raw === undefined || raw === "") return [...LANES];
+  if (typeof raw !== "string") throw new Error("ZILOBASE_BACKGROUND_LANES_INVALID");
+  const lanes = raw.split(",").map((lane) => lane.trim());
+  if (
+    lanes.some((lane) => !LANES.includes(lane as BackgroundLane)) ||
+    new Set(lanes).size !== lanes.length
+  )
+    throw new Error("ZILOBASE_BACKGROUND_LANES_INVALID");
+  return lanes as BackgroundLane[];
+}
+export function nodeSearchDependenciesReady(env: Record<string, unknown>) {
+  return (
+    env.SEARCH_EMBEDDINGS_ENABLED !== "true" ||
+    (typeof env.GEMINI_API_KEY === "string" && !!env.GEMINI_API_KEY.trim())
+  );
+}
 export type NodeQueueRuntime = ReturnType<typeof createNodeQueueRuntime>;
 export type NodeQueueCallbacks = {
   lane(task: BackgroundTask): BackgroundLane;
@@ -62,6 +80,7 @@ export function createNodeQueueRuntime(
       : "default";
   const prefix = `zilobase:${encodeURIComponent(cell)}`;
   const role = env.ZILOBASE_PROCESS_ROLE ?? "all";
+  const selectedLanes = selectedNodeBackgroundLanes(env);
   const producer = new Redis(url, {
     lazyConnect: true,
     enableOfflineQueue: false,
@@ -159,12 +178,12 @@ export function createNodeQueueRuntime(
     queues,
     readiness(): BackgroundReadiness {
       return {
-        producerReady: running && producer.status === "ready",
+        producerReady: running && producer.status === "ready" && nodeSearchDependenciesReady(env),
         consumerReady:
           role === "api"
             ? null
             : running &&
-              consumers.length === LANES.length &&
+              consumers.length === selectedLanes.length &&
               consumerClients.every((client) => client.status === "ready"),
         maintenanceFresh:
           role === "api"
@@ -191,7 +210,7 @@ export function createNodeQueueRuntime(
         new Promise((resolve) => setTimeout(resolve, 2500)),
       ]).catch(log);
       if (role === "api") return;
-      for (const lane of LANES) {
+      for (const lane of selectedLanes) {
         const client = new Redis(url, { maxRetriesPerRequest: null, connectTimeout: 2000 });
         consumerClients.push(client);
         client.on("error", log);
