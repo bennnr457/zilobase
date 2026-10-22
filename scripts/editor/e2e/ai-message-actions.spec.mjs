@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 const url = "/scripts/editor/e2e/page-layout.html?workspace=ai";
 const composer = (page) => page.getByRole("textbox", { name: "Ask AI message" });
 
-test("submitted turns show Thinking while tools read sources before the first token", async ({
+test("tool activity replaces Thinking during reads, then Thinking resumes before the first token", async ({
   page,
 }) => {
   await page.goto(url);
@@ -18,9 +18,11 @@ test("submitted turns show Thinking while tools read sources before the first to
   await writePrompt(page, "Show my selected sources");
   await composer(page).press("Enter");
   await expect(page.locator(".is-user")).toContainText("Show my selected sources");
-  await expect(page.getByRole("status", { name: "Thinking", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Reading page/ })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Thinking", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Stop", exact: true })).toBeVisible();
   await page.evaluate(() => window.pageLayoutFixture.ai.releaseReads());
+  await expect(page.getByRole("button", { name: /^Page read/ })).toBeVisible();
   await expect(page.getByRole("status", { name: "Thinking", exact: true })).toBeVisible();
   await expect(page.locator(".is-user")).toHaveCount(1);
   await expect(page.locator(".is-assistant")).toHaveCount(1);

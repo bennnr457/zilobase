@@ -1,15 +1,14 @@
-import type { ChatRunReceipt, ChatThreadDetail } from "@zilobase/features/ai";
+import type { ChatReadProgress, ChatRunReceipt, ChatThreadDetail } from "@zilobase/features/ai";
 import { chatDisplayText } from "@zilobase/features/ai";
-import { buildContextMarkdown } from "@zilobase/page-context";
-import {
-  chatRequestSchema,
-  collectWorkspaceContext,
-  type ChatRequestInput,
-} from "@zilobase/features/runtime";
+import { prosemirrorToMarkdown, type BuildContextResult } from "@zilobase/page-context";
+import { chatRequestSchema, type ChatRequestInput } from "@zilobase/features/runtime";
 
-// Deterministic transport fixture; production acquisition, rendering, shared-client
-// cache and UI code run unchanged. Real authorization/persistence is tested in PostgreSQL.
-export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
+// Scripted server transport: references are not evidence until a simulated tool
+// read succeeds. The real agent, authorization and persistence have server tests;
+// browser tests exercise the production shared client and UI against these events.
+export function createAiRuntimeFixture(
+  pages: Array<{ id: string; name: string; [key: string]: any }>,
+) {
   const at = "2026-10-20T00:00:00Z";
   const page = {
     ...pages[0],
@@ -17,7 +16,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     content: {
       type: "doc",
       content: [
-        { type: "paragraph", content: [{ type: "text", text: "Saved plan" }] },
+        { type: "paragraph", content: [{ type: "text", text: "Saved server plan" }] },
         { type: "databaseBlock", attrs: { databaseId: "database" } },
       ],
     },
@@ -138,6 +137,83 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
     listWorkspaces: async () =>
       ["workspace", "other"].map((id) => ({ id, name: id, slug: id, createdAt: at })),
   };
+  const emptyContext = (): BuildContextResult => ({
+    version: 1,
+    status: "complete",
+    markdown: "",
+    charCount: 0,
+    manifest: [],
+    omissions: [],
+    trimmedAttachmentIds: [],
+  });
+  const pageContext = (): BuildContextResult => ({
+    ...emptyContext(),
+    manifest: [
+      {
+        key: `page:${page.id}`,
+        type: "page",
+        id: page.id,
+        pageId: page.id,
+        title: page.name,
+        provenance: { capturedAt: at, origin: "saved", revision: "fixture-page-1" },
+      },
+    ],
+  });
+  const recordsContext = (
+    context: BuildContextResult,
+    hasMore: boolean,
+    inspectionOnly = false,
+  ): BuildContextResult => ({
+    ...context,
+    status: hasMore ? "partial" : "complete",
+    omissions: hasMore ? ["1 source reads have additional pages. Results are not exhaustive."] : [],
+    manifest: [
+      ...context.manifest.filter((entry) => entry.type === "page"),
+      {
+        key: "database:database",
+        type: "database",
+        id: "database",
+        databaseId: "database",
+        title: "Database",
+        provenance: { capturedAt: at, origin: "saved", revision: "fixture-source-1" },
+      },
+      {
+        key: "source:source",
+        type: "source",
+        id: "source",
+        databaseId: "database",
+        sourceId: "source",
+        title: "Records",
+        provenance: { capturedAt: at, origin: "saved", revision: "fixture-source-1" },
+      },
+      ...(inspectionOnly
+        ? []
+        : exported.rows.map((row) => ({
+            key: `record:source:${row.id}`,
+            type: "record" as const,
+            id: row.id,
+            title: row.page.name,
+            databaseId: "database",
+            sourceId: "source",
+            pageId: row.pageId,
+            provenance: { capturedAt: at, origin: "saved" as const, revision: "fixture-source-1" },
+          }))),
+    ],
+  });
+  const pageReadProgress = (status: "running" | "completed" | "failed"): ChatReadProgress => ({
+    activities: [
+      {
+        id: "read-1",
+        name: "read_page",
+        label: "Reading page",
+        source: { type: "page", id: page.id },
+        status,
+        ...(status === "completed" ? { returned: 2, hasMore: false } : {}),
+        ...(status === "failed" ? { error: "SOURCE_UNAVAILABLE" } : {}),
+      },
+    ],
+    canContinue: false,
+  });
   async function api(path: string, options?: RequestInit): Promise<unknown> {
     if (path.startsWith("/ai/sources/")) {
       controls.reads.push(path);
@@ -162,14 +238,6 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       const request = chatRequestSchema.parse(raw);
       const previous = threads.find((item) => item.run?.requestId === request.requestId);
       if (previous) return structuredClone(previous.run);
-      const context = buildContextMarkdown({
-        context: await collectWorkspaceContext(request, {
-          check: () => {},
-          now: () => at,
-          page: async () => page as any,
-          database: async () => exported,
-        }),
-      });
       let detail = threads.find((item) => item.thread.id === request.threadId);
       if (!detail) {
         detail = {
@@ -184,6 +252,10 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         };
         threads.unshift(detail);
       }
+      const context =
+        request.continueFromRunId && request.continueFromRunId === detail.run?.runId
+          ? structuredClone(detail.run.context ?? emptyContext())
+          : emptyContext();
       detail.run = {
         requestId: request.requestId,
         runId: crypto.randomUUID(),
@@ -201,6 +273,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
               id: "read-records",
               name: "query_records",
               label: "Reading records",
+              source: { type: "database", id: "database", dataSourceId: "source" },
               status: "running",
             },
           ],
@@ -394,54 +467,78 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
                   ),
                 );
               const run = detail.run as ChatRunReceipt;
-              if (!controls.holdStream && run.status === "running") {
+              if (
+                !controls.holdStream &&
+                !controls.holdReads &&
+                controls.forbidden &&
+                run.status === "running"
+              ) {
+                run.status = "failed";
+                run.seq = 3;
+                run.progress = pageReadProgress("failed");
+                detail.messages.at(-1)!.progress = run.progress;
+                detail.messages.at(-1)!.status = "failed";
+                detail.thread.status = "failed";
+                persist();
+              }
+              if (!controls.holdStream && !controls.holdReads && run.status === "running") {
                 run.text = "Partial answer";
                 run.status = "completed";
-                run.seq = controls.toolMode ? 4 : 3;
+                run.seq = 4;
+                run.context = pageContext();
+                run.progress = pageReadProgress("completed");
                 if (controls.toolMode) {
+                  const hasMore = !controls.requests.at(-1)?.continueFromRunId;
+                  run.context = recordsContext(emptyContext(), hasMore, controls.cachedInspection);
                   run.progress = {
                     activities: [
                       {
                         id: "read-records",
                         name: controls.cachedInspection ? "describe_source" : "query_records",
                         label: controls.cachedInspection ? "Inspecting source" : "Reading records",
+                        source: { type: "database", id: "database", dataSourceId: "source" },
                         cached: controls.cachedInspection || undefined,
                         status: "completed",
-                        returned: 50,
-                        hasMore: !controls.requests.at(-1)?.continueFromRunId,
+                        returned: controls.cachedInspection ? 1 : exported.rows.length,
+                        hasMore,
                       },
                     ],
                     canContinue: !controls.requests.at(-1)?.continueFromRunId,
                     ...(controls.cachedInspection ? { stopReason: "no_progress" } : {}),
                   };
-                  detail.messages.at(-1)!.progress = run.progress;
-                  detail.messages.at(-1)!.runId = run.runId;
                 }
+                detail.messages.at(-1)!.context = run.context;
+                detail.messages.at(-1)!.progress = run.progress;
+                detail.messages.at(-1)!.runId = run.runId;
                 detail.messages.at(-1)!.text = run.text;
                 detail.messages.at(-1)!.status = "completed";
                 detail.thread.status = "completed";
                 persist();
               }
               if (run.status === "completed") {
-                if (controls.toolMode) {
-                  if (cursor < 2)
-                    write(2, {
-                      type: "read-progress",
-                      context: { ...run.context, markdown: "" },
-                      progress: run.progress,
-                    });
-                  if (cursor < 3) write(3, { type: "delta", text: " answer" });
-                  if (cursor < 4) write(4, { type: "done", status: "completed" });
-                  cursor = 4;
-                } else {
-                  if (cursor < 2) write(2, { type: "delta", text: " answer" });
-                  if (cursor < 3) write(3, { type: "done", status: "completed" });
-                  cursor = 3;
-                }
+                if (cursor < 2)
+                  write(2, {
+                    type: "read-progress",
+                    context: run.context,
+                    progress: run.progress,
+                  });
+                if (cursor < 3) write(3, { type: "delta", text: " answer" });
+                if (cursor < 4) write(4, { type: "done", status: "completed" });
+                cursor = 4;
                 stop();
                 controller.close();
               } else if (run.status === "stopped") {
                 write(run.seq, { type: "done", status: "stopped" });
+                stop();
+                controller.close();
+              } else if (run.status === "failed") {
+                if (cursor < 2)
+                  write(2, { type: "read-progress", context: run.context, progress: run.progress });
+                if (cursor < 3)
+                  write(3, {
+                    type: "error",
+                    message: "Source unavailable. Attach an accessible source.",
+                  });
                 stop();
                 controller.close();
               } else timer = setTimeout(poll, 50);
@@ -465,14 +562,7 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       controls.failNext = false;
       throw new Error("Connection lost. Retry your message.");
     }
-    const context = buildContextMarkdown({
-      context: await collectWorkspaceContext(request, {
-        check: () => init.signal?.throwIfAborted(),
-        now: () => at,
-        page: async () => page as any,
-        database: async () => exported,
-      }),
-    });
+    const context = emptyContext();
     let detail = threads.find((item) => item.thread.id === request.threadId);
     if (!detail) {
       detail = {
@@ -495,11 +585,8 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
       text: "",
       status: "streaming" as "streaming" | "completed" | "stopped" | "failed",
       roots: request.roots,
-      context: {
-        ...context,
-        markdown: "",
-        omissions: [...context.omissions, "Historical source content is not retained."],
-      },
+      context,
+      progress: pageReadProgress("running"),
     };
     detail.roots = request.roots;
     detail.messages.push(
@@ -514,7 +601,14 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
         start(controller) {
           const write = (event: unknown) =>
             controller.enqueue(new TextEncoder().encode(`${JSON.stringify(event)}\n`));
+          const readProgress = (context: BuildContextResult, progress: ChatReadProgress) => {
+            assistant.context = context;
+            assistant.progress = progress;
+            write({ type: "read-progress", context, progress });
+            persist();
+          };
           write({ type: "context", context, threadId: detail!.thread.id });
+          readProgress(context, assistant.progress);
           write({
             type: "debug",
             omitted: 0,
@@ -547,9 +641,27 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
             controller.close();
           };
           init.signal?.addEventListener("abort", stop, { once: true });
+          let readsCompleted = false;
           const startAnswer = () => {
-            if (closed) return;
+            if (closed || !readsCompleted || controls.holdFirstToken) return;
+            assistant.text = answer;
+            write({ type: "delta", text: answer });
+            persist();
+            if (!controls.holdStream)
+              timer = setTimeout(() => {
+                if (closed) return;
+                closed = true;
+                assistant.status = "completed";
+                persist();
+                write({ type: "done", status: "completed" });
+                controller.close();
+                init.signal?.removeEventListener("abort", stop);
+              }, 100);
+          };
+          const completeReads = () => {
+            if (closed || readsCompleted) return;
             if (controls.forbidden) {
+              readProgress(emptyContext(), pageReadProgress("failed"));
               closed = true;
               assistant.status = "failed";
               persist();
@@ -568,34 +680,59 @@ export function createAiRuntimeFixture(pages: Array<Record<string, any>>) {
                   type: "tool.result",
                   tool: "read_page",
                   toolCallId: "read-1",
-                  payload: JSON.stringify({ text: "Saved server plan" }),
+                  payload: JSON.stringify({
+                    title: page.name,
+                    entries: [
+                      { kind: "text", block: 0, text: prosemirrorToMarkdown(page.content) },
+                      { kind: "reference", resource: { type: "database", id: "database" } },
+                    ],
+                    coverage: { complete: true },
+                  }),
                 },
               ],
             });
-            assistant.text = answer;
-            write({ type: "delta", text: answer });
-            persist();
-            if (!controls.holdStream)
-              timer = setTimeout(() => {
-                if (closed) return;
-                closed = true;
-                assistant.status = "completed";
-                persist();
-                write({ type: "done", status: "completed" });
-                controller.close();
-                init.signal?.removeEventListener("abort", stop);
-              }, 100);
+            readProgress(pageContext(), pageReadProgress("completed"));
+            // An embedded database reference alone never adds record evidence.
+            // This scenario explicitly follows the database when it was mentioned.
+            if (request.roots.some((root) => root.type === "database" && root.id === "database")) {
+              const progress: ChatReadProgress = {
+                activities: [
+                  ...assistant.progress.activities,
+                  {
+                    id: "read-records",
+                    name: "query_records",
+                    label: "Reading records",
+                    source: { type: "database", id: "database", dataSourceId: "source" },
+                    status: "running",
+                  },
+                ],
+                canContinue: false,
+              };
+              readProgress(assistant.context, progress);
+              readProgress(recordsContext(assistant.context, true), {
+                activities: progress.activities.map((activity) =>
+                  activity.id === "read-records"
+                    ? {
+                        ...activity,
+                        status: "completed",
+                        returned: exported.rows.length,
+                        hasMore: true,
+                      }
+                    : activity,
+                ),
+                canContinue: true,
+              });
+            }
+            readsCompleted = true;
+            startAnswer();
           };
           controls.releaseFirstToken = () => {
             if (!controls.holdFirstToken) return;
             controls.holdFirstToken = false;
             startAnswer();
           };
-          if (controls.holdReads)
-            releaseRead = () => {
-              if (!controls.holdFirstToken) startAnswer();
-            };
-          else if (!controls.holdFirstToken) startAnswer();
+          if (controls.holdReads) releaseRead = completeReads;
+          else completeReads();
         },
         cancel() {
           if (!closed) {

@@ -39,11 +39,15 @@ for (const width of [1400, 390]) {
             .locator(".is-assistant [data-ai-message-mention]")
             .getByRole("link", { name: "main", exact: true }),
         ).toBeVisible();
+        await expect(
+          page.getByRole("button", { name: "Copy response", exact: true }),
+        ).toBeVisible();
         await writePrompt(page, "A follow-up\nwith a second line");
         // Text edges can vary slightly between Chromium rasterization runs.
         // Empty frames and the geometry assertions below remain exact.
         await expect(shell).toHaveScreenshot(`${snapshot}-conversation.png`, {
           animations: "disabled",
+          style: "[data-sd-animate] { animation: none !important; }",
           maxDiffPixels: 20,
         });
 
