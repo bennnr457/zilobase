@@ -12,7 +12,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "./authentication";
-import { timestampColumns } from "./columns";
+import { timestampColumns, bigintText } from "./columns";
 import { pageProperty } from "./page-properties";
 import { page } from "./pages";
 import { softDeleteColumns } from "./soft-delete-columns";
@@ -53,6 +53,7 @@ export const dataSource = pgTable(
   "data_source",
   {
     id: text("id").primaryKey(),
+    searchRevision: bigintText("search_revision").notNull().default("1"),
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),

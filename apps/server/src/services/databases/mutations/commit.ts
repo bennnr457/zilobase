@@ -1,3 +1,4 @@
+import { nudgeSearchIndexing } from "../../search/invalidation";
 import {
   databaseMutationChangesSchema,
   type DatabaseChangedAreaV2,
@@ -244,6 +245,7 @@ export async function commitDatabaseMutationBatch<T>(
   );
 
   if (options.env) {
+    await nudgeSearchIndexing(options.env);
     await measureDatabaseOperation(
       "enqueue_duration_ms",
       { operation: "internal", scope: "source" },

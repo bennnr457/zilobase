@@ -1,3 +1,4 @@
+import { nudgeSearchIndexing } from "../../search/invalidation";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import * as Y from "yjs";
 import { db, runWithDbEnv } from "../../../infrastructure/database/index";
@@ -255,6 +256,7 @@ export async function storeDocument(
         })
         .where(eq(page.id, pageId));
     });
+    await nudgeSearchIndexing(env);
   });
 }
 

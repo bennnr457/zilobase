@@ -11,7 +11,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 | 3    | Page-owned vector schema                        | Verified: fresh migration; 12 focused tests including real schema constraints; server typecheck |
 | 4    | Markdown chunking                               | Verified: 7 chunking tests, 13 converter/parser tests, server typecheck                         |
 | 5    | Stored property chunks                          | Verified: 25 property serialization tests; server typecheck                                     |
-| 6    | Transactional invalidation                      | Pending                                                                                         |
+| 6    | Transactional invalidation                      | Verified: 73 search/mutation/collaboration tests; real invalidation triggers; server typecheck  |
 | 7    | Gemini provider                                 | Pending                                                                                         |
 | 8    | Quotas and query cache                          | Pending                                                                                         |
 | 9    | Search background lane                          | Pending                                                                                         |
@@ -37,3 +37,7 @@ Baseline: `6966ac168e`; both application and hosted adapter were clean when impl
 - Docker daemon is available.
 - Gemini credential validated read-only and stored with dotenvx encryption in Node development and hosted development/production envs. Production API and background Worker secrets were updated at the explicit user request. Live relevance evaluation is still pending.
 - No production migrations, secrets, deployments, or workspace activation are authorized as incidental implementation actions.
+
+Pass 6 installs durable invalidation and post-commit publication nudges. Admission from dirty state is connected with the resumable handlers in passes 9–11, before feature enablement.
+
+Concurrent non-search changes appeared in runtime-adapter package/template docs/tests during pass 6; preserve them and stage only search-owned hunks.

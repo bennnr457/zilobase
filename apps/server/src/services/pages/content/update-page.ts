@@ -1,3 +1,4 @@
+import { nudgeSearchIndexing } from "../../search/invalidation";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../../../infrastructure/database/index";
 import { databaseRow, dataSource, page } from "../../../infrastructure/database/schema";
@@ -146,6 +147,7 @@ export async function updatePage(
     record.content = patch.content;
   }
 
+  await nudgeSearchIndexing(env);
   return { page: record };
 }
 

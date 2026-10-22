@@ -1,5 +1,5 @@
 import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
-import { timestampColumns } from "./columns";
+import { timestampColumns, bigintText } from "./columns";
 import { page } from "./pages";
 import { softDeleteColumns } from "./soft-delete-columns";
 import { workspace } from "./workspaces";
@@ -8,6 +8,7 @@ export const pageProperty = pgTable(
   "page_property",
   {
     id: text("id").primaryKey(),
+    searchRevision: bigintText("search_revision").notNull().default("1"),
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
@@ -26,6 +27,7 @@ export const pagePropertyValue = pgTable(
   "page_property_value",
   {
     id: text("id").primaryKey(),
+    searchRevision: bigintText("search_revision").notNull().default("1"),
     pageId: text("page_id")
       .notNull()
       .references(() => page.id, { onDelete: "cascade" }),

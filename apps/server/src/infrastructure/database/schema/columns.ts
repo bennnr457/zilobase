@@ -12,6 +12,12 @@ export const tsvector = customType<{ data: string }>({
   },
 });
 
+// Search counters remain exact in SQL and JSON-safe in existing entity reads.
+export const bigintText = customType<{ data: string; driverData: string }>({
+  dataType: () => "bigint",
+  fromDriver: (value) => String(value),
+});
+
 export function timestampColumns() {
   return {
     createdAt: timestamp("created_at", { withTimezone: true })
