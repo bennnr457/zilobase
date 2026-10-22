@@ -1,3 +1,4 @@
+import { CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS } from "@zilobase/runtime-adapter/operations/cloudflare-queues";
 import { createServer } from "node:http";
 import { Readable } from "node:stream";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -25,11 +26,9 @@ import { publishBackgroundDispatches } from "../../apps/server/src/infrastructur
 import { runDueBackgroundMaintenance } from "../../apps/server/src/app/background/maintenance";
 
 const require = createRequire(import.meta.url);
-const queues = {
-  fast: "zilobase-background-fast",
-  automation: "zilobase-automation-runs",
-  calendar: "zilobase-calendar-jobs",
-};
+const queues = Object.fromEntries(
+  Object.entries(CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS).map(([lane, value]) => [lane, value.queue]),
+);
 
 export async function startRuntime(kind, env, providers) {
   if (kind === "worker") return startWorker(env, providers);
@@ -202,7 +201,9 @@ async function startWorker(env, providers) {
       { maxBuffer: 4 * 1024 * 1024 },
     );
     const names = Object.values(queues);
-    const bindingNames = ["BACKGROUND_FAST", "AUTOMATION_RUNS", "CALENDAR_JOBS"];
+    const bindingNames = Object.values(CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS).map(
+      (value) => value.binding,
+    );
     const script = await readFile(`${dir}/worker-fixture.js`, "utf8");
     const state = { overrides: {}, queueAvailable: true };
     let paused = false;

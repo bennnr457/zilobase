@@ -1,11 +1,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
-const names = [
-  "zilobase-background-fast",
-  "zilobase-automation-runs",
-  "zilobase-calendar-jobs",
-  "zilobase-ai-runs",
-  "zilobase-search-indexing",
-];
+import { CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS } from "../background-queues";
+export { CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS } from "../background-queues";
+const names = Object.values(CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS).map((lane) => lane.queue);
 export const CLOUDFLARE_CELL_QUEUE_NAMES = [...names, ...names.map((name) => name + "-dlq")];
 
 /** Uses the operator-provided inventory; never discovers or purges unrelated queues. */

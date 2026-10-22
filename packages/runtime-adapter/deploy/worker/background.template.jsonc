@@ -37,11 +37,43 @@
   "triggers": { "crons": ["* * * * *"] },
   "queues": {
     "producers": [
+      { "binding": "AI_RUNS", "queue": "zilobase-ai-runs" },
+      { "binding": "SEARCH_INDEXING", "queue": "zilobase-search-indexing" },
       { "binding": "BACKGROUND_FAST", "queue": "zilobase-background-fast" },
       { "binding": "AUTOMATION_RUNS", "queue": "zilobase-automation-runs" },
       { "binding": "CALENDAR_JOBS", "queue": "zilobase-calendar-jobs" },
     ],
     "consumers": [
+      {
+        "queue": "zilobase-ai-runs",
+        "max_batch_size": 1,
+        "max_batch_timeout": 0,
+        "max_concurrency": 4,
+        "max_retries": 5,
+        "dead_letter_queue": "zilobase-ai-runs-dlq",
+      },
+      {
+        "queue": "zilobase-ai-runs-dlq",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_concurrency": 2,
+        "max_retries": 100,
+      },
+      {
+        "queue": "zilobase-search-indexing",
+        "max_batch_size": 1,
+        "max_batch_timeout": 1,
+        "max_concurrency": 4,
+        "max_retries": 5,
+        "dead_letter_queue": "zilobase-search-indexing-dlq",
+      },
+      {
+        "queue": "zilobase-search-indexing-dlq",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_concurrency": 5,
+        "max_retries": 100,
+      },
       {
         "queue": "zilobase-background-fast",
         "max_batch_size": 20,
@@ -128,7 +160,14 @@
     },
   ],
   "send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["<NO_REPLY_EMAIL>"] }],
+  // GEMINI_API_KEY is conditional: required in API and background environments only when enabled.
   "vars": {
+    "SEARCH_EMBEDDINGS_ENABLED": "false",
+    "SEARCH_EMBEDDING_QUOTA_SCOPE": "default:gemini-embedding-2",
+    "SEARCH_EMBEDDING_RPM": "30",
+    "SEARCH_EMBEDDING_TPM": "100000",
+    "SEARCH_EMBEDDING_DAILY_TOKENS": "10000000",
+    "SEARCH_EMBEDDING_WORKSPACE_DAILY_TOKENS": "1000000",
     "BETTER_AUTH_URL": "<API_ORIGIN>",
     "CLIENT_URL": "<WEB_ORIGIN>",
     "DATABASE_AUTOMATIONS_ENABLED": "false",

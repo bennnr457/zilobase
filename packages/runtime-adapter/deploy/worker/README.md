@@ -20,8 +20,9 @@ Copy these templates next to your worker entries and replace every
 1. Create the resources the placeholders name:
    - Hyperdrive config for Postgres (`<HYPERDRIVE_ID>` via `wrangler hyperdrive create`),
    - R2 bucket (`<R2_BUCKET_NAME>`) plus a preview bucket for local dev,
-   - Three queues (`zilobase-background-fast`, `zilobase-automation-runs`,
-     `zilobase-calendar-jobs`) with matching dead-letter queues, as listed
+   - Queues `zilobase-background-fast`, `zilobase-automation-runs`,
+     `zilobase-calendar-jobs`, `zilobase-ai-runs`, and
+     `zilobase-search-indexing`, with matching dead-letter queues as listed
      under `queues.consumers`,
    - Two rate-limiter bindings (namespace ids `1001`, `2001`).
 2. Set `vars` origins to your domains (`<API_ORIGIN>`, `<WEB_ORIGIN>`,
@@ -46,3 +47,17 @@ routes are placeholders. `template-parity` tests guard this invariant.
 to a Worker script that already recorded the retired `v1..v14` chain; delete
 and recreate that unused Worker namespace or choose a new script name first.
 This reset does not delete PostgreSQL rows or R2 objects.
+
+## Semantic search
+
+Create the search queue and its dead-letter queue before enabling producers.
+Both API and background Workers require `GEMINI_API_KEY` when
+`SEARCH_EMBEDDINGS_ENABLED=true`. Credentials remain optional while disabled.
+Use the same quota scope and database for both Workers.
+
+The search consumer uses batch size 1, concurrency 4, five transport retries
+and a DLQ. Its handler checkpoints work before the 45-second application
+budget and schedules normal continuation as a new durable task. Minute cron
+recovers missed dispatch and expired leases. Workspace owners/admins must
+also opt in before any page indexing starts. See the
+[deployment guide](../../../../docs/search-deployment.md).

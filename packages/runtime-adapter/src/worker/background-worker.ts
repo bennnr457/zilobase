@@ -1,3 +1,4 @@
+import { CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS } from "../background-queues";
 import {
   BACKGROUND_LANE_POLICY,
   backgroundTaskLane,
@@ -15,7 +16,7 @@ import {
 } from "@zilobase/server/adapter-api";
 
 import type { WorkerEnvBindings } from "./bindings";
-import { createWorkerJobs } from "./jobs";
+import { createWorkerJobs, workerSearchDependenciesReady } from "./jobs";
 import { createWorkerTelemetry } from "./telemetry";
 import { createWorkerFanout } from "./fanout";
 import { createWorkerMeetings } from "./meetings";
@@ -35,13 +36,12 @@ export type BackgroundWorkerOptions<Env extends WorkerEnvBindings = WorkerEnvBin
   reportEvent?: (env: Env, event: string, props?: Record<string, unknown>) => void | Promise<void>;
 };
 
-const queueLanes: Record<string, BackgroundLane> = {
-  "zilobase-ai-runs": "ai",
-  "zilobase-search-indexing": "search",
-  "zilobase-automation-runs": "automation",
-  "zilobase-background-fast": "fast",
-  "zilobase-calendar-jobs": "calendar",
-};
+const queueLanes: Record<string, BackgroundLane> = Object.fromEntries(
+  Object.entries(CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS).map(([lane, value]) => [
+    value.queue,
+    lane as BackgroundLane,
+  ]),
+);
 
 export function createBackgroundWorker<Env extends WorkerEnvBindings = WorkerEnvBindings>(
   opts: BackgroundWorkerOptions<Env> = {},
@@ -82,7 +82,7 @@ export function createBackgroundWorker<Env extends WorkerEnvBindings = WorkerEnv
             env.AUTOMATION_RUNS &&
             env.CALENDAR_JOBS &&
             (env.AI_DURABLE_STREAMING_ENABLED !== "true" || env.AI_RUNS) &&
-            (env.SEARCH_EMBEDDINGS_ENABLED !== "true" || env.SEARCH_INDEXING)
+            workerSearchDependenciesReady(env)
           ),
           consumerReady: null,
           maintenanceFresh: null,

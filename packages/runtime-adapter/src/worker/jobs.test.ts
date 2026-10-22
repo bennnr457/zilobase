@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createWorkerJobs } from "./jobs";
+import { createWorkerJobs, workerSearchDependenciesReady } from "./jobs";
 
 describe("worker Jobs port", () => {
   it("routes tasks by lane and applies queue delay", async () => {
@@ -63,3 +63,21 @@ it.each(["search.page_index", "search.workspace_scan", "search.invalidate"])(
     expect(JSON.stringify(task)).not.toMatch(/markdown|embedding|content/);
   },
 );
+
+it("makes search readiness conditional on both the queue binding and server credential", () => {
+  expect(workerSearchDependenciesReady({})).toBe(true);
+  expect(workerSearchDependenciesReady({ SEARCH_EMBEDDINGS_ENABLED: "true" })).toBe(false);
+  expect(
+    workerSearchDependenciesReady({
+      SEARCH_EMBEDDINGS_ENABLED: "true",
+      SEARCH_INDEXING: { send: async () => {} },
+    }),
+  ).toBe(false);
+  expect(
+    workerSearchDependenciesReady({
+      SEARCH_EMBEDDINGS_ENABLED: "true",
+      GEMINI_API_KEY: "fixture",
+      SEARCH_INDEXING: { send: async () => {} },
+    }),
+  ).toBe(true);
+});

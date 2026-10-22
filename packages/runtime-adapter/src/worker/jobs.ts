@@ -1,3 +1,4 @@
+import { CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS } from "../background-queues";
 import type { BackgroundLane, BackgroundTask, Jobs } from "@zilobase/runtime-ports";
 import { backgroundTaskLane } from "@zilobase/server/adapter-api";
 import type { WorkerEnvBindings } from "./bindings";
@@ -13,6 +14,13 @@ export type WorkerJobsEnv = WorkerEnvBindings & {
   AUTOMATION_RUNS?: BackgroundQueue;
   CALENDAR_JOBS?: BackgroundQueue;
 };
+
+export function workerSearchDependenciesReady(env: WorkerJobsEnv) {
+  return (
+    env.SEARCH_EMBEDDINGS_ENABLED !== "true" ||
+    (!!env.SEARCH_INDEXING && typeof env.GEMINI_API_KEY === "string" && !!env.GEMINI_API_KEY.trim())
+  );
+}
 
 export function createWorkerJobs(env: WorkerJobsEnv): Jobs {
   return {
@@ -35,10 +43,5 @@ export function createWorkerJobs(env: WorkerJobsEnv): Jobs {
 }
 
 function queueForLane(env: WorkerJobsEnv, lane: BackgroundLane) {
-  if (lane === "search") return env.SEARCH_INDEXING;
-  if (lane === "ai") return env.AI_RUNS;
-  if (lane === "fast") return env.BACKGROUND_FAST;
-  if (lane === "automation") return env.AUTOMATION_RUNS;
-  if (lane === "calendar") return env.CALENDAR_JOBS;
-  throw new Error(`Unsupported background lane: ${lane satisfies never}`);
+  return env[CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS[lane].binding];
 }

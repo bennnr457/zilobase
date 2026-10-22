@@ -6,7 +6,7 @@ import type { WorkerEnvBindings } from "./bindings";
 import { createWorkerDocuments } from "./documents";
 import { createWorkerFanout } from "./fanout";
 import { createWorkerImageStorage } from "./image-storage";
-import { createWorkerJobs } from "./jobs";
+import { createWorkerJobs, workerSearchDependenciesReady } from "./jobs";
 import { createWorkerLifecycle } from "./lifecycle";
 import { createWorkerLimits } from "./limits";
 import { createWorkerMailer } from "./mailer";
@@ -52,7 +52,7 @@ export function createWorkerRuntimePorts<Env extends WorkerEnvBindings>(
           env.AUTOMATION_RUNS &&
           env.CALENDAR_JOBS &&
           (env.AI_DURABLE_STREAMING_ENABLED !== "true" || env.AI_RUNS) &&
-          (env.SEARCH_EMBEDDINGS_ENABLED !== "true" || env.SEARCH_INDEXING)
+          workerSearchDependenciesReady(env)
         ),
         consumerReady: null,
         maintenanceFresh: null,

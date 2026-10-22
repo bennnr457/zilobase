@@ -50,3 +50,29 @@ node --env-file=/secure/database.env scripts/search/rebuild-vector-indexes.mjs
 ```
 
 This command checks for the expected 32 partition indexes and runs outside migration transactions. It must not use a transaction-mode connection pool.
+
+## Community Cloudflare
+
+The API and background templates declare `SEARCH_INDEXING` and the
+`zilobase-search-indexing` queue, plus its DLQ consumer. Provision these resources
+before enabling the deployment flag. Set the same conditional `GEMINI_API_KEY`
+secret and quota configuration on both Workers. The default remains disabled;
+Gemini credentials are not unconditional Wrangler requirements.
+
+The consumer takes one message at a time with concurrency 4 and five transport
+retries. The shared indexing handler uses a 45-second work budget, checkpoints
+batches, and persists normal continuation separately from transport retries.
+Minute cron runs recovery and cleanup. Database state remains authoritative when
+messages are duplicated or publication is lost.
+
+Use Hyperdrive for application connections and a direct administrative database
+connection for migrations and index maintenance. The pgvector preflight is
+required before applying the schema. Transaction-local vector settings must
+remain scoped to the same connection as retrieval. Shared Worker code uses
+standard fetch and the existing database/background adapters.
+
+Validate a Wrangler dry-run bundle with
+`node scripts/search/check-worker-bundle.mjs /absolute/path/to/worker.js`.
+The check requires its source map and rejects Node queue/storage SDKs and
+filesystem/process imports while checking that the shared indexing handler is
+present. Worker/real-Postgres acceptance is a separate gate from bundle checks.

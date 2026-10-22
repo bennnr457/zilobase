@@ -2,7 +2,7 @@ import { Queue, createIORedisClient } from "bullmq";
 import Redis from "ioredis";
 import { getQueueRedisUrl, NODE_BACKGROUND_QUEUE_NAMES } from "./queue-runtime";
 
-/** Purges exactly one cell's three queues, including retained failed jobs. */
+/** Purges exactly one cell's canonical queue inventory, including retained failed jobs. */
 export async function purgeNodeCellQueues(env: Record<string, unknown>, cellId: string) {
   const expected =
     typeof env.ZILOBASE_CELL_ID === "string" && env.ZILOBASE_CELL_ID.trim()

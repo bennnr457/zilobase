@@ -80,6 +80,8 @@
   ],
   "queues": {
     "producers": [
+      { "binding": "AI_RUNS", "queue": "zilobase-ai-runs" },
+      { "binding": "SEARCH_INDEXING", "queue": "zilobase-search-indexing" },
       {
         "binding": "BACKGROUND_FAST",
         "queue": "zilobase-background-fast",
@@ -135,7 +137,14 @@
       "allowed_sender_addresses": ["<NO_REPLY_EMAIL>"],
     },
   ],
+  // Set GEMINI_API_KEY on this Worker and the background Worker when enabling search.
   "vars": {
+    "SEARCH_EMBEDDINGS_ENABLED": "false",
+    "SEARCH_EMBEDDING_QUOTA_SCOPE": "default:gemini-embedding-2",
+    "SEARCH_EMBEDDING_RPM": "30",
+    "SEARCH_EMBEDDING_TPM": "100000",
+    "SEARCH_EMBEDDING_DAILY_TOKENS": "10000000",
+    "SEARCH_EMBEDDING_WORKSPACE_DAILY_TOKENS": "1000000",
     "BETTER_AUTH_URL": "<API_ORIGIN>",
     "CLIENT_URL": "<WEB_ORIGIN>",
     "COLLABORATION_WEBSOCKET_URL": "<API_ORIGIN_WS>/collaboration",

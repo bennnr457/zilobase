@@ -1,3 +1,7 @@
+import {
+  CLOUDFLARE_CELL_QUEUE_NAMES,
+  CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS,
+} from "@zilobase/runtime-adapter/operations/cloudflare-queues";
 import { eq } from "drizzle-orm";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
@@ -58,8 +62,7 @@ try {
     ],
     { cwd: fileURLToPath(new URL("../../../../", import.meta.url)), maxBuffer: 1024 * 1024 },
   );
-  const names = ["zilobase-background-fast", "zilobase-automation-runs", "zilobase-calendar-jobs"];
-  const all = [...names, ...names.map((name) => name + "-dlq")];
+  const all = CLOUDFLARE_CELL_QUEUE_NAMES;
   worker = new Miniflare(
     convertV4MiniflareOptions({
       workers: [
@@ -72,9 +75,12 @@ try {
           bindings: { ...env, ZILOBASE_RUNTIME_KIND: "worker" },
           queueProducers: {
             ...Object.fromEntries(all.map((name) => [name, name])),
-            BACKGROUND_FAST: names[0],
-            AUTOMATION_RUNS: names[1],
-            CALENDAR_JOBS: names[2],
+            ...Object.fromEntries(
+              Object.values(CLOUDFLARE_BACKGROUND_QUEUE_BINDINGS).map((value) => [
+                value.binding,
+                value.queue,
+              ]),
+            ),
           },
           queueConsumers: Object.fromEntries(
             all.map((name) => [
