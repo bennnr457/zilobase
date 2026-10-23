@@ -28,6 +28,21 @@ export function subscribeConnectivity(listener: () => void) {
   };
 }
 
+/** Check long-lived connections when a suspended tab or browser regains focus. */
+export function subscribePageResume(listener: () => void) {
+  const resume = () => {
+    if (document.visibilityState !== "hidden") listener();
+  };
+  window.addEventListener("focus", resume);
+  window.addEventListener("pageshow", resume);
+  document.addEventListener("visibilitychange", resume);
+  return () => {
+    window.removeEventListener("focus", resume);
+    window.removeEventListener("pageshow", resume);
+    document.removeEventListener("visibilitychange", resume);
+  };
+}
+
 export const webClientLifecycle: ClientLifecycle = {
   isOnline: () => navigator.onLine !== false,
   isVisible: () => document.visibilityState !== "hidden",

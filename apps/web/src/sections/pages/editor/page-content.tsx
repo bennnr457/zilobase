@@ -349,7 +349,7 @@ export function PageContent({
     setPageConnectionIndicator(
       pageId,
       collaborationEnabled && collaboration.online && !collaboration.error
-        ? collaboration.synced
+        ? collaboration.status === "connected" && collaboration.synced
           ? "connected"
           : "connecting"
         : null,
@@ -357,6 +357,7 @@ export function PageContent({
   }, [
     collaboration.online,
     collaboration.synced,
+    collaboration.status,
     collaboration.error,
     collaborationEnabled,
     pageId,

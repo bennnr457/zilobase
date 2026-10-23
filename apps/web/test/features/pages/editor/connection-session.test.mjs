@@ -144,6 +144,35 @@ export function register({ assert, loadModule, test }) {
     }
   });
 
+  test("document close on an open socket clears readiness so the session can retry", async () => {
+    const { startPageConnection } = await load();
+    const f = fixture(startPageConnection, { preparedTicket: {} });
+    try {
+      f.start();
+      await settle();
+      f.input().onStatus("connected");
+      f.handlers.synced({ state: true });
+      f.input().onClose();
+      assert.equal(f.snapshots.status, "disconnected");
+      assert.equal(f.snapshots.synced, false);
+      f.input().onStatus("connecting");
+      assert.equal(f.snapshots.synced, false);
+      f.input().onStatus("connected");
+      f.handlers.synced({ state: true });
+      assert.equal(f.snapshots.synced, true);
+      f.input().onStatus("disconnected");
+      assert.equal(f.snapshots.synced, false);
+      f.input().onAuthenticationFailed("Forbidden");
+      f.input().onClose();
+      assert.equal(f.snapshots.status, "blocked");
+    } finally {
+      f.stop();
+    }
+    const stopped = f.events.length;
+    f.input().onClose();
+    assert.equal(f.events.length, stopped);
+  });
+
   test("presence deduplicates valid users and authentication failure blocks the active document", async () => {
     const { startPageConnection } = await load();
     const f = fixture(startPageConnection, { preparedTicket: {} });

@@ -4,7 +4,11 @@ import type { SessionUser } from "@zilobase/features/auth";
 import { Awareness } from "y-protocols/awareness";
 import { ApiError, apiFetch } from "@/platform/network/api";
 import { scheduleRealtimeAfterPagePaint } from "@/lib/deferred-realtime";
-import { getConnectivityState, subscribeConnectivity } from "@/platform/network/connectivity";
+import {
+  getConnectivityState,
+  subscribeConnectivity,
+  subscribePageResume,
+} from "@/platform/network/connectivity";
 import { usePageEditorRegistry } from "../../runtime/components/page-editor-registry";
 import {
   applyTicketState,
@@ -98,6 +102,7 @@ const services: PageSessionServices = {
   applyTicket: (entry, ticket) => applyTicketState(entry.document, ticket),
   online: () => getConnectivityState() === "online",
   subscribeConnectivity,
+  subscribeResume: subscribePageResume,
   schedule: scheduleRealtimeAfterPagePaint,
   connect: ({ entry, awareness, pageId, preparedTicket, user, publish }) =>
     startPageConnection({

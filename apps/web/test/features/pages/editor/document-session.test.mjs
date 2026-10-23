@@ -43,7 +43,15 @@ export function register({ assert, loadModule, test }) {
     globalThis.clearTimeout = (token) => timers.delete(token);
     let online = true,
       connection,
-      connectivity;
+      connectivity,
+      resume;
+    const connections = [];
+    const provider = {
+      connect: async () => {},
+      disconnect: () => {},
+      forceSync: () => events.push("forceSync"),
+      synced: true,
+    };
     const entry = {
       document,
       hasPersistedState: persisted,
@@ -76,21 +84,37 @@ export function register({ assert, loadModule, test }) {
           events.push("hydrate");
           document.getText("body").insert(0, "server");
         },
-        awareness: () => ({ destroy: () => events.push("awareness:destroy") }),
+        awareness: () => ({
+          clientID: document.clientID,
+          meta: new Map([[document.clientID, { clock: 0, lastUpdated: Date.now() }]]),
+          destroyed: false,
+          destroy() {
+            this.destroyed = true;
+            events.push("awareness:destroy");
+          },
+        }),
         online: () => online,
         subscribeConnectivity: (listener) => {
           connectivity = listener;
           return () => events.push("unsubscribe");
         },
+        subscribeResume: (listener) => {
+          resume = listener;
+          return () => events.push("unsubscribe:resume");
+        },
         schedule: (callback) => {
           callback();
           return () => {};
         },
-        connect: ({ publish }) => {
+        connect: ({ publish, awareness }) => {
           events.push("connect");
+          connections.push({ publish, awareness });
           connection = publish;
           publish({ status: "connecting" });
-          return () => events.push("disconnect");
+          return () => {
+            events.push("disconnect");
+            awareness.destroy();
+          };
         },
       },
     );
@@ -103,7 +127,10 @@ export function register({ assert, loadModule, test }) {
       document,
       entry,
       events,
+      connections,
+      provider,
       flush,
+      resume: () => resume(),
       connection: (patch) => connection(patch),
       online: (value) => {
         online = value;
@@ -184,5 +211,104 @@ export function register({ assert, loadModule, test }) {
     } finally {
       f.dispose();
     }
+  });
+  test("a socket that opens without syncing is replaced without losing local edits", async () => {
+    const f = await fixture();
+    try {
+      f.document.getText("body").insert(0, "unsaved draft");
+      f.entry.locallyChanged = true;
+      const first = f.connections[0];
+      first.awareness.meta.get(f.document.clientID).clock = 50;
+      f.connection({ status: "connected", synced: false });
+      f.expire(20_000);
+      assert.equal(f.session.getSnapshot().canEdit, false);
+      f.expire(30_000);
+      assert.equal(f.connections.length, 2);
+      assert.equal(first.awareness.destroyed, true);
+      assert.notEqual(f.session.getSnapshot().awareness, first.awareness);
+      assert.equal(f.session.getSnapshot().awareness.destroyed, false);
+      assert.ok(f.session.getSnapshot().awareness.meta.get(f.document.clientID).clock > 50);
+      first.publish({ status: "blocked", error: "late denial" });
+      assert.equal(f.session.getSnapshot().error, null);
+      f.connection({ status: "connected", synced: true });
+      assert.equal(f.session.getSnapshot().canEdit, true);
+      assert.equal(f.session.getSnapshot().document, f.document);
+      assert.equal(f.document.getText("body").toString(), "unsaved draft");
+      assert.equal(f.entry.locallyChanged, true);
+    } finally {
+      f.dispose();
+    }
+  });
+  test("a recovered connection cancels the delayed replacement", async () => {
+    const f = await fixture();
+    try {
+      f.connection({ status: "connected", synced: true });
+      f.connection({ status: "disconnected", synced: false });
+      f.connection({ status: "connected", synced: true });
+      f.expire(3_000);
+      f.expire(30_000);
+      assert.equal(f.connections.length, 1);
+      assert.equal(f.session.getSnapshot().canEdit, true);
+    } finally {
+      f.dispose();
+    }
+  });
+  test("returning to a tab probes sync and replaces an unresponsive socket", async () => {
+    const f = await fixture();
+    try {
+      f.connection({ provider: f.provider, status: "connected", synced: true });
+      f.expire(20_000);
+      f.resume();
+      assert.equal(f.events.filter((event) => event === "forceSync").length, 1);
+      assert.equal(f.provider.synced, false);
+      assert.equal(f.session.getSnapshot().canEdit, false);
+      f.resume();
+      assert.equal(f.connections.length, 1);
+      f.expire(30_000);
+      assert.equal(f.connections.length, 2);
+      f.connection({ status: "connected", synced: true });
+      assert.equal(f.session.getSnapshot().canEdit, true);
+    } finally {
+      f.dispose();
+    }
+  });
+  test("a successful foreground sync keeps the current transport and clears its deadline", async () => {
+    const f = await fixture();
+    try {
+      f.connection({ provider: f.provider, status: "connected", synced: true });
+      f.expire(20_000);
+      f.resume();
+      f.connection({ synced: true });
+      f.expire(30_000);
+      assert.equal(f.connections.length, 1);
+      assert.equal(f.session.getSnapshot().canEdit, true);
+    } finally {
+      f.dispose();
+    }
+  });
+  test("resume recovers disconnected sessions but cannot reopen denied or offline pages", async () => {
+    const f = await fixture();
+    try {
+      f.connection({ status: "disconnected", synced: false });
+      f.resume();
+      assert.equal(f.connections.length, 2);
+      f.expire(3_000);
+      assert.equal(f.connections.length, 2);
+      f.connection({ status: "blocked", error: "Forbidden", synced: false });
+      f.resume();
+      f.expire(30_000);
+      assert.equal(f.connections.length, 2);
+      assert.equal(f.session.getSnapshot().canEdit, false);
+      f.online(false);
+      f.resume();
+      f.online(true);
+      f.resume();
+      assert.equal(f.connections.length, 2);
+      assert.equal(f.session.getSnapshot().status, "blocked");
+    } finally {
+      f.dispose();
+    }
+    assert.equal(f.timers.size, 0);
+    assert.ok(f.events.includes("unsubscribe:resume"));
   });
 }

@@ -30,6 +30,7 @@ export function connectCollaborationDocument(input: {
   awareness?: Awareness;
   document: Y.Doc;
   onAuthenticationFailed?: (reason: string) => void;
+  onClose?: () => void;
   onStatus?: (status: "connected" | "connecting" | "disconnected") => void;
   onUnsyncedChanges?: (count: number) => void;
   onUsers?: (states: Array<{ clientId: number; user?: unknown }>) => void;
@@ -59,6 +60,7 @@ export function connectCollaborationDocument(input: {
     url: input.ticket.websocketUrl,
     onAuthenticationFailed: ({ reason }) =>
       input.onAuthenticationFailed?.(reason || "Collaboration access was denied."),
+    onClose: () => input.onClose?.(),
     onStatus: ({ status }) => input.onStatus?.(status),
     onUnsyncedChanges: ({ number }) => input.onUnsyncedChanges?.(number),
     onAwarenessUpdate: ({ states }) => input.onUsers?.(states),
@@ -204,8 +206,16 @@ export function startPageConnection({
       awareness,
       document,
       onAuthenticationFailed: authenticationFailed,
+      // The server can close the document while leaving its WebSocket open.
+      onClose: () => {
+        if (disposed || denied) return;
+        state.synced(false);
+        state.status("disconnected");
+      },
       onStatus: (next) => {
-        if (!disposed && !denied) state.status(next);
+        if (disposed || denied) return;
+        if (next !== "connected") state.synced(false);
+        state.status(next);
       },
       onUnsyncedChanges: unsyncedChanges,
       onUsers: (states) => {
@@ -236,7 +246,8 @@ export function startPageConnection({
     disposed = true;
     cancelStart();
     controller.abort();
-    activeProvider?.destroy();
+    if (activeProvider) activeProvider.destroy();
+    else awareness?.destroy();
     state.provider(null);
     state.synced(false);
     state.users([]);

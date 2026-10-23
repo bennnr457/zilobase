@@ -51,6 +51,7 @@ export type PageSessionServices = {
   applyTicket: (entry: PageDocumentEntry, ticket: CollaborationTicket) => void;
   online: () => boolean;
   subscribeConnectivity: (listener: () => void) => () => void;
+  subscribeResume: (listener: () => void) => () => void;
   schedule: (callback: () => void) => () => void;
   connect: (input: {
     entry: PageDocumentEntry;
@@ -75,6 +76,7 @@ export function createPageDocumentSession(
   let startupTimer: ReturnType<typeof setTimeout> | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let verifyTimer: ReturnType<typeof setTimeout> | undefined;
+  let syncTimer: ReturnType<typeof setTimeout> | undefined;
   let stopConnection: (() => void) | undefined;
   let cancelConnect: (() => void) | undefined;
   let epoch = 0;
@@ -83,6 +85,7 @@ export function createPageDocumentSession(
   const publish = (patch: Partial<DocumentSessionSnapshot>) => {
     if (disposed) return;
     const next = { ...snapshot, ...patch };
+    if (patch.status && patch.status !== "connected") next.synced = false;
     if (patch.status === "blocked" || patch.status === "disconnected" || patch.error)
       startupAllowed = false;
     next.canEdit = canEditPageDuringConnection({
@@ -95,6 +98,16 @@ export function createPageDocumentSession(
       synced: next.synced,
     });
     snapshot = next;
+    if (
+      !next.online ||
+      next.status === "blocked" ||
+      (next.status === "connected" && next.synced && !next.error)
+    ) {
+      clearTimeout(retryTimer);
+      retryTimer = undefined;
+      clearTimeout(syncTimer);
+      syncTimer = undefined;
+    }
     for (const listener of listeners) listener();
     if (patch.provider) connectProvider(patch.provider);
     if (next.synced && next.entry && next.unsyncedChanges === 0 && next.entry.locallyChanged)
@@ -109,7 +122,11 @@ export function createPageDocumentSession(
     if (!snapshot.online) return;
     cancelConnect = services.schedule(() => {
       if (!disposed && snapshot.provider === provider && snapshot.online) {
-        void provider.connect().catch(() => publish({ status: "disconnected", synced: false }));
+        void provider.connect().catch(() => {
+          if (disposed || snapshot.provider !== provider) return;
+          publish({ status: "disconnected", synced: false });
+          scheduleRetry();
+        });
       }
     });
   };
@@ -143,13 +160,44 @@ export function createPageDocumentSession(
       }, 30_000);
     }
   };
+  const waitForSync = () => {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      syncTimer = undefined;
+      if (disposed || !snapshot.online || snapshot.status === "blocked") return;
+      startupAllowed = false;
+      startConnection(null);
+    }, 30_000);
+  };
   const startConnection = (preparedTicket: CollaborationTicket | null) => {
-    if (disposed || !snapshot.entry || !snapshot.awareness || !snapshot.online) return;
+    if (disposed || !snapshot.entry || !snapshot.online || snapshot.status === "blocked") return;
     const generation = ++epoch;
+    clearTimeout(retryTimer);
+    retryTimer = undefined;
+    cancelConnect?.();
     stopConnection?.();
+    // Hocuspocus destroys its awareness during teardown. A replacement transport
+    // needs fresh presence timers/listeners, while retaining the same cached Y.Doc.
+    const previousAwareness = snapshot.awareness;
+    const awareness = services.awareness(snapshot.entry);
+    const clientId = snapshot.entry.document.clientID;
+    const previousClock = previousAwareness?.meta.get(clientId)?.clock ?? 0;
+    // Peers ignore presence whose clock moved backwards after a transport swap.
+    if (previousClock > 0)
+      awareness.meta.set(clientId, { clock: previousClock + 1, lastUpdated: Date.now() });
+    snapshot.entry.transportOrigin = null;
+    publish({
+      awareness,
+      provider: null,
+      synced: false,
+      users: [],
+      status: "connecting",
+      error: null,
+    });
+    waitForSync();
     stopConnection = services.connect({
       entry: snapshot.entry,
-      awareness: snapshot.awareness,
+      awareness,
       pageId: input.pageId,
       preparedTicket,
       user: snapshot.user!,
@@ -198,13 +246,11 @@ export function createPageDocumentSession(
         services.release(entry);
         return;
       }
-      const awareness = services.awareness(entry);
       entry.errorListeners.add(cacheError);
       startupAllowed = services.online() && !entry.persistenceError && !entry.blocked;
       publish({
         entry,
         document: entry.document,
-        awareness,
         error: null,
         online: services.online(),
       });
@@ -230,14 +276,45 @@ export function createPageDocumentSession(
       startupAllowed = false;
       cancelConnect?.();
       snapshot.provider?.disconnect();
-      publish({ online, synced: false, status: "disconnected" });
+      publish({
+        online,
+        synced: false,
+        status: snapshot.status === "blocked" ? "blocked" : "disconnected",
+      });
     } else {
       publish({ online });
       if (snapshot.status === "blocked") return;
-      if (snapshot.provider) connectProvider(snapshot.provider);
-      else if (snapshot.entry) startConnection(null);
+      if (snapshot.provider) {
+        waitForSync();
+        connectProvider(snapshot.provider);
+      } else if (snapshot.entry) startConnection(null);
       else scheduleRetry();
     }
+  });
+  const unsubscribeResume = services.subscribeResume(() => {
+    if (disposed || !snapshot.online || !services.online() || snapshot.status === "blocked") return;
+    if (!snapshot.entry) {
+      scheduleRetry();
+      return;
+    }
+    if (snapshot.status === "disconnected" || snapshot.error) {
+      startConnection(null);
+      return;
+    }
+    // Duplicate focus/visibility events must not restart an in-flight handshake.
+    if (syncTimer !== undefined) return;
+    const provider = snapshot.provider;
+    if (!provider) {
+      startConnection(null);
+      return;
+    }
+    // An OPEN socket can be stale after sleep. Require a fresh sync reply before
+    // enabling edits; the deadline replaces it if the peer never responds.
+    startupAllowed = false;
+    waitForSync();
+    publish({ synced: false });
+    provider.synced = false;
+    provider.forceSync();
   });
   void acquire();
   return {
@@ -261,11 +338,12 @@ export function createPageDocumentSession(
       clearTimeout(startupTimer);
       clearTimeout(retryTimer);
       clearTimeout(verifyTimer);
+      clearTimeout(syncTimer);
       cancelConnect?.();
       stopConnection?.();
       unsubscribeConnectivity();
+      unsubscribeResume();
       snapshot.entry?.errorListeners.delete(cacheError);
-      snapshot.awareness?.destroy();
       if (snapshot.entry) {
         snapshot.entry.transportOrigin = null;
         services.release(snapshot.entry);
