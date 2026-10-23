@@ -352,18 +352,9 @@ export class DatabaseController {
             },
           }
         : {}),
-      effects: effects.map((effect) => {
-        const owner = sharedClient(this.queryClient).database(input.databaseId, this.sessionId);
-        if (!owner?.databases.pageForRecord(input.databaseId, effect.rowId)) return effect;
-        const {
-          values: _values,
-          title: _title,
-          parentRowId: _parent,
-          record: _record,
-          ...placement
-        } = effect;
-        return placement;
-      }),
+      // Pending intentions remain visible even when canonical preview delivery is
+      // serialized behind an earlier edit to the same entity.
+      effects,
       metadataEffects,
       status: "queued",
     };

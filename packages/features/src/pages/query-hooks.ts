@@ -1,6 +1,7 @@
+import { useDatabaseController } from "../databases/interactions/react";
 import { parseActiveWorkspaceMismatchError } from "../shared/api-errors";
 import { resolvePageAccessReferences } from "./access-references";
-import { readCachedPagePropertyCoverage } from "./property-cache";
+import { projectPagePropertyIntentions, readCachedPagePropertyCoverage } from "./property-cache";
 import { useMemo, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { useSharedDataRevision } from "../data/react";
@@ -211,7 +212,16 @@ export function usePageProperties(
       pageId ? readCachedPagePropertyCoverage(queryClient, pageId, options?.databaseId) : undefined,
     [queryClient, pageId, options?.databaseId, query.data, query.error, revision, readRevision],
   );
-  const data = coverage?.data;
+  const controller = useDatabaseController();
+  const intentions = useSyncExternalStore(
+    controller.subscribe,
+    controller.getSnapshot,
+    controller.getSnapshot,
+  );
+  const data = useMemo(
+    () => projectPagePropertyIntentions(coverage?.data, pageId ?? "", intentions),
+    [coverage?.data, pageId, intentions],
+  );
   return {
     data,
     coverage: coverage?.state ?? "missing",

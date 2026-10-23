@@ -153,3 +153,59 @@ test("removed or ambiguous property targets fail explicitly without a write", as
     }
   }
 });
+
+test("table and page property projections keep a newer edit visible after an earlier rejection", async () => {
+  const { projectPagePropertyIntentions } = await import("./property-cache");
+  const { projectRecordInteractions } = await import("../databases/interactions/model");
+  const { clientDatabaseController } = await import("../shared/operation-context");
+  const { submitRecordChange } = await import("../databases/interactions/record-change");
+  const { client, properties } = fixture();
+  const requests: Array<{ reject: (error: Error) => void }> = [];
+  const apiFetch = (() =>
+    new Promise<unknown>((_resolve, reject) => requests.push({ reject }))) as ApiFetcher;
+  const store = clientDatabaseController({ queryClient: client, apiFetch });
+  const scope = { databaseId: "database-1", dataSourceId: "data-source-1", rowId: "row-1" };
+  const records = [sharedClient(client).database("database-1")!.databases.resolveRecord("row-1")!];
+  const first = submitRecordChange(store, {
+    ...scope,
+    valuesByPropertyId: { "property-status": "In progress" },
+  });
+  const rejectedFirst = assert.rejects(first, /denied/);
+  const second = submitRecordChange(store, {
+    ...scope,
+    valuesByPropertyId: { "property-status": "Done" },
+  });
+  const rejectedSecond = assert.rejects(second, /denied/);
+  const assertLatest = () => {
+    assert.equal(
+      projectPagePropertyIntentions(properties, "page-1", store.getSnapshot())?.values.find(
+        (value) => value.propertyId === "property-status",
+      )?.value,
+      "Done",
+    );
+    assert.equal(
+      projectRecordInteractions(records, store.getSnapshot(), {
+        dataSourceId: "data-source-1",
+        sourceVersion: 0,
+      })[0]?.valuesByPropertyId["property-status"]?.value,
+      "Done",
+    );
+  };
+  try {
+    assertLatest();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    requests[0]!.reject(Object.assign(new Error("denied"), { status: 403 }));
+    await rejectedFirst;
+    assertLatest();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    requests[1]!.reject(Object.assign(new Error("denied"), { status: 403 }));
+    await rejectedSecond;
+    assert.equal(
+      projectPagePropertyIntentions(properties, "page-1", store.getSnapshot()),
+      properties,
+    );
+  } finally {
+    store.dispose();
+    client.clear();
+  }
+});

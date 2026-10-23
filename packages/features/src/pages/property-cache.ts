@@ -477,3 +477,39 @@ export function reconcilePagePropertyReferences(
     client.setQueryData(query.queryKey, next, { updatedAt: query.state.dataUpdatedAt });
   }
 }
+
+/** Apply sparse pending intentions to an already authorized property projection. */
+export function projectPagePropertyIntentions(
+  data: PagePropertiesPayload | undefined,
+  pageId: string,
+  intentions: readonly import("../databases/interactions/model").DatabaseIntention[],
+) {
+  if (!data) return data;
+  let values = data.values;
+  for (const intention of intentions) {
+    if (intention.status === "committed") continue;
+    for (const effect of intention.effects) {
+      const target = data.presenceTargets?.find(
+        (target) => target.dataSourceId === effect.dataSourceId && target.rowId === effect.rowId,
+      );
+      if (!target) continue;
+      for (const [propertyId, value] of Object.entries(effect.values ?? {})) {
+        const property = data.properties.find((property) => property.id === propertyId);
+        if (!property || !target.propertyIds.includes(propertyId)) continue;
+        const previous = values.find((candidate) => candidate.propertyId === propertyId);
+        if (JSON.stringify(previous?.value) === JSON.stringify(value)) continue;
+        const next = {
+          ...previous,
+          id: previous?.id ?? `draft:${effect.rowId}:${propertyId}`,
+          pageId,
+          propertyId,
+          value,
+          createdAt: previous?.createdAt ?? property.createdAt,
+          updatedAt: previous?.updatedAt ?? property.updatedAt,
+        };
+        values = [...values.filter((candidate) => candidate.propertyId !== propertyId), next];
+      }
+    }
+  }
+  return values === data.values ? data : { ...data, values };
+}
