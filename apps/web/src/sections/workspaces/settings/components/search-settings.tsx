@@ -41,7 +41,7 @@ export function WorkspaceSearchSettingsSection({ workspaceId }: { workspaceId: s
           </p>
           {data.enabled && total > 0 ? (
             <progress
-              className="h-2 w-full accent-accent"
+              className="h-2 w-full accent-action-primary"
               aria-label="Pages indexed for semantic search"
               value={data.backfillComplete ? data.progress.ready : undefined}
               max={total}

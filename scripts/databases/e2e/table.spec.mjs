@@ -304,12 +304,19 @@ test("date ranges, booleans, people and multi-select retain typed values", async
   await options(page, { columns: ["date", "check", "person", "tags"] });
   await select(page, 0, "date");
   await paste(page, '["2026-10-17","2026-10-19"]\tyes\tAda\t["A","B"]');
+  // Pasted cells are delivered in order. Wait for the entire intention rather
+  // than assuming the later cells have settled when the first date appears.
   await expect
-    .poll(async () => (await values(page))["page-0:date"])
-    .toEqual(["2026-10-17", "2026-10-19"]);
-  expect((await values(page))["page-0:check"]).toBe("true");
-  expect((await values(page))["page-0:person"]).toEqual(["ada"]);
-  expect((await values(page))["page-0:tags"]).toEqual(["A", "B"]);
+    .poll(async () => {
+      const result = await values(page);
+      return [
+        result["page-0:date"],
+        result["page-0:check"],
+        result["page-0:person"],
+        result["page-0:tags"],
+      ];
+    })
+    .toEqual([["2026-10-17", "2026-10-19"], "true", ["ada"], ["A", "B"]]);
   await page.keyboard.press("Delete");
   await expect.poll(async () => (await values(page))["page-0:date"]).toBe("");
 });

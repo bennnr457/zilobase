@@ -128,6 +128,12 @@ export function useDatabaseMarquee({
         parents.push(doc.scrollingElement as HTMLElement);
       return parents;
     };
+    // Horizontal scroll content can be clipped/sticky vertically. The record
+    // surface follows the page scroll and keeps virtualized row Y coordinates stable.
+    const contentOrigin = (element: HTMLElement) => ({
+      left: element.getBoundingClientRect().left,
+      top: surface.getBoundingClientRect().top,
+    });
     const schedule = () => {
       if (session?.active && frame === null) frame = win.requestAnimationFrame(render);
     };
@@ -135,7 +141,7 @@ export function useDatabaseMarquee({
       frame = null;
       const current = session;
       if (!current?.active) return;
-      const origin = current.origin.getBoundingClientRect();
+      const origin = contentOrigin(current.origin);
       const start = { x: origin.left + current.start.x, y: origin.top + current.start.y };
       const bounds = {
         left: Math.min(start.x, current.pointer.x),
@@ -269,7 +275,7 @@ export function useDatabaseMarquee({
         return;
       }
       session.pointer = { x: event.clientX, y: event.clientY };
-      const origin = session.origin.getBoundingClientRect();
+      const origin = contentOrigin(session.origin);
       if (
         !session.active &&
         Math.hypot(
@@ -386,7 +392,7 @@ export function useDatabaseMarquee({
         surface.querySelector<HTMLElement>(
           ".database-table-scroll-content, .database-kanban-scroll-content",
         ) ?? surface;
-      const originRect = origin.getBoundingClientRect();
+      const originRect = contentOrigin(origin);
       session = {
         pointerId: event.pointerId,
         start: { x: event.clientX - originRect.left, y: event.clientY - originRect.top },

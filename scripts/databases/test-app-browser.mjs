@@ -13,7 +13,15 @@ import { CookieJar, createApiClient } from "../selfhost/api-conformance.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const measurementFile = process.env.ZILOBASE_APP_MEASUREMENTS;
-const measurements = { sampleCount: 1, requests: [], startupMs: null, heap: [], cache: [] };
+const measurements = {
+  sampleCount: 1,
+  fixtureRows: 3,
+  requests: [],
+  startupMs: null,
+  heap: [],
+  cache: [],
+  responsiveness: { visibleFeedbackMs: [], idleReads: 0, heartbeatReplies: 0, heartbeatsSent: 0 },
+};
 const measurementsPending = [];
 let measurementPhase = "startup";
 const exec = promisify(execFile);
@@ -224,6 +232,31 @@ try {
     [...jar.cookies].map(([name, value]) => ({ name, value, url: webOrigin })),
   );
   page = await context.newPage();
+  const databaseReads = [];
+  const mainFrames = [];
+  const mainSent = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (
+      request.method() === "GET" &&
+      path.includes(`/databases/${host}/`) &&
+      (path.endsWith("/bootstrap") || path.endsWith("/records"))
+    )
+      databaseReads.push(path);
+  });
+  page.on("websocket", (socket) => {
+    if (!socket.url().includes("database-collaboration")) return;
+    socket.on("framereceived", ({ payload }) => {
+      try {
+        mainFrames.push(JSON.parse(String(payload)));
+      } catch {}
+    });
+    socket.on("framesent", ({ payload }) => {
+      try {
+        mainSent.push(JSON.parse(String(payload)));
+      } catch {}
+    });
+  });
   const devtools = measurementFile ? await context.newCDPSession(page) : null;
   if (devtools) {
     await devtools.send("Performance.enable");
@@ -278,6 +311,93 @@ try {
     measurementPhase = "interactions";
   }
   console.info("Signed-in application loaded real PostgreSQL records.");
+  await page.waitForLoadState("networkidle");
+  await expect.poll(() => mainFrames.some((frame) => frame.type === "realtime.ready")).toBe(true);
+  const idleReadsBefore = databaseReads.length;
+  const pongsBefore = mainFrames.filter((frame) => frame.type === "realtime.pong").length;
+  const pingsBefore = mainSent.filter((frame) => frame.type === "realtime.ping").length;
+  // Three real heartbeat cycles; no polling interval or shortened protocol timer.
+  await expect
+    .poll(() => mainSent.filter((frame) => frame.type === "realtime.ping").length - pingsBefore, {
+      timeout: 70000,
+      intervals: [1000],
+    })
+    .toBeGreaterThanOrEqual(3);
+  measurements.responsiveness.heartbeatsSent =
+    mainSent.filter((frame) => frame.type === "realtime.ping").length - pingsBefore;
+  measurements.responsiveness.heartbeatReplies =
+    mainFrames.filter((frame) => frame.type === "realtime.pong").length - pongsBefore;
+  measurements.responsiveness.idleReads = databaseReads.length - idleReadsBefore;
+  assert.equal(
+    measurements.responsiveness.idleReads,
+    0,
+    "Healthy idle heartbeats must not fetch database reads",
+  );
+  const timedCell = page
+    .locator("tr[data-database-row-id]")
+    .filter({ hasText: "Beta browser row" })
+    .getByRole("checkbox", { name: "Done value" });
+  const timedCommands = [];
+  let allowResponse;
+  let responseGate;
+  const delayEdit = async (route) => {
+    timedCommands.push(route.request().postDataJSON().command);
+    await responseGate;
+    await route.continue();
+  };
+  await page.route(`**${sourcePath}`, delayEdit);
+  const readsBeforeEdits = databaseReads.length;
+  for (let sample = 0; sample < 6; sample++) {
+    const expected = !(await timedCell.isChecked());
+    responseGate = new Promise((resolve) => {
+      allowResponse = resolve;
+    });
+    await timedCell.evaluate((element, expected) => {
+      window.__databaseFeedbackMs = null;
+      element.addEventListener(
+        "click",
+        () => {
+          const started = performance.now();
+          const observer = new MutationObserver(() => {
+            if (element.getAttribute("aria-checked") === String(expected)) {
+              window.__databaseFeedbackMs = performance.now() - started;
+              observer.disconnect();
+            }
+          });
+          observer.observe(element, { attributes: true });
+        },
+        { once: true, capture: true },
+      );
+    }, expected);
+    const saved = page.waitForResponse(
+      (response) => response.url().endsWith(sourcePath) && response.request().method() === "POST",
+    );
+    await timedCell.click();
+    await expect.poll(() => timedCell.isChecked()).toBe(expected);
+    await expect.poll(() => page.evaluate(() => window.__databaseFeedbackMs)).not.toBeNull();
+    measurements.responsiveness.visibleFeedbackMs.push(
+      await page.evaluate(() => window.__databaseFeedbackMs),
+    );
+    allowResponse();
+    assert.ok((await saved).ok());
+    await expect.poll(() => timedCell.isChecked()).toBe(expected);
+  }
+  await page.unroute(`**${sourcePath}`, delayEdit);
+  assert.equal(timedCommands.length, 6);
+  assert.ok(timedCommands.every((command) => command.type === "row.change" && !command.placement));
+  assert.equal(
+    databaseReads.length - readsBeforeEdits,
+    0,
+    "Ordinary authorized edits need no database GET",
+  );
+  console.info(
+    JSON.stringify({
+      event: "database-responsiveness",
+      fixtureRows: 3,
+      ...measurements.responsiveness,
+    }),
+  );
+
   // Exercise the actual /d/:id route and its page layout, not just an embedded
   // renderer fixture. Selection must start in the blank body below the table.
   const recordRows = page.locator("tr[data-database-row-id]");
@@ -780,6 +900,47 @@ try {
   assert.ok(embedded.response.ok, JSON.stringify(embedded.data));
   await page.goto(`${webOrigin}/p/${embeddedHost}`);
   await openLoadedMetadata("embedded database");
+  const embeddedRow = page
+    .locator("tr[data-database-row-id]")
+    .filter({ hasText: "Shared browser title" });
+  await embeddedRow.locator(".database-page-link").hover();
+  await embeddedRow
+    .getByRole("button", { name: "Close Shared browser title", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "Board", exact: true }).click();
+  const embeddedCard = page
+    .locator(".database-kanban-card")
+    .filter({ hasText: "Shared browser title" });
+  await expect(embeddedCard).toBeVisible();
+  const currentlyChecked = await checkedColumn
+    .getByText("Shared browser title", { exact: true })
+    .count();
+  const destination = page
+    .locator(".database-kanban-column")
+    .filter({ has: page.getByText(currentlyChecked ? "Unchecked" : "Checked", { exact: true }) });
+  const embeddedCommands = [];
+  const captureEmbedded = (request) => {
+    if (request.method() === "POST" && request.url().endsWith(sourcePath))
+      embeddedCommands.push(request.postDataJSON().command);
+  };
+  page.on("request", captureEmbedded);
+  const embeddedSaved = page.waitForResponse(
+    (response) => response.url().endsWith(sourcePath) && response.request().method() === "POST",
+  );
+  await embeddedCard.dragTo(destination, { targetPosition: { x: 100, y: 60 } });
+  assert.ok((await embeddedSaved).ok());
+  await expect(destination.getByText("Shared browser title", { exact: true })).toBeVisible();
+  page.off("request", captureEmbedded);
+  assert.equal(embeddedCommands.length, 1);
+  assert.equal(embeddedCommands[0].type, "row.change");
+  assert.ok(embeddedCommands[0].placement && embeddedCommands[0].valuesByPropertyId);
+  await mkdir(`${root}.dev/database-app-results`, { recursive: true });
+  await page.screenshot({
+    path: `${root}.dev/database-app-results/embedded-kanban.png`,
+    fullPage: true,
+  });
+  console.info("The actual embedded Kanban board submitted one atomic native drop.");
+
   await page.goto(`${webOrigin}/d/${host}`);
   await expect(
     page.locator("tr[data-database-row-id]").filter({ hasText: "Shared browser title" }),
@@ -974,6 +1135,87 @@ try {
       "Repeated mount cycles must not accumulate canonical entities",
     );
   }
+
+  measurementPhase = "account-change-with-late-ack";
+  await selectView("Table");
+  // Seed only this runner's disposable PostgreSQL instance; authenticate through
+  // the real session endpoint and switch the mounted application's cookies.
+  const { hashPassword } = await import(pathToFileURL(require.resolve("better-auth/crypto")));
+  const { Client } = require("pg");
+  const fixtureDb = new Client({ connectionString: env.DATABASE_URL });
+  const otherId = randomUUID();
+  const otherEmail = "other-controller-browser@example.test";
+  await fixtureDb.connect();
+  try {
+    await fixtureDb.query(
+      'insert into "user" (id, name, email, email_verified) values ($1, $2, $3, true)',
+      [otherId, "Other Browser", otherEmail],
+    );
+    await fixtureDb.query(
+      "insert into account (id, account_id, provider_id, user_id, password) values ($1, $2, $3, $2, $4)",
+      [randomUUID(), otherId, "credential", await hashPassword(password)],
+    );
+    await fixtureDb.query(
+      "insert into member (id, workspace_id, user_id, role) values ($1, $2, $3, $4)",
+      [randomUUID(), setup.data.workspaceId, otherId, "member"],
+    );
+  } finally {
+    await fixtureDb.end();
+  }
+  const otherJar = new CookieJar();
+  await api.signIn({ email: otherEmail, password, jar: otherJar });
+  let releaseOldAck;
+  const oldAckGate = new Promise((resolve) => {
+    releaseOldAck = resolve;
+  });
+  let oldWriteCommitted = false;
+  let acknowledgeDelivered;
+  const acknowledgementDelivered = new Promise((resolve) => {
+    acknowledgeDelivered = resolve;
+  });
+  const delayOldAck = async (route) => {
+    const response = await route.fetch();
+    assert.ok(response.ok());
+    oldWriteCommitted = true;
+    await oldAckGate;
+    await route.fulfill({ response });
+    acknowledgeDelivered();
+  };
+  await page.route(`**${sourcePath}`, delayOldAck);
+  await page
+    .locator("tr[data-database-row-id]")
+    .filter({ hasText: "Beta browser row" })
+    .getByRole("checkbox")
+    .first()
+    .click();
+  await expect.poll(() => oldWriteCommitted).toBe(true);
+  await context.clearCookies();
+  await context.addCookies(
+    [...otherJar.cookies].map(([name, value]) => ({ name, value, url: webOrigin })),
+  );
+  await page.evaluate(async () => {
+    const { queryClient } = await import("/src/app/query-client.ts");
+    await queryClient.invalidateQueries({ queryKey: ["session"] });
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const { queryClient } = await import("/src/app/query-client.ts");
+        return queryClient.getQueryData(["session"])?.user?.id;
+      }),
+    )
+    .toBe(otherId);
+  await expect(page.getByText("Shared browser title", { exact: true })).toHaveCount(0);
+  releaseOldAck();
+  await acknowledgementDelivered;
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await expect(page.getByText("Shared browser title", { exact: true })).toHaveCount(0);
+  await page.unroute(`**${sourcePath}`, delayOldAck);
+  console.info(
+    "A real account change suppresses the previous account's records and late acknowledgement.",
+  );
   assert.deepEqual(errors, []);
   assert.ok(
     !serverLog.includes('"event":"background.queue_failure"'),

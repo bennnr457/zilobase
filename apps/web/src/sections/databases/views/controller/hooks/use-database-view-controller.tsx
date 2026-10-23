@@ -254,7 +254,14 @@ export function useDatabaseViewController({
       if (idleHandle !== null) window.cancelIdleCallback(idleHandle);
       if (timer !== null) globalThis.clearTimeout(timer);
     };
-  }, [activeDataSourceId, idlePrefetchKey, recordWindow.status, resolvedActiveViewId]);
+  }, [
+    databaseController,
+    databaseId,
+    activeDataSourceId,
+    idlePrefetchKey,
+    recordWindow.status,
+    resolvedActiveViewId,
+  ]);
 
   const viewModel = useMemo(() => presentDatabaseViewModel(model), [model]);
   const {
