@@ -127,7 +127,9 @@ export class SharedClient {
     let entities = this.sessions.get(key);
     if (!entities) {
       entities = new SessionEntities(scope);
-      entities.session.publication.subscribe(() => this.publication.changed([]));
+      entities.session.publication.subscribeChanges((changes) =>
+        this.publication.changed([], changes),
+      );
       this.sessions.set(key, entities);
       this.sessionIds.set(entities.session.id, entities);
       entities.session.onRelease = () => this.scheduleCollection();

@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 import type { EntityCollection } from "./collection";
 
@@ -20,4 +20,20 @@ export function useSharedDataRevision(queryClient: QueryClient) {
     owner.publication.getRevision,
     owner.publication.getRevision,
   );
+}
+
+/** Subscribe to the exact capability and entity families used by a projection. */
+export function useSharedDataInterests(
+  queryClient: QueryClient,
+  interests: readonly import("./publication").PublicationInterest[],
+) {
+  const owner = sharedClient(queryClient);
+  const identity = JSON.stringify(interests);
+  const stable = useMemo(() => interests, [identity]);
+  const subscribe = useCallback(
+    (notify: () => void) => owner.publication.subscribeTo(stable, notify),
+    [owner, stable],
+  );
+  const snapshot = useCallback(() => owner.publication.revisionFor(stable), [owner, stable]);
+  return useSyncExternalStore(subscribe, snapshot, snapshot);
 }

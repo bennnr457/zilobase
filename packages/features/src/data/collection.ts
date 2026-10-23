@@ -41,7 +41,7 @@ export class EntityCollection<T extends { id: string }> {
 
   constructor(
     client: DbClient,
-    scopeId: string,
+    private readonly scopeId: string,
     readonly registration: EntityRegistration<T>,
     private readonly publication: DataPublication,
     private readonly retain: () => () => void = () => () => {},
@@ -69,7 +69,14 @@ export class EntityCollection<T extends { id: string }> {
       for (const change of changes) {
         for (const callback of this.listeners.get(change.key) ?? []) callbacks.add(callback);
       }
-      this.publication.changed(callbacks);
+      this.publication.changed(
+        callbacks,
+        changes.map((change) => ({
+          scopeId: this.scopeId,
+          collection: this.registration.name,
+          id: change.key,
+        })),
+      );
     });
   }
 
