@@ -206,6 +206,18 @@ try {
     afterPropertyId: null,
     beforePropertyId: null,
   });
+  for (const [name, propertyType] of [
+    ["Created time", "created_time"],
+    ["Edited time", "edited_time"],
+  ])
+    await command(sourcePath, {
+      type: "property.create",
+      name,
+      propertyType,
+      config: { timeFormat: "24_hour" },
+      afterPropertyId: null,
+      beforePropertyId: null,
+    });
   const createdRows = [];
   for (const title of ["Alpha browser row", "Beta browser row", "Gamma browser row"])
     createdRows.push(
@@ -621,6 +633,22 @@ try {
   const alphaRow = page
     .locator("tr[data-database-row-id]")
     .filter({ hasText: "Alpha browser row" });
+  const tableTimes = await alphaRow.locator("span.database-input-cell-trigger").allTextContents();
+  assert.equal(tableTimes.length, 2);
+  const assertMetadataTimes = async (expected) => {
+    for (const [index, label] of ["Created time", "Edited time"].entries()) {
+      const value = page
+        .locator("[data-page-metadata-content]")
+        .last()
+        .getByText(label, { exact: true })
+        .locator("..")
+        .locator("..")
+        .locator(".database-date-cell-trigger");
+      await expect(value).toHaveText(/\d/);
+      if (expected[index]) await expect(value).toHaveText(expected[index]);
+      await expect(value.getByRole("button")).toHaveCount(0);
+    }
+  };
   const initialPropertyReads = [];
   const trackInitialProperties = (request) => {
     if (
@@ -635,6 +663,8 @@ try {
   const paneTitle = page.getByRole("textbox", { name: "Page title", exact: true }).last();
   await expect(paneTitle).toHaveValue("Alpha browser row");
   await expect(paneTitle).toBeEditable();
+  await assertMetadataTimes(tableTimes);
+  await page.screenshot({ path: `${root}.dev/database-app-results/page-time-properties.png` });
   await page.waitForLoadState("networkidle");
   page.off("request", trackInitialProperties);
   assert.deepEqual(
@@ -672,6 +702,12 @@ try {
       .first(),
   ).toBeVisible();
   await expect(paneTitle).toHaveValue("Shared browser title");
+  await assertMetadataTimes(
+    await page
+      .locator(`tr[data-database-row-id="${createdRows[0].id}"]`)
+      .locator("span.database-input-cell-trigger")
+      .allTextContents(),
+  );
   await page.waitForTimeout(200);
   page.off("request", trackMetadata);
   assert.equal(
@@ -866,6 +902,7 @@ try {
   await page.getByRole("link", { name: "Open as full page", exact: true }).last().click();
   await expect(page).toHaveURL(/\/p\//);
   await expect(page.getByText("Complete", { exact: true }).last()).toBeVisible();
+  await assertMetadataTimes([tableTimes[0]]);
   await page.goto(`${webOrigin}/d/${host}`);
   const dialogSettings = await api.requestJson("/user-settings", {
     jar,

@@ -12,6 +12,10 @@ import {
 } from "../databases/cache-references";
 import type { PageDetailReference } from "./cache";
 import type { DatabaseMutationEventV2 } from "../databases/core/entities";
+import {
+  getReadOnlyTimePropertyRawValue,
+  isReadOnlyTimeProperty,
+} from "../databases/schema/read-only-time";
 
 const payloadSchema = z
   .object({
@@ -357,9 +361,38 @@ export function resolvePageProperties(
     membershipInvalidated: _invalidated,
     ...context
   } = reference;
+  const page = owner.pages.get(pageId);
+  const record = context.presenceTargets
+    ?.map((target) => owner.databases.records.get(target.rowId))
+    .find((candidate) => candidate?.pageId === pageId);
   return {
     ...context,
     values: [...new Set([...propertyIds, ...valuePropertyIds])].flatMap((propertyId) => {
+      const property = owner.databases.definitions.get(propertyId);
+      if (property && isReadOnlyTimeProperty(property.type)) {
+        // These fields are derived, just as in database views. Never admit them
+        // as stored values: page receipts must remain their source of truth.
+        const value = getReadOnlyTimePropertyRawValue(
+          {
+            createdAt: record?.createdAt ?? "",
+            updatedAt: record?.updatedAt ?? "",
+            page: page ?? {},
+          },
+          property.type,
+        );
+        return value
+          ? [
+              {
+                id: `computed:${pageId}:${propertyId}`,
+                pageId,
+                propertyId,
+                value,
+                createdAt: page?.createdAt ?? record?.createdAt ?? value,
+                updatedAt: page?.updatedAt ?? record?.updatedAt ?? value,
+              },
+            ]
+          : [];
+      }
       const value = owner.databases.values.get(valueIdentity(pageId, propertyId));
       if (!value) return [];
       const { valueId, ...fields } = valueCacheEntitySchema.strip().parse(value);

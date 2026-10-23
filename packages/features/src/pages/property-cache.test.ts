@@ -6,7 +6,12 @@ import {
   createTestDatabasePayload,
   setTestDatabaseClientState,
 } from "../databases/mutations/test-helpers";
-import { normalizePageProperties, readCachedPagePropertyCoverage } from "./property-cache";
+import {
+  normalizePageProperties,
+  readCachedPagePropertyCoverage,
+  resolvePageProperties,
+} from "./property-cache";
+import { getReadOnlyTimePropertyRawValue } from "../databases/schema/read-only-time";
 
 function fixture() {
   const client = new TestQueryClient();
@@ -14,6 +19,89 @@ function fixture() {
   setTestDatabaseClientState(client, payload);
   return { client, payload };
 }
+
+function timeFixture(withPageTimes = true) {
+  const client = new TestQueryClient();
+  const payload = createTestDatabasePayload();
+  for (const type of ["created_time", "edited_time"]) {
+    const binding = payload.properties[0]!;
+    payload.properties.push({
+      ...binding,
+      id: `column-${type}`,
+      propertyId: type,
+      property: { ...binding.property, id: type, name: type, type },
+    });
+  }
+  if (withPageTimes) {
+    payload.rows[0]!.page.createdAt = "2026-05-01T12:00:00.000Z";
+    payload.rows[0]!.page.updatedAt = "2026-06-02T15:30:00.000Z";
+  }
+  setTestDatabaseClientState(client, payload);
+  if (withPageTimes) {
+    const owner = sharedClient(client).all()[0]!;
+    const { id, createdAt, updatedAt } = payload.rows[0]!.page;
+    owner.session.ingest([owner.pages.stage([{ id, createdAt, updatedAt }])]);
+  }
+  return { client, payload };
+}
+
+test("loaded page time properties match database views without stored values", () => {
+  for (const withPageTimes of [true, false]) {
+    const { client, payload } = timeFixture(withPageTimes);
+    try {
+      const coverage = readCachedPagePropertyCoverage(client, "page-1", "database-1");
+      assert.equal(coverage.state, "partial");
+      const owner = sharedClient(client).get(coverage.reference!.cacheId)!;
+      for (const type of ["created_time", "edited_time"]) {
+        assert.equal(
+          coverage.data?.values.find((value) => value.propertyId === type)?.value,
+          getReadOnlyTimePropertyRawValue(payload.rows[0]!, type),
+        );
+        assert.equal(owner.databases.values.get(valueIdentity("page-1", type)), undefined);
+      }
+    } finally {
+      client.clear();
+    }
+  }
+});
+
+test("cold page time properties follow page receipts after database rows are released", async () => {
+  const { client, payload } = timeFixture();
+  try {
+    await authorizeFixture(client);
+    const reference = normalizePageProperties(client, sharedClient(client).capture(), "page-1", {
+      workspaceId: "org-1",
+      properties: payload.properties.map((binding) => binding.property),
+      values: [],
+    });
+    const owner = sharedClient(client).get(reference.cacheId)!;
+    // The properties endpoint does not require a mounted database window.
+    client.setQueryData(["page", "page-1", "properties"], reference);
+    client.removeQueries({ queryKey: ["db"] });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(owner.databases.records.get("row-1"), undefined);
+    assert.equal(
+      resolvePageProperties(client, reference)?.values.find(
+        (value) => value.propertyId === "created_time",
+      )?.value,
+      "2026-05-01T12:00:00.000Z",
+    );
+    owner.session.ingest([
+      owner.pages.stage([{ id: "page-1", updatedAt: "2026-06-03T16:00:00.000Z" }]),
+    ]);
+    assert.equal(
+      resolvePageProperties(client, reference)?.values.find(
+        (value) => value.propertyId === "edited_time",
+      )?.value,
+      "2026-06-03T16:00:00.000Z",
+    );
+    sharedClient(client).clear();
+    assert.equal(resolvePageProperties(client, reference), undefined);
+  } finally {
+    client.clear();
+  }
+});
 
 test("a loaded row projects properties and values without claiming full page membership", () => {
   const { client } = fixture();
