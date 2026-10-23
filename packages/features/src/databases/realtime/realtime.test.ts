@@ -181,6 +181,44 @@ test("heartbeat pings stay under the idle timeout and use a JSON keepalive", () 
   assert.ok(DATABASE_REALTIME_HEARTBEAT_MS >= 10_000);
 });
 
+test("heartbeat replies never recover database reads but invalid frames still do", () => {
+  const client = new QueryClient();
+  let invalidations = 0;
+  client.invalidateQueries = async () => {
+    invalidations++;
+  };
+  const manager = new DatabaseRealtimeManager(
+    client,
+    async () => {
+      throw new Error("unexpected request");
+    },
+    "host",
+    "session",
+    () => {},
+  );
+  try {
+    for (let cycle = 0; cycle < 5; cycle++) {
+      const frame = JSON.stringify({ type: "realtime.pong" });
+      assert.deepEqual(parseDatabaseRealtimeServerMessage(frame), {
+        ok: true,
+        message: { type: "realtime.pong" },
+      });
+      manager["handleMessage"](frame, {} as WebSocket);
+    }
+    assert.equal(invalidations, 0);
+    manager["handleMessage"](JSON.stringify({ type: "database.mutation" }), {} as WebSocket);
+    assert.ok(invalidations > 0);
+    assert.deepEqual(
+      parseDatabaseRealtimeServerMessage(
+        JSON.stringify({ type: "realtime.pong", unexpected: true }),
+      ),
+      { ok: false, reason: "invalid" },
+    );
+  } finally {
+    client.clear();
+  }
+});
+
 test("ticket failures stop only for permanent authorization and lookup errors", () => {
   for (const status of [401, 403, 404]) {
     assert.equal(ticketFailureAction({ status }), "stop");

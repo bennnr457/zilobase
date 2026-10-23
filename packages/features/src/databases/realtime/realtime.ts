@@ -293,6 +293,9 @@ export class DatabaseRealtimeManager {
     }
     const message = parsed.message;
 
+    // Cloudflare's hibernating socket auto-response has no database scope.
+    if (message.type === "realtime.pong") return;
+
     if (message.databaseId !== this.databaseId) return;
 
     if (message.type === "database.mutation") {
@@ -709,6 +712,8 @@ export function parseDatabaseRealtimeServerMessage(
       return { ok: false, reason: "invalid" };
     }
     const message = value as Record<string, unknown>;
+    if (message.type === "realtime.pong" && Object.keys(message).length === 1)
+      return { message: { type: "realtime.pong" }, ok: true };
     const isKnownServerMessage =
       message.type === "database.mutation" ||
       message.type === "realtime.ready" ||
@@ -780,6 +785,7 @@ type PresenceClearMessage = {
   type: "presence.clear";
 };
 export type RealtimeServerMessage =
+  | { type: "realtime.pong" }
   | DatabaseMutationEventV2
   | RealtimeReadyMessage
   | PresenceUpdateMessage
