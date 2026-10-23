@@ -8,6 +8,8 @@ import type {
 import { databaseViewQueryHash } from "@zilobase/features/runtime";
 import { runMigrationSets } from "@zilobase/runtime-adapter/node";
 import { asc, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "../infrastructure/database/schema";
 import { Hono } from "hono";
 import assert from "node:assert/strict";
 import { createDbClientForUrl, runWithDb } from "../infrastructure/database";
@@ -397,6 +399,111 @@ try {
   console.info(
     "Passed millisecond-safe entity confirmation stamps across two independent PostgreSQL clients.",
   );
+  const statements: string[] = [];
+  const measured = {
+    ...first,
+    db: drizzle(first.client, {
+      schema,
+      logger: {
+        logQuery(query) {
+          statements.push(query);
+        },
+      },
+    }),
+  };
+  const samples: Array<{ size: number; ms: number; rowReads: number }> = [];
+  for (const size of [2, 252]) {
+    if (size > 2) {
+      const pages = Array.from({ length: 250 }, (_, index) => ({
+        id: `budget-${index}`,
+        workspaceId: "workspace",
+        createdById: "actor",
+        name: `Budget ${index}`,
+      }));
+      await first.db.insert(page).values(pages);
+      await first.db.insert(databaseRow).values(
+        pages.map(({ id }, index) => ({
+          id,
+          pageId: id,
+          dataSourceId: "source",
+          orderKey: String((index + 10) * 1024),
+        })),
+      );
+    }
+    for (let iteration = 0; iteration < 10; iteration++) {
+      statements.length = 0;
+      const started = performance.now();
+      const requestId = `budget-${size}-${iteration}`;
+      const command = { type: "row.change", rowId: "a", title: requestId } as const;
+      const ack = await send(command, { client: measured, dataSourceId: "source", requestId });
+      const ms = performance.now() - started;
+      const rowReads = statements.filter(
+        (query) => query.startsWith("select ") && query.includes('from "database_row"'),
+      );
+      assert.ok(rowReads.length > 0);
+      for (const query of rowReads)
+        assert.match(query, /"database_row"\."id" = /, "Content edits must not list the source");
+      samples.push({ size, ms, rowReads: rowReads.length });
+      statements.length = 0;
+      assert.deepEqual(
+        await send(command, { client: measured, dataSourceId: "source", requestId }),
+        ack,
+      );
+      assert.ok(
+        !statements.some((query) => query.includes('from "database_row"')),
+        "Receipt replay must not read a row again",
+      );
+    }
+  }
+  assert.equal(new Set(samples.map(({ rowReads }) => rowReads)).size, 1);
+  for (const size of [2, 252]) {
+    const times = samples
+      .filter((sample) => sample.size === size)
+      .map(({ ms }) => ms)
+      .sort((a, b) => a - b);
+    console.info(
+      JSON.stringify({
+        event: "content-edit-budget",
+        fixtureRows: size,
+        samples: times.length,
+        rowReads: samples[0]!.rowReads,
+        p50Ms: times[4],
+        p95Ms: times[9],
+      }),
+    );
+  }
+  const facts = await first.db
+    .select()
+    .from(schema.databaseAutomationEventWindow)
+    .where(eq(schema.databaseAutomationEventWindow.rowId, "a"));
+  assert.ok(
+    facts.some((fact) => (fact.afterValues as Record<string, unknown>).name === "budget-252-9"),
+  );
+  await Promise.all([
+    send({ type: "row.change", rowId: "a", title: "Concurrent edit" }, { dataSourceId: "source" }),
+    send(
+      { type: "row.change", rowId: "a", placement: { afterRowId: "b", beforeRowId: null } },
+      { client: second, dataSourceId: "source" },
+    ),
+  ]);
+  await Promise.all([
+    send(
+      { type: "row.change", rowId: "a", title: "Concurrent archive" },
+      { dataSourceId: "source" },
+    ),
+    send({ type: "row.archive", rowId: "b" }, { client: second, dataSourceId: "source" }),
+  ]);
+  await send({ type: "row.restore", rowId: "b" }, { dataSourceId: "source" });
+  const sharedEvents = await first.db
+    .select()
+    .from(databaseMutationEvent)
+    .where(eq(databaseMutationEvent.commandId, "budget-252-9"));
+  assert.ok(sharedEvents.some((event) => event.databaseId === "host"));
+  assert.ok(sharedEvents.some((event) => event.databaseId === "linked-host"));
+  console.info(
+    "Passed bounded content work, replay, automation facts, shared hosts and concurrent edit/move/archive operations.",
+  );
+
   // Cold search must resolve source names without first opening a database.
   await first.db.insert(database).values([
     { id: "naming-host", workspaceId: "workspace", createdById: "actor", name: "New database" },
