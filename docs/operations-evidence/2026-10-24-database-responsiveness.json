@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-24",
+  "environment": {
+    "platform": "macOS arm64",
+    "node": "26.8.2",
+    "browser": "Chrome",
+    "postgresImage": "zilobase-postgres:17.10-vector0.8.7",
+    "productionDeployment": false
+  },
+  "signedInBrowser": {
+    "fixtureRows": 3,
+    "sampleCount": 6,
+    "clickToCheckedDomMs": [6.5, 5.6, 5.4, 5.2, 6.2, 5.2],
+    "medianMs": 5.5,
+    "p95NearestRankMs": 6.5,
+    "heartbeatCycles": 3,
+    "heartbeatReplies": 0,
+    "idleDatabaseReads": 0,
+    "ordinaryEditPosts": 6,
+    "ordinaryEditDatabaseReads": 0,
+    "embeddedDropCommands": 1,
+    "lateAcknowledgementAfterRealAccountChange": "passed"
+  },
+  "deterministicBudgets": {
+    "pongReplies": 5,
+    "idleDatabaseReads": 0,
+    "equivalentFreshViewReads": 0,
+    "contentEditPosts": 1,
+    "contentEditDatabaseReads": 0,
+    "duplicateDeliveries": 3,
+    "duplicateDatabaseReads": 0,
+    "deliveryGapBootstrapReads": 1,
+    "deliveryGapRecordReads": 1,
+    "retainedCumulativeWindows": 1,
+    "recoveryRowsAfterLoading150": 150,
+    "permanent403Attempts": 1
+  },
+  "server": [
+    {
+      "fixtureRows": 2,
+      "samples": 10,
+      "targetRowSelectsPerEdit": 3,
+      "fullActiveRowListings": 0,
+      "p50Ms": 21.895,
+      "p95Ms": 24.544
+    },
+    {
+      "fixtureRows": 252,
+      "samples": 10,
+      "targetRowSelectsPerEdit": 3,
+      "fullActiveRowListings": 0,
+      "p50Ms": 21.824,
+      "p95Ms": 25.497
+    }
+  ],
+  "renderBudgets": {
+    "presenceRecordModelChanges": 0,
+    "unrelatedDatabaseRecordModelChanges": 0,
+    "unchangedSiblingRowRenders": 0
+  },
+  "gates": {
+    "features": 591,
+    "databaseBrowser": 129,
+    "serverAcceptanceTests": 91,
+    "nodeAdapterTests": 16,
+    "hostedAdapterTestsPassed": 82,
+    "hostedAdapterTestsSkipped": 1,
+    "hostedWorkerTestsPassed": 14,
+    "signedInBrowser": "passed",
+    "web": "passed",
+    "typecheck": "passed",
+    "lint": "passed with existing warnings",
+    "format": "passed",
+    "architecture": "passed",
+    "acceptance": "passed",
+    "hostedBuild": "passed",
+    "hostedDryRun": "passed without deployment",
+    "additionalIsolatedHarness": "new checks passed; unchanged cold-search assertion failed; reproduced with original main script"
+  },
+  "limits": [
+    "Local fixture evidence, not a universal latency guarantee.",
+    "Browser samples measure DOM updates before the following paint.",
+    "Node sends no pong; its browser check counts outgoing heartbeat pings.",
+    "No comparable pre-change latency samples were recorded."
+  ]
+}
