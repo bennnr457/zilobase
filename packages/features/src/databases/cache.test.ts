@@ -867,3 +867,30 @@ test("confirmed frames publish only proven facets into existing guest database a
   assert.equal(secondary.databases.records.get("private-record"), undefined);
   client.clear();
 });
+
+test("unchanged canonical row projections retain identity across unrelated publications", async () => {
+  const { session, databases } = fixture();
+  try {
+    databases.ingestBootstrap("host", bootstrap());
+    databases.ingestWindow("host", "source", "q-fixture", window());
+    const initial = databases.resolveRecord("record")!;
+    assert.equal(databases.resolveRecord("record"), initial);
+    session.ingest([databases.hosts.stage([{ id: "host", version: 2 }])]);
+    assert.equal(databases.resolveRecord("record"), initial);
+    session.ingest([
+      databases.values.stage([
+        {
+          id: valueIdentity("page", "definition"),
+          value: ["Changed"],
+          updatedAt: stamp(2),
+        },
+      ]),
+    ]);
+    const changed = databases.resolveRecord("record")!;
+    assert.notEqual(changed, initial);
+    assert.deepEqual(changed.valuesByPropertyId.definition?.value, ["Changed"]);
+    assert.equal(databases.resolveRecord("record"), changed);
+  } finally {
+    await session.dispose();
+  }
+});

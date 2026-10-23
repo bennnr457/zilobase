@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useSyncExternalStore } from "react";
-import { useSharedDataRevision } from "../../data/react";
+import { useSharedDataInterests } from "../../data/react";
 import { useZilobaseFeatures } from "../../shared/context";
-import { resolveDatabaseBootstrap } from "../cache-references";
+import { bootstrapPublicationInterests, resolveDatabaseBootstrap } from "../cache-references";
 import { useDatabaseController, useProjectedDatabaseBootstrap } from "../interactions/react";
 import {
   databaseBootstrapQueryOptions,
@@ -34,7 +34,11 @@ export function useDatabaseBootstrap(scope: DatabaseScope | null): DatabaseBoots
     ),
     enabled: Boolean(scope) && !creating && !creationFailed,
   });
-  const revision = useSharedDataRevision(queryClient);
+  const interests = useMemo(
+    () => bootstrapPublicationInterests(queryClient, query.data),
+    [queryClient, query.data],
+  );
+  const revision = useSharedDataInterests(queryClient, interests);
   const resolved = useMemo(
     () => resolveDatabaseBootstrap(queryClient, query.data),
     [queryClient, query.data, revision],

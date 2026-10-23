@@ -518,6 +518,10 @@ export class DatabaseCollections {
     });
   }
 
+  private recordProjections = new WeakMap<
+    object,
+    { page: object; values: readonly unknown[]; result: DatabaseRecordEntity }
+  >();
   resolveRecord(id: string): DatabaseRecordEntity | undefined {
     const record = this.records.get(id);
     const page = record && this.pages.get(record.pageId);
@@ -529,15 +533,22 @@ export class DatabaseCollections {
         .filter((binding) => binding.dataSourceId === record.dataSourceId)
         .map((binding) => valueIdentity(record.pageId, binding.propertyId)),
     ]);
+    const values = [...keys].flatMap((key) => this.values.get(key) ?? []);
+    const previous = this.recordProjections.get(record);
+    if (
+      previous?.page === page &&
+      previous.values.length === values.length &&
+      values.every((value, index) => value === previous.values[index])
+    )
+      return previous.result;
     const valuesByPropertyId = Object.fromEntries(
-      [...keys].flatMap((key) => {
-        const value = this.values.get(key);
+      values.flatMap((value) => {
         if (!value) return [];
         const { valueId, ...fields } = valueCacheEntitySchema.strip().parse(value);
         return [[value.propertyId, { ...fields, id: valueId }]];
       }),
     );
-    return databaseRecordEntitySchema.parse({
+    const result = databaseRecordEntitySchema.parse({
       ...fields,
       valuesByPropertyId,
       page: {
@@ -550,6 +561,8 @@ export class DatabaseCollections {
         updatedAt: page.updatedAt,
       },
     });
+    this.recordProjections.set(record, { page, values, result });
+    return result;
   }
 
   isDefinitionEvent(event: import("./core/entities").DatabaseMutationEventV2) {

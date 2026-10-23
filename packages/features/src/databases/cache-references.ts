@@ -260,3 +260,73 @@ export function resolveRecordWindow(
     }),
   };
 }
+
+/** Only the admitted capability's referenced entities can change these projections. */
+export function bootstrapPublicationInterests(
+  client: QueryClient,
+  input: unknown,
+): import("../data/publication").PublicationInterest[] {
+  const parsed = databaseBootstrapReferenceSchema.safeParse(input);
+  if (!parsed.success) return [];
+  const ref = parsed.data;
+  const owner = sharedClient(client).get(ref.cacheId);
+  if (!owner) return [];
+  const interests: import("../data/publication").PublicationInterest[] = [];
+  const add = (collection: string, ids: string[]) =>
+    interests.push(...ids.map((id) => ({ scopeId: ref.cacheId, collection, id })));
+  add("database-hosts", [ref.databaseId]);
+  add("sources", ref.sourceIds);
+  add(
+    "source-links",
+    ref.sourceIds.map((id) => sourceLinkIdentity(ref.databaseId, id)),
+  );
+  add("property-bindings", ref.bindingIds);
+  add(
+    "property-definitions",
+    ref.bindingIds.flatMap((id) => owner.databases.bindings.get(id)?.propertyId ?? []),
+  );
+  add("views", ref.viewIds);
+  return interests;
+}
+
+export function recordPublicationInterests(
+  client: QueryClient,
+  scopeId: string | undefined,
+  recordIds: readonly string[],
+): import("../data/publication").PublicationInterest[] {
+  const owner = scopeId ? sharedClient(client).get(scopeId) : undefined;
+  if (!owner || !scopeId) return [];
+  const interests: import("../data/publication").PublicationInterest[] = [];
+  const allBindings = [...owner.databases.bindings.collection.values()];
+  const bindingsBySource = new Map<string, typeof allBindings>();
+  for (const binding of allBindings) {
+    const group = bindingsBySource.get(binding.dataSourceId) ?? [];
+    group.push(binding);
+    bindingsBySource.set(binding.dataSourceId, group);
+  }
+  for (const id of recordIds) {
+    interests.push({ scopeId, collection: "records", id });
+    const record = owner.databases.records.get(id);
+    if (!record) continue;
+    interests.push({ scopeId, collection: "pages", id: record.pageId });
+    const bindings = bindingsBySource.get(record.dataSourceId) ?? [];
+    for (const binding of bindings) {
+      interests.push({ scopeId, collection: "property-bindings", id: binding.id });
+      interests.push({
+        scopeId,
+        collection: "property-values",
+        id: JSON.stringify([record.pageId, binding.propertyId]),
+      });
+    }
+    for (const id of record.valueIds)
+      interests.push({ scopeId, collection: "property-values", id });
+  }
+  return [...new Map(interests.map((interest) => [JSON.stringify(interest), interest])).values()];
+}
+
+export function windowPublicationInterests(client: QueryClient, input: unknown) {
+  const parsed = databaseWindowReferenceSchema.safeParse(input);
+  return parsed.success
+    ? recordPublicationInterests(client, parsed.data.cacheId, parsed.data.recordIds)
+    : [];
+}

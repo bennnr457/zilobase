@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { recordPublicationInterests } from "../cache-references";
 import { sharedClient } from "../../data/client";
-import { useSharedDataRevision } from "../../data/react";
+import { useSharedDataInterests } from "../../data/react";
 import { useZilobaseFeatures } from "../../shared/context";
 import { changeDatabaseRow } from "../commands";
 import type { DatabaseBootstrapResponse, DatabaseRecordEntity } from "../core/entities";
@@ -72,11 +73,21 @@ export function useProjectedDatabaseRecords(input: {
   const store = useDatabaseController();
   const sessionId = useDatabaseSessionId();
   const { queryClient } = useZilobaseFeatures();
-  const revision = useSharedDataRevision(queryClient);
   const owner = input.databaseId
     ? sharedClient(queryClient).database(input.databaseId, sessionId)
     : undefined;
   const interactions = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const interests = useMemo(
+    () =>
+      recordPublicationInterests(
+        queryClient,
+        owner?.session.id,
+        input.records.map(({ id }) => id),
+      ),
+    [queryClient, owner, input.records],
+  );
+  const revision = useSharedDataInterests(queryClient, interests);
+
   const key = useRef({});
   useEffect(() => {
     if (input.dataSourceId)

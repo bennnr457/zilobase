@@ -1,8 +1,13 @@
 import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { useSharedDataRevision } from "../../data/react";
+import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
+import { useSharedDataInterests } from "../../data/react";
 import { useZilobaseFeatures } from "../../shared/context";
-import { resolveDatabaseBootstrap, resolveRecordWindow } from "../cache-references";
+import {
+  bootstrapPublicationInterests,
+  windowPublicationInterests,
+  resolveDatabaseBootstrap,
+  resolveRecordWindow,
+} from "../cache-references";
 import { databaseViewQueryHash } from "../views/query-hash";
 import { getDatabaseInitialPageSize } from "../views/view-evaluation";
 import { databaseWindowQueryKey } from "./keys";
@@ -40,7 +45,11 @@ export function useDatabaseRecords(
   );
   const getSnapshot = () => confirmedWindowBootstrap(queryClient, sessionId, requestedScope);
   const bootstrapReference = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  const revision = useSharedDataRevision(queryClient);
+  const metadataInterests = useMemo(
+    () => bootstrapPublicationInterests(queryClient, bootstrapReference),
+    [queryClient, bootstrapReference],
+  );
+  const revision = useSharedDataInterests(queryClient, metadataInterests);
   const bootstrap = useMemo(
     () => resolveDatabaseBootstrap(queryClient, bootstrapReference, true),
     [queryClient, bootstrapReference, revision],
@@ -94,6 +103,26 @@ export function useDatabaseRecords(
     staleTime: 30_000,
   });
   const query = useInfiniteQuery(options);
+  const reference = query.data?.pages.at(-1);
+  const interests = useMemo(
+    () => windowPublicationInterests(queryClient, reference),
+    [queryClient, reference, revision],
+  );
+  const windowRevision = useSharedDataInterests(queryClient, interests);
+  const previousRecords = useRef<import("../core/entities").DatabaseRecordEntity[]>([]);
+  const latest = useMemo(() => {
+    const result = resolveRecordWindow(queryClient, reference);
+    if (result) {
+      const previous = previousRecords.current;
+      if (
+        previous.length === result.records.length &&
+        result.records.every((record, index) => record === previous[index])
+      )
+        result.records = previous;
+      else previousRecords.current = result.records;
+    }
+    return result;
+  }, [queryClient, reference, windowRevision]);
 
   if (!scope) {
     return {
@@ -113,7 +142,6 @@ export function useDatabaseRecords(
     };
   }
 
-  const latest = resolveRecordWindow(queryClient, query.data?.pages.at(-1));
   const error =
     query.error instanceof Error
       ? query.error
