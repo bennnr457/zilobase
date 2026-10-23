@@ -188,6 +188,9 @@ export function databaseWindowQueryOptions(
     retry: (failures, error) =>
       !isViewQueryChangedError(error) && shouldRetryQuery(failures, error),
     initialPageParam: { limit: pageSize, snapshot: undefined },
+    // Pages are cumulative windows, not disjoint slices. Retain the largest
+    // window and its own page parameter so recovery reads it exactly once.
+    maxPages: 1,
     queryFn: async ({ client, pageParam, signal }): Promise<DatabaseWindowReference> => {
       const owner = sharedClient(client);
       const entities = owner.database(scope.databaseId, sessionId);

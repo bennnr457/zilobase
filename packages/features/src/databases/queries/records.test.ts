@@ -17,6 +17,7 @@ import {
 } from "./records";
 import type { DatabaseBootstrapResponse, DatabaseRecordWindowResponse } from "../core/entities";
 import type { ApiFetcher } from "../../shared/api-fetcher";
+import { InfiniteQueryObserver } from "@tanstack/react-query";
 
 function windowResponse(
   overrides: Partial<DatabaseRecordWindowResponse> = {},
@@ -87,6 +88,51 @@ test("window key uses host root with source/query segments", () => {
     "q1",
     false,
   ]);
+});
+
+test("cumulative pagination retains the latest limit and recovers it in one read", async () => {
+  const client = new QueryClient();
+  const limits: number[] = [];
+  const options = databaseWindowQueryOptions(
+    async () => {
+      throw new Error("unused");
+    },
+    "session",
+    scope,
+    50,
+  );
+  const observer = new InfiniteQueryObserver(client, {
+    ...options,
+    queryFn: async ({ pageParam }) => {
+      limits.push(pageParam.limit);
+      return {
+        cacheId: "cache",
+        dataSourceId: scope.dataSourceId,
+        queryHash: scope.queryHash,
+        databaseVersion: 1,
+        dataSourceVersion: 1,
+        offset: 0,
+        recordIds: Array.from({ length: pageParam.limit }, (_, i) => String(i)),
+        hasMore: true,
+        totalCount: 200,
+        snapshot: "snapshot",
+      };
+    },
+  });
+  const unsubscribe = observer.subscribe(() => {});
+  try {
+    await observer.refetch();
+    await observer.fetchNextPage();
+    await observer.fetchNextPage();
+    assert.deepEqual(limits.splice(0), [50, 100, 150]);
+    assert.equal(observer.getCurrentResult().data?.pages.length, 1);
+    await client.invalidateQueries({ queryKey: options.queryKey });
+    assert.deepEqual(limits, [150]);
+    assert.equal(observer.getCurrentResult().data?.pages[0]?.recordIds.length, 150);
+  } finally {
+    unsubscribe();
+    client.clear();
+  }
 });
 
 test("window key splits by query hash, not by view", () => {
