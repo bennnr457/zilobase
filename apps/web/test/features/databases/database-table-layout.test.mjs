@@ -22,7 +22,8 @@ export function register({ readSource, assert, loadModule, test }) {
     assert.match(gridSource, /size: getColumnWidth\(columnWidths, id\)/);
     assert.doesNotMatch(tableSource, /key === ADD_PROPERTY_COLUMN_ID\s*\? undefined/);
     assert.match(tableSource, /\{header\}\s*<DataGridTableBody>/);
-    assert.match(tableViewSource, /header=\{renderTableHeader\("table"\)\}/);
+    assert.match(tableViewSource, /\{renderTableHeader\("sticky"\)\}/);
+    assert.doesNotMatch(tableViewSource, /header=\{renderTableHeader/);
   });
 
   test("add-property menu opens below the property insertion point", async () => {

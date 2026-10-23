@@ -801,6 +801,11 @@
     min-width: var(--database-inline-scroll-view-width, 100%);
   }
 
+  /* Keep header and cell layers below neighboring page panels such as comments. */
+  .database-table-wrap {
+    isolation: isolate;
+  }
+
   .database-table-scroll {
     overflow-y: clip;
   }
@@ -816,19 +821,6 @@
 
   .database-table-sticky-header::-webkit-scrollbar {
     display: none;
-  }
-
-  .database-table-scroll .database-table > thead > tr > th {
-    @apply sticky top-0 z-50 bg-surface-canvas;
-  }
-
-  :is([data-page-side-pane-panel], [data-page-dialog-panel])
-    .database-table-scroll
-    .database-table
-    > thead
-    > tr
-    > th {
-    @apply dark:bg-surface-navigation;
   }
 
   .database-table-groups {

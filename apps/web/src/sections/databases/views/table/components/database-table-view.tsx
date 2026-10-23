@@ -1549,22 +1549,20 @@ export function DatabaseTableView() {
             {!isInlineTableScrollEnabled ? (
               <DatabaseRowDropLine depth={rowDropLineDepth} top={rowDropLineTop} />
             ) : null}
-            {isTableGrouped ? (
-              <div
-                className="database-table-sticky-header database-inline-scroll"
-                ref={stickyHeaderScrollRef}
-              >
-                <div className="database-table-scroll-content database-inline-scroll-content">
-                  <DatabaseTable
-                    columnKeys={columnKeys}
-                    columnWidths={columnWidths}
-                    tableMinWidth={tableMinWidth}
-                  >
-                    {renderTableHeader("sticky")}
-                  </DatabaseTable>
-                </div>
+            <div
+              className="database-table-sticky-header database-inline-scroll"
+              ref={stickyHeaderScrollRef}
+            >
+              <div className="database-table-scroll-content database-inline-scroll-content">
+                <DatabaseTable
+                  columnKeys={columnKeys}
+                  columnWidths={columnWidths}
+                  tableMinWidth={tableMinWidth}
+                >
+                  {renderTableHeader("sticky")}
+                </DatabaseTable>
               </div>
-            ) : null}
+            </div>
             <div
               className="database-table-scroll database-inline-scroll relative"
               ref={tableScrollRef}
@@ -1676,7 +1674,6 @@ export function DatabaseTableView() {
                         />
                       ) : undefined
                     }
-                    header={renderTableHeader("table")}
                     measurementKey={tableMeasurementKey}
                     onRowsRendered={scheduleMeasureRows}
                     renderRow={renderTableRow}

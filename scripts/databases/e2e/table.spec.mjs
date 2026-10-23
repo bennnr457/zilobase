@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 test("ReUI renders the actual table at 32px and keeps single-click editors and page opening", async ({
   page,
 }) => {
-  await expect(page.locator('table[data-slot="data-grid-table"]')).toHaveCount(1);
+  await expect(page.locator('table[data-slot="data-grid-table"]')).toHaveCount(2);
   const heights = await page
     .locator("[data-database-row-id]")
     .evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().height));
@@ -109,12 +109,14 @@ test("Add property fills only the database width inside a narrow editor", async 
   const databaseWidth = () =>
     page.locator(".database-table-wrap").evaluate((node) => node.getBoundingClientRect().width);
   const initialWidth = await databaseWidth();
-  await expect.poll(widths).toEqual([{ table: initialWidth, addProperty: initialWidth - 250 }]);
+  await expect
+    .poll(widths)
+    .toEqual(Array(2).fill({ table: initialWidth, addProperty: initialWidth - 250 }));
 
   await options(page, { columns: ["text", "number", "status"] });
-  await expect.poll(widths).toEqual([{ table: 1050, addProperty: 200 }]);
+  await expect.poll(widths).toEqual(Array(2).fill({ table: 1050, addProperty: 200 }));
   await grid(page).evaluate((node) => (node.scrollLeft = node.scrollWidth));
-  await expect.poll(widths).toEqual([{ table: 1050, addProperty: 200 }]);
+  await expect.poll(widths).toEqual(Array(2).fill({ table: 1050, addProperty: 200 }));
 
   await options(page, { grouped: true });
   await expect(page.locator(".database-table-group")).toHaveCount(3);
@@ -129,6 +131,86 @@ test("Add property fills only the database width inside a narrow editor", async 
   await expect
     .poll(widths)
     .toEqual(Array(4).fill({ table: resizedWidth, addProperty: resizedWidth - 250 }));
+});
+
+for (const mode of ["ungrouped", "grouped", "nested"]) {
+  test(`${mode} table headers stick together and stay aligned during page and horizontal scrolling`, async ({
+    page,
+  }) => {
+    await options(page, {
+      count: mode === "nested" ? 8 : 40,
+      embedded: true,
+      narrow: true,
+      grouped: mode === "grouped",
+      nested: mode === "nested",
+    });
+    const header = page.locator(".database-table-sticky-header");
+    await expect(header).toHaveCount(1);
+    await expect(page.locator(".database-table-wrap")).toHaveAttribute(
+      "data-inline-scroll",
+      "true",
+    );
+    await expect(grid(page).locator("thead")).toHaveCount(0);
+    const pageScroll = page.locator("[data-page-scroll-viewport]");
+    await expect(grid(page)).toHaveAttribute("aria-rowcount", mode === "nested" ? "9" : "41");
+    await pageScroll.evaluate(async (node) => {
+      node.style.height = "200px";
+      // Let resize observers update the inline gutters before scrolling.
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+    });
+    await expect.poll(() => pageScroll.evaluate((node) => node.scrollHeight)).toBeGreaterThan(500);
+    await pageScroll.evaluate((node) => (node.scrollTop = 200));
+    await expect.poll(async () => (await header.boundingBox()).y).toBe(0);
+    const headerTops = await header
+      .locator("th")
+      .evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().top));
+    expect(headerTops.every((top) => top === headerTops[0])).toBe(true);
+    await grid(page).evaluate((node) => (node.scrollLeft = 180));
+    await expect.poll(() => header.evaluate((node) => node.scrollLeft)).toBe(180);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const header = document.querySelector(".database-table-sticky-header");
+          const row = document.querySelector("[data-database-row-id]");
+          return Math.max(
+            ...[...header.querySelectorAll("th")].map((cell, index) =>
+              Math.abs(
+                cell.getBoundingClientRect().left - row.cells[index].getBoundingClientRect().left,
+              ),
+            ),
+          );
+        }),
+      )
+      .toBeLessThan(0.5);
+    await header.evaluate((node) => (node.scrollLeft = 80));
+    await expect.poll(() => grid(page).evaluate((node) => node.scrollLeft)).toBe(80);
+    await header.getByRole("button", { name: "Add property", exact: true }).click();
+    await expect(page.getByRole("menuitem", { name: "Text", exact: true })).toBeVisible();
+  });
+}
+
+test("comments cover the entire table header, including Add property", async ({ page }) => {
+  await options(page, { comments: true, embedded: true, columns: ["text"], count: 100 });
+  const comments = page.getByRole("region", { name: "Comments", exact: true });
+  await expect(comments).toBeVisible();
+  const header = page.locator(".database-table-sticky-header");
+  const addProperty = header.locator(".database-add-property-cell");
+  const bounds = await addProperty.boundingBox();
+  const panel = await comments.boundingBox();
+  const x = Math.max(bounds.x, panel.x) + 20;
+  const y = Math.max(bounds.y, panel.y) + 10;
+  expect(x).toBeLessThan(Math.min(bounds.x + bounds.width, panel.x + panel.width));
+  expect(y).toBeLessThan(Math.min(bounds.y + bounds.height, panel.y + panel.height));
+  expect(
+    await page.evaluate(
+      ({ x, y }) => !!document.elementFromPoint(x, y)?.closest(".floating-comments"),
+      {
+        x,
+        y,
+      },
+    ),
+  ).toBe(true);
 });
 
 test("keyboard edits and multi-cell paste use existing saves and one undo", async ({ page }) => {

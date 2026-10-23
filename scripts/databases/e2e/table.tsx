@@ -184,6 +184,7 @@ function Proof() {
     second: false,
     count: 8,
     grouped: false,
+    comments: false,
     nested: false,
     wrap: false,
     editable: true,
@@ -449,23 +450,39 @@ function Proof() {
                 </button>
               </div>
             ) : null}
-            <div className="database-scroll-section relative" contentEditable={false}>
-              <DatabaseViewProvider value={value}>
-                {options.view === "list" ? (
-                  <DatabaseListView />
-                ) : options.view === "gallery" ? (
-                  <DatabaseGalleryView />
-                ) : options.view === "kanban" ? (
-                  <DatabaseKanbanView />
-                ) : (
-                  <DatabaseTableView />
-                )}
-                {options.second ? (
-                  <section data-secondary-database>
-                    <DatabaseTableView />
+            <div
+              className={options.comments ? "editor-comments-body" : undefined}
+              data-comments-open={options.comments ? "true" : undefined}
+            >
+              <div className={options.comments ? "editor-comments-document" : undefined}>
+                <div className="database-scroll-section relative" contentEditable={false}>
+                  <DatabaseViewProvider value={value}>
+                    {options.view === "list" ? (
+                      <DatabaseListView />
+                    ) : options.view === "gallery" ? (
+                      <DatabaseGalleryView />
+                    ) : options.view === "kanban" ? (
+                      <DatabaseKanbanView />
+                    ) : (
+                      <DatabaseTableView />
+                    )}
+                    {options.second ? (
+                      <section data-secondary-database>
+                        <DatabaseTableView />
+                      </section>
+                    ) : null}
+                  </DatabaseViewProvider>
+                </div>
+              </div>
+              {options.comments ? (
+                <aside className="editor-comments-window" aria-label="Page comments">
+                  <section className="floating-comments" aria-label="Comments">
+                    <header className="p-4">Comments</header>
+                    <p className="p-4">No open comments.</p>
+                    <div className="p-4">Add a page comment…</div>
                   </section>
-                ) : null}
-              </DatabaseViewProvider>
+                </aside>
+              ) : null}
             </div>
           </main>
         </div>
