@@ -138,14 +138,14 @@ export function useChangeDatabaseRow() {
   };
 }
 
-export function useDatabaseInteractionRecovery() {
+export function useDatabaseInteractionRecovery(hostId?: string) {
   const store = useDatabaseController();
   const interactions = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   return {
     synchronizationError: useSyncExternalStore(
       store.subscribe,
-      store.getSynchronizationError,
-      store.getSynchronizationError,
+      () => store.getSynchronizationError(hostId),
+      () => store.getSynchronizationError(hostId),
     ),
     retry: () => store.retryUnconfirmed(),
     hasUnconfirmed: interactions.some(({ status }) => status === "unconfirmed"),

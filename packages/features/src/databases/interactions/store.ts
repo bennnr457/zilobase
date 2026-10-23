@@ -32,7 +32,7 @@ import {
 } from "../mutations/execute";
 import { DatabaseCommandState, targetsForCommand } from "../mutations/pending";
 import { invalidateDatabaseQueries } from "../queries/invalidation";
-import { refreshConfirmedDatabaseReads } from "./confirmation";
+import { ConfirmedReadRefreshError, refreshConfirmedDatabaseReads } from "./confirmation";
 
 import {
   projectRecordInteractions,
@@ -73,11 +73,58 @@ type Window = { dataSourceId: string; sourceVersion: number | null };
 /** Session-owned intentions. QueryClient remains an unmodified server snapshot. */
 export class DatabaseController {
   readonly commandState = new DatabaseCommandState();
-  private synchronizationError: Error | null = null;
-  getSynchronizationError = () => this.synchronizationError;
-  private reportSynchronization(cause: unknown) {
-    this.synchronizationError = new DatabaseReconciliationError(cause);
+  private synchronizationErrors = new Map<
+    string,
+    Map<
+      string,
+      {
+        error: Error;
+        reads: Array<{ query: import("@tanstack/react-query").Query; count: number }>;
+      }
+    >
+  >();
+  getSynchronizationError = (hostId?: string): Error | null => {
+    const groups = hostId
+      ? [this.synchronizationErrors.get(hostId)]
+      : this.synchronizationErrors.values();
+    for (const group of groups) for (const failure of group?.values() ?? []) return failure.error;
+    return null;
+  };
+  private reportSynchronization(
+    hostId: string,
+    cause: unknown,
+    queryKey: readonly unknown[] = ["db", this.sessionId, hostId],
+  ) {
+    if (cause instanceof ConfirmedReadRefreshError) queryKey = cause.queryKey;
+    const errors = this.synchronizationErrors.get(hostId) ?? new Map();
+    errors.set(JSON.stringify(queryKey), {
+      error: new DatabaseReconciliationError(cause),
+      reads: this.queryClient
+        .getQueryCache()
+        .findAll({ queryKey })
+        .map((query) => ({ query, count: query.state.dataUpdateCount })),
+    });
+    this.synchronizationErrors.set(hostId, errors);
     this.publish(this.snapshot);
+  }
+  private recoverSynchronization() {
+    let changed = false;
+    for (const [host, errors] of this.synchronizationErrors) {
+      for (const [key, failure] of errors) {
+        if (
+          failure.reads.length &&
+          failure.reads.every(
+            ({ query, count }) =>
+              query.state.status === "success" && query.state.dataUpdateCount > count,
+          )
+        ) {
+          errors.delete(key);
+          changed = true;
+        }
+      }
+      if (!errors.size) this.synchronizationErrors.delete(host);
+    }
+    if (changed) this.publish(this.snapshot);
   }
   private snapshot: readonly DatabaseIntention[] = [];
   private listeners = new Set<() => void>();
@@ -97,7 +144,10 @@ export class DatabaseController {
     private apiFetch: ApiFetcher,
     public lifecycle: ClientLifecycle = defaultClientLifecycle,
   ) {
-    this.unsubscribe = queryClient.getQueryCache().subscribe(() => this.collect());
+    this.unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      this.recoverSynchronization();
+      this.collect();
+    });
   }
   getSnapshot = () => this.snapshot;
   subscribe = (listener: () => void) => {
@@ -484,7 +534,7 @@ export class DatabaseController {
             job.sharedResultsConfirmed = contiguous && results && admitted === "published";
           } catch (error) {
             job.synchronizationFailed = true;
-            this.reportSynchronization(error);
+            this.reportSynchronization(job.input.databaseId, error);
           }
         }
         if (
@@ -512,7 +562,7 @@ export class DatabaseController {
             job.sharedPresentationConfirmed = true;
           } catch (error) {
             job.synchronizationFailed = true;
-            this.reportSynchronization(error);
+            this.reportSynchronization(job.input.databaseId, error);
           }
         }
         return ack;
@@ -780,14 +830,9 @@ export class DatabaseController {
         ack,
         hosts,
       ).catch((cause) => {
-        if (!this.disposed) this.reportSynchronization(cause);
+        if (!this.disposed) this.reportSynchronization(job.input.databaseId, cause);
       });
     for (const host of hosts) {
-      const recoveryReads = this.queryClient
-        .getQueryCache()
-        .findAll({ queryKey: ["db", this.sessionId, host] })
-        .filter((query) => query.isActive())
-        .map((query) => ({ query, before: query.state.dataUpdatedAt }));
       invalidateDatabaseQueries(this.queryClient, this.sessionId, host);
       // React Query normally swallows refetch failures. Explicitly surface them,
       // without rejecting the already acknowledged write or dropping its preview.
@@ -796,22 +841,8 @@ export class DatabaseController {
           { queryKey: ["db", this.sessionId, host], type: "active" },
           { throwOnError: true, cancelRefetch: false },
         )
-        .then(() => {
-          if (
-            !this.disposed &&
-            this.synchronizationError &&
-            recoveryReads.length > 0 &&
-            recoveryReads.every(
-              ({ query, before }) =>
-                query.state.status === "success" && query.state.dataUpdatedAt > before,
-            )
-          ) {
-            this.synchronizationError = null;
-            this.publish(this.snapshot);
-          }
-        })
         .catch((cause) => {
-          if (!this.disposed) this.reportSynchronization(cause);
+          if (!this.disposed) this.reportSynchronization(host, cause);
         });
     }
   }
@@ -875,6 +906,7 @@ export class DatabaseController {
     }
     this.jobs.clear();
     this.failedCreations.clear();
+    this.synchronizationErrors.clear();
     this.windows.clear();
     this.identities.clear();
     this.pageIdentities.clear();

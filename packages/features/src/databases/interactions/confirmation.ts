@@ -14,6 +14,15 @@ const lifecycleResult = z.object({
   restoredPageIds: z.array(z.string()).optional(),
 });
 
+export class ConfirmedReadRefreshError extends Error {
+  constructor(
+    readonly queryKey: readonly unknown[],
+    cause: unknown,
+  ) {
+    super("Confirmed database read could not refresh", { cause });
+  }
+}
+
 /** Confirmation side effects also run when the original mutation hook is gone. */
 export async function refreshConfirmedDatabaseReads(
   client: QueryClient,
@@ -24,7 +33,11 @@ export async function refreshConfirmedDatabaseReads(
 ) {
   const refreshes: Promise<unknown>[] = [];
   const invalidate = (queryKey: readonly unknown[]) =>
-    refreshes.push(client.invalidateQueries({ queryKey }, { throwOnError: true }));
+    refreshes.push(
+      client.invalidateQueries({ queryKey }, { throwOnError: true }).catch((cause) => {
+        throw new ConfirmedReadRefreshError(queryKey, cause);
+      }),
+    );
   const workspaces = new Set<string>();
   for (const [, value] of client.getQueriesData({ queryKey: ["db", sessionId] })) {
     const parsed = resolveDatabaseBootstrap(client, value);

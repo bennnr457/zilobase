@@ -540,3 +540,24 @@ test("queued cell edits coalesce through the existing source scheduler before fi
     h.close();
   }
 });
+
+test("synchronization recovery clears only the failed host and read category", () => {
+  const h = harness();
+  const database = ["db", "session", "host", "bootstrap"];
+  const navigation = ["pages", "workspace", "nav"];
+  const other = ["db", "session", "other", "bootstrap"];
+  try {
+    for (const key of [database, navigation, other]) h.client.setQueryData(key, {});
+    h.store["reportSynchronization"]("host", new Error("database"), database);
+    h.store["reportSynchronization"]("host", new Error("navigation"), navigation);
+    assert.equal(h.store.getSynchronizationError("other"), null);
+    h.client.setQueryData(other, { newer: true });
+    assert.ok(h.store.getSynchronizationError("host"));
+    h.client.setQueryData(database, { newer: true });
+    assert.ok(h.store.getSynchronizationError("host"), "navigation is still failed");
+    h.client.setQueryData(navigation, { newer: true });
+    assert.equal(h.store.getSynchronizationError("host"), null);
+  } finally {
+    h.close();
+  }
+});

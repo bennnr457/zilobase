@@ -17,7 +17,7 @@ function subscribeConnectivity(listener: () => void) {
 
 export function DatabaseSaveStatus({ databaseId }: { databaseId: string }) {
   const state = useDatabaseEntityCommandState({ hostDatabaseId: databaseId });
-  const recovery = useDatabaseInteractionRecovery();
+  const recovery = useDatabaseInteractionRecovery(databaseId);
   const online = useSyncExternalStore(
     subscribeConnectivity,
     () => navigator.onLine,
