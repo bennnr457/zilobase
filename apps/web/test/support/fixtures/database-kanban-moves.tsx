@@ -265,6 +265,7 @@ export function mountRecordDrops(container: HTMLElement) {
       render();
     },
     confirm: () => manual.confirm(),
+    cancel: () => manual.cancel(),
     hasSortConfirmation: () => manual.pending,
     unmount: () => {
       flushSync(() => root.unmount());

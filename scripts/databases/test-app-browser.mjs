@@ -370,12 +370,14 @@ try {
     release = resolve;
   });
   let intercepted = false;
+  const dragCommands = [];
   await page.route(`**${sourcePath}`, async (route) => {
     if (
       route.request().method() === "POST" &&
       route.request().postDataJSON().command.type === "row.change"
     ) {
       intercepted = true;
+      dragCommands.push(route.request().postDataJSON().command);
       await held;
     }
     await route.continue();
@@ -404,6 +406,10 @@ try {
   );
   release();
   assert.ok((await saved).ok());
+  assert.equal(dragCommands.length, 1, "A completed embedded Kanban drop submits one command");
+  assert.equal(dragCommands[0].type, "row.change");
+  assert.ok(dragCommands[0].placement);
+  assert.ok(dragCommands[0].valuesByPropertyId);
   await expect(peerAlpha).toBeChecked({ timeout: 20000 });
   assert.ok(
     peerFrames.some((frame) => frame.type === "database.mutation"),

@@ -15,6 +15,10 @@ test("native Kanban drag remains projected through delayed save and stale refres
     .dragTo(page.locator('[data-column="Done"]'), { targetPosition: { x: 100, y: 100 } });
   await expect(page.locator('[data-column="Done"] [data-row="a"]')).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.board.requests.length)).toBe(1);
+  const command = await page.evaluate(() => window.board.requests[0].command);
+  expect(command.type).toBe("row.change");
+  expect(command.valuesByPropertyId).toEqual({ status: "Done" });
+  expect(command.placement).toBeDefined();
   await page.evaluate(() =>
     window.board.refresh(
       ["a", "b", "c"],
@@ -90,4 +94,50 @@ test("browser demo receipts survive replay and refresh without any write request
   expect(result.ack.sourceVersions["demo-source"]).toBe(8);
   expect(result.order).toEqual(["other-row", "demo-row"]);
   expect(writes).toEqual([]);
+});
+
+test("same-column reorder submits placement without changing status", async ({ page }) => {
+  await page.locator('[data-row="c"]').dragTo(page.locator('[data-row="b"]'), {
+    targetPosition: { x: 50, y: 1 },
+  });
+  await expect.poll(() => page.evaluate(() => window.board.requests.length)).toBe(1);
+  const command = await page.evaluate(() => window.board.requests[0].command);
+  expect(command.type).toBe("row.change");
+  expect(command.placement).toEqual({ afterRowId: "a", beforeRowId: "b" });
+  expect(command.valuesByPropertyId).toBeUndefined();
+});
+
+test("sorted moves require confirmation, support cancellation, and retain one atomic move", async ({
+  page,
+}) => {
+  await page.evaluate(() => window.board.setSorted());
+  await page.locator('[data-row="a"]').dragTo(page.locator('[data-column="Done"]'));
+  await expect.poll(() => page.evaluate(() => window.board.hasSortConfirmation())).toBe(true);
+  expect(await page.evaluate(() => window.board.requests.length)).toBe(0);
+  await page.evaluate(() => window.board.cancel());
+  await expect(page.locator('[data-column="Todo"] [data-row="a"]')).toBeVisible();
+  await page.locator('[data-row="a"]').dragTo(page.locator('[data-column="Done"]'));
+  await page.evaluate(() => window.board.confirm());
+  await expect.poll(() => page.evaluate(() => window.board.requests.length)).toBe(1);
+  const command = await page.evaluate(() => window.board.requests[0].command);
+  expect(command.type).toBe("row.change");
+  expect(command.clearSortViewId).toBe("view-1");
+  expect(command.valuesByPropertyId).toEqual({ status: "Done" });
+  expect(command.placement).toBeDefined();
+});
+
+test("rapid repeated moves project the latest destination before earlier acknowledgements", async ({
+  page,
+}) => {
+  await page.locator('[data-row="a"]').dragTo(page.locator('[data-column="Done"]'));
+  await expect(page.locator('[data-column="Done"] [data-row="a"]')).toBeVisible();
+  await page.locator('[data-row="a"]').dragTo(page.locator('[data-column="Todo"]'));
+  await expect(page.locator('[data-column="Todo"] [data-row="a"]')).toBeVisible();
+  await page.evaluate(() => window.board.requests[0].resolve(2));
+  await expect.poll(() => page.evaluate(() => window.board.requests.length)).toBe(2);
+  await expect(page.locator('[data-column="Todo"] [data-row="a"]')).toBeVisible();
+  await page.evaluate(() => window.board.requests[1].resolve(3));
+  expect(
+    await page.evaluate(() => window.board.requests.map(({ command }) => command.type)),
+  ).toEqual(["row.change", "row.change"]);
 });
