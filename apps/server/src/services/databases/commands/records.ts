@@ -129,6 +129,26 @@ async function activeRows(context: DatabaseCommandContext, dataSourceId: string)
   );
 }
 
+/** Ordering changes need the complete sequence; content edits need only their target. */
+export async function readRowsForChange(
+  context: DatabaseCommandContext,
+  dataSourceId: string,
+  command: Extract<DataSourceCommand, { type: "row.change" }>,
+) {
+  if (command.placement || command.hierarchy) return activeRows(context, dataSourceId);
+  return context.transaction
+    .select({ id: databaseRow.id, orderKey: databaseRow.orderKey, pageId: databaseRow.pageId })
+    .from(databaseRow)
+    .where(
+      and(
+        eq(databaseRow.id, command.rowId),
+        eq(databaseRow.dataSourceId, dataSourceId),
+        isNull(databaseRow.deletedAt),
+      ),
+    )
+    .limit(1);
+}
+
 async function allocateOrderKey(
   context: DatabaseCommandContext,
   dataSourceId: string,
@@ -421,7 +441,7 @@ async function changeRow(
 ): Promise<DatabaseCommandDispatchResult<DatabaseRecordEntity>> {
   const source = await sourceRecord(context);
   await lockDatabaseRowOrdering(context.transaction, source.id);
-  const rows = await activeRows(context, source.id);
+  const rows = await readRowsForChange(context, source.id, command);
   const row = rows.find(({ id }) => id === command.rowId);
   if (!row) throw new RowMoveConflictError(command.rowId);
   const placement = command.placement

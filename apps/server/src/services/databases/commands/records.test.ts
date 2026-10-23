@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
+import { PgDialect } from "drizzle-orm/pg-core";
+import type { SQL } from "drizzle-orm";
+import type { DatabaseCommandContext } from "./framework";
 
 import { RowMoveConflictError } from "./framework";
-import { resolveAnchoredRowIndex } from "./records";
+import { readRowsForChange, resolveAnchoredRowIndex } from "./records";
 
 const rows = ["row-a", "row-hidden", "row-b", "row-c"].map((id) => ({ id }));
 
@@ -81,4 +84,49 @@ test("no anchors appends within the complete canonical sequence", () => {
     rows,
   });
   assert.equal(placement.index, rows.length);
+});
+
+test("content changes select one active row in the authorized source; placement retains the complete order", async () => {
+  const conditions: SQL[] = [];
+  let limits = 0;
+  const target = { id: "row-a", pageId: "page-a", orderKey: "1024" };
+  const context = {
+    transaction: {
+      select: () => ({
+        from: () => ({
+          where: (condition: SQL) => {
+            conditions.push(condition);
+            return {
+              then: (resolve: (rows: (typeof target)[]) => unknown) =>
+                Promise.resolve(resolve([target])),
+              limit: async (limit: number) => {
+                assert.equal(limit, 1);
+                limits++;
+                return [target];
+              },
+            };
+          },
+        }),
+      }),
+    },
+  } as unknown as DatabaseCommandContext;
+  assert.deepEqual(
+    await readRowsForChange(context, "source", {
+      type: "row.change",
+      rowId: "row-a",
+      title: "Updated",
+    }),
+    [target],
+  );
+  const bounded = new PgDialect().sqlToQuery(conditions[0]!);
+  assert.deepEqual(bounded.params, ["row-a", "source"]);
+  assert.match(bounded.sql, /"deleted_at" is null/);
+  assert.equal(limits, 1);
+  await readRowsForChange(context, "source", {
+    type: "row.change",
+    rowId: "row-a",
+    placement: { afterRowId: null, beforeRowId: null },
+  });
+  assert.deepEqual(new PgDialect().sqlToQuery(conditions[1]!).params, ["source"]);
+  assert.equal(limits, 1);
 });
