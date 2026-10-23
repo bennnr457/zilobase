@@ -18,6 +18,7 @@ export type RecordEffect = {
 
 export type DatabaseIntention = MetadataIntention & {
   id: string;
+  hostId?: string;
   creation?: DatabaseBootstrapResponse;
   effects: readonly RecordEffect[];
   status: DatabaseOperationStatus;

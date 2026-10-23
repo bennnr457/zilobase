@@ -28,6 +28,17 @@ export function pendingKeyForTarget(target: DatabaseCommandTarget): string {
 export class DatabaseCommandState {
   private states = new Map<string, DatabaseEntityCommandState>();
   private listeners = new Set<() => void>();
+  private scopedListeners = new Map<string, Set<() => void>>();
+  subscribeTo = (target: DatabaseCommandTarget, listener: () => void) => {
+    const key = pendingKeyForTarget(target);
+    const listeners = this.scopedListeners.get(key) ?? new Set();
+    this.scopedListeners.set(key, listeners);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+      if (!listeners.size) this.scopedListeners.delete(key);
+    };
+  };
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => {
@@ -37,8 +48,12 @@ export class DatabaseCommandState {
   get = (target: DatabaseCommandTarget): DatabaseEntityCommandState =>
     this.states.get(pendingKeyForTarget(target)) ?? empty;
   hasPending = () => [...this.states.values()].some(({ isPending }) => isPending);
-  private publish() {
-    for (const listener of this.listeners) listener();
+  private publish(targets?: DatabaseCommandTarget[]) {
+    const listeners = new Set(this.listeners);
+    const keys = targets?.map(pendingKeyForTarget) ?? [...this.scopedListeners.keys()];
+    for (const key of keys)
+      for (const listener of this.scopedListeners.get(key) ?? []) listeners.add(listener);
+    for (const listener of listeners) listener();
   }
   begin(targets: DatabaseCommandTarget[]) {
     for (const target of targets) {
@@ -49,7 +64,7 @@ export class DatabaseCommandState {
         pendingCount: current.pendingCount + 1,
       });
     }
-    this.publish();
+    this.publish(targets);
   }
   end(targets: DatabaseCommandTarget[], error?: Error | null) {
     for (const target of targets) {
@@ -61,12 +76,12 @@ export class DatabaseCommandState {
         pendingCount,
       });
     }
-    this.publish();
+    this.publish(targets);
   }
   report(targets: DatabaseCommandTarget[], error: Error) {
     for (const target of targets)
       this.states.set(pendingKeyForTarget(target), { ...this.get(target), error });
-    this.publish();
+    this.publish(targets);
   }
   clear() {
     this.states.clear();

@@ -53,3 +53,22 @@ test("error sticks until same target succeeds", () => {
     state.clear();
   }
 });
+
+test("target subscriptions ignore unrelated commands, coalesce shared listeners and unsubscribe", () => {
+  const state = new DatabaseCommandState();
+  const a = { dataSourceId: "a" },
+    b = { dataSourceId: "b" };
+  let calls = 0;
+  const listener = () => calls++;
+  const stop = state.subscribeTo(a, listener);
+  state.subscribeTo({ ...a, rowId: "row" }, listener);
+  state.begin([b]);
+  assert.equal(calls, 0);
+  state.begin([a, { ...a, rowId: "row" }]);
+  assert.equal(calls, 1);
+  stop();
+  state.end([a]);
+  assert.equal(calls, 1);
+  state.clear();
+  assert.equal(calls, 2);
+});

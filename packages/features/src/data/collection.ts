@@ -179,17 +179,25 @@ export class EntityCollection<T extends { id: string }> {
     coverage?: Map<string, z.infer<typeof coverageSchema>>,
   ) {
     this.assertActive();
-    for (const entity of entities) {
-      if (JSON.stringify(this.collection.base.get(entity.id)) !== JSON.stringify(entity))
+    const changed = new Set(
+      entities
+        .filter(
+          (entity) =>
+            JSON.stringify(this.collection.base.get(entity.id)) !== JSON.stringify(entity),
+        )
+        .map((entity) => entity.id),
+    );
+    for (const entity of entities)
+      if (changed.has(entity.id))
         for (const retire of this.confirmations.get(entity.id) ?? []) retire();
-    }
     this.used = true;
     this.writer.begin({ immediate: true });
     for (const entity of entities) {
-      this.writer.write({
-        type: this.collection.base.has(entity.id) ? "update" : "insert",
-        value: entity,
-      });
+      if (changed.has(entity.id))
+        this.writer.write({
+          type: this.collection.base.has(entity.id) ? "update" : "insert",
+          value: entity,
+        });
       if (coverage) this.metadata().row.set(entity.id, coverage.get(entity.id));
       this.metadata().collection.delete(`removed:${entity.id}`);
     }

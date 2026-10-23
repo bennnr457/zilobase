@@ -37,7 +37,7 @@ export function useDatabaseListRowDrag(input: DatabaseListRowDragInput) {
   const [draggedRowId, setDraggedRowId] = useState<string | null>(null);
   const [isExternalDragActive, setIsExternalDragActive] = useState(false);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
-  const reorderRows = useChangeDatabaseRow();
+  const reorderRows = useChangeDatabaseRow({ dataSourceId: input.databaseId ?? undefined });
   const manualPlacement = useManualRecordPlacement();
 
   const clearDrag = useCallback(() => {

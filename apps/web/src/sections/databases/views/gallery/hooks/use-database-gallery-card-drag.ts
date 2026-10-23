@@ -54,7 +54,7 @@ export function useDatabaseGalleryCardDrag(input: DatabaseGalleryCardDragInput) 
   const [draggedRowId, setDraggedRowId] = useState<string | null>(null);
   const [isExternalDragActive, setIsExternalDragActive] = useState(false);
   const [dropTarget, setDropTarget] = useState<GalleryDropTarget | null>(null);
-  const reorderRows = useChangeDatabaseRow();
+  const reorderRows = useChangeDatabaseRow({ dataSourceId: input.databaseId ?? undefined });
 
   const clearDrag = useCallback(() => {
     dragOriginRef.current = null;

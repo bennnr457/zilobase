@@ -108,7 +108,7 @@ export function useDatabaseViewController({
   const updateProperty = useUpdateDatabaseProperty();
   const addRow = useAddDatabaseRow();
   const updateValue = useUpdateDatabasePropertyValue();
-  const changeRow = useChangeDatabaseRow();
+  const changeRow = useChangeDatabaseRow({ hostDatabaseId: databaseId ?? undefined });
   const { data: hostPage } = usePage(pageId, {
     refetchOnMount: false,
   });

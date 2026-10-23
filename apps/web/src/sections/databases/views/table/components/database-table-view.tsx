@@ -165,7 +165,7 @@ export function DatabaseTableView() {
     showPageIconInTitle: nameColumnShowPageIcon,
     subItemsSettings,
   } = useDatabaseUiContext();
-  const moveRow = useChangeDatabaseRow();
+  const moveRow = useChangeDatabaseRow({ dataSourceId: databaseId ?? undefined });
   const undoHistory = useUndoHistory();
   const loadedDatabaseId = requireDatabaseId(databaseId);
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { recordPublicationInterests } from "../cache-references";
 import { sharedClient } from "../../data/client";
 import { useSharedDataInterests } from "../../data/react";
@@ -15,8 +15,13 @@ export { submitRecordChange, type ChangeDatabaseRowInput } from "./record-change
 
 export function useDatabaseEntityCommandState(target: DatabaseCommandTarget) {
   const state = useDatabaseController().commandState;
+  const key = JSON.stringify(target);
+  const subscribe = useCallback(
+    (notify: () => void) => state.subscribeTo(target, notify),
+    [state, key],
+  );
   return useSyncExternalStore(
-    state.subscribe,
+    subscribe,
     () => state.get(target),
     () => state.get(target),
   );
@@ -26,6 +31,41 @@ export function useDatabaseController() {
   const { apiFetch, queryClient, lifecycle } = useZilobaseFeatures();
   const sessionId = useDatabaseSessionId();
   return databaseController(queryClient, sessionId, apiFetch, lifecycle);
+}
+
+/** Stable sparse selections prevent unrelated commands from rebuilding a view. */
+export function useDatabaseIntentions(
+  scope: { hostId?: string; sourceId?: string; metadataOnly?: boolean } = {},
+) {
+  const store = useDatabaseController();
+  const selection = useMemo(() => {
+    let previous: readonly import("./model").DatabaseIntention[] = [];
+    const read = () => {
+      const next = store
+        .getSnapshot()
+        .filter(
+          (item) =>
+            (!scope.hostId ||
+              item.hostId === scope.hostId ||
+              item.creation?.database.id === scope.hostId ||
+              item.metadataEffects?.some((effect) => effect.hostId === scope.hostId)) &&
+            (!scope.sourceId ||
+              item.effects.some((effect) => effect.dataSourceId === scope.sourceId) ||
+              item.metadataEffects?.some((effect) => effect.dataSourceId === scope.sourceId)) &&
+            (!scope.metadataOnly || item.creation || item.metadataEffects?.length),
+        );
+      if (next.length !== previous.length || next.some((item, index) => item !== previous[index]))
+        previous = next;
+      return previous;
+    };
+    const subscribe = (notify: () => void) =>
+      store.subscribe(() => {
+        const before = previous;
+        if (read() !== before) notify();
+      });
+    return { read, subscribe };
+  }, [store, scope.hostId, scope.sourceId, scope.metadataOnly]);
+  return useSyncExternalStore(selection.subscribe, selection.read, selection.read);
 }
 
 export function useDatabaseCreationFailed(databaseId: string | null) {
@@ -41,12 +81,7 @@ export function useProjectedDatabaseBootstrap(
   snapshot: DatabaseBootstrapResponse | undefined,
   hostId?: string,
 ) {
-  const controller = useDatabaseController();
-  const intentions = useSyncExternalStore(
-    controller.subscribe,
-    controller.getSnapshot,
-    controller.getSnapshot,
-  );
+  const intentions = useDatabaseIntentions({ hostId, metadataOnly: true });
   const base =
     snapshot ?? intentions.find((item) => item.creation?.database.id === hostId)?.creation;
   return useMemo(
@@ -76,7 +111,7 @@ export function useProjectedDatabaseRecords(input: {
   const owner = input.databaseId
     ? sharedClient(queryClient).database(input.databaseId, sessionId)
     : undefined;
-  const interactions = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const interactions = useDatabaseIntentions({ sourceId: input.dataSourceId ?? undefined });
   const interests = useMemo(
     () =>
       recordPublicationInterests(
@@ -121,10 +156,13 @@ export function useProjectedDatabaseRecords(input: {
   );
 }
 
-export function useChangeDatabaseRow() {
+export function useChangeDatabaseRow(target: DatabaseCommandTarget = {}) {
   const context = useZilobaseFeatures();
-  const store = useDatabaseController();
-  const interactions = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const state = useDatabaseEntityCommandState(target);
+  const intentions = useDatabaseIntentions({
+    hostId: target.hostDatabaseId,
+    sourceId: target.dataSourceId,
+  });
   const mutateAsync = (input: ChangeDatabaseRowInput) => {
     try {
       return changeDatabaseRow(context, input);
@@ -133,7 +171,7 @@ export function useChangeDatabaseRow() {
     }
   };
   return {
-    isPending: interactions.length > 0,
+    isPending: state.isPending || intentions.length > 0,
     mutateAsync,
     mutate(
       input: ChangeDatabaseRowInput,
@@ -151,7 +189,7 @@ export function useChangeDatabaseRow() {
 
 export function useDatabaseInteractionRecovery(hostId?: string) {
   const store = useDatabaseController();
-  const interactions = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const interactions = useDatabaseIntentions({ hostId });
   return {
     synchronizationError: useSyncExternalStore(
       store.subscribe,

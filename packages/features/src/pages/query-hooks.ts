@@ -1,10 +1,12 @@
-import { useDatabaseController } from "../databases/interactions/react";
+import { sharedClient } from "../data/client";
+import { readCachedPage } from "./cache";
+import { useDatabaseIntentions } from "../databases/interactions/react";
 import { parseActiveWorkspaceMismatchError } from "../shared/api-errors";
 import { resolvePageAccessReferences } from "./access-references";
 import { projectPagePropertyIntentions, readCachedPagePropertyCoverage } from "./property-cache";
 import { useMemo, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
-import { useSharedDataRevision } from "../data/react";
+import { useSharedDataInterests, useSharedDataRevision } from "../data/react";
 import { resolveNavigationReference, resolvePageDetailReference } from "./cache";
 import { notifyManager, useQuery } from "@tanstack/react-query";
 
@@ -212,12 +214,7 @@ export function usePageProperties(
       pageId ? readCachedPagePropertyCoverage(queryClient, pageId, options?.databaseId) : undefined,
     [queryClient, pageId, options?.databaseId, query.data, query.error, revision, readRevision],
   );
-  const controller = useDatabaseController();
-  const intentions = useSyncExternalStore(
-    controller.subscribe,
-    controller.getSnapshot,
-    controller.getSnapshot,
-  );
+  const intentions = useDatabaseIntentions();
   const data = useMemo(
     () => projectPagePropertyIntentions(coverage?.data, pageId ?? "", intentions),
     [coverage?.data, pageId, intentions],
@@ -260,4 +257,15 @@ export function usePageWorkspaceAccess(
   );
   const requiredWorkspaceId = mismatch?.workspaceId ?? (hasClientMismatch ? pageWorkspaceId : null);
   return { query, requiredWorkspaceId };
+}
+
+/** A read-only canonical page subscription for loaded row presentation. */
+export function useCachedPage(pageId: string) {
+  const { queryClient } = useZilobaseFeatures();
+  const cache = sharedClient(queryClient);
+  useSharedDataInterests(
+    queryClient,
+    cache.all().map((owner) => ({ scopeId: owner.session.id, collection: "pages", id: pageId })),
+  );
+  return readCachedPage(queryClient, pageId);
 }

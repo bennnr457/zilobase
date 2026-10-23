@@ -1,9 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { useSharedDataInterests } from "../../data/react";
 import { useZilobaseFeatures } from "../../shared/context";
 import { bootstrapPublicationInterests, resolveDatabaseBootstrap } from "../cache-references";
-import { useDatabaseController, useProjectedDatabaseBootstrap } from "../interactions/react";
+import {
+  useDatabaseController,
+  useDatabaseIntentions,
+  useProjectedDatabaseBootstrap,
+} from "../interactions/react";
 import {
   databaseBootstrapQueryOptions,
   type DatabaseBootstrapHookState,
@@ -17,11 +21,7 @@ export function useDatabaseBootstrap(scope: DatabaseScope | null): DatabaseBoots
   const queryKey = scope ? databaseBootstrapQueryKey(sessionId, scope) : null;
 
   const controller = useDatabaseController();
-  const intentions = useSyncExternalStore(
-    controller.subscribe,
-    controller.getSnapshot,
-    controller.getSnapshot,
-  );
+  const intentions = useDatabaseIntentions({ hostId: scope?.databaseId, metadataOnly: true });
   const creation = intentions.find((item) => item.creation?.database.id === scope?.databaseId);
   const creating = Boolean(creation && creation.status !== "committed");
   const creationFailed = Boolean(scope && controller.creationFailed(scope.databaseId));

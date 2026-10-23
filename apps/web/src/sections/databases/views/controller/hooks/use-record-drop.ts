@@ -7,7 +7,7 @@ export function useRecordDrops(input: {
   databaseId: string | null | undefined;
   hostDatabaseId: string | null | undefined;
 }) {
-  const changeRow = useChangeDatabaseRow();
+  const changeRow = useChangeDatabaseRow({ dataSourceId: input.databaseId ?? undefined });
   return {
     isPending: changeRow.isPending,
     submitMove(move: RecordDrop, clearSortViewId?: string) {

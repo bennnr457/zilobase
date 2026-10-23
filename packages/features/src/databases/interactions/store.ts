@@ -331,6 +331,7 @@ export class DatabaseController {
     const now = new Date().toISOString();
     const interaction: DatabaseIntention = {
       id,
+      hostId: input.databaseId,
       ...(input.command.type === "database.create"
         ? {
             creation: {

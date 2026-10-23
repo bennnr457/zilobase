@@ -141,3 +141,31 @@ test("rapid repeated moves project the latest destination before earlier acknowl
     await page.evaluate(() => window.board.requests.map(({ command }) => command.type)),
   ).toEqual(["row.change", "row.change"]);
 });
+
+test("unrelated database and presence publications preserve mounted record models and unchanged rows", async ({
+  page,
+}) => {
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        Object.values(window.queries.output).every((view) => view.status === "success"),
+      ),
+    )
+    .toBe(true);
+  // Allow the query scheduler to deliver the settled initial publication.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  const before = await page.evaluate(() => structuredClone(window.queries.counts));
+  await page.evaluate(() => window.queries.presence());
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  expect(await page.evaluate(() => window.queries.counts)).toEqual(before);
+  await page.evaluate(() => window.queries.publishOther());
+  await expect(page.locator('[data-query-row="other-first"]')).toHaveText("other-first-2");
+  const after = await page.evaluate(() => window.queries.counts);
+  expect(after.models.table).toBe(before.models.table);
+  expect(after.models.kanban).toBe(before.models.kanban);
+  expect(after.rows["other-second"]).toBe(before.rows["other-second"]);
+});

@@ -1,13 +1,10 @@
-import { useZilobaseFeatures } from "@zilobase/features";
-import { useSharedDataRevision } from "@zilobase/features/data/react";
-import { readCachedPage } from "@zilobase/features/pages";
 import { useEffect, useRef, useState } from "react";
 import { DatabaseIcon, SidebarSimpleIcon, SquareIcon, X } from "@/components/icons";
 import { toast } from "sonner";
 
 import { useOptionalPageSidePane } from "@/sections/pages/presentation/components/page-presentation";
 import { getPageEmoji, type PageMetadata } from "@zilobase/features/pages";
-import { useUpdatePage } from "@zilobase/features/pages/react";
+import { useCachedPage, useUpdatePage } from "@zilobase/features/pages/react";
 import { useChangeDatabaseRow } from "@zilobase/features/databases/react";
 import { useOptionalDatabaseDataContext } from "../../views/state/components/database-view-context";
 import { DefaultPageIcon, PageIconDisplay } from "@/sections/pages/appearance/components/page-icon";
@@ -44,14 +41,12 @@ export function DatabasePageLink({
   pageSummary?: DatabasePageSummary | null;
   showPageIcon?: boolean;
 }) {
-  const { queryClient } = useZilobaseFeatures();
-  useSharedDataRevision(queryClient);
-  const currentPage = readCachedPage(queryClient, pageId);
+  const currentPage = useCachedPage(pageId);
   const pageSummary = currentPage ? { ...fallbackSummary, ...currentPage } : fallbackSummary;
   const sidePane = useOptionalPageSidePane();
   const updatePage = useUpdatePage();
-  const changeRow = useChangeDatabaseRow();
   const database = useOptionalDatabaseDataContext();
+  const changeRow = useChangeDatabaseRow({ dataSourceId: database?.databaseId ?? undefined });
   const rename = (name: string, onError?: () => void) => {
     const row = database?.items.find((candidate) => candidate.pageId === pageId);
     if (row && database?.databaseId && database.hostDatabaseId) {

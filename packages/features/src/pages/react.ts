@@ -39,3 +39,5 @@ export { useItemSharingController } from "./sharing-hooks";
 export { useItemActionController } from "./item-action-hooks";
 
 export { useChangePageProperty } from "./content-mutations";
+
+export { useCachedPage } from "./query-hooks";

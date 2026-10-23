@@ -82,7 +82,7 @@ export function useDatabaseGrid({
     (row: TableRow) => readCachedPage(queryClient, row.pageId)?.name ?? row.page.name ?? "",
     [queryClient],
   );
-  const changeRow = useChangeDatabaseRow();
+  const changeRow = useChangeDatabaseRow({ dataSourceId: databaseId ?? undefined });
   const undo = useUndoHistory();
   const sourceRowsById = useMemo(() => new Map(allRows.map((row) => [row.id, row])), [allRows]);
   const byId = useMemo(
