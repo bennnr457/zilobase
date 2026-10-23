@@ -114,6 +114,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:hosted-parity": "ZILOBASE_TEST_HOSTED_PARITY=1 vitest run test/template-parity.test.ts",
     "test:workers": "vitest run --config vitest.workers.config.ts",
     "typecheck": "tsc --noEmit"
   },

@@ -41,7 +41,17 @@ Copy these templates next to your worker entries and replace every
 Durable Object bindings, the fresh-install `runtime-ports-v1` migration, queue
 names, rate limits, and module `alias` entries are byte-identical to the
 hosted composition — only credentials, hostnames, buckets, placement, and
-routes are placeholders. `template-parity` tests guard this invariant.
+routes are placeholders. To check parity with a sibling
+`zilobase-cloudflare-adapter` checkout, run:
+
+```sh
+npm run test:hosted-parity --workspace @zilobase/runtime-adapter
+```
+
+This explicit check requires the sibling repository and fails if its configuration
+files are missing. The default test suite and community CI check the local
+migration baseline, assets binding, and absence of hosted values without requiring
+the hosted repository.
 
 `runtime-ports-v1` is deliberately a fresh namespace baseline. Do not apply it
 to a Worker script that already recorded the retired `v1..v14` chain; delete

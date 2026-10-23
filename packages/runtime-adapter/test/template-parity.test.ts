@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 
 // The sibling cloud repo stays the source of truth for the hosted
 // composition until cutover; retained community bindings, queues, rate limits,
-// and module aliases must stay compatible with it.
+// and module aliases must stay compatible with it. Cross-repository comparisons
+// run explicitly via test:hosted-parity; community checks need only this checkout.
 const cloudRoot = new URL("../../../../zilobase-cloudflare-adapter/", import.meta.url);
 const templateRoot = new URL("../deploy/worker/", import.meta.url);
 
@@ -34,13 +35,9 @@ async function readJsonc(url: URL) {
   return JSON.parse(stripJsonComments(await readFile(url, "utf8")));
 }
 
-describe("template parity with the hosted composition", () => {
-  it("keeps worker Durable Object bindings, migrations, queues, and rate limits identical", async () => {
-    const [template, prod] = await Promise.all([
-      readJsonc(new URL("wrangler.template.jsonc", templateRoot)),
-      readJsonc(new URL("wrangler.jsonc", cloudRoot)),
-    ]);
-
+describe("community worker templates", () => {
+  it("uses a fresh migration baseline for every Durable Object binding", async () => {
+    const template = await readJsonc(new URL("wrangler.template.jsonc", templateRoot));
     expect(template.migrations).toHaveLength(1);
     expect(template.migrations[0]).toEqual({
       tag: "runtime-ports-v1",
@@ -48,68 +45,11 @@ describe("template parity with the hosted composition", () => {
         .map((binding: { class_name: string }) => binding.class_name)
         .sort(),
     });
-    const bindingNames = new Set(
-      template.durable_objects.bindings.map((binding: { name: string }) => binding.name),
-    );
-    expect(template.durable_objects.bindings).toEqual(
-      prod.durable_objects.bindings.filter((binding: { name: string }) =>
-        bindingNames.has(binding.name),
-      ),
-    );
-    const queueNames = new Set(
-      template.queues.producers.map((producer: { queue: string }) => producer.queue),
-    );
-    expect(template.queues.producers).toEqual(
-      prod.queues.producers.filter((producer: { queue: string }) => queueNames.has(producer.queue)),
-    );
-    expect(template.ratelimits).toEqual(prod.ratelimits);
-    expect(template.alias).toEqual(prod.alias);
-    expect(template.compatibility_flags).toEqual(prod.compatibility_flags);
   });
 
-  it("keeps background queues, consumers, bindings, and aliases identical", async () => {
-    const [template, prod] = await Promise.all([
-      readJsonc(new URL("background.template.jsonc", templateRoot)),
-      readJsonc(new URL("background-wrangler.jsonc", cloudRoot)),
-    ]);
-
-    const queueNames = new Set(
-      template.queues.producers.map((producer: { queue: string }) => producer.queue),
-    );
-    expect(template.queues.producers).toEqual(
-      prod.queues.producers.filter((producer: { queue: string }) => queueNames.has(producer.queue)),
-    );
-    expect(template.queues.consumers).toEqual(
-      prod.queues.consumers.filter((consumer: { queue: string }) =>
-        queueNames.has(consumer.queue.replace(/-dlq$/, "")),
-      ),
-    );
-    const bindingNames = new Set(
-      template.durable_objects.bindings.map((binding: { name: string }) => binding.name),
-    );
-    expect(template.durable_objects.bindings).toEqual(
-      prod.durable_objects.bindings.filter((binding: { name: string }) =>
-        bindingNames.has(binding.name),
-      ),
-    );
-    expect(template.alias).toEqual(prod.alias);
-    expect(template.triggers).toEqual(prod.triggers);
-    expect(template.compatibility_flags).toEqual(prod.compatibility_flags);
-  });
-
-  it("keeps web assets, services, and observability shape identical", async () => {
-    const [template, prod] = await Promise.all([
-      readJsonc(new URL("web.template.jsonc", templateRoot)),
-      readJsonc(new URL("web-wrangler.jsonc", cloudRoot)),
-    ]);
-
+  it("binds web assets as ASSETS", async () => {
+    const template = await readJsonc(new URL("web.template.jsonc", templateRoot));
     expect(template.assets).toMatchObject({ binding: "ASSETS" });
-    expect(template.services).toEqual(prod.services);
-    expect(Object.keys(template.vars ?? {}).sort()).toEqual(
-      Object.keys(prod.vars ?? {})
-        .filter((key) => !key.startsWith("POSTHOG_"))
-        .sort(),
-    );
   });
 
   it("contains zero hosted credentials, hosts, or placement values", async () => {
@@ -129,3 +69,81 @@ describe("template parity with the hosted composition", () => {
     }
   });
 });
+
+describe.runIf(process.env.ZILOBASE_TEST_HOSTED_PARITY === "1")(
+  "template parity with the hosted composition",
+  () => {
+    it("keeps worker Durable Object bindings, queues, and rate limits identical", async () => {
+      const [template, prod] = await Promise.all([
+        readJsonc(new URL("wrangler.template.jsonc", templateRoot)),
+        readJsonc(new URL("wrangler.jsonc", cloudRoot)),
+      ]);
+
+      const bindingNames = new Set(
+        template.durable_objects.bindings.map((binding: { name: string }) => binding.name),
+      );
+      expect(template.durable_objects.bindings).toEqual(
+        prod.durable_objects.bindings.filter((binding: { name: string }) =>
+          bindingNames.has(binding.name),
+        ),
+      );
+      const queueNames = new Set(
+        template.queues.producers.map((producer: { queue: string }) => producer.queue),
+      );
+      expect(template.queues.producers).toEqual(
+        prod.queues.producers.filter((producer: { queue: string }) =>
+          queueNames.has(producer.queue),
+        ),
+      );
+      expect(template.ratelimits).toEqual(prod.ratelimits);
+      expect(template.alias).toEqual(prod.alias);
+      expect(template.compatibility_flags).toEqual(prod.compatibility_flags);
+    });
+
+    it("keeps background queues, consumers, bindings, and aliases identical", async () => {
+      const [template, prod] = await Promise.all([
+        readJsonc(new URL("background.template.jsonc", templateRoot)),
+        readJsonc(new URL("background-wrangler.jsonc", cloudRoot)),
+      ]);
+
+      const queueNames = new Set(
+        template.queues.producers.map((producer: { queue: string }) => producer.queue),
+      );
+      expect(template.queues.producers).toEqual(
+        prod.queues.producers.filter((producer: { queue: string }) =>
+          queueNames.has(producer.queue),
+        ),
+      );
+      expect(template.queues.consumers).toEqual(
+        prod.queues.consumers.filter((consumer: { queue: string }) =>
+          queueNames.has(consumer.queue.replace(/-dlq$/, "")),
+        ),
+      );
+      const bindingNames = new Set(
+        template.durable_objects.bindings.map((binding: { name: string }) => binding.name),
+      );
+      expect(template.durable_objects.bindings).toEqual(
+        prod.durable_objects.bindings.filter((binding: { name: string }) =>
+          bindingNames.has(binding.name),
+        ),
+      );
+      expect(template.alias).toEqual(prod.alias);
+      expect(template.triggers).toEqual(prod.triggers);
+      expect(template.compatibility_flags).toEqual(prod.compatibility_flags);
+    });
+
+    it("keeps web assets, services, and observability shape identical", async () => {
+      const [template, prod] = await Promise.all([
+        readJsonc(new URL("web.template.jsonc", templateRoot)),
+        readJsonc(new URL("web-wrangler.jsonc", cloudRoot)),
+      ]);
+
+      expect(template.services).toEqual(prod.services);
+      expect(Object.keys(template.vars ?? {}).sort()).toEqual(
+        Object.keys(prod.vars ?? {})
+          .filter((key) => !key.startsWith("POSTHOG_"))
+          .sort(),
+      );
+    });
+  },
+);
