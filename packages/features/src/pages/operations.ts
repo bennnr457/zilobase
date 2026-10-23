@@ -8,7 +8,13 @@ import { createPage } from "./content-operations";
 import type { Page } from "./contracts";
 import { buildPageDuplicateInput, hasPageBodyContent } from "./models";
 import type { PagePropertiesReference } from "./property-cache";
-import { resolvePageProperties } from "./property-cache";
+import {
+  resolvePageProperties,
+  readCachedPagePropertyCoverage,
+  PAGE_PROPERTY_STALE_TIME,
+} from "./property-cache";
+import { submitRecordChange } from "../databases/interactions/record-change";
+import { clientDatabaseController } from "../shared/operation-context";
 import {
   pagePropertiesQueryKey,
   pagePropertiesQueryOptions,
@@ -128,3 +134,91 @@ export type GetPagePropertiesInput = Parameters<typeof getPageProperties>[1];
 export type GetPagePropertiesResult = Awaited<ReturnType<typeof getPageProperties>>;
 export type UpdatePagePropertyValueInput = Parameters<typeof updatePagePropertyValue>[1];
 export type UpdatePagePropertyValueResult = Awaited<ReturnType<typeof updatePagePropertyValue>>;
+
+export type ChangePagePropertyInput = {
+  pageId: string;
+  propertyId: string;
+  value: unknown;
+  databaseId?: string | null;
+};
+type PendingPropertyEdit = {
+  input: ChangePagePropertyInput;
+  submitted: boolean;
+  current: () => boolean;
+  promise: Promise<void>;
+};
+const propertyEdits = new WeakMap<
+  ClientOperationContext["queryClient"],
+  Map<string, PendingPropertyEdit>
+>();
+
+/** Retain user intentions across a read, never authorization or copied entity state. */
+export function changePagePropertyValue(
+  context: ClientOperationContext,
+  input: ChangePagePropertyInput,
+): Promise<void> {
+  const scope = captureClientOperation(context);
+  const client = context.queryClient;
+  const key = JSON.stringify([input.pageId, input.propertyId, input.databaseId ?? null]);
+  const pending = propertyEdits.get(client) ?? new Map<string, PendingPropertyEdit>();
+  propertyEdits.set(client, pending);
+  const existing = pending.get(key);
+  if (existing?.current() && !existing.submitted) {
+    existing.input = input;
+    return existing.promise;
+  }
+  const edit: PendingPropertyEdit = {
+    input,
+    submitted: false,
+    current: scope.isCurrent,
+    promise: Promise.resolve(),
+  };
+  pending.set(key, edit);
+  edit.promise = (async () => {
+    try {
+      let coverage = readCachedPagePropertyCoverage(client, input.pageId, input.databaseId);
+      const verified = Math.min(
+        coverage.updatedAt,
+        coverage.reference?.verifiedAt ?? coverage.updatedAt,
+      );
+      if (
+        coverage.state !== "complete" ||
+        Date.now() - verified >= PAGE_PROPERTY_STALE_TIME ||
+        client.getQueryState(pagePropertiesQueryKey(input.pageId))?.isInvalidated
+      ) {
+        await client.fetchQuery({
+          ...pagePropertiesQueryOptions(scope.context.apiFetch, input.pageId),
+          staleTime: 0,
+        });
+        scope.assertCurrent();
+        coverage = readCachedPagePropertyCoverage(client, input.pageId, input.databaseId);
+      }
+      scope.assertCurrent();
+      const latest = edit.input;
+      const targets = (coverage.data?.presenceTargets ?? []).filter(
+        (target) =>
+          target.propertyIds.includes(latest.propertyId) &&
+          (!latest.databaseId || target.databaseId === latest.databaseId),
+      );
+      if (
+        coverage.state !== "complete" ||
+        targets.length !== 1 ||
+        !coverage.data?.properties.some(
+          (property) => property.id === latest.propertyId && !property.deletedAt,
+        )
+      )
+        throw new Error("This property is no longer editable in this page. Refresh and try again.");
+      const target = targets[0]!;
+      edit.submitted = true;
+      await submitRecordChange(clientDatabaseController(scope.context), {
+        databaseId: target.databaseId,
+        dataSourceId: target.dataSourceId,
+        rowId: target.rowId,
+        valuesByPropertyId: { [latest.propertyId]: latest.value },
+      });
+    } finally {
+      if (pending.get(key) === edit) pending.delete(key);
+    }
+  })();
+  return edit.promise;
+}

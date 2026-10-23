@@ -25,3 +25,12 @@ export function useRestorePage() {
     mutationFn: (input: Parameters<typeof restorePage>[1]) => restorePage(context, input),
   });
 }
+
+import { changePagePropertyValue } from "./operations";
+export function useChangePageProperty() {
+  const context = useZilobaseFeatures();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof changePagePropertyValue>[1]) =>
+      changePagePropertyValue(context, input),
+  });
+}

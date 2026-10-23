@@ -37,3 +37,5 @@ export { usePageWorkspaceAccess } from "./query-hooks";
 
 export { useItemSharingController } from "./sharing-hooks";
 export { useItemActionController } from "./item-action-hooks";
+
+export { useChangePageProperty } from "./content-mutations";

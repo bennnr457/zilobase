@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { ImagePlus, MessageSquare, SmilePlus } from "@/components/icons";
 import {
   useCallback,
@@ -19,8 +20,12 @@ import { PageIconDisplay } from "@/sections/pages/appearance/components/page-ico
 import { usePageCommentsSnapshot } from "@/sections/pages/editor/comments/components/comments-context";
 import { useSession } from "@zilobase/features/auth/react";
 import { type DatabasePresenceCollaborator } from "@zilobase/features/databases";
-import { useChangeDatabaseRow, useDatabaseRealtime } from "@zilobase/features/databases/react";
-import { usePagePersonAccessTargets, usePageProperties } from "@zilobase/features/pages/react";
+import { useDatabaseRealtime } from "@zilobase/features/databases/react";
+import {
+  useChangePageProperty,
+  usePagePersonAccessTargets,
+  usePageProperties,
+} from "@zilobase/features/pages/react";
 
 import {
   formatCommentButtonLabel,
@@ -259,7 +264,7 @@ export function PageMetadata({
     enableComments && layoutConfig?.discussionsVisible !== false && pageId && session?.user,
   );
   const commentsSnapshot = usePageCommentsSnapshot(commentsEnabled ? pageId : null);
-  const changeRow = useChangeDatabaseRow();
+  const changeProperty = useChangePageProperty();
   const cover = coverProp ?? localCover;
   const description = descriptionProp ?? localDescription;
   const icon = iconProp ?? localIcon;
@@ -359,15 +364,6 @@ export function PageMetadata({
       return;
     }
 
-    const target =
-      presenceTargets.find((candidate) => candidate.propertyIds.includes(propertyId)) ??
-      presenceTargets[0];
-    const hostDatabaseId = databaseId ?? target?.databaseId;
-    const rowId = target?.rowId;
-    if (!hostDatabaseId || !rowId || !target?.dataSourceId) {
-      return;
-    }
-
     setDraftValues((drafts) => {
       const next = { ...drafts };
       delete next[propertyId];
@@ -376,11 +372,11 @@ export function PageMetadata({
 
     void (async () => {
       try {
-        await changeRow.mutateAsync({
-          databaseId: hostDatabaseId,
-          dataSourceId: target.dataSourceId,
-          rowId,
-          valuesByPropertyId: { [propertyId]: serializePropertyValue(propertyType, value) },
+        await changeProperty.mutateAsync({
+          pageId,
+          databaseId,
+          propertyId,
+          value: serializePropertyValue(propertyType, value),
         });
         setDraftValues((drafts) => {
           const nextDrafts = { ...drafts };
@@ -390,6 +386,8 @@ export function PageMetadata({
 
           return nextDrafts;
         });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Couldn't save this property");
       } finally {
         // Committed values and rollback now come from the shared transaction.
         setDraftValues((drafts) => {
