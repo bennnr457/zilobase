@@ -1,6 +1,7 @@
 import type { EditorView } from "@tiptap/pm/view";
 import { Selection } from "@tiptap/pm/state";
 import type { BlockRange } from "../../extensions/lib/block-selection";
+import type { DatabaseMarqueeGesture } from "@/sections/databases/views/shared/hooks/use-database-marquee";
 
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; right: number; bottom: number };
@@ -37,6 +38,8 @@ export function createBlockMarquee(view: EditorView, options: MarqueeOptions) {
   marquee.className = "editor-block-marquee";
   marquee.setAttribute("aria-hidden", "true");
   let frame: number | null = null;
+  let databaseGesture: { doc: typeof view.state.doc; gesture: DatabaseMarqueeGesture } | null =
+    null;
   let session: {
     pointerId: number;
     start: Point;
@@ -52,6 +55,16 @@ export function createBlockMarquee(view: EditorView, options: MarqueeOptions) {
     const rect = view.dom.getBoundingClientRect();
     return { x: point.x - rect.left, y: point.y - rect.top };
   };
+
+  const intersectingRanges = (ranges: BlockRange[], bounds: Bounds) =>
+    ranges.filter((range) => {
+      const element = view.nodeDOM(range.from);
+      return (
+        element instanceof ownerWindow.HTMLElement &&
+        element.getClientRects().length > 0 &&
+        intersectsMarquee(bounds, element.getBoundingClientRect())
+      );
+    });
 
   const scrollParent = () => {
     for (let element = view.dom.parentElement; element; element = element.parentElement) {
@@ -87,14 +100,7 @@ export function createBlockMarquee(view: EditorView, options: MarqueeOptions) {
       height: `${Math.max(0, Math.min(bounds.bottom, surfaceRect.bottom) - top)}px`,
     });
 
-    const hits = current.ranges.filter((range) => {
-      const element = view.nodeDOM(range.from);
-      return (
-        element instanceof ownerWindow.HTMLElement &&
-        element.getClientRects().length > 0 &&
-        intersectsMarquee(bounds, element.getBoundingClientRect())
-      );
-    });
+    const hits = intersectingRanges(current.ranges, bounds);
     const range = hits.length ? { from: hits[0].from, to: hits[hits.length - 1].to } : null;
     const rangeKey = range ? `${range.from}:${range.to}` : "none";
     if (rangeKey !== current.lastRange) {
@@ -260,15 +266,75 @@ export function createBlockMarquee(view: EditorView, options: MarqueeOptions) {
       options.select(null);
     }
   };
+  const onDatabaseStart = (event: Event) => {
+    const target = event.target;
+    if (
+      session ||
+      databaseGesture ||
+      !view.editable ||
+      !(target instanceof ownerWindow.HTMLElement) ||
+      target.closest(".tiptap-editor") !== view.dom
+    )
+      return;
+    const ranges = options.getRanges();
+    const databaseRange = ranges.find((range) => {
+      const element = view.nodeDOM(range.from);
+      return element instanceof ownerWindow.HTMLElement && element.contains(target);
+    });
+    if (!databaseRange) return;
+
+    const gesture = (event as CustomEvent<DatabaseMarqueeGesture>).detail;
+    const doc = view.state.doc;
+    const restore = options.captureSelection();
+    let lastRange: string | undefined;
+    let active = false;
+    databaseGesture = { doc, gesture };
+    gesture.selectBlocks = (bounds) => {
+      if (databaseGesture?.gesture !== gesture) return false;
+      const hits = intersectingRanges(ranges, bounds);
+      const blocks = hits.some((range) => range !== databaseRange);
+      if (blocks) {
+        // Include the starting database as a whole, even when its rows occupy
+        // a wider or narrower area than the neighboring page blocks.
+        const from = Math.min(databaseRange.from, hits[0].from);
+        const to = Math.max(databaseRange.to, hits[hits.length - 1].to);
+        const key = `${from}:${to}`;
+        if (!active) {
+          view.dom.classList.add("editor-marquee-selecting");
+          view.focus();
+          ownerDocument.getSelection()?.removeAllRanges();
+        }
+        if (key !== lastRange) options.select({ from, to });
+        lastRange = key;
+      } else if (active) {
+        options.select(null);
+        view.dom.classList.remove("editor-marquee-selecting");
+        lastRange = undefined;
+      }
+      active = blocks;
+      return blocks;
+    };
+    gesture.endBlocks = (cancelled) => {
+      if (databaseGesture?.gesture !== gesture) return;
+      databaseGesture = null;
+      view.dom.classList.remove("editor-marquee-selecting");
+      if (cancelled && doc === view.state.doc) restore();
+    };
+  };
   view.dom.addEventListener("focusin", onDatabaseFocus);
+  view.dom.addEventListener("database-marquee-start", onDatabaseStart);
   ownerDocument.addEventListener("pointerdown", onDown, true);
   return {
     update() {
       if (session && (!view.editable || session.doc !== view.state.doc)) stop();
+      if (databaseGesture && (!view.editable || databaseGesture.doc !== view.state.doc))
+        databaseGesture.gesture.cancel();
     },
     destroy() {
       stop();
+      databaseGesture?.gesture.cancel();
       view.dom.removeEventListener("focusin", onDatabaseFocus);
+      view.dom.removeEventListener("database-marquee-start", onDatabaseStart);
       ownerDocument.removeEventListener("pointerdown", onDown, true);
     },
   };

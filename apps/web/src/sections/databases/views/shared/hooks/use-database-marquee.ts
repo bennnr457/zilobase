@@ -3,6 +3,14 @@ import { useEffect, useRef, type Dispatch, type RefObject, type SetStateAction }
 type Point = { x: number; y: number };
 type Bounds = { left: number; right: number; top: number; bottom: number };
 
+// Embedded editors can promote a record gesture to a block selection. The
+// database retains pointer, marquee, and scrolling ownership until release.
+export type DatabaseMarqueeGesture = {
+  cancel: () => void;
+  selectBlocks?: (bounds: Bounds) => boolean;
+  endBlocks?: (restore: boolean) => void;
+};
+
 const RECORD_SELECTOR = "[data-database-row-id], [data-gantt-row-id]";
 const WHITESPACE_SELECTOR = [
   ".database-table-scroll",
@@ -103,6 +111,8 @@ export function useDatabaseMarquee({
       measured: Map<string, Bounds>;
       last: Set<string>;
       origin: HTMLElement;
+      gesture: DatabaseMarqueeGesture;
+      blocks: boolean;
     } | null = null;
 
     const scrollParents = () => {
@@ -152,40 +162,46 @@ export function useDatabaseMarquee({
         width: `${Math.max(0, Math.min(bounds.right, clip.right) - left)}px`,
         height: `${Math.max(0, Math.min(bounds.bottom, clip.bottom) - top)}px`,
       });
+      const blocks = current.gesture.selectBlocks?.(bounds) ?? false;
+      if (session !== current) return;
+      if (current.blocks && !blocks) focusDatabase();
+      current.blocks = blocks;
       const valid = new Set(latest.current.rowIds);
       if (!surface.classList.contains("database-table-wrap")) current.measured.clear();
       const horizontalViewport =
         surface.querySelector<HTMLElement>(".database-inline-scroll") ?? surface;
       const visible = horizontalViewport.getBoundingClientRect();
-      surface.querySelectorAll<HTMLElement>(RECORD_SELECTOR).forEach((element) => {
-        const id = element.dataset.databaseRowId ?? element.dataset.ganttRowId;
-        if (!id || !valid.has(id) || !element.getClientRects().length) return;
-        const rect = element.getBoundingClientRect();
-        // Cache content coordinates so rows retain selection after virtualization
-        // unmounts them during edge scrolling. Newly mounted rows join each frame.
-        const previous = current.measured.get(id);
-        const next = {
-          left: Math.max(rect.left, visible.left) - origin.left,
-          right: Math.min(rect.right, visible.right) - origin.left,
-          top: rect.top - origin.top,
-          bottom: rect.bottom - origin.top,
-        };
-        // Gantt renders the same record in both its sidebar and timeline.
-        current.measured.set(
-          id,
-          previous && surface.classList.contains("database-timeline-view")
-            ? {
-                left: Math.min(previous.left, next.left),
-                right: Math.max(previous.right, next.right),
-                top: next.top,
-                bottom: next.bottom,
-              }
-            : next,
-        );
-      });
+      if (!blocks)
+        surface.querySelectorAll<HTMLElement>(RECORD_SELECTOR).forEach((element) => {
+          const id = element.dataset.databaseRowId ?? element.dataset.ganttRowId;
+          if (!id || !valid.has(id) || !element.getClientRects().length) return;
+          const rect = element.getBoundingClientRect();
+          // Cache content coordinates so rows retain selection after virtualization
+          // unmounts them during edge scrolling. Newly mounted rows join each frame.
+          const previous = current.measured.get(id);
+          const next = {
+            left: Math.max(rect.left, visible.left) - origin.left,
+            right: Math.min(rect.right, visible.right) - origin.left,
+            top: rect.top - origin.top,
+            bottom: rect.bottom - origin.top,
+          };
+          // Gantt renders the same record in both its sidebar and timeline.
+          current.measured.set(
+            id,
+            previous && surface.classList.contains("database-timeline-view")
+              ? {
+                  left: Math.min(previous.left, next.left),
+                  right: Math.max(previous.right, next.right),
+                  top: next.top,
+                  bottom: next.bottom,
+                }
+              : next,
+          );
+        });
       const next = new Set<string>();
       current.measured.forEach((rect, id) => {
         if (
+          !blocks &&
           valid.has(id) &&
           rect.left < rect.right &&
           bounds.left < origin.left + rect.right &&
@@ -200,6 +216,7 @@ export function useDatabaseMarquee({
         setSelectedRowIds(next);
       }
       const scroll = scrollParents().find((parent) => {
+        if (blocks && surface.contains(parent)) return false;
         const rect =
           parent === doc.scrollingElement
             ? { top: 0, bottom: win.innerHeight }
@@ -237,7 +254,13 @@ export function useDatabaseMarquee({
       doc.removeEventListener("keydown", key, true);
       doc.removeEventListener("scroll", schedule, true);
       win.removeEventListener("blur", cancel);
+      previous?.gesture.endBlocks?.(restore);
       if (restore && previous?.active) setSelectedRowIds(previous.previous);
+    };
+    const focusDatabase = () => {
+      const focusTarget =
+        surface.querySelector<HTMLElement>('.database-table-scroll[role="grid"]') ?? surface;
+      focusTarget.focus({ preventScroll: true });
     };
     const move = (event: PointerEvent) => {
       if (!session || event.pointerId !== session.pointerId) return;
@@ -260,9 +283,7 @@ export function useDatabaseMarquee({
         latest.current.onStart?.();
         // A gesture can begin in an editor's gutter. Move keyboard ownership
         // into the database so subsequent keys cannot edit the outer document.
-        const focusTarget =
-          surface.querySelector<HTMLElement>('.database-table-scroll[role="grid"]') ?? surface;
-        focusTarget.focus({ preventScroll: true });
+        focusDatabase();
         doc.getSelection()?.removeAllRanges();
       }
       if (session.active) {
@@ -375,7 +396,15 @@ export function useDatabaseMarquee({
         measured: new Map(),
         last: new Set(latest.current.selectedRowIds),
         origin,
+        gesture: { cancel: () => stop() },
+        blocks: false,
       };
+      surface.dispatchEvent(
+        new CustomEvent<DatabaseMarqueeGesture>("database-marquee-start", {
+          bubbles: true,
+          detail: session.gesture,
+        }),
+      );
       event.preventDefault();
       doc.addEventListener("pointermove", move, true);
       doc.addEventListener("pointerup", up, true);
