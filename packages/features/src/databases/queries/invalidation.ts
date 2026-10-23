@@ -1,10 +1,70 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { Query, QueryClient } from "@tanstack/react-query";
 import { databaseWindowReferenceSchema, resolveDatabaseBootstrap } from "../cache-references";
 import { sharedClient } from "../../data/client";
 import { dependentFields } from "./dependencies";
 import { normalizeDatabaseViewQuery, databaseViewQueryHash } from "../views/query-hash";
 import { invalidatePagePropertyContexts } from "../../pages/property-cache";
 import { databaseQueryRoot } from "./keys";
+
+const recoveries = new WeakMap<
+  QueryClient,
+  Map<Query, { cacheId: string; version: number; promise: Promise<void> }>
+>();
+
+function windowReference(query: Query) {
+  const data = query.state.data as { pages?: unknown[] } | undefined;
+  const parsed = databaseWindowReferenceSchema.safeParse(data?.pages?.at(-1));
+  return parsed.success ? parsed.data : undefined;
+}
+
+/** Keep newer delivery targets while sharing an authorized window's in-flight read. */
+export function recoverRecordWindow(
+  client: QueryClient,
+  query: Query,
+  cacheId: string,
+  version: number,
+) {
+  const registry = recoveries.get(client) ?? new Map();
+  recoveries.set(client, registry);
+  const current = windowReference(query);
+  if (current?.cacheId !== cacheId) return Promise.resolve();
+  const pending = registry.get(query);
+  if (pending?.cacheId === cacheId) {
+    pending.version = Math.max(pending.version, version);
+    return pending.promise;
+  }
+  if (!query.state.isInvalidated && current.dataSourceVersion >= version) return Promise.resolve();
+  const cache = sharedClient(client);
+  const identity = cache.capture();
+  const state = { cacheId, version, promise: Promise.resolve() };
+  registry.set(query, state);
+  state.promise = (async () => {
+    try {
+      do {
+        const requested = state.version;
+        await client.invalidateQueries(
+          { queryKey: query.queryKey, exact: true },
+          { cancelRefetch: false, throwOnError: true },
+        );
+        if (
+          state.version <= requested ||
+          (windowReference(query)?.dataSourceVersion ?? -1) >= state.version
+        )
+          return;
+      } while (
+        cache.isCurrent(identity) &&
+        client.getQueryCache().get(query.queryHash) === query &&
+        query.isActive() &&
+        windowReference(query)?.cacheId === cacheId
+      );
+    } catch {
+      /* The query retains its recovery error; a future event or reconnect may retry. */
+    } finally {
+      if (registry.get(query) === state) registry.delete(query);
+    }
+  })();
+  return state.promise;
+}
 /** Server-owned membership/count/order recovery, restricted to affected source results. */
 export function refreshRecordResults(
   client: QueryClient,
@@ -22,7 +82,7 @@ export function refreshRecordResults(
       })
     )
       continue;
-    void client.invalidateQueries({ queryKey: query.queryKey, exact: true }).catch(() => undefined);
+    void recoverRecordWindow(client, query, cacheId, versions[String(query.queryKey[4])]!);
   }
   for (const query of client.getQueryCache().findAll({ queryKey: ["database-context-export"] })) {
     const ref = query.state.data as
@@ -102,8 +162,19 @@ export function refreshPropertyMembership(
   for (const query of client.getQueryCache().findAll({ queryKey: ["db"] })) {
     const key = query.queryKey;
     if (key[3] !== "window") continue;
-    if (windows.has(JSON.stringify([key[1], key[2], key[4], key[5], key[6]])))
-      void client.invalidateQueries({ queryKey: key, exact: true }).catch(() => undefined);
+    if (windows.has(JSON.stringify([key[1], key[2], key[4], key[5], key[6]]))) {
+      const reference = windowReference(query);
+      if (reference) {
+        const owner = sharedClient(client).get(reference.cacheId);
+        const version = owner?.databases.sources.get(String(key[4]))?.version;
+        void recoverRecordWindow(
+          client,
+          query,
+          reference.cacheId,
+          Math.max(reference.dataSourceVersion + 1, version ?? 0),
+        );
+      }
+    }
   }
 }
 
@@ -113,9 +184,12 @@ export function invalidateDatabaseQueries(
   hostDatabaseId: string,
 ): void {
   void queryClient
-    .invalidateQueries({
-      queryKey: [databaseQueryRoot, sessionId, hostDatabaseId],
-    })
+    .invalidateQueries(
+      {
+        queryKey: [databaseQueryRoot, sessionId, hostDatabaseId],
+      },
+      { cancelRefetch: false },
+    )
     .catch(() => undefined);
 
   invalidatePagePropertyContexts(queryClient, hostDatabaseId);
