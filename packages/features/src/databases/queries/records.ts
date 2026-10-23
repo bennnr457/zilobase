@@ -229,7 +229,12 @@ export function databaseWindowQueryOptions(
  * Warm the cache for a view the user has not opened yet. Skips when any
  * data is cached: staleness is handled by the opening query itself.
  */
-export async function prefetchDatabaseWindow(
+const prefetches = new WeakMap<
+  QueryClient,
+  Map<string, { current: () => boolean; promise: Promise<void> }>
+>();
+
+export function prefetchDatabaseWindow(
   queryClient: QueryClient,
   apiFetch: ApiFetcher,
   sessionId: string,
@@ -237,10 +242,24 @@ export async function prefetchDatabaseWindow(
   pageSize: DatabaseInitialPageSize,
 ): Promise<void> {
   const queryKey = databaseWindowQueryKey(sessionId, scope);
-  if (queryClient.getQueryData(queryKey) !== undefined) return;
-  await queryClient.prefetchInfiniteQuery(
-    databaseWindowQueryOptions(apiFetch, sessionId, scope, pageSize, queryClient),
-  );
+  if (queryClient.getQueryData(queryKey) !== undefined) return Promise.resolve();
+  const key = JSON.stringify(queryKey);
+  const registry = prefetches.get(queryClient) ?? new Map();
+  prefetches.set(queryClient, registry);
+  const pending = registry.get(key);
+  if (pending?.current()) return pending.promise;
+  const owner = sharedClient(queryClient);
+  const identity = owner.capture();
+  const entry = { current: () => owner.isCurrent(identity), promise: Promise.resolve() };
+  registry.set(key, entry);
+  entry.promise = queryClient
+    .prefetchInfiniteQuery(
+      databaseWindowQueryOptions(apiFetch, sessionId, scope, pageSize, queryClient),
+    )
+    .finally(() => {
+      if (registry.get(key) === entry) registry.delete(key);
+    });
+  return entry.promise;
 }
 
 /** Select untouched, session-scoped metadata, never an optimistic view projection. */

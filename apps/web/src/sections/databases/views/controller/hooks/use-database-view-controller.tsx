@@ -13,6 +13,7 @@ import {
 
 import {
   composeDatabaseViewData,
+  databaseViewQueryHash,
   getDatabaseDataSourceSummaries,
   getDatabaseSetupDismissed,
   getDatabaseViewTabs,
@@ -216,20 +217,30 @@ export function useDatabaseViewController({
     [isControlledActiveView, onActiveViewIdChange, resolvedActiveViewId],
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !bootstrap || recordWindow.status !== "success") {
-      return;
-    }
-    const pending = bootstrap.views
+  const prefetchViewRef = useRef(prefetchDatabaseView);
+  prefetchViewRef.current = prefetchDatabaseView;
+  const idlePrefetchKey = JSON.stringify(
+    (bootstrap?.views ?? [])
       .filter(
         (view) => view.id !== resolvedActiveViewId && view.dataSourceId === activeDataSourceId,
       )
-      .slice(0, 3);
+      .slice(0, 3)
+      .map((view) => ({
+        id: view.id,
+        hash: databaseViewQueryHash(
+          view.config ?? bootstrap?.database.config,
+          includeDeletedDatabases,
+        ),
+      })),
+  );
+  useEffect(() => {
+    if (typeof window === "undefined" || recordWindow.status !== "success") return;
+    const pending = JSON.parse(idlePrefetchKey) as Array<{ id: string; hash: string }>;
     if (pending.length === 0) return;
     let cancelled = false;
     const run = () => {
       if (cancelled) return;
-      for (const view of pending) prefetchDatabaseView(view.id);
+      for (const view of pending) prefetchViewRef.current(view.id);
     };
     let idleHandle: number | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -243,13 +254,7 @@ export function useDatabaseViewController({
       if (idleHandle !== null) window.cancelIdleCallback(idleHandle);
       if (timer !== null) globalThis.clearTimeout(timer);
     };
-  }, [
-    activeDataSourceId,
-    bootstrap,
-    prefetchDatabaseView,
-    recordWindow.status,
-    resolvedActiveViewId,
-  ]);
+  }, [activeDataSourceId, idlePrefetchKey, recordWindow.status, resolvedActiveViewId]);
 
   const viewModel = useMemo(() => presentDatabaseViewModel(model), [model]);
   const {

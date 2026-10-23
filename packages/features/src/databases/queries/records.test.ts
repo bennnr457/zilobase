@@ -434,7 +434,16 @@ test("prefetch warms an uncached window and skips a cached one", async () => {
       calls += 1;
       return windowResponse({ totalCount: 4 });
     }) as unknown as import("../../shared/api-fetcher").ApiFetcher;
-    await prefetchDatabaseWindow(queryClient, apiFetch, "session-1", scope, 50);
+    const first = prefetchDatabaseWindow(queryClient, apiFetch, "session-1", scope, 50);
+    const equivalent = prefetchDatabaseWindow(
+      queryClient,
+      apiFetch,
+      "session-1",
+      { ...scope, viewId: "same-query-other-view" },
+      50,
+    );
+    assert.equal(first, equivalent);
+    await Promise.all([first, equivalent]);
     assert.equal(calls, 1);
     const cached = queryClient.getQueryData(databaseWindowQueryKey("session-1", scope)) as {
       pages: DatabaseRecordWindowResponse[];
