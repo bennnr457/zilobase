@@ -26,7 +26,6 @@ import {
 import { encodePageContentAsYjs } from "../../collaboration/documents/document-codec";
 import { upsertPageItemPlacement } from "../../pages/placements/page-item-placements";
 import {
-  lockDatabaseRowOrdering,
   rebalanceDatabaseRowOrderKeys,
   updateDatabaseRowPlacementPositions,
 } from "../navigation/position-service";
@@ -34,6 +33,7 @@ import { inheritDatabaseRowProperties } from "../records/import";
 import { validateCellValue } from "../schema/config";
 import {
   RowMoveConflictError,
+  ensureCommandSourceLock,
   type DatabaseCommandContext,
   type DatabaseCommandDispatchResult,
   type DatabaseCommandMutation,
@@ -275,7 +275,7 @@ export async function createRow(
   command: Extract<DataSourceCommand, { type: "row.place" }>,
 ): Promise<DatabaseCommandDispatchResult<DatabaseRecordEntity>> {
   const source = await sourceRecord(context);
-  await lockDatabaseRowOrdering(context.transaction, source.id);
+  await ensureCommandSourceLock(context, source.id);
   const rows = await activeRows(context, source.id);
   const placement = resolveAnchoredRowIndex({
     afterRowId: command.afterRowId,
@@ -440,7 +440,7 @@ async function changeRow(
   command: Extract<DataSourceCommand, { type: "row.change" }>,
 ): Promise<DatabaseCommandDispatchResult<DatabaseRecordEntity>> {
   const source = await sourceRecord(context);
-  await lockDatabaseRowOrdering(context.transaction, source.id);
+  await ensureCommandSourceLock(context, source.id);
   const rows = await readRowsForChange(context, source.id, command);
   const row = rows.find(({ id }) => id === command.rowId);
   if (!row) throw new RowMoveConflictError(command.rowId);
@@ -595,7 +595,7 @@ export async function setRowArchived(
   command: Extract<DataSourceCommand, { type: "row.archive" | "row.restore" }>,
 ): Promise<DatabaseCommandDispatchResult<DatabaseRecordEntity>> {
   const source = await sourceRecord(context);
-  await lockDatabaseRowOrdering(context.transaction, source.id);
+  await ensureCommandSourceLock(context, source.id);
   const restore = command.type === "row.restore";
   const [row] = await context.transaction
     .select({ id: databaseRow.id, orderKey: databaseRow.orderKey, pageId: databaseRow.pageId })

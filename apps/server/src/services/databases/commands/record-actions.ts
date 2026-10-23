@@ -20,7 +20,7 @@ import { ServiceMutationError } from "../../../shared/errors/service-mutation-er
 import { canAccessPageInWorkspace } from "../../access/effective-access";
 import { encodePageContentAsYjs } from "../../collaboration/documents/document-codec";
 import { upsertPageItemPlacement } from "../../pages/placements/page-item-placements";
-import { lockDatabaseRowOrdering } from "../navigation/position-service";
+import { ensureCommandSourceLock } from "./framework";
 import type { DatabaseCommandContext } from "./framework";
 import { getDatabaseRecordEntity } from "./record-entity";
 import { createRow, setRowArchived } from "./records";
@@ -69,7 +69,7 @@ export async function dispatchRecordActionCommand(
 ) {
   if (command.type !== "row.duplicate" && command.type !== "row.moveToPage") return null;
   const sourceId = context.dataSourceId!;
-  await lockDatabaseRowOrdering(context.transaction, sourceId);
+  await ensureCommandSourceLock(context, sourceId);
   const [row] = await context.transaction
     .select()
     .from(databaseRow)

@@ -24,6 +24,7 @@ import {
 import {
   CommandIdReusedError,
   executeDatabaseCommand,
+  ensureCommandSourceLock,
   hashDatabaseCommandRequest,
   type DatabaseCommandContext,
   type DatabaseCommandDispatcher,
@@ -668,4 +669,22 @@ test("opposing transfers lock sources in one order and return only touched sourc
     );
     assert.deepEqual(harness.updates.slice(0, 2), [dataSource, dataSource]);
   }
+});
+
+test("nested command operations reuse only their transaction's acquired source lanes", async () => {
+  const execute = vi.fn(async () => undefined);
+  const context = {
+    transaction: { execute },
+    lockedSourceIds: new Set(["source-a"]),
+  } as unknown as DatabaseCommandContext;
+  await ensureCommandSourceLock(context, "source-a");
+  assert.equal(execute.mock.calls.length, 0);
+  await ensureCommandSourceLock(context, "source-b");
+  await ensureCommandSourceLock(context, "source-b");
+  assert.equal(execute.mock.calls.length, 1);
+  await ensureCommandSourceLock(
+    { transaction: { execute } } as unknown as DatabaseCommandContext,
+    "source-b",
+  );
+  assert.equal(execute.mock.calls.length, 2);
 });

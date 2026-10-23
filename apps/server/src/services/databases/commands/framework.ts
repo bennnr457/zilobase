@@ -65,7 +65,16 @@ export type DatabaseCommandContext = DatabaseCommandScope & {
   actorId: string;
   commandId: string;
   transaction: DatabaseTransaction;
+  lockedSourceIds?: Set<string>;
 };
+
+/** Reuse transaction-owned lanes without changing the framework's lock order. */
+export async function ensureCommandSourceLock(context: DatabaseCommandContext, sourceId: string) {
+  const acquired = (context.lockedSourceIds ??= new Set());
+  if (acquired.has(sourceId)) return;
+  await lockDatabaseRowOrdering(context.transaction, sourceId);
+  acquired.add(sourceId);
+}
 
 export type DatabaseCommandDispatcher = <TResult>(
   context: DatabaseCommandContext,
@@ -200,6 +209,7 @@ export async function executeDatabaseCommand<TResult = unknown>(
       });
       let primaryHostVersion: number | null = null;
       const sourceVersions: Record<string, number> = {};
+      const lockedSourceIds = new Set<string>();
       if (input.request.command.type === "database.favorite") {
         // Serialize the private value and its revision together, before the domain
         // write. Locking only the revision afterward can label an interleaved value.
@@ -218,7 +228,10 @@ export async function executeDatabaseCommand<TResult = unknown>(
         ].sort();
         // Link validation and revision writes must observe the state after acquiring
         // the same source lanes used by concurrent link/unlink and host commands.
-        for (const sourceId of sourceIds) await lockDatabaseRowOrdering(tx, sourceId);
+        for (const sourceId of sourceIds) {
+          await lockDatabaseRowOrdering(tx, sourceId);
+          lockedSourceIds.add(sourceId);
+        }
         const [linked] = await tx
           .select({ dataSourceId: databaseDataSource.dataSourceId })
           .from(databaseDataSource)
@@ -288,8 +301,10 @@ export async function executeDatabaseCommand<TResult = unknown>(
           if ("dataSourceId" in input.request.command)
             lockedSources.push(input.request.command.dataSourceId);
         }
-        for (const sourceId of [...new Set(lockedSources)].sort())
+        for (const sourceId of [...new Set(lockedSources)].sort()) {
           await lockDatabaseRowOrdering(tx, sourceId);
+          lockedSourceIds.add(sourceId);
+        }
         if (
           input.request.command.type === "view.update" &&
           input.request.command.patch.configuration?.some(({ path }) => path[0] === "subItems")
@@ -333,6 +348,7 @@ export async function executeDatabaseCommand<TResult = unknown>(
             databaseId: input.scope.databaseId,
             dataSourceId: input.scope.dataSourceId,
             transaction: tx,
+            lockedSourceIds,
           },
           input.request.command,
         ),
