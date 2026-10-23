@@ -1,6 +1,7 @@
 import { infiniteQueryOptions, type InfiniteData, type QueryClient } from "@tanstack/react-query";
 import { sharedClient } from "../../data/client";
 import type { ApiFetcher } from "../../shared/api-fetcher";
+import { shouldRetryQuery } from "../../shared/query-client";
 import {
   normalizeRecordWindow,
   resolveRecordWindow,
@@ -184,7 +185,8 @@ export function databaseWindowQueryOptions(
   return infiniteQueryOptions({
     queryKey,
     staleTime: 30_000,
-    retry: (failures, error) => !isViewQueryChangedError(error) && failures < 2,
+    retry: (failures, error) =>
+      !isViewQueryChangedError(error) && shouldRetryQuery(failures, error),
     initialPageParam: { limit: pageSize, snapshot: undefined },
     queryFn: async ({ client, pageParam, signal }): Promise<DatabaseWindowReference> => {
       const owner = sharedClient(client);

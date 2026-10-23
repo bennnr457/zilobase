@@ -41,6 +41,42 @@ const scope = {
   viewId: "view-1",
 };
 
+test("record query retries transient errors once and never retries permanent failures", async () => {
+  const client = new QueryClient();
+  try {
+    for (const [status, expected] of [
+      [401, 1],
+      [403, 1],
+      [404, 1],
+      [500, 2],
+      [503, 2],
+    ]) {
+      let attempts = 0;
+      await assert.rejects(
+        client.fetchInfiniteQuery({
+          ...databaseWindowQueryOptions(
+            async () => {
+              throw new Error("unused");
+            },
+            "session",
+            scope,
+            50,
+          ),
+          retryDelay: 0,
+          queryFn: async () => {
+            attempts++;
+            throw Object.assign(new Error("read failed"), { status });
+          },
+        }),
+      );
+      assert.equal(attempts, expected, String(status));
+      client.clear();
+    }
+  } finally {
+    client.clear();
+  }
+});
+
 test("window key uses host root with source/query segments", () => {
   assert.deepEqual(databaseWindowQueryKey("session-1", scope), [
     "db",
