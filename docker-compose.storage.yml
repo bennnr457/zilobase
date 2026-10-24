@@ -1,0 +1,14 @@
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/storage/zilobase/postgres
+
+  minio_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/storage/zilobase/minio
