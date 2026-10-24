@@ -91,7 +91,26 @@ export const getPagePropertyPayload = async (
     databaseIds,
     databaseVersions,
     presenceTargets,
-    properties,
-    values,
+    // Keep storage-only fields (including search revisions) out of the public
+    // contract. Database views already project these same public entities.
+    properties: properties.map((property) => ({
+      id: property.id,
+      workspaceId: property.workspaceId,
+      name: property.name,
+      type: property.type,
+      config: property.config,
+      createdAt: property.createdAt,
+      updatedAt: property.updatedAt,
+      deletedAt: property.deletedAt,
+      deletedById: property.deletedById,
+    })),
+    values: values.map((value) => ({
+      id: value.id,
+      pageId: value.pageId,
+      propertyId: value.propertyId,
+      value: value.value,
+      createdAt: value.createdAt,
+      updatedAt: value.updatedAt,
+    })),
   };
 };

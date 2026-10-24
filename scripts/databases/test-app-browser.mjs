@@ -218,6 +218,14 @@ try {
       afterPropertyId: null,
       beforePropertyId: null,
     });
+  const person = await command(sourcePath, {
+    type: "property.create",
+    name: "Person",
+    propertyType: "person",
+    config: {},
+    afterPropertyId: null,
+    beforePropertyId: null,
+  });
   const createdRows = [];
   for (const title of ["Alpha browser row", "Beta browser row", "Gamma browser row"])
     createdRows.push(
@@ -228,6 +236,22 @@ try {
         beforeRowId: null,
         parentRowId: null,
       }),
+    );
+  await command(sourcePath, {
+    type: "row.change",
+    rowId: createdRows[0].id,
+    valuesByPropertyId: { [person.property.id]: [] },
+  });
+  const coldProperties = await api.requestJson(`/pages/${createdRows[0].pageId}/properties`, {
+    jar,
+  });
+  assert.ok(coldProperties.response.ok);
+  assert.ok(coldProperties.data.values.length > 0);
+  for (const entity of [...coldProperties.data.properties, ...coldProperties.data.values])
+    assert.equal(
+      "searchRevision" in entity,
+      false,
+      "Storage revisions must not enter the public property payload",
     );
   await command(`/databases/${host}/commands`, {
     type: "view.create",
@@ -673,6 +697,48 @@ try {
     "Loaded row metadata must reuse the authorized page-detail context",
   );
   console.info("Opening a loaded database row renders page properties without a properties GET.");
+  const personPage = await context.newPage();
+  const personReads = [];
+  const personWrites = [];
+  personPage.on("request", (request) => {
+    if (
+      request.method() === "GET" &&
+      new URL(request.url()).pathname.endsWith(`/pages/${alphaPageId}/properties`)
+    )
+      personReads.push(request.url());
+    if (request.method() === "POST" && request.url().endsWith(sourcePath))
+      personWrites.push(request.postDataJSON().command);
+  });
+  await personPage.goto(`${webOrigin}/p/${alphaPageId}`);
+  const personValue = personPage.getByRole("button", { name: "Person value", exact: true });
+  await expect(personValue).toHaveText("Empty");
+  assert.ok(
+    personReads.length > 0,
+    "A cold page must exercise the authoritative property endpoint",
+  );
+  await personValue.click();
+  const personSaved = personPage.waitForResponse(
+    (response) => response.request().method() === "POST" && response.url().endsWith(sourcePath),
+  );
+  await personPage
+    .locator(".database-select-options")
+    .getByRole("button", { name: /Controller Browser/ })
+    .click();
+  assert.ok((await personSaved).ok());
+  await expect(personValue).toHaveText(/Controller Browser/);
+  assert.equal(personWrites.length, 1);
+  assert.equal(personWrites[0].type, "row.change");
+  assert.equal(personWrites[0].rowId, createdRows[0].id);
+  assert.equal(personWrites[0].valuesByPropertyId[person.property.id].length, 1);
+  await personPage.reload();
+  await expect(personValue).toHaveText(/Controller Browser/);
+  await personPage.screenshot({
+    path: `${root}.dev/database-app-results/page-person-property.png`,
+  });
+  await personPage.close();
+  console.info(
+    "Cold property reads and person selection use the public contract and persist one atomic row command.",
+  );
   const metadataRequests = [];
   const trackMetadata = (request) => {
     const url = new URL(request.url());

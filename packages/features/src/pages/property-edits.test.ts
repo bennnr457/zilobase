@@ -8,6 +8,7 @@ import {
 } from "../databases/mutations/test-helpers";
 import type { ApiFetcher } from "../shared/api-fetcher";
 import { changePagePropertyValue } from "./operations";
+import { normalizePageProperties } from "./property-cache";
 
 function fixture() {
   const client = new TestQueryClient();
@@ -28,6 +29,71 @@ function fixture() {
   };
   return { client, properties };
 }
+
+test("an expired person property refreshes once before submitting its intended user IDs", async () => {
+  const { client, properties } = fixture();
+  properties.properties[0]!.type = "person";
+  const reference = normalizePageProperties(
+    client,
+    sharedClient(client).capture(),
+    "page-1",
+    properties,
+  );
+  client.setQueryData(["page", "page-1", "properties"], reference, {
+    updatedAt: Date.now() - 31_000,
+  });
+  let reads = 0;
+  const writes: Array<Record<string, unknown>> = [];
+  const apiFetch = (async (path: string, init?: RequestInit) => {
+    if (init?.method !== "POST") {
+      assert.equal(path, "/pages/page-1/properties");
+      reads++;
+      return properties;
+    }
+    assert.equal(path, "/databases/database-1/data-sources/data-source-1/commands");
+    const request = JSON.parse(String(init.body));
+    writes.push(request.command);
+    return {
+      commandId: request.commandId,
+      result: {},
+      sourceVersions: { "data-source-1": 1 },
+      event: {
+        actorId: "actor",
+        areas: ["records"],
+        changes: {},
+        commandId: request.commandId,
+        committedAt: new Date().toISOString(),
+        databaseId: "database-1",
+        dataSourceId: "data-source-1",
+        eventId: request.commandId,
+        protocolVersion: 2,
+        type: "database.mutation",
+        version: 1,
+        requiresReset: true,
+      },
+    };
+  }) as ApiFetcher;
+  try {
+    await changePagePropertyValue(
+      { queryClient: client, apiFetch },
+      {
+        pageId: "page-1",
+        propertyId: "property-status",
+        value: ["actor"],
+      },
+    );
+    assert.equal(reads, 1);
+    assert.deepEqual(writes, [
+      {
+        type: "row.change",
+        rowId: "row-1",
+        valuesByPropertyId: { "property-status": ["actor"] },
+      },
+    ]);
+  } finally {
+    client.clear();
+  }
+});
 
 test("unsent property edits share authorization refresh and submit only the latest value", async () => {
   const { client, properties } = fixture();
