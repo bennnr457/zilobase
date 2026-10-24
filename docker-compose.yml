@@ -1,30 +1,6 @@
 name: zilobase
 
 services:
-  caddy:
-    image: caddy:2.11.4-alpine
-    restart: unless-stopped
-    depends_on:
-      zilobase:
-        condition: service_healthy
-      rustfs:
-        condition: service_healthy
-    environment:
-      ZILOBASE_SITE_ADDRESS: ${ZILOBASE_SITE_ADDRESS:?Set ZILOBASE_SITE_ADDRESS to the application domain}
-      ZILOBASE_STORAGE_SITE_ADDRESS: ${ZILOBASE_STORAGE_SITE_ADDRESS:?Set ZILOBASE_STORAGE_SITE_ADDRESS to the object-storage domain}
-    ports:
-      - "${ZILOBASE_HTTP_PORT:-80}:80"
-      - "${ZILOBASE_HTTPS_PORT:-443}:443"
-    volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    healthcheck:
-      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
   zilobase: &app-service
     image: ${ZILOBASE_IMAGE:?Set ZILOBASE_IMAGE to an immutable release tag or digest}
     restart: unless-stopped
@@ -212,8 +188,6 @@ services:
       retries: 30
 
 volumes:
-  caddy_data:
-  caddy_config:
   postgres_data:
   rustfs_data:
   queue_valkey_data:
